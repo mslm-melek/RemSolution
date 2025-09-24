@@ -3,10 +3,10 @@ using System.Runtime.CompilerServices;
 using AutoMapper;
 using RemSolution.Application.Common.Interfaces;
 using RemSolution.Application.Common.Models;
-using RemSolution.Application.TodoItems.Queries.GetTodoItemsWithPagination;
-using RemSolution.Application.TodoLists.Queries.GetTodos;
 using RemSolution.Domain.Entities;
 using NUnit.Framework;
+using RemSolution.Application.Features.TodoItems.Queries.GetTodoItemsWithPagination;
+using RemSolution.Application.Features.TodoLists.Queries.GetTodos;
 
 namespace RemSolution.Application.UnitTests.Common.Mappings;
 

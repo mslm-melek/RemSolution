@@ -1,6 +1,6 @@
 ﻿using RemSolution.Application.Common.Exceptions;
-using RemSolution.Application.TodoLists.Commands.CreateTodoList;
-using RemSolution.Application.TodoLists.Commands.UpdateTodoList;
+using RemSolution.Application.Features.TodoLists.Commands.CreateTodoList;
+using RemSolution.Application.Features.TodoLists.Commands.UpdateTodoList;
 using RemSolution.Domain.Entities;
 
 namespace RemSolution.Application.FunctionalTests.TodoLists.Commands;

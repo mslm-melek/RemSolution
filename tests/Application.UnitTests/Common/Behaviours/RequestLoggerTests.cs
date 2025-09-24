@@ -1,9 +1,9 @@
 ﻿using RemSolution.Application.Common.Behaviours;
 using RemSolution.Application.Common.Interfaces;
-using RemSolution.Application.TodoItems.Commands.CreateTodoItem;
 using Microsoft.Extensions.Logging;
 using Moq;
 using NUnit.Framework;
+using RemSolution.Application.Features.TodoItems.Commands.CreateTodoItem;
 
 namespace RemSolution.Application.UnitTests.Common.Behaviours;
 

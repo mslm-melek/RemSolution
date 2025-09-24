@@ -6,7 +6,7 @@ public static class TestDatabaseFactory
     {
         // Testcontainers requires Docker. To use a local SQL Server database instead,
         // switch to `SqlTestDatabase` and update appsettings.json.
-        var database = new SqlTestcontainersTestDatabase();
+        var database = new SqlTestDatabase();
 
         await database.InitialiseAsync();
 

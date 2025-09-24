@@ -17,4 +17,45 @@
     <ProjectReference Include="..\Domain\Domain.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Features\Brand\EventHandlers\" />
+    <Folder Include="Features\Brand\Queries\" />
+    <Folder Include="Features\User\Commands\" />
+    <Folder Include="Features\User\EventHandlers\" />
+    <Folder Include="Features\User\Queries\" />
+    <Folder Include="Features\Reservation\Commands\" />
+    <Folder Include="Features\Reservation\EventHandlers\" />
+    <Folder Include="Features\Reservation\Queries\" />
+    <Folder Include="Features\RentingHistory\Commands\" />
+    <Folder Include="Features\RentingHistory\EventHandlers\" />
+    <Folder Include="Features\RentingHistory\Queries\" />
+    <Folder Include="Features\Renting\Commands\" />
+    <Folder Include="Features\Renting\EventHandlers\" />
+    <Folder Include="Features\Renting\Queries\" />
+    <Folder Include="Features\Payment\Commands\" />
+    <Folder Include="Features\Payment\EventHandlers\" />
+    <Folder Include="Features\Payment\Queries\" />
+    <Folder Include="Features\ExtraServicesType\Commands\" />
+    <Folder Include="Features\ExtraServicesType\EventHandlers\" />
+    <Folder Include="Features\ExtraServicesType\Queries\" />
+    <Folder Include="Features\ExtraService\Commands\" />
+    <Folder Include="Features\ExtraService\EventHandlers\" />
+    <Folder Include="Features\ExtraService\Queries\" />
+    <Folder Include="Features\Expense\Commands\" />
+    <Folder Include="Features\Expense\EventHandlers\" />
+    <Folder Include="Features\Expense\Queries\" />
+    <Folder Include="Features\ExpenseType\Commands\" />
+    <Folder Include="Features\ExpenseType\EventHandlers\" />
+    <Folder Include="Features\ExpenseType\Queries\" />
+    <Folder Include="Features\Country\Commands\" />
+    <Folder Include="Features\Country\EventHandlers\" />
+    <Folder Include="Features\Country\Queries\" />
+    <Folder Include="Features\Client\Commands\" />
+    <Folder Include="Features\Client\EventHandlers\" />
+    <Folder Include="Features\Client\Queries\" />
+    <Folder Include="Features\ModelCar\Commands\" />
+    <Folder Include="Features\ModelCar\EventHandlers\" />
+    <Folder Include="Features\ModelCar\Queries\" />
+  </ItemGroup>
+
 </Project>

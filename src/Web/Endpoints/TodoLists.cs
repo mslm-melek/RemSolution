@@ -1,8 +1,8 @@
-﻿using RemSolution.Application.TodoLists.Commands.CreateTodoList;
-using RemSolution.Application.TodoLists.Commands.DeleteTodoList;
-using RemSolution.Application.TodoLists.Commands.UpdateTodoList;
-using RemSolution.Application.TodoLists.Queries.GetTodos;
-using Microsoft.AspNetCore.Http.HttpResults;
+﻿using Microsoft.AspNetCore.Http.HttpResults;
+using RemSolution.Application.Features.TodoLists.Commands.CreateTodoList;
+using RemSolution.Application.Features.TodoLists.Commands.UpdateTodoList;
+using RemSolution.Application.Features.TodoLists.Queries.GetTodos;
+using RemSolution.Application.Features.TodoLists.Commands.DeleteTodoList;
 
 namespace RemSolution.Web.Endpoints;
 

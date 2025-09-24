@@ -1,10 +1,10 @@
 ﻿using RemSolution.Application.Common.Models;
-using RemSolution.Application.TodoItems.Commands.CreateTodoItem;
-using RemSolution.Application.TodoItems.Commands.DeleteTodoItem;
-using RemSolution.Application.TodoItems.Commands.UpdateTodoItem;
-using RemSolution.Application.TodoItems.Commands.UpdateTodoItemDetail;
-using RemSolution.Application.TodoItems.Queries.GetTodoItemsWithPagination;
 using Microsoft.AspNetCore.Http.HttpResults;
+using RemSolution.Application.Features.TodoItems.Queries.GetTodoItemsWithPagination;
+using RemSolution.Application.Features.TodoItems.Commands.CreateTodoItem;
+using RemSolution.Application.Features.TodoItems.Commands.UpdateTodoItem;
+using RemSolution.Application.Features.TodoItems.Commands.UpdateTodoItemDetail;
+using RemSolution.Application.Features.TodoItems.Commands.DeleteTodoItem;
 
 namespace RemSolution.Web.Endpoints;
 

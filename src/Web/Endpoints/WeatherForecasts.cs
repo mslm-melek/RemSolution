@@ -1,5 +1,5 @@
-﻿using RemSolution.Application.WeatherForecasts.Queries.GetWeatherForecasts;
-using Microsoft.AspNetCore.Http.HttpResults;
+﻿using Microsoft.AspNetCore.Http.HttpResults;
+using RemSolution.Application.Features.WeatherForecasts.Queries.GetWeatherForecasts;
 
 namespace RemSolution.Web.Endpoints;
 

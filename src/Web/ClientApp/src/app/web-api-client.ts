@@ -15,6 +15,300 @@ import { HttpClient, HttpHeaders, HttpResponse, HttpResponseBase } from '@angula
 
 export const API_BASE_URL = new InjectionToken<string>('API_BASE_URL');
 
+export interface ICarsClient {
+    getCars(pageNumber: number | undefined, pageSize: number | undefined, modelId: number | null | undefined, color: string | null | undefined, fuelType: FuelType | null | undefined): Observable<PaginatedListOfCarDto>;
+    createCar(command: CreateCarCommand): Observable<number>;
+    getCarById(id: number): Observable<CarDto>;
+    updateCar(id: number, command: UpdateCarCommand): Observable<void>;
+    deleteCar(id: number): Observable<void>;
+}
+
+@Injectable({
+    providedIn: 'root'
+})
+export class CarsClient implements ICarsClient {
+    private http: HttpClient;
+    private baseUrl: string;
+    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
+
+    constructor(@Inject(HttpClient) http: HttpClient, @Optional() @Inject(API_BASE_URL) baseUrl?: string) {
+        this.http = http;
+        this.baseUrl = baseUrl ?? "";
+    }
+
+    getCars(pageNumber: number | undefined, pageSize: number | undefined, modelId: number | null | undefined, color: string | null | undefined, fuelType: FuelType | null | undefined): Observable<PaginatedListOfCarDto> {
+        let url_ = this.baseUrl + "/api/Cars?";
+        if (pageNumber === null)
+            throw new Error("The parameter 'pageNumber' cannot be null.");
+        else if (pageNumber !== undefined)
+            url_ += "PageNumber=" + encodeURIComponent("" + pageNumber) + "&";
+        if (pageSize === null)
+            throw new Error("The parameter 'pageSize' cannot be null.");
+        else if (pageSize !== undefined)
+            url_ += "PageSize=" + encodeURIComponent("" + pageSize) + "&";
+        if (modelId !== undefined && modelId !== null)
+            url_ += "ModelId=" + encodeURIComponent("" + modelId) + "&";
+        if (color !== undefined && color !== null)
+            url_ += "Color=" + encodeURIComponent("" + color) + "&";
+        if (fuelType !== undefined && fuelType !== null)
+            url_ += "FuelType=" + encodeURIComponent("" + fuelType) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetCars(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetCars(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<PaginatedListOfCarDto>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<PaginatedListOfCarDto>;
+        }));
+    }
+
+    protected processGetCars(response: HttpResponseBase): Observable<PaginatedListOfCarDto> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = PaginatedListOfCarDto.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    createCar(command: CreateCarCommand): Observable<number> {
+        let url_ = this.baseUrl + "/api/Cars";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(command);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processCreateCar(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processCreateCar(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<number>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<number>;
+        }));
+    }
+
+    protected processCreateCar(response: HttpResponseBase): Observable<number> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 201) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result201: any = null;
+            let resultData201 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+                result201 = resultData201 !== undefined ? resultData201 : <any>null;
+    
+            return _observableOf(result201);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getCarById(id: number): Observable<CarDto> {
+        let url_ = this.baseUrl + "/api/Cars/{id}";
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetCarById(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetCarById(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<CarDto>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<CarDto>;
+        }));
+    }
+
+    protected processGetCarById(response: HttpResponseBase): Observable<CarDto> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = CarDto.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status === 404) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("A server side error occurred.", status, _responseText, _headers);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    updateCar(id: number, command: UpdateCarCommand): Observable<void> {
+        let url_ = this.baseUrl + "/api/Cars/{id}";
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(command);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+            })
+        };
+
+        return this.http.request("put", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processUpdateCar(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processUpdateCar(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processUpdateCar(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return _observableOf(null as any);
+            }));
+        } else if (status === 400) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("A server side error occurred.", status, _responseText, _headers);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    deleteCar(id: number): Observable<void> {
+        let url_ = this.baseUrl + "/api/Cars/{id}";
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+            })
+        };
+
+        return this.http.request("delete", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processDeleteCar(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processDeleteCar(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processDeleteCar(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return _observableOf(null as any);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+}
+
 export interface ITodoItemsClient {
     getTodoItemsWithPagination(listId: number, pageNumber: number, pageSize: number): Observable<PaginatedListOfTodoItemBriefDto>;
     createTodoItem(command: CreateTodoItemCommand): Observable<number>;
@@ -602,6 +896,255 @@ export class WeatherForecastsClient implements IWeatherForecastsClient {
         }
         return _observableOf(null as any);
     }
+}
+
+export class PaginatedListOfCarDto implements IPaginatedListOfCarDto {
+    items?: CarDto[];
+    pageNumber?: number;
+    totalPages?: number;
+    totalCount?: number;
+    hasPreviousPage?: boolean;
+    hasNextPage?: boolean;
+
+    constructor(data?: IPaginatedListOfCarDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["items"])) {
+                this.items = [] as any;
+                for (let item of _data["items"])
+                    this.items!.push(CarDto.fromJS(item));
+            }
+            this.pageNumber = _data["pageNumber"];
+            this.totalPages = _data["totalPages"];
+            this.totalCount = _data["totalCount"];
+            this.hasPreviousPage = _data["hasPreviousPage"];
+            this.hasNextPage = _data["hasNextPage"];
+        }
+    }
+
+    static fromJS(data: any): PaginatedListOfCarDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new PaginatedListOfCarDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.items)) {
+            data["items"] = [];
+            for (let item of this.items)
+                data["items"].push(item.toJSON());
+        }
+        data["pageNumber"] = this.pageNumber;
+        data["totalPages"] = this.totalPages;
+        data["totalCount"] = this.totalCount;
+        data["hasPreviousPage"] = this.hasPreviousPage;
+        data["hasNextPage"] = this.hasNextPage;
+        return data;
+    }
+}
+
+export interface IPaginatedListOfCarDto {
+    items?: CarDto[];
+    pageNumber?: number;
+    totalPages?: number;
+    totalCount?: number;
+    hasPreviousPage?: boolean;
+    hasNextPage?: boolean;
+}
+
+export class CarDto implements ICarDto {
+    matricule?: string;
+    modelName?: string | undefined;
+    firstCirculationDate?: Date;
+    color?: string | undefined;
+    imageUrl?: string | undefined;
+    power?: number | undefined;
+    fuelType?: FuelType | undefined;
+
+    constructor(data?: ICarDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.matricule = _data["matricule"];
+            this.modelName = _data["modelName"];
+            this.firstCirculationDate = _data["firstCirculationDate"] ? new Date(_data["firstCirculationDate"].toString()) : <any>undefined;
+            this.color = _data["color"];
+            this.imageUrl = _data["imageUrl"];
+            this.power = _data["power"];
+            this.fuelType = _data["fuelType"];
+        }
+    }
+
+    static fromJS(data: any): CarDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new CarDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["matricule"] = this.matricule;
+        data["modelName"] = this.modelName;
+        data["firstCirculationDate"] = this.firstCirculationDate ? this.firstCirculationDate.toISOString() : <any>undefined;
+        data["color"] = this.color;
+        data["imageUrl"] = this.imageUrl;
+        data["power"] = this.power;
+        data["fuelType"] = this.fuelType;
+        return data;
+    }
+}
+
+export interface ICarDto {
+    matricule?: string;
+    modelName?: string | undefined;
+    firstCirculationDate?: Date;
+    color?: string | undefined;
+    imageUrl?: string | undefined;
+    power?: number | undefined;
+    fuelType?: FuelType | undefined;
+}
+
+export enum FuelType {
+    Gasoline = 0,
+    Diesel = 1,
+}
+
+export class CreateCarCommand implements ICreateCarCommand {
+    matricule?: string;
+    modelId?: number | undefined;
+    firstCirculationDate?: Date;
+    color?: string | undefined;
+    imageUrl?: string | undefined;
+    power?: number | undefined;
+    fuelType?: FuelType | undefined;
+
+    constructor(data?: ICreateCarCommand) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.matricule = _data["matricule"];
+            this.modelId = _data["modelId"];
+            this.firstCirculationDate = _data["firstCirculationDate"] ? new Date(_data["firstCirculationDate"].toString()) : <any>undefined;
+            this.color = _data["color"];
+            this.imageUrl = _data["imageUrl"];
+            this.power = _data["power"];
+            this.fuelType = _data["fuelType"];
+        }
+    }
+
+    static fromJS(data: any): CreateCarCommand {
+        data = typeof data === 'object' ? data : {};
+        let result = new CreateCarCommand();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["matricule"] = this.matricule;
+        data["modelId"] = this.modelId;
+        data["firstCirculationDate"] = this.firstCirculationDate ? this.firstCirculationDate.toISOString() : <any>undefined;
+        data["color"] = this.color;
+        data["imageUrl"] = this.imageUrl;
+        data["power"] = this.power;
+        data["fuelType"] = this.fuelType;
+        return data;
+    }
+}
+
+export interface ICreateCarCommand {
+    matricule?: string;
+    modelId?: number | undefined;
+    firstCirculationDate?: Date;
+    color?: string | undefined;
+    imageUrl?: string | undefined;
+    power?: number | undefined;
+    fuelType?: FuelType | undefined;
+}
+
+export class UpdateCarCommand implements IUpdateCarCommand {
+    id?: number;
+    modelId?: number | undefined;
+    firstCirculationDate?: Date;
+    color?: string | undefined;
+    imageUrl?: string | undefined;
+    power?: number | undefined;
+    fuelType?: FuelType | undefined;
+
+    constructor(data?: IUpdateCarCommand) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.modelId = _data["modelId"];
+            this.firstCirculationDate = _data["firstCirculationDate"] ? new Date(_data["firstCirculationDate"].toString()) : <any>undefined;
+            this.color = _data["color"];
+            this.imageUrl = _data["imageUrl"];
+            this.power = _data["power"];
+            this.fuelType = _data["fuelType"];
+        }
+    }
+
+    static fromJS(data: any): UpdateCarCommand {
+        data = typeof data === 'object' ? data : {};
+        let result = new UpdateCarCommand();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["modelId"] = this.modelId;
+        data["firstCirculationDate"] = this.firstCirculationDate ? this.firstCirculationDate.toISOString() : <any>undefined;
+        data["color"] = this.color;
+        data["imageUrl"] = this.imageUrl;
+        data["power"] = this.power;
+        data["fuelType"] = this.fuelType;
+        return data;
+    }
+}
+
+export interface IUpdateCarCommand {
+    id?: number;
+    modelId?: number | undefined;
+    firstCirculationDate?: Date;
+    color?: string | undefined;
+    imageUrl?: string | undefined;
+    power?: number | undefined;
+    fuelType?: FuelType | undefined;
 }
 
 export class PaginatedListOfTodoItemBriefDto implements IPaginatedListOfTodoItemBriefDto {

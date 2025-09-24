@@ -1,5 +1,5 @@
-﻿using RemSolution.Application.TodoLists.Commands.CreateTodoList;
-using RemSolution.Application.TodoLists.Commands.DeleteTodoList;
+﻿using RemSolution.Application.Features.TodoLists.Commands.CreateTodoList;
+using RemSolution.Application.Features.TodoLists.Commands.DeleteTodoList;
 using RemSolution.Domain.Entities;
 
 namespace RemSolution.Application.FunctionalTests.TodoLists.Commands;

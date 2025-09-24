@@ -1,6 +1,6 @@
-﻿using RemSolution.Application.TodoItems.Commands.CreateTodoItem;
-using RemSolution.Application.TodoItems.Commands.DeleteTodoItem;
-using RemSolution.Application.TodoLists.Commands.CreateTodoList;
+﻿using RemSolution.Application.Features.TodoItems.Commands.CreateTodoItem;
+using RemSolution.Application.Features.TodoItems.Commands.DeleteTodoItem;
+using RemSolution.Application.Features.TodoLists.Commands.CreateTodoList;
 using RemSolution.Domain.Entities;
 
 namespace RemSolution.Application.FunctionalTests.TodoItems.Commands;

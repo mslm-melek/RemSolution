@@ -12,5 +12,12 @@
         public FuelType? FuelType { get; set; }
         public virtual ICollection<Expense>? Expenses { get; set; }
         public virtual ICollection<Renting>? Rentings { get; set; }
+        public override string ToString()
+        {
+            var model = Model?.ToString()?? "Unknown Model";
+            var matricule = Matricule ?? "No Matricule";
+
+            return $"{model} - {matricule}";
+        }
     }
 }

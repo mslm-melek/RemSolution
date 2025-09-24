@@ -1,7 +1,7 @@
-﻿using RemSolution.Application.TodoItems.Commands.CreateTodoItem;
-using RemSolution.Application.TodoItems.Commands.UpdateTodoItem;
-using RemSolution.Application.TodoItems.Commands.UpdateTodoItemDetail;
-using RemSolution.Application.TodoLists.Commands.CreateTodoList;
+﻿using RemSolution.Application.Features.TodoItems.Commands.CreateTodoItem;
+using RemSolution.Application.Features.TodoItems.Commands.UpdateTodoItem;
+using RemSolution.Application.Features.TodoItems.Commands.UpdateTodoItemDetail;
+using RemSolution.Application.Features.TodoLists.Commands.CreateTodoList;
 using RemSolution.Domain.Entities;
 using RemSolution.Domain.Enums;
 
