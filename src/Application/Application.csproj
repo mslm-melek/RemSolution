@@ -19,7 +19,6 @@
 
   <ItemGroup>
     <Folder Include="Features\Brand\EventHandlers\" />
-    <Folder Include="Features\Brand\Queries\" />
     <Folder Include="Features\User\Commands\" />
     <Folder Include="Features\User\EventHandlers\" />
     <Folder Include="Features\User\Queries\" />
