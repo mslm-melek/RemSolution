@@ -14,32 +14,44 @@ import { FetchDataComponent } from './fetch-data/fetch-data.component';
 import { TodoComponent } from './todo/todo.component';
 import { AuthorizeInterceptor } from 'src/api-authorization/authorize.interceptor';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { BrandComponent } from './brand/brand.component';
+import { ModelCarComponent } from './model-car/model-car.component';
+import { CarComponent } from './car/car.component';
+import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
+
 
 @NgModule({
-    declarations: [
-        AppComponent,
-        NavMenuComponent,
-        HomeComponent,
-        CounterComponent,
-        FetchDataComponent,
-        TodoComponent
-    ],
-    bootstrap: [AppComponent],
-    imports: [
-        BrowserModule,
-        FormsModule,
-        RouterModule.forRoot([
-            { path: '', component: HomeComponent, pathMatch: 'full' },
-            { path: 'counter', component: CounterComponent },
-            { path: 'fetch-data', component: FetchDataComponent },
-            { path: 'todo', component: TodoComponent }
-        ]),
-        BrowserAnimationsModule,
-        ModalModule.forRoot()],
-    providers: [
-        { provide: APP_ID, useValue: 'ng-cli-universal' },
-        { provide: HTTP_INTERCEPTORS, useClass: AuthorizeInterceptor, multi: true },
-        provideHttpClient(withInterceptorsFromDi())
-    ]
+  declarations: [
+    AppComponent,
+    NavMenuComponent,
+    HomeComponent,
+    CounterComponent,
+    FetchDataComponent,
+    TodoComponent,
+    CarComponent,
+    ModelCarComponent,
+    BrandComponent
+  ],
+  bootstrap: [AppComponent],
+  imports: [
+    BrowserModule,
+    FormsModule,
+    RouterModule.forRoot([
+      { path: '', component: HomeComponent, pathMatch: 'full' },
+      { path: 'counter', component: CounterComponent },
+      { path: 'fetch-data', component: FetchDataComponent },
+      { path: 'todo', component: TodoComponent },
+      { path: 'brand', component: BrandComponent },
+      { path: 'model-car', component: ModelCarComponent },
+      { path: 'car', component: CarComponent }
+    ]),
+    BrowserAnimationsModule,
+    ModalModule.forRoot()],
+  providers: [
+    { provide: APP_ID, useValue: 'ng-cli-universal' },
+    { provide: HTTP_INTERCEPTORS, useClass: AuthorizeInterceptor, multi: true },
+    provideHttpClient(withInterceptorsFromDi()),
+    provideAnimationsAsync()
+  ]
 })
 export class AppModule { }

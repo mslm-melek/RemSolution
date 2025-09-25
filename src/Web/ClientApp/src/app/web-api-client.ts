@@ -1364,6 +1364,7 @@ export class WeatherForecastsClient implements IWeatherForecastsClient {
 }
 
 export class BrandDto implements IBrandDto {
+    id?: number;
     name?: string;
 
     constructor(data?: IBrandDto) {
@@ -1377,6 +1378,7 @@ export class BrandDto implements IBrandDto {
 
     init(_data?: any) {
         if (_data) {
+            this.id = _data["id"];
             this.name = _data["name"];
         }
     }
@@ -1390,12 +1392,14 @@ export class BrandDto implements IBrandDto {
 
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
         data["name"] = this.name;
         return data;
     }
 }
 
 export interface IBrandDto {
+    id?: number;
     name?: string;
 }
 
