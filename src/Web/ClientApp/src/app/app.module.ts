@@ -18,7 +18,8 @@ import { BrandComponent } from './brand/brand.component';
 import { ModelCarComponent } from './model-car/model-car.component';
 import { CarComponent } from './car/car.component';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
-
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
 
 @NgModule({
   declarations: [
@@ -36,6 +37,8 @@ import { provideAnimationsAsync } from '@angular/platform-browser/animations/asy
   imports: [
     BrowserModule,
     FormsModule,
+    MatButtonModule,
+    MatIconModule,
     RouterModule.forRoot([
       { path: '', component: HomeComponent, pathMatch: 'full' },
       { path: 'counter', component: CounterComponent },

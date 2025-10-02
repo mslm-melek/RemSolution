@@ -1,6 +1,32 @@
 <div class="brand-card">
   <h2>Brands</h2>
 
+  <!-- Add brand -->
+  <div class="add-row">
+    <input [(ngModel)]="newBrand" placeholder="New brand name" />
+  </div>
+
+  <!-- Material Table -->
+  <table mat-table class="mat-elevation-z2">
+
+    <!-- Name Column -->
+    <ng-container matColumnDef="name">
+      <th mat-header-cell *matHeaderCellDef>Name</th>
+      <td mat-cell *matCellDef="let brand"></td>
+    </ng-container>
+
+    <!-- Delete Column -->
+    <ng-container matColumnDef="actions">
+      <th mat-header-cell *matHeaderCellDef>Actions</th>
+      <td mat-cell *matCellDef="let brand">
+        <button mat-icon-button color="warn" (click)="deleteBrand(brand)">
+        </button>
+      </td>
+    </ng-container>
+
+    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+    <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+  </table>
 
 
 </div>
