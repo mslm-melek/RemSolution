@@ -12,8 +12,8 @@ using RemSolution.Infrastructure.Data;
 namespace RemSolution.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250924111251_changeModelId")]
-    partial class changeModelId
+    [Migration("20251002190713_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

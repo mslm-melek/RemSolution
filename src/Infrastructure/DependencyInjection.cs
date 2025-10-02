@@ -15,7 +15,7 @@ public static class DependencyInjection
     public static void AddInfrastructureServices(this IHostApplicationBuilder builder)
     {
         //var connectionString = builder.Configuration.GetConnectionString("RemSolutionDb");
-        var connectionString = "Server=localhost;Database=RemSolutionDb;Trusted_Connection=True;MultipleActiveResultSets=true;TrustServerCertificate=True;";
+        var connectionString = "Server=(localdb)\\MSSQLLocalDB;Database=RemSolutionDb;Trusted_Connection=True;MultipleActiveResultSets=true;TrustServerCertificate=True;";
 
         Guard.Against.Null(connectionString, message: "Connection string 'RemSolutionDb' not found.");
 
