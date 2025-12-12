@@ -17,7 +17,7 @@ namespace RemSolution.Application.Features.Brand.Queries.GetBrandsQuery
         }
         public async Task<IList<BrandDto>> Handle(GetBrandsQuery request, CancellationToken cancellationToken)
         {
-            return await _context.Brands
+            return await _context.Brands.OrderBy(a=>a.Name)
                      .AsNoTracking()
                      .ProjectTo<BrandDto>(_mapper.ConfigurationProvider)
                      .ToListAsync(cancellationToken);

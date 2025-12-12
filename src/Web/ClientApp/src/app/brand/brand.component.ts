@@ -16,7 +16,9 @@ export class BrandComponent {
 
   @ViewChild(MatPaginator) paginator!: MatPaginator;
 
-  constructor(private client: BrandsClient) {
+  constructor(private client: BrandsClient) { }
+
+  ngOnInit() {
     this.loadBrands();
   }
 
@@ -25,31 +27,45 @@ export class BrandComponent {
       next: result => {
         this.brands = result || [];
         this.dataSource = new MatTableDataSource(this.brands);
-        this.dataSource.paginator = this.paginator;
+        if (this.paginator) {
+          this.dataSource.paginator = this.paginator;
+        }
       },
       error: err => console.error(err)
     });
   }
+  errorMessage = '';
 
   addBrand() {
     if (!this.newBrand.trim()) return;
-    const command = new CreateBrandCommand({ name: this.newBrand });
+    this.errorMessage = '';
 
+    const command = new CreateBrandCommand({ name: this.newBrand.trim() });
     this.client.createBrand(command).subscribe({
       next: () => {
         this.newBrand = '';
         this.loadBrands();
+        this.errorMessage = '';
+
       },
-      error: err => console.error(err)
+      error: (err: any) => {
+        if (err.status === 400 && err.error?.errors?.Name) {
+          this.errorMessage = err.error.errors.Name[0];
+        } else {
+          console.error(err);
+        }
+      }
     });
   }
 
   deleteBrand(brand: BrandDto) {
-    // Assuming your BrandDto has an id
     if (!brand.id) return;
-    this.client.deleteBrand(brand.id).subscribe({
-      next: () => this.loadBrands(),
-      error: err => console.error(err)
-    });
+
+    if (confirm(`Delete brand "${brand.name}"?`)) {
+      this.client.deleteBrand(brand.id).subscribe({
+        next: () => this.loadBrands(),
+        error: err => console.error(err)
+      });
+    }
   }
 }

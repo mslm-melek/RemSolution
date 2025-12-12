@@ -46,9 +46,7 @@
     <Folder Include="Features\ExpenseType\Commands\" />
     <Folder Include="Features\ExpenseType\EventHandlers\" />
     <Folder Include="Features\ExpenseType\Queries\" />
-    <Folder Include="Features\Country\Commands\" />
     <Folder Include="Features\Country\EventHandlers\" />
-    <Folder Include="Features\Country\Queries\" />
     <Folder Include="Features\Client\Commands\" />
     <Folder Include="Features\Client\EventHandlers\" />
     <Folder Include="Features\Client\Queries\" />

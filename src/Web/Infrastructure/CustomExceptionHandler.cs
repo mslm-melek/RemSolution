@@ -39,7 +39,7 @@ public class CustomExceptionHandler : IExceptionHandler
         var exception = (ValidationException)ex;
 
         httpContext.Response.StatusCode = StatusCodes.Status400BadRequest;
-
+        httpContext.Response.ContentType = "application/json";
         await httpContext.Response.WriteAsJsonAsync(new ValidationProblemDetails(exception.Errors)
         {
             Status = StatusCodes.Status400BadRequest,
