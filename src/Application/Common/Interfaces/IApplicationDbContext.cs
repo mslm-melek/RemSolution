@@ -17,6 +17,5 @@ public interface IApplicationDbContext
     DbSet<RentingHistory> RentingHistories { get; }
     DbSet<Payment> Payments { get; }
     DbSet<Reservation> Reservations { get; }
-    DbSet<User> Users { get; }
     Task<int> SaveChangesAsync(CancellationToken cancellationToken);
 }
