@@ -17,12 +17,10 @@ namespace RemSolution.Application.Features.Car.Queries.GetCarsWithPaginationQuer
         : IRequestHandler<GetCarsWithPaginationQuery, PaginatedList<CarDto>>
     {
         private readonly IApplicationDbContext _context;
-        private readonly IMapper _mapper;
 
-        public GetCarsWithPaginationQueryHandler(IApplicationDbContext context, IMapper mapper)
+        public GetCarsWithPaginationQueryHandler(IApplicationDbContext context)
         {
             _context = context;
-            _mapper = mapper;
         }
 
         public async Task<PaginatedList<CarDto>> Handle(GetCarsWithPaginationQuery request, CancellationToken cancellationToken)
@@ -39,7 +37,7 @@ namespace RemSolution.Application.Features.Car.Queries.GetCarsWithPaginationQuer
                 query = query.Where(c => c.FuelType == request.FuelType);
 
             return await query
-                .ProjectTo<CarDto>(_mapper.ConfigurationProvider)
+                .ProjectToType<CarDto>()
                 .PaginatedListAsync(request.PageNumber, request.PageSize);
         }
     }

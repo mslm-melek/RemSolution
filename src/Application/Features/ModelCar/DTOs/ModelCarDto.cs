@@ -3,15 +3,16 @@ namespace RemSolution.Application.Features.ModelCar.DTOs
 {
     public class ModelCarDto
     {
+        public int Id { get; init; }
         public string Name { get; init; } = string.Empty;
         public string? BrandName { get; init; }
    
-        public class Mapping : Profile
+        public class Mapping : IRegister
         {
-            public Mapping()
+            public void Register(TypeAdapterConfig config)
             {
-                CreateMap<Domain.Entities.ModelCar, ModelCarDto>()
-                              .ForMember(dest => dest.BrandName, opt => opt.MapFrom(src => src.Brand != null ? src.Brand.Name : string.Empty));
+                config.NewConfig<Domain.Entities.ModelCar, ModelCarDto>()
+                      .Map(dest => dest.BrandName, src => src.Brand != null ? src.Brand.Name : string.Empty);
             }
         }
     }

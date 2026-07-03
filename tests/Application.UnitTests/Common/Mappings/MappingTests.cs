@@ -1,45 +1,42 @@
-﻿using System.Reflection;
+using System.Reflection;
 using System.Runtime.CompilerServices;
-using AutoMapper;
+using Mapster;
 using RemSolution.Application.Common.Interfaces;
-using RemSolution.Application.Common.Models;
 using RemSolution.Domain.Entities;
 using NUnit.Framework;
-using RemSolution.Application.Features.TodoItems.Queries.GetTodoItemsWithPagination;
-using RemSolution.Application.Features.TodoLists.Queries.GetTodos;
+using RemSolution.Application.Features.Car.DTOs;
+using RemSolution.Application.Features.ModelCar.DTOs;
+using RemSolution.Application.Features.Country.DTOs;
+using RemSolution.Application.Features.Brand.DTOs;
 
 namespace RemSolution.Application.UnitTests.Common.Mappings;
 
 public class MappingTests
 {
-    private readonly IConfigurationProvider _configuration;
-    private readonly IMapper _mapper;
+    private readonly TypeAdapterConfig _configuration;
 
     public MappingTests()
     {
-        _configuration = new MapperConfiguration(config => 
-            config.AddMaps(Assembly.GetAssembly(typeof(IApplicationDbContext))));
-
-        _mapper = _configuration.CreateMapper();
+        _configuration = new TypeAdapterConfig();
+        _configuration.Scan(Assembly.GetAssembly(typeof(IApplicationDbContext))!);
     }
 
     [Test]
     public void ShouldHaveValidConfiguration()
     {
-        _configuration.AssertConfigurationIsValid();
+        _configuration.Compile();
     }
 
     [Test]
-    [TestCase(typeof(TodoList), typeof(TodoListDto))]
-    [TestCase(typeof(TodoItem), typeof(TodoItemDto))]
-    [TestCase(typeof(TodoList), typeof(LookupDto))]
-    [TestCase(typeof(TodoItem), typeof(LookupDto))]
-    [TestCase(typeof(TodoItem), typeof(TodoItemBriefDto))]
+    [TestCase(typeof(Car), typeof(CarDto))]
+    [TestCase(typeof(ModelCar), typeof(ModelCarDto))]
+    [TestCase(typeof(Country), typeof(CountryDto))]
+    [TestCase(typeof(Brand), typeof(BrandDto))]
     public void ShouldSupportMappingFromSourceToDestination(Type source, Type destination)
     {
         var instance = GetInstanceOf(source);
 
-        _mapper.Map(instance, source, destination);
+        instance.Adapt(source, destination, _configuration);
     }
 
     private object GetInstanceOf(Type type)

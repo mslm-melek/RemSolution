@@ -12,8 +12,6 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>, IApplica
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options) { }
  
     public new DbSet<User> Users => Set<User>();
-    public DbSet<TodoList> TodoLists => Set<TodoList>();
-    public DbSet<TodoItem> TodoItems => Set<TodoItem>();
     public DbSet<Brand> Brands => Set<Brand>();
     public DbSet<Car> Cars => Set<Car>();
     public DbSet<Client> Clients => Set<Client>();

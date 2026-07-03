@@ -8,21 +8,17 @@ namespace RemSolution.Application.Features.Car.Queries.GetCarByIdQuery
     public class GetCarByIdQueryHandler : IRequestHandler<GetCarByIdQuery, CarDto?>
     {
         private readonly IApplicationDbContext _context;
-        private readonly IMapper _mapper;
 
-
-        public GetCarByIdQueryHandler(IApplicationDbContext context, IMapper mapper)
+        public GetCarByIdQueryHandler(IApplicationDbContext context)
         {
             _context = context;
-            _mapper = mapper;
-
         }
 
         public async Task<CarDto?> Handle(GetCarByIdQuery request, CancellationToken cancellationToken)
         {
             var car = await _context.Cars
               .Where(c => c.Id == request.Id)
-              .ProjectTo<CarDto>(_mapper.ConfigurationProvider)
+              .ProjectToType<CarDto>()
               .FirstOrDefaultAsync(cancellationToken);
 
             if (car == null)

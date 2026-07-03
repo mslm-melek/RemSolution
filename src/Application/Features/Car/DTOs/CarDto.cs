@@ -4,6 +4,7 @@ namespace RemSolution.Application.Features.Car.DTOs
 {
     public class CarDto
     {
+        public int Id { get; init; }
         public string Matricule { get; init; } = string.Empty;
         public string? ModelName { get; init; }
         public DateTime FirstCirculationDate { get; init; }
@@ -11,12 +12,12 @@ namespace RemSolution.Application.Features.Car.DTOs
         public string? ImageUrl { get; init; }
         public int? Power { get; init; }
         public FuelType? FuelType { get; init; }
-        public class Mapping : Profile
+        public class Mapping : IRegister
         {
-            public Mapping()
+            public void Register(TypeAdapterConfig config)
             {
-                CreateMap<Domain.Entities.Car, CarDto>()
-                              .ForMember(dest => dest.ModelName, opt => opt.MapFrom(src => src.Model != null ? src.Model.Name : string.Empty));
+                config.NewConfig<Domain.Entities.Car, CarDto>()
+                      .Map(dest => dest.ModelName, src => src.Model != null ? src.Model.Name : string.Empty);
             }
         }
     }

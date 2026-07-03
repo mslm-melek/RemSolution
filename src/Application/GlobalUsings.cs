@@ -1,6 +1,6 @@
 ﻿global using Ardalis.GuardClauses;
-global using AutoMapper;
-global using AutoMapper.QueryableExtensions;
+global using Mapster;
+global using MapsterMapper;
 global using Microsoft.EntityFrameworkCore;
 global using FluentValidation;
 global using MediatR;

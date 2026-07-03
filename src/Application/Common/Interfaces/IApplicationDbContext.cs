@@ -4,9 +4,6 @@ namespace RemSolution.Application.Common.Interfaces;
 
 public interface IApplicationDbContext
 {
-    DbSet<TodoList> TodoLists { get; }
-
-    DbSet<TodoItem> TodoItems { get; }
     DbSet<Brand> Brands { get; }
     DbSet<Car> Cars { get; }
     DbSet<Client> Clients { get; }

@@ -7,11 +7,11 @@ namespace RemSolution.Application.Features.Brand.DTOs
         public int Id { get; init; }
         public string Name { get; init; } = string.Empty;
 
-        public class Mapping : Profile
+        public class Mapping : IRegister
         {
-            public Mapping()
+            public void Register(TypeAdapterConfig config)
             {
-                CreateMap<Domain.Entities.Brand, BrandDto>();
+                config.NewConfig<Domain.Entities.Brand, BrandDto>();
             }
         }
     }

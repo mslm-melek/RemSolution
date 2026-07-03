@@ -8,25 +8,21 @@ namespace RemSolution.Application.Features.Country.Queries.GetCountryByIdQuery
     public class GetCountryByIdQueryHandler : IRequestHandler<GetCountryByIdQuery, CountryDto?>
     {
         private readonly IApplicationDbContext _context;
-        private readonly IMapper _mapper;
 
-
-        public GetCountryByIdQueryHandler(IApplicationDbContext context, IMapper mapper)
+        public GetCountryByIdQueryHandler(IApplicationDbContext context)
         {
             _context = context;
-            _mapper = mapper;
-
         }
 
         public async Task<CountryDto?> Handle(GetCountryByIdQuery request, CancellationToken cancellationToken)
         {
             var country = await _context.Countries
               .Where(c => c.Id == request.Id)
-              .ProjectTo<CountryDto>(_mapper.ConfigurationProvider)
+              .ProjectToType<CountryDto>()
               .FirstOrDefaultAsync(cancellationToken);
 
             if (country == null)
-                throw new NotFoundException(nameof(Car), request.Id.ToString());
+                throw new NotFoundException(nameof(Domain.Entities.Country), request.Id.ToString());
 
             return country;
         }

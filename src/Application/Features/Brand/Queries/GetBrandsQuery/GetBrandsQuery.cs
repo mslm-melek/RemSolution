@@ -8,18 +8,15 @@ namespace RemSolution.Application.Features.Brand.Queries.GetBrandsQuery
     public class GetBrandsQueryHandler : IRequestHandler<GetBrandsQuery, IList<BrandDto>>
     {
         private readonly IApplicationDbContext _context;
-        private readonly IMapper _mapper;
-        public GetBrandsQueryHandler(IApplicationDbContext context, IMapper mapper)
+        public GetBrandsQueryHandler(IApplicationDbContext context)
         {
             _context = context;
-            _mapper = mapper;
-
         }
         public async Task<IList<BrandDto>> Handle(GetBrandsQuery request, CancellationToken cancellationToken)
         {
             return await _context.Brands.OrderBy(a=>a.Name)
                      .AsNoTracking()
-                     .ProjectTo<BrandDto>(_mapper.ConfigurationProvider)
+                     .ProjectToType<BrandDto>()
                      .ToListAsync(cancellationToken);
         }
     }
