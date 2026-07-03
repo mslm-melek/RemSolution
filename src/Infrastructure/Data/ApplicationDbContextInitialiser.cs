@@ -19,6 +19,14 @@ public static class InitialiserExtensions
 
             await initialiser.SeedAsync();
         });
+
+        // Sync counterpart required by synchronous operations (e.g. `dotnet ef database update`).
+        builder.UseSeeding((context, _) =>
+        {
+            var initialiser = serviceProvider.GetRequiredService<ApplicationDbContextInitialiser>();
+
+            initialiser.SeedAsync().GetAwaiter().GetResult();
+        });
     }
 
     public static async Task InitialiseDatabaseAsync(this WebApplication app)

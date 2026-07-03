@@ -6,6 +6,7 @@ using RemSolution.Infrastructure.Identity;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 
 namespace Microsoft.Extensions.DependencyInjection;
@@ -14,8 +15,7 @@ public static class DependencyInjection
 {
     public static void AddInfrastructureServices(this IHostApplicationBuilder builder)
     {
-        //var connectionString = builder.Configuration.GetConnectionString("RemSolutionDb");
-        var connectionString = "Server=(localdb)\\MSSQLLocalDB;Database=RemSolutionDb;Trusted_Connection=True;MultipleActiveResultSets=true;TrustServerCertificate=True;";
+        var connectionString = builder.Configuration.GetConnectionString("RemSolutionDb");
 
         Guard.Against.Null(connectionString, message: "Connection string 'RemSolutionDb' not found.");
 
@@ -26,8 +26,7 @@ public static class DependencyInjection
         {
             options.AddInterceptors(sp.GetServices<ISaveChangesInterceptor>());
             options.UseSqlServer(connectionString)
-            .ConfigureWarnings(w => w.Ignore(RelationalEventId.PendingModelChangesWarning)).AddAsyncSeeding(sp);
-        ;
+            .AddAsyncSeeding(sp);
     });
 
 
