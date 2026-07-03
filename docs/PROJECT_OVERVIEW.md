@@ -89,7 +89,7 @@ All entities inherit `BaseAuditableEntity` (Id + audit fields).
 - **ExtraService** + **ExtraServicesType** — add-ons on a renting
 - **User** — a Domain user entity that *duplicates* Identity's `ApplicationUser` (a known redundancy)
 
-Enums: `FuelType`, `RentingState`, `PriorityLevel` (leftover).
+Enums: `FuelType`, `RentingState`.
 
 ---
 
@@ -116,7 +116,6 @@ Enums: `FuelType`, `RentingState`, `PriorityLevel` (leftover).
 - **Core business flow is missing** — Renting, Reservation, Payment, and Client have entities + DB tables but **no commands / queries / endpoints / UI**. You cannot actually rent a car yet.
 - **Incomplete CRUD** — Brand / ModelCar / Country lack Update commands.
 - **Duplicate user identity** — `Domain.User` vs Identity `ApplicationUser` (unresolved source of truth).
-- **Domain events are template leftovers** — `CarCompletedEvent` is raised on *create*; Deleted events are defined but never raised; handlers only log.
 - **Hardcoded connection string** in `Infrastructure/DependencyInjection.cs` (the configuration line is commented out).
 - **Model drift** — `PendingModelChangesWarning` is suppressed and the migration still contains Todo tables; only one migration exists.
 - **No tests for the new domain** — the old Todo tests were deleted; the test projects are empty scaffolding.
@@ -131,6 +130,7 @@ Enums: `FuelType`, `RentingState`, `PriorityLevel` (leftover).
 2. Fixed the wrong `NotFoundException` entity name in the Country **and** ModelCar GetById queries.
 3. Renamed three mis-named files (`CountryDto.cs`, `GetCountryByIdQuery.cs`, `ExpenseConfiguration.cs`).
 4. **Migrated AutoMapper → Mapster** (removed CVE-2026-32933 and the new commercial-license issue); ported DI registration, four DTO mappings, ten query handlers, the mapping helper, and the mapping test.
+5. **Removed template-leftover domain events** — deleted `CarCompletedEvent` (wrongly raised on create), the never-consumed `Car`/`ModelCar` Deleted & Completed events, and the log-only handlers; also deleted the unused `PriorityLevel` enum. The `DispatchDomainEventsInterceptor` infrastructure is retained; events will be reintroduced when `Renting` has a real consumer (e.g. `RentingCompletedEvent → write RentingHistory`).
 
 ---
 

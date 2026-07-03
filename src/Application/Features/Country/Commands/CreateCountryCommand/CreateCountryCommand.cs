@@ -1,5 +1,4 @@
 ﻿using RemSolution.Application.Common.Interfaces;
-using RemSolution.Domain.Events;
 
 namespace RemSolution.Application.Features.Country.Commands.CreateCountryCommand
 {

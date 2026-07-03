@@ -1,6 +1,5 @@
 ﻿using RemSolution.Application.Common.Interfaces;
 using RemSolution.Domain.Enums;
-using RemSolution.Domain.Events;
 
 namespace RemSolution.Application.Features.Car.Commands.UpdateCarCommand
 {
@@ -37,8 +36,6 @@ namespace RemSolution.Application.Features.Car.Commands.UpdateCarCommand
             entity.ImageUrl = request.ImageUrl;
             entity.Power = request.Power;
             entity.FuelType = request.FuelType;
-
-            entity.AddDomainEvent(new CarCompletedEvent(entity));
 
             await _context.SaveChangesAsync(cancellationToken);
         }

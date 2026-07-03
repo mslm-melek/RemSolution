@@ -1,5 +1,4 @@
 ﻿using RemSolution.Application.Common.Interfaces;
-using RemSolution.Domain.Events;
 
 namespace RemSolution.Application.Features.ModelCar.Commands.CreateModelCarCommand
 {
@@ -24,8 +23,6 @@ namespace RemSolution.Application.Features.ModelCar.Commands.CreateModelCarComma
                 Name = request.Name,
                 BrandId = request.BrandId
             };
-
-            entity.AddDomainEvent(new ModelCarCompletedEvent(entity));
 
             _context.ModelCars.Add(entity);
 

@@ -1,5 +1,4 @@
 ﻿using RemSolution.Application.Common.Interfaces;
-using RemSolution.Domain.Events;
 
 namespace RemSolution.Application.Features.Car.Commands.DeleteCarCommand
 {
@@ -23,8 +22,6 @@ namespace RemSolution.Application.Features.Car.Commands.DeleteCarCommand
             Guard.Against.NotFound(request.Id, entity);
 
             _context.Cars.Remove(entity);
-
-            entity.AddDomainEvent(new CarDeletedEvent(entity));
 
             await _context.SaveChangesAsync(cancellationToken);
         }

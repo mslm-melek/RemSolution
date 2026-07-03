@@ -1,6 +1,5 @@
 ﻿using RemSolution.Application.Common.Interfaces;
 using RemSolution.Domain.Enums;
-using RemSolution.Domain.Events;
 
 namespace RemSolution.Application.Features.Car.Commands.CreateCarCommand
 {
@@ -34,8 +33,6 @@ namespace RemSolution.Application.Features.Car.Commands.CreateCarCommand
                 Power = request.Power,
                 FuelType = request.FuelType
             };
-
-            entity.AddDomainEvent(new CarCompletedEvent(entity));
 
             _context.Cars.Add(entity);
 
