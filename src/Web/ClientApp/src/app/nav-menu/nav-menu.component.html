@@ -1,43 +1,37 @@
 <header>
-  <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-    <div class="container">
-      <a class="navbar-brand" [routerLink]="['/']">RemSolution.Web</a>
-      <button
-        class="navbar-toggler"
-        type="button"
-        data-toggle="collapse"
-        data-target=".navbar-collapse"
-        aria-label="Toggle navigation"
-        [attr.aria-expanded]="isExpanded"
-        (click)="toggle()">
-        <span class="navbar-toggler-icon"></span>
-      </button>
-      <div class="navbar-collapse collapse d-sm-inline-flex justify-content-end"
-           [ngClass]="{ show: isExpanded }">
-        <ul class="navbar-nav flex-grow">
-          <li class="nav-item"
-              [routerLinkActive]="['link-active']"
-              [routerLinkActiveOptions]="{ exact: true }">
-            <a class="nav-link text-dark" [routerLink]="['/']">Home</a>
-          </li>
+  <mat-toolbar color="primary" class="nav-toolbar">
+    <a class="nav-brand" [routerLink]="['/']">RemSolution.Web</a>
 
-          <li class="nav-item" [routerLinkActive]="['link-active']">
-            <a class="nav-link text-dark" [routerLink]="['/brand']">Car Brands</a>
-          </li>
-          <li class="nav-item" [routerLinkActive]="['link-active']">
-            <a class="nav-link text-dark" [routerLink]="['/model-car']">Car Models</a>
-          </li>
-          <li class="nav-item" [routerLinkActive]="['link-active']">
-            <a class="nav-link text-dark" [routerLink]="['/car']">Cars</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link text-dark" href="/api" target="_blank">API</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link text-dark" href="/Identity/Account/Manage">Account</a>
-          </li>
-        </ul>
-      </div>
-    </div>
-  </nav>
+    <span class="nav-spacer"></span>
+
+    <button mat-icon-button
+            class="nav-toggler"
+            aria-label="Toggle navigation"
+            [attr.aria-expanded]="isExpanded"
+            (click)="toggle()">
+      <mat-icon>menu</mat-icon>
+    </button>
+
+    <nav class="nav-links" [class.expanded]="isExpanded">
+      <a mat-button
+         [routerLink]="['/']"
+         [routerLinkActive]="['link-active']"
+         [routerLinkActiveOptions]="{ exact: true }"
+         (click)="collapse()">Home</a>
+      <a mat-button
+         [routerLink]="['/brand']"
+         [routerLinkActive]="['link-active']"
+         (click)="collapse()">Car Brands</a>
+      <a mat-button
+         [routerLink]="['/model-car']"
+         [routerLinkActive]="['link-active']"
+         (click)="collapse()">Car Models</a>
+      <a mat-button
+         [routerLink]="['/car']"
+         [routerLinkActive]="['link-active']"
+         (click)="collapse()">Cars</a>
+      <a mat-button href="/api" target="_blank">API</a>
+      <a mat-button href="/Identity/Account/Manage">Account</a>
+    </nav>
+  </mat-toolbar>
 </header>
