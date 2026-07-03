@@ -2,6 +2,7 @@
 using RemSolution.Application.Common.Models;
 using RemSolution.Application.Features.ModelCar.Commands.CreateModelCarCommand;
 using RemSolution.Application.Features.ModelCar.Commands.DeleteModelCarCommand;
+using RemSolution.Application.Features.ModelCar.Commands.UpdateModelCarCommand;
 using RemSolution.Application.Features.ModelCar.DTOs;
 using RemSolution.Application.Features.ModelCar.Queries.GetModelCarByIdQuery;
 using RemSolution.Application.Features.ModelCar.Queries.GetModelCarsWithPaginationQuery;
@@ -17,6 +18,7 @@ public class ModelCars : EndpointGroupBase
             .MapGet(GetModelCars)
             .MapGet(GetModelCarById, "{id}")
             .MapPost(CreateModelCar)
+            .MapPut(UpdateModelCar, "{id}")
             .MapDelete(DeleteModelCar, "{id}");
     }
 
@@ -40,6 +42,16 @@ public class ModelCars : EndpointGroupBase
     {
         var id = await sender.Send(command);
         return TypedResults.Created($"/ModelCars/{id}", id);
+    }
+
+    public async Task<Results<NoContent, BadRequest>> UpdateModelCar(ISender sender, int id, UpdateModelCarCommand command)
+    {
+        if (id != command.Id)
+            return TypedResults.BadRequest();
+
+        await sender.Send(command);
+
+        return TypedResults.NoContent();
     }
 
     public async Task<NoContent> DeleteModelCar(ISender sender, int id)

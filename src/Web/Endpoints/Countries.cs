@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http.HttpResults;
 using RemSolution.Application.Features.Country.Commands.CreateCountryCommand;
 using RemSolution.Application.Features.Country.Commands.DeleteCountryCommand;
+using RemSolution.Application.Features.Country.Commands.UpdateCountryCommand;
 using RemSolution.Application.Features.Country.DTOs;
 using RemSolution.Application.Features.Country.Queries.GetCountryByIdQuery;
 using RemSolution.Application.Features.Country.Queries.GetCountriesQuery;
@@ -16,6 +17,7 @@ public class Countries : EndpointGroupBase
             .MapGet(GetCountries)        
             .MapGet(GetCountryById, "{id}")
             .MapPost(CreateCountry)
+            .MapPut(UpdateCountry, "{id}")
             .MapDelete(DeleteCountry, "{id}");
     }
 
@@ -40,6 +42,16 @@ public class Countries : EndpointGroupBase
         var id = await sender.Send(command);
         return TypedResults.Created($"/Countries/{id}", id);
     }
+    public async Task<Results<NoContent, BadRequest>> UpdateCountry(ISender sender, int id, UpdateCountryCommand command)
+    {
+        if (id != command.Id)
+            return TypedResults.BadRequest();
+
+        await sender.Send(command);
+
+        return TypedResults.NoContent();
+    }
+
     public async Task<NoContent> DeleteCountry(ISender sender, int id)
     {
         await sender.Send(new DeleteCountryCommand(id));

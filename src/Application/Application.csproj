@@ -6,6 +6,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Features\User\**" />
+    <EmbeddedResource Remove="Features\User\**" />
+    <None Remove="Features\User\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Ardalis.GuardClauses" />
     <PackageReference Include="Mapster" />
     <PackageReference Include="Mapster.DependencyInjection" />
@@ -20,9 +26,6 @@
 
   <ItemGroup>
     <Folder Include="Features\Brand\EventHandlers\" />
-    <Folder Include="Features\User\Commands\" />
-    <Folder Include="Features\User\EventHandlers\" />
-    <Folder Include="Features\User\Queries\" />
     <Folder Include="Features\Reservation\Commands\" />
     <Folder Include="Features\Reservation\EventHandlers\" />
     <Folder Include="Features\Reservation\Queries\" />

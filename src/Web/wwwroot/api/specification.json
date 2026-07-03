@@ -94,6 +94,44 @@
           }
         }
       },
+      "put": {
+        "tags": [
+          "Brands"
+        ],
+        "operationId": "UpdateBrand",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          }
+        ],
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateBrandCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 2
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "400": {
+            "description": ""
+          }
+        }
+      },
       "delete": {
         "tags": [
           "Brands"
@@ -405,6 +443,44 @@
           }
         }
       },
+      "put": {
+        "tags": [
+          "Countries"
+        ],
+        "operationId": "UpdateCountry",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          }
+        ],
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCountryCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 2
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "400": {
+            "description": ""
+          }
+        }
+      },
       "delete": {
         "tags": [
           "Countries"
@@ -544,6 +620,44 @@
           }
         }
       },
+      "put": {
+        "tags": [
+          "ModelCars"
+        ],
+        "operationId": "UpdateModelCar",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          }
+        ],
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateModelCarCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 2
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "400": {
+            "description": ""
+          }
+        }
+      },
       "delete": {
         "tags": [
           "ModelCars"
@@ -588,6 +702,19 @@
         "type": "object",
         "additionalProperties": false,
         "properties": {
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "UpdateBrandCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
           "name": {
             "type": "string"
           }
@@ -778,6 +905,19 @@
           }
         }
       },
+      "UpdateCountryCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
       "PaginatedListOfModelCarDto": {
         "type": "object",
         "additionalProperties": false,
@@ -829,6 +969,24 @@
         "type": "object",
         "additionalProperties": false,
         "properties": {
+          "name": {
+            "type": "string"
+          },
+          "brandId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          }
+        }
+      },
+      "UpdateModelCarCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
           "name": {
             "type": "string"
           },

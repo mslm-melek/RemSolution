@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http.HttpResults;
 using RemSolution.Application.Features.Brand.Commands.CreateBrandCommand;
 using RemSolution.Application.Features.Brand.Commands.DeleteBrandCommand;
+using RemSolution.Application.Features.Brand.Commands.UpdateBrandCommand;
 using RemSolution.Application.Features.Brand.DTOs;
 using RemSolution.Application.Features.Brand.Queries.GetBrandByIdQuery;
 using RemSolution.Application.Features.Brand.Queries.GetBrandsQuery;
@@ -16,6 +17,7 @@ public class Brands : EndpointGroupBase
             .MapGet(GetBrands)        
             .MapGet(GetBrandById, "{id}")
             .MapPost(CreateBrand)
+            .MapPut(UpdateBrand, "{id}")
             .MapDelete(DeleteBrand, "{id}");
     }
 
@@ -40,6 +42,16 @@ public class Brands : EndpointGroupBase
         var id = await sender.Send(command);
         return TypedResults.Created($"/Brands/{id}", id);
     }
+    public async Task<Results<NoContent, BadRequest>> UpdateBrand(ISender sender, int id, UpdateBrandCommand command)
+    {
+        if (id != command.Id)
+            return TypedResults.BadRequest();
+
+        await sender.Send(command);
+
+        return TypedResults.NoContent();
+    }
+
     public async Task<NoContent> DeleteBrand(ISender sender, int id)
     {
         await sender.Send(new DeleteBrandCommand(id));

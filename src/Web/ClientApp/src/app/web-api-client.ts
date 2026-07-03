@@ -19,6 +19,7 @@ export interface IBrandsClient {
     getBrands(): Observable<BrandDto[]>;
     createBrand(command: CreateBrandCommand): Observable<number>;
     getBrandById(id: number): Observable<BrandDto>;
+    updateBrand(id: number, command: UpdateBrandCommand): Observable<void>;
     deleteBrand(id: number): Observable<void>;
 }
 
@@ -187,6 +188,61 @@ export class BrandsClient implements IBrandsClient {
             return _observableOf(result200);
             }));
         } else if (status === 404) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("A server side error occurred.", status, _responseText, _headers);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    updateBrand(id: number, command: UpdateBrandCommand): Observable<void> {
+        let url_ = this.baseUrl + "/api/Brands/{id}";
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(command);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+            })
+        };
+
+        return this.http.request("put", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processUpdateBrand(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processUpdateBrand(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processUpdateBrand(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return _observableOf(null as any);
+            }));
+        } else if (status === 400) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
             return throwException("A server side error occurred.", status, _responseText, _headers);
             }));
@@ -544,6 +600,7 @@ export interface ICountriesClient {
     getCountries(): Observable<CountryDto[]>;
     createCountry(command: CreateCountryCommand): Observable<number>;
     getCountryById(id: number): Observable<CountryDto>;
+    updateCountry(id: number, command: UpdateCountryCommand): Observable<void>;
     deleteCountry(id: number): Observable<void>;
 }
 
@@ -723,6 +780,61 @@ export class CountriesClient implements ICountriesClient {
         return _observableOf(null as any);
     }
 
+    updateCountry(id: number, command: UpdateCountryCommand): Observable<void> {
+        let url_ = this.baseUrl + "/api/Countries/{id}";
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(command);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+            })
+        };
+
+        return this.http.request("put", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processUpdateCountry(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processUpdateCountry(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processUpdateCountry(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return _observableOf(null as any);
+            }));
+        } else if (status === 400) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("A server side error occurred.", status, _responseText, _headers);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
     deleteCountry(id: number): Observable<void> {
         let url_ = this.baseUrl + "/api/Countries/{id}";
         if (id === undefined || id === null)
@@ -775,6 +887,7 @@ export interface IModelCarsClient {
     getModelCars(pageNumber: number | undefined, pageSize: number | undefined, brandId: number | null | undefined): Observable<PaginatedListOfModelCarDto>;
     createModelCar(command: CreateModelCarCommand): Observable<number>;
     getModelCarById(id: number): Observable<ModelCarDto>;
+    updateModelCar(id: number, command: UpdateModelCarCommand): Observable<void>;
     deleteModelCar(id: number): Observable<void>;
 }
 
@@ -957,6 +1070,61 @@ export class ModelCarsClient implements IModelCarsClient {
         return _observableOf(null as any);
     }
 
+    updateModelCar(id: number, command: UpdateModelCarCommand): Observable<void> {
+        let url_ = this.baseUrl + "/api/ModelCars/{id}";
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(command);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+            })
+        };
+
+        return this.http.request("put", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processUpdateModelCar(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processUpdateModelCar(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processUpdateModelCar(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return _observableOf(null as any);
+            }));
+        } else if (status === 400) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("A server side error occurred.", status, _responseText, _headers);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
     deleteModelCar(id: number): Observable<void> {
         let url_ = this.baseUrl + "/api/ModelCars/{id}";
         if (id === undefined || id === null)
@@ -1078,6 +1246,46 @@ export class CreateBrandCommand implements ICreateBrandCommand {
 }
 
 export interface ICreateBrandCommand {
+    name?: string;
+}
+
+export class UpdateBrandCommand implements IUpdateBrandCommand {
+    id?: number;
+    name?: string;
+
+    constructor(data?: IUpdateBrandCommand) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.name = _data["name"];
+        }
+    }
+
+    static fromJS(data: any): UpdateBrandCommand {
+        data = typeof data === 'object' ? data : {};
+        let result = new UpdateBrandCommand();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["name"] = this.name;
+        return data;
+    }
+}
+
+export interface IUpdateBrandCommand {
+    id?: number;
     name?: string;
 }
 
@@ -1410,6 +1618,46 @@ export interface ICreateCountryCommand {
     name?: string;
 }
 
+export class UpdateCountryCommand implements IUpdateCountryCommand {
+    id?: number;
+    name?: string;
+
+    constructor(data?: IUpdateCountryCommand) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.name = _data["name"];
+        }
+    }
+
+    static fromJS(data: any): UpdateCountryCommand {
+        data = typeof data === 'object' ? data : {};
+        let result = new UpdateCountryCommand();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["name"] = this.name;
+        return data;
+    }
+}
+
+export interface IUpdateCountryCommand {
+    id?: number;
+    name?: string;
+}
+
 export class PaginatedListOfModelCarDto implements IPaginatedListOfModelCarDto {
     items?: ModelCarDto[];
     pageNumber?: number;
@@ -1554,6 +1802,50 @@ export class CreateModelCarCommand implements ICreateModelCarCommand {
 }
 
 export interface ICreateModelCarCommand {
+    name?: string;
+    brandId?: number | undefined;
+}
+
+export class UpdateModelCarCommand implements IUpdateModelCarCommand {
+    id?: number;
+    name?: string;
+    brandId?: number | undefined;
+
+    constructor(data?: IUpdateModelCarCommand) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.name = _data["name"];
+            this.brandId = _data["brandId"];
+        }
+    }
+
+    static fromJS(data: any): UpdateModelCarCommand {
+        data = typeof data === 'object' ? data : {};
+        let result = new UpdateModelCarCommand();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["name"] = this.name;
+        data["brandId"] = this.brandId;
+        return data;
+    }
+}
+
+export interface IUpdateModelCarCommand {
+    id?: number;
     name?: string;
     brandId?: number | undefined;
 }
