@@ -4,6 +4,7 @@ namespace RemSolution.Application.Common.Interfaces;
 
 public interface IApplicationDbContext
 {
+    DbSet<Agency> Agencies { get; }
     DbSet<Brand> Brands { get; }
     DbSet<Car> Cars { get; }
     DbSet<Client> Clients { get; }

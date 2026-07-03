@@ -83,11 +83,12 @@ public class ApplicationDbContextInitialiser
     public async Task TrySeedAsync()
     {
         // Default roles
-        var administratorRole = new IdentityRole(Roles.Administrator);
-
-        if (_roleManager.Roles.All(r => r.Name != administratorRole.Name))
+        foreach (var roleName in new[] { Roles.Administrator, Roles.PlatformAdmin })
         {
-            await _roleManager.CreateAsync(administratorRole);
+            if (_roleManager.Roles.All(r => r.Name != roleName))
+            {
+                await _roleManager.CreateAsync(new IdentityRole(roleName));
+            }
         }
 
         // Default users
@@ -96,9 +97,20 @@ public class ApplicationDbContextInitialiser
         if (_userManager.Users.All(u => u.UserName != administrator.UserName))
         {
             await _userManager.CreateAsync(administrator, "Administrator1!");
-            if (!string.IsNullOrWhiteSpace(administratorRole.Name))
+        }
+
+        // Role assignment is done outside the creation branch so databases seeded
+        // before a role existed still pick it up.
+        var administratorUser = await _userManager.FindByNameAsync(administrator.UserName);
+
+        if (administratorUser is not null)
+        {
+            foreach (var roleName in new[] { Roles.Administrator, Roles.PlatformAdmin })
             {
-                await _userManager.AddToRolesAsync(administrator, new [] { administratorRole.Name });
+                if (!await _userManager.IsInRoleAsync(administratorUser, roleName))
+                {
+                    await _userManager.AddToRoleAsync(administratorUser, roleName);
+                }
             }
         }
 
