@@ -302,6 +302,191 @@ export class AgenciesClient implements IAgenciesClient {
     }
 }
 
+export interface IAgencySubscriptionsClient {
+    getAgencySubscriptions(agencyId: number | null | undefined): Observable<AgencySubscriptionDto[]>;
+    assignAgencySubscription(command: AssignAgencySubscriptionCommand): Observable<number>;
+    updateAgencySubscription(id: number, command: UpdateAgencySubscriptionCommand): Observable<void>;
+}
+
+@Injectable({
+    providedIn: 'root'
+})
+export class AgencySubscriptionsClient implements IAgencySubscriptionsClient {
+    private http: HttpClient;
+    private baseUrl: string;
+    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
+
+    constructor(@Inject(HttpClient) http: HttpClient, @Optional() @Inject(API_BASE_URL) baseUrl?: string) {
+        this.http = http;
+        this.baseUrl = baseUrl ?? "";
+    }
+
+    getAgencySubscriptions(agencyId: number | null | undefined): Observable<AgencySubscriptionDto[]> {
+        let url_ = this.baseUrl + "/api/AgencySubscriptions?";
+        if (agencyId !== undefined && agencyId !== null)
+            url_ += "AgencyId=" + encodeURIComponent("" + agencyId) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetAgencySubscriptions(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetAgencySubscriptions(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<AgencySubscriptionDto[]>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<AgencySubscriptionDto[]>;
+        }));
+    }
+
+    protected processGetAgencySubscriptions(response: HttpResponseBase): Observable<AgencySubscriptionDto[]> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            if (Array.isArray(resultData200)) {
+                result200 = [] as any;
+                for (let item of resultData200)
+                    result200!.push(AgencySubscriptionDto.fromJS(item));
+            }
+            else {
+                result200 = <any>null;
+            }
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    assignAgencySubscription(command: AssignAgencySubscriptionCommand): Observable<number> {
+        let url_ = this.baseUrl + "/api/AgencySubscriptions";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(command);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processAssignAgencySubscription(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processAssignAgencySubscription(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<number>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<number>;
+        }));
+    }
+
+    protected processAssignAgencySubscription(response: HttpResponseBase): Observable<number> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 201) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result201: any = null;
+            let resultData201 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+                result201 = resultData201 !== undefined ? resultData201 : <any>null;
+    
+            return _observableOf(result201);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    updateAgencySubscription(id: number, command: UpdateAgencySubscriptionCommand): Observable<void> {
+        let url_ = this.baseUrl + "/api/AgencySubscriptions/{id}";
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(command);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+            })
+        };
+
+        return this.http.request("put", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processUpdateAgencySubscription(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processUpdateAgencySubscription(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processUpdateAgencySubscription(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return _observableOf(null as any);
+            }));
+        } else if (status === 400) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("A server side error occurred.", status, _responseText, _headers);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+}
+
 export interface IBrandsClient {
     getBrands(): Observable<BrandDto[]>;
     createBrand(command: CreateBrandCommand): Observable<number>;
@@ -873,6 +1058,77 @@ export class CarsClient implements ICarsClient {
         if (status === 204) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
             return _observableOf(null as any);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+}
+
+export interface IClientsClient {
+    createClient(command: CreateClientCommand): Observable<number>;
+}
+
+@Injectable({
+    providedIn: 'root'
+})
+export class ClientsClient implements IClientsClient {
+    private http: HttpClient;
+    private baseUrl: string;
+    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
+
+    constructor(@Inject(HttpClient) http: HttpClient, @Optional() @Inject(API_BASE_URL) baseUrl?: string) {
+        this.http = http;
+        this.baseUrl = baseUrl ?? "";
+    }
+
+    createClient(command: CreateClientCommand): Observable<number> {
+        let url_ = this.baseUrl + "/api/Clients";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(command);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processCreateClient(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processCreateClient(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<number>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<number>;
+        }));
+    }
+
+    protected processCreateClient(response: HttpResponseBase): Observable<number> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 201) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result201: any = null;
+            let resultData201 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+                result201 = resultData201 !== undefined ? resultData201 : <any>null;
+    
+            return _observableOf(result201);
             }));
         } else if (status !== 200 && status !== 204) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
@@ -1460,6 +1716,307 @@ export class ModelCarsClient implements IModelCarsClient {
     }
 }
 
+export interface ISubscriptionPlansClient {
+    getSubscriptionPlans(): Observable<SubscriptionPlanDto[]>;
+    createSubscriptionPlan(command: CreateSubscriptionPlanCommand): Observable<number>;
+    updateSubscriptionPlan(id: number, command: UpdateSubscriptionPlanCommand): Observable<void>;
+    deleteSubscriptionPlan(id: number): Observable<void>;
+}
+
+@Injectable({
+    providedIn: 'root'
+})
+export class SubscriptionPlansClient implements ISubscriptionPlansClient {
+    private http: HttpClient;
+    private baseUrl: string;
+    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
+
+    constructor(@Inject(HttpClient) http: HttpClient, @Optional() @Inject(API_BASE_URL) baseUrl?: string) {
+        this.http = http;
+        this.baseUrl = baseUrl ?? "";
+    }
+
+    getSubscriptionPlans(): Observable<SubscriptionPlanDto[]> {
+        let url_ = this.baseUrl + "/api/SubscriptionPlans";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetSubscriptionPlans(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetSubscriptionPlans(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<SubscriptionPlanDto[]>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<SubscriptionPlanDto[]>;
+        }));
+    }
+
+    protected processGetSubscriptionPlans(response: HttpResponseBase): Observable<SubscriptionPlanDto[]> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            if (Array.isArray(resultData200)) {
+                result200 = [] as any;
+                for (let item of resultData200)
+                    result200!.push(SubscriptionPlanDto.fromJS(item));
+            }
+            else {
+                result200 = <any>null;
+            }
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    createSubscriptionPlan(command: CreateSubscriptionPlanCommand): Observable<number> {
+        let url_ = this.baseUrl + "/api/SubscriptionPlans";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(command);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processCreateSubscriptionPlan(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processCreateSubscriptionPlan(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<number>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<number>;
+        }));
+    }
+
+    protected processCreateSubscriptionPlan(response: HttpResponseBase): Observable<number> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 201) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result201: any = null;
+            let resultData201 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+                result201 = resultData201 !== undefined ? resultData201 : <any>null;
+    
+            return _observableOf(result201);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    updateSubscriptionPlan(id: number, command: UpdateSubscriptionPlanCommand): Observable<void> {
+        let url_ = this.baseUrl + "/api/SubscriptionPlans/{id}";
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(command);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+            })
+        };
+
+        return this.http.request("put", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processUpdateSubscriptionPlan(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processUpdateSubscriptionPlan(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processUpdateSubscriptionPlan(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return _observableOf(null as any);
+            }));
+        } else if (status === 400) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("A server side error occurred.", status, _responseText, _headers);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    deleteSubscriptionPlan(id: number): Observable<void> {
+        let url_ = this.baseUrl + "/api/SubscriptionPlans/{id}";
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+            })
+        };
+
+        return this.http.request("delete", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processDeleteSubscriptionPlan(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processDeleteSubscriptionPlan(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processDeleteSubscriptionPlan(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return _observableOf(null as any);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+}
+
+export interface ISubscriptionsClient {
+    getMySubscription(): Observable<MySubscriptionDto>;
+}
+
+@Injectable({
+    providedIn: 'root'
+})
+export class SubscriptionsClient implements ISubscriptionsClient {
+    private http: HttpClient;
+    private baseUrl: string;
+    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
+
+    constructor(@Inject(HttpClient) http: HttpClient, @Optional() @Inject(API_BASE_URL) baseUrl?: string) {
+        this.http = http;
+        this.baseUrl = baseUrl ?? "";
+    }
+
+    getMySubscription(): Observable<MySubscriptionDto> {
+        let url_ = this.baseUrl + "/api/Subscriptions/my";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetMySubscription(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetMySubscription(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<MySubscriptionDto>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<MySubscriptionDto>;
+        }));
+    }
+
+    protected processGetMySubscription(response: HttpResponseBase): Observable<MySubscriptionDto> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = MySubscriptionDto.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status === 404) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("A server side error occurred.", status, _responseText, _headers);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+}
+
 export class AgencyDto implements IAgencyDto {
     id?: number;
     name?: string;
@@ -1650,6 +2207,180 @@ export interface IUpdateAgencyCommand {
     countryId?: number;
     latitude?: number | undefined;
     longitude?: number | undefined;
+}
+
+export class AgencySubscriptionDto implements IAgencySubscriptionDto {
+    id?: number;
+    agencyId?: number;
+    agencyName?: string | undefined;
+    planId?: number;
+    planName?: string | undefined;
+    maxCars?: number;
+    maxClients?: number;
+    price?: number;
+    startDate?: Date;
+    endDate?: Date;
+    status?: SubscriptionStatus;
+
+    constructor(data?: IAgencySubscriptionDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.agencyId = _data["agencyId"];
+            this.agencyName = _data["agencyName"];
+            this.planId = _data["planId"];
+            this.planName = _data["planName"];
+            this.maxCars = _data["maxCars"];
+            this.maxClients = _data["maxClients"];
+            this.price = _data["price"];
+            this.startDate = _data["startDate"] ? new Date(_data["startDate"].toString()) : <any>undefined;
+            this.endDate = _data["endDate"] ? new Date(_data["endDate"].toString()) : <any>undefined;
+            this.status = _data["status"];
+        }
+    }
+
+    static fromJS(data: any): AgencySubscriptionDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new AgencySubscriptionDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["agencyId"] = this.agencyId;
+        data["agencyName"] = this.agencyName;
+        data["planId"] = this.planId;
+        data["planName"] = this.planName;
+        data["maxCars"] = this.maxCars;
+        data["maxClients"] = this.maxClients;
+        data["price"] = this.price;
+        data["startDate"] = this.startDate ? this.startDate.toISOString() : <any>undefined;
+        data["endDate"] = this.endDate ? this.endDate.toISOString() : <any>undefined;
+        data["status"] = this.status;
+        return data;
+    }
+}
+
+export interface IAgencySubscriptionDto {
+    id?: number;
+    agencyId?: number;
+    agencyName?: string | undefined;
+    planId?: number;
+    planName?: string | undefined;
+    maxCars?: number;
+    maxClients?: number;
+    price?: number;
+    startDate?: Date;
+    endDate?: Date;
+    status?: SubscriptionStatus;
+}
+
+export enum SubscriptionStatus {
+    Active = 1,
+    Suspended = 2,
+    Expired = 3,
+}
+
+export class AssignAgencySubscriptionCommand implements IAssignAgencySubscriptionCommand {
+    agencyId?: number;
+    planId?: number;
+    startDate?: Date;
+    endDate?: Date;
+
+    constructor(data?: IAssignAgencySubscriptionCommand) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.agencyId = _data["agencyId"];
+            this.planId = _data["planId"];
+            this.startDate = _data["startDate"] ? new Date(_data["startDate"].toString()) : <any>undefined;
+            this.endDate = _data["endDate"] ? new Date(_data["endDate"].toString()) : <any>undefined;
+        }
+    }
+
+    static fromJS(data: any): AssignAgencySubscriptionCommand {
+        data = typeof data === 'object' ? data : {};
+        let result = new AssignAgencySubscriptionCommand();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["agencyId"] = this.agencyId;
+        data["planId"] = this.planId;
+        data["startDate"] = this.startDate ? this.startDate.toISOString() : <any>undefined;
+        data["endDate"] = this.endDate ? this.endDate.toISOString() : <any>undefined;
+        return data;
+    }
+}
+
+export interface IAssignAgencySubscriptionCommand {
+    agencyId?: number;
+    planId?: number;
+    startDate?: Date;
+    endDate?: Date;
+}
+
+export class UpdateAgencySubscriptionCommand implements IUpdateAgencySubscriptionCommand {
+    id?: number;
+    status?: SubscriptionStatus;
+    endDate?: Date;
+
+    constructor(data?: IUpdateAgencySubscriptionCommand) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.status = _data["status"];
+            this.endDate = _data["endDate"] ? new Date(_data["endDate"].toString()) : <any>undefined;
+        }
+    }
+
+    static fromJS(data: any): UpdateAgencySubscriptionCommand {
+        data = typeof data === 'object' ? data : {};
+        let result = new UpdateAgencySubscriptionCommand();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["status"] = this.status;
+        data["endDate"] = this.endDate ? this.endDate.toISOString() : <any>undefined;
+        return data;
+    }
+}
+
+export interface IUpdateAgencySubscriptionCommand {
+    id?: number;
+    status?: SubscriptionStatus;
+    endDate?: Date;
 }
 
 export class BrandDto implements IBrandDto {
@@ -2025,6 +2756,122 @@ export interface IUpdateCarCommand {
     fuelType?: FuelType | undefined;
 }
 
+export class CreateClientCommand implements ICreateClientCommand {
+    firstName?: string;
+    lastName?: string;
+    birthDate?: Date | undefined;
+    birthPlace?: string | undefined;
+    birthCountryId?: number | undefined;
+    cin?: string | undefined;
+    cinDeliveranceDate?: Date | undefined;
+    cinDeliverancePlace?: string | undefined;
+    cinDeliveranceCountryId?: number | undefined;
+    passeportNumber?: string | undefined;
+    passeportDeliveranceDate?: Date | undefined;
+    passeportDeliverancePlace?: string | undefined;
+    passeportDeliveranceCountryId?: number | undefined;
+    drivingLicenceNumber?: string | undefined;
+    drivingLicenceDeliveranceDate?: Date | undefined;
+    drivingLicenceDeliverancePlace?: string | undefined;
+    drivingLicenceDeliveranceCountryId?: number | undefined;
+    cinImageUrl?: string | undefined;
+    drivingLicenceImageUrl?: string | undefined;
+    passerportImageUrl?: string | undefined;
+    description?: string | undefined;
+
+    constructor(data?: ICreateClientCommand) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.firstName = _data["firstName"];
+            this.lastName = _data["lastName"];
+            this.birthDate = _data["birthDate"] ? new Date(_data["birthDate"].toString()) : <any>undefined;
+            this.birthPlace = _data["birthPlace"];
+            this.birthCountryId = _data["birthCountryId"];
+            this.cin = _data["cin"];
+            this.cinDeliveranceDate = _data["cinDeliveranceDate"] ? new Date(_data["cinDeliveranceDate"].toString()) : <any>undefined;
+            this.cinDeliverancePlace = _data["cinDeliverancePlace"];
+            this.cinDeliveranceCountryId = _data["cinDeliveranceCountryId"];
+            this.passeportNumber = _data["passeportNumber"];
+            this.passeportDeliveranceDate = _data["passeportDeliveranceDate"] ? new Date(_data["passeportDeliveranceDate"].toString()) : <any>undefined;
+            this.passeportDeliverancePlace = _data["passeportDeliverancePlace"];
+            this.passeportDeliveranceCountryId = _data["passeportDeliveranceCountryId"];
+            this.drivingLicenceNumber = _data["drivingLicenceNumber"];
+            this.drivingLicenceDeliveranceDate = _data["drivingLicenceDeliveranceDate"] ? new Date(_data["drivingLicenceDeliveranceDate"].toString()) : <any>undefined;
+            this.drivingLicenceDeliverancePlace = _data["drivingLicenceDeliverancePlace"];
+            this.drivingLicenceDeliveranceCountryId = _data["drivingLicenceDeliveranceCountryId"];
+            this.cinImageUrl = _data["cinImageUrl"];
+            this.drivingLicenceImageUrl = _data["drivingLicenceImageUrl"];
+            this.passerportImageUrl = _data["passerportImageUrl"];
+            this.description = _data["description"];
+        }
+    }
+
+    static fromJS(data: any): CreateClientCommand {
+        data = typeof data === 'object' ? data : {};
+        let result = new CreateClientCommand();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["firstName"] = this.firstName;
+        data["lastName"] = this.lastName;
+        data["birthDate"] = this.birthDate ? this.birthDate.toISOString() : <any>undefined;
+        data["birthPlace"] = this.birthPlace;
+        data["birthCountryId"] = this.birthCountryId;
+        data["cin"] = this.cin;
+        data["cinDeliveranceDate"] = this.cinDeliveranceDate ? this.cinDeliveranceDate.toISOString() : <any>undefined;
+        data["cinDeliverancePlace"] = this.cinDeliverancePlace;
+        data["cinDeliveranceCountryId"] = this.cinDeliveranceCountryId;
+        data["passeportNumber"] = this.passeportNumber;
+        data["passeportDeliveranceDate"] = this.passeportDeliveranceDate ? this.passeportDeliveranceDate.toISOString() : <any>undefined;
+        data["passeportDeliverancePlace"] = this.passeportDeliverancePlace;
+        data["passeportDeliveranceCountryId"] = this.passeportDeliveranceCountryId;
+        data["drivingLicenceNumber"] = this.drivingLicenceNumber;
+        data["drivingLicenceDeliveranceDate"] = this.drivingLicenceDeliveranceDate ? this.drivingLicenceDeliveranceDate.toISOString() : <any>undefined;
+        data["drivingLicenceDeliverancePlace"] = this.drivingLicenceDeliverancePlace;
+        data["drivingLicenceDeliveranceCountryId"] = this.drivingLicenceDeliveranceCountryId;
+        data["cinImageUrl"] = this.cinImageUrl;
+        data["drivingLicenceImageUrl"] = this.drivingLicenceImageUrl;
+        data["passerportImageUrl"] = this.passerportImageUrl;
+        data["description"] = this.description;
+        return data;
+    }
+}
+
+export interface ICreateClientCommand {
+    firstName?: string;
+    lastName?: string;
+    birthDate?: Date | undefined;
+    birthPlace?: string | undefined;
+    birthCountryId?: number | undefined;
+    cin?: string | undefined;
+    cinDeliveranceDate?: Date | undefined;
+    cinDeliverancePlace?: string | undefined;
+    cinDeliveranceCountryId?: number | undefined;
+    passeportNumber?: string | undefined;
+    passeportDeliveranceDate?: Date | undefined;
+    passeportDeliverancePlace?: string | undefined;
+    passeportDeliveranceCountryId?: number | undefined;
+    drivingLicenceNumber?: string | undefined;
+    drivingLicenceDeliveranceDate?: Date | undefined;
+    drivingLicenceDeliverancePlace?: string | undefined;
+    drivingLicenceDeliveranceCountryId?: number | undefined;
+    cinImageUrl?: string | undefined;
+    drivingLicenceImageUrl?: string | undefined;
+    passerportImageUrl?: string | undefined;
+    description?: string | undefined;
+}
+
 export class CountryDto implements ICountryDto {
     id?: number;
     name?: string;
@@ -2331,6 +3178,230 @@ export interface IUpdateModelCarCommand {
     id?: number;
     name?: string;
     brandId?: number | undefined;
+}
+
+export class SubscriptionPlanDto implements ISubscriptionPlanDto {
+    id?: number;
+    name?: string;
+    maxCars?: number;
+    maxClients?: number;
+    price?: number;
+
+    constructor(data?: ISubscriptionPlanDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.name = _data["name"];
+            this.maxCars = _data["maxCars"];
+            this.maxClients = _data["maxClients"];
+            this.price = _data["price"];
+        }
+    }
+
+    static fromJS(data: any): SubscriptionPlanDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new SubscriptionPlanDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["name"] = this.name;
+        data["maxCars"] = this.maxCars;
+        data["maxClients"] = this.maxClients;
+        data["price"] = this.price;
+        return data;
+    }
+}
+
+export interface ISubscriptionPlanDto {
+    id?: number;
+    name?: string;
+    maxCars?: number;
+    maxClients?: number;
+    price?: number;
+}
+
+export class CreateSubscriptionPlanCommand implements ICreateSubscriptionPlanCommand {
+    name?: string;
+    maxCars?: number;
+    maxClients?: number;
+    price?: number;
+
+    constructor(data?: ICreateSubscriptionPlanCommand) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.name = _data["name"];
+            this.maxCars = _data["maxCars"];
+            this.maxClients = _data["maxClients"];
+            this.price = _data["price"];
+        }
+    }
+
+    static fromJS(data: any): CreateSubscriptionPlanCommand {
+        data = typeof data === 'object' ? data : {};
+        let result = new CreateSubscriptionPlanCommand();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["name"] = this.name;
+        data["maxCars"] = this.maxCars;
+        data["maxClients"] = this.maxClients;
+        data["price"] = this.price;
+        return data;
+    }
+}
+
+export interface ICreateSubscriptionPlanCommand {
+    name?: string;
+    maxCars?: number;
+    maxClients?: number;
+    price?: number;
+}
+
+export class UpdateSubscriptionPlanCommand implements IUpdateSubscriptionPlanCommand {
+    id?: number;
+    name?: string;
+    maxCars?: number;
+    maxClients?: number;
+    price?: number;
+
+    constructor(data?: IUpdateSubscriptionPlanCommand) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.name = _data["name"];
+            this.maxCars = _data["maxCars"];
+            this.maxClients = _data["maxClients"];
+            this.price = _data["price"];
+        }
+    }
+
+    static fromJS(data: any): UpdateSubscriptionPlanCommand {
+        data = typeof data === 'object' ? data : {};
+        let result = new UpdateSubscriptionPlanCommand();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["name"] = this.name;
+        data["maxCars"] = this.maxCars;
+        data["maxClients"] = this.maxClients;
+        data["price"] = this.price;
+        return data;
+    }
+}
+
+export interface IUpdateSubscriptionPlanCommand {
+    id?: number;
+    name?: string;
+    maxCars?: number;
+    maxClients?: number;
+    price?: number;
+}
+
+export class MySubscriptionDto implements IMySubscriptionDto {
+    planName?: string;
+    maxCars?: number;
+    maxClients?: number;
+    price?: number;
+    startDate?: Date;
+    endDate?: Date;
+    status?: SubscriptionStatus;
+    isActive?: boolean;
+    carsUsed?: number;
+    clientsUsed?: number;
+
+    constructor(data?: IMySubscriptionDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.planName = _data["planName"];
+            this.maxCars = _data["maxCars"];
+            this.maxClients = _data["maxClients"];
+            this.price = _data["price"];
+            this.startDate = _data["startDate"] ? new Date(_data["startDate"].toString()) : <any>undefined;
+            this.endDate = _data["endDate"] ? new Date(_data["endDate"].toString()) : <any>undefined;
+            this.status = _data["status"];
+            this.isActive = _data["isActive"];
+            this.carsUsed = _data["carsUsed"];
+            this.clientsUsed = _data["clientsUsed"];
+        }
+    }
+
+    static fromJS(data: any): MySubscriptionDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new MySubscriptionDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["planName"] = this.planName;
+        data["maxCars"] = this.maxCars;
+        data["maxClients"] = this.maxClients;
+        data["price"] = this.price;
+        data["startDate"] = this.startDate ? this.startDate.toISOString() : <any>undefined;
+        data["endDate"] = this.endDate ? this.endDate.toISOString() : <any>undefined;
+        data["status"] = this.status;
+        data["isActive"] = this.isActive;
+        data["carsUsed"] = this.carsUsed;
+        data["clientsUsed"] = this.clientsUsed;
+        return data;
+    }
+}
+
+export interface IMySubscriptionDto {
+    planName?: string;
+    maxCars?: number;
+    maxClients?: number;
+    price?: number;
+    startDate?: Date;
+    endDate?: Date;
+    status?: SubscriptionStatus;
+    isActive?: boolean;
+    carsUsed?: number;
+    clientsUsed?: number;
 }
 
 export class SwaggerException extends Error {

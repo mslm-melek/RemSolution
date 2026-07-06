@@ -17,6 +17,8 @@ public class CustomExceptionHandler : IExceptionHandler
                 { typeof(NotFoundException), HandleNotFoundException },
                 { typeof(UnauthorizedAccessException), HandleUnauthorizedAccessException },
                 { typeof(ForbiddenAccessException), HandleForbiddenAccessException },
+                { typeof(SubscriptionRequiredException), HandleSubscriptionRequiredException },
+                { typeof(PlanLimitExceededException), HandlePlanLimitExceededException },
                 { typeof(Exception), HandleUnknownException }
             };
     }
@@ -85,6 +87,32 @@ public class CustomExceptionHandler : IExceptionHandler
             Type = "https://tools.ietf.org/html/rfc7231#section-6.5.3"
         });
     }
+    private async Task HandleSubscriptionRequiredException(HttpContext httpContext, Exception ex)
+    {
+        httpContext.Response.StatusCode = StatusCodes.Status402PaymentRequired;
+
+        await httpContext.Response.WriteAsJsonAsync(new ProblemDetails
+        {
+            Status = StatusCodes.Status402PaymentRequired,
+            Title = "An active subscription is required.",
+            Detail = ex.Message,
+            Type = "https://tools.ietf.org/html/rfc7231#section-6.5.2"
+        });
+    }
+
+    private async Task HandlePlanLimitExceededException(HttpContext httpContext, Exception ex)
+    {
+        httpContext.Response.StatusCode = StatusCodes.Status409Conflict;
+
+        await httpContext.Response.WriteAsJsonAsync(new ProblemDetails
+        {
+            Status = StatusCodes.Status409Conflict,
+            Title = "Subscription plan limit reached.",
+            Detail = ex.Message,
+            Type = "https://tools.ietf.org/html/rfc7231#section-6.5.8"
+        });
+    }
+
     private async Task HandleUnknownException(HttpContext httpContext, Exception ex)
     {
         httpContext.Response.StatusCode = StatusCodes.Status500InternalServerError;

@@ -156,6 +156,112 @@
         }
       }
     },
+    "/api/AgencySubscriptions": {
+      "get": {
+        "tags": [
+          "AgencySubscriptions"
+        ],
+        "operationId": "GetAgencySubscriptions",
+        "parameters": [
+          {
+            "name": "AgencyId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "nullable": true
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AgencySubscriptionDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "AgencySubscriptions"
+        ],
+        "operationId": "AssignAgencySubscription",
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssignAgencySubscriptionCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/AgencySubscriptions/{id}": {
+      "put": {
+        "tags": [
+          "AgencySubscriptions"
+        ],
+        "operationId": "UpdateAgencySubscription",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          }
+        ],
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAgencySubscriptionCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 2
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "400": {
+            "description": ""
+          }
+        }
+      }
+    },
     "/api/Brands": {
       "get": {
         "tags": [
@@ -505,6 +611,39 @@
         }
       }
     },
+    "/api/Clients": {
+      "post": {
+        "tags": [
+          "Clients"
+        ],
+        "operationId": "CreateClient",
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateClientCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/Countries": {
       "get": {
         "tags": [
@@ -831,6 +970,146 @@
           }
         }
       }
+    },
+    "/api/SubscriptionPlans": {
+      "get": {
+        "tags": [
+          "SubscriptionPlans"
+        ],
+        "operationId": "GetSubscriptionPlans",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SubscriptionPlanDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "SubscriptionPlans"
+        ],
+        "operationId": "CreateSubscriptionPlan",
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSubscriptionPlanCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/SubscriptionPlans/{id}": {
+      "put": {
+        "tags": [
+          "SubscriptionPlans"
+        ],
+        "operationId": "UpdateSubscriptionPlan",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          }
+        ],
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateSubscriptionPlanCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 2
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "400": {
+            "description": ""
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "SubscriptionPlans"
+        ],
+        "operationId": "DeleteSubscriptionPlan",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/Subscriptions/my": {
+      "get": {
+        "tags": [
+          "Subscriptions"
+        ],
+        "operationId": "GetMySubscription",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MySubscriptionDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        }
+      }
     }
   },
   "components": {
@@ -949,6 +1228,108 @@
             "type": "number",
             "format": "double",
             "nullable": true
+          }
+        }
+      },
+      "AgencySubscriptionDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "agencyId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "agencyName": {
+            "type": "string",
+            "nullable": true
+          },
+          "planId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "planName": {
+            "type": "string",
+            "nullable": true
+          },
+          "maxCars": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "maxClients": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "price": {
+            "type": "number",
+            "format": "decimal"
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "status": {
+            "$ref": "#/components/schemas/SubscriptionStatus"
+          }
+        }
+      },
+      "SubscriptionStatus": {
+        "type": "integer",
+        "description": "",
+        "x-enumNames": [
+          "Active",
+          "Suspended",
+          "Expired"
+        ],
+        "enum": [
+          1,
+          2,
+          3
+        ]
+      },
+      "AssignAgencySubscriptionCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "agencyId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "planId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "UpdateAgencySubscriptionCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "status": {
+            "$ref": "#/components/schemas/SubscriptionStatus"
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date-time"
           }
         }
       },
@@ -1154,6 +1535,102 @@
           }
         }
       },
+      "CreateClientCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "birthDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "birthPlace": {
+            "type": "string",
+            "nullable": true
+          },
+          "birthCountryId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "cin": {
+            "type": "string",
+            "nullable": true
+          },
+          "cinDeliveranceDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "cinDeliverancePlace": {
+            "type": "string",
+            "nullable": true
+          },
+          "cinDeliveranceCountryId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "passeportNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "passeportDeliveranceDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "passeportDeliverancePlace": {
+            "type": "string",
+            "nullable": true
+          },
+          "passeportDeliveranceCountryId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "drivingLicenceNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "drivingLicenceDeliveranceDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "drivingLicenceDeliverancePlace": {
+            "type": "string",
+            "nullable": true
+          },
+          "drivingLicenceDeliveranceCountryId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "cinImageUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "drivingLicenceImageUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "passerportImageUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
       "CountryDto": {
         "type": "object",
         "additionalProperties": false,
@@ -1265,6 +1742,120 @@
             "type": "integer",
             "format": "int32",
             "nullable": true
+          }
+        }
+      },
+      "SubscriptionPlanDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "name": {
+            "type": "string"
+          },
+          "maxCars": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "maxClients": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "price": {
+            "type": "number",
+            "format": "decimal"
+          }
+        }
+      },
+      "CreateSubscriptionPlanCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "maxCars": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "maxClients": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "price": {
+            "type": "number",
+            "format": "decimal"
+          }
+        }
+      },
+      "UpdateSubscriptionPlanCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "name": {
+            "type": "string"
+          },
+          "maxCars": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "maxClients": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "price": {
+            "type": "number",
+            "format": "decimal"
+          }
+        }
+      },
+      "MySubscriptionDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "planName": {
+            "type": "string"
+          },
+          "maxCars": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "maxClients": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "price": {
+            "type": "number",
+            "format": "decimal"
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "status": {
+            "$ref": "#/components/schemas/SubscriptionStatus"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "carsUsed": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "clientsUsed": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       }

@@ -21,6 +21,7 @@ public static class DependencyInjection
 
         builder.Services.AddScoped<ISaveChangesInterceptor, BaseEntityInterceptor>();
         builder.Services.AddScoped<ISaveChangesInterceptor, TenantEntityInterceptor>();
+        builder.Services.AddScoped<ISaveChangesInterceptor, SubscriptionEnforcementInterceptor>();
         builder.Services.AddScoped<ISaveChangesInterceptor, DispatchDomainEventsInterceptor>();
 
         builder.Services.AddDbContext<ApplicationDbContext>((sp, options) =>

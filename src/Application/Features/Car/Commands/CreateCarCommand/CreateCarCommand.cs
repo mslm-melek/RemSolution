@@ -1,4 +1,5 @@
 ﻿using RemSolution.Application.Common.Interfaces;
+using RemSolution.Application.Common.Subscriptions;
 using RemSolution.Domain.Enums;
 
 namespace RemSolution.Application.Features.Car.Commands.CreateCarCommand
@@ -18,10 +19,14 @@ namespace RemSolution.Application.Features.Car.Commands.CreateCarCommand
     public class CreateCarCommandHandler : IRequestHandler<CreateCarCommand, int>
     {
         private readonly IApplicationDbContext _context;
+        private readonly ITenantProvider _tenant;
+        private readonly TimeProvider _dateTime;
 
-        public CreateCarCommandHandler(IApplicationDbContext context)
+        public CreateCarCommandHandler(IApplicationDbContext context, ITenantProvider tenant, TimeProvider dateTime)
         {
             _context = context;
+            _tenant = tenant;
+            _dateTime = dateTime;
         }
 
         public async Task<int> Handle(CreateCarCommand request, CancellationToken cancellationToken)
@@ -36,9 +41,19 @@ namespace RemSolution.Application.Features.Car.Commands.CreateCarCommand
                 FuelType = request.FuelType
             };
 
+            // Quota check and insert are atomic under the per-agency write
+            // lock; disposing without commit rolls back.
+            await using var transaction = await _context.BeginTransactionAsync(cancellationToken);
+            await _context.AcquireTenantWriteLockAsync(cancellationToken);
+
+            await SubscriptionGuard.EnsureWithinPlanLimitAsync(
+                _context, _tenant, _dateTime, _context.Cars, p => p.MaxCars, "cars", cancellationToken);
+
             _context.Cars.Add(entity);
 
             await _context.SaveChangesAsync(cancellationToken);
+
+            await transaction.CommitAsync(cancellationToken);
 
             return entity.Id;
         }

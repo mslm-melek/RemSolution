@@ -18,6 +18,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>, IApplica
     }
 
     public DbSet<Agency> Agencies => Set<Agency>();
+    public DbSet<AgencySubscription> AgencySubscriptions => Set<AgencySubscription>();
     public DbSet<Brand> Brands => Set<Brand>();
     public DbSet<Car> Cars => Set<Car>();
     public DbSet<Client> Clients => Set<Client>();
@@ -31,6 +32,49 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>, IApplica
     public DbSet<Renting> Rentings => Set<Renting>();
     public DbSet<RentingHistory> RentingHistories => Set<RentingHistory>();
     public DbSet<Reservation> Reservations => Set<Reservation>();
+    public DbSet<SubscriptionPlan> SubscriptionPlans => Set<SubscriptionPlan>();
+
+    public async Task<ITransactionScope> BeginTransactionAsync(CancellationToken cancellationToken)
+        => new TransactionScope(await Database.BeginTransactionAsync(cancellationToken));
+
+    public async Task AcquireTenantWriteLockAsync(CancellationToken cancellationToken)
+    {
+        if (_tenant.AgencyId is not int agencyId)
+        {
+            return;
+        }
+
+        if (Database.CurrentTransaction is null)
+        {
+            throw new InvalidOperationException(
+                "The tenant write lock is transaction-owned and must be acquired inside a transaction.");
+        }
+
+        // sp_getapplock reports failure (timeout, deadlock victim) through its
+        // return value, not an error — surface it as an error explicitly.
+        await Database.ExecuteSqlAsync($@"
+DECLARE @result int;
+EXEC @result = sp_getapplock
+    @Resource = {$"agency-writes-{agencyId}"},
+    @LockMode = 'Exclusive',
+    @LockOwner = 'Transaction',
+    @LockTimeout = 10000;
+IF @result < 0 THROW 51000, 'Failed to acquire the agency write lock.', 1;", cancellationToken);
+    }
+
+    private sealed class TransactionScope : ITransactionScope
+    {
+        private readonly Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction _transaction;
+
+        public TransactionScope(Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction transaction)
+        {
+            _transaction = transaction;
+        }
+
+        public Task CommitAsync(CancellationToken cancellationToken) => _transaction.CommitAsync(cancellationToken);
+
+        public ValueTask DisposeAsync() => _transaction.DisposeAsync();
+    }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

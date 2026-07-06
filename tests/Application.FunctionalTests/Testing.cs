@@ -1,5 +1,6 @@
 ﻿using RemSolution.Domain.Constants;
 using RemSolution.Domain.Entities;
+using RemSolution.Domain.Enums;
 using RemSolution.Infrastructure.Data;
 using RemSolution.Infrastructure.Identity;
 using MediatR;
@@ -144,7 +145,10 @@ public partial class Testing
     // Tenant entities require an existing Agency (which itself requires a Country).
     // Also makes that agency the current tenant, so tenant query filters and
     // AgencyId stamping apply to everything the test does afterwards.
-    public static async Task<int> AddTestAgencyAsync()
+    // Tenant writes require an active subscription, so one is provisioned by
+    // default (generous limits keep unrelated tests unaffected); pass
+    // withSubscription: false to test the unsubscribed state.
+    public static async Task<int> AddTestAgencyAsync(int maxCars = 100, int maxClients = 100, bool withSubscription = true)
     {
         var country = new Country { Name = "Testland" };
         await AddAsync(country);
@@ -152,9 +156,50 @@ public partial class Testing
         var agency = new Agency { Name = "Test Agency", CountryId = country.Id };
         await AddAsync(agency);
 
+        if (withSubscription)
+        {
+            var plan = new SubscriptionPlan
+            {
+                Name = $"Test Plan {maxCars}/{maxClients}",
+                MaxCars = maxCars,
+                MaxClients = maxClients,
+                Price = 49.99m
+            };
+            await AddAsync(plan);
+
+            await AddAsync(new AgencySubscription
+            {
+                AgencyId = agency.Id,
+                PlanId = plan.Id,
+                StartDate = DateTimeOffset.UtcNow.AddDays(-1),
+                EndDate = DateTimeOffset.UtcNow.AddDays(30),
+                Status = SubscriptionStatus.Active
+            });
+        }
+
         _agencyId = agency.Id;
 
         return agency.Id;
+    }
+
+    public static async Task MutateSubscriptionAsync(int agencyId, Action<AgencySubscription> mutate)
+    {
+        using var scope = _scopeFactory.CreateScope();
+
+        var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+        var subscriptions = await context.AgencySubscriptions
+            .Where(s => s.AgencyId == agencyId)
+            .ToListAsync();
+
+        subscriptions.ForEach(mutate);
+
+        await context.SaveChangesAsync();
+    }
+
+    public static string GetConnectionString()
+    {
+        return _database.GetConnectionString();
     }
 
     public static async Task UpdateAsync<TEntity>(TEntity entity)
