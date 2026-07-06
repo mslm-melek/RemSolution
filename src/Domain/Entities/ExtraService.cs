@@ -1,6 +1,6 @@
 ﻿namespace RemSolution.Domain.Entities
 {
-    public class ExtraService : BaseAuditableEntity
+    public class ExtraService : BaseAuditableEntity, ITenantEntity
     {
         public int AgencyId { get; set; }
         public virtual Agency? Agency { get; set; }

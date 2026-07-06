@@ -33,7 +33,6 @@ public class CreateCarTests : BaseTestFixture
 
         var command = new CreateCarCommand
         {
-            AgencyId = agencyId,
             Matricule = "ABC-123",
             ModelId = model.Id,
             Color = "Red",

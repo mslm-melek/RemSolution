@@ -1,4 +1,5 @@
 ﻿using System.Data.Common;
+using RemSolution.Application.Common.Interfaces;
 using RemSolution.Infrastructure.Data;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
@@ -37,7 +38,8 @@ public class SqlTestDatabase : ITestDatabase
             .ConfigureWarnings(warnings => warnings.Log(RelationalEventId.PendingModelChangesWarning))
             .Options;
 
-        var context = new ApplicationDbContext(options);
+        // Migration-only context; no tenant.
+        var context = new ApplicationDbContext(options, Mock.Of<ITenantProvider>());
 
         context.Database.EnsureDeleted();
         context.Database.Migrate();

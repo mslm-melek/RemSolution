@@ -25,14 +25,17 @@ namespace RemSolution.Application.Features.Agency.Commands.DeleteAgencyCommand
 
             // Tenant FKs are Restrict: deleting an agency that still owns data would
             // otherwise surface as a raw DbUpdateException (500).
+            // IgnoreQueryFilters: this is a platform-admin command and the caller has
+            // no tenant, so the tenant filters would hide the very rows being checked.
+            // Only booleans escape here, never tenant data.
             var hasTenantData =
-                await _context.Cars.AnyAsync(c => c.AgencyId == request.Id, cancellationToken) ||
-                await _context.Clients.AnyAsync(c => c.AgencyId == request.Id, cancellationToken) ||
-                await _context.Rentings.AnyAsync(r => r.AgencyId == request.Id, cancellationToken) ||
-                await _context.Reservations.AnyAsync(r => r.AgencyId == request.Id, cancellationToken) ||
-                await _context.Payments.AnyAsync(p => p.AgencyId == request.Id, cancellationToken) ||
-                await _context.Expenses.AnyAsync(e => e.AgencyId == request.Id, cancellationToken) ||
-                await _context.ExtraServices.AnyAsync(e => e.AgencyId == request.Id, cancellationToken);
+                await _context.Cars.IgnoreQueryFilters().AnyAsync(c => c.AgencyId == request.Id, cancellationToken) ||
+                await _context.Clients.IgnoreQueryFilters().AnyAsync(c => c.AgencyId == request.Id, cancellationToken) ||
+                await _context.Rentings.IgnoreQueryFilters().AnyAsync(r => r.AgencyId == request.Id, cancellationToken) ||
+                await _context.Reservations.IgnoreQueryFilters().AnyAsync(r => r.AgencyId == request.Id, cancellationToken) ||
+                await _context.Payments.IgnoreQueryFilters().AnyAsync(p => p.AgencyId == request.Id, cancellationToken) ||
+                await _context.Expenses.IgnoreQueryFilters().AnyAsync(e => e.AgencyId == request.Id, cancellationToken) ||
+                await _context.ExtraServices.IgnoreQueryFilters().AnyAsync(e => e.AgencyId == request.Id, cancellationToken);
 
             if (hasTenantData)
             {

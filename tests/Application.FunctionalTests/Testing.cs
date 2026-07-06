@@ -16,6 +16,7 @@ public partial class Testing
     private static CustomWebApplicationFactory _factory = null!;
     private static IServiceScopeFactory _scopeFactory = null!;
     private static string? _userId;
+    private static int? _agencyId;
 
     [OneTimeSetUp]
     public async Task RunBeforeAnyTests()
@@ -48,6 +49,16 @@ public partial class Testing
     public static string? GetUserId()
     {
         return _userId;
+    }
+
+    public static int? GetAgencyId()
+    {
+        return _agencyId;
+    }
+
+    public static void SetCurrentAgency(int? agencyId)
+    {
+        _agencyId = agencyId;
     }
 
     public static async Task<string> RunAsDefaultUserAsync()
@@ -105,6 +116,7 @@ public partial class Testing
         }
 
         _userId = null;
+        _agencyId = null;
     }
 
     public static async Task<TEntity?> FindAsync<TEntity>(params object[] keyValues)
@@ -130,6 +142,8 @@ public partial class Testing
     }
 
     // Tenant entities require an existing Agency (which itself requires a Country).
+    // Also makes that agency the current tenant, so tenant query filters and
+    // AgencyId stamping apply to everything the test does afterwards.
     public static async Task<int> AddTestAgencyAsync()
     {
         var country = new Country { Name = "Testland" };
@@ -138,7 +152,21 @@ public partial class Testing
         var agency = new Agency { Name = "Test Agency", CountryId = country.Id };
         await AddAsync(agency);
 
+        _agencyId = agency.Id;
+
         return agency.Id;
+    }
+
+    public static async Task UpdateAsync<TEntity>(TEntity entity)
+        where TEntity : class
+    {
+        using var scope = _scopeFactory.CreateScope();
+
+        var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+        context.Update(entity);
+
+        await context.SaveChangesAsync();
     }
 
     public static async Task<int> CountAsync<TEntity>() where TEntity : class

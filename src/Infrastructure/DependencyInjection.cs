@@ -20,6 +20,7 @@ public static class DependencyInjection
         Guard.Against.Null(connectionString, message: "Connection string 'RemSolutionDb' not found.");
 
         builder.Services.AddScoped<ISaveChangesInterceptor, BaseEntityInterceptor>();
+        builder.Services.AddScoped<ISaveChangesInterceptor, TenantEntityInterceptor>();
         builder.Services.AddScoped<ISaveChangesInterceptor, DispatchDomainEventsInterceptor>();
 
         builder.Services.AddDbContext<ApplicationDbContext>((sp, options) =>
@@ -37,7 +38,8 @@ public static class DependencyInjection
         builder.Services
             .AddDefaultIdentity<ApplicationUser>()
             .AddRoles<IdentityRole>()
-            .AddEntityFrameworkStores<ApplicationDbContext>();
+            .AddEntityFrameworkStores<ApplicationDbContext>()
+            .AddClaimsPrincipalFactory<ApplicationUserClaimsPrincipalFactory>();
 
         builder.Services.AddSingleton(TimeProvider.System);
         builder.Services.AddTransient<IIdentityService, IdentityService>();

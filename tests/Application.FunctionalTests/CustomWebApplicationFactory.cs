@@ -32,6 +32,9 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
                 .RemoveAll<IUser>()
                 .AddTransient(provider => Mock.Of<IUser>(s => s.Id == GetUserId()));
             services
+                .RemoveAll<ITenantProvider>()
+                .AddTransient(provider => Mock.Of<ITenantProvider>(s => s.AgencyId == GetAgencyId()));
+            services
                 .RemoveAll<DbContextOptions<ApplicationDbContext>>()
                 .AddDbContext<ApplicationDbContext>((sp, options) =>
                 {

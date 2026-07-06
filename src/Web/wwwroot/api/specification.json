@@ -1079,10 +1079,6 @@
         "type": "object",
         "additionalProperties": false,
         "properties": {
-          "agencyId": {
-            "type": "integer",
-            "format": "int32"
-          },
           "matricule": {
             "type": "string"
           },

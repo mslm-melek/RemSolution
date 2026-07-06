@@ -77,4 +77,31 @@ public class IdentityService : IIdentityService
 
         return result.ToApplicationResult();
     }
+
+    /// <summary>
+    /// The only sanctioned way to change a user's agency. The AgencyId claim is
+    /// minted at sign-in, so the security stamp must be refreshed to invalidate
+    /// existing sessions — otherwise the user keeps acting as the old tenant
+    /// until they happen to re-authenticate.
+    /// </summary>
+    public async Task<Result> AssignAgencyAsync(string userId, int? agencyId)
+    {
+        var user = await _userManager.FindByIdAsync(userId);
+
+        if (user == null)
+        {
+            return Result.Failure(new[] { $"User '{userId}' not found." });
+        }
+
+        user.AgencyId = agencyId;
+
+        var result = await _userManager.UpdateAsync(user);
+
+        if (!result.Succeeded)
+        {
+            return result.ToApplicationResult();
+        }
+
+        return (await _userManager.UpdateSecurityStampAsync(user)).ToApplicationResult();
+    }
 }

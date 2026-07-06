@@ -64,7 +64,19 @@ The **Web layer is the composition root**: `Program.cs` calls `AddApplicationSer
 - **MediatR pipeline behaviours**: `UnhandledException` → `Authorization` → `Validation` → `Performance` → `Logging`.
 - **EF Core interceptors**:
   - `AuditableEntityInterceptor` — auto-sets Created / LastModified and by-whom on `BaseAuditableEntity`.
+  - `TenantEntityInterceptor` — write-side tenant enforcement: stamps `AgencyId` from the current
+    tenant on inserted `ITenantEntity` rows, never writes `AgencyId` on update (rows cannot move
+    between agencies), and throws `ForbiddenAccessException` (403) when a request updates or
+    deletes a row belonging to another agency.
   - `DispatchDomainEventsInterceptor` — dispatches domain events on `SaveChanges`.
+- **Multi-tenancy (agency isolation)**: `ITenantProvider` is resolved per-request from the
+  authenticated user's `AgencyId` claim (emitted by `ApplicationUserClaimsPrincipalFactory` from
+  `ApplicationUser.AgencyId`). Every `ITenantEntity` gets an EF global query filter
+  (`AgencyId == tenant.AgencyId`) applied in `ApplicationDbContext.OnModelCreating`, so handlers
+  cannot leak cross-tenant data by forgetting a WHERE; no tenant claim ⇒ tenant data matches
+  nothing. Cross-tenant reads via `IgnoreQueryFilters()` are allowed only in the Phase 6
+  MarketplaceSearch feature folder (plus the platform-admin referential check in
+  `DeleteAgencyCommand`) — enforced by the `TenantEnforcementTests` convention test.
 - **Domain events** via `BaseEntity.AddDomainEvent(...)`.
 - **CQRS vertical slices** — each feature folder has Commands / Queries / DTOs / EventHandlers.
 - **Mapster projection** — `ProjectToType<T>()` produces efficient SQL projections (no over-fetching).

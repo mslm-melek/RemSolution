@@ -1,6 +1,6 @@
 ﻿namespace RemSolution.Domain.Entities
 {
-    public class Reservation : BaseAuditableEntity
+    public class Reservation : BaseAuditableEntity, ITenantEntity
     {
         public int AgencyId { get; set; }
         public virtual Agency? Agency { get; set; }

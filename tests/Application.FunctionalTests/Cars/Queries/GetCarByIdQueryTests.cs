@@ -11,7 +11,7 @@ public class GetCarByIdQueryTests : BaseTestFixture
     [Test]
     public async Task ShouldReturnCarById()
     {
-        var agencyId = await AddTestAgencyAsync();
+        await AddTestAgencyAsync();
 
         var brand = new Brand { Name = "Tesla" };
         await AddAsync(brand);
@@ -21,7 +21,6 @@ public class GetCarByIdQueryTests : BaseTestFixture
 
         var carId = await SendAsync(new CreateCarCommand
         {
-            AgencyId = agencyId,
             Matricule = "XYZ-789",
             ModelId = model.Id,
             Color = "Blue",
