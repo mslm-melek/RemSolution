@@ -33,7 +33,7 @@ public class SqlTestDatabase : ITestDatabase
         _connection = new SqlConnection(_connectionString);
 
         var options = new DbContextOptionsBuilder<ApplicationDbContext>()
-            .UseSqlServer(_connectionString)
+            .UseSqlServer(_connectionString, x => x.UseNetTopologySuite())
             .ConfigureWarnings(warnings => warnings.Log(RelationalEventId.PendingModelChangesWarning))
             .Options;
 

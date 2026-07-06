@@ -23,6 +23,8 @@ public class CreateCarTests : BaseTestFixture
     {
         var userId = await RunAsDefaultUserAsync();
 
+        var agencyId = await AddTestAgencyAsync();
+
         var brand = new Brand { Name = "Tesla" };
         await AddAsync(brand);
 
@@ -31,6 +33,7 @@ public class CreateCarTests : BaseTestFixture
 
         var command = new CreateCarCommand
         {
+            AgencyId = agencyId,
             Matricule = "ABC-123",
             ModelId = model.Id,
             Color = "Red",
@@ -46,6 +49,7 @@ public class CreateCarTests : BaseTestFixture
         car.Should().NotBeNull();
         car!.Matricule.Should().Be("ABC-123");
         car.ModelId.Should().Be(model.Id);
+        car.AgencyId.Should().Be(agencyId);
         car.CreatedBy.Should().Be(userId);
     }
 }

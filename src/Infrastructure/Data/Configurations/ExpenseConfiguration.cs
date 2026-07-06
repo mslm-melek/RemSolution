@@ -10,6 +10,8 @@ public class ExpenseConfiguration : IEntityTypeConfiguration<Expense>
     {
         builder.ToTable("Expenses");
 
+        builder.HasAgencyTenant(nameof(Expense.ExpenseDate));
+
         builder.Property(e => e.ExpenseAmount)
                    .HasColumnType("decimal(18,2)");
 

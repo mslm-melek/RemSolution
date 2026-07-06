@@ -5,6 +5,7 @@ namespace RemSolution.Application.Features.Car.Commands.CreateCarCommand
 {
     public record CreateCarCommand : IRequest<int>
     {
+        public int AgencyId { get; init; }
         public string Matricule { get; init; } = string.Empty;
         public int? ModelId { get; init; }
         public DateTime FirstCirculationDate { get; init; }
@@ -26,6 +27,7 @@ namespace RemSolution.Application.Features.Car.Commands.CreateCarCommand
         {
             var entity = new RemSolution.Domain.Entities.Car
             {
+                AgencyId = request.AgencyId,
                 Matricule = request.Matricule,
                 ModelId = request.ModelId,
                 FirstCirculationDate= request.FirstCirculationDate,

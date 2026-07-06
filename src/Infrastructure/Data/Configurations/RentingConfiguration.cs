@@ -8,6 +8,7 @@ public class RentingConfiguration : IEntityTypeConfiguration<Renting>
 {
     public void Configure(EntityTypeBuilder<Renting> builder)
     {
+        builder.HasAgencyTenant(nameof(Renting.RentingState));
 
         builder.Property(e => e.Price)
                    .HasColumnType("decimal(18,2)");

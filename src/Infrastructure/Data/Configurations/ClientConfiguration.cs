@@ -8,6 +8,7 @@ public class ClientConfiguration : IEntityTypeConfiguration<Client>
 {
     public void Configure(EntityTypeBuilder<Client> builder)
     {
+        builder.HasAgencyTenant();
 
         // Foreign keys configuration (optional relationships)
         builder.HasOne(c => c.BirthCountry)

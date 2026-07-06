@@ -8,6 +8,7 @@ public class ReservationConfiguration : IEntityTypeConfiguration<Reservation>
 {
     public void Configure(EntityTypeBuilder<Reservation> builder)
     {
+        builder.HasAgencyTenant(nameof(Reservation.StartDate));
 
         builder.Property(e => e.Price)
                    .HasColumnType("decimal(18,2)");

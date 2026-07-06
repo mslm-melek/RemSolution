@@ -11,6 +11,8 @@ public class DeleteCarTests : BaseTestFixture
     [Test]
     public async Task ShouldDeleteCar()
     {
+        var agencyId = await AddTestAgencyAsync();
+
         var brand = new Brand { Name = "Tesla" };
         await AddAsync(brand);
 
@@ -18,6 +20,7 @@ public class DeleteCarTests : BaseTestFixture
         await AddAsync(model);
         var carId = await SendAsync(new CreateCarCommand
         {
+            AgencyId = agencyId,
             Matricule = "DEL-999",
             ModelId = model.Id,
             Color = "Gray",

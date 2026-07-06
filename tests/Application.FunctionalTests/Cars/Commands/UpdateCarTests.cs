@@ -12,6 +12,8 @@ public class UpdateCarTests : BaseTestFixture
     public async Task ShouldUpdateCar()
 
     {
+        var agencyId = await AddTestAgencyAsync();
+
         var brand = new Brand { Name = "Tesla" };
         await AddAsync(brand);
 
@@ -20,6 +22,7 @@ public class UpdateCarTests : BaseTestFixture
 
         var carId = await SendAsync(new CreateCarCommand
         {
+            AgencyId = agencyId,
             Matricule = "OLD-111",
             ModelId = model.Id,
             Color = "Black",

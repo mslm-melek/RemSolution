@@ -5,6 +5,7 @@ namespace RemSolution.Application.Features.Car.DTOs
     public class CarDto
     {
         public int Id { get; init; }
+        public int AgencyId { get; init; }
         public string Matricule { get; init; } = string.Empty;
         public string? ModelName { get; init; }
         public DateTime FirstCirculationDate { get; init; }

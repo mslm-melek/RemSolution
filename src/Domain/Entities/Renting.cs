@@ -2,6 +2,8 @@
 {
     public class Renting : BaseAuditableEntity
     {
+        public int AgencyId { get; set; }
+        public virtual Agency? Agency { get; set; }
         public int? CarId { get; set; }
         public virtual Car? Car { get; set; }
         public int? ClientId { get; set; }

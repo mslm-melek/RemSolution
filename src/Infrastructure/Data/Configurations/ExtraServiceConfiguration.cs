@@ -8,6 +8,8 @@ public class ExtraServiceConfiguration : IEntityTypeConfiguration<ExtraService>
 {
     public void Configure(EntityTypeBuilder<ExtraService> builder)
     {
+        builder.HasAgencyTenant();
+
         builder.Property(e => e.TotalAmount)
              .HasColumnType("decimal(18,2)");
 

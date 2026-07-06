@@ -1,4 +1,5 @@
 ﻿using RemSolution.Domain.Constants;
+using RemSolution.Domain.Entities;
 using RemSolution.Infrastructure.Data;
 using RemSolution.Infrastructure.Identity;
 using MediatR;
@@ -126,6 +127,18 @@ public partial class Testing
         context.Add(entity);
 
         await context.SaveChangesAsync();
+    }
+
+    // Tenant entities require an existing Agency (which itself requires a Country).
+    public static async Task<int> AddTestAgencyAsync()
+    {
+        var country = new Country { Name = "Testland" };
+        await AddAsync(country);
+
+        var agency = new Agency { Name = "Test Agency", CountryId = country.Id };
+        await AddAsync(agency);
+
+        return agency.Id;
     }
 
     public static async Task<int> CountAsync<TEntity>() where TEntity : class

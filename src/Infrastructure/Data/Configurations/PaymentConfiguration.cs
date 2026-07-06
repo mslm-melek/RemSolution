@@ -8,6 +8,8 @@ public class PaymentConfiguration : IEntityTypeConfiguration<Payment>
 {
     public void Configure(EntityTypeBuilder<Payment> builder)
     {
+        builder.HasAgencyTenant(nameof(Payment.PayementDate));
+
         builder.Property(e => e.PayementAmount)
                    .HasColumnType("decimal(18,2)");
 

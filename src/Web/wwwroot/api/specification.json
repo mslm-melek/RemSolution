@@ -1025,6 +1025,10 @@
             "type": "integer",
             "format": "int32"
           },
+          "agencyId": {
+            "type": "integer",
+            "format": "int32"
+          },
           "matricule": {
             "type": "string"
           },
@@ -1075,6 +1079,10 @@
         "type": "object",
         "additionalProperties": false,
         "properties": {
+          "agencyId": {
+            "type": "integer",
+            "format": "int32"
+          },
           "matricule": {
             "type": "string"
           },

@@ -8,6 +8,8 @@ public class CarConfiguration : IEntityTypeConfiguration<Car>
 {
     public void Configure(EntityTypeBuilder<Car> builder)
     {
+        builder.HasAgencyTenant(nameof(Car.ModelId));
+
         builder.Property(c => c.Matricule)
                     .IsRequired()
                     .HasMaxLength(50);

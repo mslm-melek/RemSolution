@@ -2,6 +2,8 @@
 {
     public class ExtraService : BaseAuditableEntity
     {
+        public int AgencyId { get; set; }
+        public virtual Agency? Agency { get; set; }
         public int? RentingId { get; set; }
         public virtual Renting? Renting { get; set; }
         public virtual int? ExtraServicesTypeId { get; set; }

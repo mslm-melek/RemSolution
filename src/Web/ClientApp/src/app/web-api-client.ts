@@ -1834,6 +1834,7 @@ export interface IPaginatedListOfCarDto {
 
 export class CarDto implements ICarDto {
     id?: number;
+    agencyId?: number;
     matricule?: string;
     modelName?: string | undefined;
     firstCirculationDate?: Date;
@@ -1854,6 +1855,7 @@ export class CarDto implements ICarDto {
     init(_data?: any) {
         if (_data) {
             this.id = _data["id"];
+            this.agencyId = _data["agencyId"];
             this.matricule = _data["matricule"];
             this.modelName = _data["modelName"];
             this.firstCirculationDate = _data["firstCirculationDate"] ? new Date(_data["firstCirculationDate"].toString()) : <any>undefined;
@@ -1874,6 +1876,7 @@ export class CarDto implements ICarDto {
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
         data["id"] = this.id;
+        data["agencyId"] = this.agencyId;
         data["matricule"] = this.matricule;
         data["modelName"] = this.modelName;
         data["firstCirculationDate"] = this.firstCirculationDate ? this.firstCirculationDate.toISOString() : <any>undefined;
@@ -1887,6 +1890,7 @@ export class CarDto implements ICarDto {
 
 export interface ICarDto {
     id?: number;
+    agencyId?: number;
     matricule?: string;
     modelName?: string | undefined;
     firstCirculationDate?: Date;
@@ -1902,6 +1906,7 @@ export enum FuelType {
 }
 
 export class CreateCarCommand implements ICreateCarCommand {
+    agencyId?: number;
     matricule?: string;
     modelId?: number | undefined;
     firstCirculationDate?: Date;
@@ -1921,6 +1926,7 @@ export class CreateCarCommand implements ICreateCarCommand {
 
     init(_data?: any) {
         if (_data) {
+            this.agencyId = _data["agencyId"];
             this.matricule = _data["matricule"];
             this.modelId = _data["modelId"];
             this.firstCirculationDate = _data["firstCirculationDate"] ? new Date(_data["firstCirculationDate"].toString()) : <any>undefined;
@@ -1940,6 +1946,7 @@ export class CreateCarCommand implements ICreateCarCommand {
 
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
+        data["agencyId"] = this.agencyId;
         data["matricule"] = this.matricule;
         data["modelId"] = this.modelId;
         data["firstCirculationDate"] = this.firstCirculationDate ? this.firstCirculationDate.toISOString() : <any>undefined;
@@ -1952,6 +1959,7 @@ export class CreateCarCommand implements ICreateCarCommand {
 }
 
 export interface ICreateCarCommand {
+    agencyId?: number;
     matricule?: string;
     modelId?: number | undefined;
     firstCirculationDate?: Date;

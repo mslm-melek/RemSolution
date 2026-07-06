@@ -2,7 +2,9 @@
 {
     public class Client : BaseAuditableEntity
     {
-        public string? FirstName { get; set; } 
+        public int AgencyId { get; set; }
+        public virtual Agency? Agency { get; set; }
+        public string? FirstName { get; set; }
         public string? LastName { get; set; }
         public DateTime? BirthDate { get; set; }
         public string? BirthPlace { get; set; }
