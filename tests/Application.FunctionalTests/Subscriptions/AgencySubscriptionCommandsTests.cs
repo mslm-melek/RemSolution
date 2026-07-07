@@ -19,7 +19,8 @@ public class AgencySubscriptionCommandsTests : BaseTestFixture
         var upgradedPlan = new SubscriptionPlan { Name = "Upgraded", MaxCars = 50, MaxClients = 200, Price = 99m };
         await AddAsync(upgradedPlan);
 
-        // Platform-admin operation: no tenant.
+        // Platform-admin operation: requires the role, carries no tenant.
+        await RunAsPlatformAdministratorAsync();
         SetCurrentAgency(null);
 
         var newSubscriptionId = await SendAsync(new AssignAgencySubscriptionCommand

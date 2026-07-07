@@ -1,4 +1,6 @@
 using RemSolution.Application.Common.Interfaces;
+using RemSolution.Application.Common.Security;
+using RemSolution.Domain.Constants;
 using RemSolution.Domain.Enums;
 
 namespace RemSolution.Application.Features.AgencySubscription.Commands.UpdateAgencySubscriptionCommand
@@ -7,6 +9,7 @@ namespace RemSolution.Application.Features.AgencySubscription.Commands.UpdateAge
     /// Platform-admin: manual status/period management (suspend, expire,
     /// reactivate, extend) — there is no billing provider integration yet.
     /// </summary>
+    [Authorize(Roles = Roles.PlatformAdministrator)]
     public record UpdateAgencySubscriptionCommand : IRequest
     {
         public int Id { get; init; }

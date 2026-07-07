@@ -44,11 +44,13 @@ public static class DependencyInjection
 
         builder.Services.AddSingleton(TimeProvider.System);
         builder.Services.AddTransient<IIdentityService, IdentityService>();
+        builder.Services.AddScoped<ICrossTenantAccess, CrossTenantAccess>();
 
         builder.Services.AddAuthorization(options =>
         {
-            options.AddPolicy(Policies.CanPurge, policy => policy.RequireRole(Roles.Administrator));
-            options.AddPolicy(Policies.PlatformAdminOnly, policy => policy.RequireRole(Roles.PlatformAdmin));
+            options.AddPolicy(Policies.PlatformAdminOnly, policy => policy.RequireRole(Roles.PlatformAdministrator));
+            options.AddPolicy(Policies.AgencyAdminOnly, policy => policy.RequireRole(Roles.AgencyAdministrator));
+            options.AddPolicy(Policies.AgencyMember, policy => policy.RequireRole(Roles.AgencyAdministrator, Roles.AgencyStaff));
         });
     }
 }

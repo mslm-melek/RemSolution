@@ -23,6 +23,10 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>, IApplica
     public DbSet<Car> Cars => Set<Car>();
     public DbSet<Client> Clients => Set<Client>();
     public DbSet<Country> Countries => Set<Country>();
+
+    // Deliberately not on IApplicationDbContext: audit rows are written by
+    // CrossTenantAccess via raw SQL and are not for handlers to query.
+    public DbSet<CrossTenantAccessLog> CrossTenantAccessLogs => Set<CrossTenantAccessLog>();
     public DbSet<Expense> Expenses => Set<Expense>();
     public DbSet<ExpenseType> ExpenseTypes => Set<ExpenseType>();
     public DbSet<ExtraService> ExtraServices => Set<ExtraService>();
@@ -89,8 +93,9 @@ IF @result < 0 THROW 51000, 'Failed to acquire the agency write lock.', 1;", can
 
         // Tenant isolation: every ITenantEntity is filtered to the current
         // tenant. No tenant (anonymous, platform admin) matches nothing.
-        // Cross-tenant reads via IgnoreQueryFilters() are reserved for the
-        // marketplace search feature — never for agency-facing handlers.
+        // Bypassing these filters is reserved for the marketplace search
+        // feature and the audited CrossTenantAccess path — never for
+        // agency-facing handlers (pinned by TenantEnforcementTests).
         foreach (var entityType in builder.Model.GetEntityTypes()
                      .Where(t => typeof(ITenantEntity).IsAssignableFrom(t.ClrType)))
         {

@@ -83,7 +83,7 @@ public class ApplicationDbContextInitialiser
     public async Task TrySeedAsync()
     {
         // Default roles
-        foreach (var roleName in new[] { Roles.Administrator, Roles.PlatformAdmin })
+        foreach (var roleName in new[] { Roles.PlatformAdministrator, Roles.AgencyAdministrator, Roles.AgencyStaff })
         {
             if (_roleManager.Roles.All(r => r.Name != roleName))
             {
@@ -91,27 +91,22 @@ public class ApplicationDbContextInitialiser
             }
         }
 
-        // Default users
-        var administrator = new ApplicationUser { UserName = "administrator@localhost", Email = "administrator@localhost" };
+        // One platform administrator. Deliberately no AgencyId: platform admins
+        // are not tenant-scoped and must never carry the AgencyId claim.
+        var platformAdmin = new ApplicationUser { UserName = "platformadmin@localhost", Email = "platformadmin@localhost" };
 
-        if (_userManager.Users.All(u => u.UserName != administrator.UserName))
+        if (_userManager.Users.All(u => u.UserName != platformAdmin.UserName))
         {
-            await _userManager.CreateAsync(administrator, "Administrator1!");
+            await _userManager.CreateAsync(platformAdmin, "PlatformAdmin1!");
         }
 
         // Role assignment is done outside the creation branch so databases seeded
         // before a role existed still pick it up.
-        var administratorUser = await _userManager.FindByNameAsync(administrator.UserName);
+        var platformAdminUser = await _userManager.FindByNameAsync(platformAdmin.UserName);
 
-        if (administratorUser is not null)
+        if (platformAdminUser is not null && !await _userManager.IsInRoleAsync(platformAdminUser, Roles.PlatformAdministrator))
         {
-            foreach (var roleName in new[] { Roles.Administrator, Roles.PlatformAdmin })
-            {
-                if (!await _userManager.IsInRoleAsync(administratorUser, roleName))
-                {
-                    await _userManager.AddToRoleAsync(administratorUser, roleName);
-                }
-            }
+            await _userManager.AddToRoleAsync(platformAdminUser, Roles.PlatformAdministrator);
         }
 
         // Countries are reference data: seeded once, no UI needed to maintain them.

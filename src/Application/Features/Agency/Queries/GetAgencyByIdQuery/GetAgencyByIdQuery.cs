@@ -1,8 +1,11 @@
 using RemSolution.Application.Common.Interfaces;
+using RemSolution.Application.Common.Security;
 using RemSolution.Application.Features.Agency.DTOs;
+using RemSolution.Domain.Constants;
 
 namespace RemSolution.Application.Features.Agency.Queries.GetAgencyByIdQuery
 {
+    [Authorize(Roles = Roles.PlatformAdministrator)]
     public record GetAgencyByIdQuery(int Id) : IRequest<AgencyDto?>;
 
     public class GetAgencyByIdQueryHandler : IRequestHandler<GetAgencyByIdQuery, AgencyDto?>

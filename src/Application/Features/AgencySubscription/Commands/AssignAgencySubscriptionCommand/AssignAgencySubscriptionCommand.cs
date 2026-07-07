@@ -1,4 +1,6 @@
 using RemSolution.Application.Common.Interfaces;
+using RemSolution.Application.Common.Security;
+using RemSolution.Domain.Constants;
 using RemSolution.Domain.Enums;
 
 namespace RemSolution.Application.Features.AgencySubscription.Commands.AssignAgencySubscriptionCommand
@@ -8,6 +10,7 @@ namespace RemSolution.Application.Features.AgencySubscription.Commands.AssignAge
     /// subscription of the agency is marked Expired (superseded) — the database
     /// enforces at most one Active subscription per agency.
     /// </summary>
+    [Authorize(Roles = Roles.PlatformAdministrator)]
     public record AssignAgencySubscriptionCommand : IRequest<int>
     {
         public int AgencyId { get; init; }

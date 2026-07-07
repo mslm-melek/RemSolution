@@ -1,9 +1,12 @@
 using FluentValidation.Results;
 using RemSolution.Application.Common.Interfaces;
+using RemSolution.Application.Common.Security;
+using RemSolution.Domain.Constants;
 using ValidationException = RemSolution.Application.Common.Exceptions.ValidationException;
 
 namespace RemSolution.Application.Features.SubscriptionPlan.Commands.DeleteSubscriptionPlanCommand
 {
+    [Authorize(Roles = Roles.PlatformAdministrator)]
     public record DeleteSubscriptionPlanCommand(int Id) : IRequest;
 
     public class DeleteSubscriptionPlanCommandHandler : IRequestHandler<DeleteSubscriptionPlanCommand>

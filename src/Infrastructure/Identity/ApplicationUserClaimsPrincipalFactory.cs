@@ -24,7 +24,12 @@ public class ApplicationUserClaimsPrincipalFactory : UserClaimsPrincipalFactory<
     {
         var identity = await base.GenerateClaimsAsync(user);
 
-        if (user.AgencyId is int agencyId)
+        // Platform administrators never carry the tenant claim, even if
+        // AgencyId was set on the user by mistake — being tenant-scoped and
+        // platform-wide at once must be impossible.
+        var isPlatformAdministrator = identity.HasClaim(identity.RoleClaimType, Roles.PlatformAdministrator);
+
+        if (user.AgencyId is int agencyId && !isPlatformAdministrator)
         {
             identity.AddClaim(new Claim(Claims.AgencyId, agencyId.ToString()));
         }

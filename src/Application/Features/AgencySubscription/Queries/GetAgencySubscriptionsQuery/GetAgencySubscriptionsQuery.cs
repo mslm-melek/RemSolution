@@ -1,8 +1,11 @@
 using RemSolution.Application.Common.Interfaces;
+using RemSolution.Application.Common.Security;
 using RemSolution.Application.Features.AgencySubscription.DTOs;
+using RemSolution.Domain.Constants;
 
 namespace RemSolution.Application.Features.AgencySubscription.Queries.GetAgencySubscriptionsQuery
 {
+    [Authorize(Roles = Roles.PlatformAdministrator)]
     public record GetAgencySubscriptionsQuery : IRequest<IList<AgencySubscriptionDto>>
     {
         public int? AgencyId { get; init; }

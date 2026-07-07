@@ -1,7 +1,10 @@
 using RemSolution.Application.Common.Interfaces;
+using RemSolution.Application.Common.Security;
+using RemSolution.Domain.Constants;
 
 namespace RemSolution.Application.Features.SubscriptionPlan.Commands.UpdateSubscriptionPlanCommand
 {
+    [Authorize(Roles = Roles.PlatformAdministrator)]
     public record UpdateSubscriptionPlanCommand : IRequest
     {
         public int Id { get; init; }

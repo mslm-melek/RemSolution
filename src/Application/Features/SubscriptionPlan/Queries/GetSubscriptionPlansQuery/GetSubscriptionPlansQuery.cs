@@ -1,8 +1,11 @@
 using RemSolution.Application.Common.Interfaces;
+using RemSolution.Application.Common.Security;
 using RemSolution.Application.Features.SubscriptionPlan.DTOs;
+using RemSolution.Domain.Constants;
 
 namespace RemSolution.Application.Features.SubscriptionPlan.Queries.GetSubscriptionPlansQuery
 {
+    [Authorize(Roles = Roles.PlatformAdministrator)]
     public record GetSubscriptionPlansQuery : IRequest<IList<SubscriptionPlanDto>>;
 
     public class GetSubscriptionPlansQueryHandler : IRequestHandler<GetSubscriptionPlansQuery, IList<SubscriptionPlanDto>>
