@@ -1,3 +1,4 @@
+using RemSolution.Application.Common.Audit;
 using RemSolution.Application.Common.Interfaces;
 using RemSolution.Application.Common.Security;
 using RemSolution.Domain.Constants;
@@ -10,6 +11,7 @@ namespace RemSolution.Application.Features.AgencySubscription.Commands.UpdateAge
     /// reactivate, extend) — there is no billing provider integration yet.
     /// </summary>
     [Authorize(Roles = Roles.PlatformAdministrator)]
+    [Auditable("UpdateAgencySubscription", "AgencySubscription")]
     public record UpdateAgencySubscriptionCommand : IRequest
     {
         public int Id { get; init; }

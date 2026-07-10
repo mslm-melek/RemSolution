@@ -94,6 +94,8 @@ StyleCopReport.xml
 *.tmp_proj
 *_wpftmp.csproj
 *.log
+# Serilog rolling file sink output (src/Web/logs/remsolution-*.log.json)
+logs/
 *.tlog
 *.vspscc
 *.vssscc

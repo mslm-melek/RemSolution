@@ -27,6 +27,10 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>, IApplica
     // Deliberately not on IApplicationDbContext: audit rows are written by
     // CrossTenantAccess via raw SQL and are not for handlers to query.
     public DbSet<CrossTenantAccessLog> CrossTenantAccessLogs => Set<CrossTenantAccessLog>();
+
+    // Deliberately not on IApplicationDbContext: audit rows are written by the
+    // AuditSaveChangesInterceptor, never by handlers.
+    public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
     public DbSet<Expense> Expenses => Set<Expense>();
     public DbSet<ExpenseType> ExpenseTypes => Set<ExpenseType>();
     public DbSet<ExtraService> ExtraServices => Set<ExtraService>();

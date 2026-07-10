@@ -1,8 +1,10 @@
-﻿using RemSolution.Application.Common.Interfaces;
+﻿using RemSolution.Application.Common.Audit;
+using RemSolution.Application.Common.Interfaces;
 
 namespace RemSolution.Application.Features.Country.Commands.DeleteCountryCommand
 {
-   
+
+    [Auditable("DeleteCountry", "Country")]
     public record DeleteCountryCommand(int Id) : IRequest;
 
     public class DeleteCountryCommandHandler : IRequestHandler<DeleteCountryCommand>

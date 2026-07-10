@@ -1,4 +1,5 @@
 using FluentValidation.Results;
+using RemSolution.Application.Common.Audit;
 using RemSolution.Application.Common.Interfaces;
 using RemSolution.Application.Common.Security;
 using RemSolution.Domain.Constants;
@@ -8,6 +9,7 @@ namespace RemSolution.Application.Features.Agency.Commands.DeleteAgencyCommand
 {
 
     [Authorize(Roles = Roles.PlatformAdministrator)]
+    [Auditable("DeleteAgency", "Agency")]
     public record DeleteAgencyCommand(int Id) : IRequest;
 
     public class DeleteAgencyCommandHandler : IRequestHandler<DeleteAgencyCommand>

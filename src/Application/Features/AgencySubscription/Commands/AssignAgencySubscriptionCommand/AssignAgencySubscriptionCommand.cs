@@ -1,3 +1,4 @@
+using RemSolution.Application.Common.Audit;
 using RemSolution.Application.Common.Interfaces;
 using RemSolution.Application.Common.Security;
 using RemSolution.Domain.Constants;
@@ -11,6 +12,7 @@ namespace RemSolution.Application.Features.AgencySubscription.Commands.AssignAge
     /// enforces at most one Active subscription per agency.
     /// </summary>
     [Authorize(Roles = Roles.PlatformAdministrator)]
+    [Auditable("AssignAgencySubscription", "AgencySubscription")]
     public record AssignAgencySubscriptionCommand : IRequest<int>
     {
         public int AgencyId { get; init; }

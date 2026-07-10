@@ -1,8 +1,10 @@
-﻿using RemSolution.Application.Common.Interfaces;
+﻿using RemSolution.Application.Common.Audit;
+using RemSolution.Application.Common.Interfaces;
 
 namespace RemSolution.Application.Features.ModelCar.Commands.DeleteModelCarCommand
 {
-   
+
+    [Auditable("DeleteModelCar", "ModelCar")]
     public record DeleteModelCarCommand(int Id) : IRequest;
 
     public class DeleteModelCarCommandHandler : IRequestHandler<DeleteModelCarCommand>

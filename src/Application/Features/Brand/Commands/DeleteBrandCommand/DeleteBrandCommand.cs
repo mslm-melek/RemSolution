@@ -1,8 +1,10 @@
-﻿using RemSolution.Application.Common.Interfaces;
+﻿using RemSolution.Application.Common.Audit;
+using RemSolution.Application.Common.Interfaces;
 
 namespace RemSolution.Application.Features.Brand.Commands.DeleteBrandCommand
 {
-   
+
+    [Auditable("DeleteBrand", "Brand")]
     public record DeleteBrandCommand(int Id) : IRequest;
 
     public class DeleteBrandCommandHandler : IRequestHandler<DeleteBrandCommand>

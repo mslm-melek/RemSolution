@@ -1,5 +1,4 @@
-﻿using RemSolution.Application.Common.Behaviours;
-using RemSolution.Application.Common.Interfaces;
+using RemSolution.Application.Common.Behaviours;
 using Microsoft.Extensions.Logging;
 using Moq;
 using NUnit.Framework;
@@ -10,36 +9,30 @@ namespace RemSolution.Application.UnitTests.Common.Behaviours;
 public class RequestLoggerTests
 {
     private Mock<ILogger<CreateBrandCommand>> _logger = null!;
-    private Mock<IUser> _user = null!;
-    private Mock<IIdentityService> _identityService = null!;
 
     [SetUp]
     public void Setup()
     {
         _logger = new Mock<ILogger<CreateBrandCommand>>();
-        _user = new Mock<IUser>();
-        _identityService = new Mock<IIdentityService>();
     }
 
     [Test]
-    public async Task ShouldCallGetUserNameAsyncOnceIfAuthenticated()
+    public async Task ShouldLogOneInformationEventPerRequest()
     {
-        _user.Setup(x => x.Id).Returns(Guid.NewGuid().ToString());
-
-        var requestLogger = new LoggingBehaviour<CreateBrandCommand>(_logger.Object, _user.Object, _identityService.Object);
+        // UserId / AgencyId / CorrelationId are enriched onto the log context by
+        // the web middleware, so the behaviour no longer resolves the user; it
+        // just emits the request event.
+        var requestLogger = new LoggingBehaviour<CreateBrandCommand>(_logger.Object);
 
         await requestLogger.Process(new CreateBrandCommand { Name = "BMW" }, new CancellationToken());
 
-        _identityService.Verify(i => i.GetUserNameAsync(It.IsAny<string>()), Times.Once);
-    }
-
-    [Test]
-    public async Task ShouldNotCallGetUserNameAsyncOnceIfUnauthenticated()
-    {
-        var requestLogger = new LoggingBehaviour<CreateBrandCommand>(_logger.Object, _user.Object, _identityService.Object);
-
-        await requestLogger.Process(new CreateBrandCommand { Name = "BMW" }, new CancellationToken());
-
-        _identityService.Verify(i => i.GetUserNameAsync(It.IsAny<string>()), Times.Never);
+        _logger.Verify(
+            l => l.Log(
+                LogLevel.Information,
+                It.IsAny<EventId>(),
+                It.IsAny<It.IsAnyType>(),
+                It.IsAny<Exception?>(),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+            Times.Once);
     }
 }

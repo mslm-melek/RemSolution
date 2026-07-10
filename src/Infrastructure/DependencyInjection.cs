@@ -23,6 +23,9 @@ public static class DependencyInjection
         builder.Services.AddScoped<ISaveChangesInterceptor, TenantEntityInterceptor>();
         builder.Services.AddScoped<ISaveChangesInterceptor, SubscriptionEnforcementInterceptor>();
         builder.Services.AddScoped<ISaveChangesInterceptor, DispatchDomainEventsInterceptor>();
+        // Last: observes the values other interceptors have finalised before it
+        // records the before/after audit rows.
+        builder.Services.AddScoped<ISaveChangesInterceptor, AuditSaveChangesInterceptor>();
 
         builder.Services.AddDbContext<ApplicationDbContext>((sp, options) =>
         {

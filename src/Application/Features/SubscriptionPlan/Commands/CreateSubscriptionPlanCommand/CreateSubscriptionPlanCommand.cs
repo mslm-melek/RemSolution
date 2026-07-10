@@ -1,3 +1,4 @@
+using RemSolution.Application.Common.Audit;
 using RemSolution.Application.Common.Interfaces;
 using RemSolution.Application.Common.Security;
 using RemSolution.Domain.Constants;
@@ -5,6 +6,7 @@ using RemSolution.Domain.Constants;
 namespace RemSolution.Application.Features.SubscriptionPlan.Commands.CreateSubscriptionPlanCommand
 {
     [Authorize(Roles = Roles.PlatformAdministrator)]
+    [Auditable("CreateSubscriptionPlan", "SubscriptionPlan")]
     public record CreateSubscriptionPlanCommand : IRequest<int>
     {
         public string Name { get; init; } = string.Empty;
