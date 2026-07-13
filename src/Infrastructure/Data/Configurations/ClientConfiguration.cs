@@ -10,6 +10,9 @@ public class ClientConfiguration : IEntityTypeConfiguration<Client>
     {
         builder.HasAgencyTenant();
 
+        builder.Property(c => c.MarketplaceUserId)
+               .HasMaxLength(450);
+
         // Foreign keys configuration (optional relationships)
         builder.HasOne(c => c.BirthCountry)
                .WithMany()

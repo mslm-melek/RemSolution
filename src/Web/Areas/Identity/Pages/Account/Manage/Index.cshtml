@@ -1,0 +1,42 @@
+@page
+@model RemSolution.Web.Areas.Identity.Pages.Account.Manage.IndexModel
+@{
+    ViewData["Title"] = "Profile";
+    ViewData["ActivePage"] = "Index";
+    Layout = "~/Areas/Identity/Pages/Account/Manage/_ManageLayout.cshtml";
+}
+
+@if (Model.StatusMessage is not null)
+{
+    <div class="status-message">@Model.StatusMessage</div>
+}
+
+<form method="post">
+    <div asp-validation-summary="ModelOnly" class="validation-summary-errors"></div>
+
+    <div class="form-group">
+        <label>Email</label>
+        <input type="email" value="@Model.Email" readonly />
+        <div class="field-hint">Your email is your sign-in name and cannot be changed here.</div>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="Input.FullName">Full name</label>
+        <input asp-for="Input.FullName" placeholder="John Doe" />
+        <span asp-validation-for="Input.FullName" class="field-validation-error"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="Input.PhoneNumber">Phone number</label>
+        <input asp-for="Input.PhoneNumber" type="tel" placeholder="+216 ..." />
+        <span asp-validation-for="Input.PhoneNumber" class="field-validation-error"></span>
+    </div>
+
+    <button type="submit" class="btn-primary">Save</button>
+</form>
+
+@section Scripts {
+    <script src="~/Identity/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/Identity/lib/jquery-validation/dist/jquery.validate.min.js"></script>
+    <script src="~/Identity/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
+}

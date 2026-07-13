@@ -29,6 +29,10 @@
         public string? DrivingLicenceImageUrl { get; set; }
         public string? PasserportImageUrl { get; set; }
         public string? Description { get; set; }
+        // Phase 6 marketplace: a self-registered marketplace user has one
+        // global account and a linked Client row per agency; null for
+        // agency-created clients.
+        public string? MarketplaceUserId { get; set; }
         public virtual ICollection<Renting>? Rentings { get; set; }
         public virtual ICollection<Renting>? SecondRentings { get; set; }
         public virtual ICollection<Reservation>? Reservations { get; set; }

@@ -3,6 +3,7 @@ using RemSolution.Domain.Constants;
 using RemSolution.Infrastructure.Data;
 using RemSolution.Infrastructure.Data.Interceptors;
 using RemSolution.Infrastructure.Identity;
+using RemSolution.Infrastructure.Storage;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
@@ -46,6 +47,10 @@ public static class DependencyInjection
             .AddClaimsPrincipalFactory<ApplicationUserClaimsPrincipalFactory>();
 
         builder.Services.AddSingleton(TimeProvider.System);
+
+        builder.Services.Configure<FileStorageOptions>(builder.Configuration.GetSection(FileStorageOptions.SectionName));
+        builder.Services.AddSingleton<IFileStorage, LocalFileStorage>();
+
         builder.Services.AddTransient<IIdentityService, IdentityService>();
         builder.Services.AddScoped<ICrossTenantAccess, CrossTenantAccess>();
 

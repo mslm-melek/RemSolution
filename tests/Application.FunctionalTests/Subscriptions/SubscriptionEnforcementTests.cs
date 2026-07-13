@@ -176,6 +176,7 @@ public class SubscriptionEnforcementTests : BaseTestFixture
     private static CreateClientCommand MakeClient(string firstName) => new()
     {
         FirstName = firstName,
-        LastName = "Tester"
+        LastName = "Tester",
+        BirthDate = new DateTime(1990, 5, 20)
     };
 }

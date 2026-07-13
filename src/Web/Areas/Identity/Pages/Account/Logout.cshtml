@@ -1,0 +1,12 @@
+@page
+@model RemSolution.Web.Areas.Identity.Pages.Account.LogoutModel
+@{
+    ViewData["Title"] = "Sign out";
+    Layout = "~/Areas/Identity/Pages/Account/_AuthLayout.cshtml";
+}
+
+<p class="auth-subtitle">You have been signed out</p>
+
+<div class="auth-links">
+    <a asp-page="./Login">Sign in again</a>
+</div>

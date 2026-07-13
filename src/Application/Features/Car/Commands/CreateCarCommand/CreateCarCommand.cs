@@ -37,6 +37,7 @@ namespace RemSolution.Application.Features.Car.Commands.CreateCarCommand
                 ModelId = request.ModelId,
                 FirstCirculationDate= request.FirstCirculationDate,
                 Color = request.Color,
+                ImageUrl = request.ImageUrl,
                 Power = request.Power,
                 FuelType = request.FuelType
             };

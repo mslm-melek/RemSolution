@@ -19,6 +19,11 @@ public partial class Testing
     private static string? _userId;
     private static int? _agencyId;
 
+    // Isolated per-run file-storage root so upload tests never write into a
+    // real wwwroot and leave nothing behind (deleted in teardown).
+    public static string UploadsRoot { get; } =
+        Path.Combine(Path.GetTempPath(), "RemSolutionTests", $"uploads-{Guid.NewGuid():N}");
+
     [OneTimeSetUp]
     public async Task RunBeforeAnyTests()
     {
@@ -228,5 +233,8 @@ public partial class Testing
     {
         await _database.DisposeAsync();
         await _factory.DisposeAsync();
+
+        if (Directory.Exists(UploadsRoot))
+            Directory.Delete(UploadsRoot, recursive: true);
     }
 }

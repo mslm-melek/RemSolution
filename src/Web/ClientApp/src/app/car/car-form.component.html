@@ -1,0 +1,67 @@
+<div class="car-card mat-elevation-z4">
+  <div class="header-row">
+    <h2 class="title">{{ isEdit ? 'Edit Car' : 'New Car' }}</h2>
+    <a mat-button [routerLink]="['/car']">
+      <mat-icon>arrow_back</mat-icon> Back to list
+    </a>
+  </div>
+
+  <div *ngIf="errorMessage" class="error-banner">{{ errorMessage }}</div>
+
+  <form [formGroup]="form" (ngSubmit)="save()">
+    <div class="field-grid">
+      <mat-form-field appearance="outline">
+        <mat-label>Matricule</mat-label>
+        <input matInput formControlName="matricule" required />
+        <mat-hint *ngIf="isEdit">Matricule cannot be changed.</mat-hint>
+        <mat-error *ngIf="form.get('matricule')?.hasError('required')">Matricule is required.</mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Model</mat-label>
+        <mat-select formControlName="modelId" required>
+          <mat-option *ngFor="let model of models" [value]="model.id">
+            {{ model.brandName }} {{ model.name }}
+          </mat-option>
+        </mat-select>
+        <mat-error *ngIf="form.get('modelId')?.hasError('required')">Model is required.</mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>First circulation date</mat-label>
+        <input matInput type="date" formControlName="firstCirculationDate" required />
+        <mat-error *ngIf="form.get('firstCirculationDate')?.hasError('required')">First circulation date is required.</mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Color</mat-label>
+        <input matInput formControlName="color" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Power (hp)</mat-label>
+        <input matInput type="number" formControlName="power" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Fuel type</mat-label>
+        <mat-select formControlName="fuelType">
+          <mat-option [value]="null">—</mat-option>
+          <mat-option *ngFor="let fuel of fuelTypes" [value]="fuel.value">{{ fuel.label }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="span-2">
+        <mat-label>Image URL</mat-label>
+        <input matInput formControlName="imageUrl" placeholder="https://…" />
+      </mat-form-field>
+    </div>
+
+    <div class="actions-row">
+      <button mat-raised-button color="primary" type="submit" [disabled]="saving">
+        <mat-icon>save</mat-icon> {{ saving ? 'Saving…' : 'Save' }}
+      </button>
+      <a mat-button [routerLink]="['/car']">Cancel</a>
+    </div>
+  </form>
+</div>

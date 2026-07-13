@@ -1,9 +1,12 @@
 using RemSolution.Application.Common.Interfaces;
 using RemSolution.Application.Common.Subscriptions;
+using RemSolution.Application.Features.Client.Validation;
 
 namespace RemSolution.Application.Features.Client.Commands.CreateClientCommand
 {
-    public record CreateClientCommand : IRequest<int>
+    // ISensitiveRequest: carries identity-document numbers — never
+    // destructured into logs by the pipeline behaviours.
+    public record CreateClientCommand : IRequest<int>, IClientPayload, ISensitiveRequest
     {
         // AgencyId is not accepted from the client: TenantEntityInterceptor
         // stamps it from the current tenant on insert.
@@ -24,9 +27,10 @@ namespace RemSolution.Application.Features.Client.Commands.CreateClientCommand
         public DateTime? DrivingLicenceDeliveranceDate { get; init; }
         public string? DrivingLicenceDeliverancePlace { get; init; }
         public int? DrivingLicenceDeliveranceCountryId { get; init; }
-        public string? CINImageUrl { get; init; }
-        public string? DrivingLicenceImageUrl { get; init; }
-        public string? PasserportImageUrl { get; init; }
+        // The document image URLs are deliberately absent: they are owned by
+        // UploadClientDocumentCommand, which manages the stored files'
+        // lifecycle. Accepting them here would let callers plant arbitrary
+        // URLs that a later upload would delete.
         public string? Description { get; init; }
     }
 
@@ -64,9 +68,6 @@ namespace RemSolution.Application.Features.Client.Commands.CreateClientCommand
                 DrivingLicenceDeliveranceDate = request.DrivingLicenceDeliveranceDate,
                 DrivingLicenceDeliverancePlace = request.DrivingLicenceDeliverancePlace,
                 DrivingLicenceDeliveranceCountryId = request.DrivingLicenceDeliveranceCountryId,
-                CINImageUrl = request.CINImageUrl,
-                DrivingLicenceImageUrl = request.DrivingLicenceImageUrl,
-                PasserportImageUrl = request.PasserportImageUrl,
                 Description = request.Description
             };
 

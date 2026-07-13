@@ -5,6 +5,7 @@ namespace RemSolution.Application.Features.ModelCar.DTOs
     {
         public int Id { get; init; }
         public string Name { get; init; } = string.Empty;
+        public int? BrandId { get; init; }
         public string? BrandName { get; init; }
    
         public class Mapping : IRegister

@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - RemSolution</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #3f51b5 0%, #5c6bc0 50%, #7986cb 100%);
+            padding: 24px;
+        }
+
+        .auth-card {
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, .25);
+            width: 100%;
+            max-width: 420px;
+            padding: 40px 36px 32px;
+        }
+
+        .auth-brand {
+            text-align: center;
+            margin-bottom: 8px;
+        }
+
+        .auth-brand .logo {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: #3f51b5;
+            color: #fff;
+            font-size: 26px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        .auth-brand h1 {
+            font-size: 22px;
+            font-weight: 600;
+            color: #212121;
+        }
+
+        .auth-subtitle {
+            text-align: center;
+            color: #757575;
+            font-size: 14px;
+            margin-bottom: 28px;
+        }
+
+        .form-group { margin-bottom: 18px; }
+
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #424242;
+            margin-bottom: 6px;
+        }
+
+        .form-group input[type="email"],
+        .form-group input[type="password"],
+        .form-group input[type="text"] {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1px solid #c5cae9;
+            border-radius: 8px;
+            font-size: 15px;
+            transition: border-color .15s, box-shadow .15s;
+            outline: none;
+        }
+
+        .form-group input:focus {
+            border-color: #3f51b5;
+            box-shadow: 0 0 0 3px rgba(63, 81, 181, .15);
+        }
+
+        .checkbox-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 18px;
+            font-size: 14px;
+            color: #424242;
+        }
+
+        .checkbox-row input { accent-color: #3f51b5; width: 16px; height: 16px; }
+
+        .btn-primary {
+            width: 100%;
+            padding: 13px;
+            background: #3f51b5;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background .15s;
+        }
+
+        .btn-primary:hover { background: #303f9f; }
+
+        .auth-links {
+            margin-top: 22px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        .auth-links a {
+            color: #3f51b5;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .auth-links a:hover { text-decoration: underline; }
+
+        .validation-summary-errors, .field-validation-error {
+            color: #c62828;
+            font-size: 13px;
+        }
+
+        .validation-summary-errors {
+            background: #fdecea;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-bottom: 18px;
+        }
+
+        .validation-summary-errors ul { list-style: none; }
+
+        .field-validation-error { display: block; margin-top: 4px; }
+
+        .validation-summary-valid { display: none; }
+
+        .auth-message {
+            color: #424242;
+            font-size: 15px;
+            line-height: 1.6;
+            text-align: center;
+        }
+
+        .dev-note {
+            margin-top: 18px;
+            background: #fff8e1;
+            border-radius: 8px;
+            padding: 12px 16px;
+            font-size: 13px;
+            color: #795548;
+            word-break: break-all;
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-card">
+        <div class="auth-brand">
+            <span class="logo">R</span>
+            <h1>RemSolution</h1>
+        </div>
+        @RenderBody()
+    </div>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

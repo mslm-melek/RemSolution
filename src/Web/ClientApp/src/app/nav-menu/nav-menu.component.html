@@ -12,7 +12,7 @@
       <mat-icon>menu</mat-icon>
     </button>
 
-    <nav class="nav-links" [class.expanded]="isExpanded">
+    <nav class="nav-links" [class.expanded]="isExpanded" *ngIf="isAuthenticated">
       <a mat-button
          [routerLink]="['/']"
          [routerLinkActive]="['link-active']"
@@ -30,8 +30,24 @@
          [routerLink]="['/car']"
          [routerLinkActive]="['link-active']"
          (click)="collapse()">Cars</a>
+      <a mat-button
+         [routerLink]="['/client']"
+         [routerLinkActive]="['link-active']"
+         (click)="collapse()">Clients</a>
       <a mat-button href="/api" target="_blank">API</a>
-      <a mat-button href="/Identity/Account/Manage">Account</a>
+      <a mat-button href="/Identity/Account/Manage" class="nav-user">
+        <mat-icon>person</mat-icon> {{ displayName }}
+      </a>
+      <a mat-button href="/Identity/Account/Logout">
+        <mat-icon>logout</mat-icon> Logout
+      </a>
+    </nav>
+
+    <nav class="nav-links" [class.expanded]="isExpanded" *ngIf="!isAuthenticated">
+      <a mat-button href="/Identity/Account/Login">
+        <mat-icon>login</mat-icon> Login
+      </a>
+      <a mat-stroked-button class="nav-register" href="/Identity/Account/Register">Register</a>
     </nav>
   </mat-toolbar>
 </header>

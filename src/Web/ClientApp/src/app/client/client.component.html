@@ -1,0 +1,87 @@
+<div class="client-card mat-elevation-z4">
+  <div class="header-row">
+    <h2 class="title">Clients</h2>
+    <a mat-raised-button color="primary" [routerLink]="['/client/new']">
+      <mat-icon>person_add</mat-icon> New Client
+    </a>
+  </div>
+
+  <!-- Search -->
+  <div class="search-row">
+    <mat-form-field appearance="outline" class="search-input">
+      <mat-label>Search by name</mat-label>
+      <input matInput [(ngModel)]="search" (keyup.enter)="onSearch()" placeholder="e.g. Doe" />
+      <button *ngIf="search" matSuffix mat-icon-button aria-label="Clear" (click)="clearSearch()">
+        <mat-icon>close</mat-icon>
+      </button>
+    </mat-form-field>
+
+    <button mat-raised-button (click)="onSearch()">
+      <mat-icon>search</mat-icon> Search
+    </button>
+  </div>
+
+  <!-- Material Table -->
+  <table mat-table [dataSource]="clients" class="mat-elevation-z2 full-width">
+
+    <ng-container matColumnDef="name">
+      <th mat-header-cell *matHeaderCellDef>Name</th>
+      <td mat-cell *matCellDef="let client">{{ client.lastName }}, {{ client.firstName }}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="birthDate">
+      <th mat-header-cell *matHeaderCellDef>Birth Date</th>
+      <td mat-cell *matCellDef="let client">{{ client.birthDate | date:'yyyy-MM-dd' }}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="cin">
+      <th mat-header-cell *matHeaderCellDef>CIN</th>
+      <td mat-cell *matCellDef="let client">{{ client.cin }}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="documents">
+      <th mat-header-cell *matHeaderCellDef>Documents</th>
+      <td mat-cell *matCellDef="let client">
+        <a *ngIf="client.cinImageUrl" [href]="client.cinImageUrl" target="_blank" mat-icon-button
+           matTooltip="CIN image" aria-label="CIN image">
+          <mat-icon>badge</mat-icon>
+        </a>
+        <a *ngIf="client.drivingLicenceImageUrl" [href]="client.drivingLicenceImageUrl" target="_blank" mat-icon-button
+           matTooltip="Driving licence image" aria-label="Driving licence image">
+          <mat-icon>directions_car</mat-icon>
+        </a>
+        <a *ngIf="client.passerportImageUrl" [href]="client.passerportImageUrl" target="_blank" mat-icon-button
+           matTooltip="Passeport image" aria-label="Passeport image">
+          <mat-icon>menu_book</mat-icon>
+        </a>
+      </td>
+    </ng-container>
+
+    <ng-container matColumnDef="actions">
+      <th mat-header-cell *matHeaderCellDef class="text-center">Actions</th>
+      <td mat-cell *matCellDef="let client" class="text-center">
+        <a mat-icon-button color="primary" [routerLink]="['/client', client.id]" aria-label="Edit">
+          <mat-icon>edit</mat-icon>
+        </a>
+        <button mat-icon-button color="warn" (click)="deleteClient(client)" aria-label="Delete">
+          <mat-icon>delete</mat-icon>
+        </button>
+      </td>
+    </ng-container>
+
+    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+    <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+
+    <tr class="mat-row" *matNoDataRow>
+      <td class="mat-cell empty-row" [attr.colspan]="displayedColumns.length">No clients found.</td>
+    </tr>
+  </table>
+
+  <!-- Server-side paginator -->
+  <mat-paginator [length]="totalCount"
+                 [pageIndex]="pageNumber - 1"
+                 [pageSize]="pageSize"
+                 [pageSizeOptions]="[5, 10, 25, 50]"
+                 (page)="onPage($event)">
+  </mat-paginator>
+</div>

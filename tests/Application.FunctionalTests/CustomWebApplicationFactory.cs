@@ -26,6 +26,8 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
+        builder.UseSetting("FileStorage:RootPath", UploadsRoot);
+
         builder.ConfigureTestServices(services =>
         {
             services

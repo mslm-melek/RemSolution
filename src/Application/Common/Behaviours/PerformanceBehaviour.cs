@@ -44,8 +44,18 @@ public class PerformanceBehaviour<TRequest, TResponse> : IPipelineBehavior<TRequ
                 userName = await _identityService.GetUserNameAsync(userId);
             }
 
-            _logger.LogWarning("RemSolution Long Running Request: {Name} ({ElapsedMilliseconds} milliseconds) {@UserId} {@UserName} {@Request}",
-                requestName, elapsedMilliseconds, userId, userName, request);
+            if (request is ISensitiveRequest)
+            {
+                // PII must not reach the log sinks; the request name is enough
+                // to identify the slow path.
+                _logger.LogWarning("RemSolution Long Running Request: {Name} ({ElapsedMilliseconds} milliseconds) {@UserId} {@UserName} [request body redacted]",
+                    requestName, elapsedMilliseconds, userId, userName);
+            }
+            else
+            {
+                _logger.LogWarning("RemSolution Long Running Request: {Name} ({ElapsedMilliseconds} milliseconds) {@UserId} {@UserName} {@Request}",
+                    requestName, elapsedMilliseconds, userId, userName, request);
+            }
         }
 
         return response;

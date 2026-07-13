@@ -7,6 +7,7 @@ namespace RemSolution.Application.Features.Car.DTOs
         public int Id { get; init; }
         public int AgencyId { get; init; }
         public string Matricule { get; init; } = string.Empty;
+        public int? ModelId { get; init; }
         public string? ModelName { get; init; }
         public DateTime FirstCirculationDate { get; init; }
         public string? Color { get; init; }

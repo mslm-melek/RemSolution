@@ -1,0 +1,147 @@
+/* Signed-out hero */
+.hero {
+  display: flex;
+  justify-content: center;
+  padding: 64px 24px;
+}
+
+.hero-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 48px 40px;
+  max-width: 520px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.hero-logo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: #3f51b5;
+  color: #fff;
+  font-size: 30px;
+  font-weight: 700;
+}
+
+.hero-card h1 {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 600;
+  color: #212121;
+}
+
+.hero-tagline {
+  margin: 0;
+  color: #616161;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.hero-actions {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 8px;
+}
+
+/* Signed-in dashboard */
+.dashboard {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 8px 24px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.dash-header h1 {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 600;
+  color: #212121;
+}
+
+.dash-subtitle {
+  margin: 4px 0 0;
+  color: #757575;
+  font-size: 14px;
+}
+
+.stat-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.stat-tile {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px;
+  text-decoration: none;
+  transition: transform .12s, box-shadow .12s;
+}
+
+.stat-tile:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, .16);
+}
+
+.stat-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: rgba(63, 81, 181, .12);
+  color: #3f51b5;
+  flex-shrink: 0;
+}
+
+.stat-body {
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-value {
+  font-size: 28px;
+  font-weight: 700;
+  color: #212121;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+.stat-label {
+  font-size: 13px;
+  color: #757575;
+}
+
+.quick-actions {
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px 24px 24px;
+}
+
+.quick-actions h2 {
+  margin: 0 0 16px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #424242;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}

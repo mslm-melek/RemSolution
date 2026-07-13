@@ -1,0 +1,48 @@
+@page
+@model RemSolution.Web.Areas.Identity.Pages.Account.RegisterModel
+@{
+    ViewData["Title"] = "Create account";
+    Layout = "~/Areas/Identity/Pages/Account/_AuthLayout.cshtml";
+}
+
+<p class="auth-subtitle">Create a new account</p>
+
+<form method="post">
+    <div asp-validation-summary="ModelOnly" class="validation-summary-errors"></div>
+
+    <div class="form-group">
+        <label asp-for="Input.FullName">Full name</label>
+        <input asp-for="Input.FullName" autocomplete="name" autofocus placeholder="John Doe" />
+        <span asp-validation-for="Input.FullName" class="field-validation-error"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="Input.Email">Email</label>
+        <input asp-for="Input.Email" autocomplete="username" placeholder="you@example.com" />
+        <span asp-validation-for="Input.Email" class="field-validation-error"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="Input.Password">Password</label>
+        <input asp-for="Input.Password" autocomplete="new-password" placeholder="••••••••" />
+        <span asp-validation-for="Input.Password" class="field-validation-error"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="Input.ConfirmPassword">Confirm password</label>
+        <input asp-for="Input.ConfirmPassword" autocomplete="new-password" placeholder="••••••••" />
+        <span asp-validation-for="Input.ConfirmPassword" class="field-validation-error"></span>
+    </div>
+
+    <button type="submit" class="btn-primary">Create account</button>
+
+    <div class="auth-links">
+        <span>Already have an account? <a asp-page="./Login" asp-route-returnUrl="@Model.ReturnUrl">Sign in</a></span>
+    </div>
+</form>
+
+@section Scripts {
+    <script src="~/Identity/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/Identity/lib/jquery-validation/dist/jquery.validate.min.js"></script>
+    <script src="~/Identity/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
+}

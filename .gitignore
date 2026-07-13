@@ -483,3 +483,6 @@ $RECYCLE.BIN/
 *.swp
 .azure
 .gstack/
+
+# Local file storage (dev): uploaded documents live outside git
+src/Web/wwwroot/uploads/

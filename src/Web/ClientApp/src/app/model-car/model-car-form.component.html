@@ -1,0 +1,38 @@
+<div class="model-car-card mat-elevation-z4">
+  <div class="header-row">
+    <h2 class="title">{{ isEdit ? 'Edit Car Model' : 'New Car Model' }}</h2>
+    <a mat-button [routerLink]="['/model-car']">
+      <mat-icon>arrow_back</mat-icon> Back to list
+    </a>
+  </div>
+
+  <div *ngIf="errorMessage" class="error-banner">{{ errorMessage }}</div>
+
+  <form [formGroup]="form" (ngSubmit)="save()">
+    <div class="field-grid">
+      <mat-form-field appearance="outline">
+        <mat-label>Name</mat-label>
+        <input matInput formControlName="name" required />
+        <mat-error *ngIf="form.get('name')?.hasError('required')">Name is required.</mat-error>
+        <mat-error *ngIf="form.get('name')?.hasError('maxlength')">Name must not exceed 200 characters.</mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Brand</mat-label>
+        <mat-select formControlName="brandId" required>
+          <mat-option *ngFor="let brand of brands" [value]="brand.id">
+            {{ brand.name }}
+          </mat-option>
+        </mat-select>
+        <mat-error *ngIf="form.get('brandId')?.hasError('required')">Brand is required.</mat-error>
+      </mat-form-field>
+    </div>
+
+    <div class="actions-row">
+      <button mat-raised-button color="primary" type="submit" [disabled]="saving">
+        <mat-icon>save</mat-icon> {{ saving ? 'Saving…' : 'Save' }}
+      </button>
+      <a mat-button [routerLink]="['/model-car']">Cancel</a>
+    </div>
+  </form>
+</div>

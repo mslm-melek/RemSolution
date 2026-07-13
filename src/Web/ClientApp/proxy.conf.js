@@ -9,7 +9,8 @@ const PROXY_CONFIG = [
       "/api",
       "/Identity",
       "/weatherforecast",
-      "/WeatherForecast"
+      "/WeatherForecast",
+      "/uploads"
    ],
     proxyTimeout: 10000,
     target: target,

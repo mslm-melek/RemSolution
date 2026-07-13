@@ -5,6 +5,7 @@ using RemSolution.Application.Features.ModelCar.Commands.DeleteModelCarCommand;
 using RemSolution.Application.Features.ModelCar.Commands.UpdateModelCarCommand;
 using RemSolution.Application.Features.ModelCar.DTOs;
 using RemSolution.Application.Features.ModelCar.Queries.GetModelCarByIdQuery;
+using RemSolution.Application.Features.ModelCar.Queries.GetModelCarsQuery;
 using RemSolution.Application.Features.ModelCar.Queries.GetModelCarsWithPaginationQuery;
 
 namespace RemSolution.Web.Endpoints;
@@ -16,6 +17,7 @@ public class ModelCars : EndpointGroupBase
         app.MapGroup(this)
             .RequireAuthorization()
             .MapGet(GetModelCars)
+            .MapGet(GetAllModelCars, "all")
             .MapGet(GetModelCarById, "{id}")
             .MapPost(CreateModelCar)
             .MapPut(UpdateModelCar, "{id}")
@@ -25,6 +27,13 @@ public class ModelCars : EndpointGroupBase
     public async Task<Ok<PaginatedList<ModelCarDto>>> GetModelCars(ISender sender, [AsParameters] GetModelCarsWithPaginationQuery query)
     {
         var result = await sender.Send(query);
+        return TypedResults.Ok(result);
+    }
+
+    // Unpaginated lookup for dropdowns (model catalog is reference data).
+    public async Task<Ok<IList<ModelCarDto>>> GetAllModelCars(ISender sender)
+    {
+        var result = await sender.Send(new GetModelCarsQuery());
         return TypedResults.Ok(result);
     }
 

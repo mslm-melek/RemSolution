@@ -612,6 +612,62 @@
       }
     },
     "/api/Clients": {
+      "get": {
+        "tags": [
+          "Clients"
+        ],
+        "operationId": "GetClients",
+        "parameters": [
+          {
+            "name": "PageNumber",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "PageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 2
+          },
+          {
+            "name": "Search",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "nullable": true
+            },
+            "x-position": 3
+          },
+          {
+            "name": "CIN",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "nullable": true
+            },
+            "x-position": 4
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedListOfClientDto"
+                }
+              }
+            }
+          }
+        }
+      },
       "post": {
         "tags": [
           "Clients"
@@ -637,6 +693,156 @@
                 "schema": {
                   "type": "integer",
                   "format": "int32"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Clients/{id}": {
+      "get": {
+        "tags": [
+          "Clients"
+        ],
+        "operationId": "GetClientById",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Clients"
+        ],
+        "operationId": "UpdateClient",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          }
+        ],
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateClientCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 2
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "400": {
+            "description": ""
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Clients"
+        ],
+        "operationId": "DeleteClient",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/Clients/{id}/documents/{documentType}": {
+      "post": {
+        "tags": [
+          "Clients"
+        ],
+        "operationId": "UploadClientDocument",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "documentType",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/ClientDocumentType"
+            },
+            "x-position": 2
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "nullable": true
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
                 }
               }
             }
@@ -868,6 +1074,29 @@
                 "schema": {
                   "type": "integer",
                   "format": "int32"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/ModelCars/all": {
+      "get": {
+        "tags": [
+          "ModelCars"
+        ],
+        "operationId": "GetAllModelCars",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ModelCarDto"
+                  }
                 }
               }
             }
@@ -1107,6 +1336,26 @@
           },
           "404": {
             "description": ""
+          }
+        }
+      }
+    },
+    "/api/Users/me": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "operationId": "GetCurrentUser",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CurrentUserDto"
+                }
+              }
+            }
           }
         }
       }
@@ -1413,6 +1662,11 @@
           "matricule": {
             "type": "string"
           },
+          "modelId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
           "modelName": {
             "type": "string",
             "nullable": true
@@ -1535,6 +1789,150 @@
           }
         }
       },
+      "PaginatedListOfClientDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ClientDto"
+            }
+          },
+          "pageNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "hasPreviousPage": {
+            "type": "boolean"
+          },
+          "hasNextPage": {
+            "type": "boolean"
+          }
+        }
+      },
+      "ClientDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "agencyId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "firstName": {
+            "type": "string",
+            "nullable": true
+          },
+          "lastName": {
+            "type": "string",
+            "nullable": true
+          },
+          "birthDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "birthPlace": {
+            "type": "string",
+            "nullable": true
+          },
+          "birthCountryId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "birthCountryName": {
+            "type": "string",
+            "nullable": true
+          },
+          "cin": {
+            "type": "string",
+            "nullable": true
+          },
+          "cinDeliveranceDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "cinDeliverancePlace": {
+            "type": "string",
+            "nullable": true
+          },
+          "cinDeliveranceCountryId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "passeportNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "passeportDeliveranceDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "passeportDeliverancePlace": {
+            "type": "string",
+            "nullable": true
+          },
+          "passeportDeliveranceCountryId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "drivingLicenceNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "drivingLicenceDeliveranceDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "drivingLicenceDeliverancePlace": {
+            "type": "string",
+            "nullable": true
+          },
+          "drivingLicenceDeliveranceCountryId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "cinImageUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "drivingLicenceImageUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "passerportImageUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "marketplaceUserId": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
       "CreateClientCommand": {
         "type": "object",
         "additionalProperties": false,
@@ -1613,16 +2011,92 @@
             "format": "int32",
             "nullable": true
           },
-          "cinImageUrl": {
+          "description": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "UpdateClientCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "birthDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "birthPlace": {
             "type": "string",
             "nullable": true
           },
-          "drivingLicenceImageUrl": {
+          "birthCountryId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "cin": {
             "type": "string",
             "nullable": true
           },
-          "passerportImageUrl": {
+          "cinDeliveranceDate": {
             "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "cinDeliverancePlace": {
+            "type": "string",
+            "nullable": true
+          },
+          "cinDeliveranceCountryId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "passeportNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "passeportDeliveranceDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "passeportDeliverancePlace": {
+            "type": "string",
+            "nullable": true
+          },
+          "passeportDeliveranceCountryId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "drivingLicenceNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "drivingLicenceDeliveranceDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "drivingLicenceDeliverancePlace": {
+            "type": "string",
+            "nullable": true
+          },
+          "drivingLicenceDeliveranceCountryId": {
+            "type": "integer",
+            "format": "int32",
             "nullable": true
           },
           "description": {
@@ -1630,6 +2104,20 @@
             "nullable": true
           }
         }
+      },
+      "ClientDocumentType": {
+        "type": "integer",
+        "description": "",
+        "x-enumNames": [
+          "CIN",
+          "DrivingLicence",
+          "Passeport"
+        ],
+        "enum": [
+          0,
+          1,
+          2
+        ]
       },
       "CountryDto": {
         "type": "object",
@@ -1706,6 +2194,11 @@
           },
           "name": {
             "type": "string"
+          },
+          "brandId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
           },
           "brandName": {
             "type": "string",
@@ -1856,6 +2349,23 @@
           "clientsUsed": {
             "type": "integer",
             "format": "int32"
+          }
+        }
+      },
+      "CurrentUserDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "isAuthenticated": {
+            "type": "boolean"
+          },
+          "userName": {
+            "type": "string",
+            "nullable": true
+          },
+          "fullName": {
+            "type": "string",
+            "nullable": true
           }
         }
       }

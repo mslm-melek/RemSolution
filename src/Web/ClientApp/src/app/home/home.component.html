@@ -1,14 +1,45 @@
-<h1>Hello, world!</h1>
-<p>Welcome to your new single-page application, built with:</p>
-<ul>
-  <li><a href='https://get.asp.net/'>ASP.NET Core</a> and <a href='https://msdn.microsoft.com/en-us/library/67ef8sbd.aspx'>C#</a> for cross-platform server-side code</li>
-  <li><a href='https://angular.io/'>Angular</a> and <a href='http://www.typescriptlang.org/'>TypeScript</a> for client-side code</li>
-  <li><a href='https://material.angular.io/'>Angular Material</a> for layout and styling</li>
-</ul>
-<p>To help you get started, we've also set up:</p>
-<ul>
-  <li><strong>Client-side navigation</strong>. For example, click <em>Counter</em> then <em>Back</em> to return here.</li>
-  <li><strong>Angular CLI integration</strong>. In development mode, there's no need to run <code>ng serve</code>. It runs in the background automatically, so your client-side resources are dynamically built on demand and the page refreshes when you modify any file.</li>
-  <li><strong>Efficient production builds</strong>. In production mode, development-time features are disabled, and your <code>dotnet publish</code> configuration automatically invokes <code>ng build</code> to produce minified, ahead-of-time compiled JavaScript files.</li>
-</ul>
-<p>The <code>ClientApp</code> subdirectory is a standard Angular CLI application. If you open a command prompt in that directory, you can run any <code>ng</code> command (e.g., <code>ng test</code>), or use <code>npm</code> to install extra packages into it.</p>
+<!-- Signed out: hero with call to action -->
+<div class="hero" *ngIf="isAuthenticated === false">
+  <div class="hero-card mat-elevation-z4">
+    <span class="hero-logo">R</span>
+    <h1>Welcome to RemSolution</h1>
+    <p class="hero-tagline">
+      Manage your rental fleet, clients and reservations in one place.
+    </p>
+    <div class="hero-actions">
+      <a mat-raised-button color="primary" href="/Identity/Account/Login">
+        <mat-icon>login</mat-icon> Sign in
+      </a>
+      <a mat-stroked-button color="primary" href="/Identity/Account/Register">Create an account</a>
+    </div>
+  </div>
+</div>
+
+<!-- Signed in: dashboard -->
+<div class="dashboard" *ngIf="isAuthenticated">
+  <div class="dash-header">
+    <h1>Welcome back</h1>
+    <p class="dash-subtitle">{{ displayName }}</p>
+  </div>
+
+  <div class="stat-row">
+    <a class="stat-tile mat-elevation-z2" *ngFor="let stat of stats" [routerLink]="[stat.link]">
+      <div class="stat-icon">
+        <mat-icon>{{ stat.icon }}</mat-icon>
+      </div>
+      <div class="stat-body">
+        <span class="stat-value">{{ stat.value === null ? '—' : stat.value }}</span>
+        <span class="stat-label">{{ stat.label }}</span>
+      </div>
+    </a>
+  </div>
+
+  <div class="quick-actions mat-elevation-z2">
+    <h2>Quick actions</h2>
+    <div class="action-buttons">
+      <a mat-raised-button color="primary" *ngFor="let action of quickActions" [routerLink]="[action.link]">
+        <mat-icon>{{ action.icon }}</mat-icon> {{ action.label }}
+      </a>
+    </div>
+  </div>
+</div>
