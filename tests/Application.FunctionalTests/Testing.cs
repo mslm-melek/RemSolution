@@ -110,9 +110,18 @@ public partial class Testing
         {
             var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
 
-            foreach (var role in roles)
+            // Production seeds the full role set at startup; the per-test DB
+            // reset wipes it, so restore it whenever a role-carrying user is
+            // needed — handlers may assign roles beyond the caller's own
+            // (e.g. CreateAgencyUser adds AgencyStaff).
+            var standardRoles = new[] { Roles.PlatformAdministrator, Roles.AgencyAdministrator, Roles.AgencyStaff };
+
+            foreach (var role in standardRoles.Union(roles))
             {
-                await roleManager.CreateAsync(new IdentityRole(role));
+                if (!await roleManager.RoleExistsAsync(role))
+                {
+                    await roleManager.CreateAsync(new IdentityRole(role));
+                }
             }
 
             await userManager.AddToRolesAsync(user, roles);
@@ -128,6 +137,17 @@ public partial class Testing
         var errors = string.Join(Environment.NewLine, result.ToApplicationResult().Errors);
 
         throw new Exception($"Unable to create {userName}.{Environment.NewLine}{errors}");
+    }
+
+    public static async Task<bool> IsInRoleAsync(string userId, string role)
+    {
+        using var scope = _scopeFactory.CreateScope();
+
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+
+        var user = await userManager.FindByIdAsync(userId);
+
+        return user is not null && await userManager.IsInRoleAsync(user, role);
     }
 
     public static async Task ResetState()
@@ -172,7 +192,7 @@ public partial class Testing
     // Tenant writes require an active subscription, so one is provisioned by
     // default (generous limits keep unrelated tests unaffected); pass
     // withSubscription: false to test the unsubscribed state.
-    public static async Task<int> AddTestAgencyAsync(int maxCars = 100, int maxClients = 100, bool withSubscription = true)
+    public static async Task<int> AddTestAgencyAsync(int maxCars = 100, int maxClients = 100, int maxUsers = 100, bool withSubscription = true)
     {
         var country = new Country { Name = "Testland" };
         await AddAsync(country);
@@ -184,9 +204,10 @@ public partial class Testing
         {
             var plan = new SubscriptionPlan
             {
-                Name = $"Test Plan {maxCars}/{maxClients}",
+                Name = $"Test Plan {maxCars}/{maxClients}/{maxUsers}",
                 MaxCars = maxCars,
                 MaxClients = maxClients,
+                MaxUsers = maxUsers,
                 Price = 49.99m
             };
             await AddAsync(plan);
@@ -245,6 +266,26 @@ public partial class Testing
         var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
         return await context.Set<TEntity>().CountAsync();
+    }
+
+    public static async Task<int> CountAsync<TEntity>(System.Linq.Expressions.Expression<Func<TEntity, bool>> predicate) where TEntity : class
+    {
+        using var scope = _scopeFactory.CreateScope();
+
+        var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+        return await context.Set<TEntity>().CountAsync(predicate);
+    }
+
+    /// <summary>
+    /// Runs a delegate against a fresh service scope — for tests that exercise
+    /// a service directly instead of going through a MediatR request.
+    /// </summary>
+    public static async Task<T> UsingScopeAsync<T>(Func<IServiceProvider, Task<T>> action)
+    {
+        using var scope = _scopeFactory.CreateScope();
+
+        return await action(scope.ServiceProvider);
     }
 
     [OneTimeTearDown]

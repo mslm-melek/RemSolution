@@ -8,6 +8,7 @@ namespace RemSolution.Application.Features.AgencySubscription.Queries.GetMySubsc
         public string PlanName { get; init; } = string.Empty;
         public int MaxCars { get; init; }
         public int MaxClients { get; init; }
+        public int MaxUsers { get; init; }
         public decimal Price { get; init; }
         public DateTimeOffset StartDate { get; init; }
         public DateTimeOffset EndDate { get; init; }
@@ -15,6 +16,7 @@ namespace RemSolution.Application.Features.AgencySubscription.Queries.GetMySubsc
         public bool IsActive { get; init; }
         public int CarsUsed { get; set; }
         public int ClientsUsed { get; set; }
+        public int UsersUsed { get; set; }
     }
 
     /// <summary>
@@ -29,12 +31,14 @@ namespace RemSolution.Application.Features.AgencySubscription.Queries.GetMySubsc
         private readonly IApplicationDbContext _context;
         private readonly ITenantProvider _tenant;
         private readonly TimeProvider _dateTime;
+        private readonly IIdentityService _identityService;
 
-        public GetMySubscriptionQueryHandler(IApplicationDbContext context, ITenantProvider tenant, TimeProvider dateTime)
+        public GetMySubscriptionQueryHandler(IApplicationDbContext context, ITenantProvider tenant, TimeProvider dateTime, IIdentityService identityService)
         {
             _context = context;
             _tenant = tenant;
             _dateTime = dateTime;
+            _identityService = identityService;
         }
 
         public async Task<MySubscriptionDto?> Handle(GetMySubscriptionQuery request, CancellationToken cancellationToken)
@@ -56,6 +60,7 @@ namespace RemSolution.Application.Features.AgencySubscription.Queries.GetMySubsc
                     PlanName = s.Plan!.Name,
                     MaxCars = s.Plan.MaxCars,
                     MaxClients = s.Plan.MaxClients,
+                    MaxUsers = s.Plan.MaxUsers,
                     Price = s.Plan.Price,
                     StartDate = s.StartDate,
                     EndDate = s.EndDate,
@@ -72,6 +77,9 @@ namespace RemSolution.Application.Features.AgencySubscription.Queries.GetMySubsc
             // Tenant query filters scope both counts to the calling agency.
             subscription.CarsUsed = await _context.Cars.CountAsync(cancellationToken);
             subscription.ClientsUsed = await _context.Clients.CountAsync(cancellationToken);
+            // Users live in the Identity store (no tenant filter): counted via
+            // the same service the MaxUsers quota check uses.
+            subscription.UsersUsed = await _identityService.CountAgencyUsersAsync(agencyId, cancellationToken);
 
             return subscription;
         }

@@ -12,6 +12,7 @@ namespace RemSolution.Application.Features.SubscriptionPlan.Commands.CreateSubsc
         public string Name { get; init; } = string.Empty;
         public int MaxCars { get; init; }
         public int MaxClients { get; init; }
+        public int MaxUsers { get; init; }
         public decimal Price { get; init; }
     }
 
@@ -31,6 +32,7 @@ namespace RemSolution.Application.Features.SubscriptionPlan.Commands.CreateSubsc
                 Name = request.Name,
                 MaxCars = request.MaxCars,
                 MaxClients = request.MaxClients,
+                MaxUsers = request.MaxUsers,
                 Price = request.Price
             };
 

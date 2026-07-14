@@ -2636,6 +2636,7 @@ export class SubscriptionsClient implements ISubscriptionsClient {
 
 export interface IUsersClient {
     getCurrentUser(): Observable<CurrentUserDto>;
+    createAgencyUser(command: CreateAgencyUserCommand): Observable<string>;
 }
 
 @Injectable({
@@ -2690,6 +2691,59 @@ export class UsersClient implements IUsersClient {
             let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
             result200 = CurrentUserDto.fromJS(resultData200);
             return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    createAgencyUser(command: CreateAgencyUserCommand): Observable<string> {
+        let url_ = this.baseUrl + "/api/Users";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(command);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processCreateAgencyUser(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processCreateAgencyUser(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<string>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<string>;
+        }));
+    }
+
+    protected processCreateAgencyUser(response: HttpResponseBase): Observable<string> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 201) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result201: any = null;
+            let resultData201 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+                result201 = resultData201 !== undefined ? resultData201 : <any>null;
+    
+            return _observableOf(result201);
             }));
         } else if (status !== 200 && status !== 204) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
@@ -4306,6 +4360,7 @@ export class SubscriptionPlanDto implements ISubscriptionPlanDto {
     name?: string;
     maxCars?: number;
     maxClients?: number;
+    maxUsers?: number;
     price?: number;
 
     constructor(data?: ISubscriptionPlanDto) {
@@ -4323,6 +4378,7 @@ export class SubscriptionPlanDto implements ISubscriptionPlanDto {
             this.name = _data["name"];
             this.maxCars = _data["maxCars"];
             this.maxClients = _data["maxClients"];
+            this.maxUsers = _data["maxUsers"];
             this.price = _data["price"];
         }
     }
@@ -4340,6 +4396,7 @@ export class SubscriptionPlanDto implements ISubscriptionPlanDto {
         data["name"] = this.name;
         data["maxCars"] = this.maxCars;
         data["maxClients"] = this.maxClients;
+        data["maxUsers"] = this.maxUsers;
         data["price"] = this.price;
         return data;
     }
@@ -4350,6 +4407,7 @@ export interface ISubscriptionPlanDto {
     name?: string;
     maxCars?: number;
     maxClients?: number;
+    maxUsers?: number;
     price?: number;
 }
 
@@ -4357,6 +4415,7 @@ export class CreateSubscriptionPlanCommand implements ICreateSubscriptionPlanCom
     name?: string;
     maxCars?: number;
     maxClients?: number;
+    maxUsers?: number;
     price?: number;
 
     constructor(data?: ICreateSubscriptionPlanCommand) {
@@ -4373,6 +4432,7 @@ export class CreateSubscriptionPlanCommand implements ICreateSubscriptionPlanCom
             this.name = _data["name"];
             this.maxCars = _data["maxCars"];
             this.maxClients = _data["maxClients"];
+            this.maxUsers = _data["maxUsers"];
             this.price = _data["price"];
         }
     }
@@ -4389,6 +4449,7 @@ export class CreateSubscriptionPlanCommand implements ICreateSubscriptionPlanCom
         data["name"] = this.name;
         data["maxCars"] = this.maxCars;
         data["maxClients"] = this.maxClients;
+        data["maxUsers"] = this.maxUsers;
         data["price"] = this.price;
         return data;
     }
@@ -4398,6 +4459,7 @@ export interface ICreateSubscriptionPlanCommand {
     name?: string;
     maxCars?: number;
     maxClients?: number;
+    maxUsers?: number;
     price?: number;
 }
 
@@ -4406,6 +4468,7 @@ export class UpdateSubscriptionPlanCommand implements IUpdateSubscriptionPlanCom
     name?: string;
     maxCars?: number;
     maxClients?: number;
+    maxUsers?: number;
     price?: number;
 
     constructor(data?: IUpdateSubscriptionPlanCommand) {
@@ -4423,6 +4486,7 @@ export class UpdateSubscriptionPlanCommand implements IUpdateSubscriptionPlanCom
             this.name = _data["name"];
             this.maxCars = _data["maxCars"];
             this.maxClients = _data["maxClients"];
+            this.maxUsers = _data["maxUsers"];
             this.price = _data["price"];
         }
     }
@@ -4440,6 +4504,7 @@ export class UpdateSubscriptionPlanCommand implements IUpdateSubscriptionPlanCom
         data["name"] = this.name;
         data["maxCars"] = this.maxCars;
         data["maxClients"] = this.maxClients;
+        data["maxUsers"] = this.maxUsers;
         data["price"] = this.price;
         return data;
     }
@@ -4450,6 +4515,7 @@ export interface IUpdateSubscriptionPlanCommand {
     name?: string;
     maxCars?: number;
     maxClients?: number;
+    maxUsers?: number;
     price?: number;
 }
 
@@ -4457,6 +4523,7 @@ export class MySubscriptionDto implements IMySubscriptionDto {
     planName?: string;
     maxCars?: number;
     maxClients?: number;
+    maxUsers?: number;
     price?: number;
     startDate?: Date;
     endDate?: Date;
@@ -4464,6 +4531,7 @@ export class MySubscriptionDto implements IMySubscriptionDto {
     isActive?: boolean;
     carsUsed?: number;
     clientsUsed?: number;
+    usersUsed?: number;
 
     constructor(data?: IMySubscriptionDto) {
         if (data) {
@@ -4479,6 +4547,7 @@ export class MySubscriptionDto implements IMySubscriptionDto {
             this.planName = _data["planName"];
             this.maxCars = _data["maxCars"];
             this.maxClients = _data["maxClients"];
+            this.maxUsers = _data["maxUsers"];
             this.price = _data["price"];
             this.startDate = _data["startDate"] ? new Date(_data["startDate"].toString()) : <any>undefined;
             this.endDate = _data["endDate"] ? new Date(_data["endDate"].toString()) : <any>undefined;
@@ -4486,6 +4555,7 @@ export class MySubscriptionDto implements IMySubscriptionDto {
             this.isActive = _data["isActive"];
             this.carsUsed = _data["carsUsed"];
             this.clientsUsed = _data["clientsUsed"];
+            this.usersUsed = _data["usersUsed"];
         }
     }
 
@@ -4501,6 +4571,7 @@ export class MySubscriptionDto implements IMySubscriptionDto {
         data["planName"] = this.planName;
         data["maxCars"] = this.maxCars;
         data["maxClients"] = this.maxClients;
+        data["maxUsers"] = this.maxUsers;
         data["price"] = this.price;
         data["startDate"] = this.startDate ? this.startDate.toISOString() : <any>undefined;
         data["endDate"] = this.endDate ? this.endDate.toISOString() : <any>undefined;
@@ -4508,6 +4579,7 @@ export class MySubscriptionDto implements IMySubscriptionDto {
         data["isActive"] = this.isActive;
         data["carsUsed"] = this.carsUsed;
         data["clientsUsed"] = this.clientsUsed;
+        data["usersUsed"] = this.usersUsed;
         return data;
     }
 }
@@ -4516,6 +4588,7 @@ export interface IMySubscriptionDto {
     planName?: string;
     maxCars?: number;
     maxClients?: number;
+    maxUsers?: number;
     price?: number;
     startDate?: Date;
     endDate?: Date;
@@ -4523,6 +4596,7 @@ export interface IMySubscriptionDto {
     isActive?: boolean;
     carsUsed?: number;
     clientsUsed?: number;
+    usersUsed?: number;
 }
 
 export class CurrentUserDto implements ICurrentUserDto {
@@ -4591,6 +4665,58 @@ export interface ICurrentUserDto {
     fullName?: string | undefined;
     permissions?: string[];
     features?: string[];
+}
+
+export class CreateAgencyUserCommand implements ICreateAgencyUserCommand {
+    userName?: string;
+    password?: string;
+    permissions?: string[];
+
+    constructor(data?: ICreateAgencyUserCommand) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.userName = _data["userName"];
+            this.password = _data["password"];
+            if (Array.isArray(_data["permissions"])) {
+                this.permissions = [] as any;
+                for (let item of _data["permissions"])
+                    this.permissions!.push(item);
+            }
+        }
+    }
+
+    static fromJS(data: any): CreateAgencyUserCommand {
+        data = typeof data === 'object' ? data : {};
+        let result = new CreateAgencyUserCommand();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["userName"] = this.userName;
+        data["password"] = this.password;
+        if (Array.isArray(this.permissions)) {
+            data["permissions"] = [];
+            for (let item of this.permissions)
+                data["permissions"].push(item);
+        }
+        return data;
+    }
+}
+
+export interface ICreateAgencyUserCommand {
+    userName?: string;
+    password?: string;
+    permissions?: string[];
 }
 
 export interface FileParameter {

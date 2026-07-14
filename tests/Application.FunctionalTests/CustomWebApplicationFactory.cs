@@ -38,6 +38,11 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
                 .AddTransient(provider => Mock.Of<ITenantProvider>(s => s.AgencyId == GetAgencyId()));
             services
                 .RemoveAll<DbContextOptions<ApplicationDbContext>>()
+                // EF stacks one IDbContextOptionsConfiguration per AddDbContext
+                // call; without removing the production one both configure
+                // actions would run and register every interceptor twice
+                // (observable as duplicated audit rows).
+                .RemoveAll<Microsoft.EntityFrameworkCore.Infrastructure.IDbContextOptionsConfiguration<ApplicationDbContext>>()
                 .AddDbContext<ApplicationDbContext>((sp, options) =>
                 {
                     options.AddInterceptors(sp.GetServices<ISaveChangesInterceptor>());

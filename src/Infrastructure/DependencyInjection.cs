@@ -46,6 +46,30 @@ public static class DependencyInjection
             .AddEntityFrameworkStores<ApplicationDbContext>()
             .AddClaimsPrincipalFactory<ApplicationUserClaimsPrincipalFactory>();
 
+        // Session lifetime strategy. Permissions (and roles/AgencyId) live in
+        // the auth ticket, so revocation must not wait for a re-login: the
+        // ticket is treated as a short-lived access token. Every 10 minutes
+        // the security-stamp validator re-validates it and REBUILDS the
+        // principal through ApplicationUserClaimsPrincipalFactory — which
+        // re-reads UserPermissions — so grants and revocations are live within
+        // one interval, and a refreshed security stamp (user disabled, agency
+        // reassigned) kills the session outright. No version-stamp machinery:
+        // short validity + re-read on refresh is the whole mechanism.
+        // Feature flags never ride in the ticket at all — they are read from
+        // AgencyFeatures on every request by the FeatureEnforcementBehaviour.
+        builder.Services.Configure<SecurityStampValidatorOptions>(options =>
+        {
+            options.ValidationInterval = TimeSpan.FromMinutes(10);
+        });
+
+        // The long-lived sliding cookie plays the refresh-token role: it only
+        // proves who you are; what you may do is re-derived above.
+        builder.Services.ConfigureApplicationCookie(options =>
+        {
+            options.ExpireTimeSpan = TimeSpan.FromDays(14);
+            options.SlidingExpiration = true;
+        });
+
         builder.Services.AddSingleton(TimeProvider.System);
 
         builder.Services.Configure<FileStorageOptions>(builder.Configuration.GetSection(FileStorageOptions.SectionName));

@@ -13,6 +13,7 @@ namespace RemSolution.Application.Features.SubscriptionPlan.Commands.UpdateSubsc
         public string Name { get; init; } = string.Empty;
         public int MaxCars { get; init; }
         public int MaxClients { get; init; }
+        public int MaxUsers { get; init; }
         public decimal Price { get; init; }
     }
 
@@ -35,6 +36,7 @@ namespace RemSolution.Application.Features.SubscriptionPlan.Commands.UpdateSubsc
             entity.Name = request.Name;
             entity.MaxCars = request.MaxCars;
             entity.MaxClients = request.MaxClients;
+            entity.MaxUsers = request.MaxUsers;
             entity.Price = request.Price;
 
             await _context.SaveChangesAsync(cancellationToken);

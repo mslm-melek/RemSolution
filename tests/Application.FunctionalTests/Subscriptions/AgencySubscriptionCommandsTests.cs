@@ -67,8 +67,11 @@ public class AgencySubscriptionCommandsTests : BaseTestFixture
         subscription!.IsActive.Should().BeTrue();
         subscription.MaxCars.Should().Be(10);
         subscription.MaxClients.Should().Be(20);
+        subscription.MaxUsers.Should().Be(100);
         subscription.CarsUsed.Should().Be(1);
         subscription.ClientsUsed.Should().Be(0);
+        // The admin test account is not linked to the agency, so no users yet.
+        subscription.UsersUsed.Should().Be(0);
         subscription.Status.Should().Be(SubscriptionStatus.Active);
     }
 }

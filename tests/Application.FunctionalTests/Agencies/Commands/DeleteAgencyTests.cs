@@ -1,6 +1,8 @@
 using RemSolution.Application.Common.Exceptions;
+using RemSolution.Application.Common.Interfaces;
 using RemSolution.Application.Features.Agency.Commands.DeleteAgencyCommand;
 using RemSolution.Domain.Entities;
+using Microsoft.Extensions.DependencyInjection;
 using ValidationException = RemSolution.Application.Common.Exceptions.ValidationException;
 
 namespace RemSolution.Application.FunctionalTests.Agencies.Commands;
@@ -36,8 +38,10 @@ public class DeleteAgencyTests : BaseTestFixture
 
         (await FindAsync<Agency>(agencyId)).Should().NotBeNull();
 
-        // The cross-tenant referential check must leave an audit trail.
+        // The cross-tenant referential check must leave an audit trail in both
+        // registers — and the AuditLog row must survive the aborted command.
         (await CountAsync<CrossTenantAccessLog>()).Should().Be(1);
+        (await CountAsync<AuditLog>(l => l.Action == "CrossTenantRead")).Should().Be(1);
     }
 
     [Test]
@@ -51,5 +55,24 @@ public class DeleteAgencyTests : BaseTestFixture
 
         (await FindAsync<Agency>(agencyId)).Should().BeNull();
         (await CountAsync<CrossTenantAccessLog>()).Should().Be(1);
+
+        // The trail carries both halves of the operation: the cross-tenant
+        // read and the delete it served, correlated in the same request.
+        (await CountAsync<AuditLog>(l => l.Action == "CrossTenantRead")).Should().Be(1);
+        (await CountAsync<AuditLog>(l => l.Action == "DeleteAgency")).Should().Be(1);
+    }
+
+    [Test]
+    public async Task CrossTenantReadShouldRefuseRequestsWithoutAuditMarker()
+    {
+        await RunAsPlatformAdministratorAsync();
+
+        // Calling the service outside an [Auditable] request leaves the audit
+        // scope empty: the read must be refused, not silently unrecorded.
+        await FluentActions.Invoking(() => UsingScopeAsync(sp =>
+                sp.GetRequiredService<ICrossTenantAccess>()
+                    .BeginAuditedAccessAsync("no audit marker", CancellationToken.None)))
+            .Should().ThrowAsync<InvalidOperationException>()
+            .WithMessage("*[Auditable]*");
     }
 }

@@ -1506,6 +1506,38 @@
           }
         }
       }
+    },
+    "/api/Users": {
+      "post": {
+        "tags": [
+          "Users"
+        ],
+        "operationId": "CreateAgencyUser",
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAgencyUserCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -2455,6 +2487,10 @@
             "type": "integer",
             "format": "int32"
           },
+          "maxUsers": {
+            "type": "integer",
+            "format": "int32"
+          },
           "price": {
             "type": "number",
             "format": "decimal"
@@ -2473,6 +2509,10 @@
             "format": "int32"
           },
           "maxClients": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "maxUsers": {
             "type": "integer",
             "format": "int32"
           },
@@ -2501,6 +2541,10 @@
             "type": "integer",
             "format": "int32"
           },
+          "maxUsers": {
+            "type": "integer",
+            "format": "int32"
+          },
           "price": {
             "type": "number",
             "format": "decimal"
@@ -2519,6 +2563,10 @@
             "format": "int32"
           },
           "maxClients": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "maxUsers": {
             "type": "integer",
             "format": "int32"
           },
@@ -2547,6 +2595,10 @@
           "clientsUsed": {
             "type": "integer",
             "format": "int32"
+          },
+          "usersUsed": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },
@@ -2572,6 +2624,24 @@
             }
           },
           "features": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "CreateAgencyUserCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "userName": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          },
+          "permissions": {
             "type": "array",
             "items": {
               "type": "string"

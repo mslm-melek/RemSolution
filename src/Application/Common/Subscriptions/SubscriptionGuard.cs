@@ -16,7 +16,7 @@ public static class SubscriptionGuard
     /// subscription and <see cref="PlanLimitExceededException"/> at quota.
     /// No-op without a tenant (seeding, platform admin).
     /// </summary>
-    public static async Task EnsureWithinPlanLimitAsync<TEntity>(
+    public static Task EnsureWithinPlanLimitAsync<TEntity>(
         IApplicationDbContext context,
         ITenantProvider tenant,
         TimeProvider dateTime,
@@ -25,6 +25,28 @@ public static class SubscriptionGuard
         string resource,
         CancellationToken cancellationToken)
         where TEntity : class
+    {
+        return EnsureWithinPlanLimitAsync(
+            context, tenant, dateTime,
+            (_, ct) => tenantScopedSet.CountAsync(ct),
+            limitSelector, resource, cancellationToken);
+    }
+
+    /// <summary>
+    /// Same contract, for quota bases that are not a tenant-filtered DbSet —
+    /// e.g. agency users, which live in the Identity store.
+    /// <paramref name="countCurrent"/> receives the tenant's AgencyId and must
+    /// count through the same DbContext so the read runs inside the
+    /// lock-holding transaction.
+    /// </summary>
+    public static async Task EnsureWithinPlanLimitAsync(
+        IApplicationDbContext context,
+        ITenantProvider tenant,
+        TimeProvider dateTime,
+        Func<int, CancellationToken, Task<int>> countCurrent,
+        Func<SubscriptionPlan, int> limitSelector,
+        string resource,
+        CancellationToken cancellationToken)
     {
         if (tenant.AgencyId is not int agencyId)
         {
@@ -42,7 +64,7 @@ public static class SubscriptionGuard
         }
 
         var limit = limitSelector(plan);
-        var count = await tenantScopedSet.CountAsync(cancellationToken);
+        var count = await countCurrent(agencyId, cancellationToken);
 
         if (count >= limit)
         {

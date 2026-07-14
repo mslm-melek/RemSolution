@@ -1,7 +1,9 @@
 using RemSolution.Application.Common.Interfaces;
 using RemSolution.Application.Common.Models;
+using RemSolution.Domain.Constants;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 
 namespace RemSolution.Infrastructure.Identity;
 
@@ -39,6 +41,36 @@ public class IdentityService : IIdentityService
         var result = await _userManager.CreateAsync(user, password);
 
         return (result.ToApplicationResult(), user.Id);
+    }
+
+    public async Task<(Result Result, string UserId)> CreateAgencyUserAsync(string userName, string password, int agencyId, CancellationToken cancellationToken)
+    {
+        // AgencyId is set before the insert so the account is never observable
+        // outside its agency, and the AgencyId claim is correct from the very
+        // first sign-in.
+        var user = new ApplicationUser
+        {
+            UserName = userName,
+            Email = userName,
+            AgencyId = agencyId,
+        };
+
+        var result = await _userManager.CreateAsync(user, password);
+
+        if (!result.Succeeded)
+        {
+            return (result.ToApplicationResult(), user.Id);
+        }
+
+        // The role is a label; what the user can do is their permission grants.
+        var roleResult = await _userManager.AddToRoleAsync(user, Roles.AgencyStaff);
+
+        return (roleResult.ToApplicationResult(), user.Id);
+    }
+
+    public async Task<int> CountAgencyUsersAsync(int agencyId, CancellationToken cancellationToken)
+    {
+        return await _userManager.Users.CountAsync(u => u.AgencyId == agencyId, cancellationToken);
     }
 
     public async Task<bool> IsInRoleAsync(string userId, string role)

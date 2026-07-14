@@ -6,8 +6,11 @@ public abstract class Claims
 
     /// <summary>
     /// One claim per permission the user holds (see <see cref="Permissions"/>),
-    /// minted at sign-in from UserPermission rows. Granting or revoking takes
-    /// effect at the next sign-in (refresh the security stamp to force it).
+    /// minted from UserPermission rows at sign-in and re-minted at every
+    /// security-stamp validation (10-minute interval — the session ticket is a
+    /// short-lived access token). Granting or revoking is therefore live
+    /// within one interval; refresh the security stamp to force it at the
+    /// next request.
     /// </summary>
     public const string Permission = nameof(Permission);
 }

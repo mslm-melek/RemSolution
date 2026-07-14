@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using RemSolution.Application.Common.Interfaces;
+using RemSolution.Application.Features.Users.Commands.CreateAgencyUserCommand;
 using RemSolution.Domain.Constants;
 using RemSolution.Infrastructure.Identity;
 
@@ -12,10 +13,18 @@ public class Users : EndpointGroupBase
 {
     public override void Map(WebApplication app)
     {
-        // Anonymous on purpose: the SPA calls this on startup to decide which
-        // navigation to render, so it must never trigger an auth challenge.
+        // "me" is anonymous on purpose: the SPA calls it on startup to decide
+        // which navigation to render, so it must never trigger an auth
+        // challenge. Staff creation is an agency-administrator operation.
         app.MapGroup(this)
-            .MapGet(GetCurrentUser, "me");
+            .MapGet(GetCurrentUser, "me")
+            .MapPost(CreateAgencyUser, policy: Policies.AgencyAdminOnly);
+    }
+
+    public async Task<Created<string>> CreateAgencyUser(ISender sender, CreateAgencyUserCommand command)
+    {
+        var id = await sender.Send(command);
+        return TypedResults.Created($"/users/{id}", id);
     }
 
     // FullName is read from the store rather than a claim so a profile edit

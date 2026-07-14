@@ -14,6 +14,9 @@ namespace RemSolution.Application.Features.SubscriptionPlan.Commands.CreateSubsc
             RuleFor(p => p.MaxClients)
                 .GreaterThan(0);
 
+            RuleFor(p => p.MaxUsers)
+                .GreaterThan(0);
+
             RuleFor(p => p.Price)
                 .GreaterThanOrEqualTo(0);
         }

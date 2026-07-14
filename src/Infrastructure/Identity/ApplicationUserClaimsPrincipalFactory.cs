@@ -13,9 +13,12 @@ namespace RemSolution.Infrastructure.Identity;
 /// agency and get no claim.
 /// Also adds one Permission claim per UserPermission row, so per-permission
 /// policies evaluate against the principal without a lookup. The claims are
-/// minted at sign-in: granting or revoking a permission takes effect on the
-/// next sign-in (refresh the user's security stamp to force it, as
-/// AssignAgencyAsync does for the tenant claim).
+/// minted at sign-in AND re-minted by the security-stamp validator every
+/// ValidationInterval (10 minutes — see the session lifetime strategy in
+/// Infrastructure DependencyInjection), which is what makes grants and
+/// revocations live without version-stamp machinery. Refreshing the user's
+/// security stamp (as AssignAgencyAsync does) forces the update at the next
+/// request instead.
 /// </summary>
 public class ApplicationUserClaimsPrincipalFactory : UserClaimsPrincipalFactory<ApplicationUser, IdentityRole>
 {
