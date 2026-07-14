@@ -58,7 +58,17 @@ public static class DependencyInjection
         {
             options.AddPolicy(Policies.PlatformAdminOnly, policy => policy.RequireRole(Roles.PlatformAdministrator));
             options.AddPolicy(Policies.AgencyAdminOnly, policy => policy.RequireRole(Roles.AgencyAdministrator));
-            options.AddPolicy(Policies.AgencyMember, policy => policy.RequireRole(Roles.AgencyAdministrator, Roles.AgencyStaff));
+
+            // One policy per permission, named after it ("Client.Create", …),
+            // usable both at endpoints and via [Authorize(Policy = ...)] on
+            // requests. The agency administrator passes every permission
+            // policy by role — no claims involved.
+            foreach (var permission in Permissions.All)
+            {
+                options.AddPolicy(permission, policy => policy.RequireAssertion(context =>
+                    context.User.IsInRole(Roles.AgencyAdministrator) ||
+                    context.User.HasClaim(Claims.Permission, permission)));
+            }
         });
     }
 }

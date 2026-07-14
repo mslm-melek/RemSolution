@@ -11,6 +11,7 @@ public class GetCarByIdQueryTests : BaseTestFixture
     [Test]
     public async Task ShouldReturnCarById()
     {
+        await RunAsAgencyAdministratorAsync();
         await AddTestAgencyAsync();
 
         var brand = new Brand { Name = "Tesla" };

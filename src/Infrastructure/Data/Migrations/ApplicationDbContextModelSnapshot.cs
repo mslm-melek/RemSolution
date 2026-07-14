@@ -185,9 +185,6 @@ namespace RemSolution.Infrastructure.Data.Migrations
                         .HasMaxLength(320)
                         .HasColumnType("nvarchar(320)");
 
-                    b.Property<Point>("Location")
-                        .HasColumnType("geography");
-
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(200)
@@ -208,6 +205,45 @@ namespace RemSolution.Infrastructure.Data.Migrations
                     b.HasIndex("CountryId");
 
                     b.ToTable("Agencies");
+                });
+
+            modelBuilder.Entity("RemSolution.Domain.Entities.AgencyFeature", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AgencyId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTimeOffset?>("CreatedOn")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<bool>("Enabled")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Feature")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTimeOffset?>("UpdatedOn")
+                        .HasColumnType("datetimeoffset");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AgencyId", "Feature")
+                        .IsUnique();
+
+                    b.ToTable("AgencyFeatures");
                 });
 
             modelBuilder.Entity("RemSolution.Domain.Entities.AgencySubscription", b =>
@@ -312,6 +348,49 @@ namespace RemSolution.Infrastructure.Data.Migrations
                     b.HasIndex("AgencyId", "OccurredOn");
 
                     b.ToTable("AuditLogs");
+                });
+
+            modelBuilder.Entity("RemSolution.Domain.Entities.Branch", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AgencyId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("CountryId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTimeOffset?>("CreatedOn")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Point>("Location")
+                        .HasColumnType("geography");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTimeOffset?>("UpdatedOn")
+                        .HasColumnType("datetimeoffset");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CountryId");
+
+                    b.HasIndex("AgencyId", "Name");
+
+                    b.ToTable("Branches");
                 });
 
             modelBuilder.Entity("RemSolution.Domain.Entities.Brand", b =>
@@ -1006,6 +1085,44 @@ namespace RemSolution.Infrastructure.Data.Migrations
                     b.ToTable("SubscriptionPlans");
                 });
 
+            modelBuilder.Entity("RemSolution.Domain.Entities.UserPermission", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTimeOffset?>("CreatedOn")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("Permission")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTimeOffset?>("UpdatedOn")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId", "Permission")
+                        .IsUnique();
+
+                    b.ToTable("UserPermissions");
+                });
+
             modelBuilder.Entity("RemSolution.Infrastructure.Identity.ApplicationUser", b =>
                 {
                     b.Property<string>("Id")
@@ -1141,6 +1258,17 @@ namespace RemSolution.Infrastructure.Data.Migrations
                     b.Navigation("Country");
                 });
 
+            modelBuilder.Entity("RemSolution.Domain.Entities.AgencyFeature", b =>
+                {
+                    b.HasOne("RemSolution.Domain.Entities.Agency", "Agency")
+                        .WithMany()
+                        .HasForeignKey("AgencyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Agency");
+                });
+
             modelBuilder.Entity("RemSolution.Domain.Entities.AgencySubscription", b =>
                 {
                     b.HasOne("RemSolution.Domain.Entities.Agency", "Agency")
@@ -1158,6 +1286,25 @@ namespace RemSolution.Infrastructure.Data.Migrations
                     b.Navigation("Agency");
 
                     b.Navigation("Plan");
+                });
+
+            modelBuilder.Entity("RemSolution.Domain.Entities.Branch", b =>
+                {
+                    b.HasOne("RemSolution.Domain.Entities.Agency", "Agency")
+                        .WithMany()
+                        .HasForeignKey("AgencyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("RemSolution.Domain.Entities.Country", "Country")
+                        .WithMany()
+                        .HasForeignKey("CountryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Agency");
+
+                    b.Navigation("Country");
                 });
 
             modelBuilder.Entity("RemSolution.Domain.Entities.Car", b =>
@@ -1362,6 +1509,15 @@ namespace RemSolution.Infrastructure.Data.Migrations
                     b.Navigation("Client");
 
                     b.Navigation("Renting");
+                });
+
+            modelBuilder.Entity("RemSolution.Domain.Entities.UserPermission", b =>
+                {
+                    b.HasOne("RemSolution.Infrastructure.Identity.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("RemSolution.Infrastructure.Identity.ApplicationUser", b =>

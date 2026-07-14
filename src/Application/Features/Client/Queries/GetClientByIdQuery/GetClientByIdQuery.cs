@@ -1,8 +1,12 @@
 using RemSolution.Application.Common.Interfaces;
+using RemSolution.Application.Common.Security;
 using RemSolution.Application.Features.Client.DTOs;
+using RemSolution.Domain.Constants;
 
 namespace RemSolution.Application.Features.Client.Queries.GetClientByIdQuery
 {
+    [Authorize(Policy = Permissions.ClientRead)]
+    [RequiresFeature(FeatureFlags.Clients)]
     public record GetClientByIdQuery(int Id) : IRequest<ClientDto>;
 
     public class GetClientByIdQueryHandler : IRequestHandler<GetClientByIdQuery, ClientDto>

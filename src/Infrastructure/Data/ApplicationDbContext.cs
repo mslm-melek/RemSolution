@@ -18,7 +18,9 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>, IApplica
     }
 
     public DbSet<Agency> Agencies => Set<Agency>();
+    public DbSet<AgencyFeature> AgencyFeatures => Set<AgencyFeature>();
     public DbSet<AgencySubscription> AgencySubscriptions => Set<AgencySubscription>();
+    public DbSet<Branch> Branches => Set<Branch>();
     public DbSet<Brand> Brands => Set<Brand>();
     public DbSet<Car> Cars => Set<Car>();
     public DbSet<Client> Clients => Set<Client>();
@@ -41,6 +43,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>, IApplica
     public DbSet<RentingHistory> RentingHistories => Set<RentingHistory>();
     public DbSet<Reservation> Reservations => Set<Reservation>();
     public DbSet<SubscriptionPlan> SubscriptionPlans => Set<SubscriptionPlan>();
+    public DbSet<UserPermission> UserPermissions => Set<UserPermission>();
 
     public async Task<ITransactionScope> BeginTransactionAsync(CancellationToken cancellationToken)
         => new TransactionScope(await Database.BeginTransactionAsync(cancellationToken));
@@ -94,6 +97,15 @@ IF @result < 0 THROW 51000, 'Failed to acquire the agency write lock.', 1;", can
             .WithMany()
             .HasForeignKey(u => u.AgencyId)
             .OnDelete(DeleteBehavior.SetNull);
+
+        // Configured here rather than in UserPermissionConfiguration because
+        // the Identity user type is not visible from that project layer's
+        // Domain references. Grants die with the user.
+        builder.Entity<UserPermission>()
+            .HasOne<ApplicationUser>()
+            .WithMany()
+            .HasForeignKey(p => p.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
 
         // Tenant isolation: every ITenantEntity is filtered to the current
         // tenant. No tenant (anonymous, platform admin) matches nothing.

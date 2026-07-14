@@ -10,6 +10,7 @@ public class GetClientByIdQueryTests : BaseTestFixture
     [Test]
     public async Task ShouldReturnClientById()
     {
+        await RunAsAgencyAdministratorAsync();
         await AddTestAgencyAsync();
 
         var clientId = await SendAsync(new CreateClientCommand

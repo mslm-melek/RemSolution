@@ -1,11 +1,15 @@
 ﻿using RemSolution.Application.Common.Interfaces;
 using RemSolution.Application.Common.Mappings;
 using RemSolution.Application.Common.Models;
+using RemSolution.Application.Common.Security;
 using RemSolution.Application.Features.Car.DTOs;
+using RemSolution.Domain.Constants;
 using RemSolution.Domain.Enums;
 
 namespace RemSolution.Application.Features.Car.Queries.GetCarsWithPaginationQuery
 {
+    [Authorize(Policy = Permissions.CarRead)]
+    [RequiresFeature(FeatureFlags.Cars)]
     public record GetCarsWithPaginationQuery(
         int PageNumber = 1,
         int PageSize = 10,

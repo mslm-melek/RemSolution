@@ -11,6 +11,8 @@ public class CreateClientTests : BaseTestFixture
     [Test]
     public async Task ShouldRequireMinimumFields()
     {
+        await RunAsAgencyAdministratorAsync();
+
         var command = new CreateClientCommand(); // empty
 
         await FluentActions.Invoking(() =>
@@ -20,6 +22,8 @@ public class CreateClientTests : BaseTestFixture
     [Test]
     public async Task ShouldRequireBirthDate()
     {
+        await RunAsAgencyAdministratorAsync();
+
         var command = new CreateClientCommand
         {
             FirstName = "John",
@@ -33,6 +37,8 @@ public class CreateClientTests : BaseTestFixture
     [Test]
     public async Task ShouldRejectBirthDateInTheFuture()
     {
+        await RunAsAgencyAdministratorAsync();
+
         var command = new CreateClientCommand
         {
             FirstName = "John",
@@ -47,6 +53,8 @@ public class CreateClientTests : BaseTestFixture
     [Test]
     public async Task ShouldRejectInvalidCinFormat()
     {
+        await RunAsAgencyAdministratorAsync();
+
         var command = new CreateClientCommand
         {
             FirstName = "John",
@@ -62,6 +70,8 @@ public class CreateClientTests : BaseTestFixture
     [Test]
     public async Task ShouldRejectIssueDateInTheFuture()
     {
+        await RunAsAgencyAdministratorAsync();
+
         var command = new CreateClientCommand
         {
             FirstName = "John",
@@ -78,6 +88,8 @@ public class CreateClientTests : BaseTestFixture
     [Test]
     public async Task ShouldRejectIssueDateBeforeBirthDate()
     {
+        await RunAsAgencyAdministratorAsync();
+
         var command = new CreateClientCommand
         {
             FirstName = "John",
@@ -94,6 +106,8 @@ public class CreateClientTests : BaseTestFixture
     [Test]
     public async Task ShouldRequireNumberWhenIssueDetailsProvided()
     {
+        await RunAsAgencyAdministratorAsync();
+
         var command = new CreateClientCommand
         {
             FirstName = "John",
@@ -110,6 +124,8 @@ public class CreateClientTests : BaseTestFixture
     [Test]
     public async Task ShouldRejectUnknownCountry()
     {
+        await RunAsAgencyAdministratorAsync();
+
         var command = new CreateClientCommand
         {
             FirstName = "John",
@@ -125,7 +141,7 @@ public class CreateClientTests : BaseTestFixture
     [Test]
     public async Task ShouldCreateClient()
     {
-        var userId = await RunAsDefaultUserAsync();
+        var userId = await RunAsAgencyAdministratorAsync();
 
         var agencyId = await AddTestAgencyAsync();
 

@@ -30,6 +30,7 @@ public class UploadClientDocumentTests : BaseTestFixture
 
     private static async Task<int> CreateTestClientAsync()
     {
+        await RunAsAgencyAdministratorAsync();
         await AddTestAgencyAsync();
 
         return await SendAsync(new CreateClientCommand
@@ -91,6 +92,8 @@ public class UploadClientDocumentTests : BaseTestFixture
     [Test]
     public async Task ShouldRejectDisallowedContentType()
     {
+        await RunAsAgencyAdministratorAsync();
+
         var command = MakeUpload(1, ClientDocumentType.CIN) with
         {
             FileName = "malware.exe",
@@ -104,6 +107,8 @@ public class UploadClientDocumentTests : BaseTestFixture
     [Test]
     public async Task ShouldRejectOversizedFile()
     {
+        await RunAsAgencyAdministratorAsync();
+
         var command = MakeUpload(1, ClientDocumentType.CIN) with
         {
             Length = 6 * 1024 * 1024

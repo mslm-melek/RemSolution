@@ -28,6 +28,9 @@ public static class DependencyInjection
             cfg.RegisterServicesFromAssembly(Assembly.GetExecutingAssembly());
             cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(UnhandledExceptionBehaviour<,>));
             cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(AuthorizationBehaviour<,>));
+            // After authorization (who are you), before validation: a switched-off
+            // module answers 403, never a validation report of what it would want.
+            cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(FeatureEnforcementBehaviour<,>));
             cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(ValidationBehaviour<,>));
             cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(PerformanceBehaviour<,>));
             // Innermost: only requests that pass auth + validation open an audit scope.

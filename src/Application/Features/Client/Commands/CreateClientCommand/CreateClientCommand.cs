@@ -1,11 +1,15 @@
 using RemSolution.Application.Common.Interfaces;
+using RemSolution.Application.Common.Security;
 using RemSolution.Application.Common.Subscriptions;
 using RemSolution.Application.Features.Client.Validation;
+using RemSolution.Domain.Constants;
 
 namespace RemSolution.Application.Features.Client.Commands.CreateClientCommand
 {
     // ISensitiveRequest: carries identity-document numbers — never
     // destructured into logs by the pipeline behaviours.
+    [Authorize(Policy = Permissions.ClientCreate)]
+    [RequiresFeature(FeatureFlags.Clients)]
     public record CreateClientCommand : IRequest<int>, IClientPayload, ISensitiveRequest
     {
         // AgencyId is not accepted from the client: TenantEntityInterceptor

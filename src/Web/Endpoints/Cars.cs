@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http.HttpResults;
 using RemSolution.Application.Common.Models;
+using RemSolution.Domain.Constants;
 using RemSolution.Application.Features.Car.Commands.CreateCarCommand;
 using RemSolution.Application.Features.Car.Commands.DeleteCarCommand;
 using RemSolution.Application.Features.Car.Commands.UpdateCarCommand;
@@ -13,13 +14,16 @@ public class Cars : EndpointGroupBase
 {
     public override void Map(WebApplication app)
     {
+        // Each route demands its permission policy (the commands carry the
+        // same [Authorize(Policy)] for defence in depth); the agency
+        // administrator passes every permission policy by role.
         app.MapGroup(this)
             .RequireAuthorization()
-            .MapGet(GetCars)        
-            .MapGet(GetCarById, "{id}")
-            .MapPost(CreateCar)
-            .MapPut(UpdateCar, "{id}")
-            .MapDelete(DeleteCar, "{id}");
+            .MapGet(GetCars, policy: Permissions.CarRead)
+            .MapGet(GetCarById, "{id}", Permissions.CarRead)
+            .MapPost(CreateCar, policy: Permissions.CarCreate)
+            .MapPut(UpdateCar, "{id}", Permissions.CarUpdate)
+            .MapDelete(DeleteCar, "{id}", Permissions.CarDelete);
     }
 
     public async Task<Ok<PaginatedList<CarDto>>> GetCars(ISender sender, [AsParameters] GetCarsWithPaginationQuery query)

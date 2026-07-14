@@ -7,6 +7,7 @@ using RemSolution.Application.Features.Client.DTOs;
 using RemSolution.Application.Features.Client.Commands.UploadClientDocumentCommand;
 using RemSolution.Application.Features.Client.Queries.GetClientByIdQuery;
 using RemSolution.Application.Features.Client.Queries.GetClientsWithPaginationQuery;
+using RemSolution.Domain.Constants;
 using RemSolution.Domain.Enums;
 
 namespace RemSolution.Web.Endpoints;
@@ -18,18 +19,23 @@ public class Clients : EndpointGroupBase
         var group = app.MapGroup(this)
             .RequireAuthorization();
 
+        // Each route demands its permission policy (the commands carry the
+        // same [Authorize(Policy)] for defence in depth); the agency
+        // administrator passes every permission policy by role.
         group
-            .MapGet(GetClients)
-            .MapGet(GetClientById, "{id}")
-            .MapPost(CreateClient)
-            .MapPut(UpdateClient, "{id}")
-            .MapDelete(DeleteClient, "{id}");
+            .MapGet(GetClients, policy: Permissions.ClientRead)
+            .MapGet(GetClientById, "{id}", Permissions.ClientRead)
+            .MapPost(CreateClient, policy: Permissions.ClientCreate)
+            .MapPut(UpdateClient, "{id}", Permissions.ClientUpdate)
+            .MapDelete(DeleteClient, "{id}", Permissions.ClientDelete);
 
         // The only form-binding endpoint in the API; antiforgery middleware is
         // not configured, so form binding must opt out explicitly. The route
         // is cookie-authenticated like every other endpoint in the group.
+        // Replacing documents is an edit of the client record: Client.Update.
         group.MapPost("{id}/documents/{documentType}", UploadClientDocument)
             .WithName(nameof(UploadClientDocument))
+            .RequireAuthorization(Permissions.ClientUpdate)
             .DisableAntiforgery();
     }
 

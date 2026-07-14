@@ -18,19 +18,24 @@
          [routerLinkActive]="['link-active']"
          [routerLinkActiveOptions]="{ exact: true }"
          (click)="collapse()">Home</a>
+      <!-- Brands and models are reference data of the Cars module. -->
       <a mat-button
+         *ngIf="canAccessCars"
          [routerLink]="['/brand']"
          [routerLinkActive]="['link-active']"
          (click)="collapse()">Car Brands</a>
       <a mat-button
+         *ngIf="canAccessCars"
          [routerLink]="['/model-car']"
          [routerLinkActive]="['link-active']"
          (click)="collapse()">Car Models</a>
       <a mat-button
+         *ngIf="canAccessCars"
          [routerLink]="['/car']"
          [routerLinkActive]="['link-active']"
          (click)="collapse()">Cars</a>
       <a mat-button
+         *ngIf="canAccessClients"
          [routerLink]="['/client']"
          [routerLinkActive]="['link-active']"
          (click)="collapse()">Clients</a>

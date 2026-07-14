@@ -1,5 +1,7 @@
 using RemSolution.Application.Common.Audit;
 using RemSolution.Application.Common.Interfaces;
+using RemSolution.Application.Common.Security;
+using RemSolution.Domain.Constants;
 using RemSolution.Domain.Enums;
 
 namespace RemSolution.Application.Features.Client.Commands.UploadClientDocumentCommand
@@ -9,6 +11,10 @@ namespace RemSolution.Application.Features.Client.Commands.UploadClientDocumentC
     // it irreversibly deletes the previously stored document.
     // ISensitiveRequest: carries the raw document stream — must never be
     // destructured into logs.
+    // Client.Update permission: replacing a client's identity documents is an
+    // edit of the client record, not a permission of its own.
+    [Authorize(Policy = Permissions.ClientUpdate)]
+    [RequiresFeature(FeatureFlags.Clients)]
     [Auditable("UploadClientDocument", "Client")]
     public record UploadClientDocumentCommand : IRequest<string>, ISensitiveRequest
     {

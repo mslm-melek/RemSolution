@@ -13,6 +13,8 @@ public class TenantIsolationTests : BaseTestFixture
     [Test]
     public async Task ShouldNotSeeAnotherAgencysData()
     {
+        await RunAsAgencyAdministratorAsync();
+
         // Agency A creates a car.
         var agencyA = await AddTestAgencyAsync();
 
@@ -49,6 +51,8 @@ public class TenantIsolationTests : BaseTestFixture
     [Test]
     public async Task ShouldNotMoveARowToAnotherAgencyOnUpdate()
     {
+        await RunAsAgencyAdministratorAsync();
+
         var agencyA = await AddTestAgencyAsync();
         var agencyB = await AddTestAgencyAsync();
 
@@ -85,6 +89,8 @@ public class TenantIsolationTests : BaseTestFixture
     [Test]
     public async Task ShouldStampInsertsWithCurrentTenant()
     {
+        await RunAsAgencyAdministratorAsync();
+
         await AddTestAgencyAsync();
         var agencyB = await AddTestAgencyAsync();
 

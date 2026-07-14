@@ -9,9 +9,18 @@ public abstract class Roles
     /// </summary>
     public const string PlatformAdministrator = nameof(PlatformAdministrator);
 
-    /// <summary>Manages one agency (its staff, settings). Tenant-scoped.</summary>
+    /// <summary>
+    /// Manages one agency (its staff, settings). Tenant-scoped. Holds every
+    /// permission implicitly — the per-permission policies accept the role
+    /// itself, no claims required.
+    /// </summary>
     public const string AgencyAdministrator = nameof(AgencyAdministrator);
 
-    /// <summary>Day-to-day agency work (cars, clients, rentals). Tenant-scoped.</summary>
+    /// <summary>
+    /// Day-to-day agency work. Tenant-scoped. The role only labels the user
+    /// as staff — what they can actually do is the set of permission claims
+    /// they hold (see <see cref="Permissions"/>); no authorization is keyed
+    /// on this role.
+    /// </summary>
     public const string AgencyStaff = nameof(AgencyStaff);
 }

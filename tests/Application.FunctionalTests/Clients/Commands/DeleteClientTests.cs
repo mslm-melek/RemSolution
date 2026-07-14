@@ -11,6 +11,7 @@ public class DeleteClientTests : BaseTestFixture
     [Test]
     public async Task ShouldDeleteClient()
     {
+        await RunAsAgencyAdministratorAsync();
         await AddTestAgencyAsync();
 
         var clientId = await SendAsync(new CreateClientCommand
@@ -30,6 +31,7 @@ public class DeleteClientTests : BaseTestFixture
     [Test]
     public async Task ShouldClearSecondDriverReferencesWhenDeleting()
     {
+        await RunAsAgencyAdministratorAsync();
         await AddTestAgencyAsync();
 
         var clientId = await SendAsync(new CreateClientCommand

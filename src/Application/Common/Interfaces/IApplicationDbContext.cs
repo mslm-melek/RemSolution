@@ -5,7 +5,9 @@ namespace RemSolution.Application.Common.Interfaces;
 public interface IApplicationDbContext
 {
     DbSet<Agency> Agencies { get; }
+    DbSet<AgencyFeature> AgencyFeatures { get; }
     DbSet<AgencySubscription> AgencySubscriptions { get; }
+    DbSet<Branch> Branches { get; }
     DbSet<Brand> Brands { get; }
     DbSet<Car> Cars { get; }
     DbSet<Client> Clients { get; }
@@ -20,6 +22,7 @@ public interface IApplicationDbContext
     DbSet<Payment> Payments { get; }
     DbSet<Reservation> Reservations { get; }
     DbSet<SubscriptionPlan> SubscriptionPlans { get; }
+    DbSet<UserPermission> UserPermissions { get; }
     Task<int> SaveChangesAsync(CancellationToken cancellationToken);
 
     Task<ITransactionScope> BeginTransactionAsync(CancellationToken cancellationToken);

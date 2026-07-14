@@ -18,7 +18,7 @@ public class SubscriptionEnforcementTests : BaseTestFixture
     [Test]
     public async Task ShouldBlockCarCreationBeyondPlanLimit()
     {
-        await RunAsDefaultUserAsync();
+        await RunAsAgencyAdministratorAsync();
         await AddTestAgencyAsync(maxCars: 2);
         var modelId = await AddTestModelAsync();
 
@@ -34,7 +34,7 @@ public class SubscriptionEnforcementTests : BaseTestFixture
     [Test]
     public async Task ShouldBlockClientCreationBeyondPlanLimit()
     {
-        await RunAsDefaultUserAsync();
+        await RunAsAgencyAdministratorAsync();
         await AddTestAgencyAsync(maxClients: 1);
 
         await SendAsync(MakeClient("One"));
@@ -48,7 +48,7 @@ public class SubscriptionEnforcementTests : BaseTestFixture
     [Test]
     public async Task ShouldBlockWritesWithoutAnySubscription()
     {
-        await RunAsDefaultUserAsync();
+        await RunAsAgencyAdministratorAsync();
         await AddTestAgencyAsync(withSubscription: false);
         var modelId = await AddTestModelAsync();
 
@@ -59,7 +59,7 @@ public class SubscriptionEnforcementTests : BaseTestFixture
     [Test]
     public async Task ShouldBlockWritesButKeepReadsWhenSubscriptionExpired()
     {
-        await RunAsDefaultUserAsync();
+        await RunAsAgencyAdministratorAsync();
         var agencyId = await AddTestAgencyAsync();
         var modelId = await AddTestModelAsync();
 
@@ -85,7 +85,7 @@ public class SubscriptionEnforcementTests : BaseTestFixture
     [Test]
     public async Task ShouldBlockWritesWhenSubscriptionPeriodLapsed()
     {
-        await RunAsDefaultUserAsync();
+        await RunAsAgencyAdministratorAsync();
         var agencyId = await AddTestAgencyAsync();
         var modelId = await AddTestModelAsync();
 
@@ -107,7 +107,7 @@ public class SubscriptionEnforcementTests : BaseTestFixture
         const int maxCars = 3;
         const int attempts = 10;
 
-        var userId = await RunAsDefaultUserAsync();
+        var userId = await RunAsAgencyAdministratorAsync();
         var agencyId = await AddTestAgencyAsync(maxCars: maxCars);
 
         // The factory shares a single DbConnection across scopes, which cannot

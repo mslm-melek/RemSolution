@@ -1,8 +1,12 @@
 ﻿using RemSolution.Application.Common.Interfaces;
+using RemSolution.Application.Common.Security;
 using RemSolution.Application.Features.Car.DTOs;
+using RemSolution.Domain.Constants;
 
 namespace RemSolution.Application.Features.Car.Queries.GetCarByIdQuery
 {
+    [Authorize(Policy = Permissions.CarRead)]
+    [RequiresFeature(FeatureFlags.Cars)]
     public record GetCarByIdQuery(int Id) : IRequest<CarDto?>;
 
     public class GetCarByIdQueryHandler : IRequestHandler<GetCarByIdQuery, CarDto?>

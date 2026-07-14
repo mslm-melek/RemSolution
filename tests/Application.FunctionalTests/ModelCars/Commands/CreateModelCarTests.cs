@@ -12,6 +12,8 @@ public class CreateModelCarTests : BaseTestFixture
     [Test]
     public async Task ShouldRequireMinimumFields()
     {
+        await RunAsAgencyAdministratorAsync();
+
         var command = new CreateCarCommand(); // empty
 
         await FluentActions.Invoking(() =>

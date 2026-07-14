@@ -11,6 +11,7 @@ public class UpdateClientTests : BaseTestFixture
     [Test]
     public async Task ShouldUpdateClient()
     {
+        await RunAsAgencyAdministratorAsync();
         await AddTestAgencyAsync();
 
         var clientId = await SendAsync(new CreateClientCommand

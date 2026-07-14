@@ -487,6 +487,289 @@ export class AgencySubscriptionsClient implements IAgencySubscriptionsClient {
     }
 }
 
+export interface IBranchesClient {
+    getBranches(): Observable<BranchDto[]>;
+    createBranch(command: CreateBranchCommand): Observable<number>;
+    getBranchById(id: number): Observable<BranchDto>;
+    updateBranch(id: number, command: UpdateBranchCommand): Observable<void>;
+    deleteBranch(id: number): Observable<void>;
+}
+
+@Injectable({
+    providedIn: 'root'
+})
+export class BranchesClient implements IBranchesClient {
+    private http: HttpClient;
+    private baseUrl: string;
+    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
+
+    constructor(@Inject(HttpClient) http: HttpClient, @Optional() @Inject(API_BASE_URL) baseUrl?: string) {
+        this.http = http;
+        this.baseUrl = baseUrl ?? "";
+    }
+
+    getBranches(): Observable<BranchDto[]> {
+        let url_ = this.baseUrl + "/api/Branches";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetBranches(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetBranches(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<BranchDto[]>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<BranchDto[]>;
+        }));
+    }
+
+    protected processGetBranches(response: HttpResponseBase): Observable<BranchDto[]> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            if (Array.isArray(resultData200)) {
+                result200 = [] as any;
+                for (let item of resultData200)
+                    result200!.push(BranchDto.fromJS(item));
+            }
+            else {
+                result200 = <any>null;
+            }
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    createBranch(command: CreateBranchCommand): Observable<number> {
+        let url_ = this.baseUrl + "/api/Branches";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(command);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processCreateBranch(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processCreateBranch(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<number>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<number>;
+        }));
+    }
+
+    protected processCreateBranch(response: HttpResponseBase): Observable<number> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 201) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result201: any = null;
+            let resultData201 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+                result201 = resultData201 !== undefined ? resultData201 : <any>null;
+    
+            return _observableOf(result201);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getBranchById(id: number): Observable<BranchDto> {
+        let url_ = this.baseUrl + "/api/Branches/{id}";
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetBranchById(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetBranchById(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<BranchDto>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<BranchDto>;
+        }));
+    }
+
+    protected processGetBranchById(response: HttpResponseBase): Observable<BranchDto> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = BranchDto.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    updateBranch(id: number, command: UpdateBranchCommand): Observable<void> {
+        let url_ = this.baseUrl + "/api/Branches/{id}";
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(command);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+            })
+        };
+
+        return this.http.request("put", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processUpdateBranch(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processUpdateBranch(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processUpdateBranch(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return _observableOf(null as any);
+            }));
+        } else if (status === 400) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("A server side error occurred.", status, _responseText, _headers);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    deleteBranch(id: number): Observable<void> {
+        let url_ = this.baseUrl + "/api/Branches/{id}";
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+            })
+        };
+
+        return this.http.request("delete", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processDeleteBranch(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processDeleteBranch(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processDeleteBranch(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return _observableOf(null as any);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+}
+
 export interface IBrandsClient {
     getBrands(): Observable<BrandDto[]>;
     createBrand(command: CreateBrandCommand): Observable<number>;
@@ -2425,8 +2708,6 @@ export class AgencyDto implements IAgencyDto {
     address?: string | undefined;
     countryId?: number;
     countryName?: string | undefined;
-    latitude?: number | undefined;
-    longitude?: number | undefined;
 
     constructor(data?: IAgencyDto) {
         if (data) {
@@ -2446,8 +2727,6 @@ export class AgencyDto implements IAgencyDto {
             this.address = _data["address"];
             this.countryId = _data["countryId"];
             this.countryName = _data["countryName"];
-            this.latitude = _data["latitude"];
-            this.longitude = _data["longitude"];
         }
     }
 
@@ -2467,8 +2746,6 @@ export class AgencyDto implements IAgencyDto {
         data["address"] = this.address;
         data["countryId"] = this.countryId;
         data["countryName"] = this.countryName;
-        data["latitude"] = this.latitude;
-        data["longitude"] = this.longitude;
         return data;
     }
 }
@@ -2481,8 +2758,6 @@ export interface IAgencyDto {
     address?: string | undefined;
     countryId?: number;
     countryName?: string | undefined;
-    latitude?: number | undefined;
-    longitude?: number | undefined;
 }
 
 export class CreateAgencyCommand implements ICreateAgencyCommand {
@@ -2491,8 +2766,6 @@ export class CreateAgencyCommand implements ICreateAgencyCommand {
     phoneNumber?: string | undefined;
     address?: string | undefined;
     countryId?: number;
-    latitude?: number | undefined;
-    longitude?: number | undefined;
 
     constructor(data?: ICreateAgencyCommand) {
         if (data) {
@@ -2510,8 +2783,6 @@ export class CreateAgencyCommand implements ICreateAgencyCommand {
             this.phoneNumber = _data["phoneNumber"];
             this.address = _data["address"];
             this.countryId = _data["countryId"];
-            this.latitude = _data["latitude"];
-            this.longitude = _data["longitude"];
         }
     }
 
@@ -2529,8 +2800,6 @@ export class CreateAgencyCommand implements ICreateAgencyCommand {
         data["phoneNumber"] = this.phoneNumber;
         data["address"] = this.address;
         data["countryId"] = this.countryId;
-        data["latitude"] = this.latitude;
-        data["longitude"] = this.longitude;
         return data;
     }
 }
@@ -2541,8 +2810,6 @@ export interface ICreateAgencyCommand {
     phoneNumber?: string | undefined;
     address?: string | undefined;
     countryId?: number;
-    latitude?: number | undefined;
-    longitude?: number | undefined;
 }
 
 export class UpdateAgencyCommand implements IUpdateAgencyCommand {
@@ -2552,8 +2819,6 @@ export class UpdateAgencyCommand implements IUpdateAgencyCommand {
     phoneNumber?: string | undefined;
     address?: string | undefined;
     countryId?: number;
-    latitude?: number | undefined;
-    longitude?: number | undefined;
 
     constructor(data?: IUpdateAgencyCommand) {
         if (data) {
@@ -2572,8 +2837,6 @@ export class UpdateAgencyCommand implements IUpdateAgencyCommand {
             this.phoneNumber = _data["phoneNumber"];
             this.address = _data["address"];
             this.countryId = _data["countryId"];
-            this.latitude = _data["latitude"];
-            this.longitude = _data["longitude"];
         }
     }
 
@@ -2592,8 +2855,6 @@ export class UpdateAgencyCommand implements IUpdateAgencyCommand {
         data["phoneNumber"] = this.phoneNumber;
         data["address"] = this.address;
         data["countryId"] = this.countryId;
-        data["latitude"] = this.latitude;
-        data["longitude"] = this.longitude;
         return data;
     }
 }
@@ -2605,8 +2866,6 @@ export interface IUpdateAgencyCommand {
     phoneNumber?: string | undefined;
     address?: string | undefined;
     countryId?: number;
-    latitude?: number | undefined;
-    longitude?: number | undefined;
 }
 
 export class AgencySubscriptionDto implements IAgencySubscriptionDto {
@@ -2781,6 +3040,162 @@ export interface IUpdateAgencySubscriptionCommand {
     id?: number;
     status?: SubscriptionStatus;
     endDate?: Date;
+}
+
+export class BranchDto implements IBranchDto {
+    id?: number;
+    name?: string;
+    countryId?: number;
+    countryName?: string | undefined;
+    latitude?: number | undefined;
+    longitude?: number | undefined;
+
+    constructor(data?: IBranchDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.name = _data["name"];
+            this.countryId = _data["countryId"];
+            this.countryName = _data["countryName"];
+            this.latitude = _data["latitude"];
+            this.longitude = _data["longitude"];
+        }
+    }
+
+    static fromJS(data: any): BranchDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new BranchDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["name"] = this.name;
+        data["countryId"] = this.countryId;
+        data["countryName"] = this.countryName;
+        data["latitude"] = this.latitude;
+        data["longitude"] = this.longitude;
+        return data;
+    }
+}
+
+export interface IBranchDto {
+    id?: number;
+    name?: string;
+    countryId?: number;
+    countryName?: string | undefined;
+    latitude?: number | undefined;
+    longitude?: number | undefined;
+}
+
+export class CreateBranchCommand implements ICreateBranchCommand {
+    name?: string;
+    countryId?: number;
+    latitude?: number | undefined;
+    longitude?: number | undefined;
+
+    constructor(data?: ICreateBranchCommand) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.name = _data["name"];
+            this.countryId = _data["countryId"];
+            this.latitude = _data["latitude"];
+            this.longitude = _data["longitude"];
+        }
+    }
+
+    static fromJS(data: any): CreateBranchCommand {
+        data = typeof data === 'object' ? data : {};
+        let result = new CreateBranchCommand();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["name"] = this.name;
+        data["countryId"] = this.countryId;
+        data["latitude"] = this.latitude;
+        data["longitude"] = this.longitude;
+        return data;
+    }
+}
+
+export interface ICreateBranchCommand {
+    name?: string;
+    countryId?: number;
+    latitude?: number | undefined;
+    longitude?: number | undefined;
+}
+
+export class UpdateBranchCommand implements IUpdateBranchCommand {
+    id?: number;
+    name?: string;
+    countryId?: number;
+    latitude?: number | undefined;
+    longitude?: number | undefined;
+
+    constructor(data?: IUpdateBranchCommand) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.name = _data["name"];
+            this.countryId = _data["countryId"];
+            this.latitude = _data["latitude"];
+            this.longitude = _data["longitude"];
+        }
+    }
+
+    static fromJS(data: any): UpdateBranchCommand {
+        data = typeof data === 'object' ? data : {};
+        let result = new UpdateBranchCommand();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["name"] = this.name;
+        data["countryId"] = this.countryId;
+        data["latitude"] = this.latitude;
+        data["longitude"] = this.longitude;
+        return data;
+    }
+}
+
+export interface IUpdateBranchCommand {
+    id?: number;
+    name?: string;
+    countryId?: number;
+    latitude?: number | undefined;
+    longitude?: number | undefined;
 }
 
 export class BrandDto implements IBrandDto {
@@ -4114,6 +4529,8 @@ export class CurrentUserDto implements ICurrentUserDto {
     isAuthenticated?: boolean;
     userName?: string | undefined;
     fullName?: string | undefined;
+    permissions?: string[];
+    features?: string[];
 
     constructor(data?: ICurrentUserDto) {
         if (data) {
@@ -4129,6 +4546,16 @@ export class CurrentUserDto implements ICurrentUserDto {
             this.isAuthenticated = _data["isAuthenticated"];
             this.userName = _data["userName"];
             this.fullName = _data["fullName"];
+            if (Array.isArray(_data["permissions"])) {
+                this.permissions = [] as any;
+                for (let item of _data["permissions"])
+                    this.permissions!.push(item);
+            }
+            if (Array.isArray(_data["features"])) {
+                this.features = [] as any;
+                for (let item of _data["features"])
+                    this.features!.push(item);
+            }
         }
     }
 
@@ -4144,6 +4571,16 @@ export class CurrentUserDto implements ICurrentUserDto {
         data["isAuthenticated"] = this.isAuthenticated;
         data["userName"] = this.userName;
         data["fullName"] = this.fullName;
+        if (Array.isArray(this.permissions)) {
+            data["permissions"] = [];
+            for (let item of this.permissions)
+                data["permissions"].push(item);
+        }
+        if (Array.isArray(this.features)) {
+            data["features"] = [];
+            for (let item of this.features)
+                data["features"].push(item);
+        }
         return data;
     }
 }
@@ -4152,6 +4589,8 @@ export interface ICurrentUserDto {
     isAuthenticated?: boolean;
     userName?: string | undefined;
     fullName?: string | undefined;
+    permissions?: string[];
+    features?: string[];
 }
 
 export interface FileParameter {

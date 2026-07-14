@@ -12,6 +12,8 @@ public class CreateCarTests : BaseTestFixture
     [Test]
     public async Task ShouldRequireMinimumFields()
     {
+        await RunAsAgencyAdministratorAsync();
+
         var command = new CreateCarCommand(); // empty
 
         await FluentActions.Invoking(() =>
@@ -21,7 +23,7 @@ public class CreateCarTests : BaseTestFixture
     [Test]
     public async Task ShouldCreateCar()
     {
-        var userId = await RunAsDefaultUserAsync();
+        var userId = await RunAsAgencyAdministratorAsync();
 
         var agencyId = await AddTestAgencyAsync();
 

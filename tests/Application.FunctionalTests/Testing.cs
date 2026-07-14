@@ -77,6 +77,25 @@ public partial class Testing
         return await RunAsUserAsync("platformadmin@local", "PlatformAdmin1234!", new[] { Roles.PlatformAdministrator });
     }
 
+    public static async Task<string> RunAsAgencyAdministratorAsync()
+    {
+        return await RunAsUserAsync("agencyadmin@local", "AgencyAdmin1234!", new[] { Roles.AgencyAdministrator });
+    }
+
+    // Staff capability is the set of permission grants, not the role: pass
+    // exactly the permissions the test needs (none to test denial).
+    public static async Task<string> RunAsAgencyStaffAsync(params string[] permissions)
+    {
+        var userId = await RunAsUserAsync("agencystaff@local", "AgencyStaff1234!", new[] { Roles.AgencyStaff });
+
+        foreach (var permission in permissions)
+        {
+            await AddAsync(new UserPermission { UserId = userId, Permission = permission });
+        }
+
+        return userId;
+    }
+
     public static async Task<string> RunAsUserAsync(string userName, string password, string[] roles)
     {
         using var scope = _scopeFactory.CreateScope();

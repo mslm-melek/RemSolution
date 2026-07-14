@@ -1,9 +1,13 @@
 ﻿using RemSolution.Application.Common.Interfaces;
+using RemSolution.Application.Common.Security;
 using RemSolution.Application.Common.Subscriptions;
+using RemSolution.Domain.Constants;
 using RemSolution.Domain.Enums;
 
 namespace RemSolution.Application.Features.Car.Commands.CreateCarCommand
 {
+    [Authorize(Policy = Permissions.CarCreate)]
+    [RequiresFeature(FeatureFlags.Cars)]
     public record CreateCarCommand : IRequest<int>
     {
         // AgencyId is not accepted from the client: TenantEntityInterceptor

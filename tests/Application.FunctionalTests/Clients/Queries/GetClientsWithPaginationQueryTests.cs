@@ -10,6 +10,7 @@ public class GetClientsWithPaginationQueryTests : BaseTestFixture
     [Test]
     public async Task ShouldReturnPaginatedClients()
     {
+        await RunAsAgencyAdministratorAsync();
         await AddTestAgencyAsync();
 
         await SendAsync(new CreateClientCommand { FirstName = "John", LastName = "Doe", BirthDate = new DateTime(1990, 5, 20) });
@@ -26,6 +27,7 @@ public class GetClientsWithPaginationQueryTests : BaseTestFixture
     [Test]
     public async Task ShouldFilterBySearch()
     {
+        await RunAsAgencyAdministratorAsync();
         await AddTestAgencyAsync();
 
         await SendAsync(new CreateClientCommand { FirstName = "John", LastName = "Doe", BirthDate = new DateTime(1990, 5, 20) });

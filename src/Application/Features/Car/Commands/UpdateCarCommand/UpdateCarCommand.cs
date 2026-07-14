@@ -1,8 +1,12 @@
 ﻿using RemSolution.Application.Common.Interfaces;
+using RemSolution.Application.Common.Security;
+using RemSolution.Domain.Constants;
 using RemSolution.Domain.Enums;
 
 namespace RemSolution.Application.Features.Car.Commands.UpdateCarCommand
 {
+    [Authorize(Policy = Permissions.CarUpdate)]
+    [RequiresFeature(FeatureFlags.Cars)]
     public record UpdateCarCommand : IRequest
     {
         public int Id { get; init; }

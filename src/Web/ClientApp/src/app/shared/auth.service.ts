@@ -15,4 +15,14 @@ export class AuthService {
       shareReplay(1)
     );
   }
+
+  // A module is visible when the agency has the feature switched on AND the
+  // user holds the module's read permission (agency administrators get every
+  // permission from the API). Names must match the Domain constants
+  // (FeatureFlags / Permissions); the API enforces the same pair, so hiding
+  // here never out-privileges the backend.
+  static canAccessModule(user: CurrentUserDto, feature: string, readPermission: string): boolean {
+    return !!user.features?.includes(feature)
+        && !!user.permissions?.includes(readPermission);
+  }
 }

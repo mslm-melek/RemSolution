@@ -1,8 +1,8 @@
 using NetTopologySuite.Geometries;
 
-namespace RemSolution.Application.Features.Agency
+namespace RemSolution.Application.Features.Branch
 {
-    public static class AgencyLocation
+    public static class BranchLocation
     {
         // WGS 84 — the SRID SQL Server geography expects for GPS coordinates.
         public const int Srid = 4326;

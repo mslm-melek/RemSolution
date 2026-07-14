@@ -45,7 +45,7 @@ public class AgencySubscriptionCommandsTests : BaseTestFixture
     [Test]
     public async Task GetMySubscriptionShouldReportPlanAndUsage()
     {
-        await RunAsDefaultUserAsync();
+        await RunAsAgencyAdministratorAsync();
         await AddTestAgencyAsync(maxCars: 10, maxClients: 20);
 
         var brand = new Brand { Name = "Tesla" };

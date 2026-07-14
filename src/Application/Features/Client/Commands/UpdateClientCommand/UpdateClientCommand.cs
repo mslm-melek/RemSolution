@@ -1,12 +1,16 @@
 using RemSolution.Application.Common.Audit;
 using RemSolution.Application.Common.Interfaces;
+using RemSolution.Application.Common.Security;
 using RemSolution.Application.Features.Client.Validation;
+using RemSolution.Domain.Constants;
 
 namespace RemSolution.Application.Features.Client.Commands.UpdateClientCommand
 {
     // Auditable: rewrites every identity field (CIN, passeport, licence),
     // so the before/after trail is mandatory for fraud investigations.
     // ISensitiveRequest: those same fields must never reach the logs.
+    [Authorize(Policy = Permissions.ClientUpdate)]
+    [RequiresFeature(FeatureFlags.Clients)]
     [Auditable("UpdateClient", "Client")]
     public record UpdateClientCommand : IRequest, IClientPayload, ISensitiveRequest
     {

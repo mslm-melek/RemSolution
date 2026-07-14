@@ -13,8 +13,6 @@ namespace RemSolution.Application.Features.Agency.Commands.UpdateAgencyCommand
         public string? PhoneNumber { get; init; }
         public string? Address { get; init; }
         public int CountryId { get; init; }
-        public double? Latitude { get; init; }
-        public double? Longitude { get; init; }
     }
 
     public class UpdateAgencyCommandHandler : IRequestHandler<UpdateAgencyCommand>
@@ -38,7 +36,6 @@ namespace RemSolution.Application.Features.Agency.Commands.UpdateAgencyCommand
             entity.PhoneNumber = request.PhoneNumber;
             entity.Address = request.Address;
             entity.CountryId = request.CountryId;
-            entity.Location = AgencyLocation.ToPoint(request.Latitude, request.Longitude);
 
             await _context.SaveChangesAsync(cancellationToken);
         }

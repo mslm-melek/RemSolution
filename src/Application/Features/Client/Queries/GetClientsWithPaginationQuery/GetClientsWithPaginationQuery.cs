@@ -1,10 +1,14 @@
 using RemSolution.Application.Common.Interfaces;
 using RemSolution.Application.Common.Mappings;
 using RemSolution.Application.Common.Models;
+using RemSolution.Application.Common.Security;
 using RemSolution.Application.Features.Client.DTOs;
+using RemSolution.Domain.Constants;
 
 namespace RemSolution.Application.Features.Client.Queries.GetClientsWithPaginationQuery
 {
+    [Authorize(Policy = Permissions.ClientRead)]
+    [RequiresFeature(FeatureFlags.Clients)]
     public record GetClientsWithPaginationQuery(
         int PageNumber = 1,
         int PageSize = 10,

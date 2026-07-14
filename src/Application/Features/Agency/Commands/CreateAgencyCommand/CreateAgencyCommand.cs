@@ -12,8 +12,6 @@ namespace RemSolution.Application.Features.Agency.Commands.CreateAgencyCommand
         public string? PhoneNumber { get; init; }
         public string? Address { get; init; }
         public int CountryId { get; init; }
-        public double? Latitude { get; init; }
-        public double? Longitude { get; init; }
     }
 
     public class CreateAgencyCommandHandler : IRequestHandler<CreateAgencyCommand, int>
@@ -34,7 +32,6 @@ namespace RemSolution.Application.Features.Agency.Commands.CreateAgencyCommand
                 PhoneNumber = request.PhoneNumber,
                 Address = request.Address,
                 CountryId = request.CountryId,
-                Location = AgencyLocation.ToPoint(request.Latitude, request.Longitude),
             };
 
             _context.Agencies.Add(entity);
