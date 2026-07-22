@@ -74,6 +74,8 @@ public static class DependencyInjection
 
         builder.Services.Configure<FileStorageOptions>(builder.Configuration.GetSection(FileStorageOptions.SectionName));
         builder.Services.AddSingleton<IFileStorage, LocalFileStorage>();
+        // Scoped: depends on the scoped IApplicationDbContext for dedup lookups.
+        builder.Services.AddScoped<IStoredFileService, StoredFileService>();
 
         builder.Services.AddTransient<IIdentityService, IdentityService>();
         builder.Services.AddScoped<ICrossTenantAccess, CrossTenantAccess>();

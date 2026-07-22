@@ -13,7 +13,7 @@ namespace RemSolution.Application.Features.Car.Commands.UpdateCarCommand
         public int? ModelId { get; init; }
         public DateTime FirstCirculationDate { get; init; }
         public string? Color { get; init; }
-        public string? ImageUrl { get; init; }
+        // The photo is owned by UploadCarPhotoCommand; see CreateCarCommand.
         public int? Power { get; init; }
         public FuelType? FuelType { get; init; }
     }
@@ -37,7 +37,6 @@ namespace RemSolution.Application.Features.Car.Commands.UpdateCarCommand
             entity.ModelId = request.ModelId;
             entity.FirstCirculationDate = request.FirstCirculationDate;
             entity.Color = request.Color;
-            entity.ImageUrl = request.ImageUrl;
             entity.Power = request.Power;
             entity.FuelType = request.FuelType;
 

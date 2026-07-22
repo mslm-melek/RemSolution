@@ -24,5 +24,11 @@ public class ExpenseConfiguration : IEntityTypeConfiguration<Expense>
                .WithMany(et => et.Expenses) // si navigation dans ExpenseType
                .HasForeignKey(e => e.ExpenseTypeId)
                .OnDelete(DeleteBehavior.Restrict);
+
+        // Facture file FK (dormant until the Expense upload flow is built).
+        builder.HasOne(e => e.FactureFile)
+               .WithMany()
+               .HasForeignKey(e => e.FactureFileId)
+               .OnDelete(DeleteBehavior.Restrict);
     }
 }

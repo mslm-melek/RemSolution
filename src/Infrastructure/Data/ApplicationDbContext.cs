@@ -42,6 +42,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>, IApplica
     public DbSet<Renting> Rentings => Set<Renting>();
     public DbSet<RentingHistory> RentingHistories => Set<RentingHistory>();
     public DbSet<Reservation> Reservations => Set<Reservation>();
+    public DbSet<StoredFile> StoredFiles => Set<StoredFile>();
     public DbSet<SubscriptionPlan> SubscriptionPlans => Set<SubscriptionPlan>();
     public DbSet<UserPermission> UserPermissions => Set<UserPermission>();
 

@@ -10,7 +10,11 @@
         public virtual ExpenseType? ExpenseType { get; set; }
         public DateTime ExpenseDate { get; set; } = DateTime.Now;
         public decimal? ExpenseAmount { get; set; }
-        public string? FactureImageUrl { get; set; }
+        // Facture image as a StoredFile FK for schema consistency. The Expense
+        // feature slice (and its upload flow) is not built yet, so nothing
+        // populates this today — it is the deferred half of the StoredFile work.
+        public int? FactureFileId { get; set; }
+        public virtual StoredFile? FactureFile { get; set; }
         public string? Description { get; set; }
 
 

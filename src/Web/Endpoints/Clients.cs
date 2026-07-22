@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using RemSolution.Application.Common.Models;
 using RemSolution.Application.Features.Client.Commands.CreateClientCommand;
 using RemSolution.Application.Features.Client.Commands.DeleteClientCommand;
+using RemSolution.Application.Features.Client.Commands.FlagClientCommand;
 using RemSolution.Application.Features.Client.Commands.UpdateClientCommand;
 using RemSolution.Application.Features.Client.DTOs;
 using RemSolution.Application.Features.Client.Commands.UploadClientDocumentCommand;
@@ -27,6 +28,9 @@ public class Clients : EndpointGroupBase
             .MapGet(GetClientById, "{id}", Permissions.ClientRead)
             .MapPost(CreateClient, policy: Permissions.ClientCreate)
             .MapPut(UpdateClient, "{id}", Permissions.ClientUpdate)
+            // Raising/clearing the bad-client flag is an edit of the client
+            // record: Client.Update.
+            .MapPut(FlagClient, "{id}/flag", Permissions.ClientUpdate)
             .MapDelete(DeleteClient, "{id}", Permissions.ClientDelete);
 
         // The only form-binding endpoint in the API; antiforgery middleware is
@@ -61,6 +65,16 @@ public class Clients : EndpointGroupBase
     }
 
     public async Task<Results<NoContent, BadRequest>> UpdateClient(ISender sender, int id, UpdateClientCommand command)
+    {
+        if (id != command.Id)
+            return TypedResults.BadRequest();
+
+        await sender.Send(command);
+
+        return TypedResults.NoContent();
+    }
+
+    public async Task<Results<NoContent, BadRequest>> FlagClient(ISender sender, int id, FlagClientCommand command)
     {
         if (id != command.Id)
             return TypedResults.BadRequest();

@@ -51,10 +51,19 @@
         </mat-select>
       </mat-form-field>
 
-      <mat-form-field appearance="outline" class="span-2">
-        <mat-label>Image URL</mat-label>
-        <input matInput formControlName="imageUrl" placeholder="https://…" />
-      </mat-form-field>
+      <div class="span-2 photo-panel">
+        <label class="photo-label">Photo</label>
+        <img *ngIf="photoUrl" [src]="photoUrl" alt="Car photo" class="photo-preview" />
+        <p *ngIf="!isEdit" class="photo-hint">Save the car first, then upload a photo.</p>
+        <div *ngIf="isEdit" class="photo-actions">
+          <button mat-stroked-button type="button" (click)="photoInput.click()" [disabled]="uploadingPhoto">
+            <mat-icon>photo_camera</mat-icon>
+            {{ uploadingPhoto ? 'Uploading…' : (photoUrl ? 'Replace photo' : 'Upload photo') }}
+          </button>
+          <input #photoInput type="file" accept="image/png,image/jpeg,image/webp" hidden
+                 (change)="onPhotoSelected(photoInput)" />
+        </div>
+      </div>
     </div>
 
     <div class="actions-row">

@@ -26,6 +26,9 @@ namespace RemSolution.Application.Features.Client.DTOs
         public string? DrivingLicenceImageUrl { get; init; }
         public string? PasserportImageUrl { get; init; }
         public string? Description { get; init; }
+        // Per-agency bad-client flag and its moderation notes (see Client entity).
+        public bool IsFlagged { get; init; }
+        public string? Notes { get; init; }
         public string? MarketplaceUserId { get; init; }
 
         public class Mapping : IRegister
@@ -33,7 +36,12 @@ namespace RemSolution.Application.Features.Client.DTOs
             public void Register(TypeAdapterConfig config)
             {
                 config.NewConfig<Domain.Entities.Client, ClientDto>()
-                      .Map(dest => dest.BirthCountryName, src => src.BirthCountry != null ? src.BirthCountry.Name : null);
+                      .Map(dest => dest.BirthCountryName, src => src.BirthCountry != null ? src.BirthCountry.Name : null)
+                      // Document URLs now live on StoredFile records; surface the
+                      // plain URL so the API contract is unchanged for readers.
+                      .Map(dest => dest.CINImageUrl, src => src.CINFile != null ? src.CINFile.Url : null)
+                      .Map(dest => dest.DrivingLicenceImageUrl, src => src.DrivingLicenceFile != null ? src.DrivingLicenceFile.Url : null)
+                      .Map(dest => dest.PasserportImageUrl, src => src.PasseportFile != null ? src.PasseportFile.Url : null);
             }
         }
     }

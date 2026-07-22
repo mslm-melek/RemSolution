@@ -25,10 +25,25 @@
         public string? DrivingLicenceDeliverancePlace { get; set; }
         public int? DrivingLicenceDeliveranceCountryId { get; set; }
         public virtual Country? DrivingLicenceDeliveranceCountry { get; set; }
-        public string? CINImageUrl { get; set; }
-        public string? DrivingLicenceImageUrl { get; set; }
-        public string? PasserportImageUrl { get; set; }
+        // Identity-document images are StoredFile records, not raw URL strings:
+        // size/mime/SHA-256/uploader travel with each file. Managed solely by
+        // UploadClientDocumentCommand; the ClientDto still surfaces the plain URL.
+        public int? CINFileId { get; set; }
+        public virtual StoredFile? CINFile { get; set; }
+        public int? DrivingLicenceFileId { get; set; }
+        public virtual StoredFile? DrivingLicenceFile { get; set; }
+        public int? PasseportFileId { get; set; }
+        public virtual StoredFile? PasseportFile { get; set; }
         public string? Description { get; set; }
+        // Per-agency bad-client flag: a risk signal raised by the owning agency,
+        // with free-text Notes carrying the reason. Deliberately NOT a
+        // cross-agency blacklist — the flag lives on this tenant's Client row
+        // and never leaks across agencies (the row is already tenant-scoped by
+        // AgencyId + global query filters). Notes are internal moderation text,
+        // distinct from the client-facing Description. Set only via
+        // FlagClientCommand, which audits the change.
+        public bool IsFlagged { get; set; }
+        public string? Notes { get; set; }
         // Phase 6 marketplace: a self-registered marketplace user has one
         // global account and a linked Client row per agency; null for
         // agency-created clients.

@@ -29,7 +29,7 @@ public class CarTests
             },
             Color = color,
             FirstCirculationDate = firstCirculation,
-            ImageUrl = "http://example.com/car.jpg",
+            PhotoFileId = 42,
             Power = 120,
             FuelType = FuelType.Gasoline
         };
@@ -41,7 +41,7 @@ public class CarTests
         car.Model.Brand!.Name.Should().Be("Tesla");
         car.Color.Should().Be(color);
         car.FirstCirculationDate.Should().Be(firstCirculation);
-        car.ImageUrl.Should().Be("http://example.com/car.jpg");
+        car.PhotoFileId.Should().Be(42);
         car.Power.Should().Be(120);
         car.FuelType.Should().Be(FuelType.Gasoline);
     }
@@ -54,12 +54,13 @@ public class CarTests
         {
             Matricule = "XYZ-789",
             FirstCirculationDate = DateTime.UtcNow
-            // No Color, ImageUrl, ModelId, etc.
+            // No Color, PhotoFile, ModelId, etc.
         };
 
         // Assert
         car.Color.Should().BeNull();
-        car.ImageUrl.Should().BeNull();
+        car.PhotoFileId.Should().BeNull();
+        car.PhotoFile.Should().BeNull();
         car.Model.Should().BeNull();
         car.Expenses.Should().BeNull();
         car.Rentings.Should().BeNull();

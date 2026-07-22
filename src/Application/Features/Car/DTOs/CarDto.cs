@@ -19,7 +19,10 @@ namespace RemSolution.Application.Features.Car.DTOs
             public void Register(TypeAdapterConfig config)
             {
                 config.NewConfig<Domain.Entities.Car, CarDto>()
-                      .Map(dest => dest.ModelName, src => src.Model != null ? src.Model.Name : string.Empty);
+                      .Map(dest => dest.ModelName, src => src.Model != null ? src.Model.Name : string.Empty)
+                      // The photo now lives on a StoredFile; surface the plain
+                      // URL so the API contract is unchanged for readers.
+                      .Map(dest => dest.ImageUrl, src => src.PhotoFile != null ? src.PhotoFile.Url : null);
             }
         }
     }

@@ -3,7 +3,7 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
   CarsClient, CarDto, CreateCarCommand, UpdateCarCommand,
-  FuelType, ModelCarsClient, ModelCarDto
+  FuelType, ModelCarsClient, ModelCarDto, FileParameter
 } from '../web-api-client';
 import { toDateInput, fromDateInput, extractValidationErrors } from '../shared/form-utils';
 
@@ -18,6 +18,11 @@ export class CarFormComponent implements OnInit {
   carId?: number;
   saving = false;
   errorMessage = '';
+
+  // The photo is uploaded separately (multipart), like client documents, and is
+  // only available once the car exists. photoUrl is display-only.
+  photoUrl?: string;
+  uploadingPhoto = false;
 
   fuelTypes = [
     { value: FuelType.Gasoline, label: 'Gasoline' },
@@ -37,8 +42,7 @@ export class CarFormComponent implements OnInit {
       firstCirculationDate: ['', Validators.required],
       color: [''],
       power: [null],
-      fuelType: [null],
-      imageUrl: ['']
+      fuelType: [null]
     });
   }
 
@@ -72,9 +76,9 @@ export class CarFormComponent implements OnInit {
       firstCirculationDate: toDateInput(dto.firstCirculationDate),
       color: dto.color ?? '',
       power: dto.power ?? null,
-      fuelType: dto.fuelType ?? null,
-      imageUrl: dto.imageUrl ?? ''
+      fuelType: dto.fuelType ?? null
     });
+    this.photoUrl = dto.imageUrl ?? undefined;
   }
 
   save() {
@@ -93,7 +97,6 @@ export class CarFormComponent implements OnInit {
         modelId: v.modelId,
         firstCirculationDate: fromDateInput(v.firstCirculationDate),
         color: v.color || undefined,
-        imageUrl: v.imageUrl || undefined,
         power: v.power ?? undefined,
         fuelType: v.fuelType ?? undefined
       });
@@ -107,7 +110,6 @@ export class CarFormComponent implements OnInit {
         modelId: v.modelId,
         firstCirculationDate: fromDateInput(v.firstCirculationDate),
         color: v.color || undefined,
-        imageUrl: v.imageUrl || undefined,
         power: v.power ?? undefined,
         fuelType: v.fuelType ?? undefined
       });
@@ -116,6 +118,27 @@ export class CarFormComponent implements OnInit {
         error: err => this.handleError(err)
       });
     }
+  }
+
+  onPhotoSelected(input: HTMLInputElement) {
+    const file = input.files?.[0];
+    input.value = ''; // allow re-selecting the same file
+    if (!file || !this.carId) return;
+
+    this.uploadingPhoto = true;
+    this.errorMessage = '';
+    const parameter: FileParameter = { data: file, fileName: file.name };
+
+    this.client.uploadCarPhoto(this.carId, parameter).subscribe({
+      next: url => {
+        this.photoUrl = url;
+        this.uploadingPhoto = false;
+      },
+      error: err => {
+        this.uploadingPhoto = false;
+        this.handleError(err);
+      }
+    });
   }
 
   private handleError(err: any) {

@@ -29,12 +29,12 @@ namespace RemSolution.Application.Features.Client.Commands.UploadClientDocumentC
     public class UploadClientDocumentCommandHandler : IRequestHandler<UploadClientDocumentCommand, string>
     {
         private readonly IApplicationDbContext _context;
-        private readonly IFileStorage _fileStorage;
+        private readonly IStoredFileService _storedFiles;
 
-        public UploadClientDocumentCommandHandler(IApplicationDbContext context, IFileStorage fileStorage)
+        public UploadClientDocumentCommandHandler(IApplicationDbContext context, IStoredFileService storedFiles)
         {
             _context = context;
-            _fileStorage = fileStorage;
+            _storedFiles = storedFiles;
         }
 
         public async Task<string> Handle(UploadClientDocumentCommand request, CancellationToken cancellationToken)
@@ -44,26 +44,31 @@ namespace RemSolution.Application.Features.Client.Commands.UploadClientDocumentC
 
             Guard.Against.NotFound(request.ClientId, entity);
 
+            var documentType = MapDocumentType(request.DocumentType);
             var extension = Path.GetExtension(request.FileName).ToLowerInvariant();
             var relativePath =
                 $"agencies/{entity.AgencyId}/clients/{entity.Id}/{request.DocumentType.ToString().ToLowerInvariant()}-{Guid.NewGuid():N}{extension}";
 
-            var url = await _fileStorage.SaveAsync(request.Content, relativePath, request.ContentType, cancellationToken);
+            var file = await _storedFiles.CreateAsync(
+                request.Content, request.FileName, request.ContentType, documentType, relativePath, cancellationToken);
 
-            string? previousUrl;
+            // Capture the id of the document being replaced (navigations are not
+            // lazy-loaded, so read the FK, not the reference) then point the
+            // client at the new file. EF fixes up the FK on save.
+            int? previousFileId;
             switch (request.DocumentType)
             {
                 case ClientDocumentType.CIN:
-                    previousUrl = entity.CINImageUrl;
-                    entity.CINImageUrl = url;
+                    previousFileId = entity.CINFileId;
+                    entity.CINFile = file;
                     break;
                 case ClientDocumentType.DrivingLicence:
-                    previousUrl = entity.DrivingLicenceImageUrl;
-                    entity.DrivingLicenceImageUrl = url;
+                    previousFileId = entity.DrivingLicenceFileId;
+                    entity.DrivingLicenceFile = file;
                     break;
                 case ClientDocumentType.Passeport:
-                    previousUrl = entity.PasserportImageUrl;
-                    entity.PasserportImageUrl = url;
+                    previousFileId = entity.PasseportFileId;
+                    entity.PasseportFile = file;
                     break;
                 default:
                     throw new InvalidOperationException($"Unhandled document type '{request.DocumentType}'.");
@@ -77,17 +82,37 @@ namespace RemSolution.Application.Features.Client.Commands.UploadClientDocumentC
             {
                 // The row change did not commit (e.g. the write was blocked by
                 // subscription enforcement): remove the just-written file so a
-                // rejected upload leaves nothing publicly served.
-                await _fileStorage.DeleteAsync(url, CancellationToken.None);
+                // rejected upload leaves nothing publicly served. A deduped
+                // upload reused an existing file, which the orphan check keeps.
+                await _storedFiles.DeletePhysicalIfOrphanAsync(file.Path, file.Url, CancellationToken.None);
                 throw;
             }
 
-            // Only after the row change is durable: a failed delete leaves an
-            // orphan file, never a broken URL.
-            if (!string.IsNullOrEmpty(previousUrl) && previousUrl != url)
-                await _fileStorage.DeleteAsync(previousUrl, cancellationToken);
+            // Only after the new document is durably attached: drop the replaced
+            // record, then delete its bytes if nothing else references them (it
+            // may share a physical file with the new upload, or another record).
+            if (previousFileId is int prevId)
+            {
+                var previous = await _context.StoredFiles
+                    .FirstOrDefaultAsync(f => f.Id == prevId, cancellationToken);
 
-            return url;
+                if (previous is not null)
+                {
+                    _context.StoredFiles.Remove(previous);
+                    await _context.SaveChangesAsync(cancellationToken);
+                    await _storedFiles.DeletePhysicalIfOrphanAsync(previous.Path, previous.Url, cancellationToken);
+                }
+            }
+
+            return file.Url;
         }
+
+        private static Domain.Enums.DocumentType MapDocumentType(ClientDocumentType type) => type switch
+        {
+            ClientDocumentType.CIN => Domain.Enums.DocumentType.CIN,
+            ClientDocumentType.DrivingLicence => Domain.Enums.DocumentType.DrivingLicence,
+            ClientDocumentType.Passeport => Domain.Enums.DocumentType.Passeport,
+            _ => throw new InvalidOperationException($"Unhandled document type '{type}'.")
+        };
     }
 }

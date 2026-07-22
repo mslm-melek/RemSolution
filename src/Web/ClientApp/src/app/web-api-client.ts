@@ -1063,6 +1063,7 @@ export interface ICarsClient {
     getCarById(id: number): Observable<CarDto>;
     updateCar(id: number, command: UpdateCarCommand): Observable<void>;
     deleteCar(id: number): Observable<void>;
+    uploadCarPhoto(id: number, file: FileParameter | null | undefined): Observable<string>;
 }
 
 @Injectable({
@@ -1349,6 +1350,63 @@ export class CarsClient implements ICarsClient {
         }
         return _observableOf(null as any);
     }
+
+    uploadCarPhoto(id: number, file: FileParameter | null | undefined): Observable<string> {
+        let url_ = this.baseUrl + "/api/Cars/{id}/photo";
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = new FormData();
+        if (file !== null && file !== undefined)
+            content_.append("file", file.data, file.fileName ? file.fileName : "file");
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processUploadCarPhoto(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processUploadCarPhoto(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<string>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<string>;
+        }));
+    }
+
+    protected processUploadCarPhoto(response: HttpResponseBase): Observable<string> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+                result200 = resultData200 !== undefined ? resultData200 : <any>null;
+    
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
 }
 
 export interface IClientsClient {
@@ -1357,6 +1415,7 @@ export interface IClientsClient {
     getClientById(id: number): Observable<ClientDto>;
     updateClient(id: number, command: UpdateClientCommand): Observable<void>;
     deleteClient(id: number): Observable<void>;
+    flagClient(id: number, command: FlagClientCommand): Observable<void>;
     uploadClientDocument(id: number, documentType: ClientDocumentType, file: FileParameter | null | undefined): Observable<string>;
 }
 
@@ -1630,6 +1689,61 @@ export class ClientsClient implements IClientsClient {
         if (status === 204) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
             return _observableOf(null as any);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    flagClient(id: number, command: FlagClientCommand): Observable<void> {
+        let url_ = this.baseUrl + "/api/Clients/{id}/flag";
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(command);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+            })
+        };
+
+        return this.http.request("put", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processFlagClient(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processFlagClient(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processFlagClient(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return _observableOf(null as any);
+            }));
+        } else if (status === 400) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("A server side error occurred.", status, _responseText, _headers);
             }));
         } else if (status !== 200 && status !== 204) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
@@ -3514,7 +3628,6 @@ export class CreateCarCommand implements ICreateCarCommand {
     modelId?: number | undefined;
     firstCirculationDate?: Date;
     color?: string | undefined;
-    imageUrl?: string | undefined;
     power?: number | undefined;
     fuelType?: FuelType | undefined;
 
@@ -3533,7 +3646,6 @@ export class CreateCarCommand implements ICreateCarCommand {
             this.modelId = _data["modelId"];
             this.firstCirculationDate = _data["firstCirculationDate"] ? new Date(_data["firstCirculationDate"].toString()) : <any>undefined;
             this.color = _data["color"];
-            this.imageUrl = _data["imageUrl"];
             this.power = _data["power"];
             this.fuelType = _data["fuelType"];
         }
@@ -3552,7 +3664,6 @@ export class CreateCarCommand implements ICreateCarCommand {
         data["modelId"] = this.modelId;
         data["firstCirculationDate"] = this.firstCirculationDate ? this.firstCirculationDate.toISOString() : <any>undefined;
         data["color"] = this.color;
-        data["imageUrl"] = this.imageUrl;
         data["power"] = this.power;
         data["fuelType"] = this.fuelType;
         return data;
@@ -3564,7 +3675,6 @@ export interface ICreateCarCommand {
     modelId?: number | undefined;
     firstCirculationDate?: Date;
     color?: string | undefined;
-    imageUrl?: string | undefined;
     power?: number | undefined;
     fuelType?: FuelType | undefined;
 }
@@ -3574,7 +3684,6 @@ export class UpdateCarCommand implements IUpdateCarCommand {
     modelId?: number | undefined;
     firstCirculationDate?: Date;
     color?: string | undefined;
-    imageUrl?: string | undefined;
     power?: number | undefined;
     fuelType?: FuelType | undefined;
 
@@ -3593,7 +3702,6 @@ export class UpdateCarCommand implements IUpdateCarCommand {
             this.modelId = _data["modelId"];
             this.firstCirculationDate = _data["firstCirculationDate"] ? new Date(_data["firstCirculationDate"].toString()) : <any>undefined;
             this.color = _data["color"];
-            this.imageUrl = _data["imageUrl"];
             this.power = _data["power"];
             this.fuelType = _data["fuelType"];
         }
@@ -3612,7 +3720,6 @@ export class UpdateCarCommand implements IUpdateCarCommand {
         data["modelId"] = this.modelId;
         data["firstCirculationDate"] = this.firstCirculationDate ? this.firstCirculationDate.toISOString() : <any>undefined;
         data["color"] = this.color;
-        data["imageUrl"] = this.imageUrl;
         data["power"] = this.power;
         data["fuelType"] = this.fuelType;
         return data;
@@ -3624,7 +3731,6 @@ export interface IUpdateCarCommand {
     modelId?: number | undefined;
     firstCirculationDate?: Date;
     color?: string | undefined;
-    imageUrl?: string | undefined;
     power?: number | undefined;
     fuelType?: FuelType | undefined;
 }
@@ -3718,6 +3824,8 @@ export class ClientDto implements IClientDto {
     drivingLicenceImageUrl?: string | undefined;
     passerportImageUrl?: string | undefined;
     description?: string | undefined;
+    isFlagged?: boolean;
+    notes?: string | undefined;
     marketplaceUserId?: string | undefined;
 
     constructor(data?: IClientDto) {
@@ -3755,6 +3863,8 @@ export class ClientDto implements IClientDto {
             this.drivingLicenceImageUrl = _data["drivingLicenceImageUrl"];
             this.passerportImageUrl = _data["passerportImageUrl"];
             this.description = _data["description"];
+            this.isFlagged = _data["isFlagged"];
+            this.notes = _data["notes"];
             this.marketplaceUserId = _data["marketplaceUserId"];
         }
     }
@@ -3792,6 +3902,8 @@ export class ClientDto implements IClientDto {
         data["drivingLicenceImageUrl"] = this.drivingLicenceImageUrl;
         data["passerportImageUrl"] = this.passerportImageUrl;
         data["description"] = this.description;
+        data["isFlagged"] = this.isFlagged;
+        data["notes"] = this.notes;
         data["marketplaceUserId"] = this.marketplaceUserId;
         return data;
     }
@@ -3822,6 +3934,8 @@ export interface IClientDto {
     drivingLicenceImageUrl?: string | undefined;
     passerportImageUrl?: string | undefined;
     description?: string | undefined;
+    isFlagged?: boolean;
+    notes?: string | undefined;
     marketplaceUserId?: string | undefined;
 }
 
@@ -4035,6 +4149,50 @@ export interface IUpdateClientCommand {
     drivingLicenceDeliverancePlace?: string | undefined;
     drivingLicenceDeliveranceCountryId?: number | undefined;
     description?: string | undefined;
+}
+
+export class FlagClientCommand implements IFlagClientCommand {
+    id?: number;
+    isFlagged?: boolean;
+    notes?: string | undefined;
+
+    constructor(data?: IFlagClientCommand) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.isFlagged = _data["isFlagged"];
+            this.notes = _data["notes"];
+        }
+    }
+
+    static fromJS(data: any): FlagClientCommand {
+        data = typeof data === 'object' ? data : {};
+        let result = new FlagClientCommand();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["isFlagged"] = this.isFlagged;
+        data["notes"] = this.notes;
+        return data;
+    }
+}
+
+export interface IFlagClientCommand {
+    id?: number;
+    isFlagged?: boolean;
+    notes?: string | undefined;
 }
 
 export enum ClientDocumentType {

@@ -9,7 +9,10 @@
         public virtual ModelCar? Model { get; set; }
         public DateTime FirstCirculationDate { get; set; }
         public string? Color { get; set; }
-        public string? ImageUrl { get; set; }
+        // The car photo is a StoredFile record (managed by UploadCarPhotoCommand),
+        // not a raw URL string; the CarDto still surfaces the plain URL.
+        public int? PhotoFileId { get; set; }
+        public virtual StoredFile? PhotoFile { get; set; }
         public int? Power { get; set; }
         public FuelType? FuelType { get; set; }
         public virtual ICollection<Expense>? Expenses { get; set; }

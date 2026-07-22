@@ -4,6 +4,7 @@ using RemSolution.Domain.Constants;
 using RemSolution.Application.Features.Car.Commands.CreateCarCommand;
 using RemSolution.Application.Features.Car.Commands.DeleteCarCommand;
 using RemSolution.Application.Features.Car.Commands.UpdateCarCommand;
+using RemSolution.Application.Features.Car.Commands.UploadCarPhotoCommand;
 using RemSolution.Application.Features.Car.DTOs;
 using RemSolution.Application.Features.Car.Queries.GetCarByIdQuery;
 using RemSolution.Application.Features.Car.Queries.GetCarsWithPaginationQuery;
@@ -17,13 +18,23 @@ public class Cars : EndpointGroupBase
         // Each route demands its permission policy (the commands carry the
         // same [Authorize(Policy)] for defence in depth); the agency
         // administrator passes every permission policy by role.
-        app.MapGroup(this)
-            .RequireAuthorization()
+        var group = app.MapGroup(this)
+            .RequireAuthorization();
+
+        group
             .MapGet(GetCars, policy: Permissions.CarRead)
             .MapGet(GetCarById, "{id}", Permissions.CarRead)
             .MapPost(CreateCar, policy: Permissions.CarCreate)
             .MapPut(UpdateCar, "{id}", Permissions.CarUpdate)
             .MapDelete(DeleteCar, "{id}", Permissions.CarDelete);
+
+        // Form-binding upload endpoint (mirrors the client-document upload):
+        // antiforgery middleware is not configured, so form binding must opt out
+        // explicitly. Setting a car's photo is an edit: Car.Update.
+        group.MapPost("{id}/photo", UploadCarPhoto)
+            .WithName(nameof(UploadCarPhoto))
+            .RequireAuthorization(Permissions.CarUpdate)
+            .DisableAntiforgery();
     }
 
     public async Task<Ok<PaginatedList<CarDto>>> GetCars(ISender sender, [AsParameters] GetCarsWithPaginationQuery query)
@@ -62,6 +73,22 @@ public class Cars : EndpointGroupBase
     {
         await sender.Send(new DeleteCarCommand(id));
         return TypedResults.NoContent();
+    }
+
+    public async Task<Ok<string>> UploadCarPhoto(ISender sender, int id, IFormFile file)
+    {
+        await using var content = file.OpenReadStream();
+
+        var url = await sender.Send(new UploadCarPhotoCommand
+        {
+            CarId = id,
+            FileName = file.FileName,
+            ContentType = file.ContentType,
+            Length = file.Length,
+            Content = content
+        });
+
+        return TypedResults.Ok(url);
     }
 
 }

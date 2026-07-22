@@ -23,5 +23,12 @@ public class CarConfiguration : IEntityTypeConfiguration<Car>
                  .WithOne(e => e.Car)
                  .HasForeignKey(e => e.CarId)
                  .OnDelete(DeleteBehavior.Cascade);
+
+        // Car photo file. Restrict: the delete handler removes the StoredFile
+        // row explicitly after clearing the car.
+        builder.HasOne(c => c.PhotoFile)
+               .WithMany()
+               .HasForeignKey(c => c.PhotoFileId)
+               .OnDelete(DeleteBehavior.Restrict);
     }
 }

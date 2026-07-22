@@ -16,7 +16,9 @@ namespace RemSolution.Application.Features.Car.Commands.CreateCarCommand
         public int? ModelId { get; init; }
         public DateTime FirstCirculationDate { get; init; }
         public string? Color { get; init; }
-        public string? ImageUrl { get; init; }
+        // The photo is deliberately absent: it is owned by UploadCarPhotoCommand,
+        // which manages the StoredFile lifecycle. Accepting a URL here would let
+        // callers plant arbitrary URLs.
         public int? Power { get; init; }
         public FuelType? FuelType { get; init; }
     }
@@ -41,7 +43,6 @@ namespace RemSolution.Application.Features.Car.Commands.CreateCarCommand
                 ModelId = request.ModelId,
                 FirstCirculationDate= request.FirstCirculationDate,
                 Color = request.Color,
-                ImageUrl = request.ImageUrl,
                 Power = request.Power,
                 FuelType = request.FuelType
             };
