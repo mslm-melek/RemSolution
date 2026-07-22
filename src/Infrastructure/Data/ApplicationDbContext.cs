@@ -46,6 +46,10 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>, IApplica
     public DbSet<SubscriptionPlan> SubscriptionPlans => Set<SubscriptionPlan>();
     public DbSet<UserPermission> UserPermissions => Set<UserPermission>();
 
+    // Deliberately not on IApplicationDbContext: refresh tokens are managed
+    // solely by TokenService and are never queried by feature handlers.
+    public DbSet<Identity.RefreshToken> RefreshTokens => Set<Identity.RefreshToken>();
+
     public async Task<ITransactionScope> BeginTransactionAsync(CancellationToken cancellationToken)
         => new TransactionScope(await Database.BeginTransactionAsync(cancellationToken));
 
@@ -106,6 +110,14 @@ IF @result < 0 THROW 51000, 'Failed to acquire the agency write lock.', 1;", can
             .HasOne<ApplicationUser>()
             .WithMany()
             .HasForeignKey(p => p.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // Same rationale as UserPermission: the FK to the Identity user is wired
+        // here, where ApplicationUser is visible. Tokens die with the user.
+        builder.Entity<Identity.RefreshToken>()
+            .HasOne<ApplicationUser>()
+            .WithMany()
+            .HasForeignKey(t => t.UserId)
             .OnDelete(DeleteBehavior.Cascade);
 
         // Tenant isolation: every ITenantEntity is filtered to the current
