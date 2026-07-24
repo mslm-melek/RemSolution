@@ -1,7 +1,13 @@
 ﻿namespace RemSolution.Domain.Entities
 {
-    public class Client : BaseAuditableEntity, ITenantEntity
+    public class Client : BaseAuditableEntity, ITenantEntity, IHasRowVersion, ISoftDeletable
     {
+        // Optimistic-concurrency token; see IHasRowVersion.
+        public byte[]? RowVersion { get; set; }
+        // Archived rather than deleted; see ISoftDeletable.
+        public bool IsDeleted { get; set; }
+        public DateTimeOffset? DeletedAt { get; set; }
+        public string? DeletedBy { get; set; }
         public int AgencyId { get; set; }
         public virtual Agency? Agency { get; set; }
         public string? FirstName { get; set; }

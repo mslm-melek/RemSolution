@@ -1,0 +1,51 @@
+<div class="plan-card mat-elevation-z4">
+  <div class="header-row">
+    <h2 class="title">{{ isEdit ? 'Edit Plan' : 'New Plan' }}</h2>
+    <a mat-button [routerLink]="['/subscription-plan']">
+      <mat-icon>arrow_back</mat-icon> Back to list
+    </a>
+  </div>
+
+  <div *ngIf="errorMessage" class="error-banner">{{ errorMessage }}</div>
+
+  <form [formGroup]="form" (ngSubmit)="save()">
+    <div class="field-grid">
+      <mat-form-field appearance="outline" class="span-2">
+        <mat-label>Name</mat-label>
+        <input matInput formControlName="name" required />
+        <mat-error *ngIf="form.get('name')?.hasError('required')">Name is required.</mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Max cars</mat-label>
+        <input matInput type="number" formControlName="maxCars" min="1" />
+        <mat-error *ngIf="form.get('maxCars')?.invalid">Enter 1 or more.</mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Max clients</mat-label>
+        <input matInput type="number" formControlName="maxClients" min="1" />
+        <mat-error *ngIf="form.get('maxClients')?.invalid">Enter 1 or more.</mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Max users</mat-label>
+        <input matInput type="number" formControlName="maxUsers" min="1" />
+        <mat-error *ngIf="form.get('maxUsers')?.invalid">Enter 1 or more.</mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Price</mat-label>
+        <input matInput type="number" formControlName="price" min="0" step="0.01" />
+        <mat-error *ngIf="form.get('price')?.invalid">Enter 0 or more.</mat-error>
+      </mat-form-field>
+    </div>
+
+    <div class="actions-row">
+      <button mat-raised-button color="primary" type="submit" [disabled]="saving">
+        <mat-icon>save</mat-icon> {{ saving ? 'Saving…' : 'Save' }}
+      </button>
+      <a mat-button [routerLink]="['/subscription-plan']">Cancel</a>
+    </div>
+  </form>
+</div>

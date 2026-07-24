@@ -10,6 +10,15 @@ public class ClientConfiguration : IEntityTypeConfiguration<Client>
     {
         builder.HasAgencyTenant();
 
+        // Accent-insensitive names so French/Arabic searches match (P.12).
+        builder.Property(c => c.FirstName)
+               .HasMaxLength(100)
+               .UseCollation(DatabaseCollations.AccentInsensitive);
+
+        builder.Property(c => c.LastName)
+               .HasMaxLength(100)
+               .UseCollation(DatabaseCollations.AccentInsensitive);
+
         builder.Property(c => c.MarketplaceUserId)
                .HasMaxLength(450);
 
@@ -69,15 +78,18 @@ public class ClientConfiguration : IEntityTypeConfiguration<Client>
                .HasForeignKey(r => r.SecondClientId)
                .OnDelete(DeleteBehavior.NoAction);
 
+        // Reservations and Payments are financial records — never cascade-deleted
+        // with a client. Restrict means a physical client delete fails while any
+        // exist (clients are archived, not deleted; see ISoftDeletable).
         builder.HasMany(c => c.Reservations)
                .WithOne(res => res.Client)
                .HasForeignKey(res => res.ClientId)
-               .OnDelete(DeleteBehavior.Cascade);
+               .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasMany(c => c.Payments)
                .WithOne(p => p.Client)
                .HasForeignKey(p => p.ClientId)
-               .OnDelete(DeleteBehavior.Cascade);
+               .OnDelete(DeleteBehavior.Restrict);
 
 
 

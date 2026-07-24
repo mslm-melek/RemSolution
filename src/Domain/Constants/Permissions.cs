@@ -27,4 +27,15 @@ public abstract class Permissions
         CarCreate, CarRead, CarUpdate, CarDelete,
         ClientCreate, ClientRead, ClientUpdate, ClientDelete,
     };
+
+    /// <summary>
+    /// The read permissions a platform administrator may satisfy while browsing
+    /// another tenant read-only through the impersonation path. Deliberately
+    /// excludes every create/update/delete permission so impersonation can never
+    /// reach a write.
+    /// </summary>
+    public static readonly string[] ReadOnly =
+    {
+        CarRead, ClientRead,
+    };
 }

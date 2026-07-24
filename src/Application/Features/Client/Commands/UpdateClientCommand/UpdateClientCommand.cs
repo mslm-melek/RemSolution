@@ -15,6 +15,9 @@ namespace RemSolution.Application.Features.Client.Commands.UpdateClientCommand
     public record UpdateClientCommand : IRequest, IClientPayload, ISensitiveRequest
     {
         public int Id { get; init; }
+        // The row version the client last read; the update targets exactly that
+        // version so a concurrent change surfaces as a 409 (see P.8).
+        public byte[]? RowVersion { get; init; }
         // MarketplaceUserId is not editable here (linked once by the Phase 6
         // marketplace flow), and the document image URLs are owned by
         // UploadClientDocumentCommand, which manages the stored files'
@@ -54,6 +57,8 @@ namespace RemSolution.Application.Features.Client.Commands.UpdateClientCommand
                 .FindAsync(new object[] { request.Id }, cancellationToken);
 
             Guard.Against.NotFound(request.Id, entity);
+
+            _context.SetOriginalRowVersion(entity, request.RowVersion);
 
             entity.FirstName = request.FirstName;
             entity.LastName = request.LastName;

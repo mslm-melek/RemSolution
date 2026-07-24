@@ -6,6 +6,7 @@ using RemSolution.Infrastructure.Identity;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace RemSolution.Application.FunctionalTests;
@@ -156,8 +157,19 @@ public partial class Testing
         {
             await _database.ResetAsync();
         }
-        catch (Exception) 
+        catch (Exception)
         {
+        }
+
+        // The settings cache is a singleton that outlives the DB reset; clear it
+        // so a cached snapshot never leaks into the next test (which may reuse
+        // the same agency id).
+        using (var scope = _scopeFactory.CreateScope())
+        {
+            if (scope.ServiceProvider.GetService<IMemoryCache>() is MemoryCache memoryCache)
+            {
+                memoryCache.Clear();
+            }
         }
 
         _userId = null;
@@ -172,6 +184,19 @@ public partial class Testing
         var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
         return await context.FindAsync<TEntity>(keyValues);
+    }
+
+    // Fetches a row bypassing global query filters (tenant + soft-delete), for
+    // asserting on archived rows that normal reads hide.
+    public static async Task<TEntity?> FindIgnoringFiltersAsync<TEntity>(
+        System.Linq.Expressions.Expression<Func<TEntity, bool>> predicate)
+        where TEntity : class
+    {
+        using var scope = _scopeFactory.CreateScope();
+
+        var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+        return await context.Set<TEntity>().IgnoreQueryFilters().FirstOrDefaultAsync(predicate);
     }
 
     public static async Task AddAsync<TEntity>(TEntity entity)
@@ -197,7 +222,13 @@ public partial class Testing
         var country = new Country { Name = "Testland" };
         await AddAsync(country);
 
-        var agency = new Agency { Name = "Test Agency", CountryId = country.Id };
+        var agency = new Agency
+        {
+            Name = "Test Agency",
+            CountryId = country.Id,
+            // Settings row (currency etc.) is required now that it lives off-Agency.
+            Settings = new AgencySettings { CurrencyCode = "TND" }
+        };
         await AddAsync(agency);
 
         if (withSubscription)

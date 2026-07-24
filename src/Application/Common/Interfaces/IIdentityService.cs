@@ -13,15 +13,35 @@ public interface IIdentityService
     Task<(Result Result, string UserId)> CreateUserAsync(string userName, string password);
 
     /// <summary>
-    /// Creates a staff account inside an agency: the user is created with the
-    /// AgencyId already set and the AgencyStaff role. Writes through the
+    /// Creates a user inside an agency: created with the AgencyId already set and
+    /// the given role (<see cref="Domain.Constants.Roles.AgencyAdministrator"/> or
+    /// <see cref="Domain.Constants.Roles.AgencyStaff"/>). Writes through the
     /// request-scoped DbContext, so it participates in an ambient transaction
     /// (the MaxUsers quota check relies on this to stay atomic).
     /// </summary>
-    Task<(Result Result, string UserId)> CreateAgencyUserAsync(string userName, string password, int agencyId, CancellationToken cancellationToken);
+    Task<(Result Result, string UserId)> CreateAgencyUserAsync(string userName, string password, int agencyId, string role, CancellationToken cancellationToken);
 
     /// <summary>Users linked to the agency (admins included) — the MaxUsers quota base.</summary>
     Task<int> CountAgencyUsersAsync(int agencyId, CancellationToken cancellationToken);
+
+    /// <summary>Identity projection of every user in an agency (role + lockout state).</summary>
+    Task<IReadOnlyList<AgencyUserRecord>> GetAgencyUsersAsync(int agencyId, CancellationToken cancellationToken);
+
+    /// <summary>Identity projection of one user, or null if not found.</summary>
+    Task<AgencyUserRecord?> GetAgencyUserAsync(string userId, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Replaces the user's role (when <paramref name="role"/> is non-null) and
+    /// always refreshes the security stamp so the permission/role claims re-mint
+    /// on the next request rather than lingering for the stamp interval.
+    /// </summary>
+    Task<Result> UpdateUserRoleAndStampAsync(string userId, string? role, CancellationToken cancellationToken);
+
+    /// <summary>Deactivates (locks out indefinitely) or reactivates a user.</summary>
+    Task<Result> SetUserLockoutAsync(string userId, bool lockedOut, CancellationToken cancellationToken);
+
+    /// <summary>Administratively sets a new password (bypasses the current-password check).</summary>
+    Task<Result> AdminResetPasswordAsync(string userId, string newPassword, CancellationToken cancellationToken);
 
     Task<Result> DeleteUserAsync(string userId);
 

@@ -8,6 +8,9 @@ public class ModelCarConfiguration : IEntityTypeConfiguration<ModelCar>
 {
     public void Configure(EntityTypeBuilder<ModelCar> builder)
     {
+        builder.Property(m => m.Name)
+               .HasMaxLength(200)
+               .UseCollation(DatabaseCollations.AccentInsensitive);
 
         builder.HasOne(c => c.Brand)
                .WithMany(mc => mc.ModelCars) 

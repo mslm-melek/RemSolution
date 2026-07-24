@@ -8,6 +8,6 @@
         public virtual Renting? Renting { get; set; }
         public virtual int? ExtraServicesTypeId { get; set; }
         public virtual ExtraServicesType? ExtraServicesType { get; set; }
-        public decimal? TotalAmount { get; set; }
+        public Money? TotalAmount { get; set; }
     }
 }

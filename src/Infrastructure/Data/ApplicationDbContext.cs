@@ -2,6 +2,7 @@ using System.Reflection;
 using RemSolution.Application.Common.Interfaces;
 using RemSolution.Domain.Common;
 using RemSolution.Domain.Entities;
+using RemSolution.Infrastructure.Data.Converters;
 using RemSolution.Infrastructure.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -20,9 +21,11 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>, IApplica
     public DbSet<Agency> Agencies => Set<Agency>();
     public DbSet<AgencyFeature> AgencyFeatures => Set<AgencyFeature>();
     public DbSet<AgencySubscription> AgencySubscriptions => Set<AgencySubscription>();
+    public DbSet<AgencySettings> AgencySettings => Set<AgencySettings>();
     public DbSet<Branch> Branches => Set<Branch>();
     public DbSet<Brand> Brands => Set<Brand>();
     public DbSet<Car> Cars => Set<Car>();
+    public DbSet<CarImage> CarImages => Set<CarImage>();
     public DbSet<Client> Clients => Set<Client>();
     public DbSet<Country> Countries => Set<Country>();
 
@@ -92,6 +95,27 @@ IF @result < 0 THROW 51000, 'Failed to acquire the agency write lock.', 1;", can
         public ValueTask DisposeAsync() => _transaction.DisposeAsync();
     }
 
+    public void SetOriginalRowVersion(IHasRowVersion entity, byte[]? rowVersion)
+    {
+        if (rowVersion is null)
+        {
+            return;
+        }
+
+        Entry(entity).Property(nameof(IHasRowVersion.RowVersion)).OriginalValue = rowVersion;
+    }
+
+    // Every domain DateTime is treated as UTC at the persistence boundary:
+    // normalised to UTC on write and stamped UTC on read (datetime2 keeps no
+    // offset). DateTimeOffset audit stamps are already unambiguous, so this
+    // targets DateTime only. See UtcDateTimeConverter / docs "Time".
+    protected override void ConfigureConventions(ModelConfigurationBuilder builder)
+    {
+        base.ConfigureConventions(builder);
+
+        builder.Properties<DateTime>().HaveConversion<UtcDateTimeConverter>();
+    }
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
@@ -120,6 +144,17 @@ IF @result < 0 THROW 51000, 'Failed to acquire the agency write lock.', 1;", can
             .HasForeignKey(t => t.UserId)
             .OnDelete(DeleteBehavior.Cascade);
 
+        // Optimistic concurrency: every IHasRowVersion entity gets a SQL Server
+        // rowversion token so a stale update raises DbUpdateConcurrencyException
+        // (mapped to 409) instead of silently clobbering another user's change.
+        foreach (var entityType in builder.Model.GetEntityTypes()
+                     .Where(t => typeof(IHasRowVersion).IsAssignableFrom(t.ClrType)))
+        {
+            builder.Entity(entityType.ClrType)
+                .Property(nameof(IHasRowVersion.RowVersion))
+                .IsRowVersion();
+        }
+
         // Tenant isolation: every ITenantEntity is filtered to the current
         // tenant. No tenant (anonymous, platform admin) matches nothing.
         // Bypassing these filters is reserved for the marketplace search
@@ -128,8 +163,14 @@ IF @result < 0 THROW 51000, 'Failed to acquire the agency write lock.', 1;", can
         foreach (var entityType in builder.Model.GetEntityTypes()
                      .Where(t => typeof(ITenantEntity).IsAssignableFrom(t.ClrType)))
         {
+            // Soft-deletable tenant entities compose !IsDeleted with the tenant
+            // predicate so archived rows disappear from normal reads too.
+            var filterMethod = typeof(ISoftDeletable).IsAssignableFrom(entityType.ClrType)
+                ? nameof(ApplyTenantAndSoftDeleteFilter)
+                : nameof(ApplyTenantFilter);
+
             typeof(ApplicationDbContext)
-                .GetMethod(nameof(ApplyTenantFilter), BindingFlags.NonPublic | BindingFlags.Instance)!
+                .GetMethod(filterMethod, BindingFlags.NonPublic | BindingFlags.Instance)!
                 .MakeGenericMethod(entityType.ClrType)
                 .Invoke(this, new object[] { builder });
         }
@@ -139,4 +180,8 @@ IF @result < 0 THROW 51000, 'Failed to acquire the agency write lock.', 1;", can
     // cached model stays correct across requests with different tenants.
     private void ApplyTenantFilter<TEntity>(ModelBuilder builder) where TEntity : class, ITenantEntity
         => builder.Entity<TEntity>().HasQueryFilter(e => e.AgencyId == _tenant.AgencyId);
+
+    private void ApplyTenantAndSoftDeleteFilter<TEntity>(ModelBuilder builder)
+        where TEntity : class, ITenantEntity, ISoftDeletable
+        => builder.Entity<TEntity>().HasQueryFilter(e => !e.IsDeleted && e.AgencyId == _tenant.AgencyId);
 }

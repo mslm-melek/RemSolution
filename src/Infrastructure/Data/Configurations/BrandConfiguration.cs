@@ -8,6 +8,10 @@ public class BrandConfiguration : IEntityTypeConfiguration<Brand>
 {
     public void Configure(EntityTypeBuilder<Brand> builder)
     {
+        builder.Property(b => b.Name)
+               .HasMaxLength(200)
+               .UseCollation(DatabaseCollations.AccentInsensitive);
+
         builder.HasMany(b => b.ModelCars)
                    .WithOne(mc => mc.Brand) // navigation inverse dans ModelCar
                    .HasForeignKey(mc => mc.BrandId)

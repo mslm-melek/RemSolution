@@ -10,16 +10,15 @@ public class ReservationConfiguration : IEntityTypeConfiguration<Reservation>
     {
         builder.HasAgencyTenant(nameof(Reservation.StartDate));
 
-        builder.Property(e => e.Price)
-                   .HasColumnType("decimal(18,2)");
+        builder.OwnsMoney(e => e.Price, "Price", "PriceCurrency");
+        builder.OwnsMoney(e => e.PayedPrice, "PayedPrice", "PayedPriceCurrency");
 
-         builder.Property(e => e.PayedPrice)
-                   .HasColumnType("decimal(18,2)");
-
+        // Financial record: never deleted or orphaned by a client delete.
+        // Restrict makes a physical client delete fail (clients are archived).
         builder.HasOne(c => c.Client)
-               .WithMany(mc => mc.Reservations) 
+               .WithMany(mc => mc.Reservations)
                .HasForeignKey(c => c.ClientId)
-               .OnDelete(DeleteBehavior.SetNull);
+               .OnDelete(DeleteBehavior.Restrict);
 
          builder.HasOne(c => c.Renting)
                .WithMany(mc => mc.Reservations) 

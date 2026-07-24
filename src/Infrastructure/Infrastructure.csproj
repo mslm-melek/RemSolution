@@ -17,6 +17,15 @@
     </PackageReference>
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer.NetTopologySuite" />
+    <!-- Image resizing for the car-photo thumbnail/medium pipeline. The Linux
+         native assets ship the codec for container/Azure hosting; the base
+         package covers Windows/macOS dev. -->
+    <PackageReference Include="SkiaSharp" />
+    <PackageReference Include="SkiaSharp.NativeAssets.Linux" />
+    <!-- Single background-job infrastructure (P.10): SQL Server-backed Hangfire
+         for thumbnails today, reservation expiry / emails / PII purge next. -->
+    <PackageReference Include="Hangfire.AspNetCore" />
+    <PackageReference Include="Hangfire.SqlServer" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Tools">
       <PrivateAssets>all</PrivateAssets>

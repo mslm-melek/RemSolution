@@ -69,6 +69,21 @@ The **Web layer is the composition root**: `Program.cs` calls `AddApplicationSer
     between agencies), and throws `ForbiddenAccessException` (403) when a request updates or
     deletes a row belonging to another agency.
   - `DispatchDomainEventsInterceptor` — dispatches domain events on `SaveChanges`.
+- **Money value object**: monetary amounts are a `Money` value object (Amount + ISO-4217 Currency),
+  not bare decimals. Currency is tenant-scoped — each `Agency` has a single `Currency`, and handlers
+  denominate amounts in it (clients send only the amount). Mapped as EF optional owned types via
+  `OwnsMoney(...)`: the amount keeps its original column, the currency lands in a new
+  `<name>Currency` column, both null together when absent. Exposed to the API as `MoneyDto`.
+  Applies to `Car.DailyRate`, `Renting.Price`, `Reservation.Price`/`PayedPrice`,
+  `Payment.PayementAmount`, `ExtraService.TotalAmount`, `RentingHistory.Price`. Subscription-plan
+  prices stay decimal (platform-level, no agency).
+- **Time (UTC at the persistence boundary)**: all domain `DateTime` values are UTC. A global EF
+  value-conversion convention (`UtcDateTimeConverter`, applied in
+  `ApplicationDbContext.ConfigureConventions`) normalises them on write (a `Local` value is
+  converted to UTC; an `Unspecified` value is assumed already-UTC and its `Kind` stamped, since the
+  API edge deserializes inbound values as UTC) and stamps `Kind = Utc` on read (SQL Server
+  `datetime2` keeps no offset). Audit stamps stay `DateTimeOffset` (already unambiguous). Callers
+  should use `TimeProvider.GetUtcNow()`; never `DateTime.Now`.
 - **Multi-tenancy (agency isolation)**: `ITenantProvider` is resolved per-request from the
   authenticated user's `AgencyId` claim (emitted by `ApplicationUserClaimsPrincipalFactory` from
   `ApplicationUser.AgencyId`). Every `ITenantEntity` gets an EF global query filter
@@ -77,6 +92,31 @@ The **Web layer is the composition root**: `Program.cs` calls `AddApplicationSer
   nothing. Cross-tenant reads via `IgnoreQueryFilters()` are allowed only in the Phase 6
   MarketplaceSearch feature folder (plus the platform-admin referential check in
   `DeleteAgencyCommand`) — enforced by the `TenantEnforcementTests` convention test.
+- **Car image pipeline (async derivatives)**: a car has many `CarImage` (SortOrder, one IsPrimary),
+  each keeping its full-resolution original plus generated thumbnail (200px) and medium (800px)
+  derivatives — all `StoredFile` rows. `UploadCarImageCommand` stores the original synchronously
+  (status `Pending`) and enqueues via `IImageProcessingQueue`; the Hangfire-backed implementation
+  schedules `CarImageProcessingJob`, which resizes via `IImageProcessor` (SkiaSharp) out of band so
+  upload latency is flat. Hangfire resolves the job in its own DI scope; the job has no HTTP context,
+  so it pushes the agency onto `AmbientTenant` (an `AsyncLocal` that `CurrentTenant` consults before
+  the claim) — tenant filters and the write-stamp then behave as in a request. A failed job marks the
+  image `Failed` (the original stays usable) and rethrows so Hangfire records/retries it.
+- **Background jobs (Hangfire, SQL Server storage)**: the single job infrastructure (car-image
+  derivatives today; reservation expiry, emails, PII purge, statistics next). Registered only when a
+  real database is present — skipped for the NSwag build-time host (placeholder connection) and
+  functional tests (`Hangfire:Enabled=false`), where the enqueue seam is a no-op / recording fake.
+  Dashboard at `/hangfire`, restricted to platform administrators.
+- **Selective soft delete**: only where an archive is wanted. `Car`/`Client` are `ISoftDeletable`
+  (`IsDeleted`/`DeletedAt`/`DeletedBy`) — `SoftDeleteInterceptor` turns a `Remove()` into the flag
+  update (history preserved, files/FK references kept), and the global filter composes
+  `!IsDeleted && AgencyId == tenant`. `ExpenseType`/`ExtraServicesType` use an `IsActive` flag
+  (deactivation, not deletion). `Renting`/`Payment`/`Reservation` are never deleted — financial
+  records; their `Client` FKs are `Restrict`, so a physical client delete fails. Unique indexes are
+  filtered (`IX_Cars_AgencyId_Matricule WHERE IsDeleted = 0`) so an archived row's key frees for reuse.
+- **Collation (accent/case-insensitive names)**: name/search columns (client first/last name, agency /
+  branch / brand / model / expense-type / extra-service-type names) use `Latin1_General_100_CI_AI`
+  (`DatabaseCollations.AccentInsensitive`) so French/Arabic names match regardless of accent/case.
+  Chosen up front — changing a populated column's collation later rebuilds every index touching it.
 - **Domain events** via `BaseEntity.AddDomainEvent(...)`.
 - **CQRS vertical slices** — each feature folder has Commands / Queries / DTOs / EventHandlers.
 - **Mapster projection** — `ProjectToType<T>()` produces efficient SQL projections (no over-fetching).

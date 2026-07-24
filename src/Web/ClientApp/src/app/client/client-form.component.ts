@@ -5,7 +5,7 @@ import {
   ClientsClient, CountriesClient, CountryDto, ClientDto,
   CreateClientCommand, UpdateClientCommand, ClientDocumentType, FileParameter
 } from '../web-api-client';
-import { toDateInput, fromDateInput, extractValidationErrors } from '../shared/form-utils';
+import { toDateInput, fromDateInput, extractValidationErrors, isConcurrencyConflict } from '../shared/form-utils';
 
 interface DocumentSlot {
   type: ClientDocumentType;
@@ -25,6 +25,9 @@ export class ClientFormComponent implements OnInit {
   clientId?: number;
   saving = false;
   errorMessage = '';
+
+  // Optimistic-concurrency token read with the client and echoed back on update.
+  private rowVersion?: string;
 
   documents: DocumentSlot[] = [
     { type: ClientDocumentType.CIN, label: 'CIN', uploading: false },
@@ -106,6 +109,8 @@ export class ClientFormComponent implements OnInit {
     this.documents[0].url = dto.cinImageUrl;
     this.documents[1].url = dto.drivingLicenceImageUrl;
     this.documents[2].url = dto.passerportImageUrl;
+
+    this.rowVersion = dto.rowVersion;
   }
 
   save() {
@@ -119,7 +124,7 @@ export class ClientFormComponent implements OnInit {
     const payload = this.toPayload();
 
     if (this.isEdit) {
-      const command = new UpdateClientCommand({ id: this.clientId, ...payload });
+      const command = new UpdateClientCommand({ id: this.clientId, rowVersion: this.rowVersion, ...payload });
       this.client.updateClient(this.clientId!, command).subscribe({
         next: () => this.router.navigate(['/client']),
         error: err => this.handleError(err)
@@ -181,6 +186,12 @@ export class ClientFormComponent implements OnInit {
 
   private handleError(err: any) {
     this.saving = false;
+
+    if (isConcurrencyConflict(err)) {
+      this.errorMessage =
+        'This client was reloaded by another user since you opened it. Reload the page to get the latest version, then re-apply your changes.';
+      return;
+    }
 
     const validationErrors = extractValidationErrors(err);
     if (validationErrors) {

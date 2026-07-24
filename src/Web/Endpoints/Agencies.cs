@@ -1,10 +1,12 @@
 using Microsoft.AspNetCore.Http.HttpResults;
 using RemSolution.Application.Features.Agency.Commands.CreateAgencyCommand;
 using RemSolution.Application.Features.Agency.Commands.DeleteAgencyCommand;
+using RemSolution.Application.Features.Agency.Commands.SetAgencyFeatureCommand;
 using RemSolution.Application.Features.Agency.Commands.UpdateAgencyCommand;
 using RemSolution.Application.Features.Agency.DTOs;
 using RemSolution.Application.Features.Agency.Queries.GetAgenciesQuery;
 using RemSolution.Application.Features.Agency.Queries.GetAgencyByIdQuery;
+using RemSolution.Application.Features.Agency.Queries.GetAgencyFeaturesQuery;
 using RemSolution.Domain.Constants;
 
 namespace RemSolution.Web.Endpoints;
@@ -19,7 +21,25 @@ public class Agencies : EndpointGroupBase
             .MapGet(GetAgencyById, "{id}")
             .MapPost(CreateAgency)
             .MapPut(UpdateAgency, "{id}")
-            .MapDelete(DeleteAgency, "{id}");
+            .MapDelete(DeleteAgency, "{id}")
+            .MapGet(GetAgencyFeatures, "{id}/features")
+            .MapPut(SetAgencyFeature, "{id}/features");
+    }
+
+    public async Task<Ok<IReadOnlyList<AgencyFeatureDto>>> GetAgencyFeatures(ISender sender, int id)
+    {
+        var result = await sender.Send(new GetAgencyFeaturesQuery(id));
+        return TypedResults.Ok(result);
+    }
+
+    public async Task<Results<NoContent, BadRequest>> SetAgencyFeature(ISender sender, int id, SetAgencyFeatureCommand command)
+    {
+        if (id != command.AgencyId)
+            return TypedResults.BadRequest();
+
+        await sender.Send(command);
+
+        return TypedResults.NoContent();
     }
 
     public async Task<Ok<IList<AgencyDto>>> GetAgencies(ISender sender, [AsParameters] GetAgenciesQuery query)

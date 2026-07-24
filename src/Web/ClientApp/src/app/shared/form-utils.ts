@@ -41,3 +41,24 @@ export function extractValidationErrors(err: any): string | undefined {
     .map(messages => (messages as string[]).join(' '))
     .join(' ');
 }
+
+// True when the server rejected a write because the record changed since it was
+// loaded (optimistic-concurrency conflict): HTTP 409 carrying the
+// "concurrency_conflict" code. 409 is also used for plan limits, so we key on
+// the code, not the status alone. Handles both the raw HttpClient shape
+// (err.error.code) and the NSwag-wrapped shape (err.response JSON string).
+export function isConcurrencyConflict(err: any): boolean {
+  if (err?.status !== 409) return false;
+
+  if (err?.error?.code === 'concurrency_conflict') return true;
+
+  if (typeof err?.response === 'string') {
+    try {
+      return JSON.parse(err.response)?.code === 'concurrency_conflict';
+    } catch {
+      return false;
+    }
+  }
+
+  return false;
+}

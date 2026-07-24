@@ -64,7 +64,7 @@ namespace RemSolution.Application.Features.Users.Commands.CreateAgencyUserComman
                 p => p.MaxUsers, "users", cancellationToken);
 
             var (result, userId) = await _identityService.CreateAgencyUserAsync(
-                request.UserName, request.Password, agencyId, cancellationToken);
+                request.UserName, request.Password, agencyId, Roles.AgencyStaff, cancellationToken);
 
             if (!result.Succeeded)
             {

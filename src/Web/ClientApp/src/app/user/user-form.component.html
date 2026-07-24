@@ -1,0 +1,67 @@
+<div class="user-card mat-elevation-z4">
+  <div class="header-row">
+    <h2 class="title">{{ isEdit ? 'Edit User' : 'New User' }}</h2>
+    <a mat-button [routerLink]="['/agency', agencyId]">
+      <mat-icon>arrow_back</mat-icon> Back to agency
+    </a>
+  </div>
+
+  <div *ngIf="errorMessage" class="error-banner">{{ errorMessage }}</div>
+
+  <form [formGroup]="form" (ngSubmit)="save()">
+    <div class="field-grid">
+      <mat-form-field appearance="outline">
+        <mat-label>Email / username</mat-label>
+        <input matInput formControlName="userName" type="email" required />
+        <mat-error *ngIf="form.get('userName')?.hasError('required')">Email is required.</mat-error>
+        <mat-error *ngIf="form.get('userName')?.hasError('email')">Enter a valid email.</mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" *ngIf="!isEdit">
+        <mat-label>Password</mat-label>
+        <input matInput formControlName="password" type="password" required />
+        <mat-error *ngIf="form.get('password')?.hasError('required')">Password is required.</mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Role</mat-label>
+        <mat-select formControlName="role" required>
+          <mat-option [value]="adminRole">Agency Administrator</mat-option>
+          <mat-option [value]="staffRole">Agency Staff</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    <div *ngIf="isStaff">
+      <h3 class="section-title">Permissions</h3>
+      <p class="hint">Administrators hold every permission implicitly.</p>
+      <div class="permission-grid">
+        <mat-checkbox *ngFor="let p of allPermissions"
+                      [checked]="hasPermission(p)"
+                      (change)="togglePermission(p, $event.checked)">{{ p }}</mat-checkbox>
+      </div>
+    </div>
+
+    <div class="actions-row">
+      <button mat-raised-button color="primary" type="submit" [disabled]="saving">
+        <mat-icon>save</mat-icon> {{ saving ? 'Saving…' : 'Save' }}
+      </button>
+      <a mat-button [routerLink]="['/agency', agencyId]">Cancel</a>
+    </div>
+  </form>
+
+  <!-- Reset password (edit only) -->
+  <div *ngIf="isEdit">
+    <h3 class="section-title">Reset password</h3>
+    <div *ngIf="passwordMessage" class="hint">{{ passwordMessage }}</div>
+    <form [formGroup]="passwordForm" (ngSubmit)="resetPassword()" class="password-form">
+      <mat-form-field appearance="outline">
+        <mat-label>New password</mat-label>
+        <input matInput formControlName="newPassword" type="password" required />
+      </mat-form-field>
+      <button mat-stroked-button type="submit" [disabled]="resetting">
+        <mat-icon>key</mat-icon> {{ resetting ? 'Updating…' : 'Set new password' }}
+      </button>
+    </form>
+  </div>
+</div>

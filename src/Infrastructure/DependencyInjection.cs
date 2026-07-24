@@ -1,10 +1,17 @@
 ﻿using System.Security.Claims;
 using System.Text;
+using Hangfire;
+using Hangfire.SqlServer;
 using RemSolution.Application.Common.Interfaces;
+using RemSolution.Application.Common.Tenancy;
 using RemSolution.Domain.Constants;
 using RemSolution.Infrastructure.Data;
 using RemSolution.Infrastructure.Data.Interceptors;
 using RemSolution.Infrastructure.Identity;
+using RemSolution.Application.Common.Settings;
+using RemSolution.Infrastructure.Imaging;
+using RemSolution.Infrastructure.Pricing;
+using RemSolution.Infrastructure.Settings;
 using RemSolution.Infrastructure.Storage;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
@@ -28,6 +35,9 @@ public static class DependencyInjection
 
         Guard.Against.Null(connectionString, message: "Connection string 'RemSolutionDb' not found.");
 
+        // First: converts a delete of a soft-deletable entity into an archive,
+        // so the stamping and audit interceptors below see the final state.
+        builder.Services.AddScoped<ISaveChangesInterceptor, SoftDeleteInterceptor>();
         builder.Services.AddScoped<ISaveChangesInterceptor, BaseEntityInterceptor>();
         builder.Services.AddScoped<ISaveChangesInterceptor, TenantEntityInterceptor>();
         builder.Services.AddScoped<ISaveChangesInterceptor, SubscriptionEnforcementInterceptor>();
@@ -146,6 +156,57 @@ public static class DependencyInjection
 
         builder.Services.AddTransient<IIdentityService, IdentityService>();
         builder.Services.AddScoped<ICrossTenantAccess, CrossTenantAccess>();
+        builder.Services.AddScoped<IImpersonationAuditor, ImpersonationAuditor>();
+
+        // Per-agency settings, read through a cached provider (settings change
+        // rarely; commands that change them invalidate the entry).
+        builder.Services.AddMemoryCache();
+        builder.Services.AddScoped<IAgencySettingsProvider, CachedAgencySettingsProvider>();
+
+        // Stateless, side-effect-free pricing seam: the one place that turns a
+        // car's DailyRate into a booking's snapshot price.
+        builder.Services.AddSingleton<IPricingService, PricingService>();
+
+        // Car-image thumbnail/medium pipeline. The resizer is a stateless
+        // singleton; the actual work runs as a Hangfire job (below).
+        builder.Services.AddSingleton<IImageProcessor, SkiaImageProcessor>();
+        builder.Services.AddScoped<CarImageProcessingJob>();
+
+        // Hangfire is the single background-job infrastructure (P.10). Skip it
+        // when there is no real database to talk to: the NSwag build-time host
+        // uses a placeholder connection string (SqlServerStorage would connect
+        // eagerly), and functional tests turn it off (Hangfire:Enabled=false) so
+        // no job server races the per-test database reset. In those cases the
+        // enqueue seam becomes a no-op.
+        var hangfireEnabled = builder.Configuration.GetValue("Hangfire:Enabled", true)
+            && connectionString != "NSwagBuildTimePlaceholder";
+
+        if (hangfireEnabled)
+        {
+            builder.Services.AddHangfire(configuration => configuration
+                .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+                .UseSimpleAssemblyNameTypeSerializer()
+                .UseRecommendedSerializerSettings()
+                .UseSqlServerStorage(connectionString, new SqlServerStorageOptions
+                {
+                    // Hangfire manages its own [HangFire] schema, independent of
+                    // the EF migrations.
+                    SchemaName = "HangFire",
+                    PrepareSchemaIfNecessary = true,
+                    CommandBatchMaxTimeout = TimeSpan.FromMinutes(5),
+                    QueuePollInterval = TimeSpan.FromSeconds(15),
+                    UseRecommendedIsolationLevel = true,
+                    DisableGlobalLocks = true
+                }));
+
+            builder.Services.AddHangfireServer();
+
+            builder.Services.AddScoped<IImageProcessingQueue, HangfireImageProcessingQueue>();
+        }
+        else
+        {
+            builder.Services.AddSingleton<IImageProcessingQueue, NoOpImageProcessingQueue>();
+        }
 
         builder.Services.AddAuthorization(options =>
         {
@@ -160,7 +221,13 @@ public static class DependencyInjection
             {
                 options.AddPolicy(permission, policy => policy.RequireAssertion(context =>
                     context.User.IsInRole(Roles.AgencyAdministrator) ||
-                    context.User.HasClaim(Claims.Permission, permission)));
+                    context.User.HasClaim(Claims.Permission, permission) ||
+                    // A platform admin browsing a tenant read-only through the
+                    // impersonation middleware: only while the ambient scope is
+                    // active, and only for the read permissions.
+                    (context.User.IsInRole(Roles.PlatformAdministrator) &&
+                     ImpersonationScope.IsActive &&
+                     Permissions.ReadOnly.Contains(permission))));
             }
         });
     }

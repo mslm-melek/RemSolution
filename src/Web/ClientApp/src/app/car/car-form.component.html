@@ -28,6 +28,29 @@
       </mat-form-field>
 
       <mat-form-field appearance="outline">
+        <mat-label>Branch</mat-label>
+        <mat-select formControlName="branchId">
+          <mat-option [value]="null">—</mat-option>
+          <mat-option *ngFor="let branch of branches" [value]="branch.id">{{ branch.name }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Status</mat-label>
+        <mat-select formControlName="status" required>
+          <mat-option *ngFor="let status of statuses" [value]="status.value">{{ status.label }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Daily rate</mat-label>
+        <input matInput type="number" min="0" step="0.01" formControlName="dailyRate" />
+        <span matSuffix *ngIf="currency">&nbsp;{{ currency }}</span>
+        <mat-hint>Rental price per day.</mat-hint>
+        <mat-error *ngIf="form.get('dailyRate')?.hasError('min')">Daily rate must be greater than 0.</mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
         <mat-label>First circulation date</mat-label>
         <input matInput type="date" formControlName="firstCirculationDate" required />
         <mat-error *ngIf="form.get('firstCirculationDate')?.hasError('required')">First circulation date is required.</mat-error>
@@ -52,16 +75,42 @@
       </mat-form-field>
 
       <div class="span-2 photo-panel">
-        <label class="photo-label">Photo</label>
-        <img *ngIf="photoUrl" [src]="photoUrl" alt="Car photo" class="photo-preview" />
-        <p *ngIf="!isEdit" class="photo-hint">Save the car first, then upload a photo.</p>
+        <label class="photo-label">Photos</label>
+        <p *ngIf="!isEdit" class="photo-hint">Save the car first, then add photos.</p>
+
+        <div *ngIf="isEdit" class="gallery">
+          <div *ngFor="let image of images" class="gallery-item" [class.is-primary]="image.isPrimary">
+            <img [src]="thumbnailFor(image)" alt="Car photo" class="gallery-thumb" />
+
+            <span *ngIf="image.isPrimary" class="badge badge-primary">Primary</span>
+            <span *ngIf="isProcessing(image)" class="badge badge-info">Processing…</span>
+            <span *ngIf="isFailed(image)" class="badge badge-warn">Preview failed</span>
+
+            <div class="gallery-actions">
+              <button mat-icon-button type="button" title="Set as primary"
+                      [disabled]="image.isPrimary" (click)="setPrimary(image)">
+                <mat-icon>{{ image.isPrimary ? 'star' : 'star_border' }}</mat-icon>
+              </button>
+              <button mat-icon-button type="button" title="Remove" (click)="deleteImage(image)">
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+          </div>
+
+          <!-- Instant local preview of the file currently uploading. -->
+          <div *ngIf="uploadingImage && previewUrl" class="gallery-item uploading">
+            <img [src]="previewUrl" alt="Uploading preview" class="gallery-thumb" />
+            <span class="badge badge-info">Uploading…</span>
+          </div>
+        </div>
+
         <div *ngIf="isEdit" class="photo-actions">
-          <button mat-stroked-button type="button" (click)="photoInput.click()" [disabled]="uploadingPhoto">
-            <mat-icon>photo_camera</mat-icon>
-            {{ uploadingPhoto ? 'Uploading…' : (photoUrl ? 'Replace photo' : 'Upload photo') }}
+          <button mat-stroked-button type="button" (click)="imageInput.click()" [disabled]="uploadingImage">
+            <mat-icon>add_a_photo</mat-icon>
+            {{ uploadingImage ? 'Uploading…' : 'Add photo' }}
           </button>
-          <input #photoInput type="file" accept="image/png,image/jpeg,image/webp" hidden
-                 (change)="onPhotoSelected(photoInput)" />
+          <input #imageInput type="file" accept="image/png,image/jpeg,image/webp" hidden
+                 (change)="onImageSelected(imageInput)" />
         </div>
       </div>
     </div>

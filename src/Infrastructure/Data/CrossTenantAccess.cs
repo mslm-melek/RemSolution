@@ -100,6 +100,17 @@ VALUES ({userId}, {_user.UserName}, NULL, {CrossTenantReadAction}, {intent.Entit
             _context = context;
         }
 
+        // IgnoreQueryFilters drops EVERY global filter — the tenant predicate
+        // (the point of this bypass) AND the !IsDeleted soft-delete predicate.
+        // That is deliberate: this queryable shows the physical truth, which is
+        // exactly what the referential-integrity checks that use it need — an
+        // archived Car/Client is a real row still holding a Restrict FK, so it
+        // must be visible here (DeleteAgencyCommand would otherwise pass its
+        // pre-check and then fail at the DB with a raw FK violation).
+        //
+        // Consequence: any USER-FACING reader that bypasses filters to cross
+        // tenants (e.g. a future marketplace search) must re-apply
+        // `!IsDeleted` itself, or it will surface archived rows.
         public IQueryable<TEntity> Query<TEntity>() where TEntity : class, ITenantEntity
             => _context.Set<TEntity>().IgnoreQueryFilters().AsNoTracking();
     }

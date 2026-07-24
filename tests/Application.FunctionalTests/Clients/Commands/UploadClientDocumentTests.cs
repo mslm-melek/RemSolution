@@ -107,7 +107,7 @@ public class UploadClientDocumentTests : BaseTestFixture
     }
 
     [Test]
-    public async Task ShouldDeleteStoredFilesWhenClientIsDeleted()
+    public async Task ShouldPreserveStoredFilesWhenClientIsArchived()
     {
         var clientId = await CreateTestClientAsync();
 
@@ -116,10 +116,13 @@ public class UploadClientDocumentTests : BaseTestFixture
 
         await SendAsync(new DeleteClientCommand(clientId));
 
-        (await FindAsync<Client>(clientId)).Should().BeNull();
-        File.Exists(StoredPath(cinUrl)).Should().BeFalse();
-        File.Exists(StoredPath(passeportUrl)).Should().BeFalse();
-        (await CountAsync<StoredFile>()).Should().Be(0);
+        // Deleting a client archives it (history preserved); its identity
+        // documents and their bytes are kept, not erased.
+        (await CountAsync<Client>(c => c.Id == clientId)).Should().Be(0);
+        (await FindIgnoringFiltersAsync<Client>(c => c.Id == clientId))!.IsDeleted.Should().BeTrue();
+        File.Exists(StoredPath(cinUrl)).Should().BeTrue();
+        File.Exists(StoredPath(passeportUrl)).Should().BeTrue();
+        (await CountAsync<StoredFile>()).Should().Be(2);
     }
 
     [Test]

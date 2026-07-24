@@ -10,8 +10,7 @@ public class RentingConfiguration : IEntityTypeConfiguration<Renting>
     {
         builder.HasAgencyTenant(nameof(Renting.RentingState));
 
-        builder.Property(e => e.Price)
-                   .HasColumnType("decimal(18,2)");
+        builder.OwnsMoney(e => e.Price, "Price", "PriceCurrency");
 
         builder.HasOne(c => c.Car)
                .WithMany(mc => mc.Rentings) 

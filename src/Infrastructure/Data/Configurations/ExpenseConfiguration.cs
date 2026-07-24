@@ -12,8 +12,7 @@ public class ExpenseConfiguration : IEntityTypeConfiguration<Expense>
 
         builder.HasAgencyTenant(nameof(Expense.ExpenseDate));
 
-        builder.Property(e => e.ExpenseAmount)
-                   .HasColumnType("decimal(18,2)");
+        builder.OwnsMoney(e => e.ExpenseAmount, "ExpenseAmount", "ExpenseAmountCurrency");
 
         builder.HasOne(e => e.Car)
               .WithMany(c => c.Expenses) // si navigation dans Car

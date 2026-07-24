@@ -7,7 +7,7 @@
         public int? ClientId { get; set; }
         public virtual Client? Client { get; set; }
         public DateTime? PayementDate { get; set; }
-        public decimal? PayementAmount { get; set; }
+        public Money? PayementAmount { get; set; }
 
     }
 }

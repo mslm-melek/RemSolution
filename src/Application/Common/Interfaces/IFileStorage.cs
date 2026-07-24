@@ -9,6 +9,12 @@ public interface IFileStorage
     // persist on the entity.
     Task<string> SaveAsync(Stream content, string relativePath, string contentType, CancellationToken cancellationToken = default);
 
+    // Opens the stored bytes at a URL previously returned by SaveAsync for
+    // reading (e.g. the image pipeline re-reads an original to resize it). The
+    // returned stream is the caller's to dispose. Throws if the URL is not one
+    // this storage issued or the bytes are missing.
+    Task<Stream> OpenReadAsync(string url, CancellationToken cancellationToken = default);
+
     // Accepts a URL previously returned by SaveAsync; URLs not owned by this
     // storage (e.g. external URIs) are left untouched.
     Task DeleteAsync(string url, CancellationToken cancellationToken = default);

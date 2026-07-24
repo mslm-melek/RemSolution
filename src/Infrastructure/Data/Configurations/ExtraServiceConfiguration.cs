@@ -10,8 +10,7 @@ public class ExtraServiceConfiguration : IEntityTypeConfiguration<ExtraService>
     {
         builder.HasAgencyTenant();
 
-        builder.Property(e => e.TotalAmount)
-             .HasColumnType("decimal(18,2)");
+        builder.OwnsMoney(e => e.TotalAmount, "TotalAmount", "TotalAmountCurrency");
 
         builder.HasOne(c => c.Renting)
                .WithMany(mc => mc.ExtraServices) 

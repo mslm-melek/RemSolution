@@ -25,4 +25,12 @@ export class AuthService {
     return !!user.features?.includes(feature)
         && !!user.permissions?.includes(readPermission);
   }
+
+  // The platform administrator (app owner) gets the agency-grouped admin
+  // console; agency users get the flat module navigation. Must match the
+  // Domain Roles constant. The backend enforces the same role on every admin
+  // endpoint, so branching here never out-privileges the API.
+  static isPlatformAdmin(user: CurrentUserDto): boolean {
+    return user.role === 'PlatformAdministrator';
+  }
 }

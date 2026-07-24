@@ -1,4 +1,5 @@
 using RemSolution.Application.Common.Exceptions;
+using RemSolution.Application.Common.Tenancy;
 using RemSolution.Application.Features.Car.Commands.CreateCarCommand;
 using RemSolution.Application.Features.Car.Queries.GetCarByIdQuery;
 using RemSolution.Application.Features.Car.Queries.GetCarsWithPaginationQuery;
@@ -10,6 +11,90 @@ using static Testing;
 
 public class TenantIsolationTests : BaseTestFixture
 {
+    // A platform administrator holds neither the agency role nor permission
+    // claims, so the read is denied unless an impersonation scope is active.
+    [Test]
+    public async Task PlatformAdmin_CannotReadTenantData_WithoutImpersonation()
+    {
+        await RunAsAgencyAdministratorAsync();
+        var agencyA = await AddTestAgencyAsync();
+        await SeedCarAsync(agencyA, "IMP-001");
+
+        await RunAsPlatformAdministratorAsync();
+        SetCurrentAgency(agencyA);
+
+        await FluentActions.Invoking(() =>
+            SendAsync(new GetCarsWithPaginationQuery { PageNumber = 1, PageSize = 10 }))
+            .Should().ThrowAsync<ForbiddenAccessException>();
+    }
+
+    [Test]
+    public async Task PlatformAdmin_CanReadAgencyData_WhileImpersonating()
+    {
+        await RunAsAgencyAdministratorAsync();
+        var agencyA = await AddTestAgencyAsync();
+        await SeedCarAsync(agencyA, "IMP-002");
+
+        await RunAsPlatformAdministratorAsync();
+        SetCurrentAgency(agencyA);
+
+        using (ImpersonationScope.Begin())
+        {
+            var page = await SendAsync(new GetCarsWithPaginationQuery { PageNumber = 1, PageSize = 10 });
+            page.TotalCount.Should().Be(1);
+        }
+    }
+
+    // The bypass only covers read permissions: a write stays forbidden even
+    // while impersonating.
+    [Test]
+    public async Task PlatformAdmin_CannotWriteTenantData_WhileImpersonating()
+    {
+        await RunAsAgencyAdministratorAsync();
+        var agencyA = await AddTestAgencyAsync();
+
+        SetCurrentAgency(agencyA);
+        var brand = new Brand { Name = "Tesla" };
+        await AddAsync(brand);
+        var model = new ModelCar { Name = "Model X", BrandId = brand.Id };
+        await AddAsync(model);
+
+        await RunAsPlatformAdministratorAsync();
+        SetCurrentAgency(agencyA);
+
+        using (ImpersonationScope.Begin())
+        {
+            await FluentActions.Invoking(() =>
+                SendAsync(new CreateCarCommand
+                {
+                    Matricule = "IMP-003",
+                    ModelId = model.Id,
+                    Color = "Red",
+                    FirstCirculationDate = DateTime.UtcNow
+                }))
+                .Should().ThrowAsync<ForbiddenAccessException>();
+        }
+    }
+
+    private static async Task SeedCarAsync(int agencyId, string matricule)
+    {
+        SetCurrentAgency(agencyId);
+
+        var brand = new Brand { Name = "Tesla" };
+        await AddAsync(brand);
+
+        var model = new ModelCar { Name = "Model S", BrandId = brand.Id };
+        await AddAsync(model);
+
+        await SendAsync(new CreateCarCommand
+        {
+            Matricule = matricule,
+            ModelId = model.Id,
+            Color = "Black",
+            FirstCirculationDate = DateTime.UtcNow
+        });
+    }
+
     [Test]
     public async Task ShouldNotSeeAnotherAgencysData()
     {

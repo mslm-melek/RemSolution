@@ -8,8 +8,7 @@ public class RentingHistoryConfiguration : IEntityTypeConfiguration<RentingHisto
 {
     public void Configure(EntityTypeBuilder<RentingHistory> builder)
     {
-        builder.Property(e => e.Price)
-             .HasColumnType("decimal(18,2)");
+        builder.OwnsMoney(e => e.Price, "Price", "PriceCurrency");
 
         builder.HasOne(c => c.Renting)
                .WithMany(mc => mc.RentingHistories) 

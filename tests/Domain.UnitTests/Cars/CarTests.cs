@@ -2,6 +2,7 @@
 using NUnit.Framework;
 using RemSolution.Domain.Entities;
 using RemSolution.Domain.Enums;
+using RemSolution.Domain.ValueObjects;
 
 namespace RemSolution.Domain.UnitTests.Entities;
 
@@ -28,6 +29,9 @@ public class CarTests
                 Brand = new Brand { Name = "Tesla" }
             },
             Color = color,
+            BranchId = 7,
+            Status = CarStatus.Maintenance,
+            DailyRate = Money.Of(49.90m, "TND"),
             FirstCirculationDate = firstCirculation,
             PhotoFileId = 42,
             Power = 120,
@@ -40,10 +44,27 @@ public class CarTests
         car.Model!.Name.Should().Be("Model3");
         car.Model.Brand!.Name.Should().Be("Tesla");
         car.Color.Should().Be(color);
+        car.BranchId.Should().Be(7);
+        car.Status.Should().Be(CarStatus.Maintenance);
+        car.DailyRate.Should().Be(Money.Of(49.90m, "TND"));
         car.FirstCirculationDate.Should().Be(firstCirculation);
         car.PhotoFileId.Should().Be(42);
         car.Power.Should().Be(120);
         car.FuelType.Should().Be(FuelType.Gasoline);
+    }
+
+    [Test]
+    public void ShouldDefaultToActiveStatus()
+    {
+        var car = new Car
+        {
+            Matricule = "XYZ-789",
+            FirstCirculationDate = DateTime.UtcNow
+        };
+
+        car.Status.Should().Be(CarStatus.Active);
+        car.BranchId.Should().BeNull();
+        car.DailyRate.Should().BeNull();
     }
 
     [Test]

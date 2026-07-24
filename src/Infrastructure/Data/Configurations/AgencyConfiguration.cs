@@ -10,7 +10,8 @@ public class AgencyConfiguration : IEntityTypeConfiguration<Agency>
     {
         builder.Property(a => a.Name)
                .IsRequired()
-               .HasMaxLength(200);
+               .HasMaxLength(200)
+               .UseCollation(DatabaseCollations.AccentInsensitive);
 
         builder.Property(a => a.Email)
                .HasMaxLength(320);

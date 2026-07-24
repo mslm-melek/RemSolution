@@ -21,6 +21,8 @@ export interface IAgenciesClient {
     getAgencyById(id: number): Observable<AgencyDto>;
     updateAgency(id: number, command: UpdateAgencyCommand): Observable<void>;
     deleteAgency(id: number): Observable<void>;
+    getAgencyFeatures(id: number): Observable<AgencyFeatureDto[]>;
+    setAgencyFeature(id: number, command: SetAgencyFeatureCommand): Observable<void>;
 }
 
 @Injectable({
@@ -300,11 +302,125 @@ export class AgenciesClient implements IAgenciesClient {
         }
         return _observableOf(null as any);
     }
+
+    getAgencyFeatures(id: number): Observable<AgencyFeatureDto[]> {
+        let url_ = this.baseUrl + "/api/Agencies/{id}/features";
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetAgencyFeatures(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetAgencyFeatures(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<AgencyFeatureDto[]>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<AgencyFeatureDto[]>;
+        }));
+    }
+
+    protected processGetAgencyFeatures(response: HttpResponseBase): Observable<AgencyFeatureDto[]> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            if (Array.isArray(resultData200)) {
+                result200 = [] as any;
+                for (let item of resultData200)
+                    result200!.push(AgencyFeatureDto.fromJS(item));
+            }
+            else {
+                result200 = <any>null;
+            }
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    setAgencyFeature(id: number, command: SetAgencyFeatureCommand): Observable<void> {
+        let url_ = this.baseUrl + "/api/Agencies/{id}/features";
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(command);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+            })
+        };
+
+        return this.http.request("put", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processSetAgencyFeature(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processSetAgencyFeature(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processSetAgencyFeature(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return _observableOf(null as any);
+            }));
+        } else if (status === 400) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("A server side error occurred.", status, _responseText, _headers);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
 }
 
 export interface IAgencySubscriptionsClient {
     getAgencySubscriptions(agencyId: number | null | undefined): Observable<AgencySubscriptionDto[]>;
     assignAgencySubscription(command: AssignAgencySubscriptionCommand): Observable<number>;
+    getAgencyUsage(agencyId: number): Observable<AgencyUsageDto>;
     updateAgencySubscription(id: number, command: UpdateAgencySubscriptionCommand): Observable<void>;
 }
 
@@ -422,6 +538,57 @@ export class AgencySubscriptionsClient implements IAgencySubscriptionsClient {
                 result201 = resultData201 !== undefined ? resultData201 : <any>null;
     
             return _observableOf(result201);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getAgencyUsage(agencyId: number): Observable<AgencyUsageDto> {
+        let url_ = this.baseUrl + "/api/AgencySubscriptions/usage/{agencyId}";
+        if (agencyId === undefined || agencyId === null)
+            throw new Error("The parameter 'agencyId' must be defined.");
+        url_ = url_.replace("{agencyId}", encodeURIComponent("" + agencyId));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetAgencyUsage(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetAgencyUsage(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<AgencyUsageDto>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<AgencyUsageDto>;
+        }));
+    }
+
+    protected processGetAgencyUsage(response: HttpResponseBase): Observable<AgencyUsageDto> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = AgencyUsageDto.fromJS(resultData200);
+            return _observableOf(result200);
             }));
         } else if (status !== 200 && status !== 204) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
@@ -1240,6 +1407,11 @@ export interface ICarsClient {
     updateCar(id: number, command: UpdateCarCommand): Observable<void>;
     deleteCar(id: number): Observable<void>;
     uploadCarPhoto(id: number, file: FileParameter | null | undefined): Observable<string>;
+    getCarImages(id: number): Observable<CarImageDto[]>;
+    uploadCarImage(id: number, file: FileParameter | null | undefined): Observable<CarImageDto>;
+    setPrimaryCarImage(id: number, imageId: number): Observable<void>;
+    reorderCarImages(id: number, orderedImageIds: number[]): Observable<void>;
+    deleteCarImage(id: number, imageId: number): Observable<void>;
 }
 
 @Injectable({
@@ -1575,6 +1747,271 @@ export class CarsClient implements ICarsClient {
                 result200 = resultData200 !== undefined ? resultData200 : <any>null;
     
             return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getCarImages(id: number): Observable<CarImageDto[]> {
+        let url_ = this.baseUrl + "/api/Cars/{id}/images";
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetCarImages(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetCarImages(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<CarImageDto[]>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<CarImageDto[]>;
+        }));
+    }
+
+    protected processGetCarImages(response: HttpResponseBase): Observable<CarImageDto[]> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            if (Array.isArray(resultData200)) {
+                result200 = [] as any;
+                for (let item of resultData200)
+                    result200!.push(CarImageDto.fromJS(item));
+            }
+            else {
+                result200 = <any>null;
+            }
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    uploadCarImage(id: number, file: FileParameter | null | undefined): Observable<CarImageDto> {
+        let url_ = this.baseUrl + "/api/Cars/{id}/images";
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = new FormData();
+        if (file !== null && file !== undefined)
+            content_.append("file", file.data, file.fileName ? file.fileName : "file");
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processUploadCarImage(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processUploadCarImage(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<CarImageDto>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<CarImageDto>;
+        }));
+    }
+
+    protected processUploadCarImage(response: HttpResponseBase): Observable<CarImageDto> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = CarImageDto.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    setPrimaryCarImage(id: number, imageId: number): Observable<void> {
+        let url_ = this.baseUrl + "/api/Cars/{id}/images/{imageId}/primary";
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        if (imageId === undefined || imageId === null)
+            throw new Error("The parameter 'imageId' must be defined.");
+        url_ = url_.replace("{imageId}", encodeURIComponent("" + imageId));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+            })
+        };
+
+        return this.http.request("put", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processSetPrimaryCarImage(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processSetPrimaryCarImage(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processSetPrimaryCarImage(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return _observableOf(null as any);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    reorderCarImages(id: number, orderedImageIds: number[]): Observable<void> {
+        let url_ = this.baseUrl + "/api/Cars/{id}/images/order";
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(orderedImageIds);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+            })
+        };
+
+        return this.http.request("put", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processReorderCarImages(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processReorderCarImages(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processReorderCarImages(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return _observableOf(null as any);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    deleteCarImage(id: number, imageId: number): Observable<void> {
+        let url_ = this.baseUrl + "/api/Cars/{id}/images/{imageId}";
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        if (imageId === undefined || imageId === null)
+            throw new Error("The parameter 'imageId' must be defined.");
+        url_ = url_.replace("{imageId}", encodeURIComponent("" + imageId));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+            })
+        };
+
+        return this.http.request("delete", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processDeleteCarImage(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processDeleteCarImage(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processDeleteCarImage(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return _observableOf(null as any);
             }));
         } else if (status !== 200 && status !== 204) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
@@ -2927,6 +3364,12 @@ export class SubscriptionsClient implements ISubscriptionsClient {
 export interface IUsersClient {
     getCurrentUser(): Observable<CurrentUserDto>;
     createAgencyUser(command: CreateAgencyUserCommand): Observable<string>;
+    createAgencyUserByAdmin(command: CreateAgencyUserByAdminCommand): Observable<string>;
+    getAgencyUsers(agencyId: number): Observable<AgencyUserDto[]>;
+    getAgencyUserById(id: string): Observable<AgencyUserDto>;
+    updateAgencyUser(id: string, command: UpdateAgencyUserCommand): Observable<void>;
+    setAgencyUserActive(id: string, command: SetAgencyUserActiveCommand): Observable<void>;
+    resetAgencyUserPassword(id: string, command: ResetAgencyUserPasswordCommand): Observable<void>;
 }
 
 @Injectable({
@@ -3042,16 +3485,351 @@ export class UsersClient implements IUsersClient {
         }
         return _observableOf(null as any);
     }
+
+    createAgencyUserByAdmin(command: CreateAgencyUserByAdminCommand): Observable<string> {
+        let url_ = this.baseUrl + "/api/Users/by-admin";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(command);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processCreateAgencyUserByAdmin(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processCreateAgencyUserByAdmin(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<string>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<string>;
+        }));
+    }
+
+    protected processCreateAgencyUserByAdmin(response: HttpResponseBase): Observable<string> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 201) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result201: any = null;
+            let resultData201 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+                result201 = resultData201 !== undefined ? resultData201 : <any>null;
+    
+            return _observableOf(result201);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getAgencyUsers(agencyId: number): Observable<AgencyUserDto[]> {
+        let url_ = this.baseUrl + "/api/Users/by-agency/{agencyId}";
+        if (agencyId === undefined || agencyId === null)
+            throw new Error("The parameter 'agencyId' must be defined.");
+        url_ = url_.replace("{agencyId}", encodeURIComponent("" + agencyId));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetAgencyUsers(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetAgencyUsers(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<AgencyUserDto[]>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<AgencyUserDto[]>;
+        }));
+    }
+
+    protected processGetAgencyUsers(response: HttpResponseBase): Observable<AgencyUserDto[]> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            if (Array.isArray(resultData200)) {
+                result200 = [] as any;
+                for (let item of resultData200)
+                    result200!.push(AgencyUserDto.fromJS(item));
+            }
+            else {
+                result200 = <any>null;
+            }
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getAgencyUserById(id: string): Observable<AgencyUserDto> {
+        let url_ = this.baseUrl + "/api/Users/{id}";
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetAgencyUserById(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetAgencyUserById(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<AgencyUserDto>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<AgencyUserDto>;
+        }));
+    }
+
+    protected processGetAgencyUserById(response: HttpResponseBase): Observable<AgencyUserDto> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = AgencyUserDto.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status === 404) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("A server side error occurred.", status, _responseText, _headers);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    updateAgencyUser(id: string, command: UpdateAgencyUserCommand): Observable<void> {
+        let url_ = this.baseUrl + "/api/Users/{id}";
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(command);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+            })
+        };
+
+        return this.http.request("put", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processUpdateAgencyUser(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processUpdateAgencyUser(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processUpdateAgencyUser(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return _observableOf(null as any);
+            }));
+        } else if (status === 400) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("A server side error occurred.", status, _responseText, _headers);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    setAgencyUserActive(id: string, command: SetAgencyUserActiveCommand): Observable<void> {
+        let url_ = this.baseUrl + "/api/Users/{id}/active";
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(command);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+            })
+        };
+
+        return this.http.request("put", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processSetAgencyUserActive(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processSetAgencyUserActive(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processSetAgencyUserActive(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return _observableOf(null as any);
+            }));
+        } else if (status === 400) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("A server side error occurred.", status, _responseText, _headers);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    resetAgencyUserPassword(id: string, command: ResetAgencyUserPasswordCommand): Observable<void> {
+        let url_ = this.baseUrl + "/api/Users/{id}/password";
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(command);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+            })
+        };
+
+        return this.http.request("put", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processResetAgencyUserPassword(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processResetAgencyUserPassword(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processResetAgencyUserPassword(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return _observableOf(null as any);
+            }));
+        } else if (status === 400) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("A server side error occurred.", status, _responseText, _headers);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
 }
 
 export class AgencyDto implements IAgencyDto {
     id?: number;
+    rowVersion?: string | undefined;
     name?: string;
     email?: string | undefined;
     phoneNumber?: string | undefined;
     address?: string | undefined;
     countryId?: number;
     countryName?: string | undefined;
+    currency?: string;
+    cancellationWindowHours?: number;
+    reservationExpiryHours?: number;
 
     constructor(data?: IAgencyDto) {
         if (data) {
@@ -3065,12 +3843,16 @@ export class AgencyDto implements IAgencyDto {
     init(_data?: any) {
         if (_data) {
             this.id = _data["id"];
+            this.rowVersion = _data["rowVersion"];
             this.name = _data["name"];
             this.email = _data["email"];
             this.phoneNumber = _data["phoneNumber"];
             this.address = _data["address"];
             this.countryId = _data["countryId"];
             this.countryName = _data["countryName"];
+            this.currency = _data["currency"];
+            this.cancellationWindowHours = _data["cancellationWindowHours"];
+            this.reservationExpiryHours = _data["reservationExpiryHours"];
         }
     }
 
@@ -3084,24 +3866,32 @@ export class AgencyDto implements IAgencyDto {
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
         data["id"] = this.id;
+        data["rowVersion"] = this.rowVersion;
         data["name"] = this.name;
         data["email"] = this.email;
         data["phoneNumber"] = this.phoneNumber;
         data["address"] = this.address;
         data["countryId"] = this.countryId;
         data["countryName"] = this.countryName;
+        data["currency"] = this.currency;
+        data["cancellationWindowHours"] = this.cancellationWindowHours;
+        data["reservationExpiryHours"] = this.reservationExpiryHours;
         return data;
     }
 }
 
 export interface IAgencyDto {
     id?: number;
+    rowVersion?: string | undefined;
     name?: string;
     email?: string | undefined;
     phoneNumber?: string | undefined;
     address?: string | undefined;
     countryId?: number;
     countryName?: string | undefined;
+    currency?: string;
+    cancellationWindowHours?: number;
+    reservationExpiryHours?: number;
 }
 
 export class CreateAgencyCommand implements ICreateAgencyCommand {
@@ -3110,6 +3900,9 @@ export class CreateAgencyCommand implements ICreateAgencyCommand {
     phoneNumber?: string | undefined;
     address?: string | undefined;
     countryId?: number;
+    currency?: string;
+    cancellationWindowHours?: number;
+    reservationExpiryHours?: number;
 
     constructor(data?: ICreateAgencyCommand) {
         if (data) {
@@ -3127,6 +3920,9 @@ export class CreateAgencyCommand implements ICreateAgencyCommand {
             this.phoneNumber = _data["phoneNumber"];
             this.address = _data["address"];
             this.countryId = _data["countryId"];
+            this.currency = _data["currency"];
+            this.cancellationWindowHours = _data["cancellationWindowHours"];
+            this.reservationExpiryHours = _data["reservationExpiryHours"];
         }
     }
 
@@ -3144,6 +3940,9 @@ export class CreateAgencyCommand implements ICreateAgencyCommand {
         data["phoneNumber"] = this.phoneNumber;
         data["address"] = this.address;
         data["countryId"] = this.countryId;
+        data["currency"] = this.currency;
+        data["cancellationWindowHours"] = this.cancellationWindowHours;
+        data["reservationExpiryHours"] = this.reservationExpiryHours;
         return data;
     }
 }
@@ -3154,15 +3953,22 @@ export interface ICreateAgencyCommand {
     phoneNumber?: string | undefined;
     address?: string | undefined;
     countryId?: number;
+    currency?: string;
+    cancellationWindowHours?: number;
+    reservationExpiryHours?: number;
 }
 
 export class UpdateAgencyCommand implements IUpdateAgencyCommand {
     id?: number;
+    rowVersion?: string | undefined;
     name?: string;
     email?: string | undefined;
     phoneNumber?: string | undefined;
     address?: string | undefined;
     countryId?: number;
+    currency?: string;
+    cancellationWindowHours?: number;
+    reservationExpiryHours?: number;
 
     constructor(data?: IUpdateAgencyCommand) {
         if (data) {
@@ -3176,11 +3982,15 @@ export class UpdateAgencyCommand implements IUpdateAgencyCommand {
     init(_data?: any) {
         if (_data) {
             this.id = _data["id"];
+            this.rowVersion = _data["rowVersion"];
             this.name = _data["name"];
             this.email = _data["email"];
             this.phoneNumber = _data["phoneNumber"];
             this.address = _data["address"];
             this.countryId = _data["countryId"];
+            this.currency = _data["currency"];
+            this.cancellationWindowHours = _data["cancellationWindowHours"];
+            this.reservationExpiryHours = _data["reservationExpiryHours"];
         }
     }
 
@@ -3194,22 +4004,114 @@ export class UpdateAgencyCommand implements IUpdateAgencyCommand {
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
         data["id"] = this.id;
+        data["rowVersion"] = this.rowVersion;
         data["name"] = this.name;
         data["email"] = this.email;
         data["phoneNumber"] = this.phoneNumber;
         data["address"] = this.address;
         data["countryId"] = this.countryId;
+        data["currency"] = this.currency;
+        data["cancellationWindowHours"] = this.cancellationWindowHours;
+        data["reservationExpiryHours"] = this.reservationExpiryHours;
         return data;
     }
 }
 
 export interface IUpdateAgencyCommand {
     id?: number;
+    rowVersion?: string | undefined;
     name?: string;
     email?: string | undefined;
     phoneNumber?: string | undefined;
     address?: string | undefined;
     countryId?: number;
+    currency?: string;
+    cancellationWindowHours?: number;
+    reservationExpiryHours?: number;
+}
+
+export class AgencyFeatureDto implements IAgencyFeatureDto {
+    feature?: string;
+    enabled?: boolean;
+
+    constructor(data?: IAgencyFeatureDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.feature = _data["feature"];
+            this.enabled = _data["enabled"];
+        }
+    }
+
+    static fromJS(data: any): AgencyFeatureDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new AgencyFeatureDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["feature"] = this.feature;
+        data["enabled"] = this.enabled;
+        return data;
+    }
+}
+
+export interface IAgencyFeatureDto {
+    feature?: string;
+    enabled?: boolean;
+}
+
+export class SetAgencyFeatureCommand implements ISetAgencyFeatureCommand {
+    agencyId?: number;
+    feature?: string;
+    enabled?: boolean;
+
+    constructor(data?: ISetAgencyFeatureCommand) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.agencyId = _data["agencyId"];
+            this.feature = _data["feature"];
+            this.enabled = _data["enabled"];
+        }
+    }
+
+    static fromJS(data: any): SetAgencyFeatureCommand {
+        data = typeof data === 'object' ? data : {};
+        let result = new SetAgencyFeatureCommand();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["agencyId"] = this.agencyId;
+        data["feature"] = this.feature;
+        data["enabled"] = this.enabled;
+        return data;
+    }
+}
+
+export interface ISetAgencyFeatureCommand {
+    agencyId?: number;
+    feature?: string;
+    enabled?: boolean;
 }
 
 export class AgencySubscriptionDto implements IAgencySubscriptionDto {
@@ -3292,6 +4194,78 @@ export enum SubscriptionStatus {
     Active = 1,
     Suspended = 2,
     Expired = 3,
+}
+
+export class AgencyUsageDto implements IAgencyUsageDto {
+    hasSubscription?: boolean;
+    isActive?: boolean;
+    planName?: string | undefined;
+    status?: SubscriptionStatus | undefined;
+    maxCars?: number;
+    maxClients?: number;
+    maxUsers?: number;
+    carsUsed?: number;
+    clientsUsed?: number;
+    usersUsed?: number;
+
+    constructor(data?: IAgencyUsageDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.hasSubscription = _data["hasSubscription"];
+            this.isActive = _data["isActive"];
+            this.planName = _data["planName"];
+            this.status = _data["status"];
+            this.maxCars = _data["maxCars"];
+            this.maxClients = _data["maxClients"];
+            this.maxUsers = _data["maxUsers"];
+            this.carsUsed = _data["carsUsed"];
+            this.clientsUsed = _data["clientsUsed"];
+            this.usersUsed = _data["usersUsed"];
+        }
+    }
+
+    static fromJS(data: any): AgencyUsageDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new AgencyUsageDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["hasSubscription"] = this.hasSubscription;
+        data["isActive"] = this.isActive;
+        data["planName"] = this.planName;
+        data["status"] = this.status;
+        data["maxCars"] = this.maxCars;
+        data["maxClients"] = this.maxClients;
+        data["maxUsers"] = this.maxUsers;
+        data["carsUsed"] = this.carsUsed;
+        data["clientsUsed"] = this.clientsUsed;
+        data["usersUsed"] = this.usersUsed;
+        return data;
+    }
+}
+
+export interface IAgencyUsageDto {
+    hasSubscription?: boolean;
+    isActive?: boolean;
+    planName?: string | undefined;
+    status?: SubscriptionStatus | undefined;
+    maxCars?: number;
+    maxClients?: number;
+    maxUsers?: number;
+    carsUsed?: number;
+    clientsUsed?: number;
+    usersUsed?: number;
 }
 
 export class AssignAgencySubscriptionCommand implements IAssignAgencySubscriptionCommand {
@@ -3853,9 +4827,14 @@ export interface IPaginatedListOfCarDto {
 export class CarDto implements ICarDto {
     id?: number;
     agencyId?: number;
+    rowVersion?: string | undefined;
     matricule?: string;
     modelId?: number | undefined;
     modelName?: string | undefined;
+    branchId?: number | undefined;
+    branchName?: string | undefined;
+    status?: CarStatus;
+    dailyRate?: MoneyDto | undefined;
     firstCirculationDate?: Date;
     color?: string | undefined;
     imageUrl?: string | undefined;
@@ -3875,9 +4854,14 @@ export class CarDto implements ICarDto {
         if (_data) {
             this.id = _data["id"];
             this.agencyId = _data["agencyId"];
+            this.rowVersion = _data["rowVersion"];
             this.matricule = _data["matricule"];
             this.modelId = _data["modelId"];
             this.modelName = _data["modelName"];
+            this.branchId = _data["branchId"];
+            this.branchName = _data["branchName"];
+            this.status = _data["status"];
+            this.dailyRate = _data["dailyRate"] ? MoneyDto.fromJS(_data["dailyRate"]) : <any>undefined;
             this.firstCirculationDate = _data["firstCirculationDate"] ? new Date(_data["firstCirculationDate"].toString()) : <any>undefined;
             this.color = _data["color"];
             this.imageUrl = _data["imageUrl"];
@@ -3897,9 +4881,14 @@ export class CarDto implements ICarDto {
         data = typeof data === 'object' ? data : {};
         data["id"] = this.id;
         data["agencyId"] = this.agencyId;
+        data["rowVersion"] = this.rowVersion;
         data["matricule"] = this.matricule;
         data["modelId"] = this.modelId;
         data["modelName"] = this.modelName;
+        data["branchId"] = this.branchId;
+        data["branchName"] = this.branchName;
+        data["status"] = this.status;
+        data["dailyRate"] = this.dailyRate ? this.dailyRate.toJSON() : <any>undefined;
         data["firstCirculationDate"] = this.firstCirculationDate ? this.firstCirculationDate.toISOString() : <any>undefined;
         data["color"] = this.color;
         data["imageUrl"] = this.imageUrl;
@@ -3912,14 +4901,65 @@ export class CarDto implements ICarDto {
 export interface ICarDto {
     id?: number;
     agencyId?: number;
+    rowVersion?: string | undefined;
     matricule?: string;
     modelId?: number | undefined;
     modelName?: string | undefined;
+    branchId?: number | undefined;
+    branchName?: string | undefined;
+    status?: CarStatus;
+    dailyRate?: MoneyDto | undefined;
     firstCirculationDate?: Date;
     color?: string | undefined;
     imageUrl?: string | undefined;
     power?: number | undefined;
     fuelType?: FuelType | undefined;
+}
+
+export enum CarStatus {
+    Active = 0,
+    Maintenance = 1,
+    Inactive = 2,
+}
+
+export class MoneyDto implements IMoneyDto {
+    amount?: number;
+    currency?: string;
+
+    constructor(data?: IMoneyDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.amount = _data["amount"];
+            this.currency = _data["currency"];
+        }
+    }
+
+    static fromJS(data: any): MoneyDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new MoneyDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["amount"] = this.amount;
+        data["currency"] = this.currency;
+        return data;
+    }
+}
+
+export interface IMoneyDto {
+    amount?: number;
+    currency?: string;
 }
 
 export enum FuelType {
@@ -3930,6 +4970,9 @@ export enum FuelType {
 export class CreateCarCommand implements ICreateCarCommand {
     matricule?: string;
     modelId?: number | undefined;
+    branchId?: number | undefined;
+    status?: CarStatus;
+    dailyRate?: number | undefined;
     firstCirculationDate?: Date;
     color?: string | undefined;
     power?: number | undefined;
@@ -3948,6 +4991,9 @@ export class CreateCarCommand implements ICreateCarCommand {
         if (_data) {
             this.matricule = _data["matricule"];
             this.modelId = _data["modelId"];
+            this.branchId = _data["branchId"];
+            this.status = _data["status"];
+            this.dailyRate = _data["dailyRate"];
             this.firstCirculationDate = _data["firstCirculationDate"] ? new Date(_data["firstCirculationDate"].toString()) : <any>undefined;
             this.color = _data["color"];
             this.power = _data["power"];
@@ -3966,6 +5012,9 @@ export class CreateCarCommand implements ICreateCarCommand {
         data = typeof data === 'object' ? data : {};
         data["matricule"] = this.matricule;
         data["modelId"] = this.modelId;
+        data["branchId"] = this.branchId;
+        data["status"] = this.status;
+        data["dailyRate"] = this.dailyRate;
         data["firstCirculationDate"] = this.firstCirculationDate ? this.firstCirculationDate.toISOString() : <any>undefined;
         data["color"] = this.color;
         data["power"] = this.power;
@@ -3977,6 +5026,9 @@ export class CreateCarCommand implements ICreateCarCommand {
 export interface ICreateCarCommand {
     matricule?: string;
     modelId?: number | undefined;
+    branchId?: number | undefined;
+    status?: CarStatus;
+    dailyRate?: number | undefined;
     firstCirculationDate?: Date;
     color?: string | undefined;
     power?: number | undefined;
@@ -3985,7 +5037,11 @@ export interface ICreateCarCommand {
 
 export class UpdateCarCommand implements IUpdateCarCommand {
     id?: number;
+    rowVersion?: string | undefined;
     modelId?: number | undefined;
+    branchId?: number | undefined;
+    status?: CarStatus;
+    dailyRate?: number | undefined;
     firstCirculationDate?: Date;
     color?: string | undefined;
     power?: number | undefined;
@@ -4003,7 +5059,11 @@ export class UpdateCarCommand implements IUpdateCarCommand {
     init(_data?: any) {
         if (_data) {
             this.id = _data["id"];
+            this.rowVersion = _data["rowVersion"];
             this.modelId = _data["modelId"];
+            this.branchId = _data["branchId"];
+            this.status = _data["status"];
+            this.dailyRate = _data["dailyRate"];
             this.firstCirculationDate = _data["firstCirculationDate"] ? new Date(_data["firstCirculationDate"].toString()) : <any>undefined;
             this.color = _data["color"];
             this.power = _data["power"];
@@ -4021,7 +5081,11 @@ export class UpdateCarCommand implements IUpdateCarCommand {
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
         data["id"] = this.id;
+        data["rowVersion"] = this.rowVersion;
         data["modelId"] = this.modelId;
+        data["branchId"] = this.branchId;
+        data["status"] = this.status;
+        data["dailyRate"] = this.dailyRate;
         data["firstCirculationDate"] = this.firstCirculationDate ? this.firstCirculationDate.toISOString() : <any>undefined;
         data["color"] = this.color;
         data["power"] = this.power;
@@ -4032,11 +5096,86 @@ export class UpdateCarCommand implements IUpdateCarCommand {
 
 export interface IUpdateCarCommand {
     id?: number;
+    rowVersion?: string | undefined;
     modelId?: number | undefined;
+    branchId?: number | undefined;
+    status?: CarStatus;
+    dailyRate?: number | undefined;
     firstCirculationDate?: Date;
     color?: string | undefined;
     power?: number | undefined;
     fuelType?: FuelType | undefined;
+}
+
+export class CarImageDto implements ICarImageDto {
+    id?: number;
+    carId?: number;
+    sortOrder?: number;
+    isPrimary?: boolean;
+    processingStatus?: ImageProcessingStatus;
+    originalUrl?: string | undefined;
+    thumbnailUrl?: string | undefined;
+    mediumUrl?: string | undefined;
+
+    constructor(data?: ICarImageDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.carId = _data["carId"];
+            this.sortOrder = _data["sortOrder"];
+            this.isPrimary = _data["isPrimary"];
+            this.processingStatus = _data["processingStatus"];
+            this.originalUrl = _data["originalUrl"];
+            this.thumbnailUrl = _data["thumbnailUrl"];
+            this.mediumUrl = _data["mediumUrl"];
+        }
+    }
+
+    static fromJS(data: any): CarImageDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new CarImageDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["carId"] = this.carId;
+        data["sortOrder"] = this.sortOrder;
+        data["isPrimary"] = this.isPrimary;
+        data["processingStatus"] = this.processingStatus;
+        data["originalUrl"] = this.originalUrl;
+        data["thumbnailUrl"] = this.thumbnailUrl;
+        data["mediumUrl"] = this.mediumUrl;
+        return data;
+    }
+}
+
+export interface ICarImageDto {
+    id?: number;
+    carId?: number;
+    sortOrder?: number;
+    isPrimary?: boolean;
+    processingStatus?: ImageProcessingStatus;
+    originalUrl?: string | undefined;
+    thumbnailUrl?: string | undefined;
+    mediumUrl?: string | undefined;
+}
+
+export enum ImageProcessingStatus {
+    Pending = 0,
+    Processing = 1,
+    Completed = 2,
+    Failed = 3,
 }
 
 export class PaginatedListOfClientDto implements IPaginatedListOfClientDto {
@@ -4106,6 +5245,7 @@ export interface IPaginatedListOfClientDto {
 export class ClientDto implements IClientDto {
     id?: number;
     agencyId?: number;
+    rowVersion?: string | undefined;
     firstName?: string | undefined;
     lastName?: string | undefined;
     birthDate?: Date | undefined;
@@ -4145,6 +5285,7 @@ export class ClientDto implements IClientDto {
         if (_data) {
             this.id = _data["id"];
             this.agencyId = _data["agencyId"];
+            this.rowVersion = _data["rowVersion"];
             this.firstName = _data["firstName"];
             this.lastName = _data["lastName"];
             this.birthDate = _data["birthDate"] ? new Date(_data["birthDate"].toString()) : <any>undefined;
@@ -4184,6 +5325,7 @@ export class ClientDto implements IClientDto {
         data = typeof data === 'object' ? data : {};
         data["id"] = this.id;
         data["agencyId"] = this.agencyId;
+        data["rowVersion"] = this.rowVersion;
         data["firstName"] = this.firstName;
         data["lastName"] = this.lastName;
         data["birthDate"] = this.birthDate ? this.birthDate.toISOString() : <any>undefined;
@@ -4216,6 +5358,7 @@ export class ClientDto implements IClientDto {
 export interface IClientDto {
     id?: number;
     agencyId?: number;
+    rowVersion?: string | undefined;
     firstName?: string | undefined;
     lastName?: string | undefined;
     birthDate?: Date | undefined;
@@ -4349,6 +5492,7 @@ export interface ICreateClientCommand {
 
 export class UpdateClientCommand implements IUpdateClientCommand {
     id?: number;
+    rowVersion?: string | undefined;
     firstName?: string;
     lastName?: string;
     birthDate?: Date | undefined;
@@ -4380,6 +5524,7 @@ export class UpdateClientCommand implements IUpdateClientCommand {
     init(_data?: any) {
         if (_data) {
             this.id = _data["id"];
+            this.rowVersion = _data["rowVersion"];
             this.firstName = _data["firstName"];
             this.lastName = _data["lastName"];
             this.birthDate = _data["birthDate"] ? new Date(_data["birthDate"].toString()) : <any>undefined;
@@ -4411,6 +5556,7 @@ export class UpdateClientCommand implements IUpdateClientCommand {
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
         data["id"] = this.id;
+        data["rowVersion"] = this.rowVersion;
         data["firstName"] = this.firstName;
         data["lastName"] = this.lastName;
         data["birthDate"] = this.birthDate ? this.birthDate.toISOString() : <any>undefined;
@@ -4435,6 +5581,7 @@ export class UpdateClientCommand implements IUpdateClientCommand {
 
 export interface IUpdateClientCommand {
     id?: number;
+    rowVersion?: string | undefined;
     firstName?: string;
     lastName?: string;
     birthDate?: Date | undefined;
@@ -5065,6 +6212,9 @@ export class CurrentUserDto implements ICurrentUserDto {
     isAuthenticated?: boolean;
     userName?: string | undefined;
     fullName?: string | undefined;
+    role?: string | undefined;
+    agencyId?: number | undefined;
+    agencyName?: string | undefined;
     permissions?: string[];
     features?: string[];
 
@@ -5082,6 +6232,9 @@ export class CurrentUserDto implements ICurrentUserDto {
             this.isAuthenticated = _data["isAuthenticated"];
             this.userName = _data["userName"];
             this.fullName = _data["fullName"];
+            this.role = _data["role"];
+            this.agencyId = _data["agencyId"];
+            this.agencyName = _data["agencyName"];
             if (Array.isArray(_data["permissions"])) {
                 this.permissions = [] as any;
                 for (let item of _data["permissions"])
@@ -5107,6 +6260,9 @@ export class CurrentUserDto implements ICurrentUserDto {
         data["isAuthenticated"] = this.isAuthenticated;
         data["userName"] = this.userName;
         data["fullName"] = this.fullName;
+        data["role"] = this.role;
+        data["agencyId"] = this.agencyId;
+        data["agencyName"] = this.agencyName;
         if (Array.isArray(this.permissions)) {
             data["permissions"] = [];
             for (let item of this.permissions)
@@ -5125,6 +6281,9 @@ export interface ICurrentUserDto {
     isAuthenticated?: boolean;
     userName?: string | undefined;
     fullName?: string | undefined;
+    role?: string | undefined;
+    agencyId?: number | undefined;
+    agencyName?: string | undefined;
     permissions?: string[];
     features?: string[];
 }
@@ -5179,6 +6338,262 @@ export interface ICreateAgencyUserCommand {
     userName?: string;
     password?: string;
     permissions?: string[];
+}
+
+export class CreateAgencyUserByAdminCommand implements ICreateAgencyUserByAdminCommand {
+    agencyId?: number;
+    userName?: string;
+    password?: string;
+    role?: string;
+    permissions?: string[];
+
+    constructor(data?: ICreateAgencyUserByAdminCommand) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.agencyId = _data["agencyId"];
+            this.userName = _data["userName"];
+            this.password = _data["password"];
+            this.role = _data["role"];
+            if (Array.isArray(_data["permissions"])) {
+                this.permissions = [] as any;
+                for (let item of _data["permissions"])
+                    this.permissions!.push(item);
+            }
+        }
+    }
+
+    static fromJS(data: any): CreateAgencyUserByAdminCommand {
+        data = typeof data === 'object' ? data : {};
+        let result = new CreateAgencyUserByAdminCommand();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["agencyId"] = this.agencyId;
+        data["userName"] = this.userName;
+        data["password"] = this.password;
+        data["role"] = this.role;
+        if (Array.isArray(this.permissions)) {
+            data["permissions"] = [];
+            for (let item of this.permissions)
+                data["permissions"].push(item);
+        }
+        return data;
+    }
+}
+
+export interface ICreateAgencyUserByAdminCommand {
+    agencyId?: number;
+    userName?: string;
+    password?: string;
+    role?: string;
+    permissions?: string[];
+}
+
+export class AgencyUserDto implements IAgencyUserDto {
+    id?: string;
+    userName?: string;
+    fullName?: string | undefined;
+    role?: string;
+    permissions?: string[];
+    isLockedOut?: boolean;
+
+    constructor(data?: IAgencyUserDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.userName = _data["userName"];
+            this.fullName = _data["fullName"];
+            this.role = _data["role"];
+            if (Array.isArray(_data["permissions"])) {
+                this.permissions = [] as any;
+                for (let item of _data["permissions"])
+                    this.permissions!.push(item);
+            }
+            this.isLockedOut = _data["isLockedOut"];
+        }
+    }
+
+    static fromJS(data: any): AgencyUserDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new AgencyUserDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["userName"] = this.userName;
+        data["fullName"] = this.fullName;
+        data["role"] = this.role;
+        if (Array.isArray(this.permissions)) {
+            data["permissions"] = [];
+            for (let item of this.permissions)
+                data["permissions"].push(item);
+        }
+        data["isLockedOut"] = this.isLockedOut;
+        return data;
+    }
+}
+
+export interface IAgencyUserDto {
+    id?: string;
+    userName?: string;
+    fullName?: string | undefined;
+    role?: string;
+    permissions?: string[];
+    isLockedOut?: boolean;
+}
+
+export class UpdateAgencyUserCommand implements IUpdateAgencyUserCommand {
+    userId?: string;
+    role?: string | undefined;
+    permissions?: string[];
+
+    constructor(data?: IUpdateAgencyUserCommand) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.userId = _data["userId"];
+            this.role = _data["role"];
+            if (Array.isArray(_data["permissions"])) {
+                this.permissions = [] as any;
+                for (let item of _data["permissions"])
+                    this.permissions!.push(item);
+            }
+        }
+    }
+
+    static fromJS(data: any): UpdateAgencyUserCommand {
+        data = typeof data === 'object' ? data : {};
+        let result = new UpdateAgencyUserCommand();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["userId"] = this.userId;
+        data["role"] = this.role;
+        if (Array.isArray(this.permissions)) {
+            data["permissions"] = [];
+            for (let item of this.permissions)
+                data["permissions"].push(item);
+        }
+        return data;
+    }
+}
+
+export interface IUpdateAgencyUserCommand {
+    userId?: string;
+    role?: string | undefined;
+    permissions?: string[];
+}
+
+export class SetAgencyUserActiveCommand implements ISetAgencyUserActiveCommand {
+    userId?: string;
+    isActive?: boolean;
+
+    constructor(data?: ISetAgencyUserActiveCommand) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.userId = _data["userId"];
+            this.isActive = _data["isActive"];
+        }
+    }
+
+    static fromJS(data: any): SetAgencyUserActiveCommand {
+        data = typeof data === 'object' ? data : {};
+        let result = new SetAgencyUserActiveCommand();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["userId"] = this.userId;
+        data["isActive"] = this.isActive;
+        return data;
+    }
+}
+
+export interface ISetAgencyUserActiveCommand {
+    userId?: string;
+    isActive?: boolean;
+}
+
+export class ResetAgencyUserPasswordCommand implements IResetAgencyUserPasswordCommand {
+    userId?: string;
+    newPassword?: string;
+
+    constructor(data?: IResetAgencyUserPasswordCommand) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.userId = _data["userId"];
+            this.newPassword = _data["newPassword"];
+        }
+    }
+
+    static fromJS(data: any): ResetAgencyUserPasswordCommand {
+        data = typeof data === 'object' ? data : {};
+        let result = new ResetAgencyUserPasswordCommand();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["userId"] = this.userId;
+        data["newPassword"] = this.newPassword;
+        return data;
+    }
+}
+
+export interface IResetAgencyUserPasswordCommand {
+    userId?: string;
+    newPassword?: string;
 }
 
 export interface FileParameter {

@@ -4,6 +4,8 @@ namespace RemSolution.Application.Features.Client.DTOs
     {
         public int Id { get; init; }
         public int AgencyId { get; init; }
+        // Optimistic-concurrency token; echoed back on update (see P.8).
+        public byte[]? RowVersion { get; init; }
         public string? FirstName { get; init; }
         public string? LastName { get; init; }
         public DateTime? BirthDate { get; init; }

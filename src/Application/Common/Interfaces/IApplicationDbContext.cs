@@ -1,15 +1,18 @@
-﻿using RemSolution.Domain.Entities;
+﻿using RemSolution.Domain.Common;
+using RemSolution.Domain.Entities;
 
 namespace RemSolution.Application.Common.Interfaces;
 
 public interface IApplicationDbContext
 {
     DbSet<Agency> Agencies { get; }
+    DbSet<AgencySettings> AgencySettings { get; }
     DbSet<AgencyFeature> AgencyFeatures { get; }
     DbSet<AgencySubscription> AgencySubscriptions { get; }
     DbSet<Branch> Branches { get; }
     DbSet<Brand> Brands { get; }
     DbSet<Car> Cars { get; }
+    DbSet<CarImage> CarImages { get; }
     DbSet<Client> Clients { get; }
     DbSet<Country> Countries { get; }
     DbSet<ExtraService> ExtraServices { get; }
@@ -38,4 +41,13 @@ public interface IApplicationDbContext
     /// per-agency quota to protect.
     /// </summary>
     Task AcquireTenantWriteLockAsync(CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Sets the optimistic-concurrency original value of a tracked entity to the
+    /// token the client last read, so the update targets that exact row version
+    /// and a stale write raises <c>DbUpdateConcurrencyException</c> instead of
+    /// silently overwriting another user's change. No-op when
+    /// <paramref name="rowVersion"/> is null (client sent no token).
+    /// </summary>
+    void SetOriginalRowVersion(IHasRowVersion entity, byte[]? rowVersion);
 }

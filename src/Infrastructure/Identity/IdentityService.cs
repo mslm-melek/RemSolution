@@ -43,7 +43,7 @@ public class IdentityService : IIdentityService
         return (result.ToApplicationResult(), user.Id);
     }
 
-    public async Task<(Result Result, string UserId)> CreateAgencyUserAsync(string userName, string password, int agencyId, CancellationToken cancellationToken)
+    public async Task<(Result Result, string UserId)> CreateAgencyUserAsync(string userName, string password, int agencyId, string role, CancellationToken cancellationToken)
     {
         // AgencyId is set before the insert so the account is never observable
         // outside its agency, and the AgencyId claim is correct from the very
@@ -62,8 +62,7 @@ public class IdentityService : IIdentityService
             return (result.ToApplicationResult(), user.Id);
         }
 
-        // The role is a label; what the user can do is their permission grants.
-        var roleResult = await _userManager.AddToRoleAsync(user, Roles.AgencyStaff);
+        var roleResult = await _userManager.AddToRoleAsync(user, role);
 
         return (roleResult.ToApplicationResult(), user.Id);
     }
@@ -71,6 +70,115 @@ public class IdentityService : IIdentityService
     public async Task<int> CountAgencyUsersAsync(int agencyId, CancellationToken cancellationToken)
     {
         return await _userManager.Users.CountAsync(u => u.AgencyId == agencyId, cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<AgencyUserRecord>> GetAgencyUsersAsync(int agencyId, CancellationToken cancellationToken)
+    {
+        var users = await _userManager.Users
+            .Where(u => u.AgencyId == agencyId)
+            .OrderBy(u => u.UserName)
+            .ToListAsync(cancellationToken);
+
+        var records = new List<AgencyUserRecord>(users.Count);
+
+        foreach (var user in users)
+        {
+            records.Add(await ToRecordAsync(user));
+        }
+
+        return records;
+    }
+
+    public async Task<AgencyUserRecord?> GetAgencyUserAsync(string userId, CancellationToken cancellationToken)
+    {
+        var user = await _userManager.FindByIdAsync(userId);
+
+        return user is null ? null : await ToRecordAsync(user);
+    }
+
+    private async Task<AgencyUserRecord> ToRecordAsync(ApplicationUser user)
+    {
+        // Agency users carry exactly one role by convention.
+        var role = (await _userManager.GetRolesAsync(user)).FirstOrDefault() ?? string.Empty;
+        var lockedOut = await _userManager.IsLockedOutAsync(user);
+
+        return new AgencyUserRecord(user.Id, user.UserName ?? string.Empty, user.FullName, role, lockedOut);
+    }
+
+    public async Task<Result> UpdateUserRoleAndStampAsync(string userId, string? role, CancellationToken cancellationToken)
+    {
+        var user = await _userManager.FindByIdAsync(userId);
+
+        if (user is null)
+        {
+            return Result.Failure(new[] { $"User '{userId}' not found." });
+        }
+
+        if (role is not null)
+        {
+            var currentRoles = await _userManager.GetRolesAsync(user);
+
+            if (!currentRoles.Contains(role))
+            {
+                var removeResult = await _userManager.RemoveFromRolesAsync(user, currentRoles);
+
+                if (!removeResult.Succeeded)
+                {
+                    return removeResult.ToApplicationResult();
+                }
+
+                var addResult = await _userManager.AddToRoleAsync(user, role);
+
+                if (!addResult.Succeeded)
+                {
+                    return addResult.ToApplicationResult();
+                }
+            }
+        }
+
+        // Permission/role claims are minted at sign-in and re-minted on
+        // security-stamp validation; bump the stamp so a changed grant applies
+        // on the next request instead of lingering for the stamp interval.
+        return (await _userManager.UpdateSecurityStampAsync(user)).ToApplicationResult();
+    }
+
+    public async Task<Result> SetUserLockoutAsync(string userId, bool lockedOut, CancellationToken cancellationToken)
+    {
+        var user = await _userManager.FindByIdAsync(userId);
+
+        if (user is null)
+        {
+            return Result.Failure(new[] { $"User '{userId}' not found." });
+        }
+
+        // Enable lockout on the account, then set (or clear) an indefinite end.
+        await _userManager.SetLockoutEnabledAsync(user, true);
+
+        var end = lockedOut ? DateTimeOffset.MaxValue : (DateTimeOffset?)null;
+        var result = await _userManager.SetLockoutEndDateAsync(user, end);
+
+        if (!result.Succeeded)
+        {
+            return result.ToApplicationResult();
+        }
+
+        // Invalidate existing sessions so a deactivation takes effect promptly.
+        return (await _userManager.UpdateSecurityStampAsync(user)).ToApplicationResult();
+    }
+
+    public async Task<Result> AdminResetPasswordAsync(string userId, string newPassword, CancellationToken cancellationToken)
+    {
+        var user = await _userManager.FindByIdAsync(userId);
+
+        if (user is null)
+        {
+            return Result.Failure(new[] { $"User '{userId}' not found." });
+        }
+
+        var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+        var result = await _userManager.ResetPasswordAsync(user, token, newPassword);
+
+        return result.ToApplicationResult();
     }
 
     public async Task<bool> IsInRoleAsync(string userId, string role)

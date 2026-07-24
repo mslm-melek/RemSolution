@@ -27,6 +27,9 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseSetting("FileStorage:RootPath", UploadsRoot);
+        // No Hangfire server in tests: the enqueue seam is replaced below by a
+        // recording fake, and a real job server would race the per-test reset.
+        builder.UseSetting("Hangfire:Enabled", "false");
 
         builder.ConfigureTestServices(services =>
         {
@@ -36,6 +39,11 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
             services
                 .RemoveAll<ITenantProvider>()
                 .AddTransient(provider => Mock.Of<ITenantProvider>(s => s.AgencyId == GetAgencyId()));
+            // Keep the image pipeline deterministic: record enqueued jobs but
+            // never let the hosted service drain them (see the fake's remarks).
+            services
+                .RemoveAll<IImageProcessingQueue>()
+                .AddSingleton<IImageProcessingQueue, RecordingImageProcessingQueue>();
             services
                 .RemoveAll<DbContextOptions<ApplicationDbContext>>()
                 // EF stacks one IDbContextOptionsConfiguration per AddDbContext

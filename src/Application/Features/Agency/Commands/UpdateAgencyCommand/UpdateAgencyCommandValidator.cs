@@ -22,6 +22,16 @@ namespace RemSolution.Application.Features.Agency.Commands.UpdateAgencyCommand
 
             RuleFor(v => v.CountryId)
                 .GreaterThan(0);
+
+            RuleFor(v => v.Currency)
+                .NotEmpty()
+                .Length(3).WithMessage("Currency must be a 3-letter ISO 4217 code.");
+
+            RuleFor(v => v.CancellationWindowHours)
+                .GreaterThanOrEqualTo(0);
+
+            RuleFor(v => v.ReservationExpiryHours)
+                .GreaterThan(0);
         }
     }
 }

@@ -9,7 +9,7 @@ using static Testing;
 public class DeleteClientTests : BaseTestFixture
 {
     [Test]
-    public async Task ShouldDeleteClient()
+    public async Task ShouldArchiveClientAndHideItFromReads()
     {
         await RunAsAgencyAdministratorAsync();
         await AddTestAgencyAsync();
@@ -23,35 +23,41 @@ public class DeleteClientTests : BaseTestFixture
 
         await SendAsync(new DeleteClientCommand(clientId));
 
-        var client = await FindAsync<Client>(clientId);
+        // Hidden from normal (filtered) reads...
+        (await CountAsync<Client>(c => c.Id == clientId)).Should().Be(0);
 
-        client.Should().BeNull();
+        // ...but the row survives, flagged, with who/when stamped.
+        var archived = await FindIgnoringFiltersAsync<Client>(c => c.Id == clientId);
+        archived.Should().NotBeNull();
+        archived!.IsDeleted.Should().BeTrue();
+        archived.DeletedAt.Should().NotBeNull();
+        archived.DeletedBy.Should().NotBeNullOrEmpty();
     }
 
     [Test]
-    public async Task ShouldClearSecondDriverReferencesWhenDeleting()
+    public async Task ArchivingAClientPreservesItsFinancialRecords()
     {
         await RunAsAgencyAdministratorAsync();
         await AddTestAgencyAsync();
 
         var clientId = await SendAsync(new CreateClientCommand
         {
-            FirstName = "Second",
-            LastName = "Driver",
-            BirthDate = new DateTime(1985, 3, 10)
+            FirstName = "Jane",
+            LastName = "Roe",
+            BirthDate = new DateTime(1988, 1, 1)
         });
 
-        // Renting.SecondClientId is a NO ACTION FK; deleting the client must
-        // clear the reference instead of failing with an FK violation.
-        var renting = new Renting { SecondClientId = clientId };
-        await AddAsync(renting);
+        // A payment (financial record) referencing the client.
+        var payment = new Payment { ClientId = clientId };
+        await AddAsync(payment);
 
         await SendAsync(new DeleteClientCommand(clientId));
 
-        (await FindAsync<Client>(clientId)).Should().BeNull();
+        // The payment survives and still references the (archived) client.
+        var preserved = await FindAsync<Payment>(payment.Id);
+        preserved.Should().NotBeNull();
+        preserved!.ClientId.Should().Be(clientId);
 
-        var updatedRenting = await FindAsync<Renting>(renting.Id);
-        updatedRenting.Should().NotBeNull();
-        updatedRenting!.SecondClientId.Should().BeNull();
+        (await FindIgnoringFiltersAsync<Client>(c => c.Id == clientId))!.IsDeleted.Should().BeTrue();
     }
 }

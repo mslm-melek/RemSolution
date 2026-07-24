@@ -12,6 +12,11 @@ namespace RemSolution.Application.Features.Agency.Commands.CreateAgencyCommand
         public string? PhoneNumber { get; init; }
         public string? Address { get; init; }
         public int CountryId { get; init; }
+        // Settings persisted to the agency's AgencySettings row (see P.9).
+        // ISO 4217 code the agency trades in; every Money amount it stores uses it.
+        public string Currency { get; init; } = "TND";
+        public int CancellationWindowHours { get; init; } = 24;
+        public int ReservationExpiryHours { get; init; } = 48;
     }
 
     public class CreateAgencyCommandHandler : IRequestHandler<CreateAgencyCommand, int>
@@ -32,6 +37,13 @@ namespace RemSolution.Application.Features.Agency.Commands.CreateAgencyCommand
                 PhoneNumber = request.PhoneNumber,
                 Address = request.Address,
                 CountryId = request.CountryId,
+                // The 1:1 settings row is inserted with the agency (EF wires the FK).
+                Settings = new RemSolution.Domain.Entities.AgencySettings
+                {
+                    CurrencyCode = request.Currency.Trim().ToUpperInvariant(),
+                    CancellationWindowHours = request.CancellationWindowHours,
+                    ReservationExpiryHours = request.ReservationExpiryHours,
+                },
             };
 
             _context.Agencies.Add(entity);

@@ -1,4 +1,6 @@
+using Hangfire;
 using RemSolution.Infrastructure.Data;
+using RemSolution.Web.Infrastructure;
 using RemSolution.Web.Middleware;
 using Serilog;
 
@@ -61,6 +63,10 @@ try
     // Authentication must run before the request-context middleware so the
     // identity claims (UserId, AgencyId) are available to enrich the logs.
     app.UseAuthentication();
+    // Read-only platform-admin tenant impersonation: must sit after
+    // authentication (needs the principal) and before authorization (so the
+    // ambient tenant + impersonation flag are live when endpoint policies run).
+    app.UseMiddleware<PlatformAdminImpersonationMiddleware>();
     app.UseAuthorization();
     app.UseMiddleware<RequestContextLoggingMiddleware>();
 
@@ -73,6 +79,17 @@ try
         settings.Path = "/api";
         settings.DocumentPath = "/api/specification.json";
     });
+
+    // Hangfire dashboard, platform-admin only. Mapped only when Hangfire is
+    // registered (skipped for the NSwag build-time host / tests), so JobStorage
+    // presence gates it.
+    if (app.Services.GetService<JobStorage>() is not null)
+    {
+        app.UseHangfireDashboard("/hangfire", new DashboardOptions
+        {
+            Authorization = new[] { new HangfireDashboardAuthorizationFilter() }
+        });
+    }
 
     app.MapRazorPages();
 

@@ -10,13 +10,14 @@ public class PaymentConfiguration : IEntityTypeConfiguration<Payment>
     {
         builder.HasAgencyTenant(nameof(Payment.PayementDate));
 
-        builder.Property(e => e.PayementAmount)
-                   .HasColumnType("decimal(18,2)");
+        builder.OwnsMoney(e => e.PayementAmount, "PayementAmount", "PayementAmountCurrency");
 
+        // Financial record: never cascade-deleted with a client. Restrict makes
+        // a physical client delete fail (clients are archived, not deleted).
         builder.HasOne(c => c.Client)
-               .WithMany(mc => mc.Payments) 
+               .WithMany(mc => mc.Payments)
                .HasForeignKey(c => c.ClientId)
-               .OnDelete(DeleteBehavior.Cascade);
+               .OnDelete(DeleteBehavior.Restrict);
 
     }
 }

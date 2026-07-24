@@ -1,8 +1,10 @@
 ﻿using RemSolution.Application.Common.Interfaces;
 using RemSolution.Application.Common.Security;
+using RemSolution.Application.Common.Settings;
 using RemSolution.Application.Common.Subscriptions;
 using RemSolution.Domain.Constants;
 using RemSolution.Domain.Enums;
+using RemSolution.Domain.ValueObjects;
 
 namespace RemSolution.Application.Features.Car.Commands.CreateCarCommand
 {
@@ -14,6 +16,10 @@ namespace RemSolution.Application.Features.Car.Commands.CreateCarCommand
         // stamps it from the current tenant on insert.
         public string Matricule { get; init; } = string.Empty;
         public int? ModelId { get; init; }
+        public int? BranchId { get; init; }
+        // Omitted defaults to Active (a new car is bookable unless stated otherwise).
+        public CarStatus Status { get; init; } = CarStatus.Active;
+        public decimal? DailyRate { get; init; }
         public DateTime FirstCirculationDate { get; init; }
         public string? Color { get; init; }
         // The photo is deliberately absent: it is owned by UploadCarPhotoCommand,
@@ -26,12 +32,16 @@ namespace RemSolution.Application.Features.Car.Commands.CreateCarCommand
     {
         private readonly IApplicationDbContext _context;
         private readonly ITenantProvider _tenant;
+        private readonly IAgencySettingsProvider _settings;
         private readonly TimeProvider _dateTime;
 
-        public CreateCarCommandHandler(IApplicationDbContext context, ITenantProvider tenant, TimeProvider dateTime)
+        public CreateCarCommandHandler(
+            IApplicationDbContext context, ITenantProvider tenant,
+            IAgencySettingsProvider settings, TimeProvider dateTime)
         {
             _context = context;
             _tenant = tenant;
+            _settings = settings;
             _dateTime = dateTime;
         }
 
@@ -41,11 +51,21 @@ namespace RemSolution.Application.Features.Car.Commands.CreateCarCommand
             {
                 Matricule = request.Matricule,
                 ModelId = request.ModelId,
+                BranchId = request.BranchId,
+                Status = request.Status,
                 FirstCirculationDate= request.FirstCirculationDate,
                 Color = request.Color,
                 Power = request.Power,
                 FuelType = request.FuelType
             };
+
+            // DailyRate is denominated in the agency's currency (the client
+            // sends only the amount); an unpriced car simply has no rate.
+            if (request.DailyRate is decimal rate && _tenant.AgencyId is int agencyId)
+            {
+                var currency = (await _settings.GetAsync(agencyId, cancellationToken)).CurrencyCode;
+                entity.DailyRate = Money.Of(rate, currency);
+            }
 
             // Quota check and insert are atomic under the per-agency write
             // lock; disposing without commit rolls back.

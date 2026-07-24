@@ -3,10 +3,15 @@ using RemSolution.Application.Common.Models;
 using RemSolution.Domain.Constants;
 using RemSolution.Application.Features.Car.Commands.CreateCarCommand;
 using RemSolution.Application.Features.Car.Commands.DeleteCarCommand;
+using RemSolution.Application.Features.Car.Commands.DeleteCarImageCommand;
+using RemSolution.Application.Features.Car.Commands.ReorderCarImagesCommand;
+using RemSolution.Application.Features.Car.Commands.SetPrimaryCarImageCommand;
 using RemSolution.Application.Features.Car.Commands.UpdateCarCommand;
+using RemSolution.Application.Features.Car.Commands.UploadCarImageCommand;
 using RemSolution.Application.Features.Car.Commands.UploadCarPhotoCommand;
 using RemSolution.Application.Features.Car.DTOs;
 using RemSolution.Application.Features.Car.Queries.GetCarByIdQuery;
+using RemSolution.Application.Features.Car.Queries.GetCarImagesQuery;
 using RemSolution.Application.Features.Car.Queries.GetCarsWithPaginationQuery;
 
 namespace RemSolution.Web.Endpoints;
@@ -35,6 +40,28 @@ public class Cars : EndpointGroupBase
             .WithName(nameof(UploadCarPhoto))
             .RequireAuthorization(Permissions.CarUpdate)
             .DisableAntiforgery();
+
+        // Gallery images (multi-image, with generated thumbnail/medium).
+        group.MapGet("{id}/images", GetCarImages)
+            .WithName(nameof(GetCarImages))
+            .RequireAuthorization(Permissions.CarRead);
+
+        group.MapPost("{id}/images", UploadCarImage)
+            .WithName(nameof(UploadCarImage))
+            .RequireAuthorization(Permissions.CarUpdate)
+            .DisableAntiforgery();
+
+        group.MapPut("{id}/images/{imageId}/primary", SetPrimaryCarImage)
+            .WithName(nameof(SetPrimaryCarImage))
+            .RequireAuthorization(Permissions.CarUpdate);
+
+        group.MapPut("{id}/images/order", ReorderCarImages)
+            .WithName(nameof(ReorderCarImages))
+            .RequireAuthorization(Permissions.CarUpdate);
+
+        group.MapDelete("{id}/images/{imageId}", DeleteCarImage)
+            .WithName(nameof(DeleteCarImage))
+            .RequireAuthorization(Permissions.CarUpdate);
     }
 
     public async Task<Ok<PaginatedList<CarDto>>> GetCars(ISender sender, [AsParameters] GetCarsWithPaginationQuery query)
@@ -89,6 +116,46 @@ public class Cars : EndpointGroupBase
         });
 
         return TypedResults.Ok(url);
+    }
+
+    public async Task<Ok<IList<CarImageDto>>> GetCarImages(ISender sender, int id)
+    {
+        var result = await sender.Send(new GetCarImagesQuery(id));
+        return TypedResults.Ok(result);
+    }
+
+    public async Task<Ok<CarImageDto>> UploadCarImage(ISender sender, int id, IFormFile file)
+    {
+        await using var content = file.OpenReadStream();
+
+        var image = await sender.Send(new UploadCarImageCommand
+        {
+            CarId = id,
+            FileName = file.FileName,
+            ContentType = file.ContentType,
+            Length = file.Length,
+            Content = content
+        });
+
+        return TypedResults.Ok(image);
+    }
+
+    public async Task<NoContent> SetPrimaryCarImage(ISender sender, int id, int imageId)
+    {
+        await sender.Send(new SetPrimaryCarImageCommand(id, imageId));
+        return TypedResults.NoContent();
+    }
+
+    public async Task<NoContent> DeleteCarImage(ISender sender, int id, int imageId)
+    {
+        await sender.Send(new DeleteCarImageCommand(id, imageId));
+        return TypedResults.NoContent();
+    }
+
+    public async Task<NoContent> ReorderCarImages(ISender sender, int id, List<int> orderedImageIds)
+    {
+        await sender.Send(new ReorderCarImagesCommand(id, orderedImageIds));
+        return TypedResults.NoContent();
     }
 
 }

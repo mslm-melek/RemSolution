@@ -1,6 +1,7 @@
 ﻿using RemSolution.Application.Common.Exceptions;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace RemSolution.Web.Infrastructure;
 
@@ -19,6 +20,7 @@ public class CustomExceptionHandler : IExceptionHandler
                 { typeof(ForbiddenAccessException), HandleForbiddenAccessException },
                 { typeof(SubscriptionRequiredException), HandleSubscriptionRequiredException },
                 { typeof(PlanLimitExceededException), HandlePlanLimitExceededException },
+                { typeof(DbUpdateConcurrencyException), HandleConcurrencyException },
                 { typeof(Exception), HandleUnknownException }
             };
     }
@@ -111,6 +113,25 @@ public class CustomExceptionHandler : IExceptionHandler
             Detail = ex.Message,
             Type = "https://tools.ietf.org/html/rfc7231#section-6.5.8"
         });
+    }
+
+    private async Task HandleConcurrencyException(HttpContext httpContext, Exception ex)
+    {
+        httpContext.Response.StatusCode = StatusCodes.Status409Conflict;
+
+        var problemDetails = new ProblemDetails
+        {
+            Status = StatusCodes.Status409Conflict,
+            Title = "The record was changed by another user.",
+            Detail = "This record was modified or deleted by another user since you loaded it. Reload and try again.",
+            Type = "https://tools.ietf.org/html/rfc7231#section-6.5.8"
+        };
+        // Machine-readable discriminator: 409 is also used for plan limits, so
+        // the client keys on this code to show the "reloaded by another user"
+        // message specifically for concurrency conflicts.
+        problemDetails.Extensions["code"] = "concurrency_conflict";
+
+        await httpContext.Response.WriteAsJsonAsync(problemDetails);
     }
 
     private async Task HandleUnknownException(HttpContext httpContext, Exception ex)

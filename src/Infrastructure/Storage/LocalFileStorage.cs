@@ -31,6 +31,22 @@ public class LocalFileStorage : IFileStorage
         return $"{_options.PublicBasePath.TrimEnd('/')}/{safeRelative}";
     }
 
+    public Task<Stream> OpenReadAsync(string url, CancellationToken cancellationToken = default)
+    {
+        var basePath = _options.PublicBasePath.TrimEnd('/') + "/";
+
+        if (!url.StartsWith(basePath, StringComparison.OrdinalIgnoreCase))
+            throw new FileNotFoundException($"URL '{url}' was not issued by this storage.");
+
+        var fullPath = ResolveUnderRoot(Normalize(url.Substring(basePath.Length)));
+
+        if (!File.Exists(fullPath))
+            throw new FileNotFoundException($"Stored file not found for URL '{url}'.", fullPath);
+
+        Stream stream = File.OpenRead(fullPath);
+        return Task.FromResult(stream);
+    }
+
     public Task DeleteAsync(string url, CancellationToken cancellationToken = default)
     {
         var basePath = _options.PublicBasePath.TrimEnd('/') + "/";

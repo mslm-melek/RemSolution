@@ -3,6 +3,7 @@ using RemSolution.Application.Features.AgencySubscription.Commands.AssignAgencyS
 using RemSolution.Application.Features.AgencySubscription.Commands.UpdateAgencySubscriptionCommand;
 using RemSolution.Application.Features.AgencySubscription.DTOs;
 using RemSolution.Application.Features.AgencySubscription.Queries.GetAgencySubscriptionsQuery;
+using RemSolution.Application.Features.AgencySubscription.Queries.GetAgencyUsageQuery;
 using RemSolution.Domain.Constants;
 
 namespace RemSolution.Web.Endpoints;
@@ -14,8 +15,15 @@ public class AgencySubscriptions : EndpointGroupBase
         app.MapGroup(this)
             .RequireAuthorization(Policies.PlatformAdminOnly)
             .MapGet(GetAgencySubscriptions)
+            .MapGet(GetAgencyUsage, "usage/{agencyId}")
             .MapPost(AssignAgencySubscription)
             .MapPut(UpdateAgencySubscription, "{id}");
+    }
+
+    public async Task<Ok<AgencyUsageDto>> GetAgencyUsage(ISender sender, int agencyId)
+    {
+        var result = await sender.Send(new GetAgencyUsageQuery(agencyId));
+        return TypedResults.Ok(result);
     }
 
     public async Task<Ok<IList<AgencySubscriptionDto>>> GetAgencySubscriptions(ISender sender, [AsParameters] GetAgencySubscriptionsQuery query)

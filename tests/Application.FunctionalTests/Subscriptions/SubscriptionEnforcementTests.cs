@@ -1,5 +1,6 @@
 using RemSolution.Application.Common.Exceptions;
 using RemSolution.Application.Common.Interfaces;
+using RemSolution.Application.Common.Settings;
 using RemSolution.Application.Features.Car.Commands.CreateCarCommand;
 using RemSolution.Application.Features.Car.Queries.GetCarsWithPaginationQuery;
 using RemSolution.Application.Features.Client.Commands.CreateClientCommand;
@@ -119,7 +120,9 @@ public class SubscriptionEnforcementTests : BaseTestFixture
 
             await using var context = CreateIsolatedContext(tenant, userId);
 
-            var handler = new CreateCarCommandHandler(context, tenant, TimeProvider.System);
+            // No DailyRate is set below, so the settings provider is never hit.
+            var settings = Mock.Of<IAgencySettingsProvider>();
+            var handler = new CreateCarCommandHandler(context, tenant, settings, TimeProvider.System);
 
             try
             {
