@@ -2,7 +2,7 @@ namespace RemSolution.Application.Features.Client.Commands.UploadClientDocumentC
 {
     public class UploadClientDocumentCommandValidator : AbstractValidator<UploadClientDocumentCommand>
     {
-        private const long MaxSizeBytes = 5 * 1024 * 1024;
+        private const long MaxSizeBytes = 15 * 1024 * 1024;
 
         private static readonly string[] AllowedContentTypes =
             { "image/jpeg", "image/png", "image/webp", "application/pdf" };
@@ -29,7 +29,7 @@ namespace RemSolution.Application.Features.Client.Commands.UploadClientDocumentC
 
             RuleFor(c => c.Length)
                 .GreaterThan(0).WithMessage("File is empty.")
-                .LessThanOrEqualTo(MaxSizeBytes).WithMessage("File must not exceed 5 MB.");
+                .LessThanOrEqualTo(MaxSizeBytes).WithMessage("File must not exceed 15 MB.");
         }
 
         private static bool HaveAllowedExtension(string fileName) =>

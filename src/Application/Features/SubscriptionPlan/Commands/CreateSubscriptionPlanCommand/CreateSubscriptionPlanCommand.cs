@@ -14,6 +14,8 @@ namespace RemSolution.Application.Features.SubscriptionPlan.Commands.CreateSubsc
         public int MaxClients { get; init; }
         public int MaxUsers { get; init; }
         public decimal Price { get; init; }
+        // Feature keys this plan unlocks (see FeatureFlags).
+        public string[] Features { get; init; } = Array.Empty<string>();
     }
 
     public class CreateSubscriptionPlanCommandHandler : IRequestHandler<CreateSubscriptionPlanCommand, int>
@@ -33,7 +35,11 @@ namespace RemSolution.Application.Features.SubscriptionPlan.Commands.CreateSubsc
                 MaxCars = request.MaxCars,
                 MaxClients = request.MaxClients,
                 MaxUsers = request.MaxUsers,
-                Price = request.Price
+                Price = request.Price,
+                Features = request.Features
+                    .Distinct()
+                    .Select(f => new RemSolution.Domain.Entities.PlanFeature { Feature = f })
+                    .ToList()
             };
 
             _context.SubscriptionPlans.Add(entity);

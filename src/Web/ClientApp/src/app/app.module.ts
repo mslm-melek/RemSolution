@@ -25,6 +25,7 @@ import { AgencyClientsComponent } from './agency/agency-clients.component';
 import { UserFormComponent } from './user/user-form.component';
 import { SubscriptionPlanComponent } from './subscription-plan/subscription-plan.component';
 import { SubscriptionPlanFormComponent } from './subscription-plan/subscription-plan-form.component';
+import { TeamComponent } from './team/team.component';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -58,7 +59,8 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
     AgencyClientsComponent,
     UserFormComponent,
     SubscriptionPlanComponent,
-    SubscriptionPlanFormComponent
+    SubscriptionPlanFormComponent,
+    TeamComponent
   ],
   bootstrap: [AppComponent],
   imports: [
@@ -101,7 +103,10 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
       { path: 'agency/:id/clients', component: AgencyClientsComponent },
       { path: 'subscription-plan', component: SubscriptionPlanComponent },
       { path: 'subscription-plan/new', component: SubscriptionPlanFormComponent },
-      { path: 'subscription-plan/:id', component: SubscriptionPlanFormComponent }
+      { path: 'subscription-plan/:id', component: SubscriptionPlanFormComponent },
+
+      // Agency-admin self-service.
+      { path: 'team', component: TeamComponent }
     ]),
     BrowserAnimationsModule],
   providers: [

@@ -419,7 +419,7 @@ export class AgenciesClient implements IAgenciesClient {
 
 export interface IAgencySubscriptionsClient {
     getAgencySubscriptions(agencyId: number | null | undefined): Observable<AgencySubscriptionDto[]>;
-    assignAgencySubscription(command: AssignAgencySubscriptionCommand): Observable<number>;
+    assignAgencySubscription(command: AssignAgencySubscriptionCommand): Observable<AssignAgencySubscriptionResult>;
     getAgencyUsage(agencyId: number): Observable<AgencyUsageDto>;
     updateAgencySubscription(id: number, command: UpdateAgencySubscriptionCommand): Observable<void>;
 }
@@ -494,7 +494,7 @@ export class AgencySubscriptionsClient implements IAgencySubscriptionsClient {
         return _observableOf(null as any);
     }
 
-    assignAgencySubscription(command: AssignAgencySubscriptionCommand): Observable<number> {
+    assignAgencySubscription(command: AssignAgencySubscriptionCommand): Observable<AssignAgencySubscriptionResult> {
         let url_ = this.baseUrl + "/api/AgencySubscriptions";
         url_ = url_.replace(/[?&]$/, "");
 
@@ -517,14 +517,14 @@ export class AgencySubscriptionsClient implements IAgencySubscriptionsClient {
                 try {
                     return this.processAssignAgencySubscription(response_ as any);
                 } catch (e) {
-                    return _observableThrow(e) as any as Observable<number>;
+                    return _observableThrow(e) as any as Observable<AssignAgencySubscriptionResult>;
                 }
             } else
-                return _observableThrow(response_) as any as Observable<number>;
+                return _observableThrow(response_) as any as Observable<AssignAgencySubscriptionResult>;
         }));
     }
 
-    protected processAssignAgencySubscription(response: HttpResponseBase): Observable<number> {
+    protected processAssignAgencySubscription(response: HttpResponseBase): Observable<AssignAgencySubscriptionResult> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -535,8 +535,7 @@ export class AgencySubscriptionsClient implements IAgencySubscriptionsClient {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
             let result201: any = null;
             let resultData201 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
-                result201 = resultData201 !== undefined ? resultData201 : <any>null;
-    
+            result201 = AssignAgencySubscriptionResult.fromJS(resultData201);
             return _observableOf(result201);
             }));
         } else if (status !== 200 && status !== 204) {
@@ -3370,6 +3369,9 @@ export interface IUsersClient {
     updateAgencyUser(id: string, command: UpdateAgencyUserCommand): Observable<void>;
     setAgencyUserActive(id: string, command: SetAgencyUserActiveCommand): Observable<void>;
     resetAgencyUserPassword(id: string, command: ResetAgencyUserPasswordCommand): Observable<void>;
+    getMyAgencyUsers(): Observable<AgencyUserDto[]>;
+    updateMyAgencyUser(id: string, command: UpdateMyAgencyUserCommand): Observable<void>;
+    setMyAgencyUserActive(id: string, command: SetMyAgencyUserActiveCommand): Observable<void>;
 }
 
 @Injectable({
@@ -3795,6 +3797,171 @@ export class UsersClient implements IUsersClient {
     }
 
     protected processResetAgencyUserPassword(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return _observableOf(null as any);
+            }));
+        } else if (status === 400) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("A server side error occurred.", status, _responseText, _headers);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getMyAgencyUsers(): Observable<AgencyUserDto[]> {
+        let url_ = this.baseUrl + "/api/Users/my-agency";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetMyAgencyUsers(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetMyAgencyUsers(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<AgencyUserDto[]>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<AgencyUserDto[]>;
+        }));
+    }
+
+    protected processGetMyAgencyUsers(response: HttpResponseBase): Observable<AgencyUserDto[]> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            if (Array.isArray(resultData200)) {
+                result200 = [] as any;
+                for (let item of resultData200)
+                    result200!.push(AgencyUserDto.fromJS(item));
+            }
+            else {
+                result200 = <any>null;
+            }
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    updateMyAgencyUser(id: string, command: UpdateMyAgencyUserCommand): Observable<void> {
+        let url_ = this.baseUrl + "/api/Users/my-agency/{id}/permissions";
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(command);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+            })
+        };
+
+        return this.http.request("put", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processUpdateMyAgencyUser(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processUpdateMyAgencyUser(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processUpdateMyAgencyUser(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return _observableOf(null as any);
+            }));
+        } else if (status === 400) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("A server side error occurred.", status, _responseText, _headers);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    setMyAgencyUserActive(id: string, command: SetMyAgencyUserActiveCommand): Observable<void> {
+        let url_ = this.baseUrl + "/api/Users/my-agency/{id}/active";
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(command);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+            })
+        };
+
+        return this.http.request("put", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processSetMyAgencyUserActive(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processSetMyAgencyUserActive(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processSetMyAgencyUserActive(response: HttpResponseBase): Observable<void> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -4266,6 +4433,50 @@ export interface IAgencyUsageDto {
     carsUsed?: number;
     clientsUsed?: number;
     usersUsed?: number;
+}
+
+export class AssignAgencySubscriptionResult implements IAssignAgencySubscriptionResult {
+    subscriptionId?: number;
+    adminUserName?: string | undefined;
+    adminTemporaryPassword?: string | undefined;
+
+    constructor(data?: IAssignAgencySubscriptionResult) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.subscriptionId = _data["subscriptionId"];
+            this.adminUserName = _data["adminUserName"];
+            this.adminTemporaryPassword = _data["adminTemporaryPassword"];
+        }
+    }
+
+    static fromJS(data: any): AssignAgencySubscriptionResult {
+        data = typeof data === 'object' ? data : {};
+        let result = new AssignAgencySubscriptionResult();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["subscriptionId"] = this.subscriptionId;
+        data["adminUserName"] = this.adminUserName;
+        data["adminTemporaryPassword"] = this.adminTemporaryPassword;
+        return data;
+    }
+}
+
+export interface IAssignAgencySubscriptionResult {
+    subscriptionId?: number;
+    adminUserName?: string | undefined;
+    adminTemporaryPassword?: string | undefined;
 }
 
 export class AssignAgencySubscriptionCommand implements IAssignAgencySubscriptionCommand {
@@ -5971,6 +6182,7 @@ export class SubscriptionPlanDto implements ISubscriptionPlanDto {
     maxClients?: number;
     maxUsers?: number;
     price?: number;
+    features?: string[];
 
     constructor(data?: ISubscriptionPlanDto) {
         if (data) {
@@ -5989,6 +6201,11 @@ export class SubscriptionPlanDto implements ISubscriptionPlanDto {
             this.maxClients = _data["maxClients"];
             this.maxUsers = _data["maxUsers"];
             this.price = _data["price"];
+            if (Array.isArray(_data["features"])) {
+                this.features = [] as any;
+                for (let item of _data["features"])
+                    this.features!.push(item);
+            }
         }
     }
 
@@ -6007,6 +6224,11 @@ export class SubscriptionPlanDto implements ISubscriptionPlanDto {
         data["maxClients"] = this.maxClients;
         data["maxUsers"] = this.maxUsers;
         data["price"] = this.price;
+        if (Array.isArray(this.features)) {
+            data["features"] = [];
+            for (let item of this.features)
+                data["features"].push(item);
+        }
         return data;
     }
 }
@@ -6018,6 +6240,7 @@ export interface ISubscriptionPlanDto {
     maxClients?: number;
     maxUsers?: number;
     price?: number;
+    features?: string[];
 }
 
 export class CreateSubscriptionPlanCommand implements ICreateSubscriptionPlanCommand {
@@ -6026,6 +6249,7 @@ export class CreateSubscriptionPlanCommand implements ICreateSubscriptionPlanCom
     maxClients?: number;
     maxUsers?: number;
     price?: number;
+    features?: string[];
 
     constructor(data?: ICreateSubscriptionPlanCommand) {
         if (data) {
@@ -6043,6 +6267,11 @@ export class CreateSubscriptionPlanCommand implements ICreateSubscriptionPlanCom
             this.maxClients = _data["maxClients"];
             this.maxUsers = _data["maxUsers"];
             this.price = _data["price"];
+            if (Array.isArray(_data["features"])) {
+                this.features = [] as any;
+                for (let item of _data["features"])
+                    this.features!.push(item);
+            }
         }
     }
 
@@ -6060,6 +6289,11 @@ export class CreateSubscriptionPlanCommand implements ICreateSubscriptionPlanCom
         data["maxClients"] = this.maxClients;
         data["maxUsers"] = this.maxUsers;
         data["price"] = this.price;
+        if (Array.isArray(this.features)) {
+            data["features"] = [];
+            for (let item of this.features)
+                data["features"].push(item);
+        }
         return data;
     }
 }
@@ -6070,6 +6304,7 @@ export interface ICreateSubscriptionPlanCommand {
     maxClients?: number;
     maxUsers?: number;
     price?: number;
+    features?: string[];
 }
 
 export class UpdateSubscriptionPlanCommand implements IUpdateSubscriptionPlanCommand {
@@ -6079,6 +6314,7 @@ export class UpdateSubscriptionPlanCommand implements IUpdateSubscriptionPlanCom
     maxClients?: number;
     maxUsers?: number;
     price?: number;
+    features?: string[];
 
     constructor(data?: IUpdateSubscriptionPlanCommand) {
         if (data) {
@@ -6097,6 +6333,11 @@ export class UpdateSubscriptionPlanCommand implements IUpdateSubscriptionPlanCom
             this.maxClients = _data["maxClients"];
             this.maxUsers = _data["maxUsers"];
             this.price = _data["price"];
+            if (Array.isArray(_data["features"])) {
+                this.features = [] as any;
+                for (let item of _data["features"])
+                    this.features!.push(item);
+            }
         }
     }
 
@@ -6115,6 +6356,11 @@ export class UpdateSubscriptionPlanCommand implements IUpdateSubscriptionPlanCom
         data["maxClients"] = this.maxClients;
         data["maxUsers"] = this.maxUsers;
         data["price"] = this.price;
+        if (Array.isArray(this.features)) {
+            data["features"] = [];
+            for (let item of this.features)
+                data["features"].push(item);
+        }
         return data;
     }
 }
@@ -6126,6 +6372,7 @@ export interface IUpdateSubscriptionPlanCommand {
     maxClients?: number;
     maxUsers?: number;
     price?: number;
+    features?: string[];
 }
 
 export class MySubscriptionDto implements IMySubscriptionDto {
@@ -6594,6 +6841,94 @@ export class ResetAgencyUserPasswordCommand implements IResetAgencyUserPasswordC
 export interface IResetAgencyUserPasswordCommand {
     userId?: string;
     newPassword?: string;
+}
+
+export class UpdateMyAgencyUserCommand implements IUpdateMyAgencyUserCommand {
+    userId?: string;
+    permissions?: string[];
+
+    constructor(data?: IUpdateMyAgencyUserCommand) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.userId = _data["userId"];
+            if (Array.isArray(_data["permissions"])) {
+                this.permissions = [] as any;
+                for (let item of _data["permissions"])
+                    this.permissions!.push(item);
+            }
+        }
+    }
+
+    static fromJS(data: any): UpdateMyAgencyUserCommand {
+        data = typeof data === 'object' ? data : {};
+        let result = new UpdateMyAgencyUserCommand();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["userId"] = this.userId;
+        if (Array.isArray(this.permissions)) {
+            data["permissions"] = [];
+            for (let item of this.permissions)
+                data["permissions"].push(item);
+        }
+        return data;
+    }
+}
+
+export interface IUpdateMyAgencyUserCommand {
+    userId?: string;
+    permissions?: string[];
+}
+
+export class SetMyAgencyUserActiveCommand implements ISetMyAgencyUserActiveCommand {
+    userId?: string;
+    isActive?: boolean;
+
+    constructor(data?: ISetMyAgencyUserActiveCommand) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.userId = _data["userId"];
+            this.isActive = _data["isActive"];
+        }
+    }
+
+    static fromJS(data: any): SetMyAgencyUserActiveCommand {
+        data = typeof data === 'object' ? data : {};
+        let result = new SetMyAgencyUserActiveCommand();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["userId"] = this.userId;
+        data["isActive"] = this.isActive;
+        return data;
+    }
+}
+
+export interface ISetMyAgencyUserActiveCommand {
+    userId?: string;
+    isActive?: boolean;
 }
 
 export interface FileParameter {

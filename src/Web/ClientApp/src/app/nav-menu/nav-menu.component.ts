@@ -13,6 +13,8 @@ export class NavMenuComponent implements OnInit {
   // Platform admin (app owner) sees the agency-grouped console; agency users
   // see the flat module list below.
   isPlatformAdmin = false;
+  // Agency administrator can manage their own agency's staff (Team screen).
+  isAgencyAdmin = false;
   // Feature off for the agency, or read permission missing ⇒ module hidden.
   canAccessCars = false;
   canAccessClients = false;
@@ -24,6 +26,7 @@ export class NavMenuComponent implements OnInit {
       this.isAuthenticated = user.isAuthenticated ?? false;
       this.displayName = user.fullName || user.userName;
       this.isPlatformAdmin = AuthService.isPlatformAdmin(user);
+      this.isAgencyAdmin = user.role === 'AgencyAdministrator';
       this.canAccessCars = AuthService.canAccessModule(user, 'Cars', 'Car.Read');
       this.canAccessClients = AuthService.canAccessModule(user, 'Clients', 'Client.Read');
     });

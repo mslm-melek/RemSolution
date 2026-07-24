@@ -47,6 +47,8 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>, IApplica
     public DbSet<Reservation> Reservations => Set<Reservation>();
     public DbSet<StoredFile> StoredFiles => Set<StoredFile>();
     public DbSet<SubscriptionPlan> SubscriptionPlans => Set<SubscriptionPlan>();
+
+    public DbSet<PlanFeature> PlanFeatures => Set<PlanFeature>();
     public DbSet<UserPermission> UserPermissions => Set<UserPermission>();
 
     // Deliberately not on IApplicationDbContext: refresh tokens are managed

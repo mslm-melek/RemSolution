@@ -2,14 +2,18 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using RemSolution.Application.Common.Features;
 using RemSolution.Application.Common.Interfaces;
 using RemSolution.Application.Features.Users.Commands.CreateAgencyUserCommand;
 using RemSolution.Application.Features.Users.Commands.CreateAgencyUserByAdminCommand;
 using RemSolution.Application.Features.Users.Commands.UpdateAgencyUserCommand;
 using RemSolution.Application.Features.Users.Commands.SetAgencyUserActiveCommand;
 using RemSolution.Application.Features.Users.Commands.ResetAgencyUserPasswordCommand;
+using RemSolution.Application.Features.Users.Commands.UpdateMyAgencyUserCommand;
+using RemSolution.Application.Features.Users.Commands.SetMyAgencyUserActiveCommand;
 using RemSolution.Application.Features.Users.Queries.GetAgencyUsersQuery;
 using RemSolution.Application.Features.Users.Queries.GetAgencyUserByIdQuery;
+using RemSolution.Application.Features.Users.Queries.GetMyAgencyUsersQuery;
 using RemSolution.Application.Features.Users.DTOs;
 using RemSolution.Domain.Constants;
 using RemSolution.Infrastructure.Identity;
@@ -31,7 +35,37 @@ public class Users : EndpointGroupBase
             .MapGet(GetAgencyUserById, "{id}", Policies.PlatformAdminOnly)
             .MapPut(UpdateAgencyUser, "{id}", Policies.PlatformAdminOnly)
             .MapPut(SetAgencyUserActive, "{id}/active", Policies.PlatformAdminOnly)
-            .MapPut(ResetAgencyUserPassword, "{id}/password", Policies.PlatformAdminOnly);
+            .MapPut(ResetAgencyUserPassword, "{id}/password", Policies.PlatformAdminOnly)
+            // Agency-admin self-service over their own agency's staff.
+            .MapGet(GetMyAgencyUsers, "my-agency", Policies.AgencyAdminOnly)
+            .MapPut(UpdateMyAgencyUser, "my-agency/{id}/permissions", Policies.AgencyAdminOnly)
+            .MapPut(SetMyAgencyUserActive, "my-agency/{id}/active", Policies.AgencyAdminOnly);
+    }
+
+    public async Task<Ok<IReadOnlyList<AgencyUserDto>>> GetMyAgencyUsers(ISender sender)
+    {
+        var result = await sender.Send(new GetMyAgencyUsersQuery());
+        return TypedResults.Ok(result);
+    }
+
+    public async Task<Results<NoContent, BadRequest>> UpdateMyAgencyUser(ISender sender, string id, UpdateMyAgencyUserCommand command)
+    {
+        if (id != command.UserId)
+            return TypedResults.BadRequest();
+
+        await sender.Send(command);
+
+        return TypedResults.NoContent();
+    }
+
+    public async Task<Results<NoContent, BadRequest>> SetMyAgencyUserActive(ISender sender, string id, SetMyAgencyUserActiveCommand command)
+    {
+        if (id != command.UserId)
+            return TypedResults.BadRequest();
+
+        await sender.Send(command);
+
+        return TypedResults.NoContent();
     }
 
     public async Task<Created<string>> CreateAgencyUser(ISender sender, CreateAgencyUserCommand command)
@@ -103,7 +137,8 @@ public class Users : EndpointGroupBase
         ClaimsPrincipal principal,
         UserManager<ApplicationUser> userManager,
         IApplicationDbContext context,
-        ITenantProvider tenant)
+        ITenantProvider tenant,
+        TimeProvider dateTime)
     {
         if (principal.Identity?.IsAuthenticated != true)
             return TypedResults.Ok(new CurrentUserDto(false, null, null, null, null, null, Array.Empty<string>(), Array.Empty<string>()));
@@ -117,22 +152,23 @@ public class Users : EndpointGroupBase
             principal.IsInRole(Roles.AgencyAdministrator) ? Roles.AgencyAdministrator :
             principal.IsInRole(Roles.AgencyStaff) ? Roles.AgencyStaff : null;
 
-        var permissions = principal.IsInRole(Roles.AgencyAdministrator)
+        var granted = principal.IsInRole(Roles.AgencyAdministrator)
             ? Permissions.All
             : principal.FindAll(Claims.Permission).Select(c => c.Value).ToArray();
 
+        var permissions = granted;
         var features = Array.Empty<string>();
         string? agencyName = null;
 
         if (tenant.AgencyId is int agencyId)
         {
-            var disabled = await context.AgencyFeatures
-                .AsNoTracking()
-                .Where(f => !f.Enabled)
-                .Select(f => f.Feature)
-                .ToListAsync();
+            // Effective features = active plan + per-agency overrides; a
+            // permission only counts while its feature is enabled.
+            var enabled = await AgencyFeatureResolver.GetEnabledFeaturesAsync(
+                context, agencyId, dateTime.GetUtcNow(), CancellationToken.None);
 
-            features = FeatureFlags.All.Except(disabled).ToArray();
+            features = enabled.ToArray();
+            permissions = FeatureCatalog.EffectivePermissions(granted, enabled).ToArray();
 
             agencyName = await context.Agencies
                 .AsNoTracking()

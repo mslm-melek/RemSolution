@@ -93,6 +93,17 @@
         </div>
         <ng-template #noSub><p class="hint">No subscription assigned yet.</p></ng-template>
 
+        <div *ngIf="createdAdmin" class="admin-created">
+          <div class="admin-created-head">
+            <mat-icon>check_circle</mat-icon>
+            <strong>Administrator account created</strong>
+            <button mat-icon-button (click)="createdAdmin = null" aria-label="Dismiss"><mat-icon>close</mat-icon></button>
+          </div>
+          <p>Share these one-time credentials — the admin should reset the password on first sign-in.</p>
+          <p><strong>Username:</strong> {{ createdAdmin.userName }}</p>
+          <p><strong>Temporary password:</strong> <code>{{ createdAdmin.password }}</code></p>
+        </div>
+
         <h3 class="section-title">Assign a plan</h3>
         <form [formGroup]="assignForm" (ngSubmit)="assignPlan()" class="assign-form">
           <mat-form-field appearance="outline">

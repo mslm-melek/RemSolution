@@ -30,6 +30,9 @@ public interface IIdentityService
     /// <summary>Identity projection of one user, or null if not found.</summary>
     Task<AgencyUserRecord?> GetAgencyUserAsync(string userId, CancellationToken cancellationToken);
 
+    /// <summary>The agency a user belongs to (null if none / user not found) — used for tenant ownership checks.</summary>
+    Task<int?> GetUserAgencyIdAsync(string userId, CancellationToken cancellationToken);
+
     /// <summary>
     /// Replaces the user's role (when <paramref name="role"/> is non-null) and
     /// always refreshes the security stamp so the permission/role claims re-mint

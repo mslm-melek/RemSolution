@@ -96,6 +96,13 @@ public class IdentityService : IIdentityService
         return user is null ? null : await ToRecordAsync(user);
     }
 
+    public async Task<int?> GetUserAgencyIdAsync(string userId, CancellationToken cancellationToken)
+    {
+        var user = await _userManager.FindByIdAsync(userId);
+
+        return user?.AgencyId;
+    }
+
     private async Task<AgencyUserRecord> ToRecordAsync(ApplicationUser user)
     {
         // Agency users carry exactly one role by convention.

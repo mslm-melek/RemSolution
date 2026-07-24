@@ -286,8 +286,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "integer",
-                  "format": "int32"
+                  "$ref": "#/components/schemas/AssignAgencySubscriptionResult"
                 }
               }
             }
@@ -2231,6 +2230,107 @@
           }
         }
       }
+    },
+    "/api/Users/my-agency": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "operationId": "GetMyAgencyUsers",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AgencyUserDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Users/my-agency/{id}/permissions": {
+      "put": {
+        "tags": [
+          "Users"
+        ],
+        "operationId": "UpdateMyAgencyUser",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 1
+          }
+        ],
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateMyAgencyUserCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 2
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "400": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/Users/my-agency/{id}/active": {
+      "put": {
+        "tags": [
+          "Users"
+        ],
+        "operationId": "SetMyAgencyUserActive",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 1
+          }
+        ],
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetMyAgencyUserActiveCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 2
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "400": {
+            "description": ""
+          }
+        }
+      }
     }
   },
   "components": {
@@ -2501,6 +2601,24 @@
           "usersUsed": {
             "type": "integer",
             "format": "int32"
+          }
+        }
+      },
+      "AssignAgencySubscriptionResult": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "subscriptionId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "adminUserName": {
+            "type": "string",
+            "nullable": true
+          },
+          "adminTemporaryPassword": {
+            "type": "string",
+            "nullable": true
           }
         }
       },
@@ -3511,6 +3629,12 @@
           "price": {
             "type": "number",
             "format": "decimal"
+          },
+          "features": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         }
       },
@@ -3536,6 +3660,12 @@
           "price": {
             "type": "number",
             "format": "decimal"
+          },
+          "features": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         }
       },
@@ -3565,6 +3695,12 @@
           "price": {
             "type": "number",
             "format": "decimal"
+          },
+          "features": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         }
       },
@@ -3772,6 +3908,33 @@
           },
           "newPassword": {
             "type": "string"
+          }
+        }
+      },
+      "UpdateMyAgencyUserCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "userId": {
+            "type": "string"
+          },
+          "permissions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "SetMyAgencyUserActiveCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "userId": {
+            "type": "string"
+          },
+          "isActive": {
+            "type": "boolean"
           }
         }
       }

@@ -14,5 +14,7 @@ namespace RemSolution.Domain.Entities
         public int MaxUsers { get; set; }
         public decimal Price { get; set; }
         public virtual ICollection<AgencySubscription>? Subscriptions { get; set; }
+        // The features this plan unlocks for an agency.
+        public virtual ICollection<PlanFeature> Features { get; set; } = new List<PlanFeature>();
     }
 }

@@ -1,3 +1,5 @@
+using RemSolution.Domain.Constants;
+
 namespace RemSolution.Application.Features.SubscriptionPlan.Commands.CreateSubscriptionPlanCommand
 {
     public class CreateSubscriptionPlanCommandValidator : AbstractValidator<CreateSubscriptionPlanCommand>
@@ -19,6 +21,10 @@ namespace RemSolution.Application.Features.SubscriptionPlan.Commands.CreateSubsc
 
             RuleFor(p => p.Price)
                 .GreaterThanOrEqualTo(0);
+
+            RuleForEach(p => p.Features)
+                .Must(f => FeatureFlags.All.Contains(f))
+                .WithMessage("'{PropertyValue}' is not a known feature.");
         }
     }
 }

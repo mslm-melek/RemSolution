@@ -10,11 +10,13 @@ public class AgencyFeatureConfiguration : IEntityTypeConfiguration<AgencyFeature
     {
         // Not HasAgencyTenant(): the tenant-scoped index must be unique — one
         // toggle row per (agency, feature) — which the extension doesn't do.
-        // The FK rule is the same (never cascade an agency delete).
+        // Feature toggles are agency-owned config (like AgencySettings), so they
+        // cascade away with the agency; DeleteAgencyCommand still guards against
+        // deleting an agency that owns business data.
         builder.HasOne(f => f.Agency)
                .WithMany()
                .HasForeignKey(f => f.AgencyId)
-               .OnDelete(DeleteBehavior.Restrict);
+               .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasIndex(f => new { f.AgencyId, f.Feature })
                .IsUnique();

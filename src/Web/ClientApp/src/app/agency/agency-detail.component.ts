@@ -29,6 +29,9 @@ export class AgencyDetailComponent implements OnInit {
 
   features: AgencyFeatureDto[] = [];
 
+  // One-time credentials shown when assigning the first plan bootstraps an admin.
+  createdAdmin: { userName?: string; password?: string } | null = null;
+
   errorMessage = '';
 
   readonly SubscriptionStatus = SubscriptionStatus;
@@ -119,9 +122,15 @@ export class AgencyDetailComponent implements OnInit {
       endDate: fromDateInput(v.endDate)
     });
     this.subscriptionsClient.assignAgencySubscription(command).subscribe({
-      next: () => {
+      next: result => {
         this.assignForm.reset();
+        // If this assignment bootstrapped the agency's first admin, surface the
+        // one-time credentials so they can be handed over.
+        if (result?.adminUserName) {
+          this.createdAdmin = { userName: result.adminUserName, password: result.adminTemporaryPassword };
+        }
         this.loadSubscription();
+        this.loadUsers();
       },
       error: err => this.handleError(err)
     });

@@ -6,6 +6,7 @@ import {
   CreateSubscriptionPlanCommand, UpdateSubscriptionPlanCommand
 } from '../web-api-client';
 import { extractValidationErrors } from '../shared/form-utils';
+import { FEATURES } from '../shared/feature-catalog';
 
 @Component({
   selector: 'app-subscription-plan-form',
@@ -17,6 +18,9 @@ export class SubscriptionPlanFormComponent implements OnInit {
   planId?: number;
   saving = false;
   errorMessage = '';
+
+  readonly features = FEATURES;
+  selectedFeatures = new Set<string>();
 
   constructor(
     private fb: FormBuilder,
@@ -60,6 +64,15 @@ export class SubscriptionPlanFormComponent implements OnInit {
       maxUsers: dto.maxUsers ?? 1,
       price: dto.price ?? 0
     });
+    this.selectedFeatures = new Set(dto.features ?? []);
+  }
+
+  toggleFeature(key: string, checked: boolean) {
+    checked ? this.selectedFeatures.add(key) : this.selectedFeatures.delete(key);
+  }
+
+  isFeatureSelected(key: string): boolean {
+    return this.selectedFeatures.has(key);
   }
 
   save() {
@@ -71,15 +84,16 @@ export class SubscriptionPlanFormComponent implements OnInit {
     this.saving = true;
     this.errorMessage = '';
     const v = this.form.value;
+    const features = Array.from(this.selectedFeatures);
 
     if (this.isEdit) {
-      const command = new UpdateSubscriptionPlanCommand({ id: this.planId, ...v });
+      const command = new UpdateSubscriptionPlanCommand({ id: this.planId, ...v, features });
       this.client.updateSubscriptionPlan(this.planId!, command).subscribe({
         next: () => this.router.navigate(['/subscription-plan']),
         error: err => this.handleError(err)
       });
     } else {
-      const command = new CreateSubscriptionPlanCommand(v);
+      const command = new CreateSubscriptionPlanCommand({ ...v, features });
       this.client.createSubscriptionPlan(command).subscribe({
         next: () => this.router.navigate(['/subscription-plan']),
         error: err => this.handleError(err)

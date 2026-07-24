@@ -1,5 +1,6 @@
 ﻿using RemSolution.Domain.Constants;
 using RemSolution.Domain.Entities;
+using RemSolution.Domain.Enums;
 using RemSolution.Infrastructure.Identity;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Identity;
@@ -146,6 +147,74 @@ public class ApplicationDbContextInitialiser
             };
 
             _context.Countries.AddRange(countryNames.Select(name => new Country { Name = name }));
+
+            await _context.SaveChangesAsync();
+        }
+
+        // Subscription plans + their feature entitlements. Features are unlocked
+        // per plan under the allow-list model, so at least one plan must exist.
+        if (!await _context.SubscriptionPlans.AnyAsync())
+        {
+            var starter = new SubscriptionPlan
+            {
+                Name = "Starter",
+                MaxCars = 10,
+                MaxClients = 50,
+                MaxUsers = 3,
+                Price = 0m,
+                Features = new[]
+                    {
+                        FeatureFlags.Cars, FeatureFlags.Clients, FeatureFlags.Branches,
+                        FeatureFlags.Rentings, FeatureFlags.Reservations,
+                    }
+                    .Select(f => new PlanFeature { Feature = f })
+                    .ToList()
+            };
+
+            var full = new SubscriptionPlan
+            {
+                Name = "Full",
+                MaxCars = 1000,
+                MaxClients = 5000,
+                MaxUsers = 100,
+                Price = 299m,
+                Features = FeatureFlags.All.Select(f => new PlanFeature { Feature = f }).ToList()
+            };
+
+            _context.SubscriptionPlans.AddRange(starter, full);
+
+            await _context.SaveChangesAsync();
+        }
+
+        // Backfill: under the allow-list model an agency with no active
+        // subscription loses every module. Give any agency lacking a current
+        // subscription the most generous plan so existing agencies keep working.
+        var fullPlan = await _context.SubscriptionPlans
+            .OrderByDescending(p => p.Price)
+            .FirstOrDefaultAsync();
+
+        if (fullPlan is not null)
+        {
+            var now = DateTimeOffset.UtcNow;
+            var agencyIds = await _context.Agencies.Select(a => a.Id).ToListAsync();
+
+            foreach (var agencyId in agencyIds)
+            {
+                var hasActive = await _context.AgencySubscriptions
+                    .AnyAsync(AgencySubscription.IsActiveFor(agencyId, now));
+
+                if (!hasActive)
+                {
+                    _context.AgencySubscriptions.Add(new AgencySubscription
+                    {
+                        AgencyId = agencyId,
+                        PlanId = fullPlan.Id,
+                        Status = SubscriptionStatus.Active,
+                        StartDate = now,
+                        EndDate = now.AddYears(100)
+                    });
+                }
+            }
 
             await _context.SaveChangesAsync();
         }

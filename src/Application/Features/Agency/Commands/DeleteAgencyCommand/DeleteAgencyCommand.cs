@@ -38,6 +38,11 @@ namespace RemSolution.Application.Features.Agency.Commands.DeleteAgencyCommand
             var scope = await _crossTenant.BeginAuditedAccessAsync(
                 $"Referential-integrity check before deleting agency {request.Id}", cancellationToken);
 
+            // Every agency-scoped entity whose Agency FK is Restrict must be
+            // checked here — otherwise the delete surfaces as a raw
+            // DbUpdateException (500) at the DB instead of this 400. Owned config
+            // (AgencySettings, AgencyFeature, AgencySubscription) cascades away
+            // with the agency, so it is intentionally not listed.
             var hasTenantData =
                 await scope.Query<Domain.Entities.Car>().AnyAsync(c => c.AgencyId == request.Id, cancellationToken) ||
                 await scope.Query<Domain.Entities.Client>().AnyAsync(c => c.AgencyId == request.Id, cancellationToken) ||
@@ -45,14 +50,16 @@ namespace RemSolution.Application.Features.Agency.Commands.DeleteAgencyCommand
                 await scope.Query<Domain.Entities.Reservation>().AnyAsync(r => r.AgencyId == request.Id, cancellationToken) ||
                 await scope.Query<Domain.Entities.Payment>().AnyAsync(p => p.AgencyId == request.Id, cancellationToken) ||
                 await scope.Query<Domain.Entities.Expense>().AnyAsync(e => e.AgencyId == request.Id, cancellationToken) ||
-                await scope.Query<Domain.Entities.ExtraService>().AnyAsync(e => e.AgencyId == request.Id, cancellationToken);
+                await scope.Query<Domain.Entities.ExtraService>().AnyAsync(e => e.AgencyId == request.Id, cancellationToken) ||
+                await scope.Query<Domain.Entities.Branch>().AnyAsync(b => b.AgencyId == request.Id, cancellationToken) ||
+                await scope.Query<Domain.Entities.StoredFile>().AnyAsync(f => f.AgencyId == request.Id, cancellationToken);
 
             if (hasTenantData)
             {
                 throw new ValidationException(new[]
                 {
                     new ValidationFailure(nameof(request.Id),
-                        "Agency still has associated data (cars, clients, rentings, ...) and cannot be deleted.")
+                        "Agency still has associated data (cars, clients, rentings, branches, files, ...) and cannot be deleted.")
                 });
             }
 

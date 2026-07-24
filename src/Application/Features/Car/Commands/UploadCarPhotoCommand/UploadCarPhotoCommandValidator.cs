@@ -2,7 +2,7 @@ namespace RemSolution.Application.Features.Car.Commands.UploadCarPhotoCommand
 {
     public class UploadCarPhotoCommandValidator : AbstractValidator<UploadCarPhotoCommand>
     {
-        private const long MaxSizeBytes = 5 * 1024 * 1024;
+        private const long MaxSizeBytes = 15 * 1024 * 1024;
 
         // A car photo is an image only — no PDF, unlike identity documents.
         private static readonly string[] AllowedContentTypes =
@@ -27,7 +27,7 @@ namespace RemSolution.Application.Features.Car.Commands.UploadCarPhotoCommand
 
             RuleFor(c => c.Length)
                 .GreaterThan(0).WithMessage("File is empty.")
-                .LessThanOrEqualTo(MaxSizeBytes).WithMessage("File must not exceed 5 MB.");
+                .LessThanOrEqualTo(MaxSizeBytes).WithMessage("File must not exceed 15 MB.");
         }
 
         private static bool HaveAllowedExtension(string fileName) =>

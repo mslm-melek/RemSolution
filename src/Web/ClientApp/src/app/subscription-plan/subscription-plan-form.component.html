@@ -41,6 +41,14 @@
       </mat-form-field>
     </div>
 
+    <h3 class="section-title">Included features</h3>
+    <p class="hint">The modules agencies on this plan can use.</p>
+    <div class="feature-grid">
+      <mat-checkbox *ngFor="let f of features"
+                    [checked]="isFeatureSelected(f.key)"
+                    (change)="toggleFeature(f.key, $event.checked)">{{ f.label }}</mat-checkbox>
+    </div>
+
     <div class="actions-row">
       <button mat-raised-button color="primary" type="submit" [disabled]="saving">
         <mat-icon>save</mat-icon> {{ saving ? 'Saving…' : 'Save' }}

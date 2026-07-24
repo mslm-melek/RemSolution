@@ -32,10 +32,10 @@ public class AgencySubscriptions : EndpointGroupBase
         return TypedResults.Ok(result);
     }
 
-    public async Task<Created<int>> AssignAgencySubscription(ISender sender, AssignAgencySubscriptionCommand command)
+    public async Task<Created<AssignAgencySubscriptionResult>> AssignAgencySubscription(ISender sender, AssignAgencySubscriptionCommand command)
     {
-        var id = await sender.Send(command);
-        return TypedResults.Created($"/AgencySubscriptions/{id}", id);
+        var result = await sender.Send(command);
+        return TypedResults.Created($"/AgencySubscriptions/{result.SubscriptionId}", result);
     }
 
     public async Task<Results<NoContent, BadRequest>> UpdateAgencySubscription(ISender sender, int id, UpdateAgencySubscriptionCommand command)

@@ -63,6 +63,11 @@
            [routerLink]="['/client']"
            [routerLinkActive]="['link-active']"
            (click)="collapse()">Clients</a>
+        <a mat-button
+           *ngIf="isAgencyAdmin"
+           [routerLink]="['/team']"
+           [routerLinkActive]="['link-active']"
+           (click)="collapse()">Team</a>
       </ng-container>
 
       <a mat-button href="/api" target="_blank">API</a>
