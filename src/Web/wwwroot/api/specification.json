@@ -1623,6 +1623,597 @@
         }
       }
     },
+    "/api/ExpenseTypes": {
+      "get": {
+        "tags": [
+          "ExpenseTypes"
+        ],
+        "operationId": "GetExpenseTypes",
+        "parameters": [
+          {
+            "name": "OnlyActive",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ExpenseTypeDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "ExpenseTypes"
+        ],
+        "operationId": "CreateExpenseType",
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateExpenseTypeCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/ExpenseTypes/{id}": {
+      "put": {
+        "tags": [
+          "ExpenseTypes"
+        ],
+        "operationId": "UpdateExpenseType",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          }
+        ],
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateExpenseTypeCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 2
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "400": {
+            "description": ""
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "ExpenseTypes"
+        ],
+        "operationId": "DeactivateExpenseType",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/ExtraServices/by-renting/{rentingId}": {
+      "get": {
+        "tags": [
+          "ExtraServices"
+        ],
+        "operationId": "GetExtraServicesByRenting",
+        "parameters": [
+          {
+            "name": "rentingId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ExtraServiceDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/ExtraServices": {
+      "post": {
+        "tags": [
+          "ExtraServices"
+        ],
+        "operationId": "CreateExtraService",
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateExtraServiceCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/ExtraServices/{id}": {
+      "put": {
+        "tags": [
+          "ExtraServices"
+        ],
+        "operationId": "UpdateExtraService",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          }
+        ],
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateExtraServiceCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 2
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "400": {
+            "description": ""
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "ExtraServices"
+        ],
+        "operationId": "DeleteExtraService",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/ExtraServiceTypes": {
+      "get": {
+        "tags": [
+          "ExtraServiceTypes"
+        ],
+        "operationId": "GetExtraServiceTypes",
+        "parameters": [
+          {
+            "name": "OnlyActive",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ExtraServicesTypeDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "ExtraServiceTypes"
+        ],
+        "operationId": "CreateExtraServiceType",
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateExtraServicesTypeCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/ExtraServiceTypes/{id}": {
+      "put": {
+        "tags": [
+          "ExtraServiceTypes"
+        ],
+        "operationId": "UpdateExtraServiceType",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          }
+        ],
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateExtraServicesTypeCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 2
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "400": {
+            "description": ""
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "ExtraServiceTypes"
+        ],
+        "operationId": "DeactivateExtraServiceType",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/Marketplace/cars": {
+      "get": {
+        "tags": [
+          "Marketplace"
+        ],
+        "operationId": "SearchCars",
+        "parameters": [
+          {
+            "name": "StartDate",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "EndDate",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "x-position": 2
+          },
+          {
+            "name": "CountryId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "nullable": true
+            },
+            "x-position": 3
+          },
+          {
+            "name": "BranchId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "nullable": true
+            },
+            "x-position": 4
+          },
+          {
+            "name": "BrandId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "nullable": true
+            },
+            "x-position": 5
+          },
+          {
+            "name": "PageNumber",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 6
+          },
+          {
+            "name": "PageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 7
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedListOfMarketplaceCarDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Marketplace/cars/{id}": {
+      "get": {
+        "tags": [
+          "Marketplace"
+        ],
+        "operationId": "GetCar",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MarketplaceCarDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/Marketplace/reservations": {
+      "post": {
+        "tags": [
+          "Marketplace"
+        ],
+        "operationId": "BookCar",
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCustomerReservationCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Marketplace/my-reservations": {
+      "get": {
+        "tags": [
+          "Marketplace"
+        ],
+        "operationId": "GetMyReservations",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MyReservationDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Marketplace/reservations/{id}/cancel": {
+      "post": {
+        "tags": [
+          "Marketplace"
+        ],
+        "operationId": "CancelMyReservation",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        }
+      }
+    },
     "/api/ModelCars": {
       "get": {
         "tags": [
@@ -1819,6 +2410,731 @@
         "responses": {
           "204": {
             "description": ""
+          }
+        }
+      }
+    },
+    "/api/Payments": {
+      "get": {
+        "tags": [
+          "Payments"
+        ],
+        "operationId": "GetPayments",
+        "parameters": [
+          {
+            "name": "PageNumber",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "PageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 2
+          },
+          {
+            "name": "RentingId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "nullable": true
+            },
+            "x-position": 3
+          },
+          {
+            "name": "ClientId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "nullable": true
+            },
+            "x-position": 4
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedListOfPaymentDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Payments"
+        ],
+        "operationId": "CreatePayment",
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePaymentCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Payments/{id}": {
+      "get": {
+        "tags": [
+          "Payments"
+        ],
+        "operationId": "GetPaymentById",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Payments"
+        ],
+        "operationId": "UpdatePayment",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          }
+        ],
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePaymentCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 2
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "400": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/Payments/{id}/reverse": {
+      "post": {
+        "tags": [
+          "Payments"
+        ],
+        "operationId": "ReversePayment",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Rentings": {
+      "get": {
+        "tags": [
+          "Rentings"
+        ],
+        "operationId": "GetRentings",
+        "parameters": [
+          {
+            "name": "PageNumber",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "PageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 2
+          },
+          {
+            "name": "CarId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "nullable": true
+            },
+            "x-position": 3
+          },
+          {
+            "name": "ClientId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "nullable": true
+            },
+            "x-position": 4
+          },
+          {
+            "name": "State",
+            "in": "query",
+            "schema": {
+              "nullable": true,
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/RentingState"
+                }
+              ]
+            },
+            "x-position": 5
+          },
+          {
+            "name": "FromDate",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "nullable": true
+            },
+            "x-position": 6
+          },
+          {
+            "name": "ToDate",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "nullable": true
+            },
+            "x-position": 7
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedListOfRentingDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Rentings"
+        ],
+        "operationId": "CreateRenting",
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateRentingCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Rentings/{id}": {
+      "get": {
+        "tags": [
+          "Rentings"
+        ],
+        "operationId": "GetRentingById",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RentingDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Rentings"
+        ],
+        "operationId": "UpdateRenting",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          }
+        ],
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateRentingCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 2
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "400": {
+            "description": ""
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Rentings"
+        ],
+        "operationId": "CancelRenting",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/Rentings/{id}/history": {
+      "get": {
+        "tags": [
+          "Rentings"
+        ],
+        "operationId": "GetRentingHistory",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RentingHistoryDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Rentings/{id}/state": {
+      "put": {
+        "tags": [
+          "Rentings"
+        ],
+        "operationId": "ChangeRentingState",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          }
+        ],
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeRentingStateCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 2
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "400": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/Reservations": {
+      "get": {
+        "tags": [
+          "Reservations"
+        ],
+        "operationId": "GetReservations",
+        "parameters": [
+          {
+            "name": "PageNumber",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "PageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 2
+          },
+          {
+            "name": "CarId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "nullable": true
+            },
+            "x-position": 3
+          },
+          {
+            "name": "ClientId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "nullable": true
+            },
+            "x-position": 4
+          },
+          {
+            "name": "Status",
+            "in": "query",
+            "schema": {
+              "nullable": true,
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/ReservationStatus"
+                }
+              ]
+            },
+            "x-position": 5
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedListOfReservationDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Reservations"
+        ],
+        "operationId": "CreateReservation",
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateReservationCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Reservations/{id}": {
+      "get": {
+        "tags": [
+          "Reservations"
+        ],
+        "operationId": "GetReservationById",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReservationDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Reservations"
+        ],
+        "operationId": "UpdateReservation",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          }
+        ],
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateReservationCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 2
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "400": {
+            "description": ""
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Reservations"
+        ],
+        "operationId": "CancelReservation",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/Reservations/{id}/confirm": {
+      "post": {
+        "tags": [
+          "Reservations"
+        ],
+        "operationId": "ConfirmReservation",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              }
+            }
           }
         }
       }
@@ -2327,6 +3643,74 @@
             "description": ""
           },
           "400": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/Users/me/profile": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "operationId": "GetMyProfile",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyProfileDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Users"
+        ],
+        "operationId": "UpdateMyProfile",
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateMyProfileCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/Users/me/password": {
+      "put": {
+        "tags": [
+          "Users"
+        ],
+        "operationId": "ChangeMyPassword",
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeMyPasswordCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "204": {
             "description": ""
           }
         }
@@ -3519,6 +4903,397 @@
           }
         }
       },
+      "ExpenseTypeDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "withNotif": {
+            "type": "boolean"
+          },
+          "afterKilometer": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "afterMonth": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          }
+        }
+      },
+      "CreateExpenseTypeCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "withNotif": {
+            "type": "boolean"
+          },
+          "afterKilometer": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "afterMonth": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          }
+        }
+      },
+      "UpdateExpenseTypeCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "name": {
+            "type": "string"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "withNotif": {
+            "type": "boolean"
+          },
+          "afterKilometer": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "afterMonth": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          }
+        }
+      },
+      "ExtraServiceDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "agencyId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "rentingId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "extraServicesTypeId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "extraServicesTypeName": {
+            "type": "string",
+            "nullable": true
+          },
+          "totalAmount": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/MoneyDto"
+              }
+            ]
+          }
+        }
+      },
+      "CreateExtraServiceCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "rentingId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "extraServicesTypeId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "amount": {
+            "type": "number",
+            "format": "decimal",
+            "nullable": true
+          }
+        }
+      },
+      "UpdateExtraServiceCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "extraServicesTypeId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "amount": {
+            "type": "number",
+            "format": "decimal"
+          }
+        }
+      },
+      "ExtraServicesTypeDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "amount": {
+            "type": "number",
+            "format": "decimal",
+            "nullable": true
+          },
+          "isActive": {
+            "type": "boolean"
+          }
+        }
+      },
+      "CreateExtraServicesTypeCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "amount": {
+            "type": "number",
+            "format": "decimal",
+            "nullable": true
+          }
+        }
+      },
+      "UpdateExtraServicesTypeCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "name": {
+            "type": "string"
+          },
+          "amount": {
+            "type": "number",
+            "format": "decimal",
+            "nullable": true
+          },
+          "isActive": {
+            "type": "boolean"
+          }
+        }
+      },
+      "PaginatedListOfMarketplaceCarDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MarketplaceCarDto"
+            }
+          },
+          "pageNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "hasPreviousPage": {
+            "type": "boolean"
+          },
+          "hasNextPage": {
+            "type": "boolean"
+          }
+        }
+      },
+      "MarketplaceCarDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "agencyId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "agencyName": {
+            "type": "string",
+            "nullable": true
+          },
+          "branchName": {
+            "type": "string",
+            "nullable": true
+          },
+          "matricule": {
+            "type": "string",
+            "nullable": true
+          },
+          "modelName": {
+            "type": "string",
+            "nullable": true
+          },
+          "brandName": {
+            "type": "string",
+            "nullable": true
+          },
+          "dailyRate": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/MoneyDto"
+              }
+            ]
+          },
+          "fuelType": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/FuelType"
+              }
+            ]
+          },
+          "color": {
+            "type": "string",
+            "nullable": true
+          },
+          "imageUrl": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "CreateCustomerReservationCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "carId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "birthDate": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "MyReservationDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "agencyName": {
+            "type": "string",
+            "nullable": true
+          },
+          "carBrandName": {
+            "type": "string",
+            "nullable": true
+          },
+          "carModelName": {
+            "type": "string",
+            "nullable": true
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "price": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/MoneyDto"
+              }
+            ]
+          },
+          "status": {
+            "$ref": "#/components/schemas/ReservationStatus"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        }
+      },
+      "ReservationStatus": {
+        "type": "integer",
+        "description": "",
+        "x-enumNames": [
+          "Pending",
+          "Confirmed",
+          "Cancelled",
+          "Expired"
+        ],
+        "enum": [
+          0,
+          1,
+          2,
+          3
+        ]
+      },
       "PaginatedListOfModelCarDto": {
         "type": "object",
         "additionalProperties": false,
@@ -3599,6 +5374,628 @@
           "brandId": {
             "type": "integer",
             "format": "int32",
+            "nullable": true
+          }
+        }
+      },
+      "PaginatedListOfPaymentDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PaymentDto"
+            }
+          },
+          "pageNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "hasPreviousPage": {
+            "type": "boolean"
+          },
+          "hasNextPage": {
+            "type": "boolean"
+          }
+        }
+      },
+      "PaymentDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "agencyId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "clientId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "clientName": {
+            "type": "string",
+            "nullable": true
+          },
+          "rentingId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "payementDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "payementAmount": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/MoneyDto"
+              }
+            ]
+          },
+          "method": {
+            "$ref": "#/components/schemas/PaymentMethod"
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true
+          },
+          "reversesPaymentId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          }
+        }
+      },
+      "PaymentMethod": {
+        "type": "integer",
+        "description": "",
+        "x-enumNames": [
+          "Cash",
+          "Card",
+          "Transfer",
+          "Cheque"
+        ],
+        "enum": [
+          0,
+          1,
+          2,
+          3
+        ]
+      },
+      "CreatePaymentCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "rentingId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "amount": {
+            "type": "number",
+            "format": "decimal"
+          },
+          "method": {
+            "$ref": "#/components/schemas/PaymentMethod"
+          },
+          "payementDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "UpdatePaymentCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "amount": {
+            "type": "number",
+            "format": "decimal"
+          },
+          "method": {
+            "$ref": "#/components/schemas/PaymentMethod"
+          },
+          "payementDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "PaginatedListOfRentingDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RentingDto"
+            }
+          },
+          "pageNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "hasPreviousPage": {
+            "type": "boolean"
+          },
+          "hasNextPage": {
+            "type": "boolean"
+          }
+        }
+      },
+      "RentingDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "agencyId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "rowVersion": {
+            "type": "string",
+            "format": "byte",
+            "nullable": true
+          },
+          "carId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "carMatricule": {
+            "type": "string",
+            "nullable": true
+          },
+          "carModelName": {
+            "type": "string",
+            "nullable": true
+          },
+          "clientId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "clientName": {
+            "type": "string",
+            "nullable": true
+          },
+          "secondClientId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "secondClientName": {
+            "type": "string",
+            "nullable": true
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "startMileage": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "endMileage": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "price": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/MoneyDto"
+              }
+            ]
+          },
+          "rentingState": {
+            "$ref": "#/components/schemas/RentingState"
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "RentingState": {
+        "type": "integer",
+        "description": "",
+        "x-enumNames": [
+          "Done",
+          "InProgress",
+          "NotYet",
+          "Cancelled"
+        ],
+        "enum": [
+          0,
+          1,
+          2,
+          3
+        ]
+      },
+      "RentingHistoryDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "rentingId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "startMileage": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "endMileage": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "price": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/MoneyDto"
+              }
+            ]
+          },
+          "rentingState": {
+            "$ref": "#/components/schemas/RentingState"
+          }
+        }
+      },
+      "CreateRentingCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "carId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "clientId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "secondClientId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "startMileage": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "UpdateRentingCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "rowVersion": {
+            "type": "string",
+            "format": "byte",
+            "nullable": true
+          },
+          "carId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "clientId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "secondClientId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "startMileage": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "endMileage": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "ChangeRentingStateCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "rowVersion": {
+            "type": "string",
+            "format": "byte",
+            "nullable": true
+          },
+          "newState": {
+            "$ref": "#/components/schemas/RentingState"
+          },
+          "mileage": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          }
+        }
+      },
+      "PaginatedListOfReservationDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReservationDto"
+            }
+          },
+          "pageNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "hasPreviousPage": {
+            "type": "boolean"
+          },
+          "hasNextPage": {
+            "type": "boolean"
+          }
+        }
+      },
+      "ReservationDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "agencyId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "rowVersion": {
+            "type": "string",
+            "format": "byte",
+            "nullable": true
+          },
+          "carId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "carMatricule": {
+            "type": "string",
+            "nullable": true
+          },
+          "carModelName": {
+            "type": "string",
+            "nullable": true
+          },
+          "clientId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "clientName": {
+            "type": "string",
+            "nullable": true
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "price": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/MoneyDto"
+              }
+            ]
+          },
+          "payedPrice": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/MoneyDto"
+              }
+            ]
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "$ref": "#/components/schemas/ReservationStatus"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "rentingId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          }
+        }
+      },
+      "CreateReservationCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "carId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "clientId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "payedPrice": {
+            "type": "number",
+            "format": "decimal",
+            "nullable": true
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "UpdateReservationCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "rowVersion": {
+            "type": "string",
+            "format": "byte",
+            "nullable": true
+          },
+          "carId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "clientId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "payedPrice": {
+            "type": "number",
+            "format": "decimal",
+            "nullable": true
+          },
+          "notes": {
+            "type": "string",
             "nullable": true
           }
         }
@@ -3935,6 +6332,48 @@
           },
           "isActive": {
             "type": "boolean"
+          }
+        }
+      },
+      "MyProfileDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "userName": {
+            "type": "string"
+          },
+          "fullName": {
+            "type": "string",
+            "nullable": true
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "UpdateMyProfileCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "fullName": {
+            "type": "string",
+            "nullable": true
+          },
+          "email": {
+            "type": "string"
+          }
+        }
+      },
+      "ChangeMyPasswordCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "currentPassword": {
+            "type": "string"
+          },
+          "newPassword": {
+            "type": "string"
           }
         }
       }

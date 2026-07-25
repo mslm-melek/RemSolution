@@ -1041,8 +1041,21 @@ namespace RemSolution.Infrastructure.Data.Migrations
                     b.Property<DateTimeOffset?>("CreatedOn")
                         .HasColumnType("datetimeoffset");
 
+                    b.Property<int>("Method")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
                     b.Property<DateTime?>("PayementDate")
                         .HasColumnType("datetime2");
+
+                    b.Property<int?>("RentingId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("ReversesPaymentId")
+                        .HasColumnType("int");
 
                     b.Property<string>("UpdatedBy")
                         .HasColumnType("nvarchar(max)");
@@ -1053,6 +1066,10 @@ namespace RemSolution.Infrastructure.Data.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("ClientId");
+
+                    b.HasIndex("RentingId");
+
+                    b.HasIndex("ReversesPaymentId");
 
                     b.HasIndex("AgencyId", "PayementDate");
 
@@ -1124,6 +1141,10 @@ namespace RemSolution.Infrastructure.Data.Migrations
                     b.Property<int?>("EndMileage")
                         .HasColumnType("int");
 
+                    b.Property<string>("Notes")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
                     b.Property<int>("RentingState")
                         .HasColumnType("int");
 
@@ -1168,6 +1189,9 @@ namespace RemSolution.Infrastructure.Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<int>("AgencyId")
+                        .HasColumnType("int");
+
                     b.Property<string>("CreatedBy")
                         .HasColumnType("nvarchar(max)");
 
@@ -1200,6 +1224,8 @@ namespace RemSolution.Infrastructure.Data.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("AgencyId");
+
                     b.HasIndex("RentingId");
 
                     b.ToTable("RentingHistories");
@@ -1216,6 +1242,9 @@ namespace RemSolution.Infrastructure.Data.Migrations
                     b.Property<int>("AgencyId")
                         .HasColumnType("int");
 
+                    b.Property<int?>("CarId")
+                        .HasColumnType("int");
+
                     b.Property<int?>("ClientId")
                         .HasColumnType("int");
 
@@ -1228,13 +1257,14 @@ namespace RemSolution.Infrastructure.Data.Migrations
                     b.Property<DateTime?>("EndDate")
                         .HasColumnType("datetime2");
 
+                    b.Property<DateTime?>("ExpiresAt")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("Notes")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
 
                     b.Property<int?>("RentingId")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("RentingState")
                         .HasColumnType("int");
 
                     b.Property<byte[]>("RowVersion")
@@ -1245,6 +1275,9 @@ namespace RemSolution.Infrastructure.Data.Migrations
                     b.Property<DateTime?>("StartDate")
                         .HasColumnType("datetime2");
 
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
                     b.Property<string>("UpdatedBy")
                         .HasColumnType("nvarchar(max)");
 
@@ -1253,11 +1286,13 @@ namespace RemSolution.Infrastructure.Data.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("CarId");
+
                     b.HasIndex("ClientId");
 
                     b.HasIndex("RentingId");
 
-                    b.HasIndex("AgencyId", "StartDate");
+                    b.HasIndex("AgencyId", "Status", "ExpiresAt");
 
                     b.ToTable("Reservations");
                 });
@@ -1938,6 +1973,16 @@ namespace RemSolution.Infrastructure.Data.Migrations
                         .HasForeignKey("ClientId")
                         .OnDelete(DeleteBehavior.Restrict);
 
+                    b.HasOne("RemSolution.Domain.Entities.Renting", "Renting")
+                        .WithMany("Payments")
+                        .HasForeignKey("RentingId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("RemSolution.Domain.Entities.Payment", "ReversesPayment")
+                        .WithMany()
+                        .HasForeignKey("ReversesPaymentId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.OwnsOne("RemSolution.Domain.ValueObjects.Money", "PayementAmount", b1 =>
                         {
                             b1.Property<int>("PaymentId")
@@ -1967,6 +2012,10 @@ namespace RemSolution.Infrastructure.Data.Migrations
                     b.Navigation("Client");
 
                     b.Navigation("PayementAmount");
+
+                    b.Navigation("Renting");
+
+                    b.Navigation("ReversesPayment");
                 });
 
             modelBuilder.Entity("RemSolution.Domain.Entities.PlanFeature", b =>
@@ -2040,6 +2089,12 @@ namespace RemSolution.Infrastructure.Data.Migrations
 
             modelBuilder.Entity("RemSolution.Domain.Entities.RentingHistory", b =>
                 {
+                    b.HasOne("RemSolution.Domain.Entities.Agency", "Agency")
+                        .WithMany()
+                        .HasForeignKey("AgencyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("RemSolution.Domain.Entities.Renting", "Renting")
                         .WithMany("RentingHistories")
                         .HasForeignKey("RentingId")
@@ -2069,6 +2124,8 @@ namespace RemSolution.Infrastructure.Data.Migrations
                                 .HasForeignKey("RentingHistoryId");
                         });
 
+                    b.Navigation("Agency");
+
                     b.Navigation("Price");
 
                     b.Navigation("Renting");
@@ -2081,6 +2138,11 @@ namespace RemSolution.Infrastructure.Data.Migrations
                         .HasForeignKey("AgencyId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.HasOne("RemSolution.Domain.Entities.Car", "Car")
+                        .WithMany()
+                        .HasForeignKey("CarId")
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.HasOne("RemSolution.Domain.Entities.Client", "Client")
                         .WithMany("Reservations")
@@ -2141,6 +2203,8 @@ namespace RemSolution.Infrastructure.Data.Migrations
                         });
 
                     b.Navigation("Agency");
+
+                    b.Navigation("Car");
 
                     b.Navigation("Client");
 
@@ -2236,6 +2300,8 @@ namespace RemSolution.Infrastructure.Data.Migrations
             modelBuilder.Entity("RemSolution.Domain.Entities.Renting", b =>
                 {
                     b.Navigation("ExtraServices");
+
+                    b.Navigation("Payments");
 
                     b.Navigation("RentingHistories");
 

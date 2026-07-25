@@ -11,6 +11,8 @@ public class GetBrandsWithPaginationQueryTests : BaseTestFixture
     [Test]
     public async Task ShouldReturnPaginatedBrands()
     {
+        await RunAsAgencyAdministratorAsync();
+
         await SendAsync(new CreateBrandCommand { Name = "BMX" });
         await SendAsync(new CreateBrandCommand { Name = "TOYOTA" });
 

@@ -5,9 +5,11 @@ using Hangfire.SqlServer;
 using RemSolution.Application.Common.Interfaces;
 using RemSolution.Application.Common.Tenancy;
 using RemSolution.Domain.Constants;
+using RemSolution.Infrastructure.Booking;
 using RemSolution.Infrastructure.Data;
 using RemSolution.Infrastructure.Data.Interceptors;
 using RemSolution.Infrastructure.Identity;
+using RemSolution.Infrastructure.Jobs;
 using RemSolution.Application.Common.Settings;
 using RemSolution.Infrastructure.Imaging;
 using RemSolution.Infrastructure.Pricing;
@@ -167,6 +169,13 @@ public static class DependencyInjection
         // car's DailyRate into a booking's snapshot price.
         builder.Services.AddSingleton<IPricingService, PricingService>();
 
+        // Car-availability overlap check shared by the renting/reservation flows
+        // (queries the tenant-scoped booking sets, so it is DbContext-scoped).
+        builder.Services.AddScoped<IAvailabilityChecker, AvailabilityChecker>();
+
+        // Recurring reservation-expiry sweep (registered as a job below).
+        builder.Services.AddScoped<ReservationExpiryJob>();
+
         // Car-image thumbnail/medium pipeline. The resizer is a stateless
         // singleton; the actual work runs as a Hangfire job (below).
         builder.Services.AddSingleton<IImageProcessor, SkiaImageProcessor>();
@@ -212,6 +221,9 @@ public static class DependencyInjection
         {
             options.AddPolicy(Policies.PlatformAdminOnly, policy => policy.RequireRole(Roles.PlatformAdministrator));
             options.AddPolicy(Policies.AgencyAdminOnly, policy => policy.RequireRole(Roles.AgencyAdministrator));
+            options.AddPolicy(Policies.AgencyOrPlatformAdmin, policy =>
+                policy.RequireRole(Roles.AgencyAdministrator, Roles.PlatformAdministrator));
+            options.AddPolicy(Policies.CustomerOnly, policy => policy.RequireRole(Roles.Customer));
 
             // One policy per permission, named after it ("Client.Create", …),
             // usable both at endpoints and via [Authorize(Policy = ...)] on

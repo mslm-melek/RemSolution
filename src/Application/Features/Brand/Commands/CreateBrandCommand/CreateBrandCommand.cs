@@ -1,8 +1,14 @@
 ﻿using RemSolution.Application.Common.Interfaces;
-
+using RemSolution.Application.Common.Security;
+using RemSolution.Domain.Constants;
 
 namespace RemSolution.Application.Features.Brand.Commands.CreateBrandCommand
 {
+    // Reference catalog: managed only by an agency or platform administrator,
+    // and only where the Cars module is enabled (platform admin has no tenant,
+    // so the feature gate passes).
+    [Authorize(Policy = Policies.AgencyOrPlatformAdmin)]
+    [RequiresFeature(FeatureFlags.Cars)]
     public record CreateBrandCommand : IRequest<int>
     {
         public string Name { get; init; } = string.Empty;

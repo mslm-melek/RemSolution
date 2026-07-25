@@ -23,7 +23,7 @@ public class CreateModelCarTests : BaseTestFixture
     [Test]
     public async Task ShouldCreateModelCar()
     {
-        var userId = await RunAsDefaultUserAsync();
+        var userId = await RunAsAgencyAdministratorAsync();
 
         var brand = new Brand { Name = "Tesla" };
         await AddAsync(brand);

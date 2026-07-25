@@ -1,0 +1,30 @@
+<div class="my-res">
+  <div class="head">
+    <h2>My reservations</h2>
+    <a mat-stroked-button [routerLink]="['/browse']"><mat-icon>search</mat-icon> Browse cars</a>
+  </div>
+
+  <div *ngIf="error" class="error">{{ error }}</div>
+  <div *ngIf="loading" class="state">Loading…</div>
+
+  <div *ngIf="!loading && reservations.length === 0" class="state">
+    You have no reservations yet. <a [routerLink]="['/browse']">Find a car to book.</a>
+  </div>
+
+  <div class="list" *ngIf="!loading && reservations.length">
+    <div class="res-card mat-elevation-z2" *ngFor="let r of reservations">
+      <div class="main">
+        <div class="car">{{ r.carBrandName }} {{ r.carModelName }}</div>
+        <div class="agency"><mat-icon>place</mat-icon>{{ r.agencyName }}</div>
+        <div class="dates">{{ r.startDate | date:'yyyy-MM-dd' }} → {{ r.endDate | date:'yyyy-MM-dd' }}</div>
+      </div>
+
+      <div class="side">
+        <span class="status" [ngClass]="statusClass(r.status)">{{ statusLabel(r.status) }}</span>
+        <span class="price" *ngIf="r.price">{{ r.price.amount | number:'1.2-2' }} {{ r.price.currency }}</span>
+        <span class="expires" *ngIf="isPending(r) && r.expiresAt">Holds until {{ r.expiresAt | date:'yyyy-MM-dd HH:mm' }}</span>
+        <button mat-stroked-button color="warn" *ngIf="isPending(r)" (click)="cancel(r)">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>

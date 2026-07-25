@@ -12,6 +12,8 @@ public class UpdateBrandTests : BaseTestFixture
     [Test]
     public async Task ShouldUpdateBrand()
     {
+        await RunAsAgencyAdministratorAsync();
+
         var brandId = await SendAsync(new CreateBrandCommand
         {
             Name = "Toyota"
@@ -33,6 +35,8 @@ public class UpdateBrandTests : BaseTestFixture
     [Test]
     public async Task ShouldRequireUniqueName()
     {
+        await RunAsAgencyAdministratorAsync();
+
         await SendAsync(new CreateBrandCommand
         {
             Name = "Toyota"

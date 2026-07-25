@@ -17,6 +17,7 @@ interface StatTile {
 export class HomeComponent implements OnInit {
   isAuthenticated: boolean | null = null;
   isPlatformAdmin = false;
+  isCustomer = false;
   displayName: string | null | undefined;
 
   // Agency-user dashboard (tenant-scoped module counts).
@@ -68,9 +69,12 @@ export class HomeComponent implements OnInit {
     this.auth.currentUser$.subscribe(user => {
       this.isAuthenticated = user.isAuthenticated ?? false;
       this.isPlatformAdmin = AuthService.isPlatformAdmin(user);
+      this.isCustomer = AuthService.isCustomer(user);
       this.displayName = user.fullName || user.userName;
 
-      if (!this.isAuthenticated) {
+      // Customers get a browse-oriented home, not the staff dashboard (and none
+      // of the staff stat calls, which they aren't authorized for).
+      if (!this.isAuthenticated || this.isCustomer) {
         return;
       }
 

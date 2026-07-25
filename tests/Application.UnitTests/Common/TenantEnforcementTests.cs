@@ -13,7 +13,10 @@ public class TenantEnforcementTests
 {
     private static readonly string[] AllowedPathFragments =
     {
-        Normalize("Features/MarketplaceSearch/"),
+        // The whole customer-marketplace area (cross-agency search queries AND the
+        // customer booking/cancel commands that must load a car/reservation from
+        // any agency). Covers Features/MarketplaceSearch/ and Features/Marketplace/.
+        Normalize("Features/Marketplace"),
         Normalize("Infrastructure/Data/CrossTenantAccess.cs"),
     };
 

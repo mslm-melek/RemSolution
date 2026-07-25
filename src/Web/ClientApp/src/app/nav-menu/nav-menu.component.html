@@ -30,53 +30,84 @@
            [routerLink]="['/subscription-plan']"
            [routerLinkActive]="['link-active']"
            (click)="collapse()">Subscription Plans</a>
-        <a mat-button
-           [routerLink]="['/brand']"
-           [routerLinkActive]="['link-active']"
-           (click)="collapse()">Car Brands</a>
-        <a mat-button
-           [routerLink]="['/model-car']"
-           [routerLinkActive]="['link-active']"
-           (click)="collapse()">Car Models</a>
+
+        <!-- Reference & configuration data, grouped. -->
+        <button mat-button [matMenuTriggerFor]="catalogMenu">
+          Config <mat-icon>arrow_drop_down</mat-icon>
+        </button>
+        <mat-menu #catalogMenu="matMenu">
+          <a mat-menu-item [routerLink]="['/brand']" (click)="collapse()">Car Brands</a>
+          <a mat-menu-item [routerLink]="['/model-car']" (click)="collapse()">Car Models</a>
+          <a mat-menu-item [routerLink]="['/extra-service-type']" (click)="collapse()">Extra Service Types</a>
+          <a mat-menu-item [routerLink]="['/expense-type']" (click)="collapse()">Expense Types</a>
+        </mat-menu>
       </ng-container>
 
-      <!-- Agency users: flat module list, gated by feature + permission. -->
-      <ng-container *ngIf="!isPlatformAdmin">
-        <!-- Brands and models are reference data of the Cars module. -->
+      <!-- Marketplace customer: browse + their reservations only. -->
+      <ng-container *ngIf="isCustomer">
         <a mat-button
-           *ngIf="canAccessCars"
-           [routerLink]="['/brand']"
+           [routerLink]="['/browse']"
            [routerLinkActive]="['link-active']"
-           (click)="collapse()">Car Brands</a>
+           (click)="collapse()">Browse cars</a>
         <a mat-button
-           *ngIf="canAccessCars"
-           [routerLink]="['/model-car']"
+           [routerLink]="['/my-reservations']"
            [routerLinkActive]="['link-active']"
-           (click)="collapse()">Car Models</a>
+           (click)="collapse()">My reservations</a>
+      </ng-container>
+
+      <!-- Agency users: primary entities in the bar; all configuration and
+           reference data grouped under Config. Each item stays gated by its
+           own feature / role. -->
+      <ng-container *ngIf="!isPlatformAdmin && !isCustomer">
         <a mat-button
            *ngIf="canAccessCars"
            [routerLink]="['/car']"
            [routerLinkActive]="['link-active']"
            (click)="collapse()">Cars</a>
         <a mat-button
+           *ngIf="canAccessReservations"
+           [routerLink]="['/reservation']"
+           [routerLinkActive]="['link-active']"
+           (click)="collapse()">Reservations</a>
+        <a mat-button
+           *ngIf="canAccessRentings"
+           [routerLink]="['/renting']"
+           [routerLinkActive]="['link-active']"
+           (click)="collapse()">Rentings</a>
+        <a mat-button
            *ngIf="canAccessClients"
            [routerLink]="['/client']"
            [routerLinkActive]="['link-active']"
            (click)="collapse()">Clients</a>
-        <a mat-button
-           *ngIf="isAgencyAdmin"
-           [routerLink]="['/team']"
-           [routerLinkActive]="['link-active']"
-           (click)="collapse()">Team</a>
+
+        <!-- Config: reference catalogs, staff and car reference data. -->
+        <ng-container *ngIf="canAccessConfig">
+          <button mat-button [matMenuTriggerFor]="configMenu">
+            Config <mat-icon>arrow_drop_down</mat-icon>
+          </button>
+          <mat-menu #configMenu="matMenu">
+            <a mat-menu-item *ngIf="canAccessExpenses" [routerLink]="['/expense-type']" (click)="collapse()">Expense Types</a>
+            <a mat-menu-item *ngIf="canAccessExtraServices" [routerLink]="['/extra-service-type']" (click)="collapse()">Extra Service Types</a>
+            <a mat-menu-item *ngIf="canAccessCars" [routerLink]="['/brand']" (click)="collapse()">Car Brands</a>
+            <a mat-menu-item *ngIf="canAccessCars" [routerLink]="['/model-car']" (click)="collapse()">Car Models</a>
+          </mat-menu>
+        </ng-container>
       </ng-container>
 
-      <a mat-button href="/api" target="_blank">API</a>
-      <a mat-button href="/Identity/Account/Manage" class="nav-user">
-        <mat-icon>person</mat-icon> {{ displayName }}
-      </a>
-      <a mat-button href="/Identity/Account/Logout">
-        <mat-icon>logout</mat-icon> Logout
-      </a>
+      <button mat-button [matMenuTriggerFor]="userMenu" class="nav-user">
+        <mat-icon>person</mat-icon> {{ displayName }} <mat-icon>arrow_drop_down</mat-icon>
+      </button>
+      <mat-menu #userMenu="matMenu">
+        <a mat-menu-item *ngIf="isAgencyAdmin" [routerLink]="['/team']" (click)="collapse()">
+          <mat-icon>groups</mat-icon> My Team
+        </a>
+        <a mat-menu-item [routerLink]="['/profile']" (click)="collapse()">
+          <mat-icon>manage_accounts</mat-icon> Edit profile
+        </a>
+        <a mat-menu-item href="/Identity/Account/Logout">
+          <mat-icon>logout</mat-icon> Logout
+        </a>
+      </mat-menu>
     </nav>
 
     <nav class="nav-links" [class.expanded]="isExpanded" *ngIf="!isAuthenticated">

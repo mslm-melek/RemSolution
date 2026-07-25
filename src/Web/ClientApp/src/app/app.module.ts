@@ -26,6 +26,16 @@ import { UserFormComponent } from './user/user-form.component';
 import { SubscriptionPlanComponent } from './subscription-plan/subscription-plan.component';
 import { SubscriptionPlanFormComponent } from './subscription-plan/subscription-plan-form.component';
 import { TeamComponent } from './team/team.component';
+import { RentingComponent } from './renting/renting.component';
+import { RentingFormComponent } from './renting/renting-form.component';
+import { ReservationComponent } from './reservation/reservation.component';
+import { ReservationFormComponent } from './reservation/reservation-form.component';
+import { ExtraServiceTypeComponent } from './extra-service-type/extra-service-type.component';
+import { ExpenseTypeComponent } from './expense-type/expense-type.component';
+import { ProfileComponent } from './profile/profile.component';
+import { MarketplaceSearchComponent } from './marketplace/marketplace-search.component';
+import { MarketplaceCarComponent } from './marketplace/marketplace-car.component';
+import { MyReservationsComponent } from './marketplace/my-reservations.component';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -39,6 +49,8 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatDividerModule } from '@angular/material/divider';
+import { MatMenuModule } from '@angular/material/menu';
 
 @NgModule({
   declarations: [
@@ -60,7 +72,17 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
     UserFormComponent,
     SubscriptionPlanComponent,
     SubscriptionPlanFormComponent,
-    TeamComponent
+    TeamComponent,
+    RentingComponent,
+    RentingFormComponent,
+    ReservationComponent,
+    ReservationFormComponent,
+    ExtraServiceTypeComponent,
+    ExpenseTypeComponent,
+    ProfileComponent,
+    MarketplaceSearchComponent,
+    MarketplaceCarComponent,
+    MyReservationsComponent
   ],
   bootstrap: [AppComponent],
   imports: [
@@ -79,6 +101,8 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
     MatTabsModule,
     MatCheckboxModule,
     MatProgressBarModule,
+    MatDividerModule,
+    MatMenuModule,
     RouterModule.forRoot([
       { path: '', component: HomeComponent, pathMatch: 'full' },
       { path: 'brand', component: BrandComponent },
@@ -91,6 +115,18 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
       { path: 'client', component: ClientComponent },
       { path: 'client/new', component: ClientFormComponent },
       { path: 'client/:id', component: ClientFormComponent },
+      { path: 'renting', component: RentingComponent },
+      { path: 'renting/new', component: RentingFormComponent },
+      { path: 'renting/:id', component: RentingFormComponent },
+      { path: 'reservation', component: ReservationComponent },
+      { path: 'reservation/new', component: ReservationFormComponent },
+      { path: 'reservation/:id', component: ReservationFormComponent },
+      { path: 'extra-service-type', component: ExtraServiceTypeComponent },
+      { path: 'expense-type', component: ExpenseTypeComponent },
+      { path: 'profile', component: ProfileComponent },
+      { path: 'browse', component: MarketplaceSearchComponent },
+      { path: 'browse/car/:id', component: MarketplaceCarComponent },
+      { path: 'my-reservations', component: MyReservationsComponent },
 
       // Platform-admin console.
       { path: 'agency', component: AgencyComponent },

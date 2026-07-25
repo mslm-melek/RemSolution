@@ -1,5 +1,6 @@
 ﻿using System.Data.Common;
 using RemSolution.Application.Common.Interfaces;
+using RemSolution.Application.Common.Tenancy;
 using RemSolution.Infrastructure.Data;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -36,9 +37,19 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
             services
                 .RemoveAll<IUser>()
                 .AddTransient(provider => Mock.Of<IUser>(s => s.Id == GetUserId()));
+            // Mirror the real CurrentTenant: an ambient tenant (AmbientTenant.Push,
+            // used by background jobs and the marketplace commands) takes
+            // precedence over the test's current agency. Evaluated per access so a
+            // mid-handler Push is honoured.
             services
                 .RemoveAll<ITenantProvider>()
-                .AddTransient(provider => Mock.Of<ITenantProvider>(s => s.AgencyId == GetAgencyId()));
+                .AddTransient<ITenantProvider>(_ =>
+                {
+                    var mock = new Mock<ITenantProvider>();
+                    mock.SetupGet(x => x.AgencyId)
+                        .Returns(() => AmbientTenant.CurrentAgencyId ?? GetAgencyId());
+                    return mock.Object;
+                });
             // Keep the image pipeline deterministic: record enqueued jobs but
             // never let the hosted service drain them (see the fake's remarks).
             services

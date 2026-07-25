@@ -1,7 +1,11 @@
 using RemSolution.Application.Common.Interfaces;
+using RemSolution.Application.Common.Security;
+using RemSolution.Domain.Constants;
 
 namespace RemSolution.Application.Features.ModelCar.Commands.UpdateModelCarCommand
 {
+    [Authorize(Policy = Policies.AgencyOrPlatformAdmin)]
+    [RequiresFeature(FeatureFlags.Cars)]
     public record UpdateModelCarCommand : IRequest
     {
         public int Id { get; init; }

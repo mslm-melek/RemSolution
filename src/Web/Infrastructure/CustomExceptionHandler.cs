@@ -20,6 +20,7 @@ public class CustomExceptionHandler : IExceptionHandler
                 { typeof(ForbiddenAccessException), HandleForbiddenAccessException },
                 { typeof(SubscriptionRequiredException), HandleSubscriptionRequiredException },
                 { typeof(PlanLimitExceededException), HandlePlanLimitExceededException },
+                { typeof(BookingConflictException), HandleBookingConflictException },
                 { typeof(DbUpdateConcurrencyException), HandleConcurrencyException },
                 { typeof(Exception), HandleUnknownException }
             };
@@ -113,6 +114,24 @@ public class CustomExceptionHandler : IExceptionHandler
             Detail = ex.Message,
             Type = "https://tools.ietf.org/html/rfc7231#section-6.5.8"
         });
+    }
+
+    private async Task HandleBookingConflictException(HttpContext httpContext, Exception ex)
+    {
+        httpContext.Response.StatusCode = StatusCodes.Status409Conflict;
+
+        var problemDetails = new ProblemDetails
+        {
+            Status = StatusCodes.Status409Conflict,
+            Title = "The car is not available for the selected period.",
+            Detail = ex.Message,
+            Type = "https://tools.ietf.org/html/rfc7231#section-6.5.8"
+        };
+        // 409 is also used for plan limits and concurrency; the client keys on
+        // this code to show the "car not available" message specifically.
+        problemDetails.Extensions["code"] = "booking_conflict";
+
+        await httpContext.Response.WriteAsJsonAsync(problemDetails);
     }
 
     private async Task HandleConcurrencyException(HttpContext httpContext, Exception ex)

@@ -11,6 +11,8 @@ public class UpdateModelCarTests : BaseTestFixture
     [Test]
     public async Task ShouldUpdateModelCar()
     {
+        await RunAsAgencyAdministratorAsync();
+
         var brand = new Brand { Name = "Tesla" };
         await AddAsync(brand);
 

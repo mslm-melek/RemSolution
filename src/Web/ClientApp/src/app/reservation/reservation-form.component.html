@@ -1,0 +1,67 @@
+<div class="reservation-form-card mat-elevation-z4">
+  <div class="header-row">
+    <h2 class="title">{{ isEdit ? 'Reservation' : 'New Reservation' }}</h2>
+    <a mat-stroked-button [routerLink]="['/reservation']">
+      <mat-icon>arrow_back</mat-icon> Back
+    </a>
+  </div>
+
+  <div *ngIf="errorMessage" class="error-banner">{{ errorMessage }}</div>
+
+  <div *ngIf="isEdit && reservation" class="state-row">
+    <span class="state-chip">Status: <strong>{{ ReservationStatus[reservation.status] }}</strong></span>
+    <button mat-raised-button color="primary" *ngIf="isPending" (click)="confirm()">
+      <mat-icon>check_circle</mat-icon> Confirm into renting
+    </button>
+    <button mat-stroked-button color="warn" *ngIf="isPending" (click)="cancel()">
+      <mat-icon>cancel</mat-icon> Cancel
+    </button>
+  </div>
+
+  <form [formGroup]="form" (ngSubmit)="save()" class="form-grid">
+    <mat-form-field appearance="outline">
+      <mat-label>Car</mat-label>
+      <mat-select formControlName="carId">
+        <mat-option *ngFor="let c of cars" [value]="c.id">{{ c.modelName }} — {{ c.matricule }}</mat-option>
+      </mat-select>
+      <mat-error *ngIf="form.get('carId')?.hasError('required')">Car is required.</mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Client</mat-label>
+      <mat-select formControlName="clientId">
+        <mat-option *ngFor="let c of clients" [value]="c.id">{{ c.lastName }}, {{ c.firstName }}</mat-option>
+      </mat-select>
+      <mat-error *ngIf="form.get('clientId')?.hasError('required')">Client is required.</mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Start date</mat-label>
+      <input matInput type="date" formControlName="startDate" />
+      <mat-error *ngIf="form.get('startDate')?.hasError('required')">Start date is required.</mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>End date</mat-label>
+      <input matInput type="date" formControlName="endDate" />
+      <mat-error *ngIf="form.get('endDate')?.hasError('required')">End date is required.</mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Deposit paid</mat-label>
+      <input matInput type="number" min="0" step="0.01" formControlName="payedPrice" />
+      <span matSuffix *ngIf="currency">&nbsp;{{ currency }}</span>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="span-2">
+      <mat-label>Notes</mat-label>
+      <textarea matInput rows="2" formControlName="notes"></textarea>
+    </mat-form-field>
+
+    <div class="span-2 actions" *ngIf="!isEdit || isPending">
+      <button mat-raised-button color="primary" type="submit" [disabled]="saving">
+        {{ isEdit ? 'Save changes' : 'Create reservation' }}
+      </button>
+    </div>
+  </form>
+</div>

@@ -1,0 +1,74 @@
+<div class="car-detail">
+  <a mat-stroked-button [routerLink]="['/browse']"><mat-icon>arrow_back</mat-icon> Back to search</a>
+
+  <div *ngIf="loading" class="state">Loading…</div>
+  <div *ngIf="notFound" class="state">This car is no longer available.</div>
+
+  <div class="detail-card mat-elevation-z2" *ngIf="car">
+    <div class="photo" [class.placeholder]="!car.imageUrl"
+         [style.background-image]="car.imageUrl ? 'url(' + car.imageUrl + ')' : null">
+      <mat-icon *ngIf="!car.imageUrl">directions_car</mat-icon>
+    </div>
+
+    <div class="info">
+      <h1>{{ car.brandName }} {{ car.modelName }}</h1>
+      <div class="agency"><mat-icon>place</mat-icon>{{ car.agencyName }}<span *ngIf="car.branchName"> · {{ car.branchName }}</span></div>
+
+      <div class="specs">
+        <span class="spec" *ngIf="car.fuelType !== null && car.fuelType !== undefined"><mat-icon>local_gas_station</mat-icon>{{ car.fuelType === 0 ? 'Gasoline' : 'Diesel' }}</span>
+        <span class="spec" *ngIf="car.color"><mat-icon>palette</mat-icon>{{ car.color }}</span>
+      </div>
+
+      <div class="price" *ngIf="car.dailyRate">
+        {{ car.dailyRate.amount | number:'1.2-2' }} {{ car.dailyRate.currency }}<span class="per"> / day</span>
+      </div>
+
+      <div class="cta">
+        <button mat-flat-button color="primary" *ngIf="!isAuthenticated" (click)="signInToBook()">
+          <mat-icon>login</mat-icon> Sign in to book
+        </button>
+        <span class="note" *ngIf="isAuthenticated && !isCustomer">
+          Booking is available to customer accounts.
+        </span>
+      </div>
+
+      <!-- Booking form for a signed-in customer. -->
+      <form *ngIf="isCustomer" [formGroup]="form" (ngSubmit)="book()" class="booking">
+        <h3>Request this car</h3>
+        <div *ngIf="bookingError" class="booking-error">{{ bookingError }}</div>
+
+        <div class="row">
+          <mat-form-field appearance="outline">
+            <mat-label>Pick-up date</mat-label>
+            <input matInput type="date" formControlName="startDate" />
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Return date</mat-label>
+            <input matInput type="date" formControlName="endDate" />
+          </mat-form-field>
+        </div>
+
+        <div class="row">
+          <mat-form-field appearance="outline">
+            <mat-label>First name</mat-label>
+            <input matInput formControlName="firstName" />
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Last name</mat-label>
+            <input matInput formControlName="lastName" />
+          </mat-form-field>
+        </div>
+
+        <mat-form-field appearance="outline" class="full">
+          <mat-label>Date of birth</mat-label>
+          <input matInput type="date" formControlName="birthDate" />
+        </mat-form-field>
+
+        <button mat-flat-button color="primary" type="submit" [disabled]="booking">
+          <mat-icon>event_available</mat-icon> Request booking
+        </button>
+        <p class="hint">Your request is sent to {{ car.agencyName }} for confirmation.</p>
+      </form>
+    </div>
+  </div>
+</div>

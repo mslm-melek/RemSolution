@@ -1,0 +1,157 @@
+.marketplace {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+.hero {
+  border-radius: 16px;
+  padding: 2rem 2rem 1.5rem;
+  color: #fff;
+  background: linear-gradient(135deg, #3f51b5 0%, #5c6bc0 55%, #7986cb 100%);
+  margin-bottom: 1.5rem;
+}
+
+.hero h1 {
+  margin: 0 0 4px;
+  font-size: 1.8rem;
+  font-weight: 600;
+}
+
+.hero p {
+  margin: 0 0 1.25rem;
+  opacity: 0.9;
+}
+
+.search-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  background: rgba(255, 255, 255, 0.14);
+  border-radius: 12px;
+  padding: 0.75rem;
+}
+
+.search-bar .date {
+  flex: 1 1 180px;
+}
+
+/* Make the outlined date fields readable on the coloured hero. */
+.search-bar ::ng-deep .mat-mdc-text-field-wrapper {
+  background: #fff;
+  border-radius: 8px;
+}
+
+.error {
+  margin-top: 0.75rem;
+  background: rgba(255, 255, 255, 0.9);
+  color: #b71c1c;
+  padding: 0.5rem 0.9rem;
+  border-radius: 8px;
+  display: inline-block;
+}
+
+.state {
+  text-align: center;
+  color: rgba(0, 0, 0, 0.55);
+  padding: 2rem;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 1.25rem;
+}
+
+.car-card {
+  display: block;
+  border-radius: 14px;
+  overflow: hidden;
+  background: #fff;
+  color: inherit;
+  text-decoration: none;
+  transition: transform .12s ease, box-shadow .12s ease;
+}
+
+.car-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.16);
+}
+
+.thumb {
+  height: 150px;
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.thumb.placeholder {
+  background: #eceff1;
+  color: #b0bec5;
+}
+
+.thumb.placeholder mat-icon {
+  font-size: 48px;
+  width: 48px;
+  height: 48px;
+}
+
+.body {
+  padding: 0.85rem 1rem 1rem;
+}
+
+.model {
+  font-weight: 600;
+  font-size: 1.05rem;
+  margin-bottom: 4px;
+}
+
+.agency {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: rgba(0, 0, 0, 0.55);
+  font-size: 0.85rem;
+  margin-bottom: 0.75rem;
+}
+
+.agency mat-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+}
+
+.foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.price {
+  font-weight: 600;
+  color: #3f51b5;
+}
+
+.price .per {
+  font-weight: 400;
+  color: rgba(0, 0, 0, 0.5);
+  font-size: 0.8rem;
+}
+
+.book {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 0.85rem;
+  color: #3f51b5;
+  font-weight: 500;
+}
+
+.book mat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+}

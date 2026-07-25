@@ -188,6 +188,62 @@ public class IdentityService : IIdentityService
         return result.ToApplicationResult();
     }
 
+    public async Task<MyProfileRecord?> GetProfileAsync(string userId)
+    {
+        var user = await _userManager.FindByIdAsync(userId);
+
+        if (user is null)
+        {
+            return null;
+        }
+
+        return new MyProfileRecord(user.UserName ?? string.Empty, user.FullName, user.Email);
+    }
+
+    public async Task<Result> UpdateProfileAsync(string userId, string? fullName, string email, CancellationToken cancellationToken)
+    {
+        var user = await _userManager.FindByIdAsync(userId);
+
+        if (user is null)
+        {
+            return Result.Failure(new[] { $"User '{userId}' not found." });
+        }
+
+        user.FullName = fullName;
+
+        // The login is the email; keep username and email together so an email
+        // change is a login change (Identity refreshes the security stamp, which
+        // may require signing in again).
+        if (!string.Equals(email, user.Email, StringComparison.OrdinalIgnoreCase))
+        {
+            var setEmail = await _userManager.SetEmailAsync(user, email);
+            if (!setEmail.Succeeded)
+            {
+                return setEmail.ToApplicationResult();
+            }
+
+            var setUserName = await _userManager.SetUserNameAsync(user, email);
+            if (!setUserName.Succeeded)
+            {
+                return setUserName.ToApplicationResult();
+            }
+        }
+
+        return (await _userManager.UpdateAsync(user)).ToApplicationResult();
+    }
+
+    public async Task<Result> ChangePasswordAsync(string userId, string currentPassword, string newPassword, CancellationToken cancellationToken)
+    {
+        var user = await _userManager.FindByIdAsync(userId);
+
+        if (user is null)
+        {
+            return Result.Failure(new[] { $"User '{userId}' not found." });
+        }
+
+        return (await _userManager.ChangePasswordAsync(user, currentPassword, newPassword)).ToApplicationResult();
+    }
+
     public async Task<bool> IsInRoleAsync(string userId, string role)
     {
         var user = await _userManager.FindByIdAsync(userId);

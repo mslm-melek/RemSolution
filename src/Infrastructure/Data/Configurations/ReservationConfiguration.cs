@@ -8,10 +8,20 @@ public class ReservationConfiguration : IEntityTypeConfiguration<Reservation>
 {
     public void Configure(EntityTypeBuilder<Reservation> builder)
     {
-        builder.HasAgencyTenant(nameof(Reservation.StartDate));
+        // IX(AgencyId, Status, ExpiresAt): serves status-filtered lists and the
+        // per-agency expiry sweep (Pending holds past ExpiresAt).
+        builder.HasAgencyTenant(nameof(Reservation.Status), nameof(Reservation.ExpiresAt));
 
         builder.OwnsMoney(e => e.Price, "Price", "PriceCurrency");
         builder.OwnsMoney(e => e.PayedPrice, "PayedPrice", "PayedPriceCurrency");
+
+        builder.Property(e => e.Notes).HasMaxLength(1000);
+
+        // The held car — cleared (not cascaded) if the car row is ever removed.
+        builder.HasOne(c => c.Car)
+               .WithMany()
+               .HasForeignKey(c => c.CarId)
+               .OnDelete(DeleteBehavior.SetNull);
 
         // Financial record: never deleted or orphaned by a client delete.
         // Restrict makes a physical client delete fail (clients are archived).

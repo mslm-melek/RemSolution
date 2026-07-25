@@ -8,6 +8,8 @@ public class RentingHistoryConfiguration : IEntityTypeConfiguration<RentingHisto
 {
     public void Configure(EntityTypeBuilder<RentingHistory> builder)
     {
+        builder.HasAgencyTenant();
+
         builder.OwnsMoney(e => e.Price, "Price", "PriceCurrency");
 
         builder.HasOne(c => c.Renting)

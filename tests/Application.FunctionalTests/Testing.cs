@@ -239,7 +239,12 @@ public partial class Testing
                 MaxCars = maxCars,
                 MaxClients = maxClients,
                 MaxUsers = maxUsers,
-                Price = 49.99m
+                Price = 49.99m,
+                // A test plan unlocks every module; individual tests toggle a
+                // feature off with an AgencyFeature override when they need to.
+                Features = FeatureFlags.All
+                    .Select(f => new PlanFeature { Feature = f })
+                    .ToList()
             };
             await AddAsync(plan);
 

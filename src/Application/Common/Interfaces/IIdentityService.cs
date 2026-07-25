@@ -46,6 +46,18 @@ public interface IIdentityService
     /// <summary>Administratively sets a new password (bypasses the current-password check).</summary>
     Task<Result> AdminResetPasswordAsync(string userId, string newPassword, CancellationToken cancellationToken);
 
+    /// <summary>The current user's own editable profile (login, display name, email), or null if not found.</summary>
+    Task<MyProfileRecord?> GetProfileAsync(string userId);
+
+    /// <summary>
+    /// Updates the user's display name and email. The login/username is kept in
+    /// sync with the email, so an email change is also a login change.
+    /// </summary>
+    Task<Result> UpdateProfileAsync(string userId, string? fullName, string email, CancellationToken cancellationToken);
+
+    /// <summary>Changes the user's own password, verifying the current one first.</summary>
+    Task<Result> ChangePasswordAsync(string userId, string currentPassword, string newPassword, CancellationToken cancellationToken);
+
     Task<Result> DeleteUserAsync(string userId);
 
     Task<Result> AssignAgencyAsync(string userId, int? agencyId);

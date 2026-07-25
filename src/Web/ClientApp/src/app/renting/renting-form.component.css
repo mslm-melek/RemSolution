@@ -1,0 +1,73 @@
+.renting-form-card {
+  padding: 1.5rem;
+  margin: 1rem;
+  border-radius: 8px;
+  max-width: 900px;
+}
+
+.header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.title {
+  margin: 0;
+}
+
+.error-banner {
+  background: #fdecea;
+  color: #b71c1c;
+  padding: 0.75rem 1rem;
+  border-radius: 4px;
+  margin-bottom: 1rem;
+}
+
+.state-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.state-chip {
+  padding: 0.25rem 0.75rem;
+  background: rgba(0, 0, 0, 0.06);
+  border-radius: 16px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 1rem;
+}
+
+.span-2 {
+  grid-column: 1 / -1;
+}
+
+.actions {
+  margin-top: 0.5rem;
+}
+
+.panel {
+  margin: 1rem 0;
+}
+
+.full-width {
+  width: 100%;
+}
+
+.inline-add {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-top: 0.75rem;
+}
+
+.muted {
+  color: rgba(0, 0, 0, 0.5);
+}

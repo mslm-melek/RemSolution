@@ -11,7 +11,8 @@ public class DeleteBrandTests : BaseTestFixture
     [Test]
     public async Task ShouldDeleteBrand()
     {
-       
+        await RunAsAgencyAdministratorAsync();
+
         var brandId = await SendAsync(new CreateBrandCommand
         {
            Name = "BMW"

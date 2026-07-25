@@ -1,5 +1,7 @@
 ﻿namespace RemSolution.Domain.Entities
 {
+    // Global catalog of add-on types (GPS, child seat, ...) shared by all
+    // agencies; managed by agency or platform administrators (not staff).
     public class ExtraServicesType : BaseAuditableEntity
     {
         public string? Name { get; set; }

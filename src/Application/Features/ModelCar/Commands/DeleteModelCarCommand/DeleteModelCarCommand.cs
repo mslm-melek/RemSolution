@@ -1,9 +1,12 @@
 ﻿using RemSolution.Application.Common.Audit;
 using RemSolution.Application.Common.Interfaces;
+using RemSolution.Application.Common.Security;
+using RemSolution.Domain.Constants;
 
 namespace RemSolution.Application.Features.ModelCar.Commands.DeleteModelCarCommand
 {
-
+    [Authorize(Policy = Policies.AgencyOrPlatformAdmin)]
+    [RequiresFeature(FeatureFlags.Cars)]
     [Auditable("DeleteModelCar", "ModelCar")]
     public record DeleteModelCarCommand(int Id) : IRequest;
 

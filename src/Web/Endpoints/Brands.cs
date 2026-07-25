@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Http.HttpResults;
+using RemSolution.Domain.Constants;
 using RemSolution.Application.Features.Brand.Commands.CreateBrandCommand;
 using RemSolution.Application.Features.Brand.Commands.DeleteBrandCommand;
 using RemSolution.Application.Features.Brand.Commands.UpdateBrandCommand;
@@ -14,11 +15,11 @@ public class Brands : EndpointGroupBase
     {
         app.MapGroup(this)
             .RequireAuthorization()
-            .MapGet(GetBrands)        
+            .MapGet(GetBrands)
             .MapGet(GetBrandById, "{id}")
-            .MapPost(CreateBrand)
-            .MapPut(UpdateBrand, "{id}")
-            .MapDelete(DeleteBrand, "{id}");
+            .MapPost(CreateBrand, policy: Policies.AgencyOrPlatformAdmin)
+            .MapPut(UpdateBrand, "{id}", Policies.AgencyOrPlatformAdmin)
+            .MapDelete(DeleteBrand, "{id}", Policies.AgencyOrPlatformAdmin);
     }
 
     public async Task<Ok<IList<BrandDto>>> GetBrands(ISender sender, [AsParameters] GetBrandsQuery query)

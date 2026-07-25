@@ -23,4 +23,12 @@ public abstract class Roles
     /// on this role.
     /// </summary>
     public const string AgencyStaff = nameof(AgencyStaff);
+
+    /// <summary>
+    /// A self-registered marketplace customer. Not tenant-scoped (no AgencyId)
+    /// and holds no permissions — they browse available cars across agencies and
+    /// request bookings. Authorization is keyed on this role via the
+    /// <c>CustomerOnly</c> policy.
+    /// </summary>
+    public const string Customer = nameof(Customer);
 }

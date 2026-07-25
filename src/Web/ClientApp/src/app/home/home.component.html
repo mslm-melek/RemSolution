@@ -15,8 +15,25 @@
   </div>
 </div>
 
-<!-- Signed in: dashboard -->
-<div class="dashboard" *ngIf="isAuthenticated">
+<!-- Signed-in customer: browse-oriented home (no staff dashboard). -->
+<div class="hero" *ngIf="isCustomer">
+  <div class="hero-card mat-elevation-z4">
+    <span class="hero-logo">R</span>
+    <h1>Welcome{{ displayName ? ', ' + displayName : '' }}</h1>
+    <p class="hero-tagline">
+      Find and book a car from any of our agencies.
+    </p>
+    <div class="hero-actions">
+      <a mat-raised-button color="primary" [routerLink]="['/browse']">
+        <mat-icon>search</mat-icon> Browse cars
+      </a>
+      <a mat-stroked-button color="primary" [routerLink]="['/my-reservations']">My reservations</a>
+    </div>
+  </div>
+</div>
+
+<!-- Signed in (staff / admin): dashboard -->
+<div class="dashboard" *ngIf="isAuthenticated && !isCustomer">
   <div class="dash-header">
     <h1>Welcome back</h1>
     <p class="dash-subtitle">{{ displayName }}</p>

@@ -1,0 +1,151 @@
+.car-detail {
+  max-width: 900px;
+  margin: 1rem auto;
+  padding: 0 1rem;
+}
+
+.state {
+  text-align: center;
+  color: rgba(0, 0, 0, 0.55);
+  padding: 2rem;
+}
+
+.detail-card {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #fff;
+  margin-top: 1rem;
+}
+
+.photo {
+  min-height: 320px;
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.photo.placeholder {
+  background: #eceff1;
+  color: #b0bec5;
+}
+
+.photo.placeholder mat-icon {
+  font-size: 72px;
+  width: 72px;
+  height: 72px;
+}
+
+.info {
+  padding: 1.75rem;
+}
+
+.info h1 {
+  margin: 0 0 6px;
+  font-size: 1.6rem;
+}
+
+.agency {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: rgba(0, 0, 0, 0.55);
+  margin-bottom: 1rem;
+}
+
+.agency mat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+}
+
+.specs {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.25rem;
+}
+
+.spec {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: rgba(0, 0, 0, 0.7);
+  font-size: 0.9rem;
+}
+
+.spec mat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+  color: #3f51b5;
+}
+
+.price {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #3f51b5;
+  margin-bottom: 1.5rem;
+}
+
+.price .per {
+  font-size: 0.95rem;
+  font-weight: 400;
+  color: rgba(0, 0, 0, 0.5);
+}
+
+.cta .note {
+  color: rgba(0, 0, 0, 0.55);
+}
+
+.booking {
+  margin-top: 1.25rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.booking h3 {
+  margin: 0 0 0.75rem;
+  font-size: 1.05rem;
+}
+
+.booking .row {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.booking .row mat-form-field {
+  flex: 1;
+}
+
+.booking .full {
+  width: 100%;
+}
+
+.booking-error {
+  background: #fdecea;
+  color: #b71c1c;
+  padding: 0.6rem 0.9rem;
+  border-radius: 8px;
+  margin-bottom: 0.75rem;
+  font-size: 0.9rem;
+}
+
+.booking .hint {
+  color: rgba(0, 0, 0, 0.5);
+  font-size: 0.85rem;
+  margin: 0.5rem 0 0;
+}
+
+@media (max-width: 640px) {
+  .detail-card {
+    grid-template-columns: 1fr;
+  }
+  .photo {
+    min-height: 220px;
+  }
+}

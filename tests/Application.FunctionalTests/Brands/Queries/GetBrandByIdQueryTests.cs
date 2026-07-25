@@ -10,6 +10,8 @@ public class GetBrandByIdQueryTests : BaseTestFixture
     [Test]
     public async Task ShouldReturnBrandById()
     {
+        await RunAsAgencyAdministratorAsync();
+
         var brandId = await SendAsync(new CreateBrandCommand
         {
             Name = "BMW"

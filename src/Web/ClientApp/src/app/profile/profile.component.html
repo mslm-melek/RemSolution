@@ -1,0 +1,85 @@
+<div class="profile-page">
+  <div class="profile-header mat-elevation-z3">
+    <div class="avatar">{{ initial }}</div>
+    <div class="identity">
+      <h2>{{ headerName }}</h2>
+      <div class="login"><mat-icon>alternate_email</mat-icon>{{ userName }}</div>
+      <div class="chips">
+        <span class="chip" *ngIf="role"><mat-icon>badge</mat-icon>{{ role }}</span>
+        <span class="chip" *ngIf="agencyName"><mat-icon>business</mat-icon>{{ agencyName }}</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="cards">
+    <!-- Account details -->
+    <section class="card mat-elevation-z2">
+      <div class="card-head">
+        <mat-icon>manage_accounts</mat-icon>
+        <h3>Account details</h3>
+      </div>
+
+      <div *ngIf="profileError" class="banner error">{{ profileError }}</div>
+
+      <form [formGroup]="profileForm" (ngSubmit)="saveProfile()" class="form-col">
+        <mat-form-field appearance="outline">
+          <mat-label>Display name</mat-label>
+          <mat-icon matPrefix>person</mat-icon>
+          <input matInput formControlName="fullName" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Email (also your login)</mat-label>
+          <mat-icon matPrefix>mail</mat-icon>
+          <input matInput type="email" formControlName="email" />
+          <mat-error *ngIf="profileForm.get('email')?.hasError('required')">Email is required.</mat-error>
+          <mat-error *ngIf="profileForm.get('email')?.hasError('email')">Enter a valid email address.</mat-error>
+          <mat-hint>Changing your email changes your login and may require signing in again.</mat-hint>
+        </mat-form-field>
+
+        <div class="actions">
+          <button mat-flat-button color="primary" type="submit" [disabled]="savingProfile">
+            <mat-icon>save</mat-icon> Save changes
+          </button>
+        </div>
+      </form>
+    </section>
+
+    <!-- Change password -->
+    <section class="card mat-elevation-z2">
+      <div class="card-head">
+        <mat-icon>lock</mat-icon>
+        <h3>Change password</h3>
+      </div>
+
+      <div *ngIf="passwordError" class="banner error">{{ passwordError }}</div>
+      <div *ngIf="passwordSuccess" class="banner success">{{ passwordSuccess }}</div>
+
+      <form [formGroup]="passwordForm" (ngSubmit)="changePassword()" class="form-col">
+        <mat-form-field appearance="outline">
+          <mat-label>Current password</mat-label>
+          <mat-icon matPrefix>lock_outline</mat-icon>
+          <input matInput type="password" formControlName="currentPassword" autocomplete="current-password" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>New password</mat-label>
+          <mat-icon matPrefix>vpn_key</mat-icon>
+          <input matInput type="password" formControlName="newPassword" autocomplete="new-password" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Confirm new password</mat-label>
+          <mat-icon matPrefix>vpn_key</mat-icon>
+          <input matInput type="password" formControlName="confirmPassword" autocomplete="new-password" />
+        </mat-form-field>
+
+        <div class="actions">
+          <button mat-flat-button color="primary" type="submit" [disabled]="savingPassword">
+            <mat-icon>lock_reset</mat-icon> Change password
+          </button>
+        </div>
+      </form>
+    </section>
+  </div>
+</div>

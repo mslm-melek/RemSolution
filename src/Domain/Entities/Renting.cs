@@ -16,10 +16,14 @@
         public DateTime? EndDate { get; set; }
         public int? StartMileage { get; set; }
         public int? EndMileage { get; set; }
+        // The agreed price, snapshotted from IPricingService at creation time and
+        // never silently re-read from the car afterwards (see IPricingService).
         public Money? Price { get; set; }
         public RentingState RentingState { get; set; }
+        public string? Notes { get; set; }
         public virtual ICollection<ExtraService>? ExtraServices { get; set; }
         public virtual ICollection<RentingHistory>? RentingHistories { get; set; }
         public virtual ICollection<Reservation>? Reservations { get; set; }
+        public virtual ICollection<Payment>? Payments { get; set; }
     }
 }

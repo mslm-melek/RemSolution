@@ -11,6 +11,8 @@ public class GetModelCarsWithPaginationQueryTests : BaseTestFixture
     [Test]
     public async Task ShouldReturnPaginatedCars()
     {
+        await RunAsAgencyAdministratorAsync();
+
         var brand = new Brand { Name = "Tesla" };
         await AddAsync(brand);
 

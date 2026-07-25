@@ -33,4 +33,10 @@ export class AuthService {
   static isPlatformAdmin(user: CurrentUserDto): boolean {
     return user.role === 'PlatformAdministrator';
   }
+
+  // A self-registered marketplace customer — gets the browse/booking experience
+  // instead of the staff/admin navigation.
+  static isCustomer(user: CurrentUserDto): boolean {
+    return user.role === 'Customer';
+  }
 }

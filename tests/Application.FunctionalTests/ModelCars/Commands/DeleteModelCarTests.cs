@@ -11,6 +11,8 @@ public class DeleteModelCarTests : BaseTestFixture
     [Test]
     public async Task ShouldDeleteCar()
     {
+        await RunAsAgencyAdministratorAsync();
+
         var brand = new Brand { Name = "Tesla" };
         await AddAsync(brand);
 

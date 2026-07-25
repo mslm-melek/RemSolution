@@ -1,5 +1,6 @@
 using Hangfire;
 using RemSolution.Infrastructure.Data;
+using RemSolution.Infrastructure.Jobs;
 using RemSolution.Web.Infrastructure;
 using RemSolution.Web.Middleware;
 using Serilog;
@@ -89,6 +90,11 @@ try
         {
             Authorization = new[] { new HangfireDashboardAuthorizationFilter() }
         });
+
+        // Lapse stale reservation holds hourly. Registered only where Hangfire
+        // has real storage (not the NSwag build host or tests).
+        RecurringJob.AddOrUpdate<ReservationExpiryJob>(
+            "reservation-expiry", job => job.RunAsync(), Cron.Hourly());
     }
 
     app.MapRazorPages();

@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http.HttpResults;
 using RemSolution.Application.Common.Models;
+using RemSolution.Domain.Constants;
 using RemSolution.Application.Features.ModelCar.Commands.CreateModelCarCommand;
 using RemSolution.Application.Features.ModelCar.Commands.DeleteModelCarCommand;
 using RemSolution.Application.Features.ModelCar.Commands.UpdateModelCarCommand;
@@ -19,9 +20,9 @@ public class ModelCars : EndpointGroupBase
             .MapGet(GetModelCars)
             .MapGet(GetAllModelCars, "all")
             .MapGet(GetModelCarById, "{id}")
-            .MapPost(CreateModelCar)
-            .MapPut(UpdateModelCar, "{id}")
-            .MapDelete(DeleteModelCar, "{id}");
+            .MapPost(CreateModelCar, policy: Policies.AgencyOrPlatformAdmin)
+            .MapPut(UpdateModelCar, "{id}", Policies.AgencyOrPlatformAdmin)
+            .MapDelete(DeleteModelCar, "{id}", Policies.AgencyOrPlatformAdmin);
     }
 
     public async Task<Ok<PaginatedList<ModelCarDto>>> GetModelCars(ISender sender, [AsParameters] GetModelCarsWithPaginationQuery query)

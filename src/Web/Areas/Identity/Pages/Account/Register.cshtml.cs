@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using RemSolution.Domain.Constants;
 using RemSolution.Infrastructure.Identity;
 
 namespace RemSolution.Web.Areas.Identity.Pages.Account;
@@ -76,6 +77,11 @@ public class RegisterModel : PageModel
         if (result.Succeeded)
         {
             _logger.LogInformation("User {Email} created a new account with password", Input.Email);
+
+            // Self-registration is the customer marketplace funnel: the new
+            // account is a Customer (no agency, no permissions) that can browse
+            // available cars and request bookings.
+            await _userManager.AddToRoleAsync(user, Roles.Customer);
 
             await _signInManager.SignInAsync(user, isPersistent: false);
             return LocalRedirect(returnUrl);

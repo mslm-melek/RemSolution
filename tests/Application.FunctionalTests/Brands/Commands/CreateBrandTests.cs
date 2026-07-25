@@ -11,6 +11,8 @@ public class CreateBrandTests : BaseTestFixture
     [Test]
     public async Task ShouldRequireMinimumFields()
     {
+        await RunAsAgencyAdministratorAsync();
+
         var command = new CreateBrandCommand(); // empty
 
         await FluentActions.Invoking(() =>
@@ -20,7 +22,7 @@ public class CreateBrandTests : BaseTestFixture
     [Test]
     public async Task ShouldCreateBrand()
     {
-        var userId = await RunAsDefaultUserAsync();
+        var userId = await RunAsAgencyAdministratorAsync();
 
         var command = new CreateBrandCommand
         {

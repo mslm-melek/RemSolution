@@ -12,6 +12,8 @@ public class RentingConfiguration : IEntityTypeConfiguration<Renting>
 
         builder.OwnsMoney(e => e.Price, "Price", "PriceCurrency");
 
+        builder.Property(e => e.Notes).HasMaxLength(1000);
+
         builder.HasOne(c => c.Car)
                .WithMany(mc => mc.Rentings) 
                .HasForeignKey(c => c.CarId)

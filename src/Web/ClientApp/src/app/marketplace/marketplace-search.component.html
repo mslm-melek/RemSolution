@@ -1,0 +1,55 @@
+<div class="marketplace">
+  <div class="hero mat-elevation-z3">
+    <h1>Find your car</h1>
+    <p>Browse available cars across all our agencies and book in minutes.</p>
+
+    <div class="search-bar">
+      <mat-form-field appearance="outline" class="date">
+        <mat-label>Pick-up date</mat-label>
+        <input matInput type="date" [(ngModel)]="startDate" />
+      </mat-form-field>
+      <mat-form-field appearance="outline" class="date">
+        <mat-label>Return date</mat-label>
+        <input matInput type="date" [(ngModel)]="endDate" />
+      </mat-form-field>
+      <button mat-flat-button color="primary" (click)="onSearchClick()">
+        <mat-icon>search</mat-icon> Search
+      </button>
+    </div>
+    <div *ngIf="error" class="error">{{ error }}</div>
+  </div>
+
+  <div class="results">
+    <div *ngIf="loading" class="state">Searching…</div>
+    <div *ngIf="!loading && searched && cars.length === 0" class="state">
+      No cars available for those dates. Try a different date range.
+    </div>
+
+    <div class="grid" *ngIf="!loading && cars.length">
+      <a class="car-card mat-elevation-z2" *ngFor="let car of cars" [routerLink]="['/browse/car', car.id]">
+        <div class="thumb" [class.placeholder]="!car.imageUrl"
+             [style.background-image]="car.imageUrl ? 'url(' + car.imageUrl + ')' : null">
+          <mat-icon *ngIf="!car.imageUrl">directions_car</mat-icon>
+        </div>
+        <div class="body">
+          <div class="model">{{ car.brandName }} {{ car.modelName }}</div>
+          <div class="agency"><mat-icon>place</mat-icon>{{ car.agencyName }}<span *ngIf="car.branchName"> · {{ car.branchName }}</span></div>
+          <div class="foot">
+            <span class="price" *ngIf="car.dailyRate">
+              {{ car.dailyRate.amount | number:'1.2-2' }} {{ car.dailyRate.currency }}<span class="per">/day</span>
+            </span>
+            <span class="book">View &amp; book <mat-icon>arrow_forward</mat-icon></span>
+          </div>
+        </div>
+      </a>
+    </div>
+
+    <mat-paginator *ngIf="!loading && totalCount > pageSize"
+                   [length]="totalCount"
+                   [pageIndex]="pageNumber - 1"
+                   [pageSize]="pageSize"
+                   [pageSizeOptions]="[12, 24, 48]"
+                   (page)="onPage($event)">
+    </mat-paginator>
+  </div>
+</div>

@@ -12,12 +12,16 @@ namespace RemSolution.Application.UnitTests.Common.Tenancy;
 /// </summary>
 public class AmbientTenantUsageTests
 {
-    // Where acting-as-a-tenant is legitimate: the image-processing worker, the
-    // read-only impersonation middleware, and the platform-admin handlers that
-    // manage or report on a specific agency.
+    // Where acting-as-a-tenant is legitimate: the background workers (image
+    // processing, reservation expiry), the read-only impersonation middleware,
+    // and the platform-admin handlers that manage or report on a specific agency.
     private static readonly string[] AmbientTenantAllowed =
     {
         Normalize("Infrastructure/Imaging/CarImageProcessingJob.cs"),
+        Normalize("Infrastructure/Jobs/ReservationExpiryJob.cs"),
+        // Customer marketplace commands act as the car's agency to create/cancel
+        // a hold cross-tenant.
+        Normalize("Features/Marketplace/Commands/"),
         Normalize("Web/Middleware/PlatformAdminImpersonationMiddleware.cs"),
         Normalize("Features/Users/Commands/CreateAgencyUserByAdminCommand/"),
         Normalize("Features/Agency/Queries/GetAgencyFeaturesQuery/"),

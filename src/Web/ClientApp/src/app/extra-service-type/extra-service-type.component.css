@@ -1,0 +1,44 @@
+.est-card {
+  padding: 1.5rem;
+  margin: 1rem;
+  border-radius: 8px;
+  max-width: 800px;
+}
+
+.header-row {
+  margin-bottom: 1rem;
+}
+
+.title {
+  margin: 0;
+}
+
+.error-banner {
+  background: #fdecea;
+  color: #b71c1c;
+  padding: 0.75rem 1rem;
+  border-radius: 4px;
+  margin-bottom: 1rem;
+}
+
+.inline-add {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.full-width {
+  width: 100%;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.empty-row {
+  text-align: center;
+  padding: 1rem;
+  color: rgba(0, 0, 0, 0.5);
+}

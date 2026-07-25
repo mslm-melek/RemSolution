@@ -11,6 +11,9 @@ using RemSolution.Application.Features.Users.Commands.SetAgencyUserActiveCommand
 using RemSolution.Application.Features.Users.Commands.ResetAgencyUserPasswordCommand;
 using RemSolution.Application.Features.Users.Commands.UpdateMyAgencyUserCommand;
 using RemSolution.Application.Features.Users.Commands.SetMyAgencyUserActiveCommand;
+using RemSolution.Application.Features.Users.Commands.UpdateMyProfileCommand;
+using RemSolution.Application.Features.Users.Commands.ChangeMyPasswordCommand;
+using RemSolution.Application.Features.Users.Queries.GetMyProfileQuery;
 using RemSolution.Application.Features.Users.Queries.GetAgencyUsersQuery;
 using RemSolution.Application.Features.Users.Queries.GetAgencyUserByIdQuery;
 using RemSolution.Application.Features.Users.Queries.GetMyAgencyUsersQuery;
@@ -27,7 +30,7 @@ public class Users : EndpointGroupBase
         // "me" is anonymous on purpose: the SPA calls it on startup to decide
         // which navigation to render, so it must never trigger an auth
         // challenge. Staff creation is an agency-administrator operation.
-        app.MapGroup(this)
+        var group = app.MapGroup(this)
             .MapGet(GetCurrentUser, "me")
             .MapPost(CreateAgencyUser, policy: Policies.AgencyAdminOnly)
             .MapPost(CreateAgencyUserByAdmin, "by-admin", Policies.PlatformAdminOnly)
@@ -40,6 +43,30 @@ public class Users : EndpointGroupBase
             .MapGet(GetMyAgencyUsers, "my-agency", Policies.AgencyAdminOnly)
             .MapPut(UpdateMyAgencyUser, "my-agency/{id}/permissions", Policies.AgencyAdminOnly)
             .MapPut(SetMyAgencyUserActive, "my-agency/{id}/active", Policies.AgencyAdminOnly);
+
+        // Self-service profile: any authenticated user manages their own account
+        // (unlike the anonymous "me" probe, these require a signed-in user).
+        group.MapGet("me/profile", GetMyProfile).WithName(nameof(GetMyProfile)).RequireAuthorization();
+        group.MapPut("me/profile", UpdateMyProfile).WithName(nameof(UpdateMyProfile)).RequireAuthorization();
+        group.MapPut("me/password", ChangeMyPassword).WithName(nameof(ChangeMyPassword)).RequireAuthorization();
+    }
+
+    public async Task<Ok<MyProfileDto>> GetMyProfile(ISender sender)
+    {
+        var result = await sender.Send(new GetMyProfileQuery());
+        return TypedResults.Ok(result);
+    }
+
+    public async Task<NoContent> UpdateMyProfile(ISender sender, UpdateMyProfileCommand command)
+    {
+        await sender.Send(command);
+        return TypedResults.NoContent();
+    }
+
+    public async Task<NoContent> ChangeMyPassword(ISender sender, ChangeMyPasswordCommand command)
+    {
+        await sender.Send(command);
+        return TypedResults.NoContent();
     }
 
     public async Task<Ok<IReadOnlyList<AgencyUserDto>>> GetMyAgencyUsers(ISender sender)
@@ -150,7 +177,8 @@ public class Users : EndpointGroupBase
         var role =
             principal.IsInRole(Roles.PlatformAdministrator) ? Roles.PlatformAdministrator :
             principal.IsInRole(Roles.AgencyAdministrator) ? Roles.AgencyAdministrator :
-            principal.IsInRole(Roles.AgencyStaff) ? Roles.AgencyStaff : null;
+            principal.IsInRole(Roles.AgencyStaff) ? Roles.AgencyStaff :
+            principal.IsInRole(Roles.Customer) ? Roles.Customer : null;
 
         var granted = principal.IsInRole(Roles.AgencyAdministrator)
             ? Permissions.All

@@ -1,0 +1,39 @@
+.renting-card {
+  padding: 1.5rem;
+  margin: 1rem;
+  border-radius: 8px;
+}
+
+.header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.title {
+  margin: 0;
+}
+
+.filter-row {
+  margin-bottom: 1rem;
+}
+
+.full-width {
+  width: 100%;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.muted {
+  color: rgba(0, 0, 0, 0.5);
+  font-size: 0.85em;
+}
+
+.empty-row {
+  text-align: center;
+  padding: 1rem;
+  color: rgba(0, 0, 0, 0.5);
+}
