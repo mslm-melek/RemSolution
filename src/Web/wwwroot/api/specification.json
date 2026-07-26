@@ -2458,6 +2458,16 @@
               "nullable": true
             },
             "x-position": 4
+          },
+          {
+            "name": "ReservationId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "nullable": true
+            },
+            "x-position": 5
           }
         ],
         "responses": {
@@ -2501,6 +2511,41 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/api/Payments/balance/{clientId}": {
+      "get": {
+        "tags": [
+          "Payments"
+        ],
+        "operationId": "GetClientBalance",
+        "parameters": [
+          {
+            "name": "clientId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientBalanceDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
           }
         }
       }
@@ -3097,6 +3142,15 @@
               "format": "int32"
             },
             "x-position": 1
+          },
+          {
+            "name": "reason",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "nullable": true
+            },
+            "x-position": 2
           }
         ],
         "responses": {
@@ -3125,6 +3179,83 @@
           }
         ],
         "responses": {
+          "204": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/Reservations/{id}/reject": {
+      "post": {
+        "tags": [
+          "Reservations"
+        ],
+        "operationId": "RejectReservation",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          }
+        ],
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RejectReservationCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 2
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "400": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/Reservations/{id}/convert": {
+      "post": {
+        "tags": [
+          "Reservations"
+        ],
+        "operationId": "ConvertReservation",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          }
+        ],
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConvertReservationCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 2
+        },
+        "responses": {
           "200": {
             "description": "",
             "content": {
@@ -3135,6 +3266,9 @@
                 }
               }
             }
+          },
+          "400": {
+            "description": ""
           }
         }
       }
@@ -5275,6 +5409,10 @@
             "type": "string",
             "format": "date-time",
             "nullable": true
+          },
+          "rejectedReason": {
+            "type": "string",
+            "nullable": true
           }
         }
       },
@@ -5282,16 +5420,22 @@
         "type": "integer",
         "description": "",
         "x-enumNames": [
-          "Pending",
+          "PendingConfirmation",
           "Confirmed",
           "Cancelled",
-          "Expired"
+          "Expired",
+          "Rejected",
+          "Paid",
+          "Converted"
         ],
         "enum": [
           0,
           1,
           2,
-          3
+          3,
+          4,
+          5,
+          6
         ]
       },
       "PaginatedListOfModelCarDto": {
@@ -5434,6 +5578,11 @@
             "format": "int32",
             "nullable": true
           },
+          "reservationId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
           "payementDate": {
             "type": "string",
             "format": "date-time",
@@ -5449,6 +5598,9 @@
           },
           "method": {
             "$ref": "#/components/schemas/PaymentMethod"
+          },
+          "isRefund": {
+            "type": "boolean"
           },
           "notes": {
             "type": "string",
@@ -5477,17 +5629,72 @@
           3
         ]
       },
+      "ClientBalanceDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "clientId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "clientName": {
+            "type": "string",
+            "nullable": true
+          },
+          "currency": {
+            "type": "string"
+          },
+          "totalCharged": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/MoneyDto"
+              }
+            ]
+          },
+          "totalPaid": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/MoneyDto"
+              }
+            ]
+          },
+          "balance": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/MoneyDto"
+              }
+            ]
+          }
+        }
+      },
       "CreatePaymentCommand": {
         "type": "object",
         "additionalProperties": false,
         "properties": {
           "rentingId": {
             "type": "integer",
-            "format": "int32"
+            "format": "int32",
+            "nullable": true
+          },
+          "reservationId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "clientId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
           },
           "amount": {
             "type": "number",
             "format": "decimal"
+          },
+          "isRefund": {
+            "type": "boolean"
           },
           "method": {
             "$ref": "#/components/schemas/PaymentMethod"
@@ -5910,6 +6117,14 @@
               }
             ]
           },
+          "depositAmount": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/MoneyDto"
+              }
+            ]
+          },
           "notes": {
             "type": "string",
             "nullable": true
@@ -5920,6 +6135,18 @@
           "expiresAt": {
             "type": "string",
             "format": "date-time",
+            "nullable": true
+          },
+          "rejectedReason": {
+            "type": "string",
+            "nullable": true
+          },
+          "cancelledReason": {
+            "type": "string",
+            "nullable": true
+          },
+          "expiredReason": {
+            "type": "string",
             "nullable": true
           },
           "rentingId": {
@@ -5949,12 +6176,53 @@
             "type": "string",
             "format": "date-time"
           },
-          "payedPrice": {
+          "depositAmount": {
             "type": "number",
             "format": "decimal",
             "nullable": true
           },
           "notes": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "RejectReservationCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "rowVersion": {
+            "type": "string",
+            "format": "byte",
+            "nullable": true
+          }
+        }
+      },
+      "ConvertReservationCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "rowVersion": {
+            "type": "string",
+            "format": "byte",
+            "nullable": true
+          },
+          "cin": {
+            "type": "string",
+            "nullable": true
+          },
+          "passeportNumber": {
             "type": "string",
             "nullable": true
           }
@@ -5989,7 +6257,7 @@
             "type": "string",
             "format": "date-time"
           },
-          "payedPrice": {
+          "depositAmount": {
             "type": "number",
             "format": "decimal",
             "nullable": true

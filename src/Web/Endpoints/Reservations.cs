@@ -3,7 +3,9 @@ using RemSolution.Application.Common.Models;
 using RemSolution.Domain.Constants;
 using RemSolution.Application.Features.Reservation.Commands.CancelReservationCommand;
 using RemSolution.Application.Features.Reservation.Commands.ConfirmReservationCommand;
+using RemSolution.Application.Features.Reservation.Commands.ConvertReservationCommand;
 using RemSolution.Application.Features.Reservation.Commands.CreateReservationCommand;
+using RemSolution.Application.Features.Reservation.Commands.RejectReservationCommand;
 using RemSolution.Application.Features.Reservation.Commands.UpdateReservationCommand;
 using RemSolution.Application.Features.Reservation.DTOs;
 using RemSolution.Application.Features.Reservation.Queries.GetReservationByIdQuery;
@@ -23,6 +25,8 @@ public class Reservations : EndpointGroupBase
             .MapGet(GetReservationById, "{id}", Permissions.ReservationRead)
             .MapPost(CreateReservation, policy: Permissions.ReservationCreate)
             .MapPost(ConfirmReservation, "{id}/confirm", Permissions.ReservationUpdate)
+            .MapPost(RejectReservation, "{id}/reject", Permissions.ReservationUpdate)
+            .MapPost(ConvertReservation, "{id}/convert", Permissions.ReservationUpdate)
             .MapPut(UpdateReservation, "{id}", Permissions.ReservationUpdate)
             .MapDelete(CancelReservation, "{id}", Permissions.ReservationDelete);
     }
@@ -50,10 +54,33 @@ public class Reservations : EndpointGroupBase
         return TypedResults.Created($"/reservations/{id}", id);
     }
 
-    // Confirms the hold into a renting; returns the new renting id.
-    public async Task<Ok<int>> ConfirmReservation(ISender sender, int id)
+    // Agency approves the hold (Confirmed). It does NOT create a renting — see
+    // ConvertReservation for that.
+    public async Task<NoContent> ConfirmReservation(ISender sender, int id)
     {
-        var rentingId = await sender.Send(new ConfirmReservationCommand(id));
+        await sender.Send(new ConfirmReservationCommand(id));
+        return TypedResults.NoContent();
+    }
+
+    // Agency declines the hold with a reason shown to the client.
+    public async Task<Results<NoContent, BadRequest>> RejectReservation(
+        ISender sender, int id, RejectReservationCommand command)
+    {
+        if (id != command.Id)
+            return TypedResults.BadRequest();
+
+        await sender.Send(command);
+        return TypedResults.NoContent();
+    }
+
+    // Converts a Confirmed/Paid hold into a renting; returns the new renting id.
+    public async Task<Results<Ok<int>, BadRequest>> ConvertReservation(
+        ISender sender, int id, ConvertReservationCommand command)
+    {
+        if (id != command.Id)
+            return TypedResults.BadRequest();
+
+        var rentingId = await sender.Send(command);
         return TypedResults.Ok(rentingId);
     }
 
@@ -67,9 +94,9 @@ public class Reservations : EndpointGroupBase
         return TypedResults.NoContent();
     }
 
-    public async Task<NoContent> CancelReservation(ISender sender, int id)
+    public async Task<NoContent> CancelReservation(ISender sender, int id, string? reason)
     {
-        await sender.Send(new CancelReservationCommand(id));
+        await sender.Send(new CancelReservationCommand(id, reason));
         return TypedResults.NoContent();
     }
 }

@@ -66,6 +66,7 @@ namespace RemSolution.Application.Features.Payment.Commands.ReversePaymentComman
             var reversal = new PaymentEntity
             {
                 RentingId = original.RentingId,
+                ReservationId = original.ReservationId,
                 ClientId = original.ClientId,
                 PayementDate = _dateTime.GetUtcNow().UtcDateTime,
                 PayementAmount = Money.Of(-original.PayementAmount.Amount, original.PayementAmount.Currency),
@@ -75,6 +76,22 @@ namespace RemSolution.Application.Features.Payment.Commands.ReversePaymentComman
             };
 
             _context.Payments.Add(reversal);
+
+            // Keep the reservation's denormalised running total in step (the
+            // reversal removes the original entry's contribution).
+            if (original.ReservationId is int reservationId)
+            {
+                var reservation = await _context.Reservations
+                    .FirstOrDefaultAsync(r => r.Id == reservationId, cancellationToken);
+
+                if (reservation is not null)
+                {
+                    var previous = reservation.PayedPrice?.Amount ?? 0m;
+                    reservation.PayedPrice = Money.Of(
+                        previous - original.PayementAmount.Amount, original.PayementAmount.Currency);
+                }
+            }
+
             await _context.SaveChangesAsync(cancellationToken);
 
             return reversal.Id;

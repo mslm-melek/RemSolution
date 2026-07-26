@@ -45,10 +45,8 @@ public class MarketplaceTests : BaseTestFixture
 
         var booked = new Car { Matricule = "MK-BOOKED", Status = CarStatus.Active, DailyRate = Money.Of(50m, "TND") };
         await AddAsync(booked);
-        await AddAsync(new Reservation
-        {
-            CarId = booked.Id, StartDate = Start, EndDate = End, Status = ReservationStatus.Pending
-        });
+        await AddAsync(Reservation.Create(
+            booked.Id, Start, End, price: null, expiresAt: Start.AddHours(-1)));
 
         var result = await SendAsync(new SearchAvailableCarsQuery(Start, End));
 
@@ -99,7 +97,7 @@ public class MarketplaceTests : BaseTestFixture
 
         var reservation = await FindIgnoringFiltersAsync<Reservation>(r => r.Id == reservationId);
         reservation!.AgencyId.Should().Be(agencyId);
-        reservation.Status.Should().Be(ReservationStatus.Pending);
+        reservation.Status.Should().Be(ReservationStatus.PendingConfirmation);
         reservation.ExpiresAt.Should().NotBeNull();
         reservation.Price!.Amount.Should().Be(150m); // 3 days × 50
 
@@ -127,7 +125,7 @@ public class MarketplaceTests : BaseTestFixture
         var mine = await SendAsync(new GetMyReservationsQuery());
 
         mine.Should().HaveCount(1);
-        mine[0].Status.Should().Be(ReservationStatus.Pending);
+        mine[0].Status.Should().Be(ReservationStatus.PendingConfirmation);
         mine[0].AgencyName.Should().Be("Test Agency");
     }
 

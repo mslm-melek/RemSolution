@@ -51,3 +51,69 @@
 .actions {
   margin-top: 0.5rem;
 }
+
+.reason-banner {
+  background: #fff3cd;
+  color: #664d03;
+  padding: 0.6rem 1rem;
+  border-radius: 4px;
+  margin-bottom: 1rem;
+}
+
+.payments-panel {
+  margin-top: 1.5rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.12);
+  padding-top: 1rem;
+}
+
+.balance-row {
+  display: flex;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.75rem;
+}
+
+.balance-row .owing strong {
+  color: #b71c1c;
+}
+
+.payments-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1rem;
+}
+
+.payments-table th,
+.payments-table td {
+  text-align: left;
+  padding: 0.4rem 0.5rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.payments-table .num {
+  text-align: right;
+}
+
+.payments-table .neg {
+  color: #b71c1c;
+}
+
+.tag {
+  display: inline-block;
+  padding: 0.05rem 0.4rem;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.08);
+  font-size: 0.75em;
+  margin-right: 0.25rem;
+}
+
+.add-payment {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.muted {
+  color: rgba(0, 0, 0, 0.5);
+}

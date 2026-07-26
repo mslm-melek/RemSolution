@@ -6,6 +6,8 @@
     </a>
   </div>
 
+  <div class="error-banner" *ngIf="error">{{ error }}</div>
+
   <div class="filter-row">
     <mat-form-field appearance="outline">
       <mat-label>Status</mat-label>
@@ -32,29 +34,57 @@
       <td mat-cell *matCellDef="let r">{{ r.startDate | date:'yyyy-MM-dd' }} → {{ r.endDate | date:'yyyy-MM-dd' }}</td>
     </ng-container>
 
+    <ng-container matColumnDef="paid">
+      <th mat-header-cell *matHeaderCellDef>Paid / Price</th>
+      <td mat-cell *matCellDef="let r">
+        <span [class.paid-full]="r.payedPrice && r.price && r.payedPrice.amount >= r.price.amount">
+          {{ (r.payedPrice?.amount || 0) | number:'1.2-2' }}</span>
+        <span class="muted"> / {{ (r.price?.amount || 0) | number:'1.2-2' }} {{ r.price?.currency }}</span>
+      </td>
+    </ng-container>
+
     <ng-container matColumnDef="status">
       <th mat-header-cell *matHeaderCellDef>Status</th>
-      <td mat-cell *matCellDef="let r">{{ statusLabel(r.status) }}</td>
+      <td mat-cell *matCellDef="let r">
+        <span class="status-pill" [ngClass]="statusClass(r.status)"
+              [matTooltip]="statusReason(r)">{{ statusLabel(r.status) }}</span>
+      </td>
     </ng-container>
 
     <ng-container matColumnDef="expires">
       <th mat-header-cell *matHeaderCellDef>Expires</th>
-      <td mat-cell *matCellDef="let r">{{ r.expiresAt | date:'yyyy-MM-dd HH:mm' }}</td>
+      <td mat-cell *matCellDef="let r">
+        <span *ngIf="isPending(r)">{{ r.expiresAt | date:'yyyy-MM-dd HH:mm' }}</span>
+      </td>
     </ng-container>
 
     <ng-container matColumnDef="actions">
       <th mat-header-cell *matHeaderCellDef class="text-center">Actions</th>
       <td mat-cell *matCellDef="let r" class="text-center">
-        <a mat-icon-button color="primary" [routerLink]="['/reservation', r.id]" aria-label="Edit">
-          <mat-icon>edit</mat-icon>
+        <a mat-icon-button color="primary" [routerLink]="['/reservation', r.id]"
+           matTooltip="Open / manage" aria-label="Open">
+          <mat-icon>{{ isPending(r) ? 'edit' : 'visibility' }}</mat-icon>
         </a>
         <button mat-icon-button color="accent" *ngIf="isPending(r)" (click)="confirm(r)"
-                matTooltip="Confirm into renting" aria-label="Confirm">
+                matTooltip="Confirm" aria-label="Confirm">
           <mat-icon>check_circle</mat-icon>
         </button>
-        <button mat-icon-button color="warn" *ngIf="isPending(r)" (click)="cancel(r)" aria-label="Cancel">
+        <button mat-icon-button color="warn" *ngIf="isPending(r)" (click)="reject(r)"
+                matTooltip="Reject (with reason)" aria-label="Reject">
+          <mat-icon>block</mat-icon>
+        </button>
+        <button mat-icon-button color="primary" *ngIf="isConvertible(r)" (click)="convert(r)"
+                matTooltip="Convert to renting" aria-label="Convert">
+          <mat-icon>directions_car</mat-icon>
+        </button>
+        <button mat-icon-button color="warn" *ngIf="isActive(r)" (click)="cancel(r)"
+                matTooltip="Cancel" aria-label="Cancel">
           <mat-icon>cancel</mat-icon>
         </button>
+        <a mat-icon-button *ngIf="r.rentingId" [routerLink]="['/renting', r.rentingId]"
+           matTooltip="Go to renting" aria-label="Renting">
+          <mat-icon>open_in_new</mat-icon>
+        </a>
       </td>
     </ng-container>
 

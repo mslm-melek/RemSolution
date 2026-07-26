@@ -10,12 +10,28 @@
 
   <div *ngIf="isEdit && reservation" class="state-row">
     <span class="state-chip">Status: <strong>{{ ReservationStatus[reservation.status] }}</strong></span>
-    <button mat-raised-button color="primary" *ngIf="isPending" (click)="confirm()">
-      <mat-icon>check_circle</mat-icon> Confirm into renting
+    <button mat-raised-button color="accent" *ngIf="isPending" (click)="confirm()">
+      <mat-icon>check_circle</mat-icon> Confirm
     </button>
-    <button mat-stroked-button color="warn" *ngIf="isPending" (click)="cancel()">
+    <button mat-stroked-button color="warn" *ngIf="isPending" (click)="reject()">
+      <mat-icon>block</mat-icon> Reject
+    </button>
+    <button mat-raised-button color="primary" *ngIf="isConvertible" (click)="convert()">
+      <mat-icon>directions_car</mat-icon> Convert to renting
+    </button>
+    <button mat-stroked-button color="warn" *ngIf="isPending || isConvertible" (click)="cancel()">
       <mat-icon>cancel</mat-icon> Cancel
     </button>
+    <a mat-stroked-button *ngIf="reservation.rentingId" [routerLink]="['/renting', reservation.rentingId]">
+      <mat-icon>open_in_new</mat-icon> Go to renting
+    </a>
+  </div>
+
+  <div *ngIf="isEdit && reservation?.rejectedReason" class="reason-banner">
+    <strong>Rejected:</strong> {{ reservation?.rejectedReason }}
+  </div>
+  <div *ngIf="isEdit && reservation?.cancelledReason" class="reason-banner">
+    <strong>Cancelled:</strong> {{ reservation?.cancelledReason }}
   </div>
 
   <form [formGroup]="form" (ngSubmit)="save()" class="form-grid">
@@ -48,8 +64,8 @@
     </mat-form-field>
 
     <mat-form-field appearance="outline">
-      <mat-label>Deposit paid</mat-label>
-      <input matInput type="number" min="0" step="0.01" formControlName="payedPrice" />
+      <mat-label>Deposit</mat-label>
+      <input matInput type="number" min="0" step="0.01" formControlName="depositAmount" />
       <span matSuffix *ngIf="currency">&nbsp;{{ currency }}</span>
     </mat-form-field>
 
@@ -64,4 +80,65 @@
       </button>
     </div>
   </form>
+
+  <!-- Payments + client account, once the hold is confirmed -->
+  <div *ngIf="showPayments" class="payments-panel">
+    <h3>Payments</h3>
+
+    <div class="balance-row" *ngIf="balance">
+      <span>Charged: <strong>{{ balance.totalCharged?.amount | number:'1.2-2' }} {{ balance.currency }}</strong></span>
+      <span>Paid: <strong>{{ balance.totalPaid?.amount | number:'1.2-2' }} {{ balance.currency }}</strong></span>
+      <span [class.owing]="(balance.balance?.amount || 0) > 0">
+        Balance: <strong>{{ balance.balance?.amount | number:'1.2-2' }} {{ balance.currency }}</strong>
+      </span>
+    </div>
+
+    <table class="payments-table" *ngIf="payments.length">
+      <thead>
+        <tr><th>Date</th><th>Method</th><th class="num">Amount</th><th></th><th></th></tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let p of payments">
+          <td>{{ p.payementDate | date:'yyyy-MM-dd' }}</td>
+          <td>{{ methodLabel(p.method) }}</td>
+          <td class="num" [class.neg]="(p.payementAmount?.amount || 0) < 0">
+            {{ p.payementAmount?.amount | number:'1.2-2' }} {{ p.payementAmount?.currency }}
+          </td>
+          <td>
+            <span class="tag" *ngIf="p.isRefund">Refund</span>
+            <span class="tag" *ngIf="p.reversesPaymentId">Reversal</span>
+          </td>
+          <td>
+            <button mat-icon-button color="warn" *ngIf="!p.reversesPaymentId"
+                    (click)="reversePayment(p)" matTooltip="Reverse">
+              <mat-icon>undo</mat-icon>
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <p *ngIf="!payments.length" class="muted">No payments recorded yet.</p>
+
+    <div class="add-payment">
+      <mat-form-field appearance="outline">
+        <mat-label>Amount</mat-label>
+        <input matInput type="number" min="0" step="0.01" [(ngModel)]="newPaymentAmount" />
+        <span matSuffix *ngIf="currency">&nbsp;{{ currency }}</span>
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Method</mat-label>
+        <mat-select [(ngModel)]="newPaymentMethod">
+          <mat-option *ngFor="let m of paymentMethods" [value]="m.value">{{ m.label }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Notes</mat-label>
+        <input matInput [(ngModel)]="newPaymentNotes" />
+      </mat-form-field>
+      <mat-checkbox [(ngModel)]="newPaymentIsRefund">Refund</mat-checkbox>
+      <button mat-raised-button color="primary" (click)="addPayment()" [disabled]="!newPaymentAmount">
+        <mat-icon>add</mat-icon> Record
+      </button>
+    </div>
+  </div>
 </div>

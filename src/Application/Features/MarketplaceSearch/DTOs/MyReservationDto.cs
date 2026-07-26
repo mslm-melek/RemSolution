@@ -15,6 +15,8 @@ namespace RemSolution.Application.Features.MarketplaceSearch.DTOs
         public MoneyDto? Price { get; init; }
         public ReservationStatus Status { get; init; }
         public DateTime? ExpiresAt { get; init; }
+        // Shown to the customer when the agency declined the request.
+        public string? RejectedReason { get; init; }
 
         public class Mapping : IRegister
         {

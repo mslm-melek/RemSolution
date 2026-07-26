@@ -14,8 +14,12 @@ public class ReservationConfiguration : IEntityTypeConfiguration<Reservation>
 
         builder.OwnsMoney(e => e.Price, "Price", "PriceCurrency");
         builder.OwnsMoney(e => e.PayedPrice, "PayedPrice", "PayedPriceCurrency");
+        builder.OwnsMoney(e => e.DepositAmount, "DepositAmount", "DepositAmountCurrency");
 
         builder.Property(e => e.Notes).HasMaxLength(1000);
+        builder.Property(e => e.RejectedReason).HasMaxLength(1000);
+        builder.Property(e => e.CancelledReason).HasMaxLength(1000);
+        builder.Property(e => e.ExpiredReason).HasMaxLength(1000);
 
         // The held car — cleared (not cascaded) if the car row is ever removed.
         builder.HasOne(c => c.Car)

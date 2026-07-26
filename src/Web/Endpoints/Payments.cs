@@ -5,6 +5,7 @@ using RemSolution.Application.Features.Payment.Commands.CreatePaymentCommand;
 using RemSolution.Application.Features.Payment.Commands.ReversePaymentCommand;
 using RemSolution.Application.Features.Payment.Commands.UpdatePaymentCommand;
 using RemSolution.Application.Features.Payment.DTOs;
+using RemSolution.Application.Features.Payment.Queries.GetClientBalanceQuery;
 using RemSolution.Application.Features.Payment.Queries.GetPaymentByIdQuery;
 using RemSolution.Application.Features.Payment.Queries.GetPaymentsWithPaginationQuery;
 
@@ -19,10 +20,21 @@ public class Payments : EndpointGroupBase
 
         group
             .MapGet(GetPayments, policy: Permissions.PaymentRead)
+            .MapGet(GetClientBalance, "balance/{clientId}", Permissions.PaymentRead)
             .MapGet(GetPaymentById, "{id}", Permissions.PaymentRead)
             .MapPost(CreatePayment, policy: Permissions.PaymentCreate)
             .MapPost(ReversePayment, "{id}/reverse", Permissions.PaymentDelete)
             .MapPut(UpdatePayment, "{id}", Permissions.PaymentUpdate);
+    }
+
+    public async Task<Results<Ok<ClientBalanceDto>, NotFound>> GetClientBalance(ISender sender, int clientId)
+    {
+        var result = await sender.Send(new GetClientBalanceQuery(clientId));
+
+        if (result is null)
+            return TypedResults.NotFound();
+
+        return TypedResults.Ok(result);
     }
 
     public async Task<Ok<PaginatedList<PaymentDto>>> GetPayments(

@@ -13,7 +13,8 @@ namespace RemSolution.Application.Features.Payment.Queries.GetPaymentsWithPagina
         int PageNumber = 1,
         int PageSize = 10,
         int? RentingId = null,
-        int? ClientId = null
+        int? ClientId = null,
+        int? ReservationId = null
     ) : IRequest<PaginatedList<PaymentDto>>;
 
     public class GetPaymentsWithPaginationQueryHandler
@@ -36,6 +37,9 @@ namespace RemSolution.Application.Features.Payment.Queries.GetPaymentsWithPagina
 
             if (request.ClientId.HasValue)
                 query = query.Where(p => p.ClientId == request.ClientId);
+
+            if (request.ReservationId.HasValue)
+                query = query.Where(p => p.ReservationId == request.ReservationId);
 
             return await query
                 .OrderByDescending(p => p.PayementDate)

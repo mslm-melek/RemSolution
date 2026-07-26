@@ -17,6 +17,7 @@
         <div class="car">{{ r.carBrandName }} {{ r.carModelName }}</div>
         <div class="agency"><mat-icon>place</mat-icon>{{ r.agencyName }}</div>
         <div class="dates">{{ r.startDate | date:'yyyy-MM-dd' }} → {{ r.endDate | date:'yyyy-MM-dd' }}</div>
+        <div class="rejected" *ngIf="r.rejectedReason"><mat-icon>info</mat-icon>{{ r.rejectedReason }}</div>
       </div>
 
       <div class="side">

@@ -69,7 +69,9 @@ namespace RemSolution.Application.Features.MarketplaceSearch.Queries.SearchAvail
 
             query = query.Where(c => !_context.Reservations.IgnoreQueryFilters().Any(r =>
                 r.CarId == c.Id
-                && (r.Status == ReservationStatus.Pending || r.Status == ReservationStatus.Confirmed)
+                && (r.Status == ReservationStatus.PendingConfirmation
+                    || r.Status == ReservationStatus.Confirmed
+                    || r.Status == ReservationStatus.Paid)
                 && r.StartDate < end
                 && r.EndDate > start));
 

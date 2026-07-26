@@ -98,16 +98,13 @@ namespace RemSolution.Application.Features.Marketplace.Commands.CreateCustomerRe
                 _context.Clients.Add(client);
             }
 
-            var reservation = new ReservationEntity
-            {
-                CarId = request.CarId,
-                Client = client,
-                StartDate = request.StartDate,
-                EndDate = request.EndDate,
-                Price = price,
-                Status = ReservationStatus.Pending,
-                ExpiresAt = _dateTime.GetUtcNow().UtcDateTime.AddHours(settings.ReservationExpiryHours),
-            };
+            var reservation = ReservationEntity.Create(
+                carId: request.CarId,
+                startDate: request.StartDate,
+                endDate: request.EndDate,
+                price: price,
+                expiresAt: _dateTime.GetUtcNow().UtcDateTime.AddHours(settings.ReservationExpiryHours));
+            reservation.Client = client;
 
             _context.Reservations.Add(reservation);
             await _context.SaveChangesAsync(cancellationToken);

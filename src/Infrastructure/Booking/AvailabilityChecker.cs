@@ -9,7 +9,8 @@ namespace RemSolution.Infrastructure.Booking;
 // global AgencyId filter, so this only ever sees the current agency's bookings).
 // Two half-open [start, end) periods overlap iff existing.Start < requested.End
 // && requested.Start < existing.End. Terminal rentings (Done/Cancelled) and
-// inactive reservations (Cancelled/Expired) are excluded. Rows with missing
+// inactive reservations (only active holds — PendingConfirmation/Confirmed/Paid
+// — block; Converted/Rejected/Expired/Cancelled don't) are excluded. Rows with missing
 // dates compare as unknown in SQL and are therefore ignored — an incomplete
 // booking cannot block.
 public sealed class AvailabilityChecker : IAvailabilityChecker
@@ -46,7 +47,9 @@ public sealed class AvailabilityChecker : IAvailabilityChecker
         var reservationConflict = await _context.Reservations.AnyAsync(r =>
             r.CarId == carId
             && r.Id != excludeReservationId
-            && (r.Status == ReservationStatus.Pending || r.Status == ReservationStatus.Confirmed)
+            && (r.Status == ReservationStatus.PendingConfirmation
+                || r.Status == ReservationStatus.Confirmed
+                || r.Status == ReservationStatus.Paid)
             && r.StartDate < endDate
             && r.EndDate > startDate,
             cancellationToken);

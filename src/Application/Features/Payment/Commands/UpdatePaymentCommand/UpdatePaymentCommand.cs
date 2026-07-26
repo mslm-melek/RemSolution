@@ -49,7 +49,9 @@ namespace RemSolution.Application.Features.Payment.Commands.UpdatePaymentCommand
 
             var settings = await _settings.GetAsync(entity.AgencyId, cancellationToken);
 
-            entity.PayementAmount = Money.Of(request.Amount, settings.CurrencyCode);
+            // Preserve the entry's sign: a refund stays negative when re-edited.
+            entity.PayementAmount = Money.Of(
+                entity.IsRefund ? -request.Amount : request.Amount, settings.CurrencyCode);
             entity.Method = request.Method;
             if (request.PayementDate.HasValue)
             {

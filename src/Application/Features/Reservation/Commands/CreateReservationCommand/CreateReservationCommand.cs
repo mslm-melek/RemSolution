@@ -18,8 +18,9 @@ namespace RemSolution.Application.Features.Reservation.Commands.CreateReservatio
         public int ClientId { get; init; }
         public DateTime StartDate { get; init; }
         public DateTime EndDate { get; init; }
-        // Optional deposit already collected against the hold (agency currency).
-        public decimal? PayedPrice { get; init; }
+        // Optional refundable deposit held for the vehicle (agency currency).
+        // Money actually collected is recorded as Payments, never hand-set here.
+        public decimal? DepositAmount { get; init; }
         public string? Notes { get; init; }
     }
 
@@ -71,20 +72,17 @@ namespace RemSolution.Application.Features.Reservation.Commands.CreateReservatio
 
             var price = _pricing.CalculateRentalPrice(car, request.StartDate, request.EndDate);
 
-            var entity = new ReservationEntity
-            {
-                CarId = request.CarId,
-                ClientId = request.ClientId,
-                StartDate = request.StartDate,
-                EndDate = request.EndDate,
-                Price = price,
-                PayedPrice = request.PayedPrice is decimal paid
-                    ? Money.Of(paid, settings.CurrencyCode)
+            var entity = ReservationEntity.Create(
+                carId: request.CarId,
+                startDate: request.StartDate,
+                endDate: request.EndDate,
+                price: price,
+                expiresAt: _dateTime.GetUtcNow().UtcDateTime.AddHours(settings.ReservationExpiryHours),
+                clientId: request.ClientId,
+                depositAmount: request.DepositAmount is decimal deposit
+                    ? Money.Of(deposit, settings.CurrencyCode)
                     : null,
-                Notes = request.Notes,
-                Status = ReservationStatus.Pending,
-                ExpiresAt = _dateTime.GetUtcNow().UtcDateTime.AddHours(settings.ReservationExpiryHours),
-            };
+                notes: request.Notes);
 
             await using var transaction = await _context.BeginTransactionAsync(cancellationToken);
             await _context.AcquireTenantWriteLockAsync(cancellationToken);
@@ -115,8 +113,8 @@ namespace RemSolution.Application.Features.Reservation.Commands.CreateReservatio
                 .NotEmpty()
                 .GreaterThan(v => v.StartDate)
                     .WithMessage("The end date must be after the start date.");
-            RuleFor(v => v.PayedPrice)
-                .GreaterThanOrEqualTo(0).When(v => v.PayedPrice.HasValue);
+            RuleFor(v => v.DepositAmount)
+                .GreaterThanOrEqualTo(0).When(v => v.DepositAmount.HasValue);
             RuleFor(v => v.Notes).MaximumLength(1000);
         }
     }

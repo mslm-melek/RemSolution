@@ -11,6 +11,7 @@ public class RentingConfiguration : IEntityTypeConfiguration<Renting>
         builder.HasAgencyTenant(nameof(Renting.RentingState));
 
         builder.OwnsMoney(e => e.Price, "Price", "PriceCurrency");
+        builder.OwnsMoney(e => e.DepositAmount, "DepositAmount", "DepositAmountCurrency");
 
         builder.Property(e => e.Notes).HasMaxLength(1000);
 

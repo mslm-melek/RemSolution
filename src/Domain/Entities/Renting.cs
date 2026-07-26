@@ -19,6 +19,9 @@
         // The agreed price, snapshotted from IPricingService at creation time and
         // never silently re-read from the car afterwards (see IPricingService).
         public Money? Price { get; set; }
+        // Refundable deposit held for the vehicle, carried over from the
+        // reservation on conversion. Distinct from Price (the rental charge).
+        public Money? DepositAmount { get; set; }
         public RentingState RentingState { get; set; }
         public string? Notes { get; set; }
         public virtual ICollection<ExtraService>? ExtraServices { get; set; }

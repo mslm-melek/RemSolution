@@ -10,9 +10,11 @@ namespace RemSolution.Application.Features.Payment.DTOs
         public int? ClientId { get; init; }
         public string? ClientName { get; init; }
         public int? RentingId { get; init; }
+        public int? ReservationId { get; init; }
         public DateTime? PayementDate { get; init; }
         public MoneyDto? PayementAmount { get; init; }
         public PaymentMethod Method { get; init; }
+        public bool IsRefund { get; init; }
         public string? Notes { get; init; }
         // Set on a reversal entry: the payment it offsets.
         public int? ReversesPaymentId { get; init; }

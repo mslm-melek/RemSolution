@@ -42,7 +42,7 @@ namespace RemSolution.Application.Features.Marketplace.Commands.CancelMyReservat
                 throw new ForbiddenAccessException();
             }
 
-            if (reservation.Status != ReservationStatus.Pending)
+            if (reservation.Status != ReservationStatus.PendingConfirmation)
             {
                 throw new ValidationException(new[]
                 {
@@ -54,7 +54,7 @@ namespace RemSolution.Application.Features.Marketplace.Commands.CancelMyReservat
             // the modified row passes.
             using var _ = AmbientTenant.Push(reservation.AgencyId);
 
-            reservation.Status = ReservationStatus.Cancelled;
+            reservation.Cancel("Cancelled by the customer.");
 
             await _context.SaveChangesAsync(cancellationToken);
         }

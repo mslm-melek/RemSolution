@@ -149,7 +149,7 @@ export class RentingFormComponent implements OnInit {
       });
     }
     if (this.canUsePayments) {
-      this.paymentsClient.getPayments(1, 100, this.rentingId, null).subscribe({
+      this.paymentsClient.getPayments(1, 100, this.rentingId, null, null).subscribe({
         next: r => this.payments = r.items || [],
         error: err => console.error(err)
       });

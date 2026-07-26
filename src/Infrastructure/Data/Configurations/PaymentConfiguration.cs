@@ -27,6 +27,13 @@ public class PaymentConfiguration : IEntityTypeConfiguration<Payment>
                .HasForeignKey(c => c.RentingId)
                .OnDelete(DeleteBehavior.Restrict);
 
+        // The reservation this payment settles (deposit/advance before the hold
+        // becomes a renting). Restrict: reservations are financial records.
+        builder.HasOne(c => c.Reservation)
+               .WithMany()
+               .HasForeignKey(c => c.ReservationId)
+               .OnDelete(DeleteBehavior.Restrict);
+
         // Self-reference: a reversal entry points back at the payment it offsets.
         builder.HasOne(c => c.ReversesPayment)
                .WithMany()

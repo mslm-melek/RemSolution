@@ -19,7 +19,7 @@ namespace RemSolution.Application.Features.Reservation.Commands.UpdateReservatio
         public int ClientId { get; init; }
         public DateTime StartDate { get; init; }
         public DateTime EndDate { get; init; }
-        public decimal? PayedPrice { get; init; }
+        public decimal? DepositAmount { get; init; }
         public string? Notes { get; init; }
     }
 
@@ -47,7 +47,7 @@ namespace RemSolution.Application.Features.Reservation.Commands.UpdateReservatio
 
             Guard.Against.NotFound(request.Id, entity);
 
-            if (entity.Status != ReservationStatus.Pending)
+            if (entity.Status != ReservationStatus.PendingConfirmation)
             {
                 throw new ValidationException(new[]
                 {
@@ -104,8 +104,8 @@ namespace RemSolution.Application.Features.Reservation.Commands.UpdateReservatio
             {
                 entity.Price = _pricing.CalculateRentalPrice(car, request.StartDate, request.EndDate);
             }
-            entity.PayedPrice = request.PayedPrice is decimal paid
-                ? Money.Of(paid, settings.CurrencyCode)
+            entity.DepositAmount = request.DepositAmount is decimal deposit
+                ? Money.Of(deposit, settings.CurrencyCode)
                 : null;
             entity.Notes = request.Notes;
 
@@ -130,8 +130,8 @@ namespace RemSolution.Application.Features.Reservation.Commands.UpdateReservatio
                 .NotEmpty()
                 .GreaterThan(v => v.StartDate)
                     .WithMessage("The end date must be after the start date.");
-            RuleFor(v => v.PayedPrice)
-                .GreaterThanOrEqualTo(0).When(v => v.PayedPrice.HasValue);
+            RuleFor(v => v.DepositAmount)
+                .GreaterThanOrEqualTo(0).When(v => v.DepositAmount.HasValue);
             RuleFor(v => v.Notes).MaximumLength(1000);
         }
     }

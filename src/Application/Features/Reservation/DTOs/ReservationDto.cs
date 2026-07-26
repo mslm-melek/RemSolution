@@ -17,11 +17,19 @@ namespace RemSolution.Application.Features.Reservation.DTOs
         public DateTime? StartDate { get; init; }
         public DateTime? EndDate { get; init; }
         public MoneyDto? Price { get; init; }
+        // Running total collected against the hold (sum of non-reversed payments).
         public MoneyDto? PayedPrice { get; init; }
+        // Refundable deposit held for the vehicle.
+        public MoneyDto? DepositAmount { get; init; }
         public string? Notes { get; init; }
         public ReservationStatus Status { get; init; }
         public DateTime? ExpiresAt { get; init; }
-        // Set once the hold is confirmed into a renting.
+        // Why the hold left the happy path (per status). RejectedReason is shown
+        // to the client.
+        public string? RejectedReason { get; init; }
+        public string? CancelledReason { get; init; }
+        public string? ExpiredReason { get; init; }
+        // Set once the hold is converted into a renting.
         public int? RentingId { get; init; }
 
         public class Mapping : IRegister

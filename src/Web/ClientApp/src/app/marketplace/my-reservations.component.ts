@@ -12,7 +12,15 @@ export class MyReservationsComponent implements OnInit {
   error = '';
 
   ReservationStatus = ReservationStatus;
-  private labels = ['Pending', 'Confirmed', 'Cancelled', 'Expired'];
+  private labels: { [key: number]: string } = {
+    [ReservationStatus.PendingConfirmation]: 'Pending',
+    [ReservationStatus.Confirmed]: 'Confirmed',
+    [ReservationStatus.Cancelled]: 'Cancelled',
+    [ReservationStatus.Expired]: 'Expired',
+    [ReservationStatus.Rejected]: 'Rejected',
+    [ReservationStatus.Paid]: 'Paid',
+    [ReservationStatus.Converted]: 'Converted'
+  };
 
   constructor(private client: MarketplaceClient) { }
 
@@ -35,15 +43,18 @@ export class MyReservationsComponent implements OnInit {
   statusClass(status?: ReservationStatus): string {
     switch (status) {
       case ReservationStatus.Confirmed: return 'confirmed';
-      case ReservationStatus.Pending: return 'pending';
+      case ReservationStatus.Paid: return 'confirmed';
+      case ReservationStatus.Converted: return 'confirmed';
+      case ReservationStatus.PendingConfirmation: return 'pending';
       case ReservationStatus.Cancelled: return 'cancelled';
+      case ReservationStatus.Rejected: return 'cancelled';
       case ReservationStatus.Expired: return 'expired';
       default: return '';
     }
   }
 
   isPending(r: MyReservationDto): boolean {
-    return r.status === ReservationStatus.Pending;
+    return r.status === ReservationStatus.PendingConfirmation;
   }
 
   cancel(r: MyReservationDto) {

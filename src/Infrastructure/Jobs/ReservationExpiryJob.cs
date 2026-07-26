@@ -42,7 +42,7 @@ public sealed class ReservationExpiryJob
             using var _ = AmbientTenant.Push(agencyId);
 
             var stale = await _context.Reservations
-                .Where(r => r.Status == ReservationStatus.Pending
+                .Where(r => r.Status == ReservationStatus.PendingConfirmation
                             && r.ExpiresAt != null
                             && r.ExpiresAt <= now)
                 .ToListAsync();
@@ -54,7 +54,7 @@ public sealed class ReservationExpiryJob
 
             foreach (var reservation in stale)
             {
-                reservation.Status = ReservationStatus.Expired;
+                reservation.Expire();
             }
 
             await _context.SaveChangesAsync(CancellationToken.None);

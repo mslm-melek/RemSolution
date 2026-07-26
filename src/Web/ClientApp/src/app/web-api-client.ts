@@ -4066,8 +4066,9 @@ export class ModelCarsClient implements IModelCarsClient {
 }
 
 export interface IPaymentsClient {
-    getPayments(pageNumber: number | undefined, pageSize: number | undefined, rentingId: number | null | undefined, clientId: number | null | undefined): Observable<PaginatedListOfPaymentDto>;
+    getPayments(pageNumber: number | undefined, pageSize: number | undefined, rentingId: number | null | undefined, clientId: number | null | undefined, reservationId: number | null | undefined): Observable<PaginatedListOfPaymentDto>;
     createPayment(command: CreatePaymentCommand): Observable<number>;
+    getClientBalance(clientId: number): Observable<ClientBalanceDto>;
     getPaymentById(id: number): Observable<PaymentDto>;
     updatePayment(id: number, command: UpdatePaymentCommand): Observable<void>;
     reversePayment(id: number): Observable<number>;
@@ -4086,7 +4087,7 @@ export class PaymentsClient implements IPaymentsClient {
         this.baseUrl = baseUrl ?? "";
     }
 
-    getPayments(pageNumber: number | undefined, pageSize: number | undefined, rentingId: number | null | undefined, clientId: number | null | undefined): Observable<PaginatedListOfPaymentDto> {
+    getPayments(pageNumber: number | undefined, pageSize: number | undefined, rentingId: number | null | undefined, clientId: number | null | undefined, reservationId: number | null | undefined): Observable<PaginatedListOfPaymentDto> {
         let url_ = this.baseUrl + "/api/Payments?";
         if (pageNumber === null)
             throw new Error("The parameter 'pageNumber' cannot be null.");
@@ -4100,6 +4101,8 @@ export class PaymentsClient implements IPaymentsClient {
             url_ += "RentingId=" + encodeURIComponent("" + rentingId) + "&";
         if (clientId !== undefined && clientId !== null)
             url_ += "ClientId=" + encodeURIComponent("" + clientId) + "&";
+        if (reservationId !== undefined && reservationId !== null)
+            url_ += "ReservationId=" + encodeURIComponent("" + reservationId) + "&";
         url_ = url_.replace(/[?&]$/, "");
 
         let options_ : any = {
@@ -4190,6 +4193,61 @@ export class PaymentsClient implements IPaymentsClient {
                 result201 = resultData201 !== undefined ? resultData201 : <any>null;
     
             return _observableOf(result201);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getClientBalance(clientId: number): Observable<ClientBalanceDto> {
+        let url_ = this.baseUrl + "/api/Payments/balance/{clientId}";
+        if (clientId === undefined || clientId === null)
+            throw new Error("The parameter 'clientId' must be defined.");
+        url_ = url_.replace("{clientId}", encodeURIComponent("" + clientId));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetClientBalance(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetClientBalance(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<ClientBalanceDto>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<ClientBalanceDto>;
+        }));
+    }
+
+    protected processGetClientBalance(response: HttpResponseBase): Observable<ClientBalanceDto> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = ClientBalanceDto.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status === 404) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("A server side error occurred.", status, _responseText, _headers);
             }));
         } else if (status !== 200 && status !== 204) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
@@ -4780,8 +4838,10 @@ export interface IReservationsClient {
     createReservation(command: CreateReservationCommand): Observable<number>;
     getReservationById(id: number): Observable<ReservationDto>;
     updateReservation(id: number, command: UpdateReservationCommand): Observable<void>;
-    cancelReservation(id: number): Observable<void>;
-    confirmReservation(id: number): Observable<number>;
+    cancelReservation(id: number, reason: string | null | undefined): Observable<void>;
+    confirmReservation(id: number): Observable<void>;
+    rejectReservation(id: number, command: RejectReservationCommand): Observable<void>;
+    convertReservation(id: number, command: ConvertReservationCommand): Observable<number>;
 }
 
 @Injectable({
@@ -5022,11 +5082,13 @@ export class ReservationsClient implements IReservationsClient {
         return _observableOf(null as any);
     }
 
-    cancelReservation(id: number): Observable<void> {
-        let url_ = this.baseUrl + "/api/Reservations/{id}";
+    cancelReservation(id: number, reason: string | null | undefined): Observable<void> {
+        let url_ = this.baseUrl + "/api/Reservations/{id}?";
         if (id === undefined || id === null)
             throw new Error("The parameter 'id' must be defined.");
         url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        if (reason !== undefined && reason !== null)
+            url_ += "reason=" + encodeURIComponent("" + reason) + "&";
         url_ = url_.replace(/[?&]$/, "");
 
         let options_ : any = {
@@ -5069,7 +5131,7 @@ export class ReservationsClient implements IReservationsClient {
         return _observableOf(null as any);
     }
 
-    confirmReservation(id: number): Observable<number> {
+    confirmReservation(id: number): Observable<void> {
         let url_ = this.baseUrl + "/api/Reservations/{id}/confirm";
         if (id === undefined || id === null)
             throw new Error("The parameter 'id' must be defined.");
@@ -5080,7 +5142,6 @@ export class ReservationsClient implements IReservationsClient {
             observe: "response",
             responseType: "blob",
             headers: new HttpHeaders({
-                "Accept": "application/json"
             })
         };
 
@@ -5091,6 +5152,113 @@ export class ReservationsClient implements IReservationsClient {
                 try {
                     return this.processConfirmReservation(response_ as any);
                 } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processConfirmReservation(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return _observableOf(null as any);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    rejectReservation(id: number, command: RejectReservationCommand): Observable<void> {
+        let url_ = this.baseUrl + "/api/Reservations/{id}/reject";
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(command);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processRejectReservation(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processRejectReservation(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processRejectReservation(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return _observableOf(null as any);
+            }));
+        } else if (status === 400) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("A server side error occurred.", status, _responseText, _headers);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    convertReservation(id: number, command: ConvertReservationCommand): Observable<number> {
+        let url_ = this.baseUrl + "/api/Reservations/{id}/convert";
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(command);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processConvertReservation(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processConvertReservation(response_ as any);
+                } catch (e) {
                     return _observableThrow(e) as any as Observable<number>;
                 }
             } else
@@ -5098,7 +5266,7 @@ export class ReservationsClient implements IReservationsClient {
         }));
     }
 
-    protected processConfirmReservation(response: HttpResponseBase): Observable<number> {
+    protected processConvertReservation(response: HttpResponseBase): Observable<number> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -5112,6 +5280,10 @@ export class ReservationsClient implements IReservationsClient {
                 result200 = resultData200 !== undefined ? resultData200 : <any>null;
     
             return _observableOf(result200);
+            }));
+        } else if (status === 400) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("A server side error occurred.", status, _responseText, _headers);
             }));
         } else if (status !== 200 && status !== 204) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
@@ -8835,6 +9007,7 @@ export class MyReservationDto implements IMyReservationDto {
     price?: MoneyDto | undefined;
     status?: ReservationStatus;
     expiresAt?: Date | undefined;
+    rejectedReason?: string | undefined;
 
     constructor(data?: IMyReservationDto) {
         if (data) {
@@ -8856,6 +9029,7 @@ export class MyReservationDto implements IMyReservationDto {
             this.price = _data["price"] ? MoneyDto.fromJS(_data["price"]) : <any>undefined;
             this.status = _data["status"];
             this.expiresAt = _data["expiresAt"] ? new Date(_data["expiresAt"].toString()) : <any>undefined;
+            this.rejectedReason = _data["rejectedReason"];
         }
     }
 
@@ -8877,6 +9051,7 @@ export class MyReservationDto implements IMyReservationDto {
         data["price"] = this.price ? this.price.toJSON() : <any>undefined;
         data["status"] = this.status;
         data["expiresAt"] = this.expiresAt ? this.expiresAt.toISOString() : <any>undefined;
+        data["rejectedReason"] = this.rejectedReason;
         return data;
     }
 }
@@ -8891,13 +9066,17 @@ export interface IMyReservationDto {
     price?: MoneyDto | undefined;
     status?: ReservationStatus;
     expiresAt?: Date | undefined;
+    rejectedReason?: string | undefined;
 }
 
 export enum ReservationStatus {
-    Pending = 0,
+    PendingConfirmation = 0,
     Confirmed = 1,
     Cancelled = 2,
     Expired = 3,
+    Rejected = 4,
+    Paid = 5,
+    Converted = 6,
 }
 
 export class PaginatedListOfModelCarDto implements IPaginatedListOfModelCarDto {
@@ -9166,9 +9345,11 @@ export class PaymentDto implements IPaymentDto {
     clientId?: number | undefined;
     clientName?: string | undefined;
     rentingId?: number | undefined;
+    reservationId?: number | undefined;
     payementDate?: Date | undefined;
     payementAmount?: MoneyDto | undefined;
     method?: PaymentMethod;
+    isRefund?: boolean;
     notes?: string | undefined;
     reversesPaymentId?: number | undefined;
 
@@ -9188,9 +9369,11 @@ export class PaymentDto implements IPaymentDto {
             this.clientId = _data["clientId"];
             this.clientName = _data["clientName"];
             this.rentingId = _data["rentingId"];
+            this.reservationId = _data["reservationId"];
             this.payementDate = _data["payementDate"] ? new Date(_data["payementDate"].toString()) : <any>undefined;
             this.payementAmount = _data["payementAmount"] ? MoneyDto.fromJS(_data["payementAmount"]) : <any>undefined;
             this.method = _data["method"];
+            this.isRefund = _data["isRefund"];
             this.notes = _data["notes"];
             this.reversesPaymentId = _data["reversesPaymentId"];
         }
@@ -9210,9 +9393,11 @@ export class PaymentDto implements IPaymentDto {
         data["clientId"] = this.clientId;
         data["clientName"] = this.clientName;
         data["rentingId"] = this.rentingId;
+        data["reservationId"] = this.reservationId;
         data["payementDate"] = this.payementDate ? this.payementDate.toISOString() : <any>undefined;
         data["payementAmount"] = this.payementAmount ? this.payementAmount.toJSON() : <any>undefined;
         data["method"] = this.method;
+        data["isRefund"] = this.isRefund;
         data["notes"] = this.notes;
         data["reversesPaymentId"] = this.reversesPaymentId;
         return data;
@@ -9225,9 +9410,11 @@ export interface IPaymentDto {
     clientId?: number | undefined;
     clientName?: string | undefined;
     rentingId?: number | undefined;
+    reservationId?: number | undefined;
     payementDate?: Date | undefined;
     payementAmount?: MoneyDto | undefined;
     method?: PaymentMethod;
+    isRefund?: boolean;
     notes?: string | undefined;
     reversesPaymentId?: number | undefined;
 }
@@ -9239,9 +9426,68 @@ export enum PaymentMethod {
     Cheque = 3,
 }
 
+export class ClientBalanceDto implements IClientBalanceDto {
+    clientId?: number;
+    clientName?: string | undefined;
+    currency?: string;
+    totalCharged?: MoneyDto | undefined;
+    totalPaid?: MoneyDto | undefined;
+    balance?: MoneyDto | undefined;
+
+    constructor(data?: IClientBalanceDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.clientId = _data["clientId"];
+            this.clientName = _data["clientName"];
+            this.currency = _data["currency"];
+            this.totalCharged = _data["totalCharged"] ? MoneyDto.fromJS(_data["totalCharged"]) : <any>undefined;
+            this.totalPaid = _data["totalPaid"] ? MoneyDto.fromJS(_data["totalPaid"]) : <any>undefined;
+            this.balance = _data["balance"] ? MoneyDto.fromJS(_data["balance"]) : <any>undefined;
+        }
+    }
+
+    static fromJS(data: any): ClientBalanceDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new ClientBalanceDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["clientId"] = this.clientId;
+        data["clientName"] = this.clientName;
+        data["currency"] = this.currency;
+        data["totalCharged"] = this.totalCharged ? this.totalCharged.toJSON() : <any>undefined;
+        data["totalPaid"] = this.totalPaid ? this.totalPaid.toJSON() : <any>undefined;
+        data["balance"] = this.balance ? this.balance.toJSON() : <any>undefined;
+        return data;
+    }
+}
+
+export interface IClientBalanceDto {
+    clientId?: number;
+    clientName?: string | undefined;
+    currency?: string;
+    totalCharged?: MoneyDto | undefined;
+    totalPaid?: MoneyDto | undefined;
+    balance?: MoneyDto | undefined;
+}
+
 export class CreatePaymentCommand implements ICreatePaymentCommand {
-    rentingId?: number;
+    rentingId?: number | undefined;
+    reservationId?: number | undefined;
+    clientId?: number | undefined;
     amount?: number;
+    isRefund?: boolean;
     method?: PaymentMethod;
     payementDate?: Date | undefined;
     notes?: string | undefined;
@@ -9258,7 +9504,10 @@ export class CreatePaymentCommand implements ICreatePaymentCommand {
     init(_data?: any) {
         if (_data) {
             this.rentingId = _data["rentingId"];
+            this.reservationId = _data["reservationId"];
+            this.clientId = _data["clientId"];
             this.amount = _data["amount"];
+            this.isRefund = _data["isRefund"];
             this.method = _data["method"];
             this.payementDate = _data["payementDate"] ? new Date(_data["payementDate"].toString()) : <any>undefined;
             this.notes = _data["notes"];
@@ -9275,7 +9524,10 @@ export class CreatePaymentCommand implements ICreatePaymentCommand {
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
         data["rentingId"] = this.rentingId;
+        data["reservationId"] = this.reservationId;
+        data["clientId"] = this.clientId;
         data["amount"] = this.amount;
+        data["isRefund"] = this.isRefund;
         data["method"] = this.method;
         data["payementDate"] = this.payementDate ? this.payementDate.toISOString() : <any>undefined;
         data["notes"] = this.notes;
@@ -9284,8 +9536,11 @@ export class CreatePaymentCommand implements ICreatePaymentCommand {
 }
 
 export interface ICreatePaymentCommand {
-    rentingId?: number;
+    rentingId?: number | undefined;
+    reservationId?: number | undefined;
+    clientId?: number | undefined;
     amount?: number;
+    isRefund?: boolean;
     method?: PaymentMethod;
     payementDate?: Date | undefined;
     notes?: string | undefined;
@@ -9835,9 +10090,13 @@ export class ReservationDto implements IReservationDto {
     endDate?: Date | undefined;
     price?: MoneyDto | undefined;
     payedPrice?: MoneyDto | undefined;
+    depositAmount?: MoneyDto | undefined;
     notes?: string | undefined;
     status?: ReservationStatus;
     expiresAt?: Date | undefined;
+    rejectedReason?: string | undefined;
+    cancelledReason?: string | undefined;
+    expiredReason?: string | undefined;
     rentingId?: number | undefined;
 
     constructor(data?: IReservationDto) {
@@ -9863,9 +10122,13 @@ export class ReservationDto implements IReservationDto {
             this.endDate = _data["endDate"] ? new Date(_data["endDate"].toString()) : <any>undefined;
             this.price = _data["price"] ? MoneyDto.fromJS(_data["price"]) : <any>undefined;
             this.payedPrice = _data["payedPrice"] ? MoneyDto.fromJS(_data["payedPrice"]) : <any>undefined;
+            this.depositAmount = _data["depositAmount"] ? MoneyDto.fromJS(_data["depositAmount"]) : <any>undefined;
             this.notes = _data["notes"];
             this.status = _data["status"];
             this.expiresAt = _data["expiresAt"] ? new Date(_data["expiresAt"].toString()) : <any>undefined;
+            this.rejectedReason = _data["rejectedReason"];
+            this.cancelledReason = _data["cancelledReason"];
+            this.expiredReason = _data["expiredReason"];
             this.rentingId = _data["rentingId"];
         }
     }
@@ -9891,9 +10154,13 @@ export class ReservationDto implements IReservationDto {
         data["endDate"] = this.endDate ? this.endDate.toISOString() : <any>undefined;
         data["price"] = this.price ? this.price.toJSON() : <any>undefined;
         data["payedPrice"] = this.payedPrice ? this.payedPrice.toJSON() : <any>undefined;
+        data["depositAmount"] = this.depositAmount ? this.depositAmount.toJSON() : <any>undefined;
         data["notes"] = this.notes;
         data["status"] = this.status;
         data["expiresAt"] = this.expiresAt ? this.expiresAt.toISOString() : <any>undefined;
+        data["rejectedReason"] = this.rejectedReason;
+        data["cancelledReason"] = this.cancelledReason;
+        data["expiredReason"] = this.expiredReason;
         data["rentingId"] = this.rentingId;
         return data;
     }
@@ -9912,9 +10179,13 @@ export interface IReservationDto {
     endDate?: Date | undefined;
     price?: MoneyDto | undefined;
     payedPrice?: MoneyDto | undefined;
+    depositAmount?: MoneyDto | undefined;
     notes?: string | undefined;
     status?: ReservationStatus;
     expiresAt?: Date | undefined;
+    rejectedReason?: string | undefined;
+    cancelledReason?: string | undefined;
+    expiredReason?: string | undefined;
     rentingId?: number | undefined;
 }
 
@@ -9923,7 +10194,7 @@ export class CreateReservationCommand implements ICreateReservationCommand {
     clientId?: number;
     startDate?: Date;
     endDate?: Date;
-    payedPrice?: number | undefined;
+    depositAmount?: number | undefined;
     notes?: string | undefined;
 
     constructor(data?: ICreateReservationCommand) {
@@ -9941,7 +10212,7 @@ export class CreateReservationCommand implements ICreateReservationCommand {
             this.clientId = _data["clientId"];
             this.startDate = _data["startDate"] ? new Date(_data["startDate"].toString()) : <any>undefined;
             this.endDate = _data["endDate"] ? new Date(_data["endDate"].toString()) : <any>undefined;
-            this.payedPrice = _data["payedPrice"];
+            this.depositAmount = _data["depositAmount"];
             this.notes = _data["notes"];
         }
     }
@@ -9959,7 +10230,7 @@ export class CreateReservationCommand implements ICreateReservationCommand {
         data["clientId"] = this.clientId;
         data["startDate"] = this.startDate ? this.startDate.toISOString() : <any>undefined;
         data["endDate"] = this.endDate ? this.endDate.toISOString() : <any>undefined;
-        data["payedPrice"] = this.payedPrice;
+        data["depositAmount"] = this.depositAmount;
         data["notes"] = this.notes;
         return data;
     }
@@ -9970,8 +10241,100 @@ export interface ICreateReservationCommand {
     clientId?: number;
     startDate?: Date;
     endDate?: Date;
-    payedPrice?: number | undefined;
+    depositAmount?: number | undefined;
     notes?: string | undefined;
+}
+
+export class RejectReservationCommand implements IRejectReservationCommand {
+    id?: number;
+    reason?: string;
+    rowVersion?: string | undefined;
+
+    constructor(data?: IRejectReservationCommand) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.reason = _data["reason"];
+            this.rowVersion = _data["rowVersion"];
+        }
+    }
+
+    static fromJS(data: any): RejectReservationCommand {
+        data = typeof data === 'object' ? data : {};
+        let result = new RejectReservationCommand();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["reason"] = this.reason;
+        data["rowVersion"] = this.rowVersion;
+        return data;
+    }
+}
+
+export interface IRejectReservationCommand {
+    id?: number;
+    reason?: string;
+    rowVersion?: string | undefined;
+}
+
+export class ConvertReservationCommand implements IConvertReservationCommand {
+    id?: number;
+    rowVersion?: string | undefined;
+    cin?: string | undefined;
+    passeportNumber?: string | undefined;
+
+    constructor(data?: IConvertReservationCommand) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.rowVersion = _data["rowVersion"];
+            this.cin = _data["cin"];
+            this.passeportNumber = _data["passeportNumber"];
+        }
+    }
+
+    static fromJS(data: any): ConvertReservationCommand {
+        data = typeof data === 'object' ? data : {};
+        let result = new ConvertReservationCommand();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["rowVersion"] = this.rowVersion;
+        data["cin"] = this.cin;
+        data["passeportNumber"] = this.passeportNumber;
+        return data;
+    }
+}
+
+export interface IConvertReservationCommand {
+    id?: number;
+    rowVersion?: string | undefined;
+    cin?: string | undefined;
+    passeportNumber?: string | undefined;
 }
 
 export class UpdateReservationCommand implements IUpdateReservationCommand {
@@ -9981,7 +10344,7 @@ export class UpdateReservationCommand implements IUpdateReservationCommand {
     clientId?: number;
     startDate?: Date;
     endDate?: Date;
-    payedPrice?: number | undefined;
+    depositAmount?: number | undefined;
     notes?: string | undefined;
 
     constructor(data?: IUpdateReservationCommand) {
@@ -10001,7 +10364,7 @@ export class UpdateReservationCommand implements IUpdateReservationCommand {
             this.clientId = _data["clientId"];
             this.startDate = _data["startDate"] ? new Date(_data["startDate"].toString()) : <any>undefined;
             this.endDate = _data["endDate"] ? new Date(_data["endDate"].toString()) : <any>undefined;
-            this.payedPrice = _data["payedPrice"];
+            this.depositAmount = _data["depositAmount"];
             this.notes = _data["notes"];
         }
     }
@@ -10021,7 +10384,7 @@ export class UpdateReservationCommand implements IUpdateReservationCommand {
         data["clientId"] = this.clientId;
         data["startDate"] = this.startDate ? this.startDate.toISOString() : <any>undefined;
         data["endDate"] = this.endDate ? this.endDate.toISOString() : <any>undefined;
-        data["payedPrice"] = this.payedPrice;
+        data["depositAmount"] = this.depositAmount;
         data["notes"] = this.notes;
         return data;
     }
@@ -10034,7 +10397,7 @@ export interface IUpdateReservationCommand {
     clientId?: number;
     startDate?: Date;
     endDate?: Date;
-    payedPrice?: number | undefined;
+    depositAmount?: number | undefined;
     notes?: string | undefined;
 }
 
