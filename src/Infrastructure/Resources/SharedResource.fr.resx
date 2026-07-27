@@ -1,0 +1,628 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Validation.Currency.Iso4217" xml:space="preserve">
+    <value>La devise doit être un code ISO 4217 de 3 lettres.</value>
+  </data>
+  <data name="Validation.Feature.Unknown" xml:space="preserve">
+    <value>« {PropertyValue} » n'est pas un module connu.</value>
+  </data>
+  <data name="Validation.Permission.Unknown" xml:space="preserve">
+    <value>« {PropertyValue} » n'est pas une permission connue.</value>
+  </data>
+  <data name="Validation.Role.AgencyRoles" xml:space="preserve">
+    <value>Le rôle doit être AgencyAdministrator ou AgencyStaff.</value>
+  </data>
+  <data name="Validation.EndDate.AfterStartDate" xml:space="preserve">
+    <value>La date de fin doit être postérieure à la date de début.</value>
+  </data>
+  <data name="Validation.Coordinates.Together" xml:space="preserve">
+    <value>La latitude et la longitude doivent être renseignées ensemble.</value>
+  </data>
+  <data name="Validation.Brand.NameRequired" xml:space="preserve">
+    <value>Le nom de la marque est obligatoire.</value>
+  </data>
+  <data name="Validation.Brand.NameMaxLength" xml:space="preserve">
+    <value>Le nom de la marque ne doit pas dépasser 200 caractères.</value>
+  </data>
+  <data name="Validation.Brand.NameUnique" xml:space="preserve">
+    <value>Le nom de la marque doit être unique.</value>
+  </data>
+  <data name="Validation.Car.ModelIdRequired" xml:space="preserve">
+    <value>Le modèle de voiture est obligatoire.</value>
+  </data>
+  <data name="Validation.ModelCar.BrandIdRequired" xml:space="preserve">
+    <value>La marque est obligatoire.</value>
+  </data>
+  <data name="Validation.CarImages.NoDuplicates" xml:space="preserve">
+    <value>L'ordre des images ne doit pas contenir de doublons.</value>
+  </data>
+  <data name="Validation.File.Extension" xml:space="preserve">
+    <value>L'extension du fichier doit être l'une des suivantes : {0}.</value>
+  </data>
+  <data name="Validation.File.ContentType" xml:space="preserve">
+    <value>Le type de contenu doit être l’un des suivants : {0}.</value>
+  </data>
+  <data name="Validation.File.Empty" xml:space="preserve">
+    <value>Le fichier est vide.</value>
+  </data>
+  <data name="Validation.File.TooLarge" xml:space="preserve">
+    <value>Le fichier ne doit pas dépasser 15 Mo.</value>
+  </data>
+  <data name="Validation.Client.FlagReasonRequired" xml:space="preserve">
+    <value>Un motif est obligatoire pour signaler un client.</value>
+  </data>
+  <data name="Validation.Client.BirthDateRequired" xml:space="preserve">
+    <value>La date de naissance est obligatoire.</value>
+  </data>
+  <data name="Validation.Client.BirthDateInPast" xml:space="preserve">
+    <value>La date de naissance doit être dans le passé.</value>
+  </data>
+  <data name="Validation.Client.BirthCountryUnknown" xml:space="preserve">
+    <value>Le pays de naissance n'existe pas.</value>
+  </data>
+  <data name="Validation.Client.CinFormat" xml:space="preserve">
+    <value>La CIN doit comporter de 4 à 20 lettres ou chiffres.</value>
+  </data>
+  <data name="Validation.Client.CinRequiredWithDetails" xml:space="preserve">
+    <value>Le numéro de CIN est obligatoire lorsque les informations de délivrance sont renseignées.</value>
+  </data>
+  <data name="Validation.Client.CinIssueDateFuture" xml:space="preserve">
+    <value>La date de délivrance de la CIN ne peut pas être dans le futur.</value>
+  </data>
+  <data name="Validation.Client.CinIssueDateBeforeBirth" xml:space="preserve">
+    <value>La date de délivrance de la CIN ne peut pas précéder la date de naissance.</value>
+  </data>
+  <data name="Validation.Client.CinCountryUnknown" xml:space="preserve">
+    <value>Le pays de délivrance de la CIN n'existe pas.</value>
+  </data>
+  <data name="Validation.Client.PasseportFormat" xml:space="preserve">
+    <value>Le numéro de passeport doit comporter de 5 à 20 lettres ou chiffres.</value>
+  </data>
+  <data name="Validation.Client.PasseportRequiredWithDetails" xml:space="preserve">
+    <value>Le numéro de passeport est obligatoire lorsque les informations de délivrance sont renseignées.</value>
+  </data>
+  <data name="Validation.Client.PasseportIssueDateFuture" xml:space="preserve">
+    <value>La date de délivrance du passeport ne peut pas être dans le futur.</value>
+  </data>
+  <data name="Validation.Client.PasseportIssueDateBeforeBirth" xml:space="preserve">
+    <value>La date de délivrance du passeport ne peut pas précéder la date de naissance.</value>
+  </data>
+  <data name="Validation.Client.PasseportCountryUnknown" xml:space="preserve">
+    <value>Le pays de délivrance du passeport n'existe pas.</value>
+  </data>
+  <data name="Validation.Client.LicenceFormat" xml:space="preserve">
+    <value>Le numéro de permis doit comporter de 4 à 30 caractères (lettres, chiffres, tirets, barres obliques ou espaces).</value>
+  </data>
+  <data name="Validation.Client.LicenceRequiredWithDetails" xml:space="preserve">
+    <value>Le numéro de permis est obligatoire lorsque les informations de délivrance sont renseignées.</value>
+  </data>
+  <data name="Validation.Client.LicenceIssueDateFuture" xml:space="preserve">
+    <value>La date de délivrance du permis ne peut pas être dans le futur.</value>
+  </data>
+  <data name="Validation.Client.LicenceIssueDateBeforeBirth" xml:space="preserve">
+    <value>La date de délivrance du permis ne peut pas précéder la date de naissance.</value>
+  </data>
+  <data name="Validation.Client.LicenceCountryUnknown" xml:space="preserve">
+    <value>Le pays de délivrance du permis n'existe pas.</value>
+  </data>
+  <data name="Validation.Booking.ReturnAfterPickup" xml:space="preserve">
+    <value>La date de retour doit être postérieure à la date de départ.</value>
+  </data>
+  <data name="Validation.Booking.EndAfterStart" xml:space="preserve">
+    <value>La date de fin doit être postérieure à la date de début.</value>
+  </data>
+  <data name="Validation.Payment.SingleTarget" xml:space="preserve">
+    <value>Un paiement doit se rattacher à une seule location, réservation ou client.</value>
+  </data>
+  <data name="Validation.Renting.SecondDriverDistinct" xml:space="preserve">
+    <value>Le second conducteur doit être un client différent.</value>
+  </data>
+  <data name="Validation.Language.Unsupported" xml:space="preserve">
+    <value>La langue doit être : en, fr ou ar.</value>
+  </data>
+  <data name="Property.Name" xml:space="preserve">
+    <value>Nom</value>
+  </data>
+  <data name="Property.FullName" xml:space="preserve">
+    <value>Nom complet</value>
+  </data>
+  <data name="Property.UserName" xml:space="preserve">
+    <value>Nom d'utilisateur</value>
+  </data>
+  <data name="Property.Email" xml:space="preserve">
+    <value>E-mail</value>
+  </data>
+  <data name="Property.Password" xml:space="preserve">
+    <value>Mot de passe</value>
+  </data>
+  <data name="Property.NewPassword" xml:space="preserve">
+    <value>Nouveau mot de passe</value>
+  </data>
+  <data name="Property.CurrentPassword" xml:space="preserve">
+    <value>Mot de passe actuel</value>
+  </data>
+  <data name="Property.Role" xml:space="preserve">
+    <value>Rôle</value>
+  </data>
+  <data name="Property.Language" xml:space="preserve">
+    <value>Langue</value>
+  </data>
+  <data name="Property.Permissions" xml:space="preserve">
+    <value>Permissions</value>
+  </data>
+  <data name="Property.Features" xml:space="preserve">
+    <value>Modules</value>
+  </data>
+  <data name="Property.Feature" xml:space="preserve">
+    <value>Module</value>
+  </data>
+  <data name="Property.FirstName" xml:space="preserve">
+    <value>Prénom</value>
+  </data>
+  <data name="Property.LastName" xml:space="preserve">
+    <value>Nom</value>
+  </data>
+  <data name="Property.BirthDate" xml:space="preserve">
+    <value>Date de naissance</value>
+  </data>
+  <data name="Property.BirthPlace" xml:space="preserve">
+    <value>Lieu de naissance</value>
+  </data>
+  <data name="Property.BirthCountryId" xml:space="preserve">
+    <value>Pays de naissance</value>
+  </data>
+  <data name="Property.Cin" xml:space="preserve">
+    <value>CIN</value>
+  </data>
+  <data name="Property.PasseportNumber" xml:space="preserve">
+    <value>Numéro de passeport</value>
+  </data>
+  <data name="Property.DrivingLicenceNumber" xml:space="preserve">
+    <value>Numéro de permis</value>
+  </data>
+  <data name="Property.Matricule" xml:space="preserve">
+    <value>Matricule</value>
+  </data>
+  <data name="Property.ModelId" xml:space="preserve">
+    <value>Modèle</value>
+  </data>
+  <data name="Property.BrandId" xml:space="preserve">
+    <value>Marque</value>
+  </data>
+  <data name="Property.BranchId" xml:space="preserve">
+    <value>Succursale</value>
+  </data>
+  <data name="Property.CarId" xml:space="preserve">
+    <value>Voiture</value>
+  </data>
+  <data name="Property.ClientId" xml:space="preserve">
+    <value>Client</value>
+  </data>
+  <data name="Property.SecondClientId" xml:space="preserve">
+    <value>Second conducteur</value>
+  </data>
+  <data name="Property.AgencyId" xml:space="preserve">
+    <value>Agence</value>
+  </data>
+  <data name="Property.PlanId" xml:space="preserve">
+    <value>Formule</value>
+  </data>
+  <data name="Property.StartDate" xml:space="preserve">
+    <value>Date de début</value>
+  </data>
+  <data name="Property.EndDate" xml:space="preserve">
+    <value>Date de fin</value>
+  </data>
+  <data name="Property.FirstCirculationDate" xml:space="preserve">
+    <value>Date de mise en circulation</value>
+  </data>
+  <data name="Property.DailyRate" xml:space="preserve">
+    <value>Tarif journalier</value>
+  </data>
+  <data name="Property.Price" xml:space="preserve">
+    <value>Prix</value>
+  </data>
+  <data name="Property.Amount" xml:space="preserve">
+    <value>Montant</value>
+  </data>
+  <data name="Property.DepositAmount" xml:space="preserve">
+    <value>Caution</value>
+  </data>
+  <data name="Property.Currency" xml:space="preserve">
+    <value>Devise</value>
+  </data>
+  <data name="Property.CountryId" xml:space="preserve">
+    <value>Pays</value>
+  </data>
+  <data name="Property.PhoneNumber" xml:space="preserve">
+    <value>Numéro de téléphone</value>
+  </data>
+  <data name="Property.Address" xml:space="preserve">
+    <value>Adresse</value>
+  </data>
+  <data name="Property.Notes" xml:space="preserve">
+    <value>Notes</value>
+  </data>
+  <data name="Property.Reason" xml:space="preserve">
+    <value>Motif</value>
+  </data>
+  <data name="Property.Description" xml:space="preserve">
+    <value>Description</value>
+  </data>
+  <data name="Property.Color" xml:space="preserve">
+    <value>Couleur</value>
+  </data>
+  <data name="Property.Power" xml:space="preserve">
+    <value>Puissance</value>
+  </data>
+  <data name="Property.FuelType" xml:space="preserve">
+    <value>Carburant</value>
+  </data>
+  <data name="Property.Status" xml:space="preserve">
+    <value>Statut</value>
+  </data>
+  <data name="Property.Method" xml:space="preserve">
+    <value>Moyen de paiement</value>
+  </data>
+  <data name="Property.MaxCars" xml:space="preserve">
+    <value>Voitures max.</value>
+  </data>
+  <data name="Property.MaxClients" xml:space="preserve">
+    <value>Clients max.</value>
+  </data>
+  <data name="Property.MaxUsers" xml:space="preserve">
+    <value>Utilisateurs max.</value>
+  </data>
+  <data name="Property.CancellationWindowHours" xml:space="preserve">
+    <value>Délai d'annulation</value>
+  </data>
+  <data name="Property.ReservationExpiryHours" xml:space="preserve">
+    <value>Expiration des réservations</value>
+  </data>
+  <data name="Property.File" xml:space="preserve">
+    <value>Fichier</value>
+  </data>
+  <data name="Property.FileName" xml:space="preserve">
+    <value>Nom du fichier</value>
+  </data>
+  <data name="Property.ContentType" xml:space="preserve">
+    <value>Type de contenu</value>
+  </data>
+  <data name="Property.Latitude" xml:space="preserve">
+    <value>Latitude</value>
+  </data>
+  <data name="Property.Longitude" xml:space="preserve">
+    <value>Longitude</value>
+  </data>
+  <data name="Error.Validation.Title" xml:space="preserve">
+    <value>Une ou plusieurs erreurs de validation se sont produites.</value>
+  </data>
+  <data name="Error.NotFound.Title" xml:space="preserve">
+    <value>La ressource demandée est introuvable.</value>
+  </data>
+  <data name="Error.Unauthorized.Title" xml:space="preserve">
+    <value>Non authentifié</value>
+  </data>
+  <data name="Error.Forbidden.Title" xml:space="preserve">
+    <value>Accès refusé</value>
+  </data>
+  <data name="Error.SubscriptionRequired.Title" xml:space="preserve">
+    <value>Un abonnement actif est requis.</value>
+  </data>
+  <data name="Error.PlanLimit.Title" xml:space="preserve">
+    <value>Limite de la formule d'abonnement atteinte.</value>
+  </data>
+  <data name="Error.BookingConflict.Title" xml:space="preserve">
+    <value>La voiture n'est pas disponible pour la période choisie.</value>
+  </data>
+  <data name="Error.Concurrency.Title" xml:space="preserve">
+    <value>L'enregistrement a été modifié par un autre utilisateur.</value>
+  </data>
+  <data name="Error.Concurrency.Detail" xml:space="preserve">
+    <value>Cet enregistrement a été modifié ou supprimé par un autre utilisateur depuis son chargement. Rechargez la page puis réessayez.</value>
+  </data>
+  <data name="Error.Unknown.Title" xml:space="preserve">
+    <value>Une erreur inattendue s'est produite.</value>
+  </data>
+  <data name="Language.Name.en" xml:space="preserve">
+    <value>English</value>
+  </data>
+  <data name="Language.Name.fr" xml:space="preserve">
+    <value>Français</value>
+  </data>
+  <data name="Language.Name.ar" xml:space="preserve">
+    <value>العربية</value>
+  </data>
+  <data name="Identity.Language" xml:space="preserve">
+    <value>Langue</value>
+  </data>
+  <data name="Identity.Field.Email" xml:space="preserve">
+    <value>E-mail</value>
+  </data>
+  <data name="Identity.Field.Password" xml:space="preserve">
+    <value>Mot de passe</value>
+  </data>
+  <data name="Identity.Field.NewPassword" xml:space="preserve">
+    <value>Nouveau mot de passe</value>
+  </data>
+  <data name="Identity.Field.CurrentPassword" xml:space="preserve">
+    <value>Mot de passe actuel</value>
+  </data>
+  <data name="Identity.Field.ConfirmPassword" xml:space="preserve">
+    <value>Confirmer le mot de passe</value>
+  </data>
+  <data name="Identity.Field.ConfirmNewPassword" xml:space="preserve">
+    <value>Confirmer le nouveau mot de passe</value>
+  </data>
+  <data name="Identity.Field.FullName" xml:space="preserve">
+    <value>Nom complet</value>
+  </data>
+  <data name="Identity.Field.PhoneNumber" xml:space="preserve">
+    <value>Numéro de téléphone</value>
+  </data>
+  <data name="Identity.Field.RememberMe" xml:space="preserve">
+    <value>Se souvenir de moi</value>
+  </data>
+  <data name="Identity.Login.Title" xml:space="preserve">
+    <value>Connexion</value>
+  </data>
+  <data name="Identity.Login.Subtitle" xml:space="preserve">
+    <value>Connectez-vous à votre compte</value>
+  </data>
+  <data name="Identity.Login.Submit" xml:space="preserve">
+    <value>Se connecter</value>
+  </data>
+  <data name="Identity.Login.ForgotPassword" xml:space="preserve">
+    <value>Mot de passe oublié ?</value>
+  </data>
+  <data name="Identity.Login.NoAccount" xml:space="preserve">
+    <value>Vous n'avez pas de compte ?</value>
+  </data>
+  <data name="Identity.Login.CreateOne" xml:space="preserve">
+    <value>Créez-en un</value>
+  </data>
+  <data name="Identity.Login.LockedOut" xml:space="preserve">
+    <value>Ce compte est verrouillé. Veuillez réessayer plus tard.</value>
+  </data>
+  <data name="Identity.Login.InvalidCredentials" xml:space="preserve">
+    <value>E-mail ou mot de passe incorrect.</value>
+  </data>
+  <data name="Identity.Register.Title" xml:space="preserve">
+    <value>Créer un compte client</value>
+  </data>
+  <data name="Identity.Register.Subtitle" xml:space="preserve">
+    <value>Créez un compte pour parcourir les voitures disponibles et réserver votre location</value>
+  </data>
+  <data name="Identity.Register.Submit" xml:space="preserve">
+    <value>Créer le compte</value>
+  </data>
+  <data name="Identity.Register.HaveAccount" xml:space="preserve">
+    <value>Vous avez déjà un compte ?</value>
+  </data>
+  <data name="Identity.Register.SignIn" xml:space="preserve">
+    <value>Connectez-vous</value>
+  </data>
+  <data name="Identity.Forgot.Title" xml:space="preserve">
+    <value>Mot de passe oublié</value>
+  </data>
+  <data name="Identity.Forgot.Subtitle" xml:space="preserve">
+    <value>Saisissez votre e-mail et nous vous enverrons un lien de réinitialisation</value>
+  </data>
+  <data name="Identity.Forgot.Submit" xml:space="preserve">
+    <value>Envoyer le lien</value>
+  </data>
+  <data name="Identity.BackToSignIn" xml:space="preserve">
+    <value>Retour à la connexion</value>
+  </data>
+  <data name="Identity.ForgotConfirm.Title" xml:space="preserve">
+    <value>Vérifiez votre e-mail</value>
+  </data>
+  <data name="Identity.ForgotConfirm.Subtitle" xml:space="preserve">
+    <value>Réinitialisation demandée</value>
+  </data>
+  <data name="Identity.ForgotConfirm.Message" xml:space="preserve">
+    <value>Si un compte existe pour cette adresse e-mail, un lien de réinitialisation a été envoyé. Consultez votre boîte de réception.</value>
+  </data>
+  <data name="Identity.ForgotConfirm.DevOnly" xml:space="preserve">
+    <value>Développement uniquement</value>
+  </data>
+  <data name="Identity.ForgotConfirm.DevHint" xml:space="preserve">
+    <value>aucun serveur d'e-mail n'est configuré, utilisez ce lien :</value>
+  </data>
+  <data name="Identity.ForgotConfirm.DevLink" xml:space="preserve">
+    <value>Réinitialiser le mot de passe</value>
+  </data>
+  <data name="Identity.Logout.Title" xml:space="preserve">
+    <value>Déconnexion</value>
+  </data>
+  <data name="Identity.Logout.Subtitle" xml:space="preserve">
+    <value>Vous avez été déconnecté</value>
+  </data>
+  <data name="Identity.Logout.SignInAgain" xml:space="preserve">
+    <value>Se reconnecter</value>
+  </data>
+  <data name="Identity.Reset.Title" xml:space="preserve">
+    <value>Réinitialiser le mot de passe</value>
+  </data>
+  <data name="Identity.Reset.Subtitle" xml:space="preserve">
+    <value>Choisissez un nouveau mot de passe</value>
+  </data>
+  <data name="Identity.Reset.Submit" xml:space="preserve">
+    <value>Réinitialiser</value>
+  </data>
+  <data name="Identity.ResetConfirm.Title" xml:space="preserve">
+    <value>Mot de passe réinitialisé</value>
+  </data>
+  <data name="Identity.ResetConfirm.Subtitle" xml:space="preserve">
+    <value>Réinitialisation terminée</value>
+  </data>
+  <data name="Identity.ResetConfirm.Message" xml:space="preserve">
+    <value>Votre mot de passe a été réinitialisé. Vous pouvez maintenant vous connecter avec le nouveau.</value>
+  </data>
+  <data name="Identity.ResetConfirm.GoToSignIn" xml:space="preserve">
+    <value>Aller à la connexion</value>
+  </data>
+  <data name="Identity.Manage.Title" xml:space="preserve">
+    <value>Paramètres du compte</value>
+  </data>
+  <data name="Identity.Manage.BackToApp" xml:space="preserve">
+    <value>Retour à l'application</value>
+  </data>
+  <data name="Identity.Manage.Profile" xml:space="preserve">
+    <value>Profil</value>
+  </data>
+  <data name="Identity.Manage.Password" xml:space="preserve">
+    <value>Mot de passe</value>
+  </data>
+  <data name="Identity.Manage.ChangePasswordTitle" xml:space="preserve">
+    <value>Changer le mot de passe</value>
+  </data>
+  <data name="Identity.Manage.UpdatePassword" xml:space="preserve">
+    <value>Mettre à jour</value>
+  </data>
+  <data name="Identity.Manage.PasswordChanged" xml:space="preserve">
+    <value>Votre mot de passe a été modifié.</value>
+  </data>
+  <data name="Identity.Manage.ProfileUpdated" xml:space="preserve">
+    <value>Votre profil a été mis à jour.</value>
+  </data>
+  <data name="Identity.Manage.EmailReadonlyHint" xml:space="preserve">
+    <value>Votre e-mail est votre identifiant de connexion et ne peut pas être modifié ici.</value>
+  </data>
+  <data name="Identity.Manage.Save" xml:space="preserve">
+    <value>Enregistrer</value>
+  </data>
+  <data name="Identity.Validation.Required" xml:space="preserve">
+    <value>Le champ {0} est obligatoire.</value>
+  </data>
+  <data name="Identity.Validation.Email" xml:space="preserve">
+    <value>Le champ {0} n'est pas une adresse e-mail valide.</value>
+  </data>
+  <data name="Identity.Validation.Phone" xml:space="preserve">
+    <value>Le champ {0} n'est pas un numéro de téléphone valide.</value>
+  </data>
+  <data name="Identity.Validation.MaxLength" xml:space="preserve">
+    <value>Le champ {0} ne doit pas dépasser {1} caractères.</value>
+  </data>
+  <data name="Identity.Validation.PasswordLength" xml:space="preserve">
+    <value>Le champ {0} doit comporter entre {2} et {1} caractères.</value>
+  </data>
+  <data name="Identity.Validation.PasswordMismatch" xml:space="preserve">
+    <value>Le mot de passe et sa confirmation ne correspondent pas.</value>
+  </data>
+  <data name="Identity.Validation.NewPasswordMismatch" xml:space="preserve">
+    <value>Le nouveau mot de passe et sa confirmation ne correspondent pas.</value>
+  </data>
+  <data name="Identity.Error.DefaultError" xml:space="preserve">
+    <value>Une erreur inconnue s'est produite.</value>
+  </data>
+  <data name="Identity.Error.ConcurrencyFailure" xml:space="preserve">
+    <value>Conflit de concurrence : l'objet a été modifié.</value>
+  </data>
+  <data name="Identity.Error.PasswordMismatch" xml:space="preserve">
+    <value>Mot de passe incorrect.</value>
+  </data>
+  <data name="Identity.Error.InvalidToken" xml:space="preserve">
+    <value>Lien invalide ou expiré.</value>
+  </data>
+  <data name="Identity.Error.DuplicateUserName" xml:space="preserve">
+    <value>Le nom d'utilisateur « {0} » est déjà pris.</value>
+  </data>
+  <data name="Identity.Error.DuplicateEmail" xml:space="preserve">
+    <value>L'e-mail « {0} » est déjà utilisé.</value>
+  </data>
+  <data name="Identity.Error.InvalidUserName" xml:space="preserve">
+    <value>Le nom d'utilisateur « {0} » est invalide.</value>
+  </data>
+  <data name="Identity.Error.InvalidEmail" xml:space="preserve">
+    <value>L'e-mail « {0} » est invalide.</value>
+  </data>
+  <data name="Identity.Error.PasswordTooShort" xml:space="preserve">
+    <value>Le mot de passe doit comporter au moins {0} caractères.</value>
+  </data>
+  <data name="Identity.Error.PasswordRequiresNonAlphanumeric" xml:space="preserve">
+    <value>Le mot de passe doit contenir au moins un caractère non alphanumérique.</value>
+  </data>
+  <data name="Identity.Error.PasswordRequiresDigit" xml:space="preserve">
+    <value>Le mot de passe doit contenir au moins un chiffre (« 0 » à « 9 »).</value>
+  </data>
+  <data name="Identity.Error.PasswordRequiresLower" xml:space="preserve">
+    <value>Le mot de passe doit contenir au moins une minuscule (« a » à « z »).</value>
+  </data>
+  <data name="Identity.Error.PasswordRequiresUpper" xml:space="preserve">
+    <value>Le mot de passe doit contenir au moins une majuscule (« A » à « Z »).</value>
+  </data>
+  <data name="Identity.Error.PasswordRequiresUniqueChars" xml:space="preserve">
+    <value>Le mot de passe doit utiliser au moins {0} caractères différents.</value>
+  </data>
+  <data name="Identity.Error.UserAlreadyHasPassword" xml:space="preserve">
+    <value>L'utilisateur possède déjà un mot de passe.</value>
+  </data>
+  <data name="Identity.Error.UserLockoutNotEnabled" xml:space="preserve">
+    <value>Le verrouillage n'est pas activé pour cet utilisateur.</value>
+  </data>
+  <data name="Error.Page.Title" xml:space="preserve">
+    <value>Erreur</value>
+  </data>
+  <data name="Error.Page.Heading" xml:space="preserve">
+    <value>Une erreur s'est produite lors du traitement de votre demande.</value>
+  </data>
+</root>

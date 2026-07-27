@@ -1,5 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { MarketplaceClient, MyReservationDto, ReservationStatus } from '../web-api-client';
+import { TranslocoService } from '@jsverse/transloco';
 
 @Component({
   selector: 'app-my-reservations',
@@ -7,19 +8,22 @@ import { MarketplaceClient, MyReservationDto, ReservationStatus } from '../web-a
   styleUrls: ['./my-reservations.component.css']
 })
 export class MyReservationsComponent implements OnInit {
+  // Confirm/prompt dialogs and error banners are plain strings, so they are
+  // translated imperatively rather than through the template pipe.
+  private readonly transloco = inject(TranslocoService);
   reservations: MyReservationDto[] = [];
   loading = true;
   error = '';
 
   ReservationStatus = ReservationStatus;
-  private labels: { [key: number]: string } = {
-    [ReservationStatus.PendingConfirmation]: 'Pending',
-    [ReservationStatus.Confirmed]: 'Confirmed',
-    [ReservationStatus.Cancelled]: 'Cancelled',
-    [ReservationStatus.Expired]: 'Expired',
-    [ReservationStatus.Rejected]: 'Rejected',
-    [ReservationStatus.Paid]: 'Paid',
-    [ReservationStatus.Converted]: 'Converted'
+  private labelKeys: { [key: number]: string } = {
+    [ReservationStatus.PendingConfirmation]: 'enums.reservationStatus.pendingConfirmation',
+    [ReservationStatus.Confirmed]: 'enums.reservationStatus.confirmed',
+    [ReservationStatus.Cancelled]: 'enums.reservationStatus.cancelled',
+    [ReservationStatus.Expired]: 'enums.reservationStatus.expired',
+    [ReservationStatus.Rejected]: 'enums.reservationStatus.rejected',
+    [ReservationStatus.Paid]: 'enums.reservationStatus.paid',
+    [ReservationStatus.Converted]: 'enums.reservationStatus.converted'
   };
 
   constructor(private client: MarketplaceClient) { }
@@ -32,12 +36,13 @@ export class MyReservationsComponent implements OnInit {
     this.loading = true;
     this.client.getMyReservations().subscribe({
       next: list => { this.reservations = list || []; this.loading = false; },
-      error: () => { this.error = 'Could not load your reservations.'; this.loading = false; }
+      error: () => { this.error = this.transloco.translate('marketplace.loadFailed'); this.loading = false; }
     });
   }
 
-  statusLabel(status?: ReservationStatus): string {
-    return status === undefined || status === null ? '' : this.labels[status] ?? '';
+  // Returns a transloco key; the template pipes it.
+  statusLabelKey(status?: ReservationStatus): string {
+    return status === undefined || status === null ? '' : this.labelKeys[status] ?? '';
   }
 
   statusClass(status?: ReservationStatus): string {
@@ -59,10 +64,10 @@ export class MyReservationsComponent implements OnInit {
 
   cancel(r: MyReservationDto) {
     if (!r.id) return;
-    if (!confirm('Cancel this reservation request?')) return;
+    if (!confirm(this.transloco.translate('marketplace.confirmCancel'))) return;
     this.client.cancelMyReservation(r.id).subscribe({
       next: () => this.load(),
-      error: () => this.error = 'Could not cancel the reservation.'
+      error: () => this.error = this.transloco.translate('marketplace.cancelFailed')
     });
   }
 }

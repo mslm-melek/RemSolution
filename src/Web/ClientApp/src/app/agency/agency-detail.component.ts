@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import {
@@ -9,6 +9,7 @@ import {
   SubscriptionPlansClient, SubscriptionPlanDto, SubscriptionStatus
 } from '../web-api-client';
 import { fromDateInput, extractValidationErrors } from '../shared/form-utils';
+import { TranslocoService } from '@jsverse/transloco';
 
 @Component({
   selector: 'app-agency-detail',
@@ -16,6 +17,9 @@ import { fromDateInput, extractValidationErrors } from '../shared/form-utils';
   styleUrls: ['./agency-detail.component.css']
 })
 export class AgencyDetailComponent implements OnInit {
+  // Confirm/prompt dialogs and error banners are plain strings, so they are
+  // translated imperatively rather than through the template pipe.
+  private readonly transloco = inject(TranslocoService);
   agencyId!: number;
   agency?: AgencyDto;
 
@@ -81,8 +85,8 @@ export class AgencyDetailComponent implements OnInit {
   toggleActive(user: AgencyUserDto) {
     if (!user.id) return;
     const activate = !!user.isLockedOut;
-    const verb = activate ? 'Reactivate' : 'Deactivate';
-    if (!confirm(`${verb} user "${user.userName}"?`)) return;
+    const verb = this.transloco.translate(activate ? 'common.reactivate' : 'common.deactivate');
+    if (!confirm(this.transloco.translate('agency.confirmToggleUser', { verb, user: user.userName }))) return;
 
     const command = new SetAgencyUserActiveCommand({ userId: user.id, isActive: activate });
     this.usersClient.setAgencyUserActive(user.id, command).subscribe({
@@ -145,11 +149,13 @@ export class AgencyDetailComponent implements OnInit {
     });
   }
 
-  statusLabel(status?: SubscriptionStatus): string {
+  // Returns a transloco key; the template pipes it so a language switch
+  // re-renders the value.
+  statusLabelKey(status?: SubscriptionStatus): string {
     switch (status) {
-      case SubscriptionStatus.Active: return 'Active';
-      case SubscriptionStatus.Suspended: return 'Suspended';
-      case SubscriptionStatus.Expired: return 'Expired';
+      case SubscriptionStatus.Active: return 'enums.subscriptionStatus.active';
+      case SubscriptionStatus.Suspended: return 'enums.subscriptionStatus.suspended';
+      case SubscriptionStatus.Expired: return 'enums.subscriptionStatus.expired';
       default: return '';
     }
   }

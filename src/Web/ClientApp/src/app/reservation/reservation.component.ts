@@ -1,10 +1,11 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { PageEvent } from '@angular/material/paginator';
 import { Router } from '@angular/router';
 import {
   ReservationsClient, ReservationDto, ReservationStatus, RejectReservationCommand,
   ConvertReservationCommand
 } from '../web-api-client';
+import { TranslocoService } from '@jsverse/transloco';
 
 @Component({
   selector: 'app-reservation',
@@ -12,6 +13,9 @@ import {
   styleUrls: ['./reservation.component.css']
 })
 export class ReservationComponent implements OnInit {
+  // Confirm/prompt dialogs and error banners are plain strings, so they are
+  // translated imperatively rather than through the template pipe.
+  private readonly transloco = inject(TranslocoService);
   reservations: ReservationDto[] = [];
   displayedColumns: string[] = ['car', 'client', 'period', 'paid', 'status', 'expires', 'actions'];
 
@@ -23,13 +27,13 @@ export class ReservationComponent implements OnInit {
 
   ReservationStatus = ReservationStatus;
   statuses = [
-    { value: ReservationStatus.PendingConfirmation, label: 'Pending' },
-    { value: ReservationStatus.Confirmed, label: 'Confirmed' },
-    { value: ReservationStatus.Paid, label: 'Paid' },
-    { value: ReservationStatus.Converted, label: 'Converted' },
-    { value: ReservationStatus.Rejected, label: 'Rejected' },
-    { value: ReservationStatus.Cancelled, label: 'Cancelled' },
-    { value: ReservationStatus.Expired, label: 'Expired' }
+    { value: ReservationStatus.PendingConfirmation, labelKey: 'enums.reservationStatus.pendingConfirmation' },
+    { value: ReservationStatus.Confirmed, labelKey: 'enums.reservationStatus.confirmed' },
+    { value: ReservationStatus.Paid, labelKey: 'enums.reservationStatus.paid' },
+    { value: ReservationStatus.Converted, labelKey: 'enums.reservationStatus.converted' },
+    { value: ReservationStatus.Rejected, labelKey: 'enums.reservationStatus.rejected' },
+    { value: ReservationStatus.Cancelled, labelKey: 'enums.reservationStatus.cancelled' },
+    { value: ReservationStatus.Expired, labelKey: 'enums.reservationStatus.expired' }
   ];
 
   constructor(private client: ReservationsClient, private router: Router) { }
@@ -59,8 +63,9 @@ export class ReservationComponent implements OnInit {
     this.load();
   }
 
-  statusLabel(status?: ReservationStatus): string {
-    return this.statuses.find(s => s.value === status)?.label ?? '';
+  // Returns a transloco key; the template pipes it.
+  statusLabelKey(status?: ReservationStatus): string {
+    return this.statuses.find(s => s.value === status)?.labelKey ?? '';
   }
 
   statusClass(status?: ReservationStatus): string {
@@ -103,7 +108,7 @@ export class ReservationComponent implements OnInit {
 
   reject(r: ReservationDto) {
     if (!r.id) return;
-    const reason = prompt('Reason for rejecting this reservation (shown to the client):');
+    const reason = prompt(this.transloco.translate('reservation.promptRejectReason'));
     if (!reason) return;
     this.client.rejectReservation(r.id, new RejectReservationCommand({ id: r.id, reason })).subscribe({
       next: () => this.load(),
@@ -113,9 +118,9 @@ export class ReservationComponent implements OnInit {
 
   convert(r: ReservationDto) {
     if (!r.id) return;
-    if (!confirm('Convert this reservation into a renting?')) return;
-    const cin = prompt('Driver CIN (optional — used to match an existing client):') || undefined;
-    const passeportNumber = cin ? undefined : (prompt('Driver passport number (optional):') || undefined);
+    if (!confirm(this.transloco.translate('reservation.confirmConvert'))) return;
+    const cin = prompt(this.transloco.translate('reservation.promptDriverCin')) || undefined;
+    const passeportNumber = cin ? undefined : (prompt(this.transloco.translate('reservation.promptDriverPassport')) || undefined);
     const command = new ConvertReservationCommand({ id: r.id, cin, passeportNumber });
     this.client.convertReservation(r.id, command).subscribe({
       next: rentingId => this.router.navigate(['/renting', rentingId]),
@@ -125,8 +130,8 @@ export class ReservationComponent implements OnInit {
 
   cancel(r: ReservationDto) {
     if (!r.id) return;
-    const reason = prompt('Reason for cancelling (optional):') ?? undefined;
-    if (reason === undefined && !confirm('Cancel this reservation?')) return;
+    const reason = prompt(this.transloco.translate('reservation.promptCancelReason')) ?? undefined;
+    if (reason === undefined && !confirm(this.transloco.translate('reservation.confirmCancel'))) return;
     this.client.cancelReservation(r.id, reason).subscribe({
       next: () => this.load(),
       error: err => this.fail(err)
@@ -134,7 +139,7 @@ export class ReservationComponent implements OnInit {
   }
 
   private fail(err: any) {
-    this.error = err?.response ? this.extract(err.response) : 'The action could not be completed.';
+    this.error = err?.response ? this.extract(err.response) : this.transloco.translate('common.actionFailed');
     console.error(err);
     setTimeout(() => this.error = '', 6000);
   }

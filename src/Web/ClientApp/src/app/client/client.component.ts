@@ -1,6 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { PageEvent } from '@angular/material/paginator';
 import { ClientsClient, ClientDto } from '../web-api-client';
+import { TranslocoService } from '@jsverse/transloco';
 
 @Component({
   selector: 'app-client',
@@ -8,6 +9,9 @@ import { ClientsClient, ClientDto } from '../web-api-client';
   styleUrls: ['./client.component.css']
 })
 export class ClientComponent implements OnInit {
+  // Confirm/prompt dialogs and error banners are plain strings, so they are
+  // translated imperatively rather than through the template pipe.
+  private readonly transloco = inject(TranslocoService);
   clients: ClientDto[] = [];
   displayedColumns: string[] = ['name', 'birthDate', 'cin', 'documents', 'actions'];
 
@@ -51,7 +55,8 @@ export class ClientComponent implements OnInit {
   deleteClient(client: ClientDto) {
     if (!client.id) return;
 
-    if (confirm(`Delete client "${client.firstName} ${client.lastName}"? Their uploaded documents will also be removed.`)) {
+    const name = `${client.firstName} ${client.lastName}`;
+    if (confirm(this.transloco.translate('client.confirmDelete', { name }))) {
       this.client.deleteClient(client.id).subscribe({
         next: () => this.load(),
         error: err => console.error(err)

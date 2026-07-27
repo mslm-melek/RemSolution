@@ -120,7 +120,7 @@ namespace RemSolution.Application.Features.Reservation.Commands.UpdateReservatio
 {
     public class UpdateReservationCommandValidator : AbstractValidator<UpdateReservationCommand>
     {
-        public UpdateReservationCommandValidator()
+        public UpdateReservationCommandValidator(ILocalizer localizer)
         {
             RuleFor(v => v.Id).GreaterThan(0);
             RuleFor(v => v.CarId).GreaterThan(0);
@@ -129,7 +129,7 @@ namespace RemSolution.Application.Features.Reservation.Commands.UpdateReservatio
             RuleFor(v => v.EndDate)
                 .NotEmpty()
                 .GreaterThan(v => v.StartDate)
-                    .WithMessage("The end date must be after the start date.");
+                    .WithMessage(_ => localizer["Validation.Booking.EndAfterStart"]);
             RuleFor(v => v.DepositAmount)
                 .GreaterThanOrEqualTo(0).When(v => v.DepositAmount.HasValue);
             RuleFor(v => v.Notes).MaximumLength(1000);

@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
@@ -7,6 +7,7 @@ import {
   BranchesClient, BranchDto, CarImageDto, ImageProcessingStatus, FileParameter
 } from '../web-api-client';
 import { toDateInput, fromDateInput, extractValidationErrors, isConcurrencyConflict } from '../shared/form-utils';
+import { TranslocoService } from '@jsverse/transloco';
 
 @Component({
   selector: 'app-car-form',
@@ -14,6 +15,9 @@ import { toDateInput, fromDateInput, extractValidationErrors, isConcurrencyConfl
   styleUrls: ['./car-form.component.css']
 })
 export class CarFormComponent implements OnInit, OnDestroy {
+  // Confirm/prompt dialogs and error banners are plain strings, so they are
+  // translated imperatively rather than through the template pipe.
+  private readonly transloco = inject(TranslocoService);
   form: FormGroup;
   models: ModelCarDto[] = [];
   branches: BranchDto[] = [];
@@ -38,14 +42,14 @@ export class CarFormComponent implements OnInit, OnDestroy {
   previewUrl?: string;
 
   fuelTypes = [
-    { value: FuelType.Gasoline, label: 'Gasoline' },
-    { value: FuelType.Diesel, label: 'Diesel' }
+    { value: FuelType.Gasoline, labelKey: 'enums.fuelType.gasoline' },
+    { value: FuelType.Diesel, labelKey: 'enums.fuelType.diesel' }
   ];
 
   statuses = [
-    { value: CarStatus.Active, label: 'Active' },
-    { value: CarStatus.Maintenance, label: 'Maintenance' },
-    { value: CarStatus.Inactive, label: 'Inactive' }
+    { value: CarStatus.Active, labelKey: 'enums.carStatus.active' },
+    { value: CarStatus.Maintenance, labelKey: 'enums.carStatus.maintenance' },
+    { value: CarStatus.Inactive, labelKey: 'enums.carStatus.inactive' }
   ];
 
   constructor(
@@ -245,8 +249,7 @@ export class CarFormComponent implements OnInit, OnDestroy {
     this.saving = false;
 
     if (isConcurrencyConflict(err)) {
-      this.errorMessage =
-        'This car was reloaded by another user since you opened it. Reload the page to get the latest version, then re-apply your changes.';
+      this.errorMessage = this.transloco.translate('car.concurrency');
       return;
     }
 
@@ -254,7 +257,7 @@ export class CarFormComponent implements OnInit, OnDestroy {
     if (validationErrors) {
       this.errorMessage = validationErrors;
     } else {
-      this.errorMessage = 'An unexpected error occurred. Please try again.';
+      this.errorMessage = this.transloco.translate('common.unexpectedError');
       console.error(err);
     }
   }

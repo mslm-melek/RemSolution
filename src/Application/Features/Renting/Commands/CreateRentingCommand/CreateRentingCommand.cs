@@ -98,19 +98,19 @@ namespace RemSolution.Application.Features.Renting.Commands.CreateRentingCommand
 {
     public class CreateRentingCommandValidator : AbstractValidator<CreateRentingCommand>
     {
-        public CreateRentingCommandValidator()
+        public CreateRentingCommandValidator(ILocalizer localizer)
         {
             RuleFor(v => v.CarId).GreaterThan(0);
             RuleFor(v => v.ClientId).GreaterThan(0);
             RuleFor(v => v.SecondClientId)
                 .GreaterThan(0).When(v => v.SecondClientId.HasValue)
                 .NotEqual(v => v.ClientId).When(v => v.SecondClientId.HasValue)
-                    .WithMessage("The second driver must be a different client.");
+                    .WithMessage(_ => localizer["Validation.Renting.SecondDriverDistinct"]);
             RuleFor(v => v.StartDate).NotEmpty();
             RuleFor(v => v.EndDate)
                 .NotEmpty()
                 .GreaterThan(v => v.StartDate)
-                    .WithMessage("The end date must be after the start date.");
+                    .WithMessage(_ => localizer["Validation.Booking.EndAfterStart"]);
             RuleFor(v => v.StartMileage)
                 .GreaterThanOrEqualTo(0).When(v => v.StartMileage.HasValue);
             RuleFor(v => v.Notes).MaximumLength(1000);

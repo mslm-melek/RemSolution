@@ -7,5 +7,9 @@ namespace RemSolution.Application.Features.Users.DTOs
         public string UserName { get; init; } = string.Empty;
         public string? FullName { get; init; }
         public string? Email { get; init; }
+
+        // Chosen UI language ("en"/"fr"/"ar"), or null when the user has never
+        // picked one and the request falls back to cookie / Accept-Language.
+        public string? PreferredLanguage { get; init; }
     }
 }

@@ -1,10 +1,12 @@
 using RemSolution.Domain.Constants;
 
+using RemSolution.Application.Common.Interfaces;
+
 namespace RemSolution.Application.Features.Users.Commands.CreateAgencyUserCommand
 {
     public class CreateAgencyUserCommandValidator : AbstractValidator<CreateAgencyUserCommand>
     {
-        public CreateAgencyUserCommandValidator()
+        public CreateAgencyUserCommandValidator(ILocalizer localizer)
         {
             RuleFor(v => v.UserName)
                 .NotEmpty()
@@ -18,7 +20,7 @@ namespace RemSolution.Application.Features.Users.Commands.CreateAgencyUserComman
 
             RuleForEach(v => v.Permissions)
                 .Must(p => Permissions.All.Contains(p))
-                .WithMessage("'{PropertyValue}' is not a known permission.");
+                .WithMessage(_ => localizer["Validation.Permission.Unknown"]);
         }
     }
 }

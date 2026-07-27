@@ -1,4 +1,5 @@
 ﻿using RemSolution.Application.Common.Exceptions;
+using RemSolution.Application.Common.Interfaces;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -9,8 +10,14 @@ public class CustomExceptionHandler : IExceptionHandler
 {
     private readonly Dictionary<Type, Func<HttpContext, Exception, Task>> _exceptionHandlers;
 
-    public CustomExceptionHandler()
+    // Resolved against the request culture, which UseRequestLocalization has
+    // already established by the time an exception reaches here.
+    private readonly ILocalizer _localizer;
+
+    public CustomExceptionHandler(ILocalizer localizer)
     {
+        _localizer = localizer;
+
         // Register known exception types and handlers.
         _exceptionHandlers = new()
             {
@@ -48,6 +55,9 @@ public class CustomExceptionHandler : IExceptionHandler
         await httpContext.Response.WriteAsJsonAsync(new ValidationProblemDetails(exception.Errors)
         {
             Status = StatusCodes.Status400BadRequest,
+            // The per-field messages already come back localized; without this
+            // the envelope's default title would stay English around them.
+            Title = _localizer["Error.Validation.Title"],
             Type = "https://tools.ietf.org/html/rfc7231#section-6.5.1"
         });
     }
@@ -62,7 +72,7 @@ public class CustomExceptionHandler : IExceptionHandler
         {
             Status = StatusCodes.Status404NotFound,
             Type = "https://tools.ietf.org/html/rfc7231#section-6.5.4",
-            Title = "The specified resource was not found.",
+            Title = _localizer["Error.NotFound.Title"],
             Detail = exception.Message
         });
     }
@@ -74,7 +84,7 @@ public class CustomExceptionHandler : IExceptionHandler
         await httpContext.Response.WriteAsJsonAsync(new ProblemDetails
         {
             Status = StatusCodes.Status401Unauthorized,
-            Title = "Unauthorized",
+            Title = _localizer["Error.Unauthorized.Title"],
             Type = "https://tools.ietf.org/html/rfc7235#section-3.1"
         });
     }
@@ -86,7 +96,7 @@ public class CustomExceptionHandler : IExceptionHandler
         await httpContext.Response.WriteAsJsonAsync(new ProblemDetails
         {
             Status = StatusCodes.Status403Forbidden,
-            Title = "Forbidden",
+            Title = _localizer["Error.Forbidden.Title"],
             Type = "https://tools.ietf.org/html/rfc7231#section-6.5.3"
         });
     }
@@ -97,7 +107,7 @@ public class CustomExceptionHandler : IExceptionHandler
         await httpContext.Response.WriteAsJsonAsync(new ProblemDetails
         {
             Status = StatusCodes.Status402PaymentRequired,
-            Title = "An active subscription is required.",
+            Title = _localizer["Error.SubscriptionRequired.Title"],
             Detail = ex.Message,
             Type = "https://tools.ietf.org/html/rfc7231#section-6.5.2"
         });
@@ -110,7 +120,7 @@ public class CustomExceptionHandler : IExceptionHandler
         await httpContext.Response.WriteAsJsonAsync(new ProblemDetails
         {
             Status = StatusCodes.Status409Conflict,
-            Title = "Subscription plan limit reached.",
+            Title = _localizer["Error.PlanLimit.Title"],
             Detail = ex.Message,
             Type = "https://tools.ietf.org/html/rfc7231#section-6.5.8"
         });
@@ -123,7 +133,7 @@ public class CustomExceptionHandler : IExceptionHandler
         var problemDetails = new ProblemDetails
         {
             Status = StatusCodes.Status409Conflict,
-            Title = "The car is not available for the selected period.",
+            Title = _localizer["Error.BookingConflict.Title"],
             Detail = ex.Message,
             Type = "https://tools.ietf.org/html/rfc7231#section-6.5.8"
         };
@@ -141,8 +151,8 @@ public class CustomExceptionHandler : IExceptionHandler
         var problemDetails = new ProblemDetails
         {
             Status = StatusCodes.Status409Conflict,
-            Title = "The record was changed by another user.",
-            Detail = "This record was modified or deleted by another user since you loaded it. Reload and try again.",
+            Title = _localizer["Error.Concurrency.Title"],
+            Detail = _localizer["Error.Concurrency.Detail"],
             Type = "https://tools.ietf.org/html/rfc7231#section-6.5.8"
         };
         // Machine-readable discriminator: 409 is also used for plan limits, so
@@ -160,7 +170,7 @@ public class CustomExceptionHandler : IExceptionHandler
         await httpContext.Response.WriteAsJsonAsync(new ProblemDetails
         {
             Status = StatusCodes.Status500InternalServerError,
-            Title = "An unexpected error occurred.",
+            Title = _localizer["Error.Unknown.Title"],
            // Detail = ex.Message, 
             Type = "https://tools.ietf.org/html/rfc7231#section-6.6.1"
         });

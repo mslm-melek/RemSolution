@@ -5,27 +5,29 @@
 
 export interface FeatureMeta {
   key: string;
-  label: string;
+  /** Transloco key under `features.*` — resolved in the template, not here. */
+  labelKey: string;
 }
 
-// Every feature a plan can include (full list).
+// Every feature a plan can include (full list). The display name lives in the
+// translation files; only the server-matching key lives here.
 export const FEATURES: FeatureMeta[] = [
-  { key: 'Cars', label: 'Cars' },
-  { key: 'Clients', label: 'Clients' },
-  { key: 'Branches', label: 'Branches' },
-  { key: 'Rentings', label: 'Rentings' },
-  { key: 'Reservations', label: 'Reservations' },
-  { key: 'Expenses', label: 'Expenses' },
-  { key: 'ExtraServices', label: 'Extra Services' },
-  { key: 'Payments', label: 'Payments' },
-  { key: 'Contracts', label: 'Contracts + e-signature' },
-  { key: 'Factures', label: 'Invoices' },
-  { key: 'Credits', label: 'Credits' },
-  { key: 'Dashboard', label: 'Dashboard' },
-  { key: 'Chat', label: 'Chat' },
-  { key: 'OnlineReservations', label: 'Online reservations' },
-  { key: 'OnlinePayment', label: 'Online payment' }
-];
+  'Cars',
+  'Clients',
+  'Branches',
+  'Rentings',
+  'Reservations',
+  'Expenses',
+  'ExtraServices',
+  'Payments',
+  'Contracts',
+  'Factures',
+  'Credits',
+  'Dashboard',
+  'Chat',
+  'OnlineReservations',
+  'OnlinePayment'
+].map(key => ({ key, labelKey: `features.${key}` }));
 
 // Permissions grouped by their feature (empty for capability-only features).
 export const PERMISSIONS_BY_FEATURE: Record<string, string[]> = {
@@ -46,6 +48,6 @@ export const PERMISSIONS_BY_FEATURE: Record<string, string[]> = {
   OnlinePayment: []
 };
 
-export function featureLabel(key: string): string {
-  return FEATURES.find(f => f.key === key)?.label ?? key;
+export function featureLabelKey(key: string): string {
+  return `features.${key}`;
 }

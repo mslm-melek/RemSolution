@@ -1,8 +1,8 @@
-<div class="user-card mat-elevation-z4">
+<div class="user-card mat-elevation-z4" *transloco="let t">
   <div class="header-row">
-    <h2 class="title">{{ isEdit ? 'Edit User' : 'New User' }}</h2>
+    <h2 class="title">{{ isEdit ? t('user.editTitle') : t('user.newTitle') }}</h2>
     <a mat-button [routerLink]="['/agency', agencyId]">
-      <mat-icon>arrow_back</mat-icon> Back to agency
+      <mat-icon>arrow_back</mat-icon> {{ t('agency.backToAgency') }}
     </a>
   </div>
 
@@ -11,30 +11,31 @@
   <form [formGroup]="form" (ngSubmit)="save()">
     <div class="field-grid">
       <mat-form-field appearance="outline">
-        <mat-label>Email / username</mat-label>
+        <mat-label>{{ t('user.emailUsername') }}</mat-label>
         <input matInput formControlName="userName" type="email" required />
-        <mat-error *ngIf="form.get('userName')?.hasError('required')">Email is required.</mat-error>
-        <mat-error *ngIf="form.get('userName')?.hasError('email')">Enter a valid email.</mat-error>
+        <mat-error *ngIf="form.get('userName')?.hasError('required')">{{ t('user.emailRequired') }}</mat-error>
+        <mat-error *ngIf="form.get('userName')?.hasError('email')">{{ t('user.emailInvalid') }}</mat-error>
       </mat-form-field>
 
       <mat-form-field appearance="outline" *ngIf="!isEdit">
-        <mat-label>Password</mat-label>
+        <mat-label>{{ t('user.password') }}</mat-label>
         <input matInput formControlName="password" type="password" required />
-        <mat-error *ngIf="form.get('password')?.hasError('required')">Password is required.</mat-error>
+        <mat-error *ngIf="form.get('password')?.hasError('required')">{{ t('user.passwordRequired') }}</mat-error>
       </mat-form-field>
 
       <mat-form-field appearance="outline">
-        <mat-label>Role</mat-label>
+        <mat-label>{{ t('common.role') }}</mat-label>
         <mat-select formControlName="role" required>
-          <mat-option [value]="adminRole">Agency Administrator</mat-option>
-          <mat-option [value]="staffRole">Agency Staff</mat-option>
+          <mat-option [value]="adminRole">{{ t('user.agencyAdministrator') }}</mat-option>
+          <mat-option [value]="staffRole">{{ t('user.agencyStaff') }}</mat-option>
         </mat-select>
       </mat-form-field>
     </div>
 
     <div *ngIf="isStaff">
-      <h3 class="section-title">Permissions</h3>
-      <p class="hint">Administrators hold every permission implicitly.</p>
+      <h3 class="section-title">{{ t('common.permissions') }}</h3>
+      <p class="hint">{{ t('user.permissionsHint') }}</p>
+      <!-- Permission names are the API's own identifiers ("Car.Create"), left verbatim. -->
       <div class="permission-grid">
         <mat-checkbox *ngFor="let p of allPermissions"
                       [checked]="hasPermission(p)"
@@ -44,23 +45,23 @@
 
     <div class="actions-row">
       <button mat-raised-button color="primary" type="submit" [disabled]="saving">
-        <mat-icon>save</mat-icon> {{ saving ? 'Saving…' : 'Save' }}
+        <mat-icon>save</mat-icon> {{ saving ? t('common.saving') : t('common.save') }}
       </button>
-      <a mat-button [routerLink]="['/agency', agencyId]">Cancel</a>
+      <a mat-button [routerLink]="['/agency', agencyId]">{{ t('common.cancel') }}</a>
     </div>
   </form>
 
   <!-- Reset password (edit only) -->
   <div *ngIf="isEdit">
-    <h3 class="section-title">Reset password</h3>
+    <h3 class="section-title">{{ t('user.resetPassword') }}</h3>
     <div *ngIf="passwordMessage" class="hint">{{ passwordMessage }}</div>
     <form [formGroup]="passwordForm" (ngSubmit)="resetPassword()" class="password-form">
       <mat-form-field appearance="outline">
-        <mat-label>New password</mat-label>
+        <mat-label>{{ t('user.newPassword') }}</mat-label>
         <input matInput formControlName="newPassword" type="password" required />
       </mat-form-field>
       <button mat-stroked-button type="submit" [disabled]="resetting">
-        <mat-icon>key</mat-icon> {{ resetting ? 'Updating…' : 'Set new password' }}
+        <mat-icon>key</mat-icon> {{ resetting ? t('user.updating') : t('user.setNewPassword') }}
       </button>
     </form>
   </div>

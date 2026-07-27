@@ -13,4 +13,13 @@ public abstract class Claims
     /// next request.
     /// </summary>
     public const string Permission = nameof(Permission);
+
+    /// <summary>
+    /// The user's stored UI language (see <see cref="Languages"/>), minted from
+    /// ApplicationUser.PreferredLanguage. Read by the request-localization
+    /// provider so it takes precedence over the culture cookie and the browser's
+    /// Accept-Language, which makes the choice follow the account across devices.
+    /// Absent when the user has never picked a language.
+    /// </summary>
+    public const string PreferredLanguage = nameof(PreferredLanguage);
 }

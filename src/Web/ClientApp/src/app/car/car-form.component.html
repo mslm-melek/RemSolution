@@ -1,8 +1,8 @@
-<div class="car-card mat-elevation-z4">
+<div class="car-card mat-elevation-z4" *transloco="let t">
   <div class="header-row">
-    <h2 class="title">{{ isEdit ? 'Edit Car' : 'New Car' }}</h2>
+    <h2 class="title">{{ isEdit ? t('car.editTitle') : t('car.newTitle') }}</h2>
     <a mat-button [routerLink]="['/car']">
-      <mat-icon>arrow_back</mat-icon> Back to list
+      <mat-icon>arrow_back</mat-icon> {{ t('common.backToList') }}
     </a>
   </div>
 
@@ -11,24 +11,24 @@
   <form [formGroup]="form" (ngSubmit)="save()">
     <div class="field-grid">
       <mat-form-field appearance="outline">
-        <mat-label>Matricule</mat-label>
+        <mat-label>{{ t('car.matricule') }}</mat-label>
         <input matInput formControlName="matricule" required />
-        <mat-hint *ngIf="isEdit">Matricule cannot be changed.</mat-hint>
-        <mat-error *ngIf="form.get('matricule')?.hasError('required')">Matricule is required.</mat-error>
+        <mat-hint *ngIf="isEdit">{{ t('car.matriculeLocked') }}</mat-hint>
+        <mat-error *ngIf="form.get('matricule')?.hasError('required')">{{ t('car.matriculeRequired') }}</mat-error>
       </mat-form-field>
 
       <mat-form-field appearance="outline">
-        <mat-label>Model</mat-label>
+        <mat-label>{{ t('car.model') }}</mat-label>
         <mat-select formControlName="modelId" required>
           <mat-option *ngFor="let model of models" [value]="model.id">
             {{ model.brandName }} {{ model.name }}
           </mat-option>
         </mat-select>
-        <mat-error *ngIf="form.get('modelId')?.hasError('required')">Model is required.</mat-error>
+        <mat-error *ngIf="form.get('modelId')?.hasError('required')">{{ t('car.modelRequired') }}</mat-error>
       </mat-form-field>
 
       <mat-form-field appearance="outline">
-        <mat-label>Branch</mat-label>
+        <mat-label>{{ t('car.branch') }}</mat-label>
         <mat-select formControlName="branchId">
           <mat-option [value]="null">—</mat-option>
           <mat-option *ngFor="let branch of branches" [value]="branch.id">{{ branch.name }}</mat-option>
@@ -36,62 +36,62 @@
       </mat-form-field>
 
       <mat-form-field appearance="outline">
-        <mat-label>Status</mat-label>
+        <mat-label>{{ t('common.status') }}</mat-label>
         <mat-select formControlName="status" required>
-          <mat-option *ngFor="let status of statuses" [value]="status.value">{{ status.label }}</mat-option>
+          <mat-option *ngFor="let status of statuses" [value]="status.value">{{ t(status.labelKey) }}</mat-option>
         </mat-select>
       </mat-form-field>
 
       <mat-form-field appearance="outline">
-        <mat-label>Daily rate</mat-label>
+        <mat-label>{{ t('car.dailyRate') }}</mat-label>
         <input matInput type="number" min="0" step="0.01" formControlName="dailyRate" />
         <span matSuffix *ngIf="currency">&nbsp;{{ currency }}</span>
-        <mat-hint>Rental price per day.</mat-hint>
-        <mat-error *ngIf="form.get('dailyRate')?.hasError('min')">Daily rate must be greater than 0.</mat-error>
+        <mat-hint>{{ t('car.dailyRateHint') }}</mat-hint>
+        <mat-error *ngIf="form.get('dailyRate')?.hasError('min')">{{ t('car.dailyRateMin') }}</mat-error>
       </mat-form-field>
 
       <mat-form-field appearance="outline">
-        <mat-label>First circulation date</mat-label>
+        <mat-label>{{ t('car.firstCirculationDate') }}</mat-label>
         <input matInput type="date" formControlName="firstCirculationDate" required />
-        <mat-error *ngIf="form.get('firstCirculationDate')?.hasError('required')">First circulation date is required.</mat-error>
+        <mat-error *ngIf="form.get('firstCirculationDate')?.hasError('required')">{{ t('car.firstCirculationRequired') }}</mat-error>
       </mat-form-field>
 
       <mat-form-field appearance="outline">
-        <mat-label>Color</mat-label>
+        <mat-label>{{ t('car.color') }}</mat-label>
         <input matInput formControlName="color" />
       </mat-form-field>
 
       <mat-form-field appearance="outline">
-        <mat-label>Power (hp)</mat-label>
+        <mat-label>{{ t('car.powerHp') }}</mat-label>
         <input matInput type="number" formControlName="power" />
       </mat-form-field>
 
       <mat-form-field appearance="outline">
-        <mat-label>Fuel type</mat-label>
+        <mat-label>{{ t('car.fuelType') }}</mat-label>
         <mat-select formControlName="fuelType">
           <mat-option [value]="null">—</mat-option>
-          <mat-option *ngFor="let fuel of fuelTypes" [value]="fuel.value">{{ fuel.label }}</mat-option>
+          <mat-option *ngFor="let fuel of fuelTypes" [value]="fuel.value">{{ t(fuel.labelKey) }}</mat-option>
         </mat-select>
       </mat-form-field>
 
       <div class="span-2 photo-panel">
-        <label class="photo-label">Photos</label>
-        <p *ngIf="!isEdit" class="photo-hint">Save the car first, then add photos.</p>
+        <label class="photo-label">{{ t('car.photos') }}</label>
+        <p *ngIf="!isEdit" class="photo-hint">{{ t('car.photosAfterSave') }}</p>
 
         <div *ngIf="isEdit" class="gallery">
           <div *ngFor="let image of images" class="gallery-item" [class.is-primary]="image.isPrimary">
-            <img [src]="thumbnailFor(image)" alt="Car photo" class="gallery-thumb" />
+            <img [src]="thumbnailFor(image)" [alt]="t('car.photoAlt')" class="gallery-thumb" />
 
-            <span *ngIf="image.isPrimary" class="badge badge-primary">Primary</span>
-            <span *ngIf="isProcessing(image)" class="badge badge-info">Processing…</span>
-            <span *ngIf="isFailed(image)" class="badge badge-warn">Preview failed</span>
+            <span *ngIf="image.isPrimary" class="badge badge-primary">{{ t('car.primary') }}</span>
+            <span *ngIf="isProcessing(image)" class="badge badge-info">{{ t('car.processing') }}</span>
+            <span *ngIf="isFailed(image)" class="badge badge-warn">{{ t('car.previewFailed') }}</span>
 
             <div class="gallery-actions">
-              <button mat-icon-button type="button" title="Set as primary"
+              <button mat-icon-button type="button" [title]="t('car.setPrimary')"
                       [disabled]="image.isPrimary" (click)="setPrimary(image)">
                 <mat-icon>{{ image.isPrimary ? 'star' : 'star_border' }}</mat-icon>
               </button>
-              <button mat-icon-button type="button" title="Remove" (click)="deleteImage(image)">
+              <button mat-icon-button type="button" [title]="t('common.remove')" (click)="deleteImage(image)">
                 <mat-icon>delete</mat-icon>
               </button>
             </div>
@@ -99,15 +99,15 @@
 
           <!-- Instant local preview of the file currently uploading. -->
           <div *ngIf="uploadingImage && previewUrl" class="gallery-item uploading">
-            <img [src]="previewUrl" alt="Uploading preview" class="gallery-thumb" />
-            <span class="badge badge-info">Uploading…</span>
+            <img [src]="previewUrl" [alt]="t('car.uploadingPreview')" class="gallery-thumb" />
+            <span class="badge badge-info">{{ t('common.uploading') }}</span>
           </div>
         </div>
 
         <div *ngIf="isEdit" class="photo-actions">
           <button mat-stroked-button type="button" (click)="imageInput.click()" [disabled]="uploadingImage">
             <mat-icon>add_a_photo</mat-icon>
-            {{ uploadingImage ? 'Uploading…' : 'Add photo' }}
+            {{ uploadingImage ? t('common.uploading') : t('car.addPhoto') }}
           </button>
           <input #imageInput type="file" accept="image/png,image/jpeg,image/webp" hidden
                  (change)="onImageSelected(imageInput)" />
@@ -117,9 +117,9 @@
 
     <div class="actions-row">
       <button mat-raised-button color="primary" type="submit" [disabled]="saving">
-        <mat-icon>save</mat-icon> {{ saving ? 'Saving…' : 'Save' }}
+        <mat-icon>save</mat-icon> {{ saving ? t('common.saving') : t('common.save') }}
       </button>
-      <a mat-button [routerLink]="['/car']">Cancel</a>
+      <a mat-button [routerLink]="['/car']">{{ t('common.cancel') }}</a>
     </div>
   </form>
 </div>

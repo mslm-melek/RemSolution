@@ -2,7 +2,11 @@ using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.Extensions.Localization;
+using RemSolution.Domain.Constants;
+using RemSolution.Infrastructure;
 using RemSolution.Infrastructure.Identity;
+using RemSolution.Web.Infrastructure;
 
 namespace RemSolution.Web.Areas.Identity.Pages.Account.Manage;
 
@@ -10,13 +14,16 @@ public class IndexModel : PageModel
 {
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly SignInManager<ApplicationUser> _signInManager;
+    private readonly IStringLocalizer<SharedResource> _localizer;
 
     public IndexModel(
         UserManager<ApplicationUser> userManager,
-        SignInManager<ApplicationUser> signInManager)
+        SignInManager<ApplicationUser> signInManager,
+        IStringLocalizer<SharedResource> localizer)
     {
         _userManager = userManager;
         _signInManager = signInManager;
+        _localizer = localizer;
     }
 
     public string? Email { get; set; }
@@ -29,13 +36,16 @@ public class IndexModel : PageModel
 
     public class InputModel
     {
-        [StringLength(200)]
-        [Display(Name = "Full name")]
+        [StringLength(200, ErrorMessage = "Identity.Validation.MaxLength")]
+        [Display(Name = "Identity.Field.FullName")]
         public string? FullName { get; set; }
 
-        [Phone]
-        [Display(Name = "Phone number")]
+        [Phone(ErrorMessage = "Identity.Validation.Phone")]
+        [Display(Name = "Identity.Field.PhoneNumber")]
         public string? PhoneNumber { get; set; }
+
+        // Neutral language tag; the <select> only offers Languages.All.
+        public string? PreferredLanguage { get; set; }
     }
 
     public async Task<IActionResult> OnGetAsync()
@@ -48,7 +58,8 @@ public class IndexModel : PageModel
         Input = new InputModel
         {
             FullName = user.FullName,
-            PhoneNumber = await _userManager.GetPhoneNumberAsync(user)
+            PhoneNumber = await _userManager.GetPhoneNumberAsync(user),
+            PreferredLanguage = Languages.Normalize(user.PreferredLanguage) ?? Languages.Default
         };
 
         return Page();
@@ -96,8 +107,20 @@ public class IndexModel : PageModel
             }
         }
 
+        // Ignore anything not in the supported set rather than 400-ing on a
+        // tampered form post; the previous value simply stands.
+        if (Languages.Normalize(Input.PreferredLanguage) is string language && language != user.PreferredLanguage)
+        {
+            user.PreferredLanguage = language;
+            await _userManager.UpdateAsync(user);
+            // Also the cookie, so the SPA opens in the same language.
+            CultureCookie.Write(Response, language);
+        }
+
+        // Re-mints the ticket, so the PreferredLanguage claim is current on the
+        // very next request rather than after the security-stamp interval.
         await _signInManager.RefreshSignInAsync(user);
-        StatusMessage = "Your profile has been updated.";
+        StatusMessage = _localizer["Identity.Manage.ProfileUpdated"];
         return RedirectToPage();
     }
 }

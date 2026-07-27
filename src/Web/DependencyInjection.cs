@@ -1,5 +1,6 @@
 ﻿using Azure.Identity;
 using RemSolution.Application.Common.Interfaces;
+using RemSolution.Infrastructure;
 using RemSolution.Infrastructure.Data;
 using RemSolution.Web.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -22,7 +23,14 @@ public static class DependencyInjection
 
         builder.Services.AddExceptionHandler<CustomExceptionHandler>();
 
-        builder.Services.AddRazorPages();
+        // The Identity pages are server-rendered, so their text and their
+        // DataAnnotations messages resolve through the same shared .resx set the
+        // API and the SPA use.
+        builder.Services.AddRazorPages()
+            .AddViewLocalization()
+            .AddDataAnnotationsLocalization(options =>
+                options.DataAnnotationLocalizerProvider = (_, factory) =>
+                    factory.Create(typeof(SharedResource)));
 
         // Customise default API behaviour
         builder.Services.Configure<ApiBehaviorOptions>(options =>

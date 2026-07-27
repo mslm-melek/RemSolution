@@ -1,63 +1,65 @@
-<div class="et-card mat-elevation-z4">
+<div class="et-card mat-elevation-z4" *transloco="let t">
   <div class="header-row">
-    <h2 class="title">Expense Types</h2>
+    <h2 class="title">{{ t('expenseType.title') }}</h2>
   </div>
 
   <div *ngIf="errorMessage" class="error-banner">{{ errorMessage }}</div>
 
   <div class="inline-add">
     <mat-form-field appearance="outline">
-      <mat-label>Name</mat-label>
-      <input matInput [(ngModel)]="name" placeholder="e.g. Oil change" />
+      <mat-label>{{ t('common.name') }}</mat-label>
+      <input matInput [(ngModel)]="name" [placeholder]="t('expenseType.namePlaceholder')" />
     </mat-form-field>
     <mat-form-field appearance="outline">
-      <mat-label>After km</mat-label>
+      <mat-label>{{ t('expenseType.afterKm') }}</mat-label>
       <input matInput type="number" min="1" [(ngModel)]="afterKilometer" />
     </mat-form-field>
     <mat-form-field appearance="outline">
-      <mat-label>After months</mat-label>
+      <mat-label>{{ t('expenseType.afterMonths') }}</mat-label>
       <input matInput type="number" min="1" [(ngModel)]="afterMonth" />
     </mat-form-field>
-    <mat-checkbox [(ngModel)]="withNotif">Notify</mat-checkbox>
-    <mat-checkbox *ngIf="editingId" [(ngModel)]="isActive">Active</mat-checkbox>
+    <mat-checkbox [(ngModel)]="withNotif">{{ t('expenseType.notify') }}</mat-checkbox>
+    <mat-checkbox *ngIf="editingId" [(ngModel)]="isActive">{{ t('common.active') }}</mat-checkbox>
     <button mat-raised-button color="primary" (click)="save()">
-      <mat-icon>{{ editingId ? 'save' : 'add' }}</mat-icon> {{ editingId ? 'Save' : 'Add' }}
+      <mat-icon>{{ editingId ? 'save' : 'add' }}</mat-icon> {{ editingId ? t('common.save') : t('common.add') }}
     </button>
-    <button mat-stroked-button *ngIf="editingId" (click)="resetForm()">Cancel</button>
+    <button mat-stroked-button *ngIf="editingId" (click)="resetForm()">{{ t('common.cancel') }}</button>
   </div>
 
+  <!-- Row variable is `type`, not `t`: `t` is the transloco accessor above. -->
   <table mat-table [dataSource]="types" class="mat-elevation-z2 full-width">
     <ng-container matColumnDef="name">
-      <th mat-header-cell *matHeaderCellDef>Name</th>
-      <td mat-cell *matCellDef="let t">{{ t.name }}</td>
+      <th mat-header-cell *matHeaderCellDef>{{ t('common.name') }}</th>
+      <td mat-cell *matCellDef="let type">{{ type.name }}</td>
     </ng-container>
 
     <ng-container matColumnDef="schedule">
-      <th mat-header-cell *matHeaderCellDef>Due</th>
-      <td mat-cell *matCellDef="let t">
-        <span *ngIf="t.afterKilometer">every {{ t.afterKilometer }} km</span>
-        <span *ngIf="t.afterKilometer && t.afterMonth"> / </span>
-        <span *ngIf="t.afterMonth">every {{ t.afterMonth }} mo</span>
+      <th mat-header-cell *matHeaderCellDef>{{ t('expenseType.due') }}</th>
+      <td mat-cell *matCellDef="let type">
+        <span *ngIf="type.afterKilometer">{{ t('expenseType.everyKm', { value: type.afterKilometer }) }}</span>
+        <span *ngIf="type.afterKilometer && type.afterMonth"> / </span>
+        <span *ngIf="type.afterMonth">{{ t('expenseType.everyMonths', { value: type.afterMonth }) }}</span>
       </td>
     </ng-container>
 
     <ng-container matColumnDef="notify">
-      <th mat-header-cell *matHeaderCellDef>Notify</th>
-      <td mat-cell *matCellDef="let t">{{ t.withNotif ? 'Yes' : 'No' }}</td>
+      <th mat-header-cell *matHeaderCellDef>{{ t('expenseType.notify') }}</th>
+      <td mat-cell *matCellDef="let type">{{ type.withNotif ? t('common.yes') : t('common.no') }}</td>
     </ng-container>
 
     <ng-container matColumnDef="active">
-      <th mat-header-cell *matHeaderCellDef>Active</th>
-      <td mat-cell *matCellDef="let t">{{ t.isActive ? 'Yes' : 'No' }}</td>
+      <th mat-header-cell *matHeaderCellDef>{{ t('common.active') }}</th>
+      <td mat-cell *matCellDef="let type">{{ type.isActive ? t('common.yes') : t('common.no') }}</td>
     </ng-container>
 
     <ng-container matColumnDef="actions">
-      <th mat-header-cell *matHeaderCellDef class="text-center">Actions</th>
-      <td mat-cell *matCellDef="let t" class="text-center">
-        <button mat-icon-button color="primary" (click)="edit(t)" aria-label="Edit">
+      <th mat-header-cell *matHeaderCellDef class="text-center">{{ t('common.actions') }}</th>
+      <td mat-cell *matCellDef="let type" class="text-center">
+        <button mat-icon-button color="primary" (click)="edit(type)" [attr.aria-label]="t('common.edit')">
           <mat-icon>edit</mat-icon>
         </button>
-        <button mat-icon-button color="warn" *ngIf="t.isActive" (click)="deactivate(t)" aria-label="Deactivate">
+        <button mat-icon-button color="warn" *ngIf="type.isActive" (click)="deactivate(type)"
+                [attr.aria-label]="t('common.deactivate')">
           <mat-icon>block</mat-icon>
         </button>
       </td>
@@ -67,7 +69,7 @@
     <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
 
     <tr class="mat-row" *matNoDataRow>
-      <td class="mat-cell empty-row" [attr.colspan]="displayedColumns.length">No types defined.</td>
+      <td class="mat-cell empty-row" [attr.colspan]="displayedColumns.length">{{ t('expenseType.empty') }}</td>
     </tr>
   </table>
 </div>

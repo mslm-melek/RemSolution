@@ -121,7 +121,7 @@
 }
 
 .actions button mat-icon {
-  margin-right: 4px;
+  margin-inline-end: 4px;
 }
 
 /* Banners */

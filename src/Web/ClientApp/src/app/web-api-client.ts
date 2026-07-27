@@ -15,6 +15,74 @@ import { HttpClient, HttpHeaders, HttpResponse, HttpResponseBase } from '@angula
 
 export const API_BASE_URL = new InjectionToken<string>('API_BASE_URL');
 
+export interface IClient {
+    getCultureSet(language: string, returnUrl: string | null | undefined): Observable<void>;
+}
+
+@Injectable({
+    providedIn: 'root'
+})
+export class Client implements IClient {
+    private http: HttpClient;
+    private baseUrl: string;
+    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
+
+    constructor(@Inject(HttpClient) http: HttpClient, @Optional() @Inject(API_BASE_URL) baseUrl?: string) {
+        this.http = http;
+        this.baseUrl = baseUrl ?? "";
+    }
+
+    getCultureSet(language: string, returnUrl: string | null | undefined): Observable<void> {
+        let url_ = this.baseUrl + "/culture/set?";
+        if (language === undefined || language === null)
+            throw new Error("The parameter 'language' must be defined and cannot be null.");
+        else
+            url_ += "language=" + encodeURIComponent("" + language) + "&";
+        if (returnUrl !== undefined && returnUrl !== null)
+            url_ += "returnUrl=" + encodeURIComponent("" + returnUrl) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetCultureSet(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetCultureSet(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processGetCultureSet(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return _observableOf(null as any);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+}
+
 export interface IAgenciesClient {
     getAgencies(): Observable<AgencyDto[]>;
     createAgency(command: CreateAgencyCommand): Observable<number>;
@@ -5610,6 +5678,7 @@ export interface IUsersClient {
     getMyProfile(): Observable<MyProfileDto>;
     updateMyProfile(command: UpdateMyProfileCommand): Observable<void>;
     changeMyPassword(command: ChangeMyPasswordCommand): Observable<void>;
+    updateMyLanguage(command: UpdateMyLanguageCommand): Observable<void>;
 }
 
 @Injectable({
@@ -6348,6 +6417,54 @@ export class UsersClient implements IUsersClient {
     }
 
     protected processChangeMyPassword(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return _observableOf(null as any);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    updateMyLanguage(command: UpdateMyLanguageCommand): Observable<void> {
+        let url_ = this.baseUrl + "/api/Users/me/language";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(command);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+            })
+        };
+
+        return this.http.request("put", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processUpdateMyLanguage(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processUpdateMyLanguage(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processUpdateMyLanguage(response: HttpResponseBase): Observable<void> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -11161,6 +11278,7 @@ export class MyProfileDto implements IMyProfileDto {
     userName?: string;
     fullName?: string | undefined;
     email?: string | undefined;
+    preferredLanguage?: string | undefined;
 
     constructor(data?: IMyProfileDto) {
         if (data) {
@@ -11176,6 +11294,7 @@ export class MyProfileDto implements IMyProfileDto {
             this.userName = _data["userName"];
             this.fullName = _data["fullName"];
             this.email = _data["email"];
+            this.preferredLanguage = _data["preferredLanguage"];
         }
     }
 
@@ -11191,6 +11310,7 @@ export class MyProfileDto implements IMyProfileDto {
         data["userName"] = this.userName;
         data["fullName"] = this.fullName;
         data["email"] = this.email;
+        data["preferredLanguage"] = this.preferredLanguage;
         return data;
     }
 }
@@ -11199,6 +11319,7 @@ export interface IMyProfileDto {
     userName?: string;
     fullName?: string | undefined;
     email?: string | undefined;
+    preferredLanguage?: string | undefined;
 }
 
 export class UpdateMyProfileCommand implements IUpdateMyProfileCommand {
@@ -11279,6 +11400,42 @@ export class ChangeMyPasswordCommand implements IChangeMyPasswordCommand {
 export interface IChangeMyPasswordCommand {
     currentPassword?: string;
     newPassword?: string;
+}
+
+export class UpdateMyLanguageCommand implements IUpdateMyLanguageCommand {
+    language?: string;
+
+    constructor(data?: IUpdateMyLanguageCommand) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.language = _data["language"];
+        }
+    }
+
+    static fromJS(data: any): UpdateMyLanguageCommand {
+        data = typeof data === 'object' ? data : {};
+        let result = new UpdateMyLanguageCommand();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["language"] = this.language;
+        return data;
+    }
+}
+
+export interface IUpdateMyLanguageCommand {
+    language?: string;
 }
 
 export interface FileParameter {

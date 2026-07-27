@@ -1,4 +1,4 @@
-<div class="profile-page">
+<div class="profile-page" *transloco="let t">
   <div class="profile-header mat-elevation-z3">
     <div class="avatar">{{ initial }}</div>
     <div class="identity">
@@ -16,40 +16,61 @@
     <section class="card mat-elevation-z2">
       <div class="card-head">
         <mat-icon>manage_accounts</mat-icon>
-        <h3>Account details</h3>
+        <h3>{{ t('profile.accountDetails') }}</h3>
       </div>
 
       <div *ngIf="profileError" class="banner error">{{ profileError }}</div>
 
       <form [formGroup]="profileForm" (ngSubmit)="saveProfile()" class="form-col">
         <mat-form-field appearance="outline">
-          <mat-label>Display name</mat-label>
+          <mat-label>{{ t('profile.displayName') }}</mat-label>
           <mat-icon matPrefix>person</mat-icon>
           <input matInput formControlName="fullName" />
         </mat-form-field>
 
         <mat-form-field appearance="outline">
-          <mat-label>Email (also your login)</mat-label>
+          <mat-label>{{ t('profile.email') }}</mat-label>
           <mat-icon matPrefix>mail</mat-icon>
           <input matInput type="email" formControlName="email" />
-          <mat-error *ngIf="profileForm.get('email')?.hasError('required')">Email is required.</mat-error>
-          <mat-error *ngIf="profileForm.get('email')?.hasError('email')">Enter a valid email address.</mat-error>
-          <mat-hint>Changing your email changes your login and may require signing in again.</mat-hint>
+          <mat-error *ngIf="profileForm.get('email')?.hasError('required')">{{ t('profile.emailRequired') }}</mat-error>
+          <mat-error *ngIf="profileForm.get('email')?.hasError('email')">{{ t('profile.emailInvalid') }}</mat-error>
+          <mat-hint>{{ t('profile.emailHint') }}</mat-hint>
         </mat-form-field>
 
         <div class="actions">
           <button mat-flat-button color="primary" type="submit" [disabled]="savingProfile">
-            <mat-icon>save</mat-icon> Save changes
+            <mat-icon>save</mat-icon> {{ t('common.saveChanges') }}
           </button>
         </div>
       </form>
+    </section>
+
+    <!-- Interface language. Selecting one saves it on the account and reloads
+         (LOCALE_ID and the text direction are fixed at bootstrap). -->
+    <section class="card mat-elevation-z2">
+      <div class="card-head">
+        <mat-icon>language</mat-icon>
+        <h3>{{ t('profile.language') }}</h3>
+      </div>
+
+      <div class="form-col">
+        <mat-form-field appearance="outline">
+          <mat-label>{{ t('language.label') }}</mat-label>
+          <mat-select [value]="currentLanguage" (selectionChange)="setLanguage($event.value)">
+            <mat-option *ngFor="let language of languages" [value]="language">
+              {{ t('language.' + language) }}
+            </mat-option>
+          </mat-select>
+          <mat-hint>{{ t('profile.languageHint') }}</mat-hint>
+        </mat-form-field>
+      </div>
     </section>
 
     <!-- Change password -->
     <section class="card mat-elevation-z2">
       <div class="card-head">
         <mat-icon>lock</mat-icon>
-        <h3>Change password</h3>
+        <h3>{{ t('profile.changePassword') }}</h3>
       </div>
 
       <div *ngIf="passwordError" class="banner error">{{ passwordError }}</div>
@@ -57,26 +78,26 @@
 
       <form [formGroup]="passwordForm" (ngSubmit)="changePassword()" class="form-col">
         <mat-form-field appearance="outline">
-          <mat-label>Current password</mat-label>
+          <mat-label>{{ t('profile.currentPassword') }}</mat-label>
           <mat-icon matPrefix>lock_outline</mat-icon>
           <input matInput type="password" formControlName="currentPassword" autocomplete="current-password" />
         </mat-form-field>
 
         <mat-form-field appearance="outline">
-          <mat-label>New password</mat-label>
+          <mat-label>{{ t('profile.newPassword') }}</mat-label>
           <mat-icon matPrefix>vpn_key</mat-icon>
           <input matInput type="password" formControlName="newPassword" autocomplete="new-password" />
         </mat-form-field>
 
         <mat-form-field appearance="outline">
-          <mat-label>Confirm new password</mat-label>
+          <mat-label>{{ t('profile.confirmPassword') }}</mat-label>
           <mat-icon matPrefix>vpn_key</mat-icon>
           <input matInput type="password" formControlName="confirmPassword" autocomplete="new-password" />
         </mat-form-field>
 
         <div class="actions">
           <button mat-flat-button color="primary" type="submit" [disabled]="savingPassword">
-            <mat-icon>lock_reset</mat-icon> Change password
+            <mat-icon>lock_reset</mat-icon> {{ t('profile.changePassword') }}
           </button>
         </div>
       </form>

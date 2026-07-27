@@ -1,4 +1,5 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
+import { TranslocoService } from '@jsverse/transloco';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MarketplaceClient, MarketplaceCarDto, CreateCustomerReservationCommand } from '../web-api-client';
@@ -11,6 +12,10 @@ import { fromDateInput, toDateInput, extractValidationErrors } from '../shared/f
   styleUrls: ['./marketplace-car.component.css']
 })
 export class MarketplaceCarComponent implements OnInit {
+  // The booking error banner is a plain string, so it is translated
+  // imperatively rather than through the template pipe.
+  private readonly transloco = inject(TranslocoService);
+
   car?: MarketplaceCarDto;
   loading = true;
   notFound = false;
@@ -74,7 +79,7 @@ export class MarketplaceCarComponent implements OnInit {
     const start = fromDateInput(v.startDate);
     const end = fromDateInput(v.endDate);
     if (!start || !end || end <= start) {
-      this.bookingError = 'The return date must be after the pick-up date.';
+      this.bookingError = this.transloco.translate('marketplace.invalidRange');
       return;
     }
     this.booking = true;

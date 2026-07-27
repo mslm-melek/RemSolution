@@ -1,9 +1,10 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import {
   ExtraServiceTypesClient, ExtraServicesTypeDto,
   CreateExtraServicesTypeCommand, UpdateExtraServicesTypeCommand
 } from '../web-api-client';
 import { extractValidationErrors } from '../shared/form-utils';
+import { TranslocoService } from '@jsverse/transloco';
 
 @Component({
   selector: 'app-extra-service-type',
@@ -11,6 +12,9 @@ import { extractValidationErrors } from '../shared/form-utils';
   styleUrls: ['./extra-service-type.component.css']
 })
 export class ExtraServiceTypeComponent implements OnInit {
+  // Confirm/prompt dialogs and error banners are plain strings, so they are
+  // translated imperatively rather than through the template pipe.
+  private readonly transloco = inject(TranslocoService);
   types: ExtraServicesTypeDto[] = [];
   displayedColumns: string[] = ['name', 'amount', 'active', 'actions'];
   errorMessage = '';
@@ -52,7 +56,7 @@ export class ExtraServiceTypeComponent implements OnInit {
 
   save() {
     if (!this.name.trim()) {
-      this.errorMessage = 'Name is required.';
+      this.errorMessage = this.transloco.translate('extraServiceType.nameRequired');
       return;
     }
     this.errorMessage = '';
@@ -82,7 +86,7 @@ export class ExtraServiceTypeComponent implements OnInit {
 
   deactivate(type: ExtraServicesTypeDto) {
     if (!type.id) return;
-    if (!confirm(`Deactivate "${type.name}"? It stays on past extra services but is hidden from new ones.`)) return;
+    if (!confirm(this.transloco.translate('extraServiceType.confirmDeactivate', { name: type.name }))) return;
     this.client.deactivateExtraServiceType(type.id).subscribe({
       next: () => this.load(),
       error: err => this.handleError(err)

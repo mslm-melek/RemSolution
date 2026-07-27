@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
@@ -6,6 +6,7 @@ import {
   CreateAgencyUserByAdminCommand, UpdateAgencyUserCommand, ResetAgencyUserPasswordCommand
 } from '../web-api-client';
 import { extractValidationErrors } from '../shared/form-utils';
+import { TranslocoService } from '@jsverse/transloco';
 
 // Must match the Domain Permissions constants; the API rejects anything else.
 const ALL_PERMISSIONS = [
@@ -19,6 +20,9 @@ const ALL_PERMISSIONS = [
   styleUrls: ['./user-form.component.css']
 })
 export class UserFormComponent implements OnInit {
+  // Confirm/prompt dialogs and error banners are plain strings, so they are
+  // translated imperatively rather than through the template pipe.
+  private readonly transloco = inject(TranslocoService);
   agencyId!: number;
   userId?: string;
   form: FormGroup;
@@ -143,7 +147,7 @@ export class UserFormComponent implements OnInit {
       next: () => {
         this.resetting = false;
         this.passwordForm.reset();
-        this.passwordMessage = 'Password updated.';
+        this.passwordMessage = this.transloco.translate('user.passwordUpdated');
       },
       error: err => {
         this.resetting = false;

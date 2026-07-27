@@ -1,28 +1,28 @@
-<div class="marketplace">
+<div class="marketplace" *transloco="let t">
   <div class="hero mat-elevation-z3">
-    <h1>Find your car</h1>
-    <p>Browse available cars across all our agencies and book in minutes.</p>
+    <h1>{{ t('marketplace.findYourCar') }}</h1>
+    <p>{{ t('marketplace.findSubtitle') }}</p>
 
     <div class="search-bar">
       <mat-form-field appearance="outline" class="date">
-        <mat-label>Pick-up date</mat-label>
+        <mat-label>{{ t('marketplace.pickupDate') }}</mat-label>
         <input matInput type="date" [(ngModel)]="startDate" />
       </mat-form-field>
       <mat-form-field appearance="outline" class="date">
-        <mat-label>Return date</mat-label>
+        <mat-label>{{ t('marketplace.returnDate') }}</mat-label>
         <input matInput type="date" [(ngModel)]="endDate" />
       </mat-form-field>
       <button mat-flat-button color="primary" (click)="onSearchClick()">
-        <mat-icon>search</mat-icon> Search
+        <mat-icon>search</mat-icon> {{ t('common.search') }}
       </button>
     </div>
     <div *ngIf="error" class="error">{{ error }}</div>
   </div>
 
   <div class="results">
-    <div *ngIf="loading" class="state">Searching…</div>
+    <div *ngIf="loading" class="state">{{ t('marketplace.searching') }}</div>
     <div *ngIf="!loading && searched && cars.length === 0" class="state">
-      No cars available for those dates. Try a different date range.
+      {{ t('marketplace.noResults') }}
     </div>
 
     <div class="grid" *ngIf="!loading && cars.length">
@@ -36,9 +36,9 @@
           <div class="agency"><mat-icon>place</mat-icon>{{ car.agencyName }}<span *ngIf="car.branchName"> · {{ car.branchName }}</span></div>
           <div class="foot">
             <span class="price" *ngIf="car.dailyRate">
-              {{ car.dailyRate.amount | number:'1.2-2' }} {{ car.dailyRate.currency }}<span class="per">/day</span>
+              {{ car.dailyRate.amount | number:'1.2-2' }} {{ car.dailyRate.currency }}<span class="per">{{ t('marketplace.perDay') }}</span>
             </span>
-            <span class="book">View &amp; book <mat-icon>arrow_forward</mat-icon></span>
+            <span class="book">{{ t('marketplace.viewAndBook') }} <mat-icon>arrow_forward</mat-icon></span>
           </div>
         </div>
       </a>

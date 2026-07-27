@@ -1,5 +1,10 @@
 import { BrowserModule } from '@angular/platform-browser';
-import { APP_ID, NgModule } from '@angular/core';
+import { APP_ID, APP_INITIALIZER, LOCALE_ID, NgModule } from '@angular/core';
+import { registerLocaleData } from '@angular/common';
+import localeFr from '@angular/common/locales/fr';
+import localeAr from '@angular/common/locales/ar';
+import { provideTransloco, TranslocoModule, TranslocoService } from '@jsverse/transloco';
+import { firstValueFrom } from 'rxjs';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
@@ -51,6 +56,17 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatMenuModule } from '@angular/material/menu';
+import { TranslocoHttpLoader } from './shared/transloco-loader';
+import { LanguageInterceptor } from './shared/language.interceptor';
+import { DEFAULT_LANGUAGE, SUPPORTED_LANGUAGES, resolveLanguage } from './shared/language';
+import { environment } from 'src/environments/environment';
+
+// Drives the date / number pipes used throughout the tables. Angular's Arabic
+// data already formats with Latin digits (350, not ٣٥٠); it groups US-style
+// (1,234.56) — swap the import for 'ar-TN' or 'ar-DZ' to get the Maghrebi
+// 1 234,56 instead.
+registerLocaleData(localeFr);
+registerLocaleData(localeAr);
 
 @NgModule({
   declarations: [
@@ -144,13 +160,45 @@ import { MatMenuModule } from '@angular/material/menu';
       // Agency-admin self-service.
       { path: 'team', component: TeamComponent }
     ]),
+    TranslocoModule,
     BrowserAnimationsModule],
   providers: [
     { provide: APP_ID, useValue: 'ng-cli-universal' },
     { provide: HTTP_INTERCEPTORS, useClass: AuthorizeInterceptor, multi: true },
     { provide: HTTP_INTERCEPTORS, useClass: ImpersonationInterceptor, multi: true },
+    // Tells the API which language to answer validation and error text in.
+    { provide: HTTP_INTERCEPTORS, useClass: LanguageInterceptor, multi: true },
     provideHttpClient(withInterceptorsFromDi()),
-    provideAnimationsAsync()
+    provideAnimationsAsync(),
+    provideTransloco({
+      config: {
+        availableLangs: SUPPORTED_LANGUAGES,
+        // Same resolution main.ts used for `<html lang/dir>` — a pure read of
+        // cookie / storage / navigator, so both agree.
+        defaultLang: resolveLanguage(),
+        fallbackLang: DEFAULT_LANGUAGE,
+        // A key missing from a translation file falls back to the default
+        // language instead of rendering the raw key at the user.
+        missingHandler: { useFallbackTranslation: true },
+        reRenderOnLangChange: true,
+        prodMode: environment.production
+      },
+      loader: TranslocoHttpLoader
+    }),
+    // LOCALE_ID is fixed at bootstrap, which is why switching language reloads
+    // the page (see LanguageService.use).
+    { provide: LOCALE_ID, useFactory: resolveLanguage },
+    // Have the translation file in memory before the first render. Components
+    // that translate imperatively (confirm dialogs, error banners) call
+    // TranslocoService.translate() synchronously and would otherwise show the
+    // raw key if they ran before the initial fetch resolved.
+    {
+      provide: APP_INITIALIZER,
+      multi: true,
+      deps: [TranslocoService],
+      useFactory: (transloco: TranslocoService) => () =>
+        firstValueFrom(transloco.load(transloco.getActiveLang()))
+    }
   ]
 })
 export class AppModule { }

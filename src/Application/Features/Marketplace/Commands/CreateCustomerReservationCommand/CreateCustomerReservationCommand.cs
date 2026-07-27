@@ -120,19 +120,19 @@ namespace RemSolution.Application.Features.Marketplace.Commands.CreateCustomerRe
 {
     public class CreateCustomerReservationCommandValidator : AbstractValidator<CreateCustomerReservationCommand>
     {
-        public CreateCustomerReservationCommandValidator()
+        public CreateCustomerReservationCommandValidator(ILocalizer localizer)
         {
             RuleFor(v => v.CarId).GreaterThan(0);
             RuleFor(v => v.StartDate).NotEmpty();
             RuleFor(v => v.EndDate)
                 .NotEmpty()
                 .GreaterThan(v => v.StartDate)
-                    .WithMessage("The return date must be after the pick-up date.");
+                    .WithMessage(_ => localizer["Validation.Booking.ReturnAfterPickup"]);
             RuleFor(v => v.FirstName).NotEmpty().MaximumLength(200);
             RuleFor(v => v.LastName).NotEmpty().MaximumLength(200);
             RuleFor(v => v.BirthDate)
                 .NotEmpty()
-                .LessThan(v => DateTime.UtcNow).WithMessage("Birth date must be in the past.");
+                .LessThan(v => DateTime.UtcNow).WithMessage(_ => localizer["Validation.Client.BirthDateInPast"]);
         }
     }
 }

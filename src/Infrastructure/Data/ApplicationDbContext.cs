@@ -129,6 +129,12 @@ IF @result < 0 THROW 51000, 'Failed to acquire the agency write lock.', 1;", can
             .HasForeignKey(u => u.AgencyId)
             .OnDelete(DeleteBehavior.SetNull);
 
+        // A neutral language tag ("en"/"fr"/"ar"); 16 leaves room for a regional
+        // tag should the product ever ship one.
+        builder.Entity<ApplicationUser>()
+            .Property(u => u.PreferredLanguage)
+            .HasMaxLength(16);
+
         // Configured here rather than in UserPermissionConfiguration because
         // the Identity user type is not visible from that project layer's
         // Domain references. Grants die with the user.

@@ -10,6 +10,7 @@ using RemSolution.Infrastructure.Data;
 using RemSolution.Infrastructure.Data.Interceptors;
 using RemSolution.Infrastructure.Identity;
 using RemSolution.Infrastructure.Jobs;
+using RemSolution.Infrastructure.Localization;
 using RemSolution.Application.Common.Settings;
 using RemSolution.Infrastructure.Imaging;
 using RemSolution.Infrastructure.Pricing;
@@ -60,11 +61,20 @@ public static class DependencyInjection
 
         builder.Services.AddScoped<ApplicationDbContextInitialiser>();
 
+        // .resx-backed localization for validation messages, API problem titles
+        // and the Identity Razor pages. ResourcesPath is load-bearing: see the
+        // SharedResource doc comment.
+        builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
+        builder.Services.AddSingleton<ILocalizer, ResourceLocalizer>();
+
         builder.Services
             .AddDefaultIdentity<ApplicationUser>()
             .AddRoles<IdentityRole>()
             .AddEntityFrameworkStores<ApplicationDbContext>()
-            .AddClaimsPrincipalFactory<ApplicationUserClaimsPrincipalFactory>();
+            .AddClaimsPrincipalFactory<ApplicationUserClaimsPrincipalFactory>()
+            // Identity's own failure text ("Email 'x' is already taken") is shown
+            // verbatim on Register / ChangePassword, so it needs translating too.
+            .AddErrorDescriber<LocalizedIdentityErrorDescriber>();
 
         // JWT bearer + refresh tokens for API/SPA clients. The access token
         // carries the same claims the cookie does (minted by the same claims

@@ -197,7 +197,21 @@ public class IdentityService : IIdentityService
             return null;
         }
 
-        return new MyProfileRecord(user.UserName ?? string.Empty, user.FullName, user.Email);
+        return new MyProfileRecord(user.UserName ?? string.Empty, user.FullName, user.Email, user.PreferredLanguage);
+    }
+
+    public async Task<Result> SetPreferredLanguageAsync(string userId, string language, CancellationToken cancellationToken)
+    {
+        var user = await _userManager.FindByIdAsync(userId);
+
+        if (user is null)
+        {
+            return Result.Failure(new[] { $"User '{userId}' not found." });
+        }
+
+        user.PreferredLanguage = language;
+
+        return (await _userManager.UpdateAsync(user)).ToApplicationResult();
     }
 
     public async Task<Result> UpdateProfileAsync(string userId, string? fullName, string email, CancellationToken cancellationToken)

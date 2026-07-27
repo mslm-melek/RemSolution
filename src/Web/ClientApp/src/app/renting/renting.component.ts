@@ -1,6 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { PageEvent } from '@angular/material/paginator';
 import { RentingsClient, RentingDto, RentingState } from '../web-api-client';
+import { TranslocoService } from '@jsverse/transloco';
 
 @Component({
   selector: 'app-renting',
@@ -8,6 +9,9 @@ import { RentingsClient, RentingDto, RentingState } from '../web-api-client';
   styleUrls: ['./renting.component.css']
 })
 export class RentingComponent implements OnInit {
+  // Confirm/prompt dialogs and error banners are plain strings, so they are
+  // translated imperatively rather than through the template pipe.
+  private readonly transloco = inject(TranslocoService);
   rentings: RentingDto[] = [];
   displayedColumns: string[] = ['car', 'client', 'period', 'state', 'price', 'actions'];
 
@@ -18,10 +22,10 @@ export class RentingComponent implements OnInit {
 
   RentingState = RentingState;
   states = [
-    { value: RentingState.NotYet, label: 'Upcoming' },
-    { value: RentingState.InProgress, label: 'In progress' },
-    { value: RentingState.Done, label: 'Completed' },
-    { value: RentingState.Cancelled, label: 'Cancelled' }
+    { value: RentingState.NotYet, labelKey: 'enums.rentingState.notYet' },
+    { value: RentingState.InProgress, labelKey: 'enums.rentingState.inProgress' },
+    { value: RentingState.Done, labelKey: 'enums.rentingState.done' },
+    { value: RentingState.Cancelled, labelKey: 'enums.rentingState.cancelled' }
   ];
 
   constructor(private client: RentingsClient) { }
@@ -51,8 +55,9 @@ export class RentingComponent implements OnInit {
     this.load();
   }
 
-  stateLabel(state?: RentingState): string {
-    return this.states.find(s => s.value === state)?.label ?? '';
+  // Returns a transloco key; the template pipes it.
+  stateLabelKey(state?: RentingState): string {
+    return this.states.find(s => s.value === state)?.labelKey ?? '';
   }
 
   canCancel(renting: RentingDto): boolean {
@@ -62,7 +67,7 @@ export class RentingComponent implements OnInit {
 
   cancelRenting(renting: RentingDto) {
     if (!renting.id) return;
-    if (confirm('Cancel this renting? It stays on record as cancelled.')) {
+    if (confirm(this.transloco.translate('renting.confirmCancel'))) {
       this.client.cancelRenting(renting.id).subscribe({
         next: () => this.load(),
         error: err => console.error(err)

@@ -1,6 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { PageEvent } from '@angular/material/paginator';
 import { CarsClient, CarDto, FuelType, ModelCarsClient, ModelCarDto } from '../web-api-client';
+import { TranslocoService } from '@jsverse/transloco';
 
 @Component({
   selector: 'app-car',
@@ -8,6 +9,9 @@ import { CarsClient, CarDto, FuelType, ModelCarsClient, ModelCarDto } from '../w
   styleUrls: ['./car.component.css']
 })
 export class CarComponent implements OnInit {
+  // Confirm/prompt dialogs and error banners are plain strings, so they are
+  // translated imperatively rather than through the template pipe.
+  private readonly transloco = inject(TranslocoService);
   cars: CarDto[] = [];
   models: ModelCarDto[] = [];
   displayedColumns: string[] = ['matricule', 'model', 'firstCirculationDate', 'color', 'power', 'fuelType', 'image', 'actions'];
@@ -21,8 +25,8 @@ export class CarComponent implements OnInit {
   filterFuelType: FuelType | null = null;
 
   fuelTypes = [
-    { value: FuelType.Gasoline, label: 'Gasoline' },
-    { value: FuelType.Diesel, label: 'Diesel' }
+    { value: FuelType.Gasoline, labelKey: 'enums.fuelType.gasoline' },
+    { value: FuelType.Diesel, labelKey: 'enums.fuelType.diesel' }
   ];
 
   constructor(private client: CarsClient, private modelCarsClient: ModelCarsClient) { }
@@ -70,14 +74,16 @@ export class CarComponent implements OnInit {
     this.load();
   }
 
-  fuelTypeLabel(value?: FuelType): string {
-    return value === undefined || value === null ? '' : FuelType[value];
+  // Returns a transloco key (empty when unset); the template pipes it, so the
+  // column re-renders on a language switch.
+  fuelTypeLabelKey(value?: FuelType): string {
+    return this.fuelTypes.find(f => f.value === value)?.labelKey ?? '';
   }
 
   deleteCar(car: CarDto) {
     if (!car.id) return;
 
-    if (confirm(`Delete car "${car.matricule}"?`)) {
+    if (confirm(this.transloco.translate('car.confirmDelete', { matricule: car.matricule }))) {
       this.client.deleteCar(car.id).subscribe({
         next: () => this.load(),
         error: err => console.error(err)

@@ -2,6 +2,8 @@ using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.Extensions.Localization;
+using RemSolution.Infrastructure;
 using RemSolution.Infrastructure.Identity;
 
 namespace RemSolution.Web.Areas.Identity.Pages.Account.Manage;
@@ -10,15 +12,18 @@ public class ChangePasswordModel : PageModel
 {
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly SignInManager<ApplicationUser> _signInManager;
+    private readonly IStringLocalizer<SharedResource> _localizer;
     private readonly ILogger<ChangePasswordModel> _logger;
 
     public ChangePasswordModel(
         UserManager<ApplicationUser> userManager,
         SignInManager<ApplicationUser> signInManager,
+        IStringLocalizer<SharedResource> localizer,
         ILogger<ChangePasswordModel> logger)
     {
         _userManager = userManager;
         _signInManager = signInManager;
+        _localizer = localizer;
         _logger = logger;
     }
 
@@ -30,20 +35,20 @@ public class ChangePasswordModel : PageModel
 
     public class InputModel
     {
-        [Required]
+        [Required(ErrorMessage = "Identity.Validation.Required")]
         [DataType(DataType.Password)]
-        [Display(Name = "Current password")]
+        [Display(Name = "Identity.Field.CurrentPassword")]
         public string OldPassword { get; set; } = string.Empty;
 
-        [Required]
-        [StringLength(100, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 6)]
+        [Required(ErrorMessage = "Identity.Validation.Required")]
+        [StringLength(100, ErrorMessage = "Identity.Validation.PasswordLength", MinimumLength = 6)]
         [DataType(DataType.Password)]
-        [Display(Name = "New password")]
+        [Display(Name = "Identity.Field.NewPassword")]
         public string NewPassword { get; set; } = string.Empty;
 
         [DataType(DataType.Password)]
-        [Display(Name = "Confirm new password")]
-        [Compare(nameof(NewPassword), ErrorMessage = "The new password and confirmation password do not match.")]
+        [Display(Name = "Identity.Field.ConfirmNewPassword")]
+        [Compare(nameof(NewPassword), ErrorMessage = "Identity.Validation.NewPasswordMismatch")]
         public string ConfirmPassword { get; set; } = string.Empty;
     }
 
@@ -78,7 +83,7 @@ public class ChangePasswordModel : PageModel
 
         await _signInManager.RefreshSignInAsync(user);
         _logger.LogInformation("User changed their password successfully");
-        StatusMessage = "Your password has been changed.";
+        StatusMessage = _localizer["Identity.Manage.PasswordChanged"];
 
         return RedirectToPage();
     }

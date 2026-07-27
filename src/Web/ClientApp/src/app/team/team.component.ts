@@ -1,16 +1,17 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import {
   UsersClient, AgencyUserDto,
   CreateAgencyUserCommand, UpdateMyAgencyUserCommand, SetMyAgencyUserActiveCommand
 } from '../web-api-client';
 import { AuthService } from '../shared/auth.service';
-import { FEATURES, PERMISSIONS_BY_FEATURE, featureLabel } from '../shared/feature-catalog';
+import { FEATURES, PERMISSIONS_BY_FEATURE } from '../shared/feature-catalog';
 import { extractValidationErrors } from '../shared/form-utils';
+import { TranslocoService } from '@jsverse/transloco';
 
 interface FeatureGroup {
   key: string;
-  label: string;
+  labelKey: string;
   permissions: string[];
 }
 
@@ -20,6 +21,9 @@ interface FeatureGroup {
   styleUrls: ['./team.component.css']
 })
 export class TeamComponent implements OnInit {
+  // Confirm/prompt dialogs and error banners are plain strings, so they are
+  // translated imperatively rather than through the template pipe.
+  private readonly transloco = inject(TranslocoService);
   users: AgencyUserDto[] = [];
   displayedColumns = ['userName', 'role', 'status', 'permissions', 'actions'];
 
@@ -47,7 +51,7 @@ export class TeamComponent implements OnInit {
       const enabled = new Set(user.features ?? []);
       this.groups = FEATURES
         .filter(f => enabled.has(f.key) && PERMISSIONS_BY_FEATURE[f.key]?.length)
-        .map(f => ({ key: f.key, label: f.label, permissions: PERMISSIONS_BY_FEATURE[f.key] }));
+        .map(f => ({ key: f.key, labelKey: f.labelKey, permissions: PERMISSIONS_BY_FEATURE[f.key] }));
     });
     this.load();
   }
@@ -123,15 +127,12 @@ export class TeamComponent implements OnInit {
   toggleActive(user: AgencyUserDto) {
     if (!user.id) return;
     const activate = !!user.isLockedOut;
-    if (!confirm(`${activate ? 'Reactivate' : 'Deactivate'} "${user.userName}"?`)) return;
+    const verb = this.transloco.translate(activate ? 'common.reactivate' : 'common.deactivate');
+    if (!confirm(this.transloco.translate('team.confirmToggle', { verb, user: user.userName }))) return;
     const command = new SetMyAgencyUserActiveCommand({ userId: user.id, isActive: activate });
     this.client.setMyAgencyUserActive(user.id, command).subscribe({
       next: () => this.load(),
       error: err => console.error(err)
     });
-  }
-
-  labelFor(key: string): string {
-    return featureLabel(key);
   }
 }

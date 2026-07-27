@@ -9,4 +9,9 @@ public class ApplicationUser : IdentityUser
     public int? AgencyId { get; set; }
 
     public string? FullName { get; set; }
+
+    // The user's chosen UI language (see Domain.Constants.Languages). Null means
+    // "never chosen" — the request then falls back to the culture cookie, the
+    // Accept-Language header and finally the default culture.
+    public string? PreferredLanguage { get; set; }
 }

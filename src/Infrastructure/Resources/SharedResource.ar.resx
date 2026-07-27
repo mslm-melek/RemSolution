@@ -1,0 +1,628 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Validation.Currency.Iso4217" xml:space="preserve">
+    <value>يجب أن تكون العملة رمزًا من 3 أحرف وفق معيار ISO 4217.</value>
+  </data>
+  <data name="Validation.Feature.Unknown" xml:space="preserve">
+    <value>«{PropertyValue}» ليست وحدة معروفة.</value>
+  </data>
+  <data name="Validation.Permission.Unknown" xml:space="preserve">
+    <value>«{PropertyValue}» ليست صلاحية معروفة.</value>
+  </data>
+  <data name="Validation.Role.AgencyRoles" xml:space="preserve">
+    <value>يجب أن يكون الدور AgencyAdministrator أو AgencyStaff.</value>
+  </data>
+  <data name="Validation.EndDate.AfterStartDate" xml:space="preserve">
+    <value>يجب أن يكون تاريخ النهاية بعد تاريخ البداية.</value>
+  </data>
+  <data name="Validation.Coordinates.Together" xml:space="preserve">
+    <value>يجب إدخال خط العرض وخط الطول معًا.</value>
+  </data>
+  <data name="Validation.Brand.NameRequired" xml:space="preserve">
+    <value>اسم الماركة مطلوب.</value>
+  </data>
+  <data name="Validation.Brand.NameMaxLength" xml:space="preserve">
+    <value>يجب ألّا يتجاوز اسم الماركة 200 حرف.</value>
+  </data>
+  <data name="Validation.Brand.NameUnique" xml:space="preserve">
+    <value>يجب أن يكون اسم الماركة فريدًا.</value>
+  </data>
+  <data name="Validation.Car.ModelIdRequired" xml:space="preserve">
+    <value>طراز السيارة مطلوب.</value>
+  </data>
+  <data name="Validation.ModelCar.BrandIdRequired" xml:space="preserve">
+    <value>الماركة مطلوبة.</value>
+  </data>
+  <data name="Validation.CarImages.NoDuplicates" xml:space="preserve">
+    <value>يجب ألّا يحتوي ترتيب الصور على تكرار.</value>
+  </data>
+  <data name="Validation.File.Extension" xml:space="preserve">
+    <value>يجب أن يكون امتداد الملف أحد التالي: {0}.</value>
+  </data>
+  <data name="Validation.File.ContentType" xml:space="preserve">
+    <value>يجب أن يكون نوع المحتوى أحد التالي: {0}.</value>
+  </data>
+  <data name="Validation.File.Empty" xml:space="preserve">
+    <value>الملف فارغ.</value>
+  </data>
+  <data name="Validation.File.TooLarge" xml:space="preserve">
+    <value>يجب ألّا يتجاوز حجم الملف 15 ميغابايت.</value>
+  </data>
+  <data name="Validation.Client.FlagReasonRequired" xml:space="preserve">
+    <value>يجب ذكر سبب عند وضع علامة على العميل.</value>
+  </data>
+  <data name="Validation.Client.BirthDateRequired" xml:space="preserve">
+    <value>تاريخ الميلاد مطلوب.</value>
+  </data>
+  <data name="Validation.Client.BirthDateInPast" xml:space="preserve">
+    <value>يجب أن يكون تاريخ الميلاد في الماضي.</value>
+  </data>
+  <data name="Validation.Client.BirthCountryUnknown" xml:space="preserve">
+    <value>بلد الميلاد غير موجود.</value>
+  </data>
+  <data name="Validation.Client.CinFormat" xml:space="preserve">
+    <value>يجب أن تتكوّن بطاقة التعريف من 4 إلى 20 حرفًا أو رقمًا.</value>
+  </data>
+  <data name="Validation.Client.CinRequiredWithDetails" xml:space="preserve">
+    <value>رقم بطاقة التعريف مطلوب عند إدخال بيانات الإصدار.</value>
+  </data>
+  <data name="Validation.Client.CinIssueDateFuture" xml:space="preserve">
+    <value>لا يمكن أن يكون تاريخ إصدار بطاقة التعريف في المستقبل.</value>
+  </data>
+  <data name="Validation.Client.CinIssueDateBeforeBirth" xml:space="preserve">
+    <value>لا يمكن أن يسبق تاريخ إصدار بطاقة التعريف تاريخ الميلاد.</value>
+  </data>
+  <data name="Validation.Client.CinCountryUnknown" xml:space="preserve">
+    <value>بلد إصدار بطاقة التعريف غير موجود.</value>
+  </data>
+  <data name="Validation.Client.PasseportFormat" xml:space="preserve">
+    <value>يجب أن يتكوّن رقم جواز السفر من 5 إلى 20 حرفًا أو رقمًا.</value>
+  </data>
+  <data name="Validation.Client.PasseportRequiredWithDetails" xml:space="preserve">
+    <value>رقم جواز السفر مطلوب عند إدخال بيانات الإصدار.</value>
+  </data>
+  <data name="Validation.Client.PasseportIssueDateFuture" xml:space="preserve">
+    <value>لا يمكن أن يكون تاريخ إصدار جواز السفر في المستقبل.</value>
+  </data>
+  <data name="Validation.Client.PasseportIssueDateBeforeBirth" xml:space="preserve">
+    <value>لا يمكن أن يسبق تاريخ إصدار جواز السفر تاريخ الميلاد.</value>
+  </data>
+  <data name="Validation.Client.PasseportCountryUnknown" xml:space="preserve">
+    <value>بلد إصدار جواز السفر غير موجود.</value>
+  </data>
+  <data name="Validation.Client.LicenceFormat" xml:space="preserve">
+    <value>يجب أن يتكوّن رقم رخصة السياقة من 4 إلى 30 حرفًا (حروف، أرقام، شرطات، خطوط مائلة أو مسافات).</value>
+  </data>
+  <data name="Validation.Client.LicenceRequiredWithDetails" xml:space="preserve">
+    <value>رقم رخصة السياقة مطلوب عند إدخال بيانات الإصدار.</value>
+  </data>
+  <data name="Validation.Client.LicenceIssueDateFuture" xml:space="preserve">
+    <value>لا يمكن أن يكون تاريخ إصدار رخصة السياقة في المستقبل.</value>
+  </data>
+  <data name="Validation.Client.LicenceIssueDateBeforeBirth" xml:space="preserve">
+    <value>لا يمكن أن يسبق تاريخ إصدار رخصة السياقة تاريخ الميلاد.</value>
+  </data>
+  <data name="Validation.Client.LicenceCountryUnknown" xml:space="preserve">
+    <value>بلد إصدار رخصة السياقة غير موجود.</value>
+  </data>
+  <data name="Validation.Booking.ReturnAfterPickup" xml:space="preserve">
+    <value>يجب أن يكون تاريخ الإرجاع بعد تاريخ الاستلام.</value>
+  </data>
+  <data name="Validation.Booking.EndAfterStart" xml:space="preserve">
+    <value>يجب أن يكون تاريخ النهاية بعد تاريخ البداية.</value>
+  </data>
+  <data name="Validation.Payment.SingleTarget" xml:space="preserve">
+    <value>يجب أن ترتبط الدفعة بعملية كراء واحدة أو حجز واحد أو عميل واحد فقط.</value>
+  </data>
+  <data name="Validation.Renting.SecondDriverDistinct" xml:space="preserve">
+    <value>يجب أن يكون السائق الثاني عميلًا مختلفًا.</value>
+  </data>
+  <data name="Validation.Language.Unsupported" xml:space="preserve">
+    <value>يجب أن تكون اللغة إحدى التالي: en أو fr أو ar.</value>
+  </data>
+  <data name="Property.Name" xml:space="preserve">
+    <value>الاسم</value>
+  </data>
+  <data name="Property.FullName" xml:space="preserve">
+    <value>الاسم الكامل</value>
+  </data>
+  <data name="Property.UserName" xml:space="preserve">
+    <value>اسم المستخدم</value>
+  </data>
+  <data name="Property.Email" xml:space="preserve">
+    <value>البريد الإلكتروني</value>
+  </data>
+  <data name="Property.Password" xml:space="preserve">
+    <value>كلمة المرور</value>
+  </data>
+  <data name="Property.NewPassword" xml:space="preserve">
+    <value>كلمة المرور الجديدة</value>
+  </data>
+  <data name="Property.CurrentPassword" xml:space="preserve">
+    <value>كلمة المرور الحالية</value>
+  </data>
+  <data name="Property.Role" xml:space="preserve">
+    <value>الدور</value>
+  </data>
+  <data name="Property.Language" xml:space="preserve">
+    <value>اللغة</value>
+  </data>
+  <data name="Property.Permissions" xml:space="preserve">
+    <value>الصلاحيات</value>
+  </data>
+  <data name="Property.Features" xml:space="preserve">
+    <value>الوحدات</value>
+  </data>
+  <data name="Property.Feature" xml:space="preserve">
+    <value>الوحدة</value>
+  </data>
+  <data name="Property.FirstName" xml:space="preserve">
+    <value>الاسم</value>
+  </data>
+  <data name="Property.LastName" xml:space="preserve">
+    <value>اللقب</value>
+  </data>
+  <data name="Property.BirthDate" xml:space="preserve">
+    <value>تاريخ الميلاد</value>
+  </data>
+  <data name="Property.BirthPlace" xml:space="preserve">
+    <value>مكان الميلاد</value>
+  </data>
+  <data name="Property.BirthCountryId" xml:space="preserve">
+    <value>بلد الميلاد</value>
+  </data>
+  <data name="Property.Cin" xml:space="preserve">
+    <value>بطاقة التعريف</value>
+  </data>
+  <data name="Property.PasseportNumber" xml:space="preserve">
+    <value>رقم جواز السفر</value>
+  </data>
+  <data name="Property.DrivingLicenceNumber" xml:space="preserve">
+    <value>رقم رخصة السياقة</value>
+  </data>
+  <data name="Property.Matricule" xml:space="preserve">
+    <value>رقم التسجيل</value>
+  </data>
+  <data name="Property.ModelId" xml:space="preserve">
+    <value>الطراز</value>
+  </data>
+  <data name="Property.BrandId" xml:space="preserve">
+    <value>الماركة</value>
+  </data>
+  <data name="Property.BranchId" xml:space="preserve">
+    <value>الفرع</value>
+  </data>
+  <data name="Property.CarId" xml:space="preserve">
+    <value>السيارة</value>
+  </data>
+  <data name="Property.ClientId" xml:space="preserve">
+    <value>العميل</value>
+  </data>
+  <data name="Property.SecondClientId" xml:space="preserve">
+    <value>السائق الثاني</value>
+  </data>
+  <data name="Property.AgencyId" xml:space="preserve">
+    <value>الوكالة</value>
+  </data>
+  <data name="Property.PlanId" xml:space="preserve">
+    <value>الباقة</value>
+  </data>
+  <data name="Property.StartDate" xml:space="preserve">
+    <value>تاريخ البداية</value>
+  </data>
+  <data name="Property.EndDate" xml:space="preserve">
+    <value>تاريخ النهاية</value>
+  </data>
+  <data name="Property.FirstCirculationDate" xml:space="preserve">
+    <value>تاريخ أول تسجيل</value>
+  </data>
+  <data name="Property.DailyRate" xml:space="preserve">
+    <value>السعر اليومي</value>
+  </data>
+  <data name="Property.Price" xml:space="preserve">
+    <value>السعر</value>
+  </data>
+  <data name="Property.Amount" xml:space="preserve">
+    <value>المبلغ</value>
+  </data>
+  <data name="Property.DepositAmount" xml:space="preserve">
+    <value>الضمان</value>
+  </data>
+  <data name="Property.Currency" xml:space="preserve">
+    <value>العملة</value>
+  </data>
+  <data name="Property.CountryId" xml:space="preserve">
+    <value>البلد</value>
+  </data>
+  <data name="Property.PhoneNumber" xml:space="preserve">
+    <value>رقم الهاتف</value>
+  </data>
+  <data name="Property.Address" xml:space="preserve">
+    <value>العنوان</value>
+  </data>
+  <data name="Property.Notes" xml:space="preserve">
+    <value>ملاحظات</value>
+  </data>
+  <data name="Property.Reason" xml:space="preserve">
+    <value>السبب</value>
+  </data>
+  <data name="Property.Description" xml:space="preserve">
+    <value>الوصف</value>
+  </data>
+  <data name="Property.Color" xml:space="preserve">
+    <value>اللون</value>
+  </data>
+  <data name="Property.Power" xml:space="preserve">
+    <value>القدرة</value>
+  </data>
+  <data name="Property.FuelType" xml:space="preserve">
+    <value>نوع الوقود</value>
+  </data>
+  <data name="Property.Status" xml:space="preserve">
+    <value>الحالة</value>
+  </data>
+  <data name="Property.Method" xml:space="preserve">
+    <value>طريقة الدفع</value>
+  </data>
+  <data name="Property.MaxCars" xml:space="preserve">
+    <value>أقصى عدد سيارات</value>
+  </data>
+  <data name="Property.MaxClients" xml:space="preserve">
+    <value>أقصى عدد عملاء</value>
+  </data>
+  <data name="Property.MaxUsers" xml:space="preserve">
+    <value>أقصى عدد مستخدمين</value>
+  </data>
+  <data name="Property.CancellationWindowHours" xml:space="preserve">
+    <value>مهلة الإلغاء</value>
+  </data>
+  <data name="Property.ReservationExpiryHours" xml:space="preserve">
+    <value>انتهاء صلاحية الحجز</value>
+  </data>
+  <data name="Property.File" xml:space="preserve">
+    <value>الملف</value>
+  </data>
+  <data name="Property.FileName" xml:space="preserve">
+    <value>اسم الملف</value>
+  </data>
+  <data name="Property.ContentType" xml:space="preserve">
+    <value>نوع المحتوى</value>
+  </data>
+  <data name="Property.Latitude" xml:space="preserve">
+    <value>خط العرض</value>
+  </data>
+  <data name="Property.Longitude" xml:space="preserve">
+    <value>خط الطول</value>
+  </data>
+  <data name="Error.Validation.Title" xml:space="preserve">
+    <value>حدث خطأ واحد أو أكثر في التحقّق من البيانات.</value>
+  </data>
+  <data name="Error.NotFound.Title" xml:space="preserve">
+    <value>المورد المطلوب غير موجود.</value>
+  </data>
+  <data name="Error.Unauthorized.Title" xml:space="preserve">
+    <value>غير مصرّح</value>
+  </data>
+  <data name="Error.Forbidden.Title" xml:space="preserve">
+    <value>ممنوع</value>
+  </data>
+  <data name="Error.SubscriptionRequired.Title" xml:space="preserve">
+    <value>يلزم اشتراك نشط.</value>
+  </data>
+  <data name="Error.PlanLimit.Title" xml:space="preserve">
+    <value>تم بلوغ حدّ باقة الاشتراك.</value>
+  </data>
+  <data name="Error.BookingConflict.Title" xml:space="preserve">
+    <value>السيارة غير متاحة في الفترة المختارة.</value>
+  </data>
+  <data name="Error.Concurrency.Title" xml:space="preserve">
+    <value>تم تعديل السجل من مستخدم آخر.</value>
+  </data>
+  <data name="Error.Concurrency.Detail" xml:space="preserve">
+    <value>تم تعديل هذا السجل أو حذفه من مستخدم آخر منذ تحميله. أعد تحميل الصفحة ثم حاول مجددًا.</value>
+  </data>
+  <data name="Error.Unknown.Title" xml:space="preserve">
+    <value>حدث خطأ غير متوقع.</value>
+  </data>
+  <data name="Language.Name.en" xml:space="preserve">
+    <value>English</value>
+  </data>
+  <data name="Language.Name.fr" xml:space="preserve">
+    <value>Français</value>
+  </data>
+  <data name="Language.Name.ar" xml:space="preserve">
+    <value>العربية</value>
+  </data>
+  <data name="Identity.Language" xml:space="preserve">
+    <value>اللغة</value>
+  </data>
+  <data name="Identity.Field.Email" xml:space="preserve">
+    <value>البريد الإلكتروني</value>
+  </data>
+  <data name="Identity.Field.Password" xml:space="preserve">
+    <value>كلمة المرور</value>
+  </data>
+  <data name="Identity.Field.NewPassword" xml:space="preserve">
+    <value>كلمة المرور الجديدة</value>
+  </data>
+  <data name="Identity.Field.CurrentPassword" xml:space="preserve">
+    <value>كلمة المرور الحالية</value>
+  </data>
+  <data name="Identity.Field.ConfirmPassword" xml:space="preserve">
+    <value>تأكيد كلمة المرور</value>
+  </data>
+  <data name="Identity.Field.ConfirmNewPassword" xml:space="preserve">
+    <value>تأكيد كلمة المرور الجديدة</value>
+  </data>
+  <data name="Identity.Field.FullName" xml:space="preserve">
+    <value>الاسم الكامل</value>
+  </data>
+  <data name="Identity.Field.PhoneNumber" xml:space="preserve">
+    <value>رقم الهاتف</value>
+  </data>
+  <data name="Identity.Field.RememberMe" xml:space="preserve">
+    <value>تذكّرني</value>
+  </data>
+  <data name="Identity.Login.Title" xml:space="preserve">
+    <value>تسجيل الدخول</value>
+  </data>
+  <data name="Identity.Login.Subtitle" xml:space="preserve">
+    <value>سجّل الدخول إلى حسابك</value>
+  </data>
+  <data name="Identity.Login.Submit" xml:space="preserve">
+    <value>تسجيل الدخول</value>
+  </data>
+  <data name="Identity.Login.ForgotPassword" xml:space="preserve">
+    <value>نسيت كلمة المرور؟</value>
+  </data>
+  <data name="Identity.Login.NoAccount" xml:space="preserve">
+    <value>ليس لديك حساب؟</value>
+  </data>
+  <data name="Identity.Login.CreateOne" xml:space="preserve">
+    <value>أنشئ حسابًا</value>
+  </data>
+  <data name="Identity.Login.LockedOut" xml:space="preserve">
+    <value>هذا الحساب مقفل. يرجى المحاولة لاحقًا.</value>
+  </data>
+  <data name="Identity.Login.InvalidCredentials" xml:space="preserve">
+    <value>البريد الإلكتروني أو كلمة المرور غير صحيحة.</value>
+  </data>
+  <data name="Identity.Register.Title" xml:space="preserve">
+    <value>إنشاء حساب عميل</value>
+  </data>
+  <data name="Identity.Register.Subtitle" xml:space="preserve">
+    <value>أنشئ حسابًا لتصفّح السيارات المتاحة وحجز كرائك</value>
+  </data>
+  <data name="Identity.Register.Submit" xml:space="preserve">
+    <value>إنشاء الحساب</value>
+  </data>
+  <data name="Identity.Register.HaveAccount" xml:space="preserve">
+    <value>لديك حساب بالفعل؟</value>
+  </data>
+  <data name="Identity.Register.SignIn" xml:space="preserve">
+    <value>سجّل الدخول</value>
+  </data>
+  <data name="Identity.Forgot.Title" xml:space="preserve">
+    <value>نسيت كلمة المرور</value>
+  </data>
+  <data name="Identity.Forgot.Subtitle" xml:space="preserve">
+    <value>أدخل بريدك الإلكتروني وسنرسل لك رابط إعادة التعيين</value>
+  </data>
+  <data name="Identity.Forgot.Submit" xml:space="preserve">
+    <value>إرسال الرابط</value>
+  </data>
+  <data name="Identity.BackToSignIn" xml:space="preserve">
+    <value>العودة إلى تسجيل الدخول</value>
+  </data>
+  <data name="Identity.ForgotConfirm.Title" xml:space="preserve">
+    <value>تحقّق من بريدك الإلكتروني</value>
+  </data>
+  <data name="Identity.ForgotConfirm.Subtitle" xml:space="preserve">
+    <value>تم طلب إعادة تعيين كلمة المرور</value>
+  </data>
+  <data name="Identity.ForgotConfirm.Message" xml:space="preserve">
+    <value>إذا كان هناك حساب مرتبط بهذا البريد الإلكتروني، فقد أُرسل رابط لإعادة تعيين كلمة المرور. يرجى التحقق من صندوق الوارد.</value>
+  </data>
+  <data name="Identity.ForgotConfirm.DevOnly" xml:space="preserve">
+    <value>بيئة التطوير فقط</value>
+  </data>
+  <data name="Identity.ForgotConfirm.DevHint" xml:space="preserve">
+    <value>لم يتم إعداد خادم بريد، استعمل هذا الرابط:</value>
+  </data>
+  <data name="Identity.ForgotConfirm.DevLink" xml:space="preserve">
+    <value>إعادة تعيين كلمة المرور</value>
+  </data>
+  <data name="Identity.Logout.Title" xml:space="preserve">
+    <value>تسجيل الخروج</value>
+  </data>
+  <data name="Identity.Logout.Subtitle" xml:space="preserve">
+    <value>تم تسجيل خروجك</value>
+  </data>
+  <data name="Identity.Logout.SignInAgain" xml:space="preserve">
+    <value>تسجيل الدخول من جديد</value>
+  </data>
+  <data name="Identity.Reset.Title" xml:space="preserve">
+    <value>إعادة تعيين كلمة المرور</value>
+  </data>
+  <data name="Identity.Reset.Subtitle" xml:space="preserve">
+    <value>اختر كلمة مرور جديدة</value>
+  </data>
+  <data name="Identity.Reset.Submit" xml:space="preserve">
+    <value>إعادة التعيين</value>
+  </data>
+  <data name="Identity.ResetConfirm.Title" xml:space="preserve">
+    <value>تمت إعادة تعيين كلمة المرور</value>
+  </data>
+  <data name="Identity.ResetConfirm.Subtitle" xml:space="preserve">
+    <value>اكتملت إعادة التعيين</value>
+  </data>
+  <data name="Identity.ResetConfirm.Message" xml:space="preserve">
+    <value>تمت إعادة تعيين كلمة المرور. يمكنك الآن تسجيل الدخول بكلمة المرور الجديدة.</value>
+  </data>
+  <data name="Identity.ResetConfirm.GoToSignIn" xml:space="preserve">
+    <value>الانتقال إلى تسجيل الدخول</value>
+  </data>
+  <data name="Identity.Manage.Title" xml:space="preserve">
+    <value>إعدادات الحساب</value>
+  </data>
+  <data name="Identity.Manage.BackToApp" xml:space="preserve">
+    <value>العودة إلى التطبيق</value>
+  </data>
+  <data name="Identity.Manage.Profile" xml:space="preserve">
+    <value>الملف الشخصي</value>
+  </data>
+  <data name="Identity.Manage.Password" xml:space="preserve">
+    <value>كلمة المرور</value>
+  </data>
+  <data name="Identity.Manage.ChangePasswordTitle" xml:space="preserve">
+    <value>تغيير كلمة المرور</value>
+  </data>
+  <data name="Identity.Manage.UpdatePassword" xml:space="preserve">
+    <value>تحديث كلمة المرور</value>
+  </data>
+  <data name="Identity.Manage.PasswordChanged" xml:space="preserve">
+    <value>تم تغيير كلمة المرور.</value>
+  </data>
+  <data name="Identity.Manage.ProfileUpdated" xml:space="preserve">
+    <value>تم تحديث ملفك الشخصي.</value>
+  </data>
+  <data name="Identity.Manage.EmailReadonlyHint" xml:space="preserve">
+    <value>بريدك الإلكتروني هو اسم الدخول ولا يمكن تغييره من هنا.</value>
+  </data>
+  <data name="Identity.Manage.Save" xml:space="preserve">
+    <value>حفظ</value>
+  </data>
+  <data name="Identity.Validation.Required" xml:space="preserve">
+    <value>حقل {0} مطلوب.</value>
+  </data>
+  <data name="Identity.Validation.Email" xml:space="preserve">
+    <value>حقل {0} ليس عنوان بريد إلكتروني صحيحًا.</value>
+  </data>
+  <data name="Identity.Validation.Phone" xml:space="preserve">
+    <value>حقل {0} ليس رقم هاتف صحيحًا.</value>
+  </data>
+  <data name="Identity.Validation.MaxLength" xml:space="preserve">
+    <value>يجب ألّا يتجاوز حقل {0} عدد {1} حرفًا.</value>
+  </data>
+  <data name="Identity.Validation.PasswordLength" xml:space="preserve">
+    <value>يجب أن يتراوح طول {0} بين {2} و{1} حرفًا.</value>
+  </data>
+  <data name="Identity.Validation.PasswordMismatch" xml:space="preserve">
+    <value>كلمة المرور وتأكيدها غير متطابقين.</value>
+  </data>
+  <data name="Identity.Validation.NewPasswordMismatch" xml:space="preserve">
+    <value>كلمة المرور الجديدة وتأكيدها غير متطابقين.</value>
+  </data>
+  <data name="Identity.Error.DefaultError" xml:space="preserve">
+    <value>حدث خطأ غير معروف.</value>
+  </data>
+  <data name="Identity.Error.ConcurrencyFailure" xml:space="preserve">
+    <value>تعارض في التزامن، تم تعديل العنصر.</value>
+  </data>
+  <data name="Identity.Error.PasswordMismatch" xml:space="preserve">
+    <value>كلمة المرور غير صحيحة.</value>
+  </data>
+  <data name="Identity.Error.InvalidToken" xml:space="preserve">
+    <value>الرابط غير صالح أو منتهي الصلاحية.</value>
+  </data>
+  <data name="Identity.Error.DuplicateUserName" xml:space="preserve">
+    <value>اسم المستخدم «{0}» مستعمل بالفعل.</value>
+  </data>
+  <data name="Identity.Error.DuplicateEmail" xml:space="preserve">
+    <value>البريد الإلكتروني «{0}» مستعمل بالفعل.</value>
+  </data>
+  <data name="Identity.Error.InvalidUserName" xml:space="preserve">
+    <value>اسم المستخدم «{0}» غير صالح.</value>
+  </data>
+  <data name="Identity.Error.InvalidEmail" xml:space="preserve">
+    <value>البريد الإلكتروني «{0}» غير صالح.</value>
+  </data>
+  <data name="Identity.Error.PasswordTooShort" xml:space="preserve">
+    <value>يجب أن تتكوّن كلمة المرور من {0} أحرف على الأقل.</value>
+  </data>
+  <data name="Identity.Error.PasswordRequiresNonAlphanumeric" xml:space="preserve">
+    <value>يجب أن تحتوي كلمة المرور على رمز واحد غير أبجدي رقمي على الأقل.</value>
+  </data>
+  <data name="Identity.Error.PasswordRequiresDigit" xml:space="preserve">
+    <value>يجب أن تحتوي كلمة المرور على رقم واحد على الأقل (من 0 إلى 9).</value>
+  </data>
+  <data name="Identity.Error.PasswordRequiresLower" xml:space="preserve">
+    <value>يجب أن تحتوي كلمة المرور على حرف صغير واحد على الأقل (a-z).</value>
+  </data>
+  <data name="Identity.Error.PasswordRequiresUpper" xml:space="preserve">
+    <value>يجب أن تحتوي كلمة المرور على حرف كبير واحد على الأقل (A-Z).</value>
+  </data>
+  <data name="Identity.Error.PasswordRequiresUniqueChars" xml:space="preserve">
+    <value>يجب أن تستعمل كلمة المرور {0} أحرف مختلفة على الأقل.</value>
+  </data>
+  <data name="Identity.Error.UserAlreadyHasPassword" xml:space="preserve">
+    <value>المستخدم لديه كلمة مرور بالفعل.</value>
+  </data>
+  <data name="Identity.Error.UserLockoutNotEnabled" xml:space="preserve">
+    <value>القفل غير مفعّل لهذا المستخدم.</value>
+  </data>
+  <data name="Error.Page.Title" xml:space="preserve">
+    <value>خطأ</value>
+  </data>
+  <data name="Error.Page.Heading" xml:space="preserve">
+    <value>حدث خطأ أثناء معالجة طلبك.</value>
+  </data>
+</root>

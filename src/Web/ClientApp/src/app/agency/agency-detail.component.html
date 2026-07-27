@@ -1,15 +1,15 @@
-<div class="detail-card mat-elevation-z4">
+<div class="detail-card mat-elevation-z4" *transloco="let t">
   <div class="header-row">
     <div>
-      <h2 class="title">{{ agency?.name || 'Agency' }}</h2>
+      <h2 class="title">{{ agency?.name || t('agency.fallbackName') }}</h2>
       <p class="subtitle" *ngIf="agency">{{ agency.countryName }} · {{ agency.currency }}</p>
     </div>
     <div class="header-actions">
       <a mat-button [routerLink]="['/agency', agencyId, 'edit']">
-        <mat-icon>edit</mat-icon> Edit details
+        <mat-icon>edit</mat-icon> {{ t('agency.editDetails') }}
       </a>
       <a mat-button [routerLink]="['/agency']">
-        <mat-icon>arrow_back</mat-icon> Back to list
+        <mat-icon>arrow_back</mat-icon> {{ t('common.backToList') }}
       </a>
     </div>
   </div>
@@ -18,41 +18,42 @@
 
   <mat-tab-group>
     <!-- USERS -->
-    <mat-tab label="Users">
+    <mat-tab [label]="t('agency.tabs.users')">
       <div class="tab-body">
         <div class="tab-actions">
           <a mat-raised-button color="primary" [routerLink]="['/agency', agencyId, 'user', 'new']">
-            <mat-icon>person_add</mat-icon> Add user
+            <mat-icon>person_add</mat-icon> {{ t('agency.addUser') }}
           </a>
         </div>
 
         <table mat-table [dataSource]="users" class="mat-elevation-z2 full-width">
           <ng-container matColumnDef="userName">
-            <th mat-header-cell *matHeaderCellDef>User</th>
+            <th mat-header-cell *matHeaderCellDef>{{ t('common.user') }}</th>
             <td mat-cell *matCellDef="let u">{{ u.userName }}</td>
           </ng-container>
           <ng-container matColumnDef="role">
-            <th mat-header-cell *matHeaderCellDef>Role</th>
+            <th mat-header-cell *matHeaderCellDef>{{ t('common.role') }}</th>
             <td mat-cell *matCellDef="let u">{{ u.role }}</td>
           </ng-container>
           <ng-container matColumnDef="status">
-            <th mat-header-cell *matHeaderCellDef>Status</th>
+            <th mat-header-cell *matHeaderCellDef>{{ t('common.status') }}</th>
             <td mat-cell *matCellDef="let u">
-              <span [class.inactive]="u.isLockedOut">{{ u.isLockedOut ? 'Deactivated' : 'Active' }}</span>
+              <span [class.inactive]="u.isLockedOut">{{ u.isLockedOut ? t('common.deactivated') : t('common.active') }}</span>
             </td>
           </ng-container>
           <ng-container matColumnDef="permissions">
-            <th mat-header-cell *matHeaderCellDef>Permissions</th>
+            <th mat-header-cell *matHeaderCellDef>{{ t('common.permissions') }}</th>
             <td mat-cell *matCellDef="let u">{{ (u.permissions || []).length }}</td>
           </ng-container>
           <ng-container matColumnDef="actions">
-            <th mat-header-cell *matHeaderCellDef class="text-center">Actions</th>
+            <th mat-header-cell *matHeaderCellDef class="text-center">{{ t('common.actions') }}</th>
             <td mat-cell *matCellDef="let u" class="text-center">
-              <a mat-icon-button color="primary" [routerLink]="['/agency', agencyId, 'user', u.id]" matTooltip="Edit">
+              <a mat-icon-button color="primary" [routerLink]="['/agency', agencyId, 'user', u.id]"
+                 [matTooltip]="t('common.edit')">
                 <mat-icon>edit</mat-icon>
               </a>
               <button mat-icon-button (click)="toggleActive(u)"
-                      [matTooltip]="u.isLockedOut ? 'Reactivate' : 'Deactivate'">
+                      [matTooltip]="u.isLockedOut ? t('common.reactivate') : t('common.deactivate')">
                 <mat-icon>{{ u.isLockedOut ? 'lock_open' : 'block' }}</mat-icon>
               </button>
             </td>
@@ -60,125 +61,130 @@
           <tr mat-header-row *matHeaderRowDef="usersColumns"></tr>
           <tr mat-row *matRowDef="let row; columns: usersColumns"></tr>
           <tr class="mat-row" *matNoDataRow>
-            <td class="mat-cell empty-row" [attr.colspan]="usersColumns.length">No users yet.</td>
+            <td class="mat-cell empty-row" [attr.colspan]="usersColumns.length">{{ t('agency.noUsers') }}</td>
           </tr>
         </table>
       </div>
     </mat-tab>
 
     <!-- SUBSCRIPTION -->
-    <mat-tab label="Subscription">
+    <mat-tab [label]="t('agency.tabs.subscription')">
       <div class="tab-body">
-        <h3 class="section-title">Usage vs. plan</h3>
+        <h3 class="section-title">{{ t('agency.usageVsPlan') }}</h3>
         <div *ngIf="usage?.hasSubscription; else noSub">
           <p class="plan-line">
-            Plan <strong>{{ usage?.planName }}</strong> — {{ statusLabel(usage?.status) }}
-            <span *ngIf="usage?.isActive" class="active-pill">active</span>
+            {{ t('agency.planLine') }} <strong>{{ usage?.planName }}</strong> —
+            {{ statusLabelKey(usage?.status) ? t(statusLabelKey(usage?.status)) : '' }}
+            <span *ngIf="usage?.isActive" class="active-pill">{{ t('agency.activePill') }}</span>
           </p>
           <div class="usage-row">
-            <span class="usage-label">Cars</span>
+            <span class="usage-label">{{ t('agency.usageCars') }}</span>
             <mat-progress-bar mode="determinate" [value]="percent(usage?.carsUsed, usage?.maxCars)"></mat-progress-bar>
             <span class="usage-count">{{ usage?.carsUsed }} / {{ usage?.maxCars }}</span>
           </div>
           <div class="usage-row">
-            <span class="usage-label">Clients</span>
+            <span class="usage-label">{{ t('agency.usageClients') }}</span>
             <mat-progress-bar mode="determinate" [value]="percent(usage?.clientsUsed, usage?.maxClients)"></mat-progress-bar>
             <span class="usage-count">{{ usage?.clientsUsed }} / {{ usage?.maxClients }}</span>
           </div>
           <div class="usage-row">
-            <span class="usage-label">Users</span>
+            <span class="usage-label">{{ t('agency.usageUsers') }}</span>
             <mat-progress-bar mode="determinate" [value]="percent(usage?.usersUsed, usage?.maxUsers)"></mat-progress-bar>
             <span class="usage-count">{{ usage?.usersUsed }} / {{ usage?.maxUsers }}</span>
           </div>
         </div>
-        <ng-template #noSub><p class="hint">No subscription assigned yet.</p></ng-template>
+        <ng-template #noSub><p class="hint">{{ t('agency.noSubscription') }}</p></ng-template>
 
         <div *ngIf="createdAdmin" class="admin-created">
           <div class="admin-created-head">
             <mat-icon>check_circle</mat-icon>
-            <strong>Administrator account created</strong>
-            <button mat-icon-button (click)="createdAdmin = null" aria-label="Dismiss"><mat-icon>close</mat-icon></button>
+            <strong>{{ t('agency.adminCreated') }}</strong>
+            <button mat-icon-button (click)="createdAdmin = null" [attr.aria-label]="t('common.dismiss')">
+              <mat-icon>close</mat-icon>
+            </button>
           </div>
-          <p>Share these one-time credentials — the admin should reset the password on first sign-in.</p>
-          <p><strong>Username:</strong> {{ createdAdmin.userName }}</p>
-          <p><strong>Temporary password:</strong> <code>{{ createdAdmin.password }}</code></p>
+          <p>{{ t('agency.adminCreatedHint') }}</p>
+          <p><strong>{{ t('agency.username') }}</strong> {{ createdAdmin.userName }}</p>
+          <p><strong>{{ t('agency.temporaryPassword') }}</strong> <code>{{ createdAdmin.password }}</code></p>
         </div>
 
-        <h3 class="section-title">Assign a plan</h3>
+        <h3 class="section-title">{{ t('agency.assignPlan') }}</h3>
         <form [formGroup]="assignForm" (ngSubmit)="assignPlan()" class="assign-form">
           <mat-form-field appearance="outline">
-            <mat-label>Plan</mat-label>
+            <mat-label>{{ t('agency.plan') }}</mat-label>
             <mat-select formControlName="planId" required>
               <mat-option *ngFor="let p of plans" [value]="p.id">{{ p.name }} ({{ p.price }})</mat-option>
             </mat-select>
           </mat-form-field>
           <mat-form-field appearance="outline">
-            <mat-label>Start date</mat-label>
+            <mat-label>{{ t('common.startDate') }}</mat-label>
             <input matInput type="date" formControlName="startDate" required />
           </mat-form-field>
           <mat-form-field appearance="outline">
-            <mat-label>End date</mat-label>
+            <mat-label>{{ t('common.endDate') }}</mat-label>
             <input matInput type="date" formControlName="endDate" required />
           </mat-form-field>
           <button mat-raised-button color="primary" type="submit">
-            <mat-icon>check</mat-icon> Assign
+            <mat-icon>check</mat-icon> {{ t('agency.assign') }}
           </button>
         </form>
 
-        <h3 class="section-title">History</h3>
+        <h3 class="section-title">{{ t('common.history') }}</h3>
         <table mat-table [dataSource]="subscriptions" class="mat-elevation-z2 full-width">
           <ng-container matColumnDef="plan">
-            <th mat-header-cell *matHeaderCellDef>Plan</th>
+            <th mat-header-cell *matHeaderCellDef>{{ t('agency.plan') }}</th>
             <td mat-cell *matCellDef="let s">{{ s.planName }}</td>
           </ng-container>
           <ng-container matColumnDef="period">
-            <th mat-header-cell *matHeaderCellDef>Period</th>
+            <th mat-header-cell *matHeaderCellDef>{{ t('common.period') }}</th>
             <td mat-cell *matCellDef="let s">{{ s.startDate | date:'yyyy-MM-dd' }} → {{ s.endDate | date:'yyyy-MM-dd' }}</td>
           </ng-container>
           <ng-container matColumnDef="status">
-            <th mat-header-cell *matHeaderCellDef>Status</th>
-            <td mat-cell *matCellDef="let s">{{ statusLabel(s.status) }}</td>
+            <th mat-header-cell *matHeaderCellDef>{{ t('common.status') }}</th>
+            <td mat-cell *matCellDef="let s">{{ statusLabelKey(s.status) ? t(statusLabelKey(s.status)) : '' }}</td>
           </ng-container>
           <ng-container matColumnDef="actions">
-            <th mat-header-cell *matHeaderCellDef class="text-center">Actions</th>
+            <th mat-header-cell *matHeaderCellDef class="text-center">{{ t('common.actions') }}</th>
             <td mat-cell *matCellDef="let s" class="text-center">
               <button mat-button *ngIf="s.status !== SubscriptionStatus.Active"
-                      (click)="changeStatus(s, SubscriptionStatus.Active)">Reactivate</button>
+                      (click)="changeStatus(s, SubscriptionStatus.Active)">{{ t('common.reactivate') }}</button>
               <button mat-button *ngIf="s.status === SubscriptionStatus.Active"
-                      (click)="changeStatus(s, SubscriptionStatus.Suspended)">Suspend</button>
+                      (click)="changeStatus(s, SubscriptionStatus.Suspended)">{{ t('agency.suspend') }}</button>
               <button mat-button color="warn" *ngIf="s.status !== SubscriptionStatus.Expired"
-                      (click)="changeStatus(s, SubscriptionStatus.Expired)">Expire</button>
+                      (click)="changeStatus(s, SubscriptionStatus.Expired)">{{ t('agency.expire') }}</button>
             </td>
           </ng-container>
           <tr mat-header-row *matHeaderRowDef="['plan','period','status','actions']"></tr>
           <tr mat-row *matRowDef="let row; columns: ['plan','period','status','actions']"></tr>
           <tr class="mat-row" *matNoDataRow>
-            <td class="mat-cell empty-row" [attr.colspan]="4">No subscriptions yet.</td>
+            <td class="mat-cell empty-row" [attr.colspan]="4">{{ t('agency.noSubscriptions') }}</td>
           </tr>
         </table>
       </div>
     </mat-tab>
 
     <!-- FEATURES -->
-    <mat-tab label="Features">
+    <mat-tab [label]="t('agency.tabs.features')">
       <div class="tab-body">
-        <p class="hint">Turn a module off to hide it and block its API for this agency.</p>
+        <p class="hint">{{ t('agency.featuresHint') }}</p>
         <div class="feature-row" *ngFor="let f of features">
-          <mat-checkbox [checked]="f.enabled" (change)="toggleFeature(f, $event.checked)">{{ f.feature }}</mat-checkbox>
+          <mat-checkbox [checked]="f.enabled" (change)="toggleFeature(f, $event.checked)">
+            {{ t('features.' + f.feature) }}
+          </mat-checkbox>
         </div>
       </div>
     </mat-tab>
 
     <!-- CARS / CLIENTS (impersonated browse) -->
-    <mat-tab label="Cars &amp; Clients">
+    <mat-tab [label]="t('agency.tabs.carsClients')">
       <div class="tab-body">
-        <p class="hint">Browse this agency's data as read-only.</p>
+        <p class="hint">{{ t('agency.browseHint') }}</p>
         <div class="tab-actions">
           <a mat-raised-button color="primary" [routerLink]="['/agency', agencyId, 'cars']">
-            <mat-icon>directions_car</mat-icon> View cars
+            <mat-icon>directions_car</mat-icon> {{ t('agency.viewCars') }}
           </a>
           <a mat-raised-button color="primary" [routerLink]="['/agency', agencyId, 'clients']">
-            <mat-icon>group</mat-icon> View clients
+            <mat-icon>group</mat-icon> {{ t('agency.viewClients') }}
           </a>
         </div>
       </div>

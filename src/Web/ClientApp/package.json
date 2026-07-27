@@ -25,6 +25,7 @@
     "@angular/platform-browser-dynamic": "^18.2.13",
     "@angular/platform-server": "^18.2.13",
     "@angular/router": "^18.2.13",
+    "@jsverse/transloco": "^7.6.1",
     "run-script-os": "^1.1.6",
     "rxjs": "~7.8.1",
     "tslib": "^2.5.0",

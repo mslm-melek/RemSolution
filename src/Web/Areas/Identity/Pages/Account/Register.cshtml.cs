@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Globalization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -32,23 +33,25 @@ public class RegisterModel : PageModel
 
     public class InputModel
     {
-        [Required]
-        [StringLength(200)]
-        [Display(Name = "Full name")]
+        [Required(ErrorMessage = "Identity.Validation.Required")]
+        [StringLength(200, ErrorMessage = "Identity.Validation.MaxLength")]
+        [Display(Name = "Identity.Field.FullName")]
         public string FullName { get; set; } = string.Empty;
 
-        [Required]
-        [EmailAddress]
+        [Required(ErrorMessage = "Identity.Validation.Required")]
+        [EmailAddress(ErrorMessage = "Identity.Validation.Email")]
+        [Display(Name = "Identity.Field.Email")]
         public string Email { get; set; } = string.Empty;
 
-        [Required]
-        [StringLength(100, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 6)]
+        [Required(ErrorMessage = "Identity.Validation.Required")]
+        [StringLength(100, ErrorMessage = "Identity.Validation.PasswordLength", MinimumLength = 6)]
         [DataType(DataType.Password)]
+        [Display(Name = "Identity.Field.Password")]
         public string Password { get; set; } = string.Empty;
 
         [DataType(DataType.Password)]
-        [Display(Name = "Confirm password")]
-        [Compare(nameof(Password), ErrorMessage = "The password and confirmation password do not match.")]
+        [Display(Name = "Identity.Field.ConfirmPassword")]
+        [Compare(nameof(Password), ErrorMessage = "Identity.Validation.PasswordMismatch")]
         public string ConfirmPassword { get; set; } = string.Empty;
     }
 
@@ -69,7 +72,11 @@ public class RegisterModel : PageModel
         {
             UserName = Input.Email,
             Email = Input.Email,
-            FullName = Input.FullName.Trim()
+            FullName = Input.FullName.Trim(),
+            // Whatever language the visitor filled this form in becomes the
+            // account's preference, so it follows them to their next device
+            // instead of only living in this browser's culture cookie.
+            PreferredLanguage = Languages.Normalize(CultureInfo.CurrentUICulture.Name) ?? Languages.Default
         };
 
         var result = await _userManager.CreateAsync(user, Input.Password);

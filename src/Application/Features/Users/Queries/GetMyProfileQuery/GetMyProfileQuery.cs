@@ -28,7 +28,8 @@ namespace RemSolution.Application.Features.Users.Queries.GetMyProfileQuery
             {
                 UserName = profile.UserName,
                 FullName = profile.FullName,
-                Email = profile.Email
+                Email = profile.Email,
+                PreferredLanguage = profile.PreferredLanguage
             };
         }
     }

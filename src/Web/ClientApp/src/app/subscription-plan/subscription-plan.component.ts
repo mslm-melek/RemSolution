@@ -1,5 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { SubscriptionPlansClient, SubscriptionPlanDto } from '../web-api-client';
+import { TranslocoService } from '@jsverse/transloco';
 
 @Component({
   selector: 'app-subscription-plan',
@@ -7,6 +8,9 @@ import { SubscriptionPlansClient, SubscriptionPlanDto } from '../web-api-client'
   styleUrls: ['./subscription-plan.component.css']
 })
 export class SubscriptionPlanComponent implements OnInit {
+  // Confirm/prompt dialogs and error banners are plain strings, so they are
+  // translated imperatively rather than through the template pipe.
+  private readonly transloco = inject(TranslocoService);
   plans: SubscriptionPlanDto[] = [];
   displayedColumns: string[] = ['name', 'maxCars', 'maxClients', 'maxUsers', 'price', 'actions'];
 
@@ -26,11 +30,11 @@ export class SubscriptionPlanComponent implements OnInit {
   deletePlan(plan: SubscriptionPlanDto) {
     if (!plan.id) return;
 
-    if (confirm(`Delete plan "${plan.name}"? This is only allowed when no agency uses it.`)) {
+    if (confirm(this.transloco.translate('plan.confirmDelete', { name: plan.name }))) {
       this.client.deleteSubscriptionPlan(plan.id).subscribe({
         next: () => this.load(),
         error: err => {
-          alert('This plan could not be deleted. It may still be assigned to an agency.');
+          alert(this.transloco.translate('plan.deleteFailed'));
           console.error(err);
         }
       });

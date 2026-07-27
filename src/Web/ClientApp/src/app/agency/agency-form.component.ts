@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
@@ -6,6 +6,7 @@ import {
   CreateAgencyCommand, UpdateAgencyCommand
 } from '../web-api-client';
 import { extractValidationErrors, isConcurrencyConflict } from '../shared/form-utils';
+import { TranslocoService } from '@jsverse/transloco';
 
 @Component({
   selector: 'app-agency-form',
@@ -13,6 +14,9 @@ import { extractValidationErrors, isConcurrencyConflict } from '../shared/form-u
   styleUrls: ['./agency-form.component.css']
 })
 export class AgencyFormComponent implements OnInit {
+  // Confirm/prompt dialogs and error banners are plain strings, so they are
+  // translated imperatively rather than through the template pipe.
+  private readonly transloco = inject(TranslocoService);
   form: FormGroup;
   countries: CountryDto[] = [];
   agencyId?: number;
@@ -120,8 +124,7 @@ export class AgencyFormComponent implements OnInit {
     this.saving = false;
 
     if (isConcurrencyConflict(err)) {
-      this.errorMessage =
-        'This agency was reloaded by another user since you opened it. Reload the page to get the latest version, then re-apply your changes.';
+      this.errorMessage = this.transloco.translate('agency.concurrency');
       return;
     }
 
@@ -129,7 +132,7 @@ export class AgencyFormComponent implements OnInit {
     if (validationErrors) {
       this.errorMessage = validationErrors;
     } else {
-      this.errorMessage = 'An unexpected error occurred. Please try again.';
+      this.errorMessage = this.transloco.translate('common.unexpectedError');
       console.error(err);
     }
   }

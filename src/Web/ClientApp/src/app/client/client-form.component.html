@@ -1,8 +1,8 @@
-<div class="client-card mat-elevation-z4">
+<div class="client-card mat-elevation-z4" *transloco="let t">
   <div class="header-row">
-    <h2 class="title">{{ isEdit ? 'Edit Client' : 'New Client' }}</h2>
+    <h2 class="title">{{ isEdit ? t('client.editTitle') : t('client.newTitle') }}</h2>
     <a mat-button [routerLink]="['/client']">
-      <mat-icon>arrow_back</mat-icon> Back to list
+      <mat-icon>arrow_back</mat-icon> {{ t('common.backToList') }}
     </a>
   </div>
 
@@ -11,33 +11,33 @@
   <form [formGroup]="form" (ngSubmit)="save()">
 
     <!-- Identity -->
-    <h3 class="section-title">Identity</h3>
+    <h3 class="section-title">{{ t('client.identity') }}</h3>
     <div class="field-grid">
       <mat-form-field appearance="outline">
-        <mat-label>First name</mat-label>
+        <mat-label>{{ t('client.firstName') }}</mat-label>
         <input matInput formControlName="firstName" required />
-        <mat-error *ngIf="form.get('firstName')?.hasError('required')">First name is required.</mat-error>
+        <mat-error *ngIf="form.get('firstName')?.hasError('required')">{{ t('client.firstNameRequired') }}</mat-error>
       </mat-form-field>
 
       <mat-form-field appearance="outline">
-        <mat-label>Last name</mat-label>
+        <mat-label>{{ t('client.lastName') }}</mat-label>
         <input matInput formControlName="lastName" required />
-        <mat-error *ngIf="form.get('lastName')?.hasError('required')">Last name is required.</mat-error>
+        <mat-error *ngIf="form.get('lastName')?.hasError('required')">{{ t('client.lastNameRequired') }}</mat-error>
       </mat-form-field>
 
       <mat-form-field appearance="outline">
-        <mat-label>Birth date</mat-label>
+        <mat-label>{{ t('client.birthDate') }}</mat-label>
         <input matInput type="date" formControlName="birthDate" required />
-        <mat-error *ngIf="form.get('birthDate')?.hasError('required')">Birth date is required.</mat-error>
+        <mat-error *ngIf="form.get('birthDate')?.hasError('required')">{{ t('client.birthDateRequired') }}</mat-error>
       </mat-form-field>
 
       <mat-form-field appearance="outline">
-        <mat-label>Birth place</mat-label>
+        <mat-label>{{ t('client.birthPlace') }}</mat-label>
         <input matInput formControlName="birthPlace" />
       </mat-form-field>
 
       <mat-form-field appearance="outline">
-        <mat-label>Birth country</mat-label>
+        <mat-label>{{ t('client.birthCountry') }}</mat-label>
         <mat-select formControlName="birthCountryId">
           <mat-option [value]="null">—</mat-option>
           <mat-option *ngFor="let country of countries" [value]="country.id">{{ country.name }}</mat-option>
@@ -46,25 +46,25 @@
     </div>
 
     <!-- CIN -->
-    <h3 class="section-title">CIN</h3>
+    <h3 class="section-title">{{ t('client.cinSection') }}</h3>
     <div class="field-grid">
       <mat-form-field appearance="outline">
-        <mat-label>CIN number</mat-label>
+        <mat-label>{{ t('client.cinNumber') }}</mat-label>
         <input matInput formControlName="cin" />
       </mat-form-field>
 
       <mat-form-field appearance="outline">
-        <mat-label>Issue date</mat-label>
+        <mat-label>{{ t('client.issueDate') }}</mat-label>
         <input matInput type="date" formControlName="cinDeliveranceDate" />
       </mat-form-field>
 
       <mat-form-field appearance="outline">
-        <mat-label>Issue place</mat-label>
+        <mat-label>{{ t('client.issuePlace') }}</mat-label>
         <input matInput formControlName="cinDeliverancePlace" />
       </mat-form-field>
 
       <mat-form-field appearance="outline">
-        <mat-label>Issue country</mat-label>
+        <mat-label>{{ t('client.issueCountry') }}</mat-label>
         <mat-select formControlName="cinDeliveranceCountryId">
           <mat-option [value]="null">—</mat-option>
           <mat-option *ngFor="let country of countries" [value]="country.id">{{ country.name }}</mat-option>
@@ -73,25 +73,25 @@
     </div>
 
     <!-- Passeport -->
-    <h3 class="section-title">Passeport</h3>
+    <h3 class="section-title">{{ t('client.passeport') }}</h3>
     <div class="field-grid">
       <mat-form-field appearance="outline">
-        <mat-label>Passeport number</mat-label>
+        <mat-label>{{ t('client.passeportNumber') }}</mat-label>
         <input matInput formControlName="passeportNumber" />
       </mat-form-field>
 
       <mat-form-field appearance="outline">
-        <mat-label>Issue date</mat-label>
+        <mat-label>{{ t('client.issueDate') }}</mat-label>
         <input matInput type="date" formControlName="passeportDeliveranceDate" />
       </mat-form-field>
 
       <mat-form-field appearance="outline">
-        <mat-label>Issue place</mat-label>
+        <mat-label>{{ t('client.issuePlace') }}</mat-label>
         <input matInput formControlName="passeportDeliverancePlace" />
       </mat-form-field>
 
       <mat-form-field appearance="outline">
-        <mat-label>Issue country</mat-label>
+        <mat-label>{{ t('client.issueCountry') }}</mat-label>
         <mat-select formControlName="passeportDeliveranceCountryId">
           <mat-option [value]="null">—</mat-option>
           <mat-option *ngFor="let country of countries" [value]="country.id">{{ country.name }}</mat-option>
@@ -100,25 +100,25 @@
     </div>
 
     <!-- Driving licence -->
-    <h3 class="section-title">Driving Licence</h3>
+    <h3 class="section-title">{{ t('client.drivingLicence') }}</h3>
     <div class="field-grid">
       <mat-form-field appearance="outline">
-        <mat-label>Licence number</mat-label>
+        <mat-label>{{ t('client.licenceNumber') }}</mat-label>
         <input matInput formControlName="drivingLicenceNumber" />
       </mat-form-field>
 
       <mat-form-field appearance="outline">
-        <mat-label>Issue date</mat-label>
+        <mat-label>{{ t('client.issueDate') }}</mat-label>
         <input matInput type="date" formControlName="drivingLicenceDeliveranceDate" />
       </mat-form-field>
 
       <mat-form-field appearance="outline">
-        <mat-label>Issue place</mat-label>
+        <mat-label>{{ t('client.issuePlace') }}</mat-label>
         <input matInput formControlName="drivingLicenceDeliverancePlace" />
       </mat-form-field>
 
       <mat-form-field appearance="outline">
-        <mat-label>Issue country</mat-label>
+        <mat-label>{{ t('client.issueCountry') }}</mat-label>
         <mat-select formControlName="drivingLicenceDeliveranceCountryId">
           <mat-option [value]="null">—</mat-option>
           <mat-option *ngFor="let country of countries" [value]="country.id">{{ country.name }}</mat-option>
@@ -128,24 +128,25 @@
 
     <!-- Notes -->
     <mat-form-field appearance="outline" class="full-width">
-      <mat-label>Description</mat-label>
+      <mat-label>{{ t('common.description') }}</mat-label>
       <textarea matInput formControlName="description" rows="3"></textarea>
     </mat-form-field>
 
     <!-- Document images -->
-    <h3 class="section-title">Document Images</h3>
-    <p *ngIf="!isEdit" class="hint">Save the client first, then upload document images here.</p>
+    <h3 class="section-title">{{ t('client.documentImages') }}</h3>
+    <p *ngIf="!isEdit" class="hint">{{ t('client.documentsAfterSave') }}</p>
     <div class="documents-row" *ngIf="isEdit">
       <div class="document-slot" *ngFor="let slot of documents">
-        <span class="document-label">{{ slot.label }}</span>
+        <span class="document-label">{{ t(slot.labelKey) }}</span>
 
         <a *ngIf="slot.url" [href]="slot.url" target="_blank" mat-button color="primary">
-          <mat-icon>visibility</mat-icon> View
+          <mat-icon>visibility</mat-icon> {{ t('common.view') }}
         </a>
-        <span *ngIf="!slot.url" class="hint">Not uploaded</span>
+        <span *ngIf="!slot.url" class="hint">{{ t('common.notUploaded') }}</span>
 
         <button type="button" mat-stroked-button (click)="fileInput.click()" [disabled]="slot.uploading">
-          <mat-icon>upload</mat-icon> {{ slot.uploading ? 'Uploading…' : (slot.url ? 'Replace' : 'Upload') }}
+          <mat-icon>upload</mat-icon>
+          {{ slot.uploading ? t('common.uploading') : (slot.url ? t('common.replace') : t('common.upload')) }}
         </button>
         <input #fileInput hidden type="file" accept=".jpg,.jpeg,.png,.webp,.pdf"
                (change)="onFileSelected(slot, fileInput)" />
@@ -155,9 +156,9 @@
     <!-- Actions -->
     <div class="actions-row">
       <button mat-raised-button color="primary" type="submit" [disabled]="saving">
-        <mat-icon>save</mat-icon> {{ saving ? 'Saving…' : 'Save' }}
+        <mat-icon>save</mat-icon> {{ saving ? t('common.saving') : t('common.save') }}
       </button>
-      <a mat-button [routerLink]="['/client']">Cancel</a>
+      <a mat-button [routerLink]="['/client']">{{ t('common.cancel') }}</a>
     </div>
   </form>
 </div>

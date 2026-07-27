@@ -1,10 +1,13 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import {
   UsersClient, MyProfileDto, UpdateMyProfileCommand, ChangeMyPasswordCommand, CurrentUserDto
 } from '../web-api-client';
 import { AuthService } from '../shared/auth.service';
 import { extractValidationErrors } from '../shared/form-utils';
+import { TranslocoService } from '@jsverse/transloco';
+import { LanguageService } from '../shared/language.service';
+import { AppLanguage } from '../shared/language';
 
 @Component({
   selector: 'app-profile',
@@ -12,6 +15,13 @@ import { extractValidationErrors } from '../shared/form-utils';
   styleUrls: ['./profile.component.css']
 })
 export class ProfileComponent implements OnInit {
+  // Confirm/prompt dialogs and error banners are plain strings, so they are
+  // translated imperatively rather than through the template pipe.
+  private readonly transloco = inject(TranslocoService);
+  private readonly language = inject(LanguageService);
+
+  readonly languages = this.language.available;
+
   profileForm: FormGroup;
   passwordForm: FormGroup;
 
@@ -63,6 +73,15 @@ export class ProfileComponent implements OnInit {
     });
   }
 
+  get currentLanguage(): AppLanguage {
+    return this.language.current;
+  }
+
+  // Saves on the account and reloads — see LanguageService.use.
+  setLanguage(language: AppLanguage) {
+    this.language.use(language);
+  }
+
   saveProfile() {
     if (this.profileForm.invalid) {
       this.profileForm.markAllAsTouched();
@@ -86,7 +105,7 @@ export class ProfileComponent implements OnInit {
       },
       error: err => {
         this.savingProfile = false;
-        this.profileError = extractValidationErrors(err) ?? 'Could not save your profile.';
+        this.profileError = extractValidationErrors(err) ?? this.transloco.translate('profile.saveFailed');
       }
     });
   }
@@ -98,7 +117,7 @@ export class ProfileComponent implements OnInit {
     }
     const v = this.passwordForm.value;
     if (v.newPassword !== v.confirmPassword) {
-      this.passwordError = 'The new password and its confirmation do not match.';
+      this.passwordError = this.transloco.translate('profile.passwordMismatch');
       return;
     }
     this.savingPassword = true;
@@ -113,12 +132,12 @@ export class ProfileComponent implements OnInit {
     this.client.changeMyPassword(command).subscribe({
       next: () => {
         this.savingPassword = false;
-        this.passwordSuccess = 'Your password has been changed.';
+        this.passwordSuccess = this.transloco.translate('profile.passwordChanged');
         this.passwordForm.reset();
       },
       error: err => {
         this.savingPassword = false;
-        this.passwordError = extractValidationErrors(err) ?? 'Could not change your password.';
+        this.passwordError = extractValidationErrors(err) ?? this.transloco.translate('profile.passwordFailed');
       }
     });
   }

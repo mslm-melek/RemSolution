@@ -164,7 +164,7 @@ namespace RemSolution.Application.Features.Payment.Commands.CreatePaymentCommand
 {
     public class CreatePaymentCommandValidator : AbstractValidator<CreatePaymentCommand>
     {
-        public CreatePaymentCommandValidator()
+        public CreatePaymentCommandValidator(ILocalizer localizer)
         {
             RuleFor(v => v.Amount).GreaterThan(0);
             RuleFor(v => v.Method).IsInEnum();
@@ -173,7 +173,7 @@ namespace RemSolution.Application.Features.Payment.Commands.CreatePaymentCommand
             // Exactly one target: a renting, a reservation, or a client.
             RuleFor(v => v)
                 .Must(v => TargetCount(v) == 1)
-                .WithMessage("A payment must target exactly one of a renting, a reservation, or a client.");
+                .WithMessage(_ => localizer["Validation.Payment.SingleTarget"]);
         }
 
         private static int TargetCount(CreatePaymentCommand v)

@@ -1,9 +1,11 @@
 
+using RemSolution.Application.Common.Interfaces;
+
 namespace RemSolution.Application.Features.Agency.Commands.UpdateAgencyCommand
 {
     public class UpdateAgencyCommandValidator : AbstractValidator<UpdateAgencyCommand>
     {
-        public UpdateAgencyCommandValidator()
+        public UpdateAgencyCommandValidator(ILocalizer localizer)
         {
             RuleFor(v => v.Name)
                 .MaximumLength(200)
@@ -25,7 +27,7 @@ namespace RemSolution.Application.Features.Agency.Commands.UpdateAgencyCommand
 
             RuleFor(v => v.Currency)
                 .NotEmpty()
-                .Length(3).WithMessage("Currency must be a 3-letter ISO 4217 code.");
+                .Length(3).WithMessage(_ => localizer["Validation.Currency.Iso4217"]);
 
             RuleFor(v => v.CancellationWindowHours)
                 .GreaterThanOrEqualTo(0);

@@ -5,8 +5,8 @@ namespace RemSolution.Application.Features.Client.Commands.CreateClientCommand
 {
     public class CreateClientCommandValidator : ClientPayloadValidator<CreateClientCommand>
     {
-        public CreateClientCommandValidator(IApplicationDbContext context, TimeProvider dateTime)
-            : base(context, dateTime)
+        public CreateClientCommandValidator(IApplicationDbContext context, TimeProvider dateTime, ILocalizer localizer)
+            : base(context, dateTime, localizer)
         {
         }
     }

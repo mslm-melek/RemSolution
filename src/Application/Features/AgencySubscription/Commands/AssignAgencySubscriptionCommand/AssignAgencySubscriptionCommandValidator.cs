@@ -1,8 +1,10 @@
+using RemSolution.Application.Common.Interfaces;
+
 namespace RemSolution.Application.Features.AgencySubscription.Commands.AssignAgencySubscriptionCommand
 {
     public class AssignAgencySubscriptionCommandValidator : AbstractValidator<AssignAgencySubscriptionCommand>
     {
-        public AssignAgencySubscriptionCommandValidator()
+        public AssignAgencySubscriptionCommandValidator(ILocalizer localizer)
         {
             RuleFor(s => s.AgencyId)
                 .GreaterThan(0);
@@ -12,7 +14,7 @@ namespace RemSolution.Application.Features.AgencySubscription.Commands.AssignAge
 
             RuleFor(s => s.EndDate)
                 .GreaterThan(s => s.StartDate)
-                .WithMessage("'End Date' must be after 'Start Date'.");
+                .WithMessage(_ => localizer["Validation.EndDate.AfterStartDate"]);
         }
     }
 }

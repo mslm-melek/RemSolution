@@ -7,13 +7,13 @@ namespace RemSolution.Application.Features.Brand.Commands.UpdateBrandCommand
     {
         private readonly IApplicationDbContext _context;
 
-        public UpdateBrandCommandValidator(IApplicationDbContext context)
+        public UpdateBrandCommandValidator(IApplicationDbContext context, ILocalizer localizer)
         {
             _context = context;
             RuleFor(v => v.Name)
-                .MaximumLength(200).WithMessage("Brand name must not exceed 200 characters.")
-                .NotEmpty().WithMessage("Brand name is required.")
-                .MustAsync(BeUniqueName).WithMessage("Brand name must be unique.");
+                .MaximumLength(200).WithMessage(_ => localizer["Validation.Brand.NameMaxLength"])
+                .NotEmpty().WithMessage(_ => localizer["Validation.Brand.NameRequired"])
+                .MustAsync(BeUniqueName).WithMessage(_ => localizer["Validation.Brand.NameUnique"]);
         }
 
         private async Task<bool> BeUniqueName(UpdateBrandCommand command, string name, CancellationToken cancellationToken)

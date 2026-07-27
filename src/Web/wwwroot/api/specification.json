@@ -6,6 +6,36 @@
     "version": "1.0.0"
   },
   "paths": {
+    "/culture/set": {
+      "get": {
+        "operationId": "GetCultureSet",
+        "parameters": [
+          {
+            "name": "language",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "returnUrl",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "nullable": true
+            },
+            "x-position": 2
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        }
+      }
+    },
     "/api/Agencies": {
       "get": {
         "tags": [
@@ -3849,6 +3879,31 @@
           }
         }
       }
+    },
+    "/api/Users/me/language": {
+      "put": {
+        "tags": [
+          "Users"
+        ],
+        "operationId": "UpdateMyLanguage",
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateMyLanguageCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        }
+      }
     }
   },
   "components": {
@@ -6617,6 +6672,10 @@
           "email": {
             "type": "string",
             "nullable": true
+          },
+          "preferredLanguage": {
+            "type": "string",
+            "nullable": true
           }
         }
       },
@@ -6641,6 +6700,15 @@
             "type": "string"
           },
           "newPassword": {
+            "type": "string"
+          }
+        }
+      },
+      "UpdateMyLanguageCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "language": {
             "type": "string"
           }
         }

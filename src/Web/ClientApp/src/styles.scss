@@ -12,6 +12,25 @@ code {
 html, body { height: 100%; }
 body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
 
+/* Arabic. `dir` is set on <html> before bootstrap (see main.ts) so Angular
+   Material picks the direction up when its injector is built; these rules cover
+   the plain HTML the components render themselves. */
+[dir="rtl"] {
+  /* Latin-digit numbers, matricules and ISO currency codes must keep their
+     left-to-right run inside otherwise right-to-left text. */
+  .num,
+  code {
+    direction: ltr;
+    unicode-bidi: embed;
+  }
+
+  /* The date-range arrows in the tables point along the reading direction. */
+  .mat-mdc-cell,
+  .mat-mdc-header-cell {
+    text-align: start;
+  }
+}
+
 .content-container {
   max-width: 1200px;
   margin: 0 auto;

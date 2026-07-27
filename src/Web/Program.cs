@@ -1,4 +1,8 @@
 using Hangfire;
+using Microsoft.Extensions.Localization;
+using RemSolution.Domain.Constants;
+using RemSolution.Infrastructure;
+using RemSolution.Infrastructure.Localization;
 using RemSolution.Infrastructure.Data;
 using RemSolution.Infrastructure.Jobs;
 using RemSolution.Web.Infrastructure;
@@ -46,6 +50,12 @@ try
 
     var app = builder.Build();
 
+    // FluentValidation resolves {PropertyName} from the C# property name; point
+    // it at the shared resources so validation messages are translated end to
+    // end. Global static state, so it is configured once at startup.
+    FluentValidationLocalization.Configure(
+        app.Services.GetRequiredService<IStringLocalizer<SharedResource>>());
+
     // Configure the HTTP request pipeline.
     if (app.Environment.IsDevelopment())
     {
@@ -68,6 +78,12 @@ try
     // authentication (needs the principal) and before authorization (so the
     // ambient tenant + impersonation flag are live when endpoint policies run).
     app.UseMiddleware<PlatformAdminImpersonationMiddleware>();
+
+    // After authentication so the signed-in user's PreferredLanguage claim can
+    // outrank the culture cookie, and before anything that produces user-facing
+    // text (authorization failures, validation, Razor pages).
+    app.UseRequestLocalization(RequestLocalizationSetup.Build());
+
     app.UseAuthorization();
     app.UseMiddleware<RequestContextLoggingMiddleware>();
 
@@ -98,6 +114,24 @@ try
     }
 
     app.MapRazorPages();
+
+    // Language switch for the anonymous, server-rendered Identity pages, which
+    // have no SPA to call the authenticated me/language endpoint. Signed-in
+    // users go through that endpoint instead, which also persists the choice.
+    app.MapGet("/culture/set", (HttpContext http, string language, string? returnUrl) =>
+    {
+        if (!Languages.IsSupported(language))
+            return Results.BadRequest();
+
+        CultureCookie.Write(http.Response, language);
+
+        // Local-only redirect: an open redirect here would be a phishing vector.
+        var target = !string.IsNullOrEmpty(returnUrl) && Uri.IsWellFormedUriString(returnUrl, UriKind.Relative)
+            ? returnUrl
+            : "/";
+
+        return Results.LocalRedirect(target);
+    }).AllowAnonymous();
 
     app.MapFallbackToFile("index.html");
 

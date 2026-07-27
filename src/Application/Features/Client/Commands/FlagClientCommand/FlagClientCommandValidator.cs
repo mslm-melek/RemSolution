@@ -1,8 +1,10 @@
+using RemSolution.Application.Common.Interfaces;
+
 namespace RemSolution.Application.Features.Client.Commands.FlagClientCommand
 {
     public class FlagClientCommandValidator : AbstractValidator<FlagClientCommand>
     {
-        public FlagClientCommandValidator()
+        public FlagClientCommandValidator(ILocalizer localizer)
         {
             RuleFor(c => c.Id)
                 .GreaterThan(0);
@@ -14,7 +16,7 @@ namespace RemSolution.Application.Features.Client.Commands.FlagClientCommand
             // A flag with no explanation is not actionable for other staff; the
             // reason is required when raising it, optional when clearing.
             RuleFor(c => c.Notes)
-                .NotEmpty().WithMessage("A reason (Notes) is required when flagging a client.")
+                .NotEmpty().WithMessage(_ => localizer["Validation.Client.FlagReasonRequired"])
                 .When(c => c.IsFlagged);
         }
     }

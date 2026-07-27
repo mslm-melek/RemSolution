@@ -1,9 +1,10 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import {
   ExpenseTypesClient, ExpenseTypeDto,
   CreateExpenseTypeCommand, UpdateExpenseTypeCommand
 } from '../web-api-client';
 import { extractValidationErrors } from '../shared/form-utils';
+import { TranslocoService } from '@jsverse/transloco';
 
 @Component({
   selector: 'app-expense-type',
@@ -11,6 +12,9 @@ import { extractValidationErrors } from '../shared/form-utils';
   styleUrls: ['./expense-type.component.css']
 })
 export class ExpenseTypeComponent implements OnInit {
+  // Confirm/prompt dialogs and error banners are plain strings, so they are
+  // translated imperatively rather than through the template pipe.
+  private readonly transloco = inject(TranslocoService);
   types: ExpenseTypeDto[] = [];
   displayedColumns: string[] = ['name', 'schedule', 'notify', 'active', 'actions'];
   errorMessage = '';
@@ -57,7 +61,7 @@ export class ExpenseTypeComponent implements OnInit {
 
   save() {
     if (!this.name.trim()) {
-      this.errorMessage = 'Name is required.';
+      this.errorMessage = this.transloco.translate('expenseType.nameRequired');
       return;
     }
     this.errorMessage = '';
@@ -91,7 +95,7 @@ export class ExpenseTypeComponent implements OnInit {
 
   deactivate(type: ExpenseTypeDto) {
     if (!type.id) return;
-    if (!confirm(`Deactivate "${type.name}"? It stays on past expenses but is hidden from new ones.`)) return;
+    if (!confirm(this.transloco.translate('expenseType.confirmDeactivate', { name: type.name }))) return;
     this.client.deactivateExpenseType(type.id).subscribe({
       next: () => this.load(),
       error: err => this.handleError(err)

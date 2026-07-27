@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
@@ -8,6 +8,7 @@ import {
   PaymentsClient, PaymentDto, CreatePaymentCommand, PaymentMethod, ClientBalanceDto
 } from '../web-api-client';
 import { toDateInput, fromDateInput, extractValidationErrors, isConcurrencyConflict } from '../shared/form-utils';
+import { TranslocoService } from '@jsverse/transloco';
 
 @Component({
   selector: 'app-reservation-form',
@@ -15,6 +16,9 @@ import { toDateInput, fromDateInput, extractValidationErrors, isConcurrencyConfl
   styleUrls: ['./reservation-form.component.css']
 })
 export class ReservationFormComponent implements OnInit {
+  // Confirm/prompt dialogs and error banners are plain strings, so they are
+  // translated imperatively rather than through the template pipe.
+  private readonly transloco = inject(TranslocoService);
   form: FormGroup;
   reservationId?: number;
   saving = false;
@@ -38,10 +42,10 @@ export class ReservationFormComponent implements OnInit {
   ReservationStatus = ReservationStatus;
   PaymentMethod = PaymentMethod;
   paymentMethods = [
-    { value: PaymentMethod.Cash, label: 'Cash' },
-    { value: PaymentMethod.Card, label: 'Card' },
-    { value: PaymentMethod.Transfer, label: 'Transfer' },
-    { value: PaymentMethod.Cheque, label: 'Cheque' }
+    { value: PaymentMethod.Cash, labelKey: 'enums.paymentMethod.cash' },
+    { value: PaymentMethod.Card, labelKey: 'enums.paymentMethod.card' },
+    { value: PaymentMethod.Transfer, labelKey: 'enums.paymentMethod.transfer' },
+    { value: PaymentMethod.Cheque, labelKey: 'enums.paymentMethod.cheque' }
   ];
 
   constructor(
@@ -88,7 +92,7 @@ export class ReservationFormComponent implements OnInit {
     this.clientsClient.getClients(1, 1000, null, null).subscribe({
       next: r => this.clients = r.items || [],
       // A failed lookup leaves the picker empty, which is otherwise silent.
-      error: err => { this.errorMessage = 'The client list could not be loaded.'; console.error(err); }
+      error: err => { this.errorMessage = this.transloco.translate('reservation.clientListFailed'); console.error(err); }
     });
 
     const idParam = this.route.snapshot.paramMap.get('id');
@@ -190,7 +194,7 @@ export class ReservationFormComponent implements OnInit {
 
   reject() {
     if (!this.reservationId) return;
-    const reason = prompt('Reason for rejecting this reservation (shown to the client):');
+    const reason = prompt(this.transloco.translate('reservation.promptRejectReason'));
     if (!reason) return;
     this.client.rejectReservation(this.reservationId,
       new RejectReservationCommand({ id: this.reservationId, reason })).subscribe({
@@ -201,9 +205,9 @@ export class ReservationFormComponent implements OnInit {
 
   convert() {
     if (!this.reservationId) return;
-    if (!confirm('Convert this reservation into a renting?')) return;
-    const cin = prompt('Driver CIN (optional — used to match an existing client):') || undefined;
-    const passeportNumber = cin ? undefined : (prompt('Driver passport number (optional):') || undefined);
+    if (!confirm(this.transloco.translate('reservation.confirmConvert'))) return;
+    const cin = prompt(this.transloco.translate('reservation.promptDriverCin')) || undefined;
+    const passeportNumber = cin ? undefined : (prompt(this.transloco.translate('reservation.promptDriverPassport')) || undefined);
     this.client.convertReservation(this.reservationId,
       new ConvertReservationCommand({ id: this.reservationId, cin, passeportNumber })).subscribe({
       next: rentingId => this.router.navigate(['/renting', rentingId]),
@@ -213,8 +217,8 @@ export class ReservationFormComponent implements OnInit {
 
   cancel() {
     if (!this.reservationId) return;
-    const reason = prompt('Reason for cancelling (optional):') ?? undefined;
-    if (reason === undefined && !confirm('Cancel this reservation?')) return;
+    const reason = prompt(this.transloco.translate('reservation.promptCancelReason')) ?? undefined;
+    if (reason === undefined && !confirm(this.transloco.translate('reservation.confirmCancel'))) return;
     this.client.cancelReservation(this.reservationId, reason).subscribe({
       next: () => this.router.navigate(['/reservation']),
       error: err => this.handleError(err)
@@ -243,28 +247,43 @@ export class ReservationFormComponent implements OnInit {
 
   reversePayment(item: PaymentDto) {
     if (!item.id) return;
-    if (!confirm('Reverse this payment? An offsetting entry will be posted.')) return;
+    if (!confirm(this.transloco.translate('reservation.confirmReverse'))) return;
     this.paymentsClient.reversePayment(item.id).subscribe({
       next: () => this.reload(),
       error: err => this.handleError(err)
     });
   }
 
-  methodLabel(method?: PaymentMethod): string {
-    return this.paymentMethods.find(m => m.value === method)?.label ?? '';
+  // Returns a transloco key for the status chip; the raw enum name would show
+  // "PendingConfirmation" untranslated.
+  statusLabelKey(status?: ReservationStatus): string {
+    switch (status) {
+      case ReservationStatus.PendingConfirmation: return 'enums.reservationStatus.pendingConfirmation';
+      case ReservationStatus.Confirmed: return 'enums.reservationStatus.confirmed';
+      case ReservationStatus.Paid: return 'enums.reservationStatus.paid';
+      case ReservationStatus.Converted: return 'enums.reservationStatus.converted';
+      case ReservationStatus.Rejected: return 'enums.reservationStatus.rejected';
+      case ReservationStatus.Cancelled: return 'enums.reservationStatus.cancelled';
+      case ReservationStatus.Expired: return 'enums.reservationStatus.expired';
+      default: return '';
+    }
+  }
+
+  // Returns a transloco key; the template pipes it.
+  methodLabelKey(method?: PaymentMethod): string {
+    return this.paymentMethods.find(m => m.value === method)?.labelKey ?? '';
   }
 
   private handleError(err: any) {
     this.saving = false;
 
     if (isConcurrencyConflict(err)) {
-      this.errorMessage =
-        'This reservation was reloaded by another user since you opened it. Reload the page to get the latest version, then re-apply your changes.';
+      this.errorMessage = this.transloco.translate('reservation.concurrency');
       return;
     }
 
     const validationErrors = extractValidationErrors(err);
-    this.errorMessage = validationErrors ?? 'An unexpected error occurred. Please try again.';
+    this.errorMessage = validationErrors ?? this.transloco.translate('common.unexpectedError');
     if (!validationErrors) console.error(err);
     setTimeout(() => this.errorMessage = '', 8000);
   }

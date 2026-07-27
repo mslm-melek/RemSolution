@@ -1,14 +1,14 @@
-<div class="my-res">
+<div class="my-res" *transloco="let t">
   <div class="head">
-    <h2>My reservations</h2>
-    <a mat-stroked-button [routerLink]="['/browse']"><mat-icon>search</mat-icon> Browse cars</a>
+    <h2>{{ t('marketplace.myReservations') }}</h2>
+    <a mat-stroked-button [routerLink]="['/browse']"><mat-icon>search</mat-icon> {{ t('nav.browseCars') }}</a>
   </div>
 
   <div *ngIf="error" class="error">{{ error }}</div>
-  <div *ngIf="loading" class="state">Loading…</div>
+  <div *ngIf="loading" class="state">{{ t('common.loading') }}</div>
 
   <div *ngIf="!loading && reservations.length === 0" class="state">
-    You have no reservations yet. <a [routerLink]="['/browse']">Find a car to book.</a>
+    {{ t('marketplace.noReservations') }} <a [routerLink]="['/browse']">{{ t('marketplace.findACar') }}</a>
   </div>
 
   <div class="list" *ngIf="!loading && reservations.length">
@@ -21,10 +21,14 @@
       </div>
 
       <div class="side">
-        <span class="status" [ngClass]="statusClass(r.status)">{{ statusLabel(r.status) }}</span>
+        <span class="status" [ngClass]="statusClass(r.status)">
+          {{ statusLabelKey(r.status) ? t(statusLabelKey(r.status)) : '' }}
+        </span>
         <span class="price" *ngIf="r.price">{{ r.price.amount | number:'1.2-2' }} {{ r.price.currency }}</span>
-        <span class="expires" *ngIf="isPending(r) && r.expiresAt">Holds until {{ r.expiresAt | date:'yyyy-MM-dd HH:mm' }}</span>
-        <button mat-stroked-button color="warn" *ngIf="isPending(r)" (click)="cancel(r)">Cancel</button>
+        <span class="expires" *ngIf="isPending(r) && r.expiresAt">
+          {{ t('marketplace.holdsUntil', { date: (r.expiresAt | date:'yyyy-MM-dd HH:mm') }) }}
+        </span>
+        <button mat-stroked-button color="warn" *ngIf="isPending(r)" (click)="cancel(r)">{{ t('common.cancel') }}</button>
       </div>
     </div>
   </div>

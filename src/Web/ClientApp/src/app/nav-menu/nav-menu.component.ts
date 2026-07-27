@@ -1,5 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { AuthService } from '../shared/auth.service';
+import { LanguageService } from '../shared/language.service';
+import { AppLanguage } from '../shared/language';
 
 @Component({
   selector: 'app-nav-menu',
@@ -27,7 +29,21 @@ export class NavMenuComponent implements OnInit {
   // The Config dropdown shows when at least one config/reference item is reachable.
   canAccessConfig = false;
 
-  constructor(private auth: AuthService) { }
+  readonly languages: AppLanguage[];
+
+  constructor(private auth: AuthService, private language: LanguageService) {
+    this.languages = this.language.available;
+  }
+
+  get currentLanguage(): AppLanguage {
+    return this.language.current;
+  }
+
+  // Persists the choice and reloads — see LanguageService.use for why.
+  setLanguage(language: AppLanguage) {
+    this.collapse();
+    this.language.use(language);
+  }
 
   ngOnInit() {
     this.auth.currentUser$.subscribe(user => {

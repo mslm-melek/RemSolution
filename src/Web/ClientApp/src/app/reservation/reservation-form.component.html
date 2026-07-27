@@ -1,143 +1,151 @@
-<div class="reservation-form-card mat-elevation-z4">
+<div class="reservation-form-card mat-elevation-z4" *transloco="let t">
   <div class="header-row">
-    <h2 class="title">{{ isEdit ? 'Reservation' : 'New Reservation' }}</h2>
+    <h2 class="title">{{ isEdit ? t('reservation.detailTitle') : t('reservation.new') }}</h2>
     <a mat-stroked-button [routerLink]="['/reservation']">
-      <mat-icon>arrow_back</mat-icon> Back
+      <mat-icon>arrow_back</mat-icon> {{ t('common.back') }}
     </a>
   </div>
 
   <div *ngIf="errorMessage" class="error-banner">{{ errorMessage }}</div>
 
   <div *ngIf="isEdit && reservation" class="state-row">
-    <span class="state-chip">Status: <strong>{{ ReservationStatus[reservation.status] }}</strong></span>
+    <span class="state-chip">{{ t('common.status') }}:
+      <strong>{{ statusLabelKey(reservation.status) ? t(statusLabelKey(reservation.status)) : '' }}</strong>
+    </span>
     <button mat-raised-button color="accent" *ngIf="isPending" (click)="confirm()">
-      <mat-icon>check_circle</mat-icon> Confirm
+      <mat-icon>check_circle</mat-icon> {{ t('reservation.confirm') }}
     </button>
     <button mat-stroked-button color="warn" *ngIf="isPending" (click)="reject()">
-      <mat-icon>block</mat-icon> Reject
+      <mat-icon>block</mat-icon> {{ t('reservation.reject') }}
     </button>
     <button mat-raised-button color="primary" *ngIf="isConvertible" (click)="convert()">
-      <mat-icon>directions_car</mat-icon> Convert to renting
+      <mat-icon>directions_car</mat-icon> {{ t('reservation.convert') }}
     </button>
     <button mat-stroked-button color="warn" *ngIf="isPending || isConvertible" (click)="cancel()">
-      <mat-icon>cancel</mat-icon> Cancel
+      <mat-icon>cancel</mat-icon> {{ t('common.cancel') }}
     </button>
     <a mat-stroked-button *ngIf="reservation.rentingId" [routerLink]="['/renting', reservation.rentingId]">
-      <mat-icon>open_in_new</mat-icon> Go to renting
+      <mat-icon>open_in_new</mat-icon> {{ t('reservation.goToRenting') }}
     </a>
   </div>
 
   <div *ngIf="isEdit && reservation?.rejectedReason" class="reason-banner">
-    <strong>Rejected:</strong> {{ reservation?.rejectedReason }}
+    <strong>{{ t('reservation.rejected') }}</strong> {{ reservation?.rejectedReason }}
   </div>
   <div *ngIf="isEdit && reservation?.cancelledReason" class="reason-banner">
-    <strong>Cancelled:</strong> {{ reservation?.cancelledReason }}
+    <strong>{{ t('reservation.cancelled') }}</strong> {{ reservation?.cancelledReason }}
   </div>
 
   <form [formGroup]="form" (ngSubmit)="save()" class="form-grid">
     <mat-form-field appearance="outline">
-      <mat-label>Car</mat-label>
+      <mat-label>{{ t('reservation.car') }}</mat-label>
       <mat-select formControlName="carId">
         <mat-option *ngFor="let c of cars" [value]="c.id">{{ c.modelName }} — {{ c.matricule }}</mat-option>
       </mat-select>
-      <mat-error *ngIf="form.get('carId')?.hasError('required')">Car is required.</mat-error>
+      <mat-error *ngIf="form.get('carId')?.hasError('required')">{{ t('reservation.carRequired') }}</mat-error>
     </mat-form-field>
 
     <mat-form-field appearance="outline">
-      <mat-label>Client</mat-label>
+      <mat-label>{{ t('reservation.client') }}</mat-label>
       <mat-select formControlName="clientId">
         <mat-option *ngFor="let c of clients" [value]="c.id">{{ c.lastName }}, {{ c.firstName }}</mat-option>
       </mat-select>
-      <mat-error *ngIf="form.get('clientId')?.hasError('required')">Client is required.</mat-error>
+      <mat-error *ngIf="form.get('clientId')?.hasError('required')">{{ t('reservation.clientRequired') }}</mat-error>
     </mat-form-field>
 
     <mat-form-field appearance="outline">
-      <mat-label>Start date</mat-label>
+      <mat-label>{{ t('common.startDate') }}</mat-label>
       <input matInput type="date" formControlName="startDate" />
-      <mat-error *ngIf="form.get('startDate')?.hasError('required')">Start date is required.</mat-error>
+      <mat-error *ngIf="form.get('startDate')?.hasError('required')">{{ t('reservation.startDateRequired') }}</mat-error>
     </mat-form-field>
 
     <mat-form-field appearance="outline">
-      <mat-label>End date</mat-label>
+      <mat-label>{{ t('common.endDate') }}</mat-label>
       <input matInput type="date" formControlName="endDate" />
-      <mat-error *ngIf="form.get('endDate')?.hasError('required')">End date is required.</mat-error>
+      <mat-error *ngIf="form.get('endDate')?.hasError('required')">{{ t('reservation.endDateRequired') }}</mat-error>
     </mat-form-field>
 
     <mat-form-field appearance="outline">
-      <mat-label>Deposit</mat-label>
+      <mat-label>{{ t('reservation.deposit') }}</mat-label>
       <input matInput type="number" min="0" step="0.01" formControlName="depositAmount" />
       <span matSuffix *ngIf="currency">&nbsp;{{ currency }}</span>
     </mat-form-field>
 
     <mat-form-field appearance="outline" class="span-2">
-      <mat-label>Notes</mat-label>
+      <mat-label>{{ t('common.notes') }}</mat-label>
       <textarea matInput rows="2" formControlName="notes"></textarea>
     </mat-form-field>
 
     <div class="span-2 actions" *ngIf="!isEdit || isPending">
       <button mat-raised-button color="primary" type="submit" [disabled]="saving">
-        {{ isEdit ? 'Save changes' : 'Create reservation' }}
+        {{ isEdit ? t('common.saveChanges') : t('reservation.createReservation') }}
       </button>
     </div>
   </form>
 
   <!-- Payments + client account, once the hold is confirmed -->
   <div *ngIf="showPayments" class="payments-panel">
-    <h3>Payments</h3>
+    <h3>{{ t('reservation.payments') }}</h3>
 
     <div class="balance-row" *ngIf="balance">
-      <span>Charged: <strong>{{ balance.totalCharged?.amount | number:'1.2-2' }} {{ balance.currency }}</strong></span>
-      <span>Paid: <strong>{{ balance.totalPaid?.amount | number:'1.2-2' }} {{ balance.currency }}</strong></span>
+      <span>{{ t('reservation.charged') }}: <strong>{{ balance.totalCharged?.amount | number:'1.2-2' }} {{ balance.currency }}</strong></span>
+      <span>{{ t('reservation.paid') }}: <strong>{{ balance.totalPaid?.amount | number:'1.2-2' }} {{ balance.currency }}</strong></span>
       <span [class.owing]="(balance.balance?.amount || 0) > 0">
-        Balance: <strong>{{ balance.balance?.amount | number:'1.2-2' }} {{ balance.currency }}</strong>
+        {{ t('reservation.balance') }}: <strong>{{ balance.balance?.amount | number:'1.2-2' }} {{ balance.currency }}</strong>
       </span>
     </div>
 
     <table class="payments-table" *ngIf="payments.length">
       <thead>
-        <tr><th>Date</th><th>Method</th><th class="num">Amount</th><th></th><th></th></tr>
+        <tr>
+          <th>{{ t('common.date') }}</th>
+          <th>{{ t('common.method') }}</th>
+          <th class="num">{{ t('common.amount') }}</th>
+          <th></th>
+          <th></th>
+        </tr>
       </thead>
       <tbody>
         <tr *ngFor="let p of payments">
           <td>{{ p.payementDate | date:'yyyy-MM-dd' }}</td>
-          <td>{{ methodLabel(p.method) }}</td>
+          <td>{{ methodLabelKey(p.method) ? t(methodLabelKey(p.method)) : '' }}</td>
           <td class="num" [class.neg]="(p.payementAmount?.amount || 0) < 0">
             {{ p.payementAmount?.amount | number:'1.2-2' }} {{ p.payementAmount?.currency }}
           </td>
           <td>
-            <span class="tag" *ngIf="p.isRefund">Refund</span>
-            <span class="tag" *ngIf="p.reversesPaymentId">Reversal</span>
+            <span class="tag" *ngIf="p.isRefund">{{ t('reservation.refund') }}</span>
+            <span class="tag" *ngIf="p.reversesPaymentId">{{ t('reservation.reversal') }}</span>
           </td>
           <td>
             <button mat-icon-button color="warn" *ngIf="!p.reversesPaymentId"
-                    (click)="reversePayment(p)" matTooltip="Reverse">
+                    (click)="reversePayment(p)" [matTooltip]="t('reservation.reverse')">
               <mat-icon>undo</mat-icon>
             </button>
           </td>
         </tr>
       </tbody>
     </table>
-    <p *ngIf="!payments.length" class="muted">No payments recorded yet.</p>
+    <p *ngIf="!payments.length" class="muted">{{ t('reservation.noPayments') }}</p>
 
     <div class="add-payment">
       <mat-form-field appearance="outline">
-        <mat-label>Amount</mat-label>
+        <mat-label>{{ t('common.amount') }}</mat-label>
         <input matInput type="number" min="0" step="0.01" [(ngModel)]="newPaymentAmount" />
         <span matSuffix *ngIf="currency">&nbsp;{{ currency }}</span>
       </mat-form-field>
       <mat-form-field appearance="outline">
-        <mat-label>Method</mat-label>
+        <mat-label>{{ t('common.method') }}</mat-label>
         <mat-select [(ngModel)]="newPaymentMethod">
-          <mat-option *ngFor="let m of paymentMethods" [value]="m.value">{{ m.label }}</mat-option>
+          <mat-option *ngFor="let m of paymentMethods" [value]="m.value">{{ t(m.labelKey) }}</mat-option>
         </mat-select>
       </mat-form-field>
       <mat-form-field appearance="outline">
-        <mat-label>Notes</mat-label>
+        <mat-label>{{ t('common.notes') }}</mat-label>
         <input matInput [(ngModel)]="newPaymentNotes" />
       </mat-form-field>
-      <mat-checkbox [(ngModel)]="newPaymentIsRefund">Refund</mat-checkbox>
+      <mat-checkbox [(ngModel)]="newPaymentIsRefund">{{ t('reservation.refund') }}</mat-checkbox>
       <button mat-raised-button color="primary" (click)="addPayment()" [disabled]="!newPaymentAmount">
-        <mat-icon>add</mat-icon> Record
+        <mat-icon>add</mat-icon> {{ t('reservation.record') }}
       </button>
     </div>
   </div>

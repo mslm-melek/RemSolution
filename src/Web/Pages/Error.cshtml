@@ -1,11 +1,11 @@
-﻿@page
+@page
 @model ErrorModel
 @{
-    ViewData["Title"] = "Error";
+    ViewData["Title"] = L["Error.Page.Title"];
 }
 
-<h1 class="text-danger">Error.</h1>
-<h2 class="text-danger">An error occurred while processing your request.</h2>
+<h1 class="text-danger">@L["Error.Page.Title"]</h1>
+<h2 class="text-danger">@L["Error.Page.Heading"]</h2>
 
 @if (Model.ShowRequestId)
 {
@@ -14,6 +14,9 @@
     </p>
 }
 
+@* Developer-facing guidance, deliberately left in English: it is only useful to
+   whoever is configuring the deployment, and it never reaches an end user in a
+   correctly configured environment. *@
 <h3>Development Mode</h3>
 <p>
     Swapping to the <strong>Development</strong> environment displays detailed information about the error that occurred.

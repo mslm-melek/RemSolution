@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
@@ -11,6 +11,7 @@ import {
 } from '../web-api-client';
 import { toDateInput, fromDateInput, extractValidationErrors, isConcurrencyConflict } from '../shared/form-utils';
 import { AuthService } from '../shared/auth.service';
+import { TranslocoService } from '@jsverse/transloco';
 
 @Component({
   selector: 'app-renting-form',
@@ -18,6 +19,9 @@ import { AuthService } from '../shared/auth.service';
   styleUrls: ['./renting-form.component.css']
 })
 export class RentingFormComponent implements OnInit {
+  // Confirm/prompt dialogs and error banners are plain strings, so they are
+  // translated imperatively rather than through the template pipe.
+  private readonly transloco = inject(TranslocoService);
   form: FormGroup;
   rentingId?: number;
   saving = false;
@@ -51,10 +55,10 @@ export class RentingFormComponent implements OnInit {
   RentingState = RentingState;
   PaymentMethod = PaymentMethod;
   paymentMethods = [
-    { value: PaymentMethod.Cash, label: 'Cash' },
-    { value: PaymentMethod.Card, label: 'Card' },
-    { value: PaymentMethod.Transfer, label: 'Transfer' },
-    { value: PaymentMethod.Cheque, label: 'Cheque' }
+    { value: PaymentMethod.Cash, labelKey: 'enums.paymentMethod.cash' },
+    { value: PaymentMethod.Card, labelKey: 'enums.paymentMethod.card' },
+    { value: PaymentMethod.Transfer, labelKey: 'enums.paymentMethod.transfer' },
+    { value: PaymentMethod.Cheque, labelKey: 'enums.paymentMethod.cheque' }
   ];
 
   constructor(
@@ -204,14 +208,14 @@ export class RentingFormComponent implements OnInit {
   }
 
   startRenting() {
-    const value = prompt('Pickup mileage (optional):');
+    const value = prompt(this.transloco.translate('renting.promptPickupMileage'));
     if (value === null) return; // cancelled
     const mileage = value.trim() === '' ? undefined : Number(value);
     this.changeState(RentingState.InProgress, mileage);
   }
 
   completeRenting() {
-    const value = prompt('Return mileage (optional):');
+    const value = prompt(this.transloco.translate('renting.promptReturnMileage'));
     if (value === null) return;
     const mileage = value.trim() === '' ? undefined : Number(value);
     this.changeState(RentingState.Done, mileage);
@@ -234,7 +238,7 @@ export class RentingFormComponent implements OnInit {
 
   cancelRenting() {
     if (!this.rentingId) return;
-    if (!confirm('Cancel this renting? It stays on record as cancelled.')) return;
+    if (!confirm(this.transloco.translate('renting.confirmCancel'))) return;
     this.client.cancelRenting(this.rentingId).subscribe({
       next: () => this.reload(),
       error: err => this.handleError(err)
@@ -286,23 +290,35 @@ export class RentingFormComponent implements OnInit {
 
   reversePayment(item: PaymentDto) {
     if (!item.id) return;
-    if (!confirm('Post a reversal for this payment?')) return;
+    if (!confirm(this.transloco.translate('renting.confirmReverse'))) return;
     this.paymentsClient.reversePayment(item.id).subscribe({
       next: () => this.reload(),
       error: err => this.handleError(err)
     });
   }
 
-  methodLabel(method?: PaymentMethod): string {
-    return this.paymentMethods.find(m => m.value === method)?.label ?? '';
+  // Returns a transloco key for the state chip; the raw enum name would show
+  // "NotYet" untranslated.
+  stateLabelKey(state?: RentingState): string {
+    switch (state) {
+      case RentingState.NotYet: return 'enums.rentingState.notYet';
+      case RentingState.InProgress: return 'enums.rentingState.inProgress';
+      case RentingState.Done: return 'enums.rentingState.done';
+      case RentingState.Cancelled: return 'enums.rentingState.cancelled';
+      default: return '';
+    }
+  }
+
+  // Returns a transloco key; the template pipes it.
+  methodLabelKey(method?: PaymentMethod): string {
+    return this.paymentMethods.find(m => m.value === method)?.labelKey ?? '';
   }
 
   private handleError(err: any) {
     this.saving = false;
 
     if (isConcurrencyConflict(err)) {
-      this.errorMessage =
-        'This renting was reloaded by another user since you opened it. Reload the page to get the latest version, then re-apply your changes.';
+      this.errorMessage = this.transloco.translate('renting.concurrency');
       return;
     }
 

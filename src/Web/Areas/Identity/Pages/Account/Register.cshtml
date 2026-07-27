@@ -1,43 +1,43 @@
 @page
 @model RemSolution.Web.Areas.Identity.Pages.Account.RegisterModel
 @{
-    ViewData["Title"] = "Create a customer account";
+    ViewData["Title"] = L["Identity.Register.Title"];
     Layout = "~/Areas/Identity/Pages/Account/_AuthLayout.cshtml";
 }
 
-<p class="auth-subtitle">Create an account to browse available cars and book your rental</p>
+<p class="auth-subtitle">@L["Identity.Register.Subtitle"]</p>
 
 <form method="post">
     <div asp-validation-summary="ModelOnly" class="validation-summary-errors"></div>
 
     <div class="form-group">
-        <label asp-for="Input.FullName">Full name</label>
+        <label asp-for="Input.FullName">@L["Identity.Field.FullName"]</label>
         <input asp-for="Input.FullName" autocomplete="name" autofocus placeholder="John Doe" />
         <span asp-validation-for="Input.FullName" class="field-validation-error"></span>
     </div>
 
     <div class="form-group">
-        <label asp-for="Input.Email">Email</label>
+        <label asp-for="Input.Email">@L["Identity.Field.Email"]</label>
         <input asp-for="Input.Email" autocomplete="username" placeholder="you@example.com" />
         <span asp-validation-for="Input.Email" class="field-validation-error"></span>
     </div>
 
     <div class="form-group">
-        <label asp-for="Input.Password">Password</label>
+        <label asp-for="Input.Password">@L["Identity.Field.Password"]</label>
         <input asp-for="Input.Password" autocomplete="new-password" placeholder="••••••••" />
         <span asp-validation-for="Input.Password" class="field-validation-error"></span>
     </div>
 
     <div class="form-group">
-        <label asp-for="Input.ConfirmPassword">Confirm password</label>
+        <label asp-for="Input.ConfirmPassword">@L["Identity.Field.ConfirmPassword"]</label>
         <input asp-for="Input.ConfirmPassword" autocomplete="new-password" placeholder="••••••••" />
         <span asp-validation-for="Input.ConfirmPassword" class="field-validation-error"></span>
     </div>
 
-    <button type="submit" class="btn-primary">Create account</button>
+    <button type="submit" class="btn-primary">@L["Identity.Register.Submit"]</button>
 
     <div class="auth-links">
-        <span>Already have an account? <a asp-page="./Login" asp-route-returnUrl="@Model.ReturnUrl">Sign in</a></span>
+        <span>@L["Identity.Register.HaveAccount"] <a asp-page="./Login" asp-route-returnUrl="@Model.ReturnUrl">@L["Identity.Register.SignIn"]</a></span>
     </div>
 </form>
 

@@ -3,8 +3,15 @@ import { AuthService } from '../shared/auth.service';
 import { AgenciesClient, BrandsClient, CarsClient, ClientsClient, ModelCarsClient, SubscriptionPlansClient } from '../web-api-client';
 
 interface StatTile {
-  label: string;
+  // Transloco key; resolved in the template so a language switch re-renders it.
+  labelKey: string;
   value: number | null;
+  icon: string;
+  link: string;
+}
+
+interface QuickAction {
+  labelKey: string;
   icon: string;
   link: string;
 }
@@ -22,29 +29,29 @@ export class HomeComponent implements OnInit {
 
   // Agency-user dashboard (tenant-scoped module counts).
   agencyStats: StatTile[] = [
-    { label: 'Cars', value: null, icon: 'directions_car', link: '/car' },
-    { label: 'Clients', value: null, icon: 'group', link: '/client' },
-    { label: 'Car Models', value: null, icon: 'category', link: '/model-car' },
-    { label: 'Brands', value: null, icon: 'sell', link: '/brand' }
+    { labelKey: 'home.stats.cars', value: null, icon: 'directions_car', link: '/car' },
+    { labelKey: 'home.stats.clients', value: null, icon: 'group', link: '/client' },
+    { labelKey: 'home.stats.carModels', value: null, icon: 'category', link: '/model-car' },
+    { labelKey: 'home.stats.brands', value: null, icon: 'sell', link: '/brand' }
   ];
 
-  agencyQuickActions = [
-    { label: 'New Car', icon: 'add', link: '/car/new' },
-    { label: 'New Client', icon: 'person_add', link: '/client/new' },
-    { label: 'New Model', icon: 'playlist_add', link: '/model-car/new' }
+  agencyQuickActions: QuickAction[] = [
+    { labelKey: 'home.quick.newCar', icon: 'add', link: '/car/new' },
+    { labelKey: 'home.quick.newClient', icon: 'person_add', link: '/client/new' },
+    { labelKey: 'home.quick.newModel', icon: 'playlist_add', link: '/model-car/new' }
   ];
 
   // Platform-admin dashboard (cross-tenant catalog counts).
   adminStats: StatTile[] = [
-    { label: 'Agencies', value: null, icon: 'business', link: '/agency' },
-    { label: 'Subscription Plans', value: null, icon: 'workspace_premium', link: '/subscription-plan' },
-    { label: 'Car Models', value: null, icon: 'category', link: '/model-car' },
-    { label: 'Brands', value: null, icon: 'sell', link: '/brand' }
+    { labelKey: 'home.stats.agencies', value: null, icon: 'business', link: '/agency' },
+    { labelKey: 'home.stats.subscriptionPlans', value: null, icon: 'workspace_premium', link: '/subscription-plan' },
+    { labelKey: 'home.stats.carModels', value: null, icon: 'category', link: '/model-car' },
+    { labelKey: 'home.stats.brands', value: null, icon: 'sell', link: '/brand' }
   ];
 
-  adminQuickActions = [
-    { label: 'New Agency', icon: 'add_business', link: '/agency/new' },
-    { label: 'New Plan', icon: 'add', link: '/subscription-plan/new' }
+  adminQuickActions: QuickAction[] = [
+    { labelKey: 'home.quick.newAgency', icon: 'add_business', link: '/agency/new' },
+    { labelKey: 'home.quick.newPlan', icon: 'add', link: '/subscription-plan/new' }
   ];
 
   constructor(
@@ -61,7 +68,7 @@ export class HomeComponent implements OnInit {
     return this.isPlatformAdmin ? this.adminStats : this.agencyStats;
   }
 
-  get quickActions() {
+  get quickActions(): QuickAction[] {
     return this.isPlatformAdmin ? this.adminQuickActions : this.agencyQuickActions;
   }
 

@@ -37,6 +37,16 @@
   display: none;
 }
 
+.nav-language {
+  text-transform: none;
+
+  .nav-language-code {
+    margin-inline-start: 4px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+}
+
 @media (max-width: 767px) {
   .nav-toggler {
     display: inline-flex;

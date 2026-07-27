@@ -1,5 +1,13 @@
+@using System.Globalization
+@{
+    var uiLanguage = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
+    var textDirection = uiLanguage == Languages.Arabic ? "rtl" : "ltr";
+    // Round-trips back to this exact page so switching language never loses the
+    // return URL a sign-in flow was carrying.
+    var currentPath = $"{Context.Request.Path}{Context.Request.QueryString}";
+}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="@uiLanguage" dir="@textDirection">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -162,6 +170,31 @@
             color: #795548;
             word-break: break-all;
         }
+
+        .lang-switch {
+            margin-top: 24px;
+            padding-top: 16px;
+            border-top: 1px solid #eceff1;
+            display: flex;
+            justify-content: center;
+            gap: 4px;
+            font-size: 13px;
+        }
+
+        .lang-switch a {
+            color: #757575;
+            text-decoration: none;
+            padding: 4px 10px;
+            border-radius: 6px;
+        }
+
+        .lang-switch a:hover { background: #f5f5f5; }
+
+        .lang-switch a.current {
+            color: #3f51b5;
+            font-weight: 600;
+            background: #e8eaf6;
+        }
     </style>
 </head>
 <body>
@@ -171,6 +204,18 @@
             <h1>RemSolution</h1>
         </div>
         @RenderBody()
+
+        @* Anonymous visitors have no account to store a preference on, so the
+           switch just sets the culture cookie and re-renders this page. *@
+        <div class="lang-switch">
+            @foreach (var language in Languages.All)
+            {
+                <a class="@(language == uiLanguage ? "current" : null)"
+                   href="/culture/set?language=@language&returnUrl=@Uri.EscapeDataString(currentPath)">
+                    @L["Language.Name." + language]
+                </a>
+            }
+        </div>
     </div>
 
     @await RenderSectionAsync("Scripts", required: false)

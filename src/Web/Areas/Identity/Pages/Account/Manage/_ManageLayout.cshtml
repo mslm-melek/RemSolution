@@ -1,5 +1,10 @@
+@using System.Globalization
+@{
+    var uiLanguage = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
+    var textDirection = uiLanguage == Languages.Arabic ? "rtl" : "ltr";
+}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="@uiLanguage" dir="@textDirection">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -85,7 +90,8 @@
         .form-group input[type="email"],
         .form-group input[type="password"],
         .form-group input[type="text"],
-        .form-group input[type="tel"] {
+        .form-group input[type="tel"],
+        .form-group select {
             width: 100%;
             padding: 12px 14px;
             border: 1px solid #c5cae9;
@@ -95,7 +101,7 @@
             outline: none;
         }
 
-        .form-group input:focus {
+        .form-group input:focus, .form-group select:focus {
             border-color: #3f51b5;
             box-shadow: 0 0 0 3px rgba(63, 81, 181, .15);
         }
@@ -156,15 +162,16 @@
 <body>
     <div class="manage-card">
         <div class="manage-header">
-            <h1>Account settings</h1>
-            <a class="back-link" href="/">&larr; Back to app</a>
+            <h1>@L["Identity.Manage.Title"]</h1>
+            @* The arrow points back along the reading direction, so it flips in Arabic. *@
+            <a class="back-link" href="/">@(textDirection == "rtl" ? "→" : "←") @L["Identity.Manage.BackToApp"]</a>
         </div>
 
         <nav class="manage-nav">
             <a asp-area="Identity" asp-page="/Account/Manage/Index"
-               class="@(ViewData["ActivePage"] as string == "Index" ? "active" : "")">Profile</a>
+               class="@(ViewData["ActivePage"] as string == "Index" ? "active" : "")">@L["Identity.Manage.Profile"]</a>
             <a asp-area="Identity" asp-page="/Account/Manage/ChangePassword"
-               class="@(ViewData["ActivePage"] as string == "ChangePassword" ? "active" : "")">Password</a>
+               class="@(ViewData["ActivePage"] as string == "ChangePassword" ? "active" : "")">@L["Identity.Manage.Password"]</a>
         </nav>
 
         @RenderBody()

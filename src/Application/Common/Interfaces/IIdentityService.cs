@@ -55,6 +55,13 @@ public interface IIdentityService
     /// </summary>
     Task<Result> UpdateProfileAsync(string userId, string? fullName, string email, CancellationToken cancellationToken);
 
+    /// <summary>
+    /// Stores the user's chosen UI language (a neutral tag from
+    /// <see cref="Domain.Constants.Languages"/>) so it follows the account
+    /// across devices.
+    /// </summary>
+    Task<Result> SetPreferredLanguageAsync(string userId, string language, CancellationToken cancellationToken);
+
     /// <summary>Changes the user's own password, verifying the current one first.</summary>
     Task<Result> ChangePasswordAsync(string userId, string currentPassword, string newPassword, CancellationToken cancellationToken);
 

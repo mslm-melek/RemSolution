@@ -1,37 +1,37 @@
 @page
 @model RemSolution.Web.Areas.Identity.Pages.Account.LoginModel
 @{
-    ViewData["Title"] = "Sign in";
+    ViewData["Title"] = L["Identity.Login.Title"];
     Layout = "~/Areas/Identity/Pages/Account/_AuthLayout.cshtml";
 }
 
-<p class="auth-subtitle">Sign in to your account</p>
+<p class="auth-subtitle">@L["Identity.Login.Subtitle"]</p>
 
 <form method="post">
     <div asp-validation-summary="ModelOnly" class="validation-summary-errors"></div>
 
     <div class="form-group">
-        <label asp-for="Input.Email">Email</label>
+        <label asp-for="Input.Email">@L["Identity.Field.Email"]</label>
         <input asp-for="Input.Email" autocomplete="username" autofocus placeholder="you@example.com" />
         <span asp-validation-for="Input.Email" class="field-validation-error"></span>
     </div>
 
     <div class="form-group">
-        <label asp-for="Input.Password">Password</label>
+        <label asp-for="Input.Password">@L["Identity.Field.Password"]</label>
         <input asp-for="Input.Password" autocomplete="current-password" placeholder="••••••••" />
         <span asp-validation-for="Input.Password" class="field-validation-error"></span>
     </div>
 
     <div class="checkbox-row">
         <input asp-for="Input.RememberMe" />
-        <label asp-for="Input.RememberMe" style="margin: 0; font-weight: 400;">Remember me</label>
+        <label asp-for="Input.RememberMe" style="margin: 0; font-weight: 400;">@L["Identity.Field.RememberMe"]</label>
     </div>
 
-    <button type="submit" class="btn-primary">Sign in</button>
+    <button type="submit" class="btn-primary">@L["Identity.Login.Submit"]</button>
 
     <div class="auth-links">
-        <a asp-page="./ForgotPassword">Forgot your password?</a>
-        <span>Don't have an account? <a asp-page="./Register" asp-route-returnUrl="@Model.ReturnUrl">Create one</a></span>
+        <a asp-page="./ForgotPassword">@L["Identity.Login.ForgotPassword"]</a>
+        <span>@L["Identity.Login.NoAccount"] <a asp-page="./Register" asp-route-returnUrl="@Model.ReturnUrl">@L["Identity.Login.CreateOne"]</a></span>
     </div>
 </form>
 

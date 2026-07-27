@@ -33,8 +33,9 @@ public class ForgotPasswordModel : PageModel
 
     public class InputModel
     {
-        [Required]
-        [EmailAddress]
+        [Required(ErrorMessage = "Identity.Validation.Required")]
+        [EmailAddress(ErrorMessage = "Identity.Validation.Email")]
+        [Display(Name = "Identity.Field.Email")]
         public string Email { get; set; } = string.Empty;
     }
 

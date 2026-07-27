@@ -1,9 +1,11 @@
 
+using RemSolution.Application.Common.Interfaces;
+
 namespace RemSolution.Application.Features.Branch.Commands.UpdateBranchCommand
 {
     public class UpdateBranchCommandValidator : AbstractValidator<UpdateBranchCommand>
     {
-        public UpdateBranchCommandValidator()
+        public UpdateBranchCommandValidator(ILocalizer localizer)
         {
             RuleFor(v => v.Name)
                 .MaximumLength(200)
@@ -22,7 +24,7 @@ namespace RemSolution.Application.Features.Branch.Commands.UpdateBranchCommand
 
             RuleFor(v => v)
                 .Must(v => v.Latitude.HasValue == v.Longitude.HasValue)
-                .WithMessage("Latitude and Longitude must be provided together.");
+                .WithMessage(_ => localizer["Validation.Coordinates.Together"]);
         }
     }
 }

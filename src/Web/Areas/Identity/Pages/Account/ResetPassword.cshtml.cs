@@ -24,21 +24,23 @@ public class ResetPasswordModel : PageModel
 
     public class InputModel
     {
-        [Required]
-        [EmailAddress]
+        [Required(ErrorMessage = "Identity.Validation.Required")]
+        [EmailAddress(ErrorMessage = "Identity.Validation.Email")]
+        [Display(Name = "Identity.Field.Email")]
         public string Email { get; set; } = string.Empty;
 
-        [Required]
-        [StringLength(100, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 6)]
+        [Required(ErrorMessage = "Identity.Validation.Required")]
+        [StringLength(100, ErrorMessage = "Identity.Validation.PasswordLength", MinimumLength = 6)]
         [DataType(DataType.Password)]
+        [Display(Name = "Identity.Field.NewPassword")]
         public string Password { get; set; } = string.Empty;
 
         [DataType(DataType.Password)]
-        [Display(Name = "Confirm password")]
-        [Compare(nameof(Password), ErrorMessage = "The password and confirmation password do not match.")]
+        [Display(Name = "Identity.Field.ConfirmNewPassword")]
+        [Compare(nameof(Password), ErrorMessage = "Identity.Validation.PasswordMismatch")]
         public string ConfirmPassword { get; set; } = string.Empty;
 
-        [Required]
+        [Required(ErrorMessage = "Identity.Validation.Required")]
         public string Code { get; set; } = string.Empty;
     }
 

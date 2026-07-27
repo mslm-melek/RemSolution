@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
@@ -6,6 +6,7 @@ import {
   BrandsClient, BrandDto
 } from '../web-api-client';
 import { extractValidationErrors } from '../shared/form-utils';
+import { TranslocoService } from '@jsverse/transloco';
 
 @Component({
   selector: 'app-model-car-form',
@@ -13,6 +14,9 @@ import { extractValidationErrors } from '../shared/form-utils';
   styleUrls: ['./model-car-form.component.css']
 })
 export class ModelCarFormComponent implements OnInit {
+  // Confirm/prompt dialogs and error banners are plain strings, so they are
+  // translated imperatively rather than through the template pipe.
+  private readonly transloco = inject(TranslocoService);
   form: FormGroup;
   brands: BrandDto[] = [];
   modelCarId?: number;
@@ -98,7 +102,7 @@ export class ModelCarFormComponent implements OnInit {
     if (validationErrors) {
       this.errorMessage = validationErrors;
     } else {
-      this.errorMessage = 'An unexpected error occurred. Please try again.';
+      this.errorMessage = this.transloco.translate('common.unexpectedError');
       console.error(err);
     }
   }

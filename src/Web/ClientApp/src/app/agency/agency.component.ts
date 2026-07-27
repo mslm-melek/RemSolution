@@ -1,5 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { AgenciesClient, AgencyDto } from '../web-api-client';
+import { TranslocoService } from '@jsverse/transloco';
 
 @Component({
   selector: 'app-agency',
@@ -7,6 +8,9 @@ import { AgenciesClient, AgencyDto } from '../web-api-client';
   styleUrls: ['./agency.component.css']
 })
 export class AgencyComponent implements OnInit {
+  // Confirm/prompt dialogs and error banners are plain strings, so they are
+  // translated imperatively rather than through the template pipe.
+  private readonly transloco = inject(TranslocoService);
   agencies: AgencyDto[] = [];
   displayedColumns: string[] = ['name', 'country', 'contact', 'currency', 'actions'];
 
@@ -27,12 +31,12 @@ export class AgencyComponent implements OnInit {
   deleteAgency(agency: AgencyDto) {
     if (!agency.id) return;
 
-    if (confirm(`Delete agency "${agency.name}"? This is only allowed when the agency has no cars, clients or other records.`)) {
+    if (confirm(this.transloco.translate('agency.confirmDelete', { name: agency.name }))) {
       this.client.deleteAgency(agency.id).subscribe({
         next: () => this.load(),
         error: err => {
           // The API refuses deletion of an agency that still owns data.
-          alert('This agency could not be deleted. It may still have cars, clients or other records.');
+          alert(this.transloco.translate('agency.deleteFailed'));
           console.error(err);
         }
       });

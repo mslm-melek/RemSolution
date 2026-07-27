@@ -87,13 +87,13 @@ namespace RemSolution.Application.Features.MarketplaceSearch.Queries.SearchAvail
 {
     public class SearchAvailableCarsQueryValidator : AbstractValidator<SearchAvailableCarsQuery>
     {
-        public SearchAvailableCarsQueryValidator()
+        public SearchAvailableCarsQueryValidator(ILocalizer localizer)
         {
             RuleFor(v => v.StartDate).NotEmpty();
             RuleFor(v => v.EndDate)
                 .NotEmpty()
                 .GreaterThan(v => v.StartDate)
-                    .WithMessage("The end date must be after the start date.");
+                    .WithMessage(_ => localizer["Validation.Booking.EndAfterStart"]);
             RuleFor(v => v.PageSize).InclusiveBetween(1, 50);
         }
     }

@@ -1,7 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { PageEvent } from '@angular/material/paginator';
 import { MarketplaceClient, MarketplaceCarDto } from '../web-api-client';
 import { toDateInput, fromDateInput, extractValidationErrors } from '../shared/form-utils';
+import { TranslocoService } from '@jsverse/transloco';
 
 @Component({
   selector: 'app-marketplace-search',
@@ -9,6 +10,9 @@ import { toDateInput, fromDateInput, extractValidationErrors } from '../shared/f
   styleUrls: ['./marketplace-search.component.css']
 })
 export class MarketplaceSearchComponent implements OnInit {
+  // Confirm/prompt dialogs and error banners are plain strings, so they are
+  // translated imperatively rather than through the template pipe.
+  private readonly transloco = inject(TranslocoService);
   startDate = '';
   endDate = '';
 
@@ -37,7 +41,7 @@ export class MarketplaceSearchComponent implements OnInit {
     const start = fromDateInput(this.startDate);
     const end = fromDateInput(this.endDate);
     if (!start || !end || end <= start) {
-      this.error = 'Please pick a valid date range (end after start).';
+      this.error = this.transloco.translate('marketplace.invalidRange');
       return;
     }
     this.error = '';

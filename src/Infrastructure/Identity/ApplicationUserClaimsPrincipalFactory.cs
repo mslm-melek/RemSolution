@@ -48,6 +48,14 @@ public class ApplicationUserClaimsPrincipalFactory : UserClaimsPrincipalFactory<
             identity.AddClaim(new Claim(Claims.AgencyId, agencyId.ToString()));
         }
 
+        // The stored UI language rides in the ticket so request localization can
+        // honour it without a database round-trip, and so a user signing in on a
+        // new device gets their language before any cookie exists.
+        if (Languages.Normalize(user.PreferredLanguage) is string language)
+        {
+            identity.AddClaim(new Claim(Claims.PreferredLanguage, language));
+        }
+
         // Agency administrators hold every permission implicitly — the
         // policies accept the role itself, so materializing claims for
         // them would only bloat the cookie and go stale as permissions

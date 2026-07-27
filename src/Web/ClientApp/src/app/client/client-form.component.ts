@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
@@ -6,10 +6,11 @@ import {
   CreateClientCommand, UpdateClientCommand, ClientDocumentType, FileParameter
 } from '../web-api-client';
 import { toDateInput, fromDateInput, extractValidationErrors, isConcurrencyConflict } from '../shared/form-utils';
+import { TranslocoService } from '@jsverse/transloco';
 
 interface DocumentSlot {
   type: ClientDocumentType;
-  label: string;
+  labelKey: string;
   url?: string;
   uploading: boolean;
 }
@@ -20,6 +21,9 @@ interface DocumentSlot {
   styleUrls: ['./client-form.component.css']
 })
 export class ClientFormComponent implements OnInit {
+  // Confirm/prompt dialogs and error banners are plain strings, so they are
+  // translated imperatively rather than through the template pipe.
+  private readonly transloco = inject(TranslocoService);
   form: FormGroup;
   countries: CountryDto[] = [];
   clientId?: number;
@@ -30,9 +34,9 @@ export class ClientFormComponent implements OnInit {
   private rowVersion?: string;
 
   documents: DocumentSlot[] = [
-    { type: ClientDocumentType.CIN, label: 'CIN', uploading: false },
-    { type: ClientDocumentType.DrivingLicence, label: 'Driving Licence', uploading: false },
-    { type: ClientDocumentType.Passeport, label: 'Passeport', uploading: false }
+    { type: ClientDocumentType.CIN, labelKey: 'client.cin', uploading: false },
+    { type: ClientDocumentType.DrivingLicence, labelKey: 'client.drivingLicence', uploading: false },
+    { type: ClientDocumentType.Passeport, labelKey: 'client.passeport', uploading: false }
   ];
 
   constructor(
@@ -188,8 +192,7 @@ export class ClientFormComponent implements OnInit {
     this.saving = false;
 
     if (isConcurrencyConflict(err)) {
-      this.errorMessage =
-        'This client was reloaded by another user since you opened it. Reload the page to get the latest version, then re-apply your changes.';
+      this.errorMessage = this.transloco.translate('client.concurrency');
       return;
     }
 
@@ -197,7 +200,7 @@ export class ClientFormComponent implements OnInit {
     if (validationErrors) {
       this.errorMessage = validationErrors;
     } else {
-      this.errorMessage = 'An unexpected error occurred. Please try again.';
+      this.errorMessage = this.transloco.translate('common.unexpectedError');
       console.error(err);
     }
   }

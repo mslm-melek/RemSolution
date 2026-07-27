@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
+using RemSolution.Web.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using RemSolution.Application.Common.Features;
 using RemSolution.Application.Common.Interfaces;
@@ -13,6 +14,7 @@ using RemSolution.Application.Features.Users.Commands.UpdateMyAgencyUserCommand;
 using RemSolution.Application.Features.Users.Commands.SetMyAgencyUserActiveCommand;
 using RemSolution.Application.Features.Users.Commands.UpdateMyProfileCommand;
 using RemSolution.Application.Features.Users.Commands.ChangeMyPasswordCommand;
+using RemSolution.Application.Features.Users.Commands.UpdateMyLanguageCommand;
 using RemSolution.Application.Features.Users.Queries.GetMyProfileQuery;
 using RemSolution.Application.Features.Users.Queries.GetAgencyUsersQuery;
 using RemSolution.Application.Features.Users.Queries.GetAgencyUserByIdQuery;
@@ -49,6 +51,7 @@ public class Users : EndpointGroupBase
         group.MapGet("me/profile", GetMyProfile).WithName(nameof(GetMyProfile)).RequireAuthorization();
         group.MapPut("me/profile", UpdateMyProfile).WithName(nameof(UpdateMyProfile)).RequireAuthorization();
         group.MapPut("me/password", ChangeMyPassword).WithName(nameof(ChangeMyPassword)).RequireAuthorization();
+        group.MapPut("me/language", UpdateMyLanguage).WithName(nameof(UpdateMyLanguage)).RequireAuthorization();
     }
 
     public async Task<Ok<MyProfileDto>> GetMyProfile(ISender sender)
@@ -66,6 +69,21 @@ public class Users : EndpointGroupBase
     public async Task<NoContent> ChangeMyPassword(ISender sender, ChangeMyPasswordCommand command)
     {
         await sender.Send(command);
+        return TypedResults.NoContent();
+    }
+
+    // Stores the choice AND writes the culture cookie in the same response. The
+    // stored value is what follows the account across devices (via the
+    // PreferredLanguage claim); the cookie is what the server-rendered Identity
+    // pages read, and it also covers the window before the auth ticket is
+    // re-minted with the new claim.
+    public async Task<NoContent> UpdateMyLanguage(
+        ISender sender, HttpContext httpContext, UpdateMyLanguageCommand command)
+    {
+        await sender.Send(command);
+
+        CultureCookie.Write(httpContext.Response, command.Language);
+
         return TypedResults.NoContent();
     }
 

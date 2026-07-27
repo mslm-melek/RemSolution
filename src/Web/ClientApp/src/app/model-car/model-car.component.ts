@@ -1,6 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { PageEvent } from '@angular/material/paginator';
 import { ModelCarsClient, ModelCarDto, BrandsClient, BrandDto } from '../web-api-client';
+import { TranslocoService } from '@jsverse/transloco';
 
 @Component({
   selector: 'app-model-car',
@@ -8,6 +9,9 @@ import { ModelCarsClient, ModelCarDto, BrandsClient, BrandDto } from '../web-api
   styleUrls: ['./model-car.component.css']
 })
 export class ModelCarComponent implements OnInit {
+  // Confirm/prompt dialogs and error banners are plain strings, so they are
+  // translated imperatively rather than through the template pipe.
+  private readonly transloco = inject(TranslocoService);
   modelCars: ModelCarDto[] = [];
   brands: BrandDto[] = [];
   displayedColumns: string[] = ['name', 'brand', 'actions'];
@@ -58,7 +62,7 @@ export class ModelCarComponent implements OnInit {
   deleteModelCar(modelCar: ModelCarDto) {
     if (!modelCar.id) return;
 
-    if (confirm(`Delete model "${modelCar.name}"?`)) {
+    if (confirm(this.transloco.translate('modelCar.confirmDelete', { name: modelCar.name }))) {
       this.client.deleteModelCar(modelCar.id).subscribe({
         next: () => this.load(),
         error: err => console.error(err)

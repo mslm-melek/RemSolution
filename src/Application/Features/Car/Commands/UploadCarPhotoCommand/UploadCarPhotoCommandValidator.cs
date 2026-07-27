@@ -1,3 +1,5 @@
+using RemSolution.Application.Common.Interfaces;
+
 namespace RemSolution.Application.Features.Car.Commands.UploadCarPhotoCommand
 {
     public class UploadCarPhotoCommandValidator : AbstractValidator<UploadCarPhotoCommand>
@@ -11,7 +13,7 @@ namespace RemSolution.Application.Features.Car.Commands.UploadCarPhotoCommand
         private static readonly string[] AllowedExtensions =
             { ".jpg", ".jpeg", ".png", ".webp" };
 
-        public UploadCarPhotoCommandValidator()
+        public UploadCarPhotoCommandValidator(ILocalizer localizer)
         {
             RuleFor(c => c.CarId)
                 .GreaterThan(0);
@@ -19,15 +21,15 @@ namespace RemSolution.Application.Features.Car.Commands.UploadCarPhotoCommand
             RuleFor(c => c.FileName)
                 .NotEmpty()
                 .Must(HaveAllowedExtension)
-                .WithMessage($"File extension must be one of: {string.Join(", ", AllowedExtensions)}.");
+                .WithMessage(_ => localizer["Validation.File.Extension", string.Join(", ", AllowedExtensions)]);
 
             RuleFor(c => c.ContentType)
                 .Must(ct => AllowedContentTypes.Contains(ct, StringComparer.OrdinalIgnoreCase))
-                .WithMessage($"Content type must be one of: {string.Join(", ", AllowedContentTypes)}.");
+                .WithMessage(_ => localizer["Validation.File.ContentType", string.Join(", ", AllowedContentTypes)]);
 
             RuleFor(c => c.Length)
-                .GreaterThan(0).WithMessage("File is empty.")
-                .LessThanOrEqualTo(MaxSizeBytes).WithMessage("File must not exceed 15 MB.");
+                .GreaterThan(0).WithMessage(_ => localizer["Validation.File.Empty"])
+                .LessThanOrEqualTo(MaxSizeBytes).WithMessage(_ => localizer["Validation.File.TooLarge"]);
         }
 
         private static bool HaveAllowedExtension(string fileName) =>

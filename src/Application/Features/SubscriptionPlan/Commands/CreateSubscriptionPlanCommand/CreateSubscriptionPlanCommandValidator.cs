@@ -1,10 +1,12 @@
 using RemSolution.Domain.Constants;
 
+using RemSolution.Application.Common.Interfaces;
+
 namespace RemSolution.Application.Features.SubscriptionPlan.Commands.CreateSubscriptionPlanCommand
 {
     public class CreateSubscriptionPlanCommandValidator : AbstractValidator<CreateSubscriptionPlanCommand>
     {
-        public CreateSubscriptionPlanCommandValidator()
+        public CreateSubscriptionPlanCommandValidator(ILocalizer localizer)
         {
             RuleFor(p => p.Name)
                 .NotEmpty()
@@ -24,7 +26,7 @@ namespace RemSolution.Application.Features.SubscriptionPlan.Commands.CreateSubsc
 
             RuleForEach(p => p.Features)
                 .Must(f => FeatureFlags.All.Contains(f))
-                .WithMessage("'{PropertyValue}' is not a known feature.");
+                .WithMessage(_ => localizer["Validation.Feature.Unknown"]);
         }
     }
 }

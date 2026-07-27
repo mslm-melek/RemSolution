@@ -1,12 +1,12 @@
-<header>
+<header *transloco="let t">
   <mat-toolbar color="primary" class="nav-toolbar">
-    <a class="nav-brand" [routerLink]="['/']">RemSolution.Web</a>
+    <a class="nav-brand" [routerLink]="['/']">{{ t('nav.brandName') }}</a>
 
     <span class="nav-spacer"></span>
 
     <button mat-icon-button
             class="nav-toggler"
-            aria-label="Toggle navigation"
+            [attr.aria-label]="t('nav.toggle')"
             [attr.aria-expanded]="isExpanded"
             (click)="toggle()">
       <mat-icon>menu</mat-icon>
@@ -17,7 +17,7 @@
          [routerLink]="['/']"
          [routerLinkActive]="['link-active']"
          [routerLinkActiveOptions]="{ exact: true }"
-         (click)="collapse()">Home</a>
+         (click)="collapse()">{{ t('nav.home') }}</a>
 
       <!-- Platform administrator: agency-grouped console. Cars & clients are
            reached inside an agency, not from the top level. -->
@@ -25,21 +25,21 @@
         <a mat-button
            [routerLink]="['/agency']"
            [routerLinkActive]="['link-active']"
-           (click)="collapse()">Agencies</a>
+           (click)="collapse()">{{ t('nav.agencies') }}</a>
         <a mat-button
            [routerLink]="['/subscription-plan']"
            [routerLinkActive]="['link-active']"
-           (click)="collapse()">Subscription Plans</a>
+           (click)="collapse()">{{ t('nav.subscriptionPlans') }}</a>
 
         <!-- Reference & configuration data, grouped. -->
         <button mat-button [matMenuTriggerFor]="catalogMenu">
-          Config <mat-icon>arrow_drop_down</mat-icon>
+          {{ t('nav.config') }} <mat-icon>arrow_drop_down</mat-icon>
         </button>
         <mat-menu #catalogMenu="matMenu">
-          <a mat-menu-item [routerLink]="['/brand']" (click)="collapse()">Car Brands</a>
-          <a mat-menu-item [routerLink]="['/model-car']" (click)="collapse()">Car Models</a>
-          <a mat-menu-item [routerLink]="['/extra-service-type']" (click)="collapse()">Extra Service Types</a>
-          <a mat-menu-item [routerLink]="['/expense-type']" (click)="collapse()">Expense Types</a>
+          <a mat-menu-item [routerLink]="['/brand']" (click)="collapse()">{{ t('nav.carBrands') }}</a>
+          <a mat-menu-item [routerLink]="['/model-car']" (click)="collapse()">{{ t('nav.carModels') }}</a>
+          <a mat-menu-item [routerLink]="['/extra-service-type']" (click)="collapse()">{{ t('nav.extraServiceTypes') }}</a>
+          <a mat-menu-item [routerLink]="['/expense-type']" (click)="collapse()">{{ t('nav.expenseTypes') }}</a>
         </mat-menu>
       </ng-container>
 
@@ -48,11 +48,11 @@
         <a mat-button
            [routerLink]="['/browse']"
            [routerLinkActive]="['link-active']"
-           (click)="collapse()">Browse cars</a>
+           (click)="collapse()">{{ t('nav.browseCars') }}</a>
         <a mat-button
            [routerLink]="['/my-reservations']"
            [routerLinkActive]="['link-active']"
-           (click)="collapse()">My reservations</a>
+           (click)="collapse()">{{ t('nav.myReservations') }}</a>
       </ng-container>
 
       <!-- Agency users: primary entities in the bar; all configuration and
@@ -63,33 +63,33 @@
            *ngIf="canAccessCars"
            [routerLink]="['/car']"
            [routerLinkActive]="['link-active']"
-           (click)="collapse()">Cars</a>
+           (click)="collapse()">{{ t('nav.cars') }}</a>
         <a mat-button
            *ngIf="canAccessReservations"
            [routerLink]="['/reservation']"
            [routerLinkActive]="['link-active']"
-           (click)="collapse()">Reservations</a>
+           (click)="collapse()">{{ t('nav.reservations') }}</a>
         <a mat-button
            *ngIf="canAccessRentings"
            [routerLink]="['/renting']"
            [routerLinkActive]="['link-active']"
-           (click)="collapse()">Rentings</a>
+           (click)="collapse()">{{ t('nav.rentings') }}</a>
         <a mat-button
            *ngIf="canAccessClients"
            [routerLink]="['/client']"
            [routerLinkActive]="['link-active']"
-           (click)="collapse()">Clients</a>
+           (click)="collapse()">{{ t('nav.clients') }}</a>
 
         <!-- Config: reference catalogs, staff and car reference data. -->
         <ng-container *ngIf="canAccessConfig">
           <button mat-button [matMenuTriggerFor]="configMenu">
-            Config <mat-icon>arrow_drop_down</mat-icon>
+            {{ t('nav.config') }} <mat-icon>arrow_drop_down</mat-icon>
           </button>
           <mat-menu #configMenu="matMenu">
-            <a mat-menu-item *ngIf="canAccessExpenses" [routerLink]="['/expense-type']" (click)="collapse()">Expense Types</a>
-            <a mat-menu-item *ngIf="canAccessExtraServices" [routerLink]="['/extra-service-type']" (click)="collapse()">Extra Service Types</a>
-            <a mat-menu-item *ngIf="canAccessCars" [routerLink]="['/brand']" (click)="collapse()">Car Brands</a>
-            <a mat-menu-item *ngIf="canAccessCars" [routerLink]="['/model-car']" (click)="collapse()">Car Models</a>
+            <a mat-menu-item *ngIf="canAccessExpenses" [routerLink]="['/expense-type']" (click)="collapse()">{{ t('nav.expenseTypes') }}</a>
+            <a mat-menu-item *ngIf="canAccessExtraServices" [routerLink]="['/extra-service-type']" (click)="collapse()">{{ t('nav.extraServiceTypes') }}</a>
+            <a mat-menu-item *ngIf="canAccessCars" [routerLink]="['/brand']" (click)="collapse()">{{ t('nav.carBrands') }}</a>
+            <a mat-menu-item *ngIf="canAccessCars" [routerLink]="['/model-car']" (click)="collapse()">{{ t('nav.carModels') }}</a>
           </mat-menu>
         </ng-container>
       </ng-container>
@@ -99,22 +99,38 @@
       </button>
       <mat-menu #userMenu="matMenu">
         <a mat-menu-item *ngIf="isAgencyAdmin" [routerLink]="['/team']" (click)="collapse()">
-          <mat-icon>groups</mat-icon> My Team
+          <mat-icon>groups</mat-icon> {{ t('nav.myTeam') }}
         </a>
         <a mat-menu-item [routerLink]="['/profile']" (click)="collapse()">
-          <mat-icon>manage_accounts</mat-icon> Edit profile
+          <mat-icon>manage_accounts</mat-icon> {{ t('nav.editProfile') }}
         </a>
         <a mat-menu-item href="/Identity/Account/Logout">
-          <mat-icon>logout</mat-icon> Logout
+          <mat-icon>logout</mat-icon> {{ t('nav.logout') }}
         </a>
       </mat-menu>
     </nav>
 
     <nav class="nav-links" [class.expanded]="isExpanded" *ngIf="!isAuthenticated">
       <a mat-button href="/Identity/Account/Login">
-        <mat-icon>login</mat-icon> Login
+        <mat-icon>login</mat-icon> {{ t('nav.login') }}
       </a>
-      <a mat-stroked-button class="nav-register" href="/Identity/Account/Register">Register</a>
+      <a mat-stroked-button class="nav-register" href="/Identity/Account/Register">{{ t('nav.register') }}</a>
     </nav>
+
+    <!-- Outside both navs so it stays reachable signed in or out. Languages are
+         listed by endonym, so the labels are the same whatever the active one. -->
+    <button mat-button class="nav-language" [matMenuTriggerFor]="languageMenu"
+            [attr.aria-label]="t('language.label')">
+      <mat-icon>language</mat-icon>
+      <span class="nav-language-code">{{ currentLanguage | uppercase }}</span>
+    </button>
+    <mat-menu #languageMenu="matMenu">
+      <button mat-menu-item *ngFor="let language of languages"
+              [disabled]="language === currentLanguage"
+              (click)="setLanguage(language)">
+        <mat-icon>{{ language === currentLanguage ? 'check' : 'translate' }}</mat-icon>
+        {{ t('language.' + language) }}
+      </button>
+    </mat-menu>
   </mat-toolbar>
 </header>
