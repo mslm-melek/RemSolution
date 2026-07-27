@@ -40,7 +40,16 @@
       <mat-error *ngIf="form.get('carId')?.hasError('required')">{{ t('renting.carRequired') }}</mat-error>
     </mat-form-field>
 
-    <mat-form-field appearance="outline">
+    <!-- Existing client, or a new one created with the renting. The toggle only
+         appears on create: editing a renting reassigns it to a known client. -->
+    <div class="span-2 client-source" *ngIf="!isEdit">
+      <mat-radio-group formControlName="clientMode" class="client-mode">
+        <mat-radio-button value="existing">{{ t('renting.existingClient') }}</mat-radio-button>
+        <mat-radio-button value="new">{{ t('renting.newClient') }}</mat-radio-button>
+      </mat-radio-group>
+    </div>
+
+    <mat-form-field appearance="outline" *ngIf="!isNewClient">
       <mat-label>{{ t('renting.client') }}</mat-label>
       <mat-select formControlName="clientId">
         <mat-option *ngFor="let c of clients" [value]="c.id">
@@ -49,6 +58,146 @@
       </mat-select>
       <mat-error *ngIf="form.get('clientId')?.hasError('required')">{{ t('renting.clientRequired') }}</mat-error>
     </mat-form-field>
+
+    <!-- The picked client's own file, checkable and correctable here: at the
+         counter their papers are in hand, and leaving the booking to fix a typo
+         loses it. Read-only unless the user may edit clients. -->
+    <div class="span-2 selected-client" *ngIf="!isNewClient && selectedClient">
+      <button type="button" mat-button class="client-toggle" (click)="toggleClientPanel()">
+        <mat-icon>{{ clientPanelOpen ? 'expand_less' : 'expand_more' }}</mat-icon>
+        {{ t('renting.clientDetails') }}
+      </button>
+
+      <div class="client-panel" *ngIf="clientPanelOpen">
+        <p class="muted hint" *ngIf="!canUpdateClients">{{ t('renting.clientReadOnly') }}</p>
+
+        <div [formGroup]="clientForm" class="new-client-grid">
+          <mat-form-field appearance="outline">
+            <mat-label>{{ t('client.firstName') }}</mat-label>
+            <input matInput formControlName="firstName" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>{{ t('client.lastName') }}</mat-label>
+            <input matInput formControlName="lastName" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>{{ t('client.birthDate') }}</mat-label>
+            <input matInput type="date" formControlName="birthDate" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>{{ t('client.birthPlace') }}</mat-label>
+            <input matInput formControlName="birthPlace" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>{{ t('client.cinNumber') }}</mat-label>
+            <input matInput formControlName="cin" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>{{ t('client.licenceNumber') }}</mat-label>
+            <input matInput formControlName="drivingLicenceNumber" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>{{ t('client.passeportNumber') }}</mat-label>
+            <input matInput formControlName="passeportNumber" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>{{ t('common.description') }}</mat-label>
+            <input matInput formControlName="description" />
+          </mat-form-field>
+        </div>
+
+        <!-- Identity papers: view what is on file, replace what is out of date. -->
+        <h4 class="papers-title">{{ t('renting.clientPapers') }}</h4>
+        <div class="papers">
+          <div class="paper" *ngFor="let doc of clientDocuments">
+            <span class="paper-label">{{ t(doc.labelKey) }}</span>
+            <a *ngIf="doc.url" [href]="doc.url" target="_blank" rel="noopener" mat-button color="primary">
+              <mat-icon>visibility</mat-icon> {{ t('common.view') }}
+            </a>
+            <span *ngIf="!doc.url" class="muted">{{ t('common.notUploaded') }}</span>
+            <ng-container *ngIf="canUpdateClients">
+              <button type="button" mat-stroked-button [disabled]="doc.uploading"
+                      (click)="paperInput.click()">
+                <mat-icon>upload</mat-icon>
+                {{ doc.uploading ? t('common.uploading') : (doc.url ? t('common.replace') : t('common.upload')) }}
+              </button>
+              <input #paperInput type="file" accept="image/*,application/pdf" hidden
+                     (change)="onClientDocumentSelected(doc, paperInput)" />
+            </ng-container>
+          </div>
+        </div>
+
+        <div class="client-actions">
+          <button type="button" mat-raised-button *ngIf="canUpdateClients"
+                  (click)="saveSelectedClient()" [disabled]="savingClient">
+            <mat-icon>save</mat-icon>
+            {{ savingClient ? t('common.saving') : t('renting.saveClient') }}
+          </button>
+          <a mat-button [routerLink]="['/client', selectedClient.id]">
+            {{ t('renting.openClientFile') }}
+          </a>
+          <span class="saved-message" *ngIf="clientSavedMessage">{{ clientSavedMessage }}</span>
+        </div>
+      </div>
+    </div>
+
+    <fieldset class="span-2 new-client-panel" *ngIf="isNewClient" formGroupName="newClient">
+      <legend>{{ t('renting.newClient') }}</legend>
+      <p class="muted hint">{{ t('renting.newClientHint') }}</p>
+
+      <div class="new-client-grid">
+        <mat-form-field appearance="outline">
+          <mat-label>{{ t('client.firstName') }}</mat-label>
+          <input matInput formControlName="firstName" required />
+          <mat-error *ngIf="form.get('newClient.firstName')?.hasError('required')">
+            {{ t('client.firstNameRequired') }}
+          </mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>{{ t('client.lastName') }}</mat-label>
+          <input matInput formControlName="lastName" required />
+          <mat-error *ngIf="form.get('newClient.lastName')?.hasError('required')">
+            {{ t('client.lastNameRequired') }}
+          </mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>{{ t('client.birthDate') }}</mat-label>
+          <input matInput type="date" formControlName="birthDate" required />
+          <mat-error *ngIf="form.get('newClient.birthDate')?.hasError('required')">
+            {{ t('client.birthDateRequired') }}
+          </mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>{{ t('client.cinNumber') }}</mat-label>
+          <input matInput formControlName="cin" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>{{ t('client.licenceNumber') }}</mat-label>
+          <input matInput formControlName="drivingLicenceNumber" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>{{ t('client.passeportNumber') }}</mat-label>
+          <input matInput formControlName="passeportNumber" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="span-2">
+          <mat-label>{{ t('common.description') }}</mat-label>
+          <input matInput formControlName="description" />
+        </mat-form-field>
+      </div>
+    </fieldset>
 
     <mat-form-field appearance="outline">
       <mat-label>{{ t('renting.secondDriver') }}</mat-label>
@@ -87,6 +236,66 @@
       <textarea matInput rows="2" formControlName="notes"></textarea>
     </mat-form-field>
 
+    <!-- Paperwork to issue with the renting. Create-only: once the renting
+         exists, the Documents panel below issues (and re-issues) on demand. Each
+         box appears only with the matching feature AND permission — the API
+         enforces the same pair and answers 403 otherwise. -->
+    <div class="span-2 generate-options"
+         *ngIf="!isEdit && (canGenerateContracts || canGenerateFactures)">
+      <span class="generate-label">{{ t('renting.onSaveGenerate') }}</span>
+      <mat-checkbox formControlName="generateContract" *ngIf="canGenerateContracts">
+        {{ t('renting.contract') }}
+      </mat-checkbox>
+      <mat-checkbox formControlName="generateFacture" *ngIf="canGenerateFactures">
+        {{ t('renting.facture') }}
+      </mat-checkbox>
+    </div>
+
+    <!-- Which layout each requested document uses. Only shown when the agency has
+         built more than the shipped default, so the common case stays a checkbox. -->
+    <div class="span-2 generate-options"
+         *ngIf="!isEdit && form.get('generateContract')?.value && contractTemplates.length">
+      <mat-form-field appearance="outline">
+        <mat-label>{{ t('renting.contractTemplate') }}</mat-label>
+        <mat-select [(ngModel)]="contractTemplateId" [ngModelOptions]="{ standalone: true }"
+                    (ngModelChange)="loadPrompts(DocumentTemplateKind.Contract)">
+          <mat-option [value]="null">{{ t('renting.defaultTemplate') }}</mat-option>
+          <mat-option *ngFor="let template of contractTemplates" [value]="template.id">
+            {{ template.name }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    <div class="span-2 generate-options"
+         *ngIf="!isEdit && form.get('generateFacture')?.value && factureTemplates.length">
+      <mat-form-field appearance="outline">
+        <mat-label>{{ t('renting.factureTemplate') }}</mat-label>
+        <mat-select [(ngModel)]="factureTemplateId" [ngModelOptions]="{ standalone: true }"
+                    (ngModelChange)="loadPrompts(DocumentTemplateKind.Facture)">
+          <mat-option [value]="null">{{ t('renting.defaultTemplate') }}</mat-option>
+          <mat-option *ngFor="let template of factureTemplates" [value]="template.id">
+            {{ template.name }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    <!-- The template's ask-each-time fields: what it could not work out on its own. -->
+    <fieldset class="span-2 prompt-panel" *ngIf="!isEdit && activePrompts.length">
+      <legend>{{ t('renting.documentFields') }}</legend>
+      <p class="muted hint">{{ t('renting.documentFieldsHint') }}</p>
+
+      <div class="prompt-grid">
+        <mat-form-field appearance="outline" *ngFor="let field of activePrompts">
+          <mat-label>{{ field.label || field.placeholder }}</mat-label>
+          <input matInput [ngModel]="documentValues[field.placeholder!]"
+                 (ngModelChange)="documentValues[field.placeholder!] = $event"
+                 [ngModelOptions]="{ standalone: true }" [required]="!!field.isRequired" />
+        </mat-form-field>
+      </div>
+    </fieldset>
+
     <div class="span-2 actions" *ngIf="!isTerminal">
       <button mat-raised-button color="primary" type="submit" [disabled]="saving">
         {{ isEdit ? t('common.saveChanges') : t('renting.createRenting') }}
@@ -94,8 +303,95 @@
     </div>
   </form>
 
-  <!-- Extra services & payments only exist once the renting does. -->
+  <!-- Extra services, payments & paperwork only exist once the renting does. -->
   <ng-container *ngIf="isEdit">
+    <mat-divider *ngIf="canReadContracts || canReadFactures"></mat-divider>
+
+    <section class="panel" *ngIf="canReadContracts || canReadFactures">
+      <h3>{{ t('renting.documents') }}</h3>
+      <p class="muted hint">{{ t('renting.documentsHint') }}</p>
+
+      <!-- Values the chosen templates need before either document can be issued. -->
+      <fieldset class="prompt-panel" *ngIf="activePrompts.length">
+        <legend>{{ t('renting.documentFields') }}</legend>
+        <p class="muted hint">{{ t('renting.documentFieldsHint') }}</p>
+
+        <div class="prompt-grid">
+          <mat-form-field appearance="outline" *ngFor="let field of activePrompts">
+            <mat-label>{{ field.label || field.placeholder }}</mat-label>
+            <input matInput [ngModel]="documentValues[field.placeholder!]"
+                   (ngModelChange)="documentValues[field.placeholder!] = $event"
+                   [ngModelOptions]="{ standalone: true }" [required]="!!field.isRequired" />
+          </mat-form-field>
+        </div>
+      </fieldset>
+
+      <div class="doc-group" *ngIf="canReadContracts">
+        <div class="doc-header">
+          <h4>{{ t('renting.contracts') }}</h4>
+
+          <mat-form-field appearance="outline" class="template-picker"
+                          *ngIf="canGenerateContracts && contractTemplates.length">
+            <mat-label>{{ t('renting.contractTemplate') }}</mat-label>
+            <mat-select [(ngModel)]="contractTemplateId" [ngModelOptions]="{ standalone: true }"
+                        (ngModelChange)="loadPrompts(DocumentTemplateKind.Contract)">
+              <mat-option [value]="null">{{ t('renting.defaultTemplate') }}</mat-option>
+              <mat-option *ngFor="let template of contractTemplates" [value]="template.id">
+                {{ template.name }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <button mat-stroked-button *ngIf="canGenerateContracts && !isTerminal"
+                  (click)="generateContract()" [disabled]="generatingContract">
+            <mat-icon>description</mat-icon> {{ t('renting.generateContract') }}
+          </button>
+        </div>
+        <ul class="doc-list" *ngIf="contracts.length">
+          <li *ngFor="let c of contracts">
+            <button mat-button color="primary" (click)="downloadContract(c)">
+              <mat-icon>picture_as_pdf</mat-icon> {{ c.number }}
+            </button>
+            <span class="muted">{{ c.issuedAt | date:'yyyy-MM-dd HH:mm' }}</span>
+          </li>
+        </ul>
+        <p *ngIf="!contracts.length" class="muted">{{ t('renting.noContracts') }}</p>
+      </div>
+
+      <div class="doc-group" *ngIf="canReadFactures">
+        <div class="doc-header">
+          <h4>{{ t('renting.factures') }}</h4>
+
+          <mat-form-field appearance="outline" class="template-picker"
+                          *ngIf="canGenerateFactures && factureTemplates.length">
+            <mat-label>{{ t('renting.factureTemplate') }}</mat-label>
+            <mat-select [(ngModel)]="factureTemplateId" [ngModelOptions]="{ standalone: true }"
+                        (ngModelChange)="loadPrompts(DocumentTemplateKind.Facture)">
+              <mat-option [value]="null">{{ t('renting.defaultTemplate') }}</mat-option>
+              <mat-option *ngFor="let template of factureTemplates" [value]="template.id">
+                {{ template.name }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <button mat-stroked-button *ngIf="canGenerateFactures"
+                  (click)="generateFacture()" [disabled]="generatingFacture">
+            <mat-icon>receipt_long</mat-icon> {{ t('renting.generateFacture') }}
+          </button>
+        </div>
+        <ul class="doc-list" *ngIf="factures.length">
+          <li *ngFor="let f of factures">
+            <button mat-button color="primary" (click)="downloadFacture(f)">
+              <mat-icon>picture_as_pdf</mat-icon> {{ f.number }}
+            </button>
+            <span *ngIf="f.totalAmount">{{ f.totalAmount.amount | number:'1.2-2' }} {{ f.totalAmount.currency }}</span>
+            <span class="muted">{{ f.issuedAt | date:'yyyy-MM-dd HH:mm' }}</span>
+          </li>
+        </ul>
+        <p *ngIf="!factures.length" class="muted">{{ t('renting.noFactures') }}</p>
+      </div>
+    </section>
+
     <mat-divider *ngIf="canUseExtraServices"></mat-divider>
 
     <section class="panel" *ngIf="canUseExtraServices">

@@ -756,6 +756,77 @@ namespace RemSolution.Infrastructure.Data.Migrations
                     b.ToTable("Clients");
                 });
 
+            modelBuilder.Entity("RemSolution.Domain.Entities.Contract", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AgencyId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTimeOffset?>("CreatedOn")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<int>("DocumentFileId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("DocumentTemplateId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("IssuedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Language")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("nvarchar(16)");
+
+                    b.Property<string>("Number")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("nvarchar(40)");
+
+                    b.Property<int>("RentingId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("SequenceNumber")
+                        .HasColumnType("int");
+
+                    b.Property<string>("TemplateName")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTimeOffset?>("UpdatedOn")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<int>("Year")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DocumentFileId");
+
+                    b.HasIndex("DocumentTemplateId");
+
+                    b.HasIndex("RentingId");
+
+                    b.HasIndex("AgencyId", "RentingId");
+
+                    b.HasIndex("AgencyId", "Year", "SequenceNumber")
+                        .IsUnique();
+
+                    b.ToTable("Contracts");
+                });
+
             modelBuilder.Entity("RemSolution.Domain.Entities.Country", b =>
                 {
                     b.Property<int>("Id")
@@ -810,6 +881,123 @@ namespace RemSolution.Infrastructure.Data.Migrations
                     b.HasIndex("OccurredOn");
 
                     b.ToTable("CrossTenantAccessLogs");
+                });
+
+            modelBuilder.Entity("RemSolution.Domain.Entities.DocumentTemplate", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AgencyId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("BlocksJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTimeOffset?>("CreatedOn")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsDefault")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("Kind")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Language")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("nvarchar(16)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTimeOffset?>("UpdatedOn")
+                        .HasColumnType("datetimeoffset");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AgencyId", "Kind", "Language");
+
+                    b.ToTable("DocumentTemplates");
+                });
+
+            modelBuilder.Entity("RemSolution.Domain.Entities.DocumentTemplateField", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AgencyId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Binding")
+                        .HasColumnType("int");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTimeOffset?>("CreatedOn")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("DataPath")
+                        .HasMaxLength(120)
+                        .HasColumnType("nvarchar(120)");
+
+                    b.Property<int>("DocumentTemplateId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("FixedValue")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<bool>("IsRequired")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Label")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("Placeholder")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("nvarchar(120)");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTimeOffset?>("UpdatedOn")
+                        .HasColumnType("datetimeoffset");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AgencyId", "DocumentTemplateId");
+
+                    b.HasIndex("DocumentTemplateId", "Placeholder")
+                        .IsUnique();
+
+                    b.ToTable("DocumentTemplateFields");
                 });
 
             modelBuilder.Entity("RemSolution.Domain.Entities.Expense", b =>
@@ -983,6 +1171,82 @@ namespace RemSolution.Infrastructure.Data.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("ExtraServicesTypes");
+                });
+
+            modelBuilder.Entity("RemSolution.Domain.Entities.Facture", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AgencyId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("ClientId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTimeOffset?>("CreatedOn")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<int>("DocumentFileId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("DocumentTemplateId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("IssuedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Language")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("nvarchar(16)");
+
+                    b.Property<string>("Number")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("nvarchar(40)");
+
+                    b.Property<int>("RentingId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("SequenceNumber")
+                        .HasColumnType("int");
+
+                    b.Property<string>("TemplateName")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTimeOffset?>("UpdatedOn")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<int>("Year")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ClientId");
+
+                    b.HasIndex("DocumentFileId");
+
+                    b.HasIndex("DocumentTemplateId");
+
+                    b.HasIndex("RentingId");
+
+                    b.HasIndex("AgencyId", "RentingId");
+
+                    b.HasIndex("AgencyId", "Year", "SequenceNumber")
+                        .IsUnique();
+
+                    b.ToTable("Factures");
                 });
 
             modelBuilder.Entity("RemSolution.Domain.Entities.ModelCar", b =>
@@ -1863,6 +2127,70 @@ namespace RemSolution.Infrastructure.Data.Migrations
                     b.Navigation("PasseportFile");
                 });
 
+            modelBuilder.Entity("RemSolution.Domain.Entities.Contract", b =>
+                {
+                    b.HasOne("RemSolution.Domain.Entities.Agency", "Agency")
+                        .WithMany()
+                        .HasForeignKey("AgencyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("RemSolution.Domain.Entities.StoredFile", "DocumentFile")
+                        .WithMany()
+                        .HasForeignKey("DocumentFileId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("RemSolution.Domain.Entities.DocumentTemplate", "DocumentTemplate")
+                        .WithMany()
+                        .HasForeignKey("DocumentTemplateId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("RemSolution.Domain.Entities.Renting", "Renting")
+                        .WithMany("Contracts")
+                        .HasForeignKey("RentingId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Agency");
+
+                    b.Navigation("DocumentFile");
+
+                    b.Navigation("DocumentTemplate");
+
+                    b.Navigation("Renting");
+                });
+
+            modelBuilder.Entity("RemSolution.Domain.Entities.DocumentTemplate", b =>
+                {
+                    b.HasOne("RemSolution.Domain.Entities.Agency", "Agency")
+                        .WithMany()
+                        .HasForeignKey("AgencyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Agency");
+                });
+
+            modelBuilder.Entity("RemSolution.Domain.Entities.DocumentTemplateField", b =>
+                {
+                    b.HasOne("RemSolution.Domain.Entities.Agency", "Agency")
+                        .WithMany()
+                        .HasForeignKey("AgencyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("RemSolution.Domain.Entities.DocumentTemplate", "DocumentTemplate")
+                        .WithMany("Fields")
+                        .HasForeignKey("DocumentTemplateId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Agency");
+
+                    b.Navigation("DocumentTemplate");
+                });
+
             modelBuilder.Entity("RemSolution.Domain.Entities.Expense", b =>
                 {
                     b.HasOne("RemSolution.Domain.Entities.Agency", "Agency")
@@ -1968,6 +2296,125 @@ namespace RemSolution.Infrastructure.Data.Migrations
                     b.Navigation("Agency");
 
                     b.Navigation("ExtraServicesType");
+
+                    b.Navigation("Renting");
+
+                    b.Navigation("TotalAmount");
+                });
+
+            modelBuilder.Entity("RemSolution.Domain.Entities.Facture", b =>
+                {
+                    b.HasOne("RemSolution.Domain.Entities.Agency", "Agency")
+                        .WithMany()
+                        .HasForeignKey("AgencyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("RemSolution.Domain.Entities.Client", "Client")
+                        .WithMany()
+                        .HasForeignKey("ClientId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("RemSolution.Domain.Entities.StoredFile", "DocumentFile")
+                        .WithMany()
+                        .HasForeignKey("DocumentFileId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("RemSolution.Domain.Entities.DocumentTemplate", "DocumentTemplate")
+                        .WithMany()
+                        .HasForeignKey("DocumentTemplateId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("RemSolution.Domain.Entities.Renting", "Renting")
+                        .WithMany("Factures")
+                        .HasForeignKey("RentingId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.OwnsOne("RemSolution.Domain.ValueObjects.Money", "ExtraServicesAmount", b1 =>
+                        {
+                            b1.Property<int>("FactureId")
+                                .HasColumnType("int");
+
+                            b1.Property<decimal>("Amount")
+                                .HasColumnType("decimal(18,2)")
+                                .HasColumnName("ExtraServicesAmount");
+
+                            b1.Property<string>("Currency")
+                                .IsRequired()
+                                .HasMaxLength(3)
+                                .IsUnicode(false)
+                                .HasColumnType("varchar(3)")
+                                .HasColumnName("ExtraServicesAmountCurrency");
+
+                            b1.HasKey("FactureId");
+
+                            b1.ToTable("Factures");
+
+                            b1.WithOwner()
+                                .HasForeignKey("FactureId");
+                        });
+
+                    b.OwnsOne("RemSolution.Domain.ValueObjects.Money", "RentalAmount", b1 =>
+                        {
+                            b1.Property<int>("FactureId")
+                                .HasColumnType("int");
+
+                            b1.Property<decimal>("Amount")
+                                .HasColumnType("decimal(18,2)")
+                                .HasColumnName("RentalAmount");
+
+                            b1.Property<string>("Currency")
+                                .IsRequired()
+                                .HasMaxLength(3)
+                                .IsUnicode(false)
+                                .HasColumnType("varchar(3)")
+                                .HasColumnName("RentalAmountCurrency");
+
+                            b1.HasKey("FactureId");
+
+                            b1.ToTable("Factures");
+
+                            b1.WithOwner()
+                                .HasForeignKey("FactureId");
+                        });
+
+                    b.OwnsOne("RemSolution.Domain.ValueObjects.Money", "TotalAmount", b1 =>
+                        {
+                            b1.Property<int>("FactureId")
+                                .HasColumnType("int");
+
+                            b1.Property<decimal>("Amount")
+                                .HasColumnType("decimal(18,2)")
+                                .HasColumnName("TotalAmount");
+
+                            b1.Property<string>("Currency")
+                                .IsRequired()
+                                .HasMaxLength(3)
+                                .IsUnicode(false)
+                                .HasColumnType("varchar(3)")
+                                .HasColumnName("TotalAmountCurrency");
+
+                            b1.HasKey("FactureId");
+
+                            b1.ToTable("Factures");
+
+                            b1.WithOwner()
+                                .HasForeignKey("FactureId");
+                        });
+
+                    b.Navigation("Agency");
+
+                    b.Navigation("Client");
+
+                    b.Navigation("DocumentFile");
+
+                    b.Navigation("DocumentTemplate");
+
+                    b.Navigation("ExtraServicesAmount");
+
+                    b.Navigation("RentalAmount");
 
                     b.Navigation("Renting");
 
@@ -2365,6 +2812,11 @@ namespace RemSolution.Infrastructure.Data.Migrations
                     b.Navigation("SecondRentings");
                 });
 
+            modelBuilder.Entity("RemSolution.Domain.Entities.DocumentTemplate", b =>
+                {
+                    b.Navigation("Fields");
+                });
+
             modelBuilder.Entity("RemSolution.Domain.Entities.ExpenseType", b =>
                 {
                     b.Navigation("Expenses");
@@ -2382,7 +2834,11 @@ namespace RemSolution.Infrastructure.Data.Migrations
 
             modelBuilder.Entity("RemSolution.Domain.Entities.Renting", b =>
                 {
+                    b.Navigation("Contracts");
+
                     b.Navigation("ExtraServices");
+
+                    b.Navigation("Factures");
 
                     b.Navigation("Payments");
 

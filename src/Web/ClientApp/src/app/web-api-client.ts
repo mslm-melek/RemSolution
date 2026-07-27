@@ -2494,6 +2494,186 @@ export class ClientsClient implements IClientsClient {
     }
 }
 
+export interface IContractsClient {
+    getContractsByRenting(rentingId: number): Observable<ContractDto[]>;
+    generateContract(rentingId: number, command: GenerateContractCommand | undefined): Observable<ContractDto>;
+    downloadContract(id: number): Observable<void>;
+}
+
+@Injectable({
+    providedIn: 'root'
+})
+export class ContractsClient implements IContractsClient {
+    private http: HttpClient;
+    private baseUrl: string;
+    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
+
+    constructor(@Inject(HttpClient) http: HttpClient, @Optional() @Inject(API_BASE_URL) baseUrl?: string) {
+        this.http = http;
+        this.baseUrl = baseUrl ?? "";
+    }
+
+    getContractsByRenting(rentingId: number): Observable<ContractDto[]> {
+        let url_ = this.baseUrl + "/api/Contracts/renting/{rentingId}";
+        if (rentingId === undefined || rentingId === null)
+            throw new Error("The parameter 'rentingId' must be defined.");
+        url_ = url_.replace("{rentingId}", encodeURIComponent("" + rentingId));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetContractsByRenting(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetContractsByRenting(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<ContractDto[]>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<ContractDto[]>;
+        }));
+    }
+
+    protected processGetContractsByRenting(response: HttpResponseBase): Observable<ContractDto[]> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            if (Array.isArray(resultData200)) {
+                result200 = [] as any;
+                for (let item of resultData200)
+                    result200!.push(ContractDto.fromJS(item));
+            }
+            else {
+                result200 = <any>null;
+            }
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    generateContract(rentingId: number, command: GenerateContractCommand | undefined): Observable<ContractDto> {
+        let url_ = this.baseUrl + "/api/Contracts/renting/{rentingId}";
+        if (rentingId === undefined || rentingId === null)
+            throw new Error("The parameter 'rentingId' must be defined.");
+        url_ = url_.replace("{rentingId}", encodeURIComponent("" + rentingId));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(command);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGenerateContract(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGenerateContract(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<ContractDto>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<ContractDto>;
+        }));
+    }
+
+    protected processGenerateContract(response: HttpResponseBase): Observable<ContractDto> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 201) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result201: any = null;
+            let resultData201 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result201 = ContractDto.fromJS(resultData201);
+            return _observableOf(result201);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    downloadContract(id: number): Observable<void> {
+        let url_ = this.baseUrl + "/api/Contracts/{id}/download";
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processDownloadContract(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processDownloadContract(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processDownloadContract(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 404) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("A server side error occurred.", status, _responseText, _headers);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+}
+
 export interface ICountriesClient {
     getCountries(): Observable<CountryDto[]>;
     createCountry(command: CreateCountryCommand): Observable<number>;
@@ -2771,6 +2951,593 @@ export class CountriesClient implements ICountriesClient {
         if (status === 204) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
             return _observableOf(null as any);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+}
+
+export interface IDocumentTemplatesClient {
+    getDocumentTemplates(kind: DocumentTemplateKind | null | undefined, language: string | null | undefined, includeInactive: boolean): Observable<DocumentTemplateDto[]>;
+    createDocumentTemplate(command: CreateDocumentTemplateCommand): Observable<number>;
+    getDocumentTemplateExamples(): Observable<DocumentTemplateExampleDto[]>;
+    getDocumentPlaceholders(kind: DocumentTemplateKind): Observable<DocumentPlaceholderDto[]>;
+    getDocumentPrompt(kind: DocumentTemplateKind, templateId: number | null | undefined): Observable<DocumentTemplateFieldDto[]>;
+    getDocumentTemplateById(id: number): Observable<DocumentTemplateDto>;
+    updateDocumentTemplate(id: number, command: UpdateDocumentTemplateCommand): Observable<void>;
+    setDefaultDocumentTemplate(id: number): Observable<void>;
+    setDocumentTemplateActive(id: number, isActive: boolean): Observable<void>;
+    importDocumentTemplate(kind: DocumentTemplateKind, language: string, file: FileParameter | null | undefined): Observable<DocumentTemplateDraftDto>;
+}
+
+@Injectable({
+    providedIn: 'root'
+})
+export class DocumentTemplatesClient implements IDocumentTemplatesClient {
+    private http: HttpClient;
+    private baseUrl: string;
+    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
+
+    constructor(@Inject(HttpClient) http: HttpClient, @Optional() @Inject(API_BASE_URL) baseUrl?: string) {
+        this.http = http;
+        this.baseUrl = baseUrl ?? "";
+    }
+
+    getDocumentTemplates(kind: DocumentTemplateKind | null | undefined, language: string | null | undefined, includeInactive: boolean): Observable<DocumentTemplateDto[]> {
+        let url_ = this.baseUrl + "/api/DocumentTemplates?";
+        if (kind !== undefined && kind !== null)
+            url_ += "Kind=" + encodeURIComponent("" + kind) + "&";
+        if (language !== undefined && language !== null)
+            url_ += "Language=" + encodeURIComponent("" + language) + "&";
+        if (includeInactive === undefined || includeInactive === null)
+            throw new Error("The parameter 'includeInactive' must be defined and cannot be null.");
+        else
+            url_ += "IncludeInactive=" + encodeURIComponent("" + includeInactive) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetDocumentTemplates(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetDocumentTemplates(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<DocumentTemplateDto[]>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<DocumentTemplateDto[]>;
+        }));
+    }
+
+    protected processGetDocumentTemplates(response: HttpResponseBase): Observable<DocumentTemplateDto[]> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            if (Array.isArray(resultData200)) {
+                result200 = [] as any;
+                for (let item of resultData200)
+                    result200!.push(DocumentTemplateDto.fromJS(item));
+            }
+            else {
+                result200 = <any>null;
+            }
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    createDocumentTemplate(command: CreateDocumentTemplateCommand): Observable<number> {
+        let url_ = this.baseUrl + "/api/DocumentTemplates";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(command);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processCreateDocumentTemplate(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processCreateDocumentTemplate(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<number>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<number>;
+        }));
+    }
+
+    protected processCreateDocumentTemplate(response: HttpResponseBase): Observable<number> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 201) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result201: any = null;
+            let resultData201 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+                result201 = resultData201 !== undefined ? resultData201 : <any>null;
+    
+            return _observableOf(result201);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getDocumentTemplateExamples(): Observable<DocumentTemplateExampleDto[]> {
+        let url_ = this.baseUrl + "/api/DocumentTemplates/examples";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetDocumentTemplateExamples(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetDocumentTemplateExamples(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<DocumentTemplateExampleDto[]>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<DocumentTemplateExampleDto[]>;
+        }));
+    }
+
+    protected processGetDocumentTemplateExamples(response: HttpResponseBase): Observable<DocumentTemplateExampleDto[]> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            if (Array.isArray(resultData200)) {
+                result200 = [] as any;
+                for (let item of resultData200)
+                    result200!.push(DocumentTemplateExampleDto.fromJS(item));
+            }
+            else {
+                result200 = <any>null;
+            }
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getDocumentPlaceholders(kind: DocumentTemplateKind): Observable<DocumentPlaceholderDto[]> {
+        let url_ = this.baseUrl + "/api/DocumentTemplates/placeholders?";
+        if (kind === undefined || kind === null)
+            throw new Error("The parameter 'kind' must be defined and cannot be null.");
+        else
+            url_ += "kind=" + encodeURIComponent("" + kind) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetDocumentPlaceholders(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetDocumentPlaceholders(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<DocumentPlaceholderDto[]>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<DocumentPlaceholderDto[]>;
+        }));
+    }
+
+    protected processGetDocumentPlaceholders(response: HttpResponseBase): Observable<DocumentPlaceholderDto[]> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            if (Array.isArray(resultData200)) {
+                result200 = [] as any;
+                for (let item of resultData200)
+                    result200!.push(DocumentPlaceholderDto.fromJS(item));
+            }
+            else {
+                result200 = <any>null;
+            }
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getDocumentPrompt(kind: DocumentTemplateKind, templateId: number | null | undefined): Observable<DocumentTemplateFieldDto[]> {
+        let url_ = this.baseUrl + "/api/DocumentTemplates/prompt?";
+        if (kind === undefined || kind === null)
+            throw new Error("The parameter 'kind' must be defined and cannot be null.");
+        else
+            url_ += "kind=" + encodeURIComponent("" + kind) + "&";
+        if (templateId !== undefined && templateId !== null)
+            url_ += "templateId=" + encodeURIComponent("" + templateId) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetDocumentPrompt(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetDocumentPrompt(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<DocumentTemplateFieldDto[]>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<DocumentTemplateFieldDto[]>;
+        }));
+    }
+
+    protected processGetDocumentPrompt(response: HttpResponseBase): Observable<DocumentTemplateFieldDto[]> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            if (Array.isArray(resultData200)) {
+                result200 = [] as any;
+                for (let item of resultData200)
+                    result200!.push(DocumentTemplateFieldDto.fromJS(item));
+            }
+            else {
+                result200 = <any>null;
+            }
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getDocumentTemplateById(id: number): Observable<DocumentTemplateDto> {
+        let url_ = this.baseUrl + "/api/DocumentTemplates/{id}";
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetDocumentTemplateById(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetDocumentTemplateById(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<DocumentTemplateDto>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<DocumentTemplateDto>;
+        }));
+    }
+
+    protected processGetDocumentTemplateById(response: HttpResponseBase): Observable<DocumentTemplateDto> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = DocumentTemplateDto.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status === 404) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("A server side error occurred.", status, _responseText, _headers);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    updateDocumentTemplate(id: number, command: UpdateDocumentTemplateCommand): Observable<void> {
+        let url_ = this.baseUrl + "/api/DocumentTemplates/{id}";
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(command);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+            })
+        };
+
+        return this.http.request("put", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processUpdateDocumentTemplate(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processUpdateDocumentTemplate(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processUpdateDocumentTemplate(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return _observableOf(null as any);
+            }));
+        } else if (status === 400) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("A server side error occurred.", status, _responseText, _headers);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    setDefaultDocumentTemplate(id: number): Observable<void> {
+        let url_ = this.baseUrl + "/api/DocumentTemplates/{id}/default";
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+            })
+        };
+
+        return this.http.request("put", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processSetDefaultDocumentTemplate(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processSetDefaultDocumentTemplate(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processSetDefaultDocumentTemplate(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return _observableOf(null as any);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    setDocumentTemplateActive(id: number, isActive: boolean): Observable<void> {
+        let url_ = this.baseUrl + "/api/DocumentTemplates/{id}/active?";
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        if (isActive === undefined || isActive === null)
+            throw new Error("The parameter 'isActive' must be defined and cannot be null.");
+        else
+            url_ += "isActive=" + encodeURIComponent("" + isActive) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+            })
+        };
+
+        return this.http.request("put", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processSetDocumentTemplateActive(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processSetDocumentTemplateActive(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processSetDocumentTemplateActive(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return _observableOf(null as any);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    importDocumentTemplate(kind: DocumentTemplateKind, language: string, file: FileParameter | null | undefined): Observable<DocumentTemplateDraftDto> {
+        let url_ = this.baseUrl + "/api/DocumentTemplates/import?";
+        if (kind === undefined || kind === null)
+            throw new Error("The parameter 'kind' must be defined and cannot be null.");
+        else
+            url_ += "kind=" + encodeURIComponent("" + kind) + "&";
+        if (language === undefined || language === null)
+            throw new Error("The parameter 'language' must be defined and cannot be null.");
+        else
+            url_ += "language=" + encodeURIComponent("" + language) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = new FormData();
+        if (file !== null && file !== undefined)
+            content_.append("file", file.data, file.fileName ? file.fileName : "file");
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processImportDocumentTemplate(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processImportDocumentTemplate(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<DocumentTemplateDraftDto>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<DocumentTemplateDraftDto>;
+        }));
+    }
+
+    protected processImportDocumentTemplate(response: HttpResponseBase): Observable<DocumentTemplateDraftDto> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = DocumentTemplateDraftDto.fromJS(resultData200);
+            return _observableOf(result200);
             }));
         } else if (status !== 200 && status !== 204) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
@@ -3475,6 +4242,186 @@ export class ExtraServiceTypesClient implements IExtraServiceTypesClient {
         if (status === 204) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
             return _observableOf(null as any);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+}
+
+export interface IFacturesClient {
+    getFacturesByRenting(rentingId: number): Observable<FactureDto[]>;
+    generateFacture(rentingId: number, command: GenerateFactureCommand | undefined): Observable<FactureDto>;
+    downloadFacture(id: number): Observable<void>;
+}
+
+@Injectable({
+    providedIn: 'root'
+})
+export class FacturesClient implements IFacturesClient {
+    private http: HttpClient;
+    private baseUrl: string;
+    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
+
+    constructor(@Inject(HttpClient) http: HttpClient, @Optional() @Inject(API_BASE_URL) baseUrl?: string) {
+        this.http = http;
+        this.baseUrl = baseUrl ?? "";
+    }
+
+    getFacturesByRenting(rentingId: number): Observable<FactureDto[]> {
+        let url_ = this.baseUrl + "/api/Factures/renting/{rentingId}";
+        if (rentingId === undefined || rentingId === null)
+            throw new Error("The parameter 'rentingId' must be defined.");
+        url_ = url_.replace("{rentingId}", encodeURIComponent("" + rentingId));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetFacturesByRenting(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetFacturesByRenting(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<FactureDto[]>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<FactureDto[]>;
+        }));
+    }
+
+    protected processGetFacturesByRenting(response: HttpResponseBase): Observable<FactureDto[]> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            if (Array.isArray(resultData200)) {
+                result200 = [] as any;
+                for (let item of resultData200)
+                    result200!.push(FactureDto.fromJS(item));
+            }
+            else {
+                result200 = <any>null;
+            }
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    generateFacture(rentingId: number, command: GenerateFactureCommand | undefined): Observable<FactureDto> {
+        let url_ = this.baseUrl + "/api/Factures/renting/{rentingId}";
+        if (rentingId === undefined || rentingId === null)
+            throw new Error("The parameter 'rentingId' must be defined.");
+        url_ = url_.replace("{rentingId}", encodeURIComponent("" + rentingId));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(command);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGenerateFacture(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGenerateFacture(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<FactureDto>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<FactureDto>;
+        }));
+    }
+
+    protected processGenerateFacture(response: HttpResponseBase): Observable<FactureDto> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 201) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result201: any = null;
+            let resultData201 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result201 = FactureDto.fromJS(resultData201);
+            return _observableOf(result201);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    downloadFacture(id: number): Observable<void> {
+        let url_ = this.baseUrl + "/api/Factures/{id}/download";
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processDownloadFacture(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processDownloadFacture(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processDownloadFacture(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 404) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("A server side error occurred.", status, _responseText, _headers);
             }));
         } else if (status !== 200 && status !== 204) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
@@ -8362,6 +9309,126 @@ export enum ClientDocumentType {
     Passeport = 2,
 }
 
+export class ContractDto implements IContractDto {
+    id?: number;
+    agencyId?: number;
+    rentingId?: number;
+    number?: string;
+    issuedAt?: Date;
+    language?: string;
+    documentUrl?: string | undefined;
+    documentSize?: number | undefined;
+
+    constructor(data?: IContractDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.agencyId = _data["agencyId"];
+            this.rentingId = _data["rentingId"];
+            this.number = _data["number"];
+            this.issuedAt = _data["issuedAt"] ? new Date(_data["issuedAt"].toString()) : <any>undefined;
+            this.language = _data["language"];
+            this.documentUrl = _data["documentUrl"];
+            this.documentSize = _data["documentSize"];
+        }
+    }
+
+    static fromJS(data: any): ContractDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new ContractDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["agencyId"] = this.agencyId;
+        data["rentingId"] = this.rentingId;
+        data["number"] = this.number;
+        data["issuedAt"] = this.issuedAt ? this.issuedAt.toISOString() : <any>undefined;
+        data["language"] = this.language;
+        data["documentUrl"] = this.documentUrl;
+        data["documentSize"] = this.documentSize;
+        return data;
+    }
+}
+
+export interface IContractDto {
+    id?: number;
+    agencyId?: number;
+    rentingId?: number;
+    number?: string;
+    issuedAt?: Date;
+    language?: string;
+    documentUrl?: string | undefined;
+    documentSize?: number | undefined;
+}
+
+export class GenerateContractCommand implements IGenerateContractCommand {
+    rentingId?: number;
+    templateId?: number | undefined;
+    manualValues?: { [key: string]: string; } | undefined;
+
+    constructor(data?: IGenerateContractCommand) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.rentingId = _data["rentingId"];
+            this.templateId = _data["templateId"];
+            if (_data["manualValues"]) {
+                this.manualValues = {} as any;
+                for (let key in _data["manualValues"]) {
+                    if (_data["manualValues"].hasOwnProperty(key))
+                        (<any>this.manualValues)![key] = _data["manualValues"][key];
+                }
+            }
+        }
+    }
+
+    static fromJS(data: any): GenerateContractCommand {
+        data = typeof data === 'object' ? data : {};
+        let result = new GenerateContractCommand();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["rentingId"] = this.rentingId;
+        data["templateId"] = this.templateId;
+        if (this.manualValues) {
+            data["manualValues"] = {};
+            for (let key in this.manualValues) {
+                if (this.manualValues.hasOwnProperty(key))
+                    (<any>data["manualValues"])[key] = (<any>this.manualValues)[key];
+            }
+        }
+        return data;
+    }
+}
+
+export interface IGenerateContractCommand {
+    rentingId?: number;
+    templateId?: number | undefined;
+    manualValues?: { [key: string]: string; } | undefined;
+}
+
 export class CountryDto implements ICountryDto {
     id?: number;
     name?: string;
@@ -8476,6 +9543,676 @@ export class UpdateCountryCommand implements IUpdateCountryCommand {
 export interface IUpdateCountryCommand {
     id?: number;
     name?: string;
+}
+
+export class DocumentTemplateDto implements IDocumentTemplateDto {
+    id?: number;
+    agencyId?: number;
+    rowVersion?: string | undefined;
+    name?: string;
+    kind?: DocumentTemplateKind;
+    language?: string;
+    isDefault?: boolean;
+    isActive?: boolean;
+    blocks?: DocumentBlock[];
+    fields?: DocumentTemplateFieldDto[];
+
+    constructor(data?: IDocumentTemplateDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.agencyId = _data["agencyId"];
+            this.rowVersion = _data["rowVersion"];
+            this.name = _data["name"];
+            this.kind = _data["kind"];
+            this.language = _data["language"];
+            this.isDefault = _data["isDefault"];
+            this.isActive = _data["isActive"];
+            if (Array.isArray(_data["blocks"])) {
+                this.blocks = [] as any;
+                for (let item of _data["blocks"])
+                    this.blocks!.push(DocumentBlock.fromJS(item));
+            }
+            if (Array.isArray(_data["fields"])) {
+                this.fields = [] as any;
+                for (let item of _data["fields"])
+                    this.fields!.push(DocumentTemplateFieldDto.fromJS(item));
+            }
+        }
+    }
+
+    static fromJS(data: any): DocumentTemplateDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new DocumentTemplateDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["agencyId"] = this.agencyId;
+        data["rowVersion"] = this.rowVersion;
+        data["name"] = this.name;
+        data["kind"] = this.kind;
+        data["language"] = this.language;
+        data["isDefault"] = this.isDefault;
+        data["isActive"] = this.isActive;
+        if (Array.isArray(this.blocks)) {
+            data["blocks"] = [];
+            for (let item of this.blocks)
+                data["blocks"].push(item.toJSON());
+        }
+        if (Array.isArray(this.fields)) {
+            data["fields"] = [];
+            for (let item of this.fields)
+                data["fields"].push(item.toJSON());
+        }
+        return data;
+    }
+}
+
+export interface IDocumentTemplateDto {
+    id?: number;
+    agencyId?: number;
+    rowVersion?: string | undefined;
+    name?: string;
+    kind?: DocumentTemplateKind;
+    language?: string;
+    isDefault?: boolean;
+    isActive?: boolean;
+    blocks?: DocumentBlock[];
+    fields?: DocumentTemplateFieldDto[];
+}
+
+export enum DocumentTemplateKind {
+    Contract = 0,
+    Facture = 1,
+}
+
+export class DocumentBlock implements IDocumentBlock {
+    type?: DocumentBlockType;
+    text?: string | undefined;
+    title?: string | undefined;
+    fields?: DocumentBlockField[] | undefined;
+    labels?: string[] | undefined;
+    sideBySide?: boolean;
+    fine?: boolean;
+    height?: number | undefined;
+    showTotals?: boolean;
+
+    constructor(data?: IDocumentBlock) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.type = _data["type"];
+            this.text = _data["text"];
+            this.title = _data["title"];
+            if (Array.isArray(_data["fields"])) {
+                this.fields = [] as any;
+                for (let item of _data["fields"])
+                    this.fields!.push(DocumentBlockField.fromJS(item));
+            }
+            if (Array.isArray(_data["labels"])) {
+                this.labels = [] as any;
+                for (let item of _data["labels"])
+                    this.labels!.push(item);
+            }
+            this.sideBySide = _data["sideBySide"];
+            this.fine = _data["fine"];
+            this.height = _data["height"];
+            this.showTotals = _data["showTotals"];
+        }
+    }
+
+    static fromJS(data: any): DocumentBlock {
+        data = typeof data === 'object' ? data : {};
+        let result = new DocumentBlock();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["type"] = this.type;
+        data["text"] = this.text;
+        data["title"] = this.title;
+        if (Array.isArray(this.fields)) {
+            data["fields"] = [];
+            for (let item of this.fields)
+                data["fields"].push(item.toJSON());
+        }
+        if (Array.isArray(this.labels)) {
+            data["labels"] = [];
+            for (let item of this.labels)
+                data["labels"].push(item);
+        }
+        data["sideBySide"] = this.sideBySide;
+        data["fine"] = this.fine;
+        data["height"] = this.height;
+        data["showTotals"] = this.showTotals;
+        return data;
+    }
+}
+
+export interface IDocumentBlock {
+    type?: DocumentBlockType;
+    text?: string | undefined;
+    title?: string | undefined;
+    fields?: DocumentBlockField[] | undefined;
+    labels?: string[] | undefined;
+    sideBySide?: boolean;
+    fine?: boolean;
+    height?: number | undefined;
+    showTotals?: boolean;
+}
+
+export enum DocumentBlockType {
+    Heading = 0,
+    Paragraph = 1,
+    Fields = 2,
+    LineItems = 3,
+    Signatures = 4,
+    PageBreak = 5,
+    Spacer = 6,
+}
+
+export class DocumentBlockField implements IDocumentBlockField {
+    label?: string;
+    value?: string;
+    hideWhenEmpty?: boolean;
+
+    constructor(data?: IDocumentBlockField) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.label = _data["label"];
+            this.value = _data["value"];
+            this.hideWhenEmpty = _data["hideWhenEmpty"];
+        }
+    }
+
+    static fromJS(data: any): DocumentBlockField {
+        data = typeof data === 'object' ? data : {};
+        let result = new DocumentBlockField();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["label"] = this.label;
+        data["value"] = this.value;
+        data["hideWhenEmpty"] = this.hideWhenEmpty;
+        return data;
+    }
+}
+
+export interface IDocumentBlockField {
+    label?: string;
+    value?: string;
+    hideWhenEmpty?: boolean;
+}
+
+export class DocumentTemplateFieldDto implements IDocumentTemplateFieldDto {
+    id?: number;
+    placeholder?: string;
+    binding?: DocumentFieldBinding;
+    dataPath?: string | undefined;
+    fixedValue?: string | undefined;
+    label?: string | undefined;
+    isRequired?: boolean;
+
+    constructor(data?: IDocumentTemplateFieldDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.placeholder = _data["placeholder"];
+            this.binding = _data["binding"];
+            this.dataPath = _data["dataPath"];
+            this.fixedValue = _data["fixedValue"];
+            this.label = _data["label"];
+            this.isRequired = _data["isRequired"];
+        }
+    }
+
+    static fromJS(data: any): DocumentTemplateFieldDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new DocumentTemplateFieldDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["placeholder"] = this.placeholder;
+        data["binding"] = this.binding;
+        data["dataPath"] = this.dataPath;
+        data["fixedValue"] = this.fixedValue;
+        data["label"] = this.label;
+        data["isRequired"] = this.isRequired;
+        return data;
+    }
+}
+
+export interface IDocumentTemplateFieldDto {
+    id?: number;
+    placeholder?: string;
+    binding?: DocumentFieldBinding;
+    dataPath?: string | undefined;
+    fixedValue?: string | undefined;
+    label?: string | undefined;
+    isRequired?: boolean;
+}
+
+export enum DocumentFieldBinding {
+    DataField = 0,
+    FixedValue = 1,
+    AskEachTime = 2,
+    Blank = 3,
+}
+
+export class DocumentTemplateExampleDto implements IDocumentTemplateExampleDto {
+    key?: string;
+    name?: string;
+    kind?: DocumentTemplateKind;
+    language?: string;
+    blocks?: DocumentBlock[];
+
+    constructor(data?: IDocumentTemplateExampleDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.key = _data["key"];
+            this.name = _data["name"];
+            this.kind = _data["kind"];
+            this.language = _data["language"];
+            if (Array.isArray(_data["blocks"])) {
+                this.blocks = [] as any;
+                for (let item of _data["blocks"])
+                    this.blocks!.push(DocumentBlock.fromJS(item));
+            }
+        }
+    }
+
+    static fromJS(data: any): DocumentTemplateExampleDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new DocumentTemplateExampleDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["key"] = this.key;
+        data["name"] = this.name;
+        data["kind"] = this.kind;
+        data["language"] = this.language;
+        if (Array.isArray(this.blocks)) {
+            data["blocks"] = [];
+            for (let item of this.blocks)
+                data["blocks"].push(item.toJSON());
+        }
+        return data;
+    }
+}
+
+export interface IDocumentTemplateExampleDto {
+    key?: string;
+    name?: string;
+    kind?: DocumentTemplateKind;
+    language?: string;
+    blocks?: DocumentBlock[];
+}
+
+export class DocumentPlaceholderDto implements IDocumentPlaceholderDto {
+    path?: string;
+    token?: string;
+    group?: string;
+
+    constructor(data?: IDocumentPlaceholderDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.path = _data["path"];
+            this.token = _data["token"];
+            this.group = _data["group"];
+        }
+    }
+
+    static fromJS(data: any): DocumentPlaceholderDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new DocumentPlaceholderDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["path"] = this.path;
+        data["token"] = this.token;
+        data["group"] = this.group;
+        return data;
+    }
+}
+
+export interface IDocumentPlaceholderDto {
+    path?: string;
+    token?: string;
+    group?: string;
+}
+
+export class CreateDocumentTemplateCommand implements ICreateDocumentTemplateCommand {
+    name?: string;
+    kind?: DocumentTemplateKind;
+    language?: string;
+    blocks?: DocumentBlock[];
+    fields?: DocumentTemplateFieldInput[] | undefined;
+
+    constructor(data?: ICreateDocumentTemplateCommand) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.name = _data["name"];
+            this.kind = _data["kind"];
+            this.language = _data["language"];
+            if (Array.isArray(_data["blocks"])) {
+                this.blocks = [] as any;
+                for (let item of _data["blocks"])
+                    this.blocks!.push(DocumentBlock.fromJS(item));
+            }
+            if (Array.isArray(_data["fields"])) {
+                this.fields = [] as any;
+                for (let item of _data["fields"])
+                    this.fields!.push(DocumentTemplateFieldInput.fromJS(item));
+            }
+        }
+    }
+
+    static fromJS(data: any): CreateDocumentTemplateCommand {
+        data = typeof data === 'object' ? data : {};
+        let result = new CreateDocumentTemplateCommand();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["name"] = this.name;
+        data["kind"] = this.kind;
+        data["language"] = this.language;
+        if (Array.isArray(this.blocks)) {
+            data["blocks"] = [];
+            for (let item of this.blocks)
+                data["blocks"].push(item.toJSON());
+        }
+        if (Array.isArray(this.fields)) {
+            data["fields"] = [];
+            for (let item of this.fields)
+                data["fields"].push(item.toJSON());
+        }
+        return data;
+    }
+}
+
+export interface ICreateDocumentTemplateCommand {
+    name?: string;
+    kind?: DocumentTemplateKind;
+    language?: string;
+    blocks?: DocumentBlock[];
+    fields?: DocumentTemplateFieldInput[] | undefined;
+}
+
+export class DocumentTemplateFieldInput implements IDocumentTemplateFieldInput {
+    placeholder?: string;
+    binding?: DocumentFieldBinding;
+    dataPath?: string | undefined;
+    fixedValue?: string | undefined;
+    label?: string | undefined;
+    isRequired?: boolean;
+
+    constructor(data?: IDocumentTemplateFieldInput) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.placeholder = _data["placeholder"];
+            this.binding = _data["binding"];
+            this.dataPath = _data["dataPath"];
+            this.fixedValue = _data["fixedValue"];
+            this.label = _data["label"];
+            this.isRequired = _data["isRequired"];
+        }
+    }
+
+    static fromJS(data: any): DocumentTemplateFieldInput {
+        data = typeof data === 'object' ? data : {};
+        let result = new DocumentTemplateFieldInput();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["placeholder"] = this.placeholder;
+        data["binding"] = this.binding;
+        data["dataPath"] = this.dataPath;
+        data["fixedValue"] = this.fixedValue;
+        data["label"] = this.label;
+        data["isRequired"] = this.isRequired;
+        return data;
+    }
+}
+
+export interface IDocumentTemplateFieldInput {
+    placeholder?: string;
+    binding?: DocumentFieldBinding;
+    dataPath?: string | undefined;
+    fixedValue?: string | undefined;
+    label?: string | undefined;
+    isRequired?: boolean;
+}
+
+export class UpdateDocumentTemplateCommand implements IUpdateDocumentTemplateCommand {
+    id?: number;
+    rowVersion?: string | undefined;
+    name?: string;
+    kind?: DocumentTemplateKind;
+    language?: string;
+    blocks?: DocumentBlock[];
+    fields?: DocumentTemplateFieldInput[] | undefined;
+
+    constructor(data?: IUpdateDocumentTemplateCommand) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.rowVersion = _data["rowVersion"];
+            this.name = _data["name"];
+            this.kind = _data["kind"];
+            this.language = _data["language"];
+            if (Array.isArray(_data["blocks"])) {
+                this.blocks = [] as any;
+                for (let item of _data["blocks"])
+                    this.blocks!.push(DocumentBlock.fromJS(item));
+            }
+            if (Array.isArray(_data["fields"])) {
+                this.fields = [] as any;
+                for (let item of _data["fields"])
+                    this.fields!.push(DocumentTemplateFieldInput.fromJS(item));
+            }
+        }
+    }
+
+    static fromJS(data: any): UpdateDocumentTemplateCommand {
+        data = typeof data === 'object' ? data : {};
+        let result = new UpdateDocumentTemplateCommand();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["rowVersion"] = this.rowVersion;
+        data["name"] = this.name;
+        data["kind"] = this.kind;
+        data["language"] = this.language;
+        if (Array.isArray(this.blocks)) {
+            data["blocks"] = [];
+            for (let item of this.blocks)
+                data["blocks"].push(item.toJSON());
+        }
+        if (Array.isArray(this.fields)) {
+            data["fields"] = [];
+            for (let item of this.fields)
+                data["fields"].push(item.toJSON());
+        }
+        return data;
+    }
+}
+
+export interface IUpdateDocumentTemplateCommand {
+    id?: number;
+    rowVersion?: string | undefined;
+    name?: string;
+    kind?: DocumentTemplateKind;
+    language?: string;
+    blocks?: DocumentBlock[];
+    fields?: DocumentTemplateFieldInput[] | undefined;
+}
+
+export class DocumentTemplateDraftDto implements IDocumentTemplateDraftDto {
+    name?: string;
+    kind?: DocumentTemplateKind;
+    language?: string;
+    blocks?: DocumentBlock[];
+    fields?: DocumentTemplateFieldDto[];
+
+    constructor(data?: IDocumentTemplateDraftDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.name = _data["name"];
+            this.kind = _data["kind"];
+            this.language = _data["language"];
+            if (Array.isArray(_data["blocks"])) {
+                this.blocks = [] as any;
+                for (let item of _data["blocks"])
+                    this.blocks!.push(DocumentBlock.fromJS(item));
+            }
+            if (Array.isArray(_data["fields"])) {
+                this.fields = [] as any;
+                for (let item of _data["fields"])
+                    this.fields!.push(DocumentTemplateFieldDto.fromJS(item));
+            }
+        }
+    }
+
+    static fromJS(data: any): DocumentTemplateDraftDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new DocumentTemplateDraftDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["name"] = this.name;
+        data["kind"] = this.kind;
+        data["language"] = this.language;
+        if (Array.isArray(this.blocks)) {
+            data["blocks"] = [];
+            for (let item of this.blocks)
+                data["blocks"].push(item.toJSON());
+        }
+        if (Array.isArray(this.fields)) {
+            data["fields"] = [];
+            for (let item of this.fields)
+                data["fields"].push(item.toJSON());
+        }
+        return data;
+    }
+}
+
+export interface IDocumentTemplateDraftDto {
+    name?: string;
+    kind?: DocumentTemplateKind;
+    language?: string;
+    blocks?: DocumentBlock[];
+    fields?: DocumentTemplateFieldDto[];
 }
 
 export class ExpenseTypeDto implements IExpenseTypeDto {
@@ -8916,6 +10653,146 @@ export interface IUpdateExtraServicesTypeCommand {
     name?: string;
     amount?: number | undefined;
     isActive?: boolean;
+}
+
+export class FactureDto implements IFactureDto {
+    id?: number;
+    agencyId?: number;
+    rentingId?: number;
+    clientId?: number | undefined;
+    clientName?: string | undefined;
+    number?: string;
+    issuedAt?: Date;
+    language?: string;
+    rentalAmount?: MoneyDto | undefined;
+    extraServicesAmount?: MoneyDto | undefined;
+    totalAmount?: MoneyDto | undefined;
+    documentUrl?: string | undefined;
+    documentSize?: number | undefined;
+
+    constructor(data?: IFactureDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.agencyId = _data["agencyId"];
+            this.rentingId = _data["rentingId"];
+            this.clientId = _data["clientId"];
+            this.clientName = _data["clientName"];
+            this.number = _data["number"];
+            this.issuedAt = _data["issuedAt"] ? new Date(_data["issuedAt"].toString()) : <any>undefined;
+            this.language = _data["language"];
+            this.rentalAmount = _data["rentalAmount"] ? MoneyDto.fromJS(_data["rentalAmount"]) : <any>undefined;
+            this.extraServicesAmount = _data["extraServicesAmount"] ? MoneyDto.fromJS(_data["extraServicesAmount"]) : <any>undefined;
+            this.totalAmount = _data["totalAmount"] ? MoneyDto.fromJS(_data["totalAmount"]) : <any>undefined;
+            this.documentUrl = _data["documentUrl"];
+            this.documentSize = _data["documentSize"];
+        }
+    }
+
+    static fromJS(data: any): FactureDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new FactureDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["agencyId"] = this.agencyId;
+        data["rentingId"] = this.rentingId;
+        data["clientId"] = this.clientId;
+        data["clientName"] = this.clientName;
+        data["number"] = this.number;
+        data["issuedAt"] = this.issuedAt ? this.issuedAt.toISOString() : <any>undefined;
+        data["language"] = this.language;
+        data["rentalAmount"] = this.rentalAmount ? this.rentalAmount.toJSON() : <any>undefined;
+        data["extraServicesAmount"] = this.extraServicesAmount ? this.extraServicesAmount.toJSON() : <any>undefined;
+        data["totalAmount"] = this.totalAmount ? this.totalAmount.toJSON() : <any>undefined;
+        data["documentUrl"] = this.documentUrl;
+        data["documentSize"] = this.documentSize;
+        return data;
+    }
+}
+
+export interface IFactureDto {
+    id?: number;
+    agencyId?: number;
+    rentingId?: number;
+    clientId?: number | undefined;
+    clientName?: string | undefined;
+    number?: string;
+    issuedAt?: Date;
+    language?: string;
+    rentalAmount?: MoneyDto | undefined;
+    extraServicesAmount?: MoneyDto | undefined;
+    totalAmount?: MoneyDto | undefined;
+    documentUrl?: string | undefined;
+    documentSize?: number | undefined;
+}
+
+export class GenerateFactureCommand implements IGenerateFactureCommand {
+    rentingId?: number;
+    templateId?: number | undefined;
+    manualValues?: { [key: string]: string; } | undefined;
+
+    constructor(data?: IGenerateFactureCommand) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.rentingId = _data["rentingId"];
+            this.templateId = _data["templateId"];
+            if (_data["manualValues"]) {
+                this.manualValues = {} as any;
+                for (let key in _data["manualValues"]) {
+                    if (_data["manualValues"].hasOwnProperty(key))
+                        (<any>this.manualValues)![key] = _data["manualValues"][key];
+                }
+            }
+        }
+    }
+
+    static fromJS(data: any): GenerateFactureCommand {
+        data = typeof data === 'object' ? data : {};
+        let result = new GenerateFactureCommand();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["rentingId"] = this.rentingId;
+        data["templateId"] = this.templateId;
+        if (this.manualValues) {
+            data["manualValues"] = {};
+            for (let key in this.manualValues) {
+                if (this.manualValues.hasOwnProperty(key))
+                    (<any>data["manualValues"])[key] = (<any>this.manualValues)[key];
+            }
+        }
+        return data;
+    }
+}
+
+export interface IGenerateFactureCommand {
+    rentingId?: number;
+    templateId?: number | undefined;
+    manualValues?: { [key: string]: string; } | undefined;
 }
 
 export class PaginatedListOfMarketplaceCarDto implements IPaginatedListOfMarketplaceCarDto {
@@ -9952,12 +11829,18 @@ export interface IRentingHistoryDto {
 
 export class CreateRentingCommand implements ICreateRentingCommand {
     carId?: number;
-    clientId?: number;
+    clientId?: number | undefined;
+    newClient?: NewRentingClient | undefined;
     secondClientId?: number | undefined;
     startDate?: Date;
     endDate?: Date;
     startMileage?: number | undefined;
     notes?: string | undefined;
+    generateContract?: boolean;
+    generateFacture?: boolean;
+    contractTemplateId?: number | undefined;
+    factureTemplateId?: number | undefined;
+    documentValues?: { [key: string]: string; } | undefined;
 
     constructor(data?: ICreateRentingCommand) {
         if (data) {
@@ -9972,11 +11855,23 @@ export class CreateRentingCommand implements ICreateRentingCommand {
         if (_data) {
             this.carId = _data["carId"];
             this.clientId = _data["clientId"];
+            this.newClient = _data["newClient"] ? NewRentingClient.fromJS(_data["newClient"]) : <any>undefined;
             this.secondClientId = _data["secondClientId"];
             this.startDate = _data["startDate"] ? new Date(_data["startDate"].toString()) : <any>undefined;
             this.endDate = _data["endDate"] ? new Date(_data["endDate"].toString()) : <any>undefined;
             this.startMileage = _data["startMileage"];
             this.notes = _data["notes"];
+            this.generateContract = _data["generateContract"];
+            this.generateFacture = _data["generateFacture"];
+            this.contractTemplateId = _data["contractTemplateId"];
+            this.factureTemplateId = _data["factureTemplateId"];
+            if (_data["documentValues"]) {
+                this.documentValues = {} as any;
+                for (let key in _data["documentValues"]) {
+                    if (_data["documentValues"].hasOwnProperty(key))
+                        (<any>this.documentValues)![key] = _data["documentValues"][key];
+                }
+            }
         }
     }
 
@@ -9991,23 +11886,145 @@ export class CreateRentingCommand implements ICreateRentingCommand {
         data = typeof data === 'object' ? data : {};
         data["carId"] = this.carId;
         data["clientId"] = this.clientId;
+        data["newClient"] = this.newClient ? this.newClient.toJSON() : <any>undefined;
         data["secondClientId"] = this.secondClientId;
         data["startDate"] = this.startDate ? this.startDate.toISOString() : <any>undefined;
         data["endDate"] = this.endDate ? this.endDate.toISOString() : <any>undefined;
         data["startMileage"] = this.startMileage;
         data["notes"] = this.notes;
+        data["generateContract"] = this.generateContract;
+        data["generateFacture"] = this.generateFacture;
+        data["contractTemplateId"] = this.contractTemplateId;
+        data["factureTemplateId"] = this.factureTemplateId;
+        if (this.documentValues) {
+            data["documentValues"] = {};
+            for (let key in this.documentValues) {
+                if (this.documentValues.hasOwnProperty(key))
+                    (<any>data["documentValues"])[key] = (<any>this.documentValues)[key];
+            }
+        }
         return data;
     }
 }
 
 export interface ICreateRentingCommand {
     carId?: number;
-    clientId?: number;
+    clientId?: number | undefined;
+    newClient?: NewRentingClient | undefined;
     secondClientId?: number | undefined;
     startDate?: Date;
     endDate?: Date;
     startMileage?: number | undefined;
     notes?: string | undefined;
+    generateContract?: boolean;
+    generateFacture?: boolean;
+    contractTemplateId?: number | undefined;
+    factureTemplateId?: number | undefined;
+    documentValues?: { [key: string]: string; } | undefined;
+}
+
+export class NewRentingClient implements INewRentingClient {
+    firstName?: string;
+    lastName?: string;
+    birthDate?: Date | undefined;
+    birthPlace?: string | undefined;
+    birthCountryId?: number | undefined;
+    cin?: string | undefined;
+    cinDeliveranceDate?: Date | undefined;
+    cinDeliverancePlace?: string | undefined;
+    cinDeliveranceCountryId?: number | undefined;
+    passeportNumber?: string | undefined;
+    passeportDeliveranceDate?: Date | undefined;
+    passeportDeliverancePlace?: string | undefined;
+    passeportDeliveranceCountryId?: number | undefined;
+    drivingLicenceNumber?: string | undefined;
+    drivingLicenceDeliveranceDate?: Date | undefined;
+    drivingLicenceDeliverancePlace?: string | undefined;
+    drivingLicenceDeliveranceCountryId?: number | undefined;
+    description?: string | undefined;
+
+    constructor(data?: INewRentingClient) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.firstName = _data["firstName"];
+            this.lastName = _data["lastName"];
+            this.birthDate = _data["birthDate"] ? new Date(_data["birthDate"].toString()) : <any>undefined;
+            this.birthPlace = _data["birthPlace"];
+            this.birthCountryId = _data["birthCountryId"];
+            this.cin = _data["cin"];
+            this.cinDeliveranceDate = _data["cinDeliveranceDate"] ? new Date(_data["cinDeliveranceDate"].toString()) : <any>undefined;
+            this.cinDeliverancePlace = _data["cinDeliverancePlace"];
+            this.cinDeliveranceCountryId = _data["cinDeliveranceCountryId"];
+            this.passeportNumber = _data["passeportNumber"];
+            this.passeportDeliveranceDate = _data["passeportDeliveranceDate"] ? new Date(_data["passeportDeliveranceDate"].toString()) : <any>undefined;
+            this.passeportDeliverancePlace = _data["passeportDeliverancePlace"];
+            this.passeportDeliveranceCountryId = _data["passeportDeliveranceCountryId"];
+            this.drivingLicenceNumber = _data["drivingLicenceNumber"];
+            this.drivingLicenceDeliveranceDate = _data["drivingLicenceDeliveranceDate"] ? new Date(_data["drivingLicenceDeliveranceDate"].toString()) : <any>undefined;
+            this.drivingLicenceDeliverancePlace = _data["drivingLicenceDeliverancePlace"];
+            this.drivingLicenceDeliveranceCountryId = _data["drivingLicenceDeliveranceCountryId"];
+            this.description = _data["description"];
+        }
+    }
+
+    static fromJS(data: any): NewRentingClient {
+        data = typeof data === 'object' ? data : {};
+        let result = new NewRentingClient();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["firstName"] = this.firstName;
+        data["lastName"] = this.lastName;
+        data["birthDate"] = this.birthDate ? this.birthDate.toISOString() : <any>undefined;
+        data["birthPlace"] = this.birthPlace;
+        data["birthCountryId"] = this.birthCountryId;
+        data["cin"] = this.cin;
+        data["cinDeliveranceDate"] = this.cinDeliveranceDate ? this.cinDeliveranceDate.toISOString() : <any>undefined;
+        data["cinDeliverancePlace"] = this.cinDeliverancePlace;
+        data["cinDeliveranceCountryId"] = this.cinDeliveranceCountryId;
+        data["passeportNumber"] = this.passeportNumber;
+        data["passeportDeliveranceDate"] = this.passeportDeliveranceDate ? this.passeportDeliveranceDate.toISOString() : <any>undefined;
+        data["passeportDeliverancePlace"] = this.passeportDeliverancePlace;
+        data["passeportDeliveranceCountryId"] = this.passeportDeliveranceCountryId;
+        data["drivingLicenceNumber"] = this.drivingLicenceNumber;
+        data["drivingLicenceDeliveranceDate"] = this.drivingLicenceDeliveranceDate ? this.drivingLicenceDeliveranceDate.toISOString() : <any>undefined;
+        data["drivingLicenceDeliverancePlace"] = this.drivingLicenceDeliverancePlace;
+        data["drivingLicenceDeliveranceCountryId"] = this.drivingLicenceDeliveranceCountryId;
+        data["description"] = this.description;
+        return data;
+    }
+}
+
+export interface INewRentingClient {
+    firstName?: string;
+    lastName?: string;
+    birthDate?: Date | undefined;
+    birthPlace?: string | undefined;
+    birthCountryId?: number | undefined;
+    cin?: string | undefined;
+    cinDeliveranceDate?: Date | undefined;
+    cinDeliverancePlace?: string | undefined;
+    cinDeliveranceCountryId?: number | undefined;
+    passeportNumber?: string | undefined;
+    passeportDeliveranceDate?: Date | undefined;
+    passeportDeliverancePlace?: string | undefined;
+    passeportDeliveranceCountryId?: number | undefined;
+    drivingLicenceNumber?: string | undefined;
+    drivingLicenceDeliveranceDate?: Date | undefined;
+    drivingLicenceDeliverancePlace?: string | undefined;
+    drivingLicenceDeliveranceCountryId?: number | undefined;
+    description?: string | undefined;
 }
 
 export class UpdateRentingCommand implements IUpdateRentingCommand {

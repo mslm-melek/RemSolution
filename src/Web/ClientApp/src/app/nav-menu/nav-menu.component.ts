@@ -26,6 +26,9 @@ export class NavMenuComponent implements OnInit {
   canAccessReservations = false;
   canAccessExtraServices = false;
   canAccessExpenses = false;
+  // Paperwork layouts live under Config; either document module getting them there
+  // is enough, since one screen manages both kinds.
+  canAccessDocumentTemplates = false;
   // The Config dropdown shows when at least one config/reference item is reachable.
   canAccessConfig = false;
 
@@ -61,8 +64,13 @@ export class NavMenuComponent implements OnInit {
       // Config holds administrator-only, feature-gated reference screens (type
       // catalogs, car brands/models). Team moved to the user menu. Show the
       // dropdown only when the admin actually has one of those features.
+      this.canAccessDocumentTemplates =
+        AuthService.canAccessModule(user, 'Contracts', 'Contract.Read')
+        || AuthService.canAccessModule(user, 'Factures', 'Facture.Read');
+
       this.canAccessConfig = this.isAgencyAdmin
-        && (this.canAccessCars || this.canAccessExtraServices || this.canAccessExpenses);
+        && (this.canAccessCars || this.canAccessExtraServices || this.canAccessExpenses
+            || this.canAccessDocumentTemplates);
     });
   }
 

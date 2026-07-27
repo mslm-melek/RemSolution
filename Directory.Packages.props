@@ -50,6 +50,10 @@
     <PackageVersion Include="NUnit.Analyzers" Version="3.10.0" />
     <PackageVersion Include="NUnit3TestAdapter" Version="4.6.0" />
     <PackageVersion Include="Respawn" Version="6.2.1" />
+    <!-- PDF rendering for generated rental contracts / invoices. Ships its own
+         native renderer (no SkiaSharp dependency since 2024.3), so it does not
+         collide with the SkiaSharp version the image pipeline pins below. -->
+    <PackageVersion Include="QuestPDF" Version="2026.7.1" />
     <PackageVersion Include="SkiaSharp" Version="3.116.1" />
     <PackageVersion Include="SkiaSharp.NativeAssets.Linux" Version="3.116.1" />
     <PackageVersion Include="Hangfire.AspNetCore" Version="1.8.17" />

@@ -2,12 +2,14 @@
 using System.Text;
 using Hangfire;
 using Hangfire.SqlServer;
+using RemSolution.Application.Common.Documents;
 using RemSolution.Application.Common.Interfaces;
 using RemSolution.Application.Common.Tenancy;
 using RemSolution.Domain.Constants;
 using RemSolution.Infrastructure.Booking;
 using RemSolution.Infrastructure.Data;
 using RemSolution.Infrastructure.Data.Interceptors;
+using RemSolution.Infrastructure.Documents;
 using RemSolution.Infrastructure.Identity;
 using RemSolution.Infrastructure.Jobs;
 using RemSolution.Infrastructure.Localization;
@@ -60,6 +62,11 @@ public static class DependencyInjection
         builder.Services.AddScoped<IApplicationDbContext>(provider => provider.GetRequiredService<ApplicationDbContext>());
 
         builder.Services.AddScoped<ApplicationDbContextInitialiser>();
+
+        // Development-only demo dataset; see DemoDataOptions for why it is opt-in.
+        builder.Services.Configure<DemoDataOptions>(
+            builder.Configuration.GetSection(DemoDataOptions.SectionName));
+        builder.Services.AddScoped<DemoDataSeeder>();
 
         // .resx-backed localization for validation messages, API problem titles
         // and the Identity Razor pages. ResourcesPath is load-bearing: see the
@@ -190,6 +197,25 @@ public static class DependencyInjection
         // singleton; the actual work runs as a Hangfire job (below).
         builder.Services.AddSingleton<IImageProcessor, SkiaImageProcessor>();
         builder.Services.AddScoped<CarImageProcessingJob>();
+
+        // Generated rental paperwork (contracts, invoices). QuestPDF's licence
+        // type is global process state, so it is set once here: Community is the
+        // free tier and covers this product's revenue band — revisit if that
+        // changes. Glyph checking is turned OFF deliberately: it throws when a
+        // font lacks a glyph, which would turn an Arabic document on a host with
+        // no Arabic font into a failed request instead of a rendered page (see
+        // QuestPdfRentalDocumentRenderer.FontFor).
+        QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
+        QuestPDF.Settings.CheckIfAllTextGlyphsAreAvailable = false;
+
+        // Stateless apart from the localizer, but scoped so they resolve the
+        // request's culture for document labels.
+        builder.Services.AddScoped<IRentalDocumentRenderer, QuestPdfRentalDocumentRenderer>();
+        builder.Services.AddScoped<IRentalDocumentService, RentalDocumentService>();
+        builder.Services.AddScoped<IDocumentTemplateImporter, DocumentTemplateImporter>();
+        // The platform's shipped example templates. A concrete class rather than an
+        // interface: it has one implementation by definition (see the type).
+        builder.Services.AddScoped<DocumentTemplateExamples>();
 
         // Hangfire is the single background-job infrastructure (P.10). Skip it
         // when there is no real database to talk to: the NSwag build-time host

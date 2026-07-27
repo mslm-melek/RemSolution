@@ -27,6 +27,14 @@ public abstract class Languages
         language is not null && All.Contains(language);
 
     /// <summary>
+    /// Whether the language reads right-to-left. Mirrors <c>isRtl()</c> in the
+    /// SPA's language.ts; server-side renderers (generated PDFs) need the same
+    /// answer the browser gets for <c>&lt;html dir&gt;</c>.
+    /// </summary>
+    public static bool IsRightToLeft(string? language) =>
+        Normalize(language) == Arabic;
+
+    /// <summary>
     /// Reduces a possibly-regional culture ("fr-TN") to a supported neutral
     /// language, or null when nothing matches.
     /// </summary>

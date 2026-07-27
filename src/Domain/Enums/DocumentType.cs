@@ -10,5 +10,10 @@ public enum DocumentType
     DrivingLicence = 1,
     Passeport = 2,
     CarPhoto = 3,
-    ExpenseFacture = 4
+    ExpenseFacture = 4,
+    // Documents the system GENERATES rather than receives: the rental agreement
+    // and the client invoice rendered for a renting. Same StoredFile plumbing
+    // (hash, dedup, size) so a generated PDF is archived like any other file.
+    RentalContract = 5,
+    RentalFacture = 6
 }

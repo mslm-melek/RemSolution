@@ -14,11 +14,15 @@ public interface IApplicationDbContext
     DbSet<Car> Cars { get; }
     DbSet<CarImage> CarImages { get; }
     DbSet<Client> Clients { get; }
+    DbSet<Contract> Contracts { get; }
     DbSet<Country> Countries { get; }
+    DbSet<DocumentTemplate> DocumentTemplates { get; }
+    DbSet<DocumentTemplateField> DocumentTemplateFields { get; }
     DbSet<ExtraService> ExtraServices { get; }
     DbSet<ExtraServicesType> ExtraServicesTypes { get; }
     DbSet<Expense> Expenses { get; }
     DbSet<ExpenseType> ExpenseTypes { get; }
+    DbSet<Facture> Factures { get; }
     DbSet<ModelCar> ModelCars { get; }
     DbSet<Renting> Rentings { get; }
     DbSet<RentingHistory> RentingHistories { get; }

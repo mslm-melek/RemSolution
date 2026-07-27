@@ -28,5 +28,9 @@
         public virtual ICollection<RentingHistory>? RentingHistories { get; set; }
         public virtual ICollection<Reservation>? Reservations { get; set; }
         public virtual ICollection<Payment>? Payments { get; set; }
+        // Generated paperwork. Append-only: regenerating issues a new numbered
+        // document rather than replacing the previous one (see Contract/Facture).
+        public virtual ICollection<Contract>? Contracts { get; set; }
+        public virtual ICollection<Facture>? Factures { get; set; }
     }
 }

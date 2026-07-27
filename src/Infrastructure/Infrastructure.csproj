@@ -22,6 +22,9 @@
          package covers Windows/macOS dev. -->
     <PackageReference Include="SkiaSharp" />
     <PackageReference Include="SkiaSharp.NativeAssets.Linux" />
+    <!-- PDF rendering for generated rental contracts / invoices. Licence type is
+         set once at startup in AddInfrastructureServices. -->
+    <PackageReference Include="QuestPDF" />
     <!-- Single background-job infrastructure (P.10): SQL Server-backed Hangfire
          for thumbnails today, reservation expiry / emails / PII purge next. -->
     <PackageReference Include="Hangfire.AspNetCore" />

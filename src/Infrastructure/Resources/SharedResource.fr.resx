@@ -625,4 +625,145 @@
   <data name="Error.Page.Heading" xml:space="preserve">
     <value>Une erreur s'est produite lors du traitement de votre demande.</value>
   </data>
+  <data name="Document.Contract.Title" xml:space="preserve">
+    <value>CONTRAT DE LOCATION</value>
+  </data>
+  <data name="Document.Facture.Title" xml:space="preserve">
+    <value>FACTURE</value>
+  </data>
+  <data name="Document.Number" xml:space="preserve">
+    <value>N°</value>
+  </data>
+  <data name="Document.IssuedAt" xml:space="preserve">
+    <value>Établi le</value>
+  </data>
+  <data name="Document.Lessor" xml:space="preserve">
+    <value>Loueur</value>
+  </data>
+  <data name="Document.Renter" xml:space="preserve">
+    <value>Locataire</value>
+  </data>
+  <data name="Document.SecondDriver" xml:space="preserve">
+    <value>Second conducteur</value>
+  </data>
+  <data name="Document.Vehicle" xml:space="preserve">
+    <value>Véhicule</value>
+  </data>
+  <data name="Document.RentalPeriod" xml:space="preserve">
+    <value>Période de location</value>
+  </data>
+  <data name="Document.BirthDate" xml:space="preserve">
+    <value>Date de naissance</value>
+  </data>
+  <data name="Document.CIN" xml:space="preserve">
+    <value>CIN</value>
+  </data>
+  <data name="Document.Passeport" xml:space="preserve">
+    <value>Passeport</value>
+  </data>
+  <data name="Document.DrivingLicence" xml:space="preserve">
+    <value>Permis de conduire</value>
+  </data>
+  <data name="Document.Model" xml:space="preserve">
+    <value>Modèle</value>
+  </data>
+  <data name="Document.Matricule" xml:space="preserve">
+    <value>Immatriculation</value>
+  </data>
+  <data name="Document.Color" xml:space="preserve">
+    <value>Couleur</value>
+  </data>
+  <data name="Document.Power" xml:space="preserve">
+    <value>Puissance (ch)</value>
+  </data>
+  <data name="Document.FuelType" xml:space="preserve">
+    <value>Carburant</value>
+  </data>
+  <data name="Document.From" xml:space="preserve">
+    <value>Du</value>
+  </data>
+  <data name="Document.To" xml:space="preserve">
+    <value>Au</value>
+  </data>
+  <data name="Document.PickupMileage" xml:space="preserve">
+    <value>Kilométrage au départ</value>
+  </data>
+  <data name="Document.Price" xml:space="preserve">
+    <value>Montant de la location</value>
+  </data>
+  <data name="Document.Deposit" xml:space="preserve">
+    <value>Caution</value>
+  </data>
+  <data name="Document.Notes" xml:space="preserve">
+    <value>Observations</value>
+  </data>
+  <data name="Document.Description" xml:space="preserve">
+    <value>Désignation</value>
+  </data>
+  <data name="Document.Amount" xml:space="preserve">
+    <value>Montant</value>
+  </data>
+  <data name="Document.RentalLine" xml:space="preserve">
+    <value>Location du véhicule</value>
+  </data>
+  <data name="Document.Total" xml:space="preserve">
+    <value>Total</value>
+  </data>
+  <data name="Document.AmountPaid" xml:space="preserve">
+    <value>Déjà réglé</value>
+  </data>
+  <data name="Document.BalanceDue" xml:space="preserve">
+    <value>Reste à payer</value>
+  </data>
+  <data name="Document.SignatureLessor" xml:space="preserve">
+    <value>Signature du loueur</value>
+  </data>
+  <data name="Document.SignatureRenter" xml:space="preserve">
+    <value>Signature du locataire</value>
+  </data>
+  <data name="Document.ContractTerms" xml:space="preserve">
+    <value>Le locataire reconnaît avoir reçu le véhicule décrit ci-dessus en bon état de fonctionnement et s'engage à le restituer à la date convenue, dans le même état et avec le même niveau de carburant. Le locataire demeure responsable des amendes et dommages survenus pendant la période de location.</value>
+  </data>
+  <data name="Validation.Document.RentingNotFound" xml:space="preserve">
+    <value>La location associée à ce document est introuvable.</value>
+  </data>
+  <data name="Validation.Renting.ClientOrNewClient" xml:space="preserve">
+    <value>Indiquez soit un client existant, soit les informations d'un nouveau client, pas les deux.</value>
+  </data>
+  <data name="Document.Example.StandardContract" xml:space="preserve">
+    <value>Contrat de location — standard</value>
+  </data>
+  <data name="Document.Example.StandardFacture" xml:space="preserve">
+    <value>Facture — standard</value>
+  </data>
+  <data name="Validation.Document.TemplateNotFound" xml:space="preserve">
+    <value>Le modèle sélectionné est introuvable.</value>
+  </data>
+  <data name="Validation.Document.RequiredFieldMissing" xml:space="preserve">
+    <value>« {0} » est obligatoire pour générer ce document.</value>
+  </data>
+  <data name="Validation.Document.ImportUnsupported" xml:space="preserve">
+    <value>Seuls les fichiers Word (.docx), HTML et texte peuvent être importés.</value>
+  </data>
+  <data name="Validation.Document.ImportEmpty" xml:space="preserve">
+    <value>Aucun texte n'a pu être lu dans ce fichier.</value>
+  </data>
+  <data name="Validation.Document.ImportNotAWordFile" xml:space="preserve">
+    <value>Ce fichier n'est pas un document Word (.docx) valide.</value>
+  </data>
+  <data name="Validation.DocumentTemplate.NameRequired" xml:space="preserve">
+    <value>Le modèle doit avoir un nom.</value>
+  </data>
+  <data name="Validation.DocumentTemplate.BlocksRequired" xml:space="preserve">
+    <value>Un modèle doit contenir au moins un bloc.</value>
+  </data>
+  <data name="Validation.DocumentTemplate.UnknownDataPath" xml:space="preserve">
+    <value>« {0} » n'est pas une valeur disponible dans une location.</value>
+  </data>
+  <data name="Validation.DocumentTemplate.LanguageUnsupported" xml:space="preserve">
+    <value>La langue du modèle doit être l'une des langues prises en charge par l'application.</value>
+  </data>
+  <data name="Validation.DocumentTemplate.ExampleUnknown" xml:space="preserve">
+    <value>Le modèle d'exemple sélectionné est introuvable.</value>
+  </data>
 </root>

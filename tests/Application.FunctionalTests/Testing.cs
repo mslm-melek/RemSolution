@@ -295,6 +295,30 @@ public partial class Testing
         await context.SaveChangesAsync();
     }
 
+    /// <summary>
+    /// Every row of an entity, through the normal query filters (so tenant and
+    /// soft-delete rules apply). For assertions that need the rows themselves
+    /// rather than a count.
+    /// </summary>
+    public static async Task<List<TEntity>> AllAsync<TEntity>() where TEntity : class
+    {
+        using var scope = _scopeFactory.CreateScope();
+
+        var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+        return await context.Set<TEntity>().AsNoTracking().ToListAsync();
+    }
+
+    /// <summary>The id of a user by login name, or null if there is no such user.</summary>
+    public static async Task<string?> UserIdAsync(string userName)
+    {
+        using var scope = _scopeFactory.CreateScope();
+
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+
+        return (await userManager.FindByNameAsync(userName))?.Id;
+    }
+
     public static async Task<int> CountAsync<TEntity>() where TEntity : class
     {
         using var scope = _scopeFactory.CreateScope();

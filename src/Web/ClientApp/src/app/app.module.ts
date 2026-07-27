@@ -37,6 +37,8 @@ import { ReservationComponent } from './reservation/reservation.component';
 import { ReservationFormComponent } from './reservation/reservation-form.component';
 import { ExtraServiceTypeComponent } from './extra-service-type/extra-service-type.component';
 import { ExpenseTypeComponent } from './expense-type/expense-type.component';
+import { DocumentTemplateComponent } from './document-template/document-template.component';
+import { DocumentTemplateFormComponent } from './document-template/document-template-form.component';
 import { ProfileComponent } from './profile/profile.component';
 import { MarketplaceSearchComponent } from './marketplace/marketplace-search.component';
 import { MarketplaceCarComponent } from './marketplace/marketplace-car.component';
@@ -53,6 +55,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatRadioModule } from '@angular/material/radio';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatMenuModule } from '@angular/material/menu';
@@ -95,6 +98,8 @@ registerLocaleData(localeAr);
     ReservationFormComponent,
     ExtraServiceTypeComponent,
     ExpenseTypeComponent,
+    DocumentTemplateComponent,
+    DocumentTemplateFormComponent,
     ProfileComponent,
     MarketplaceSearchComponent,
     MarketplaceCarComponent,
@@ -116,6 +121,7 @@ registerLocaleData(localeAr);
     MatTooltipModule,
     MatTabsModule,
     MatCheckboxModule,
+    MatRadioModule,
     MatProgressBarModule,
     MatDividerModule,
     MatMenuModule,
@@ -139,6 +145,9 @@ registerLocaleData(localeAr);
       { path: 'reservation/:id', component: ReservationFormComponent },
       { path: 'extra-service-type', component: ExtraServiceTypeComponent },
       { path: 'expense-type', component: ExpenseTypeComponent },
+      { path: 'document-template', component: DocumentTemplateComponent },
+      { path: 'document-template/new', component: DocumentTemplateFormComponent },
+      { path: 'document-template/:id', component: DocumentTemplateFormComponent },
       { path: 'profile', component: ProfileComponent },
       { path: 'browse', component: MarketplaceSearchComponent },
       { path: 'browse/car/:id', component: MarketplaceCarComponent },

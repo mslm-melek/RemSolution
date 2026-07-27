@@ -625,4 +625,145 @@
   <data name="Error.Page.Heading" xml:space="preserve">
     <value>حدث خطأ أثناء معالجة طلبك.</value>
   </data>
+  <data name="Document.Contract.Title" xml:space="preserve">
+    <value>عقد إيجار</value>
+  </data>
+  <data name="Document.Facture.Title" xml:space="preserve">
+    <value>فاتورة</value>
+  </data>
+  <data name="Document.Number" xml:space="preserve">
+    <value>رقم</value>
+  </data>
+  <data name="Document.IssuedAt" xml:space="preserve">
+    <value>تاريخ الإصدار</value>
+  </data>
+  <data name="Document.Lessor" xml:space="preserve">
+    <value>المؤجر</value>
+  </data>
+  <data name="Document.Renter" xml:space="preserve">
+    <value>المستأجر</value>
+  </data>
+  <data name="Document.SecondDriver" xml:space="preserve">
+    <value>السائق الإضافي</value>
+  </data>
+  <data name="Document.Vehicle" xml:space="preserve">
+    <value>السيارة</value>
+  </data>
+  <data name="Document.RentalPeriod" xml:space="preserve">
+    <value>مدة الإيجار</value>
+  </data>
+  <data name="Document.BirthDate" xml:space="preserve">
+    <value>تاريخ الميلاد</value>
+  </data>
+  <data name="Document.CIN" xml:space="preserve">
+    <value>بطاقة التعريف</value>
+  </data>
+  <data name="Document.Passeport" xml:space="preserve">
+    <value>جواز السفر</value>
+  </data>
+  <data name="Document.DrivingLicence" xml:space="preserve">
+    <value>رخصة السياقة</value>
+  </data>
+  <data name="Document.Model" xml:space="preserve">
+    <value>الطراز</value>
+  </data>
+  <data name="Document.Matricule" xml:space="preserve">
+    <value>رقم التسجيل</value>
+  </data>
+  <data name="Document.Color" xml:space="preserve">
+    <value>اللون</value>
+  </data>
+  <data name="Document.Power" xml:space="preserve">
+    <value>القدرة (حصان)</value>
+  </data>
+  <data name="Document.FuelType" xml:space="preserve">
+    <value>الوقود</value>
+  </data>
+  <data name="Document.From" xml:space="preserve">
+    <value>من</value>
+  </data>
+  <data name="Document.To" xml:space="preserve">
+    <value>إلى</value>
+  </data>
+  <data name="Document.PickupMileage" xml:space="preserve">
+    <value>العداد عند الانطلاق</value>
+  </data>
+  <data name="Document.Price" xml:space="preserve">
+    <value>مبلغ الإيجار</value>
+  </data>
+  <data name="Document.Deposit" xml:space="preserve">
+    <value>الضمان</value>
+  </data>
+  <data name="Document.Notes" xml:space="preserve">
+    <value>ملاحظات</value>
+  </data>
+  <data name="Document.Description" xml:space="preserve">
+    <value>البيان</value>
+  </data>
+  <data name="Document.Amount" xml:space="preserve">
+    <value>المبلغ</value>
+  </data>
+  <data name="Document.RentalLine" xml:space="preserve">
+    <value>إيجار السيارة</value>
+  </data>
+  <data name="Document.Total" xml:space="preserve">
+    <value>المجموع</value>
+  </data>
+  <data name="Document.AmountPaid" xml:space="preserve">
+    <value>المبلغ المدفوع</value>
+  </data>
+  <data name="Document.BalanceDue" xml:space="preserve">
+    <value>المبلغ المتبقي</value>
+  </data>
+  <data name="Document.SignatureLessor" xml:space="preserve">
+    <value>توقيع المؤجر</value>
+  </data>
+  <data name="Document.SignatureRenter" xml:space="preserve">
+    <value>توقيع المستأجر</value>
+  </data>
+  <data name="Document.ContractTerms" xml:space="preserve">
+    <value>يقر المستأجر بأنه تسلم السيارة الموصوفة أعلاه في حالة جيدة، ويتعهد بإرجاعها في التاريخ المتفق عليه بنفس الحالة وبنفس مستوى الوقود. ويبقى المستأجر مسؤولا عن الخطايا والأضرار الحاصلة خلال مدة الإيجار.</value>
+  </data>
+  <data name="Validation.Document.RentingNotFound" xml:space="preserve">
+    <value>لم يتم العثور على عملية الإيجار الخاصة بهذه الوثيقة.</value>
+  </data>
+  <data name="Validation.Renting.ClientOrNewClient" xml:space="preserve">
+    <value>حدد إما عميلا موجودا أو معلومات عميل جديد، وليس الاثنين معا.</value>
+  </data>
+  <data name="Document.Example.StandardContract" xml:space="preserve">
+    <value>عقد إيجار — نموذجي</value>
+  </data>
+  <data name="Document.Example.StandardFacture" xml:space="preserve">
+    <value>فاتورة — نموذجية</value>
+  </data>
+  <data name="Validation.Document.TemplateNotFound" xml:space="preserve">
+    <value>لم يتم العثور على النموذج المحدد.</value>
+  </data>
+  <data name="Validation.Document.RequiredFieldMissing" xml:space="preserve">
+    <value>«{0}» مطلوب لإصدار هذه الوثيقة.</value>
+  </data>
+  <data name="Validation.Document.ImportUnsupported" xml:space="preserve">
+    <value>يمكن استيراد ملفات Word (.docx) وHTML والنصوص فقط.</value>
+  </data>
+  <data name="Validation.Document.ImportEmpty" xml:space="preserve">
+    <value>لم يتم العثور على أي نص في هذا الملف.</value>
+  </data>
+  <data name="Validation.Document.ImportNotAWordFile" xml:space="preserve">
+    <value>هذا الملف ليس مستند Word (.docx) صالحا.</value>
+  </data>
+  <data name="Validation.DocumentTemplate.NameRequired" xml:space="preserve">
+    <value>يجب أن يكون للنموذج اسم.</value>
+  </data>
+  <data name="Validation.DocumentTemplate.BlocksRequired" xml:space="preserve">
+    <value>يجب أن يحتوي النموذج على عنصر واحد على الأقل.</value>
+  </data>
+  <data name="Validation.DocumentTemplate.UnknownDataPath" xml:space="preserve">
+    <value>«{0}» ليست قيمة متوفرة في عملية الإيجار.</value>
+  </data>
+  <data name="Validation.DocumentTemplate.LanguageUnsupported" xml:space="preserve">
+    <value>يجب أن تكون لغة النموذج إحدى اللغات التي يدعمها التطبيق.</value>
+  </data>
+  <data name="Validation.DocumentTemplate.ExampleUnknown" xml:space="preserve">
+    <value>لم يتم العثور على النموذج المثال المحدد.</value>
+  </data>
 </root>

@@ -1,0 +1,190 @@
+.template-form-card {
+  padding: 1.5rem;
+  margin: 1rem;
+  border-radius: 8px;
+  max-width: 1200px;
+}
+
+.header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.title {
+  margin: 0;
+}
+
+.error-banner {
+  background: #fdecea;
+  color: #b71c1c;
+  padding: 0.75rem 1rem;
+  border-radius: 4px;
+  margin-bottom: 1rem;
+}
+
+.meta-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: 0 1rem;
+}
+
+/* Blocks on the left, the field palette pinned beside them. */
+.editor {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 16rem;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .meta-grid,
+  .editor {
+    grid-template-columns: 1fr;
+  }
+}
+
+.blocks h3,
+.palette h3 {
+  margin: 0.5rem 0 0.25rem;
+}
+
+.block {
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 4px;
+  padding: 0.75rem 0.75rem 0;
+  margin-bottom: 0.75rem;
+}
+
+.block-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.block-type {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: rgba(0, 0, 0, 0.55);
+}
+
+.block-tools {
+  display: flex;
+}
+
+.field-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.block-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding-bottom: 0.5rem;
+}
+
+.grow {
+  flex: 1 1 12rem;
+}
+
+.full-width {
+  width: 100%;
+}
+
+.add-block {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin: 0.5rem 0 1rem;
+}
+
+.palette {
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 4px;
+  padding: 0.75rem;
+  position: sticky;
+  top: 1rem;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.palette-group h4 {
+  margin: 0.75rem 0 0.25rem;
+  font-size: 0.85rem;
+  color: rgba(0, 0, 0, 0.6);
+}
+
+.palette-item {
+  display: flex;
+  justify-content: flex-start;
+  width: 100%;
+  font-size: 0.8rem;
+  text-align: start;
+}
+
+.panel {
+  margin: 1rem 0;
+}
+
+.panel-header {
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.panel-header h3 {
+  margin: 0;
+}
+
+.binding {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  padding: 0.25rem 0;
+}
+
+/* A binding whose placeholder no longer appears in any block: kept, not lost. */
+.binding.unused {
+  opacity: 0.55;
+}
+
+.unused-note {
+  font-size: 0.8rem;
+}
+
+.placeholder {
+  background: rgba(0, 0, 0, 0.06);
+  border-radius: 4px;
+  padding: 0.15rem 0.4rem;
+  min-width: 12rem;
+}
+
+.binding-kind {
+  min-width: 11rem;
+}
+
+.actions {
+  margin-top: 0.5rem;
+}
+
+.muted {
+  color: rgba(0, 0, 0, 0.5);
+}
+
+.hint {
+  font-size: 0.85rem;
+  margin: 0 0 0.75rem;
+}

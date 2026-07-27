@@ -90,6 +90,7 @@
             <a mat-menu-item *ngIf="canAccessExtraServices" [routerLink]="['/extra-service-type']" (click)="collapse()">{{ t('nav.extraServiceTypes') }}</a>
             <a mat-menu-item *ngIf="canAccessCars" [routerLink]="['/brand']" (click)="collapse()">{{ t('nav.carBrands') }}</a>
             <a mat-menu-item *ngIf="canAccessCars" [routerLink]="['/model-car']" (click)="collapse()">{{ t('nav.carModels') }}</a>
+            <a mat-menu-item *ngIf="canAccessDocumentTemplates" [routerLink]="['/document-template']" (click)="collapse()">{{ t('nav.documentTemplates') }}</a>
           </mat-menu>
         </ng-container>
       </ng-container>

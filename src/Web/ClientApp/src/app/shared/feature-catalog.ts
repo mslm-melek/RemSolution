@@ -39,7 +39,7 @@ export const PERMISSIONS_BY_FEATURE: Record<string, string[]> = {
   Expenses: ['Expense.Create', 'Expense.Read', 'Expense.Update', 'Expense.Delete'],
   ExtraServices: ['ExtraService.Create', 'ExtraService.Read', 'ExtraService.Update', 'ExtraService.Delete'],
   Payments: ['Payment.Create', 'Payment.Read', 'Payment.Update', 'Payment.Delete'],
-  Contracts: ['Contract.Generate'],
+  Contracts: ['Contract.Read', 'Contract.Generate'],
   Factures: ['Facture.Read', 'Facture.Generate'],
   Credits: ['Credit.Read'],
   Dashboard: ['Dashboard.View'],

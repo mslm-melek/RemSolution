@@ -71,3 +71,148 @@
 .muted {
   color: rgba(0, 0, 0, 0.5);
 }
+
+.hint {
+  margin: 0 0 0.75rem;
+  font-size: 0.85rem;
+}
+
+.client-source {
+  margin-bottom: 0.75rem;
+}
+
+.client-mode {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.new-client-panel {
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 4px;
+  padding: 0.75rem 1rem 0;
+  margin: 0 0 1rem;
+}
+
+.new-client-panel legend {
+  padding: 0 0.35rem;
+  font-size: 0.85rem;
+  color: rgba(0, 0, 0, 0.6);
+}
+
+.new-client-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 1rem;
+}
+
+.selected-client {
+  margin: 0 0 1rem;
+}
+
+.client-toggle {
+  padding-left: 0;
+}
+
+.client-panel {
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 4px;
+  padding: 1rem 1rem 0;
+}
+
+.papers-title {
+  margin: 0.25rem 0 0.5rem;
+  font-size: 0.9rem;
+}
+
+.papers {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.paper {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.paper-label {
+  min-width: 10rem;
+  color: rgba(0, 0, 0, 0.6);
+}
+
+.client-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin: 1rem 0;
+}
+
+.saved-message {
+  color: #2e7d32;
+}
+
+.generate-options {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.5rem;
+}
+
+.generate-label {
+  color: rgba(0, 0, 0, 0.6);
+}
+
+.prompt-panel {
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 4px;
+  padding: 0.75rem 1rem 0;
+  margin: 0 0 1rem;
+}
+
+.prompt-panel legend {
+  padding: 0 0.35rem;
+  font-size: 0.85rem;
+  color: rgba(0, 0, 0, 0.6);
+}
+
+.prompt-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 1rem;
+}
+
+.template-picker {
+  min-width: 14rem;
+}
+
+.doc-group {
+  margin-bottom: 1.25rem;
+}
+
+.doc-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.doc-header h4 {
+  margin: 0;
+}
+
+.doc-list {
+  list-style: none;
+  padding: 0;
+  margin: 0.25rem 0 0;
+}
+
+.doc-list li {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}

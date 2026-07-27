@@ -27,6 +27,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>, IApplica
     public DbSet<Car> Cars => Set<Car>();
     public DbSet<CarImage> CarImages => Set<CarImage>();
     public DbSet<Client> Clients => Set<Client>();
+    public DbSet<Contract> Contracts => Set<Contract>();
     public DbSet<Country> Countries => Set<Country>();
 
     // Deliberately not on IApplicationDbContext: audit rows are written by
@@ -36,8 +37,11 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>, IApplica
     // Deliberately not on IApplicationDbContext: audit rows are written by the
     // AuditSaveChangesInterceptor, never by handlers.
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+    public DbSet<DocumentTemplate> DocumentTemplates => Set<DocumentTemplate>();
+    public DbSet<DocumentTemplateField> DocumentTemplateFields => Set<DocumentTemplateField>();
     public DbSet<Expense> Expenses => Set<Expense>();
     public DbSet<ExpenseType> ExpenseTypes => Set<ExpenseType>();
+    public DbSet<Facture> Factures => Set<Facture>();
     public DbSet<ExtraService> ExtraServices => Set<ExtraService>();
     public DbSet<ExtraServicesType> ExtraServicesTypes => Set<ExtraServicesType>();
     public DbSet<ModelCar> ModelCars => Set<ModelCar>();

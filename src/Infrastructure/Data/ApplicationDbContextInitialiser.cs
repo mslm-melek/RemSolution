@@ -6,7 +6,9 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace RemSolution.Infrastructure.Data;
 
@@ -37,6 +39,16 @@ public static class InitialiserExtensions
         var initialiser = scope.ServiceProvider.GetRequiredService<ApplicationDbContextInitialiser>();
 
         await initialiser.InitialiseAsync();
+
+        // Demo data is doubly gated: the DemoData:Enabled flag AND the Development
+        // environment. Migrating a database is safe anywhere; filling it with fake
+        // bookings is not, and this method is the one place both facts are known.
+        var demoData = scope.ServiceProvider.GetRequiredService<IOptions<DemoDataOptions>>().Value;
+
+        if (demoData.Enabled && app.Environment.IsDevelopment())
+        {
+            await scope.ServiceProvider.GetRequiredService<DemoDataSeeder>().SeedAsync();
+        }
     }
 }
 

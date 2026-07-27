@@ -1503,6 +1503,107 @@
         }
       }
     },
+    "/api/Contracts/renting/{rentingId}": {
+      "get": {
+        "tags": [
+          "Contracts"
+        ],
+        "operationId": "GetContractsByRenting",
+        "parameters": [
+          {
+            "name": "rentingId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ContractDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Contracts"
+        ],
+        "operationId": "GenerateContract",
+        "parameters": [
+          {
+            "name": "rentingId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          }
+        ],
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GenerateContractCommand"
+              }
+            }
+          },
+          "x-position": 2
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContractDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Contracts/{id}/download": {
+      "get": {
+        "tags": [
+          "Contracts"
+        ],
+        "operationId": "DownloadContract",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "404": {
+            "description": ""
+          }
+        }
+      }
+    },
     "/api/Countries": {
       "get": {
         "tags": [
@@ -1649,6 +1750,382 @@
         "responses": {
           "204": {
             "description": ""
+          }
+        }
+      }
+    },
+    "/api/DocumentTemplates": {
+      "get": {
+        "tags": [
+          "DocumentTemplates"
+        ],
+        "operationId": "GetDocumentTemplates",
+        "parameters": [
+          {
+            "name": "Kind",
+            "in": "query",
+            "schema": {
+              "nullable": true,
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/DocumentTemplateKind"
+                }
+              ]
+            },
+            "x-position": 1
+          },
+          {
+            "name": "Language",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "nullable": true
+            },
+            "x-position": 2
+          },
+          {
+            "name": "IncludeInactive",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "boolean"
+            },
+            "x-position": 3
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DocumentTemplateDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "DocumentTemplates"
+        ],
+        "operationId": "CreateDocumentTemplate",
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateDocumentTemplateCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/DocumentTemplates/examples": {
+      "get": {
+        "tags": [
+          "DocumentTemplates"
+        ],
+        "operationId": "GetDocumentTemplateExamples",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DocumentTemplateExampleDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/DocumentTemplates/placeholders": {
+      "get": {
+        "tags": [
+          "DocumentTemplates"
+        ],
+        "operationId": "GetDocumentPlaceholders",
+        "parameters": [
+          {
+            "name": "kind",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/DocumentTemplateKind"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DocumentPlaceholderDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/DocumentTemplates/prompt": {
+      "get": {
+        "tags": [
+          "DocumentTemplates"
+        ],
+        "operationId": "GetDocumentPrompt",
+        "parameters": [
+          {
+            "name": "kind",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/DocumentTemplateKind"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "templateId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "nullable": true
+            },
+            "x-position": 2
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DocumentTemplateFieldDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/DocumentTemplates/{id}": {
+      "get": {
+        "tags": [
+          "DocumentTemplates"
+        ],
+        "operationId": "GetDocumentTemplateById",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentTemplateDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "DocumentTemplates"
+        ],
+        "operationId": "UpdateDocumentTemplate",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          }
+        ],
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateDocumentTemplateCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 2
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "400": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/DocumentTemplates/{id}/default": {
+      "put": {
+        "tags": [
+          "DocumentTemplates"
+        ],
+        "operationId": "SetDefaultDocumentTemplate",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/DocumentTemplates/{id}/active": {
+      "put": {
+        "tags": [
+          "DocumentTemplates"
+        ],
+        "operationId": "SetDocumentTemplateActive",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "isActive",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "boolean"
+            },
+            "x-position": 2
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/DocumentTemplates/import": {
+      "post": {
+        "tags": [
+          "DocumentTemplates"
+        ],
+        "operationId": "ImportDocumentTemplate",
+        "parameters": [
+          {
+            "name": "kind",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/DocumentTemplateKind"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "language",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 2
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "nullable": true
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentTemplateDraftDto"
+                }
+              }
+            }
           }
         }
       }
@@ -2033,6 +2510,107 @@
         ],
         "responses": {
           "204": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/Factures/renting/{rentingId}": {
+      "get": {
+        "tags": [
+          "Factures"
+        ],
+        "operationId": "GetFacturesByRenting",
+        "parameters": [
+          {
+            "name": "rentingId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FactureDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Factures"
+        ],
+        "operationId": "GenerateFacture",
+        "parameters": [
+          {
+            "name": "rentingId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          }
+        ],
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GenerateFactureCommand"
+              }
+            }
+          },
+          "x-position": 2
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FactureDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Factures/{id}/download": {
+      "get": {
+        "tags": [
+          "Factures"
+        ],
+        "operationId": "DownloadFacture",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "404": {
             "description": ""
           }
         }
@@ -5057,6 +5635,65 @@
           2
         ]
       },
+      "ContractDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "agencyId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "rentingId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "number": {
+            "type": "string"
+          },
+          "issuedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "language": {
+            "type": "string"
+          },
+          "documentUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "documentSize": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          }
+        }
+      },
+      "GenerateContractCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "rentingId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "templateId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "manualValues": {
+            "type": "object",
+            "nullable": true,
+            "additionalProperties": {
+              "type": "string"
+            }
+          }
+        }
+      },
       "CountryDto": {
         "type": "object",
         "additionalProperties": false,
@@ -5089,6 +5726,351 @@
           },
           "name": {
             "type": "string"
+          }
+        }
+      },
+      "DocumentTemplateDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "agencyId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "rowVersion": {
+            "type": "string",
+            "format": "byte",
+            "nullable": true
+          },
+          "name": {
+            "type": "string"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/DocumentTemplateKind"
+          },
+          "language": {
+            "type": "string"
+          },
+          "isDefault": {
+            "type": "boolean"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "blocks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DocumentBlock"
+            }
+          },
+          "fields": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DocumentTemplateFieldDto"
+            }
+          }
+        }
+      },
+      "DocumentTemplateKind": {
+        "type": "integer",
+        "description": "",
+        "x-enumNames": [
+          "Contract",
+          "Facture"
+        ],
+        "enum": [
+          0,
+          1
+        ]
+      },
+      "DocumentBlock": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "$ref": "#/components/schemas/DocumentBlockType"
+          },
+          "text": {
+            "type": "string",
+            "nullable": true
+          },
+          "title": {
+            "type": "string",
+            "nullable": true
+          },
+          "fields": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "$ref": "#/components/schemas/DocumentBlockField"
+            }
+          },
+          "labels": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "string"
+            }
+          },
+          "sideBySide": {
+            "type": "boolean"
+          },
+          "fine": {
+            "type": "boolean"
+          },
+          "height": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "showTotals": {
+            "type": "boolean"
+          }
+        }
+      },
+      "DocumentBlockType": {
+        "type": "integer",
+        "description": "",
+        "x-enumNames": [
+          "Heading",
+          "Paragraph",
+          "Fields",
+          "LineItems",
+          "Signatures",
+          "PageBreak",
+          "Spacer"
+        ],
+        "enum": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ]
+      },
+      "DocumentBlockField": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "label": {
+            "type": "string"
+          },
+          "value": {
+            "type": "string"
+          },
+          "hideWhenEmpty": {
+            "type": "boolean"
+          }
+        }
+      },
+      "DocumentTemplateFieldDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "placeholder": {
+            "type": "string"
+          },
+          "binding": {
+            "$ref": "#/components/schemas/DocumentFieldBinding"
+          },
+          "dataPath": {
+            "type": "string",
+            "nullable": true
+          },
+          "fixedValue": {
+            "type": "string",
+            "nullable": true
+          },
+          "label": {
+            "type": "string",
+            "nullable": true
+          },
+          "isRequired": {
+            "type": "boolean"
+          }
+        }
+      },
+      "DocumentFieldBinding": {
+        "type": "integer",
+        "description": "",
+        "x-enumNames": [
+          "DataField",
+          "FixedValue",
+          "AskEachTime",
+          "Blank"
+        ],
+        "enum": [
+          0,
+          1,
+          2,
+          3
+        ]
+      },
+      "DocumentTemplateExampleDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/DocumentTemplateKind"
+          },
+          "language": {
+            "type": "string"
+          },
+          "blocks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DocumentBlock"
+            }
+          }
+        }
+      },
+      "DocumentPlaceholderDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "path": {
+            "type": "string"
+          },
+          "token": {
+            "type": "string"
+          },
+          "group": {
+            "type": "string"
+          }
+        }
+      },
+      "CreateDocumentTemplateCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/DocumentTemplateKind"
+          },
+          "language": {
+            "type": "string"
+          },
+          "blocks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DocumentBlock"
+            }
+          },
+          "fields": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "$ref": "#/components/schemas/DocumentTemplateFieldInput"
+            }
+          }
+        }
+      },
+      "DocumentTemplateFieldInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "placeholder": {
+            "type": "string"
+          },
+          "binding": {
+            "$ref": "#/components/schemas/DocumentFieldBinding"
+          },
+          "dataPath": {
+            "type": "string",
+            "nullable": true
+          },
+          "fixedValue": {
+            "type": "string",
+            "nullable": true
+          },
+          "label": {
+            "type": "string",
+            "nullable": true
+          },
+          "isRequired": {
+            "type": "boolean"
+          }
+        }
+      },
+      "UpdateDocumentTemplateCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "rowVersion": {
+            "type": "string",
+            "format": "byte",
+            "nullable": true
+          },
+          "name": {
+            "type": "string"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/DocumentTemplateKind"
+          },
+          "language": {
+            "type": "string"
+          },
+          "blocks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DocumentBlock"
+            }
+          },
+          "fields": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "$ref": "#/components/schemas/DocumentTemplateFieldInput"
+            }
+          }
+        }
+      },
+      "DocumentTemplateDraftDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/DocumentTemplateKind"
+          },
+          "language": {
+            "type": "string"
+          },
+          "blocks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DocumentBlock"
+            }
+          },
+          "fields": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DocumentTemplateFieldDto"
+            }
           }
         }
       },
@@ -5300,6 +6282,98 @@
           },
           "isActive": {
             "type": "boolean"
+          }
+        }
+      },
+      "FactureDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "agencyId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "rentingId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "clientId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "clientName": {
+            "type": "string",
+            "nullable": true
+          },
+          "number": {
+            "type": "string"
+          },
+          "issuedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "language": {
+            "type": "string"
+          },
+          "rentalAmount": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/MoneyDto"
+              }
+            ]
+          },
+          "extraServicesAmount": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/MoneyDto"
+              }
+            ]
+          },
+          "totalAmount": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/MoneyDto"
+              }
+            ]
+          },
+          "documentUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "documentSize": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          }
+        }
+      },
+      "GenerateFactureCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "rentingId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "templateId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "manualValues": {
+            "type": "object",
+            "nullable": true,
+            "additionalProperties": {
+              "type": "string"
+            }
           }
         }
       },
@@ -5978,7 +7052,16 @@
           },
           "clientId": {
             "type": "integer",
-            "format": "int32"
+            "format": "int32",
+            "nullable": true
+          },
+          "newClient": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/NewRentingClient"
+              }
+            ]
           },
           "secondClientId": {
             "type": "integer",
@@ -5999,6 +7082,113 @@
             "nullable": true
           },
           "notes": {
+            "type": "string",
+            "nullable": true
+          },
+          "generateContract": {
+            "type": "boolean"
+          },
+          "generateFacture": {
+            "type": "boolean"
+          },
+          "contractTemplateId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "factureTemplateId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "documentValues": {
+            "type": "object",
+            "nullable": true,
+            "additionalProperties": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "NewRentingClient": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "birthDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "birthPlace": {
+            "type": "string",
+            "nullable": true
+          },
+          "birthCountryId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "cin": {
+            "type": "string",
+            "nullable": true
+          },
+          "cinDeliveranceDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "cinDeliverancePlace": {
+            "type": "string",
+            "nullable": true
+          },
+          "cinDeliveranceCountryId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "passeportNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "passeportDeliveranceDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "passeportDeliverancePlace": {
+            "type": "string",
+            "nullable": true
+          },
+          "passeportDeliveranceCountryId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "drivingLicenceNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "drivingLicenceDeliveranceDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "drivingLicenceDeliverancePlace": {
+            "type": "string",
+            "nullable": true
+          },
+          "drivingLicenceDeliveranceCountryId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "description": {
             "type": "string",
             "nullable": true
           }

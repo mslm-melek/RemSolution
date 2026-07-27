@@ -51,6 +51,7 @@ public abstract class Permissions
     public const string PaymentUpdate = "Payment.Update";
     public const string PaymentDelete = "Payment.Delete";
 
+    public const string ContractRead = "Contract.Read";
     public const string ContractGenerate = "Contract.Generate";
 
     public const string FactureRead = "Facture.Read";
@@ -73,7 +74,7 @@ public abstract class Permissions
         ExpenseCreate, ExpenseRead, ExpenseUpdate, ExpenseDelete,
         ExtraServiceCreate, ExtraServiceRead, ExtraServiceUpdate, ExtraServiceDelete,
         PaymentCreate, PaymentRead, PaymentUpdate, PaymentDelete,
-        ContractGenerate,
+        ContractRead, ContractGenerate,
         FactureRead, FactureGenerate,
         CreditRead,
         DashboardView,
@@ -88,7 +89,7 @@ public abstract class Permissions
     public static readonly string[] ReadOnly =
     {
         CarRead, ClientRead, BranchRead, RentingRead, ReservationRead,
-        ExpenseRead, ExtraServiceRead, PaymentRead, FactureRead, CreditRead,
+        ExpenseRead, ExtraServiceRead, PaymentRead, ContractRead, FactureRead, CreditRead,
         DashboardView, ChatView,
     };
 }

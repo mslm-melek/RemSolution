@@ -24,7 +24,7 @@ public static class FeatureCatalog
             [FeatureFlags.Expenses] = new[] { Permissions.ExpenseCreate, Permissions.ExpenseRead, Permissions.ExpenseUpdate, Permissions.ExpenseDelete },
             [FeatureFlags.ExtraServices] = new[] { Permissions.ExtraServiceCreate, Permissions.ExtraServiceRead, Permissions.ExtraServiceUpdate, Permissions.ExtraServiceDelete },
             [FeatureFlags.Payments] = new[] { Permissions.PaymentCreate, Permissions.PaymentRead, Permissions.PaymentUpdate, Permissions.PaymentDelete },
-            [FeatureFlags.Contracts] = new[] { Permissions.ContractGenerate },
+            [FeatureFlags.Contracts] = new[] { Permissions.ContractRead, Permissions.ContractGenerate },
             [FeatureFlags.Factures] = new[] { Permissions.FactureRead, Permissions.FactureGenerate },
             [FeatureFlags.Credits] = new[] { Permissions.CreditRead },
             [FeatureFlags.Dashboard] = new[] { Permissions.DashboardView },

@@ -1,0 +1,1038 @@
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using NetTopologySuite.Geometries;
+using RemSolution.Application.Common.Documents;
+using RemSolution.Application.Common.Interfaces;
+using RemSolution.Application.Common.Tenancy;
+using RemSolution.Domain.Constants;
+using RemSolution.Domain.Entities;
+using RemSolution.Domain.Enums;
+using RemSolution.Domain.ValueObjects;
+using RemSolution.Infrastructure.Identity;
+
+namespace RemSolution.Infrastructure.Data;
+
+/// <summary>
+/// Fills a development database with a coherent dataset you can actually click
+/// through: two agencies on different plans, logins for every role, priced cars,
+/// clients, bookings in every state, money movements, reservations in every
+/// status, document templates and a few already-issued PDFs.
+/// <para>
+/// Design notes:
+/// </para>
+/// <list type="bullet">
+/// <item><b>Opt-in.</b> Runs only when <see cref="DemoDataOptions.Enabled"/> is set
+/// AND the host is Development (see InitialiserExtensions).</item>
+/// <item><b>Idempotent.</b> Presence of the first demo agency means "already
+/// seeded" and the whole thing is skipped, so restarting the app does not
+/// duplicate anything. To start over, drop the database
+/// (<c>dotnet ef database drop -f -p src/Infrastructure -s src/Web</c>) and run
+/// again — deleting piecemeal would fight the Restrict FKs that protect financial
+/// records, which is the schema working as intended.</item>
+/// <item><b>Tenant context via <see cref="AmbientTenant"/>.</b> Both the tenant
+/// stamp and the query filters read the ambient tenant, so pushing it makes the
+/// seeder behave exactly like a request for that agency instead of hand-setting
+/// AgencyId everywhere and reading through filters that match nothing.</item>
+/// <item><b>Honest data.</b> Bookings for the same car never overlap, so the
+/// availability rule stays true of the seeded data; prices come from
+/// <see cref="IPricingService"/> rather than a second copy of the arithmetic.</item>
+/// </list>
+/// </summary>
+public class DemoDataSeeder
+{
+    // Presence of this agency is the "already seeded" marker.
+    private const string PrimaryAgencyName = "Carthage Rent Tunis";
+    private const string SecondaryAgencyName = "Sahara Cars Djerba";
+
+    private const string DemoPassword = "Demo1234!";
+    private const string Currency = "TND";
+
+    private readonly ApplicationDbContext _context;
+    private readonly UserManager<ApplicationUser> _userManager;
+    private readonly RoleManager<IdentityRole> _roleManager;
+    private readonly IPricingService _pricing;
+    private readonly IRentalDocumentService _documents;
+    private readonly TimeProvider _dateTime;
+    private readonly ILogger<DemoDataSeeder> _logger;
+
+    public DemoDataSeeder(
+        ApplicationDbContext context,
+        UserManager<ApplicationUser> userManager,
+        RoleManager<IdentityRole> roleManager,
+        IPricingService pricing,
+        IRentalDocumentService documents,
+        TimeProvider dateTime,
+        ILogger<DemoDataSeeder> logger)
+    {
+        _context = context;
+        _userManager = userManager;
+        _roleManager = roleManager;
+        _pricing = pricing;
+        _documents = documents;
+        _dateTime = dateTime;
+        _logger = logger;
+    }
+
+    /// <summary>Today at midnight UTC — every seeded date hangs off this.</summary>
+    private DateTime Today => _dateTime.GetUtcNow().UtcDateTime.Date;
+
+    public async Task SeedAsync(CancellationToken cancellationToken = default)
+    {
+        if (await _context.Agencies.AnyAsync(a => a.Name == PrimaryAgencyName, cancellationToken))
+        {
+            _logger.LogInformation("Demo data already present — skipping.");
+            return;
+        }
+
+        _logger.LogInformation("Seeding demo data…");
+
+        // Deliberately self-sufficient rather than assuming the base seeder ran:
+        // roles and plans are created here if absent, so this can be pointed at an
+        // empty database (which is also what makes it testable in isolation).
+        await EnsureRolesAsync();
+
+        // Global reference data first: brands, models and the type catalogs are
+        // shared by every agency and carry no tenant.
+        var models = await SeedCarCatalogAsync(cancellationToken);
+        var extras = await SeedExtraServiceTypesAsync(cancellationToken);
+        await SeedExpenseTypesAsync(cancellationToken);
+
+        var tunisia = await CountryAsync("Tunisie", cancellationToken);
+
+        // ---- Agency 1: everything switched on ----
+        var full = await PlanAsync("Full", cancellationToken);
+        var carthage = await SeedAgencyAsync(
+            PrimaryAgencyName, "12 avenue Habib Bourguiba, Tunis",
+            "+216 71 240 100", "contact@carthagerent.tn", tunisia, full, cancellationToken);
+
+        await SeedUserAsync("admin@demo.tn", "Nadia Ben Amor", Roles.AgencyAdministrator, carthage.Id);
+
+        // Staff deliberately WITHOUT Client.Create or Contract.Generate: that is
+        // what makes the "pick an existing client but don't add one" and "read the
+        // contract but don't issue it" paths testable without editing permissions.
+        await SeedUserAsync("staff@demo.tn", "Karim Jelassi", Roles.AgencyStaff, carthage.Id, new[]
+        {
+            Permissions.CarRead,
+            Permissions.ClientRead,
+            Permissions.RentingCreate, Permissions.RentingRead, Permissions.RentingUpdate,
+            Permissions.ReservationRead,
+            Permissions.ExtraServiceRead,
+            Permissions.PaymentCreate, Permissions.PaymentRead,
+            Permissions.ContractRead,
+            Permissions.FactureRead,
+        });
+
+        using (AmbientTenant.Push(carthage.Id))
+        {
+            await SeedCarthageAsync(carthage, tunisia, models, extras, cancellationToken);
+        }
+
+        // ---- Agency 2: Starter plan, so Payments/ExtraServices/Contracts/Factures
+        // are OFF. Useful for seeing the feature gate hide whole panels. ----
+        var starter = await PlanAsync("Starter", cancellationToken);
+        var sahara = await SeedAgencyAsync(
+            SecondaryAgencyName, "Route de Midoun, Djerba",
+            "+216 75 650 200", "contact@saharacars.tn", tunisia, starter, cancellationToken);
+
+        await SeedUserAsync("admin@sahara.tn", "Hichem Gharbi", Roles.AgencyAdministrator, sahara.Id);
+
+        using (AmbientTenant.Push(sahara.Id))
+        {
+            await SeedSaharaAsync(sahara, tunisia, models, cancellationToken);
+        }
+
+        // A marketplace customer: no agency, browses across agencies.
+        await SeedUserAsync("customer@demo.tn", "Leïla Msakni", Roles.Customer, agencyId: null);
+
+        _logger.LogInformation(
+            "Demo data seeded. Logins: admin@demo.tn / staff@demo.tn / admin@sahara.tn / customer@demo.tn (password {Password}).",
+            DemoPassword);
+    }
+
+    // ---------------------------------------------------------------- agency 1
+
+    private async Task SeedCarthageAsync(
+        Agency agency,
+        Country country,
+        IReadOnlyDictionary<string, ModelCar> models,
+        IReadOnlyList<ExtraServicesType> extras,
+        CancellationToken cancellationToken)
+    {
+        var centre = new Branch
+        {
+            Name = "Agence Tunis Centre",
+            CountryId = country.Id,
+            // SRID 4326 = WGS84 lon/lat, which is what the spatial queries expect.
+            Location = new Point(10.1815, 36.7996) { SRID = 4326 }
+        };
+
+        var airport = new Branch
+        {
+            Name = "Aéroport Tunis-Carthage",
+            CountryId = country.Id,
+            Location = new Point(10.2272, 36.8510) { SRID = 4326 }
+        };
+
+        _context.Branches.AddRange(centre, airport);
+        await _context.SaveChangesAsync(cancellationToken);
+
+        // Mixed statuses: only Active cars are bookable, so Maintenance/Inactive
+        // give you something to see excluded from availability.
+        var cars = new[]
+        {
+            Car("184 TU 3021", models["Clio 5"], centre, 95m, "Blanc", 90, FuelType.Diesel, 2022),
+            Car("184 TU 3022", models["Clio 5"], centre, 95m, "Gris", 90, FuelType.Diesel, 2022),
+            Car("184 TU 4187", models["Symbol"], centre, 80m, "Blanc", 75, FuelType.Diesel, 2021),
+            Car("192 TU 1140", models["Polo"], airport, 110m, "Bleu", 95, FuelType.Gasoline, 2023),
+            Car("192 TU 1141", models["Golf 8"], airport, 165m, "Noir", 130, FuelType.Diesel, 2023),
+            Car("178 TU 8802", models["208"], centre, 105m, "Rouge", 100, FuelType.Gasoline, 2022),
+            Car("201 TU 2255", models["Picanto"], centre, 70m, "Blanc", 67, FuelType.Gasoline, 2024),
+            Car("201 TU 2256", models["i10"], centre, 70m, "Argent", 67, FuelType.Gasoline, 2024),
+            Car("196 TU 6644", models["Yaris"], airport, 120m, "Blanc", 100, FuelType.Gasoline, 2023),
+            Car("188 TU 9310", models["Logan"], centre, 85m, "Beige", 90, FuelType.Diesel, 2021),
+            Car("175 TU 5501", models["Duster"], airport, 175m, "Marron", 115, FuelType.Diesel, 2020,
+                CarStatus.Maintenance),
+            Car("169 TU 7788", models["Tucson"], centre, 220m, "Noir", 136, FuelType.Diesel, 2019,
+                CarStatus.Inactive),
+        };
+
+        _context.Cars.AddRange(cars);
+        await _context.SaveChangesAsync(cancellationToken);
+
+        var clients = new[]
+        {
+            // The dedup fixture: type CIN 09887766 into the renting form's
+            // "new client" panel and the booking should attach to THIS row
+            // instead of creating a second Ben Salah.
+            Client("Amina", "Ben Salah", 1990, 4, 12, "09887766", "K1234567", "12-345678"),
+            Client("Mehdi", "Trabelsi", 1985, 9, 3, "09112233", null, "09-887711"),
+            Client("Sonia", "Chaouch", 1993, 1, 27, "09445566", null, "13-220145"),
+            Client("Youssef", "Khelifi", 1978, 6, 15, "08990011", "K7788990", "05-114477"),
+            Client("Rania", "Bouzid", 1996, 11, 8, "09667788", null, "16-559002"),
+            Client("Walid", "Hamdi", 1982, 3, 22, "08774455", null, "07-330891"),
+            Client("Ines", "Sassi", 1999, 7, 4, "09223344", null, "18-771230"),
+            Client("Tarek", "Mabrouk", 1974, 12, 30, "08551122", "K4455661", "02-908877"),
+            Client("Nour", "Belhaj", 1991, 5, 19, "09338899", null, "12-664401"),
+            Client("Slim", "Gharbi", 1988, 8, 11, "09001122", null, "10-445599"),
+            Client("Dorra", "Ayari", 1994, 2, 6, "09556677", null, "14-887733"),
+            Client("Anis", "Ferchichi", 1980, 10, 25, "08663344", null, "06-221100"),
+            Client("Hela", "Zouari", 1997, 4, 2, "09779900", "K9900112", "17-334455"),
+            // A foreign renter: passport only, no CIN.
+            Client("Marc", "Lefèvre", 1975, 1, 14, null, "18AB55201", "751122334"),
+            // Flagged: a risk signal the agency raised on its own record.
+            Client("Bilel", "Nasri", 1986, 6, 9, "08882211", null, "08-556677",
+                flagged: true, notes: "Véhicule rendu avec deux jours de retard et sans carburant (mars)."),
+        };
+
+        _context.Clients.AddRange(clients);
+        await _context.SaveChangesAsync(cancellationToken);
+
+        // Bookings, oldest first. Each car's windows are kept disjoint so the
+        // overlap rule holds for the seeded data.
+        var rentings = new List<Renting>
+        {
+            // --- finished, with mileage closed out ---
+            Renting(cars[0], clients[0], -62, -58, RentingState.Done, 41_200, 41_940),
+            Renting(cars[1], clients[1], -55, -52, RentingState.Done, 38_400, 38_910),
+            Renting(cars[3], clients[2], -48, -41, RentingState.Done, 12_050, 13_480),
+            Renting(cars[5], clients[3], -40, -37, RentingState.Done, 27_800, 28_260),
+            Renting(cars[2], clients[4], -35, -30, RentingState.Done, 55_100, 56_020),
+            Renting(cars[6], clients[5], -28, -25, RentingState.Done, 8_900, 9_310),
+            Renting(cars[4], clients[7], -24, -17, RentingState.Done, 19_600, 21_150),
+            Renting(cars[8], clients[8], -16, -12, RentingState.Done, 15_300, 16_040),
+            Renting(cars[9], clients[6], -14, -10, RentingState.Done, 62_400, 63_100),
+            Renting(cars[0], clients[13], -9, -5, RentingState.Done, 41_940, 42_600,
+                notes: "Client étranger, permis international vérifié."),
+
+            // --- cancelled, kept on the record ---
+            Renting(cars[7], clients[9], -20, -18, RentingState.Cancelled, 5_200),
+            Renting(cars[5], clients[14], -8, -6, RentingState.Cancelled, 28_260,
+                notes: "Annulé par l'agence : client signalé."),
+
+            // --- out on the road right now ---
+            Renting(cars[1], clients[2], -2, +3, RentingState.InProgress, 38_910),
+            Renting(cars[3], clients[10], -1, +4, RentingState.InProgress, 13_480),
+            Renting(cars[8], clients[11], 0, +6, RentingState.InProgress, 16_040),
+
+            // --- booked, not yet collected ---
+            Renting(cars[0], clients[12], +2, +6, RentingState.NotYet),
+            Renting(cars[4], clients[0], +3, +10, RentingState.NotYet,
+                notes: "Livraison à l'aéroport, vol TU 720 à 14h.", secondDriver: clients[1]),
+            Renting(cars[6], clients[4], +5, +8, RentingState.NotYet),
+            Renting(cars[2], clients[6], +7, +12, RentingState.NotYet),
+            Renting(cars[9], clients[8], +9, +14, RentingState.NotYet, secondDriver: clients[9]),
+        };
+
+        _context.Rentings.AddRange(rentings);
+        await _context.SaveChangesAsync(cancellationToken);
+
+        await SeedExtraServicesAsync(rentings, extras, cancellationToken);
+        await SeedPaymentsAsync(rentings, cancellationToken);
+        await SeedReservationsAsync(cars, clients, cancellationToken);
+        await SeedExpensesAsync(cars, cancellationToken);
+        await SeedTemplatesAndDocumentsAsync(rentings, cancellationToken);
+    }
+
+    private async Task SeedExtraServicesAsync(
+        IReadOnlyList<Renting> rentings,
+        IReadOnlyList<ExtraServicesType> extras,
+        CancellationToken cancellationToken)
+    {
+        var gps = extras[0];
+        var babySeat = extras[1];
+        var secondDriver = extras[2];
+        var insurance = extras[3];
+
+        _context.ExtraServices.AddRange(
+            Extra(rentings[2], gps),
+            Extra(rentings[2], babySeat),
+            Extra(rentings[6], insurance),
+            Extra(rentings[6], secondDriver),
+            Extra(rentings[9], gps),
+            Extra(rentings[12], babySeat),
+            Extra(rentings[13], gps),
+            Extra(rentings[16], insurance),
+            // A negotiated price that differs from the type's list amount.
+            Extra(rentings[16], secondDriver, 45m));
+
+        await _context.SaveChangesAsync(cancellationToken);
+    }
+
+    private async Task SeedPaymentsAsync(IReadOnlyList<Renting> rentings, CancellationToken cancellationToken)
+    {
+        // Finished bookings are settled in full; in-progress ones carry a deposit;
+        // upcoming ones are mostly unpaid, which is what makes the client-balance
+        // and invoice "balance due" numbers interesting.
+        var payments = new List<Payment>();
+
+        foreach (var index in new[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 })
+        {
+            var renting = rentings[index];
+            payments.Add(Payment(renting, renting.Price!.Amount, (index % 3) switch
+            {
+                0 => PaymentMethod.Cash,
+                1 => PaymentMethod.Card,
+                _ => PaymentMethod.Transfer
+            }, DaysFromToday(renting.StartDate!.Value)));
+        }
+
+        // Part-payments on the live bookings.
+        payments.Add(Payment(rentings[12], 200m, PaymentMethod.Cash, -2));
+        payments.Add(Payment(rentings[13], 300m, PaymentMethod.Card, -1));
+        payments.Add(Payment(rentings[14], 150m, PaymentMethod.Cash, 0));
+
+        // A deposit on an upcoming booking.
+        payments.Add(Payment(rentings[16], 400m, PaymentMethod.Transfer, 0));
+
+        _context.Payments.AddRange(payments);
+        await _context.SaveChangesAsync(cancellationToken);
+
+        // A refund on the cancelled booking: money going back to the client, so a
+        // negative amount rather than a deleted row.
+        var cancelled = rentings[10];
+        var refunded = Payment(cancelled, 240m, PaymentMethod.Cash, -21);
+        _context.Payments.Add(refunded);
+        await _context.SaveChangesAsync(cancellationToken);
+
+        _context.Payments.Add(new Payment
+        {
+            ClientId = cancelled.ClientId,
+            RentingId = cancelled.Id,
+            PayementDate = Today.AddDays(-18),
+            PayementAmount = Money.Of(-240m, Currency),
+            Method = PaymentMethod.Cash,
+            IsRefund = true,
+            Notes = "Remboursement suite à l'annulation."
+        });
+
+        // A mistaken entry corrected by an offsetting reversal, which is how a
+        // wrong payment is undone — the original stays on the record.
+        var mistaken = Payment(rentings[8], 500m, PaymentMethod.Card, -11, "Saisie erronée.");
+        _context.Payments.Add(mistaken);
+        await _context.SaveChangesAsync(cancellationToken);
+
+        _context.Payments.Add(new Payment
+        {
+            ClientId = mistaken.ClientId,
+            RentingId = mistaken.RentingId,
+            PayementDate = Today.AddDays(-11),
+            PayementAmount = Money.Of(-500m, Currency),
+            Method = PaymentMethod.Card,
+            ReversesPaymentId = mistaken.Id,
+            Notes = "Contrepassation de la saisie erronée."
+        });
+
+        await _context.SaveChangesAsync(cancellationToken);
+    }
+
+    private async Task SeedReservationsAsync(
+        IReadOnlyList<Car> cars, IReadOnlyList<Client> clients, CancellationToken cancellationToken)
+    {
+        // One hold per status, so every branch of the reservation state machine has
+        // something behind it. Transitions go through the aggregate's own methods —
+        // Status has a private setter precisely so nothing sets it directly.
+        var expiryHours = 48;
+
+        var pending = Hold(cars[6], clients[2], +12, +15, expiryHours);
+        var confirmed = Hold(cars[7], clients[3], +14, +18, expiryHours);
+        var paid = Hold(cars[5], clients[4], +16, +20, expiryHours);
+        var rejected = Hold(cars[4], clients[5], +13, +16, expiryHours);
+        var cancelled = Hold(cars[8], clients[6], +18, +22, expiryHours);
+        var lapsed = Hold(cars[9], clients[7], +20, +24, -72);
+
+        confirmed.Confirm();
+
+        paid.Confirm();
+        paid.MarkPaid();
+
+        rejected.Reject("Véhicule déjà réservé pour cette période.");
+        cancelled.Cancel("Annulée à la demande du client.");
+        lapsed.Expire();
+
+        _context.Reservations.AddRange(pending, confirmed, paid, rejected, cancelled, lapsed);
+        await _context.SaveChangesAsync(cancellationToken);
+    }
+
+    private async Task SeedExpensesAsync(IReadOnlyList<Car> cars, CancellationToken cancellationToken)
+    {
+        var types = await _context.ExpenseTypes.OrderBy(t => t.Id).ToListAsync(cancellationToken);
+
+        if (types.Count == 0)
+        {
+            return;
+        }
+
+        _context.Expenses.AddRange(
+            Expense(cars[0], types[0], 180m, -50, "Vidange + filtres."),
+            Expense(cars[1], types[0], 165m, -44, "Vidange."),
+            Expense(cars[4], types[3], 640m, -33, "Deux pneus avant."),
+            Expense(cars[10], types[5], 1_450m, -12, "Réparation embrayage (immobilisé)."),
+            Expense(cars[3], types[4], 25m, -6, "Lavage complet."),
+            Expense(cars[8], types[1], 890m, -20, "Assurance trimestrielle."));
+
+        await _context.SaveChangesAsync(cancellationToken);
+    }
+
+    private async Task SeedTemplatesAndDocumentsAsync(
+        IReadOnlyList<Renting> rentings, CancellationToken cancellationToken)
+    {
+        // Two templates on purpose. The default needs nothing typed in, so
+        // generating a contract just works; the long-stay one asks for a franchise
+        // amount, which is what exercises the prompt-then-generate flow.
+        var standard = new DocumentTemplate
+        {
+            Name = "Contrat Carthage — standard",
+            Kind = DocumentTemplateKind.Contract,
+            Language = Languages.French,
+            IsDefault = true,
+            IsActive = true,
+            BlocksJson = DocumentTemplateBlocks.Serialize(StandardContractBlocks()),
+            Fields = new List<DocumentTemplateField>()
+        };
+
+        var longStay = new DocumentTemplate
+        {
+            Name = "Contrat Carthage — longue durée",
+            Kind = DocumentTemplateKind.Contract,
+            Language = Languages.French,
+            IsDefault = false,
+            IsActive = true,
+            BlocksJson = DocumentTemplateBlocks.Serialize(LongStayContractBlocks()),
+            Fields = new List<DocumentTemplateField>
+            {
+                new()
+                {
+                    Placeholder = "franchise",
+                    Binding = DocumentFieldBinding.AskEachTime,
+                    Label = "Franchise applicable (TND)",
+                    IsRequired = true
+                },
+                new()
+                {
+                    Placeholder = "kilometrageInclus",
+                    Binding = DocumentFieldBinding.FixedValue,
+                    FixedValue = "3 000 km / mois"
+                }
+            }
+        };
+
+        _context.DocumentTemplates.AddRange(standard, longStay);
+        await _context.SaveChangesAsync(cancellationToken);
+
+        // Auto-binding is left to the server-side reconcile for the standard
+        // template: every placeholder in it is a known booking field.
+        standard.Fields = DocumentTemplateFields.Reconcile(
+            DocumentTemplateBlocks.Deserialize(standard.BlocksJson),
+            Array.Empty<DocumentTemplateField>(),
+            DocumentTemplateKind.Contract);
+
+        longStay.Fields = DocumentTemplateFields.Reconcile(
+            DocumentTemplateBlocks.Deserialize(longStay.BlocksJson),
+            longStay.Fields!,
+            DocumentTemplateKind.Contract);
+
+        await _context.SaveChangesAsync(cancellationToken);
+
+        // Already-issued paperwork, so there are PDFs to open on day one. Each
+        // generation needs the write lock the numbering relies on, exactly as the
+        // commands do.
+        await IssueAsync(() => _documents.GenerateContractAsync(
+            new RentalDocumentRequest(rentings[0].Id), cancellationToken), cancellationToken);
+
+        await IssueAsync(() => _documents.GenerateContractAsync(
+            new RentalDocumentRequest(rentings[2].Id), cancellationToken), cancellationToken);
+
+        await IssueAsync(() => _documents.GenerateContractAsync(
+            new RentalDocumentRequest(
+                rentings[6].Id,
+                longStay.Id,
+                new Dictionary<string, string> { ["franchise"] = "500 TND" }),
+            cancellationToken), cancellationToken);
+
+        await IssueAsync(() => _documents.GenerateFactureAsync(
+            new RentalDocumentRequest(rentings[2].Id), cancellationToken), cancellationToken);
+
+        await IssueAsync(() => _documents.GenerateFactureAsync(
+            new RentalDocumentRequest(rentings[6].Id), cancellationToken), cancellationToken);
+    }
+
+    // The document service assigns MAX(sequence)+1 and does not commit; both are
+    // the caller's job (see IRentalDocumentService).
+    private async Task IssueAsync(Func<Task> generate, CancellationToken cancellationToken)
+    {
+        await using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
+        await _context.AcquireTenantWriteLockAsync(cancellationToken);
+
+        await generate();
+
+        await _context.SaveChangesAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+    }
+
+    // ---------------------------------------------------------------- agency 2
+
+    private async Task SeedSaharaAsync(
+        Agency agency,
+        Country country,
+        IReadOnlyDictionary<string, ModelCar> models,
+        CancellationToken cancellationToken)
+    {
+        var branch = new Branch
+        {
+            Name = "Agence Djerba Midoun",
+            CountryId = country.Id,
+            Location = new Point(10.9963, 33.8076) { SRID = 4326 }
+        };
+
+        _context.Branches.Add(branch);
+        await _context.SaveChangesAsync(cancellationToken);
+
+        var cars = new[]
+        {
+            Car("122 TU 4410", models["Picanto"], branch, 65m, "Blanc", 67, FuelType.Gasoline, 2023),
+            Car("122 TU 4411", models["i10"], branch, 65m, "Bleu", 67, FuelType.Gasoline, 2023),
+            Car("131 TU 7702", models["Symbol"], branch, 78m, "Gris", 75, FuelType.Diesel, 2022),
+            Car("145 TU 9915", models["Duster"], branch, 160m, "Blanc", 115, FuelType.Diesel, 2021),
+        };
+
+        _context.Cars.AddRange(cars);
+        await _context.SaveChangesAsync(cancellationToken);
+
+        var clients = new[]
+        {
+            Client("Fathi", "Kammoun", 1983, 2, 17, "07112244", null, "04-778811"),
+            Client("Salma", "Riahi", 1992, 12, 5, "07334455", null, "12-119933"),
+            Client("Ahmed", "Dridi", 1979, 7, 21, "07556677", "K3344551", "03-667722"),
+            Client("Olfa", "Mejri", 1995, 3, 30, "07778899", null, "15-882200"),
+            Client("Hamza", "Ltaief", 1987, 9, 12, "07990011", null, "09-114466"),
+        };
+
+        _context.Clients.AddRange(clients);
+        await _context.SaveChangesAsync(cancellationToken);
+
+        _context.Rentings.AddRange(
+            Renting(cars[0], clients[0], -18, -14, RentingState.Done, 22_100, 22_640),
+            Renting(cars[3], clients[2], -3, +2, RentingState.InProgress, 48_300),
+            Renting(cars[1], clients[3], +4, +9, RentingState.NotYet));
+
+        await _context.SaveChangesAsync(cancellationToken);
+    }
+
+    // ------------------------------------------------------- shared reference data
+
+    private async Task<IReadOnlyDictionary<string, ModelCar>> SeedCarCatalogAsync(
+        CancellationToken cancellationToken)
+    {
+        var catalog = new Dictionary<string, string[]>
+        {
+            ["Renault"] = new[] { "Clio 5", "Symbol", "Megane" },
+            ["Volkswagen"] = new[] { "Polo", "Golf 8" },
+            ["Peugeot"] = new[] { "208", "308" },
+            ["Kia"] = new[] { "Picanto", "Sportage" },
+            ["Hyundai"] = new[] { "i10", "Tucson" },
+            ["Toyota"] = new[] { "Yaris", "Corolla" },
+            ["Dacia"] = new[] { "Logan", "Duster" },
+        };
+
+        var models = new Dictionary<string, ModelCar>(StringComparer.Ordinal);
+
+        foreach (var (brandName, modelNames) in catalog)
+        {
+            var brand = await _context.Brands.FirstOrDefaultAsync(b => b.Name == brandName, cancellationToken);
+
+            if (brand is null)
+            {
+                brand = new Brand { Name = brandName };
+                _context.Brands.Add(brand);
+                await _context.SaveChangesAsync(cancellationToken);
+            }
+
+            foreach (var modelName in modelNames)
+            {
+                var model = await _context.ModelCars
+                    .FirstOrDefaultAsync(m => m.Name == modelName && m.BrandId == brand.Id, cancellationToken);
+
+                if (model is null)
+                {
+                    model = new ModelCar { Name = modelName, BrandId = brand.Id };
+                    _context.ModelCars.Add(model);
+                    await _context.SaveChangesAsync(cancellationToken);
+                }
+
+                models[modelName] = model;
+            }
+        }
+
+        return models;
+    }
+
+    private async Task<IReadOnlyList<ExtraServicesType>> SeedExtraServiceTypesAsync(
+        CancellationToken cancellationToken)
+    {
+        var wanted = new (string Name, decimal Amount)[]
+        {
+            ("GPS", 25m),
+            ("Siège bébé", 40m),
+            ("Conducteur additionnel", 60m),
+            ("Assurance tous risques", 90m),
+            ("Wifi portable", 30m),
+        };
+
+        var types = new List<ExtraServicesType>();
+
+        foreach (var (name, amount) in wanted)
+        {
+            var type = await _context.ExtraServicesTypes.FirstOrDefaultAsync(t => t.Name == name, cancellationToken);
+
+            if (type is null)
+            {
+                type = new ExtraServicesType { Name = name, Amount = amount, IsActive = true };
+                _context.ExtraServicesTypes.Add(type);
+                await _context.SaveChangesAsync(cancellationToken);
+            }
+
+            types.Add(type);
+        }
+
+        return types;
+    }
+
+    private async Task SeedExpenseTypesAsync(CancellationToken cancellationToken)
+    {
+        var wanted = new (string Name, bool Notify, int? Km, int? Months)[]
+        {
+            ("Vidange", true, 10_000, 12),
+            ("Assurance", true, null, 3),
+            ("Vignette", true, null, 12),
+            ("Pneus", true, 40_000, null),
+            ("Lavage", false, null, null),
+            ("Réparation", false, null, null),
+        };
+
+        foreach (var (name, notify, km, months) in wanted)
+        {
+            if (await _context.ExpenseTypes.AnyAsync(t => t.Name == name, cancellationToken))
+            {
+                continue;
+            }
+
+            _context.ExpenseTypes.Add(new ExpenseType
+            {
+                Name = name,
+                IsActive = true,
+                WithNotif = notify,
+                AfterKilometer = km,
+                AfterMonth = months
+            });
+        }
+
+        await _context.SaveChangesAsync(cancellationToken);
+    }
+
+    // ------------------------------------------------------------------ helpers
+
+    private async Task<Country> CountryAsync(string name, CancellationToken cancellationToken)
+    {
+        var country = await _context.Countries.FirstOrDefaultAsync(c => c.Name == name, cancellationToken);
+
+        if (country is null)
+        {
+            country = new Country { Name = name };
+            _context.Countries.Add(country);
+            await _context.SaveChangesAsync(cancellationToken);
+        }
+
+        return country;
+    }
+
+    private async Task EnsureRolesAsync()
+    {
+        foreach (var role in new[]
+                 {
+                     Roles.PlatformAdministrator, Roles.AgencyAdministrator,
+                     Roles.AgencyStaff, Roles.Customer
+                 })
+        {
+            if (!await _roleManager.RoleExistsAsync(role))
+            {
+                await _roleManager.CreateAsync(new IdentityRole(role));
+            }
+        }
+    }
+
+    /// <summary>
+    /// The named plan, created if the database does not have it. The two plans are
+    /// the point of the second agency: Starter withholds Payments, ExtraServices,
+    /// Contracts and Factures, so the feature gate is visible by logging in.
+    /// </summary>
+    private async Task<SubscriptionPlan> PlanAsync(string name, CancellationToken cancellationToken)
+    {
+        var plan = await _context.SubscriptionPlans.FirstOrDefaultAsync(p => p.Name == name, cancellationToken);
+
+        if (plan is not null)
+        {
+            return plan;
+        }
+
+        var features = name == "Starter"
+            ? new[]
+            {
+                FeatureFlags.Cars, FeatureFlags.Clients, FeatureFlags.Branches,
+                FeatureFlags.Rentings, FeatureFlags.Reservations,
+            }
+            : FeatureFlags.All;
+
+        plan = new SubscriptionPlan
+        {
+            Name = name,
+            MaxCars = name == "Starter" ? 10 : 1_000,
+            MaxClients = name == "Starter" ? 50 : 5_000,
+            MaxUsers = name == "Starter" ? 3 : 100,
+            Price = name == "Starter" ? 0m : 299m,
+            Features = features.Select(f => new PlanFeature { Feature = f }).ToList()
+        };
+
+        _context.SubscriptionPlans.Add(plan);
+        await _context.SaveChangesAsync(cancellationToken);
+
+        return plan;
+    }
+
+    private async Task<Agency> SeedAgencyAsync(
+        string name, string address, string phone, string email,
+        Country country, SubscriptionPlan plan, CancellationToken cancellationToken)
+    {
+        var now = _dateTime.GetUtcNow();
+
+        var agency = new Agency
+        {
+            Name = name,
+            Address = address,
+            PhoneNumber = phone,
+            Email = email,
+            CountryId = country.Id,
+            Settings = new AgencySettings
+            {
+                CurrencyCode = Currency,
+                CancellationWindowHours = 24,
+                ReservationExpiryHours = 48
+            }
+        };
+
+        _context.Agencies.Add(agency);
+        await _context.SaveChangesAsync(cancellationToken);
+
+        // Written before any tenant data: an agency without an active subscription
+        // cannot be written to at all (SubscriptionEnforcementInterceptor).
+        _context.AgencySubscriptions.Add(new AgencySubscription
+        {
+            AgencyId = agency.Id,
+            PlanId = plan.Id,
+            Status = SubscriptionStatus.Active,
+            StartDate = now.AddMonths(-6),
+            EndDate = now.AddYears(2)
+        });
+
+        await _context.SaveChangesAsync(cancellationToken);
+
+        return agency;
+    }
+
+    private async Task SeedUserAsync(
+        string email, string fullName, string role, int? agencyId, string[]? permissions = null)
+    {
+        var user = await _userManager.FindByNameAsync(email);
+
+        if (user is null)
+        {
+            user = new ApplicationUser
+            {
+                UserName = email,
+                Email = email,
+                EmailConfirmed = true,
+                FullName = fullName,
+                AgencyId = agencyId,
+                PreferredLanguage = Languages.French
+            };
+
+            var result = await _userManager.CreateAsync(user, DemoPassword);
+
+            if (!result.Succeeded)
+            {
+                _logger.LogWarning("Could not create demo user {Email}: {Errors}",
+                    email, string.Join("; ", result.Errors.Select(e => e.Description)));
+                return;
+            }
+        }
+
+        if (!await _userManager.IsInRoleAsync(user, role))
+        {
+            await _userManager.AddToRoleAsync(user, role);
+        }
+
+        // Administrators hold every permission by role, so grants are only written
+        // for staff.
+        foreach (var permission in permissions ?? Array.Empty<string>())
+        {
+            if (!await _context.UserPermissions.AnyAsync(p => p.UserId == user.Id && p.Permission == permission))
+            {
+                _context.UserPermissions.Add(new UserPermission { UserId = user.Id, Permission = permission });
+            }
+        }
+
+        await _context.SaveChangesAsync();
+    }
+
+    private Car Car(
+        string matricule, ModelCar model, Branch branch, decimal dailyRate,
+        string colour, int power, FuelType fuel, int firstCirculationYear,
+        CarStatus status = CarStatus.Active) => new()
+        {
+            Matricule = matricule,
+            ModelId = model.Id,
+            BranchId = branch.Id,
+            Status = status,
+            DailyRate = Money.Of(dailyRate, Currency),
+            Color = colour,
+            Power = power,
+            FuelType = fuel,
+            FirstCirculationDate = new DateTime(firstCirculationYear, 3, 1, 0, 0, 0, DateTimeKind.Utc)
+        };
+
+    private static Client Client(
+        string firstName, string lastName, int birthYear, int birthMonth, int birthDay,
+        string? cin, string? passport, string? licence,
+        bool flagged = false, string? notes = null) => new()
+        {
+            FirstName = firstName,
+            LastName = lastName,
+            BirthDate = new DateTime(birthYear, birthMonth, birthDay, 0, 0, 0, DateTimeKind.Utc),
+            BirthPlace = "Tunis",
+            CIN = cin,
+            CINDeliveranceDate = cin is null
+                ? null
+                : new DateTime(birthYear + 18, birthMonth, birthDay, 0, 0, 0, DateTimeKind.Utc),
+            CINDeliverancePlace = cin is null ? null : "Tunis",
+            PasseportNumber = passport,
+            DrivingLicenceNumber = licence,
+            DrivingLicenceDeliveranceDate = licence is null
+                ? null
+                : new DateTime(birthYear + 20, 6, 1, 0, 0, 0, DateTimeKind.Utc),
+            DrivingLicenceDeliverancePlace = licence is null ? null : "Tunis",
+            IsFlagged = flagged,
+            Notes = notes
+        };
+
+    private Renting Renting(
+        Car car, Client client, int startOffsetDays, int endOffsetDays, RentingState state,
+        int? startMileage = null, int? endMileage = null,
+        string? notes = null, Client? secondDriver = null)
+    {
+        var start = Today.AddDays(startOffsetDays);
+        var end = Today.AddDays(endOffsetDays);
+
+        return new Renting
+        {
+            CarId = car.Id,
+            ClientId = client.Id,
+            SecondClientId = secondDriver?.Id,
+            StartDate = start,
+            EndDate = end,
+            StartMileage = startMileage,
+            EndMileage = endMileage,
+            // From the pricing seam rather than a second copy of the arithmetic, so
+            // seeded prices match what the app would have quoted.
+            Price = _pricing.CalculateRentalPrice(car, start, end),
+            DepositAmount = Money.Of(300m, Currency),
+            RentingState = state,
+            Notes = notes
+        };
+    }
+
+    private Reservation Hold(
+        Car car, Client client, int startOffsetDays, int endOffsetDays, int expiryOffsetHours)
+    {
+        var start = Today.AddDays(startOffsetDays);
+        var end = Today.AddDays(endOffsetDays);
+
+        return Reservation.Create(
+            car.Id,
+            start,
+            end,
+            _pricing.CalculateRentalPrice(car, start, end),
+            _dateTime.GetUtcNow().UtcDateTime.AddHours(expiryOffsetHours),
+            client.Id,
+            depositAmount: Money.Of(200m, Currency));
+    }
+
+    private ExtraService Extra(Renting renting, ExtraServicesType type, decimal? overrideAmount = null) => new()
+    {
+        RentingId = renting.Id,
+        ExtraServicesTypeId = type.Id,
+        TotalAmount = Money.Of(overrideAmount ?? type.Amount ?? 0m, Currency)
+    };
+
+    private Payment Payment(
+        Renting renting, decimal amount, PaymentMethod method, int dayOffset, string? notes = null) => new()
+        {
+            ClientId = renting.ClientId,
+            RentingId = renting.Id,
+            PayementDate = Today.AddDays(dayOffset),
+            PayementAmount = Money.Of(amount, Currency),
+            Method = method,
+            Notes = notes
+        };
+
+    private Expense Expense(Car car, ExpenseType type, decimal amount, int dayOffset, string? notes) => new()
+    {
+        CarId = car.Id,
+        ExpenseTypeId = type.Id,
+        ExpenseDate = Today.AddDays(dayOffset),
+        ExpenseAmount = Money.Of(amount, Currency),
+        Description = notes
+    };
+
+    private int DaysFromToday(DateTime date) => (int)(date.Date - Today).TotalDays;
+
+    // The default contract layout, as blocks. Mirrors the shipped example's shape
+    // but in the agency's own words, so editing it in the UI shows a real template
+    // rather than a copy of the fallback.
+    private static List<DocumentBlock> StandardContractBlocks() => new()
+    {
+        new DocumentBlock { Type = DocumentBlockType.Heading, Text = "CONTRAT DE LOCATION" },
+        new DocumentBlock
+        {
+            Type = DocumentBlockType.Paragraph,
+            Fine = true,
+            Text = "N° {{document.number}} — Établi le {{document.issuedAt}}"
+        },
+        new DocumentBlock
+        {
+            Type = DocumentBlockType.Fields,
+            SideBySide = true,
+            Title = "Loueur",
+            Fields = new List<DocumentBlockField>
+            {
+                new() { Value = "{{agency.name}}" },
+                new() { Value = "{{agency.address}}", HideWhenEmpty = true },
+                new() { Value = "{{agency.phoneNumber}}", HideWhenEmpty = true },
+            }
+        },
+        new DocumentBlock
+        {
+            Type = DocumentBlockType.Fields,
+            SideBySide = true,
+            Title = "Locataire",
+            Fields = new List<DocumentBlockField>
+            {
+                new() { Value = "{{client.fullName}}" },
+                new() { Label = "Né(e) le", Value = "{{client.birthDate}}", HideWhenEmpty = true },
+                new() { Label = "CIN", Value = "{{client.cin}}", HideWhenEmpty = true },
+                new() { Label = "Passeport", Value = "{{client.passeportNumber}}", HideWhenEmpty = true },
+                new() { Label = "Permis", Value = "{{client.drivingLicenceNumber}}", HideWhenEmpty = true },
+            }
+        },
+        new DocumentBlock
+        {
+            Type = DocumentBlockType.Fields,
+            Title = "Véhicule",
+            Fields = new List<DocumentBlockField>
+            {
+                new() { Label = "Modèle", Value = "{{car.model}}", HideWhenEmpty = true },
+                new() { Label = "Immatriculation", Value = "{{car.matricule}}", HideWhenEmpty = true },
+                new() { Label = "Couleur", Value = "{{car.color}}", HideWhenEmpty = true },
+                new() { Label = "Carburant", Value = "{{car.fuelType}}", HideWhenEmpty = true },
+            }
+        },
+        new DocumentBlock
+        {
+            Type = DocumentBlockType.Fields,
+            Title = "Période et tarif",
+            Fields = new List<DocumentBlockField>
+            {
+                new() { Label = "Du", Value = "{{renting.startDate}}" },
+                new() { Label = "Au", Value = "{{renting.endDate}}" },
+                new() { Label = "Durée", Value = "{{renting.days}} jour(s)" },
+                new() { Label = "Kilométrage au départ", Value = "{{renting.startMileage}}", HideWhenEmpty = true },
+                new() { Label = "Montant", Value = "{{renting.price}}" },
+                new() { Label = "Caution", Value = "{{renting.deposit}}", HideWhenEmpty = true },
+            }
+        },
+        new DocumentBlock
+        {
+            Type = DocumentBlockType.Paragraph,
+            Fine = true,
+            Text = "Le locataire reconnaît avoir reçu le véhicule décrit ci-dessus en bon état de "
+                 + "fonctionnement et s'engage à le restituer à la date convenue, dans le même état et avec "
+                 + "le même niveau de carburant. Le locataire demeure responsable des amendes et dommages "
+                 + "survenus pendant la période de location."
+        },
+        new DocumentBlock
+        {
+            Type = DocumentBlockType.Signatures,
+            Labels = new List<string> { "Signature du loueur", "Signature du locataire" }
+        },
+    };
+
+    // The long-stay variant: same spine, plus the two placeholders that are not in
+    // anybody's database column — one asked for each time, one fixed on the template.
+    private static List<DocumentBlock> LongStayContractBlocks()
+    {
+        var blocks = StandardContractBlocks();
+
+        blocks.Insert(blocks.Count - 1, new DocumentBlock
+        {
+            Type = DocumentBlockType.Fields,
+            Title = "Conditions longue durée",
+            Fields = new List<DocumentBlockField>
+            {
+                new() { Label = "Franchise", Value = "{{franchise}}" },
+                new() { Label = "Kilométrage inclus", Value = "{{kilometrageInclus}}" },
+                new() { Label = "Lieu de restitution", Value = string.Empty },
+            }
+        });
+
+        return blocks;
+    }
+}
