@@ -37,12 +37,18 @@ import { ReservationComponent } from './reservation/reservation.component';
 import { ReservationFormComponent } from './reservation/reservation-form.component';
 import { ExtraServiceTypeComponent } from './extra-service-type/extra-service-type.component';
 import { ExpenseTypeComponent } from './expense-type/expense-type.component';
+import { ExpenseComponent } from './expense/expense.component';
+import { ExpenseFormComponent } from './expense/expense-form.component';
+import { CreditComponent } from './credit/credit.component';
+import { DashboardComponent } from './dashboard/dashboard.component';
+import { ChatComponent } from './chat/chat.component';
 import { DocumentTemplateComponent } from './document-template/document-template.component';
 import { DocumentTemplateFormComponent } from './document-template/document-template-form.component';
 import { ProfileComponent } from './profile/profile.component';
 import { MarketplaceSearchComponent } from './marketplace/marketplace-search.component';
 import { MarketplaceCarComponent } from './marketplace/marketplace-car.component';
 import { MyReservationsComponent } from './marketplace/my-reservations.component';
+import { MyChatsComponent } from './marketplace/my-chats.component';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -98,12 +104,18 @@ registerLocaleData(localeAr);
     ReservationFormComponent,
     ExtraServiceTypeComponent,
     ExpenseTypeComponent,
+    ExpenseComponent,
+    ExpenseFormComponent,
+    CreditComponent,
+    DashboardComponent,
+    ChatComponent,
     DocumentTemplateComponent,
     DocumentTemplateFormComponent,
     ProfileComponent,
     MarketplaceSearchComponent,
     MarketplaceCarComponent,
-    MyReservationsComponent
+    MyReservationsComponent,
+    MyChatsComponent
   ],
   bootstrap: [AppComponent],
   imports: [
@@ -145,6 +157,12 @@ registerLocaleData(localeAr);
       { path: 'reservation/:id', component: ReservationFormComponent },
       { path: 'extra-service-type', component: ExtraServiceTypeComponent },
       { path: 'expense-type', component: ExpenseTypeComponent },
+      { path: 'expense', component: ExpenseComponent },
+      { path: 'expense/new', component: ExpenseFormComponent },
+      { path: 'expense/:id', component: ExpenseFormComponent },
+      { path: 'credit', component: CreditComponent },
+      { path: 'dashboard', component: DashboardComponent },
+      { path: 'chat', component: ChatComponent },
       { path: 'document-template', component: DocumentTemplateComponent },
       { path: 'document-template/new', component: DocumentTemplateFormComponent },
       { path: 'document-template/:id', component: DocumentTemplateFormComponent },
@@ -152,6 +170,7 @@ registerLocaleData(localeAr);
       { path: 'browse', component: MarketplaceSearchComponent },
       { path: 'browse/car/:id', component: MarketplaceCarComponent },
       { path: 'my-reservations', component: MyReservationsComponent },
+      { path: 'my-chats', component: MyChatsComponent },
 
       // Platform-admin console.
       { path: 'agency', component: AgencyComponent },

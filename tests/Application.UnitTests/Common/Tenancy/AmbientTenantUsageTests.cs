@@ -19,8 +19,11 @@ public class AmbientTenantUsageTests
     {
         Normalize("Infrastructure/Imaging/CarImageProcessingJob.cs"),
         Normalize("Infrastructure/Jobs/ReservationExpiryJob.cs"),
+        // The demo seeder writes each sample agency's data in turn, so it acts
+        // as every tenant by design.
+        Normalize("Infrastructure/Data/DemoDataSeeder.cs"),
         // Customer marketplace commands act as the car's agency to create/cancel
-        // a hold cross-tenant.
+        // a hold, and to post/read the customer's side of a renting's chat.
         Normalize("Features/Marketplace/Commands/"),
         Normalize("Web/Middleware/PlatformAdminImpersonationMiddleware.cs"),
         Normalize("Features/Users/Commands/CreateAgencyUserByAdminCommand/"),

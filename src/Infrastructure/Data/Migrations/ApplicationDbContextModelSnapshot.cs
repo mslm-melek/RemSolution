@@ -620,6 +620,63 @@ namespace RemSolution.Infrastructure.Data.Migrations
                     b.ToTable("CarImages");
                 });
 
+            modelBuilder.Entity("RemSolution.Domain.Entities.ChatMessage", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AgencyId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("AuthorKind")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Body")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTimeOffset?>("CreatedOn")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTime?>("ReadAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("RentingId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("SenderName")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("SenderUserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime>("SentAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTimeOffset?>("UpdatedOn")
+                        .HasColumnType("datetimeoffset");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RentingId");
+
+                    b.HasIndex("AgencyId", "RentingId", "SentAt");
+
+                    b.ToTable("ChatMessages", (string)null);
+                });
+
             modelBuilder.Entity("RemSolution.Domain.Entities.Client", b =>
                 {
                     b.Property<int>("Id")
@@ -1021,7 +1078,8 @@ namespace RemSolution.Infrastructure.Data.Migrations
                         .HasColumnType("datetimeoffset");
 
                     b.Property<string>("Description")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
 
                     b.Property<DateTime>("ExpenseDate")
                         .HasColumnType("datetime2");
@@ -2067,6 +2125,25 @@ namespace RemSolution.Infrastructure.Data.Migrations
                     b.Navigation("ThumbnailFile");
                 });
 
+            modelBuilder.Entity("RemSolution.Domain.Entities.ChatMessage", b =>
+                {
+                    b.HasOne("RemSolution.Domain.Entities.Agency", "Agency")
+                        .WithMany()
+                        .HasForeignKey("AgencyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("RemSolution.Domain.Entities.Renting", "Renting")
+                        .WithMany("ChatMessages")
+                        .HasForeignKey("RentingId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Agency");
+
+                    b.Navigation("Renting");
+                });
+
             modelBuilder.Entity("RemSolution.Domain.Entities.Client", b =>
                 {
                     b.HasOne("RemSolution.Domain.Entities.Agency", "Agency")
@@ -2240,6 +2317,30 @@ namespace RemSolution.Infrastructure.Data.Migrations
                                 .HasForeignKey("ExpenseId");
                         });
 
+                    b.OwnsOne("RemSolution.Domain.ValueObjects.Money", "PaidAmount", b1 =>
+                        {
+                            b1.Property<int>("ExpenseId")
+                                .HasColumnType("int");
+
+                            b1.Property<decimal>("Amount")
+                                .HasColumnType("decimal(18,2)")
+                                .HasColumnName("PaidAmount");
+
+                            b1.Property<string>("Currency")
+                                .IsRequired()
+                                .HasMaxLength(3)
+                                .IsUnicode(false)
+                                .HasColumnType("varchar(3)")
+                                .HasColumnName("PaidAmountCurrency");
+
+                            b1.HasKey("ExpenseId");
+
+                            b1.ToTable("Expenses");
+
+                            b1.WithOwner()
+                                .HasForeignKey("ExpenseId");
+                        });
+
                     b.Navigation("Agency");
 
                     b.Navigation("Car");
@@ -2249,6 +2350,8 @@ namespace RemSolution.Infrastructure.Data.Migrations
                     b.Navigation("ExpenseType");
 
                     b.Navigation("FactureFile");
+
+                    b.Navigation("PaidAmount");
                 });
 
             modelBuilder.Entity("RemSolution.Domain.Entities.ExtraService", b =>
@@ -2834,6 +2937,8 @@ namespace RemSolution.Infrastructure.Data.Migrations
 
             modelBuilder.Entity("RemSolution.Domain.Entities.Renting", b =>
                 {
+                    b.Navigation("ChatMessages");
+
                     b.Navigation("Contracts");
 
                     b.Navigation("ExtraServices");

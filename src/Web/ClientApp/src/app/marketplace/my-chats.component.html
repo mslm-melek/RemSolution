@@ -1,0 +1,94 @@
+<div class="chat-card mat-elevation-z4" *transloco="let t">
+  <div class="header-row">
+    <h2 class="title">{{ t('chat.myTitle') }}</h2>
+  </div>
+
+  <div *ngIf="errorMessage" class="error-banner">{{ errorMessage }}</div>
+
+  <div class="chat-layout">
+    <div class="thread-list">
+      <div class="thread" *ngFor="let thread of threads"
+           [class.active]="selected?.rentingId === thread.rentingId"
+           (click)="open(thread)">
+        <div class="thread-head">
+          <span class="thread-client">{{ thread.agencyName }}</span>
+          <span class="badge" *ngIf="thread.unreadCount">{{ thread.unreadCount }}</span>
+        </div>
+        <div class="thread-sub">
+          {{ carLabel(thread) }}
+          <span class="muted" *ngIf="thread.startDate">
+            · {{ thread.startDate | date:'yyyy-MM-dd' }}
+          </span>
+        </div>
+        <div class="thread-preview" *ngIf="thread.lastMessagePreview">
+          <span class="muted" *ngIf="thread.lastMessageAuthorKind === ChatAuthorKind.Client">
+            {{ t('chat.youPrefix') }}
+          </span>
+          {{ thread.lastMessagePreview }}
+        </div>
+        <div class="thread-preview muted" *ngIf="!thread.lastMessagePreview">
+          {{ t('chat.noMessagesYet') }}
+        </div>
+        <div class="thread-closed muted" *ngIf="!thread.isOpen">{{ t('chat.closed') }}</div>
+      </div>
+
+      <div class="empty-row" *ngIf="!threads.length">{{ t('chat.noMyThreads') }}</div>
+    </div>
+
+    <div class="thread-pane" *ngIf="selected; else noSelection">
+      <div class="pane-head">
+        <div>
+          <div class="pane-title">{{ selected.agencyName }}</div>
+          <div class="muted">
+            {{ carLabel(selected) }}
+            <span *ngIf="selected.startDate">
+              · {{ selected.startDate | date:'yyyy-MM-dd' }} → {{ selected.endDate | date:'yyyy-MM-dd' }}
+            </span>
+          </div>
+        </div>
+        <div class="pane-actions">
+          <button mat-icon-button (click)="close()" [attr.aria-label]="t('common.dismiss')">
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+      </div>
+
+      <div class="messages">
+        <!-- Mirror of the agency view: here the CLIENT's messages are "mine". -->
+        <div class="message" *ngFor="let message of messages"
+             [class.mine]="message.authorKind === ChatAuthorKind.Client"
+             [class.theirs]="message.authorKind === ChatAuthorKind.Agency">
+          <div class="bubble">
+            <div class="bubble-body">{{ message.body }}</div>
+            <div class="bubble-meta">
+              <span>{{ message.senderName }}</span>
+              <span>{{ message.sentAt | date:'yyyy-MM-dd HH:mm' }}</span>
+              <mat-icon class="read-tick" *ngIf="message.authorKind === ChatAuthorKind.Client && message.readAt"
+                        [matTooltip]="t('chat.read')">done_all</mat-icon>
+            </div>
+          </div>
+        </div>
+
+        <div class="empty-row" *ngIf="!messages.length">{{ t('chat.startConversation') }}</div>
+      </div>
+
+      <div class="composer" *ngIf="selected.isOpen">
+        <mat-form-field appearance="outline" class="composer-input">
+          <mat-label>{{ t('chat.yourMessage') }}</mat-label>
+          <textarea matInput rows="2" [(ngModel)]="draft" (keydown.enter)="send($event)"></textarea>
+        </mat-form-field>
+        <button mat-raised-button color="primary" (click)="send()" [disabled]="sending || !draft.trim()">
+          <mat-icon>send</mat-icon> {{ t('chat.send') }}
+        </button>
+      </div>
+
+      <div class="composer-note muted" *ngIf="!selected.isOpen">{{ t('chat.closedNote') }}</div>
+    </div>
+
+    <ng-template #noSelection>
+      <div class="thread-pane empty">
+        <div class="empty-row">{{ t('chat.pickThread') }}</div>
+      </div>
+    </ng-template>
+  </div>
+</div>

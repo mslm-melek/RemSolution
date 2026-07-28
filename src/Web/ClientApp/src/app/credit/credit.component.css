@@ -1,0 +1,116 @@
+.credit-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 24px;
+  max-width: 1100px;
+  margin: 40px auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.title {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+  color: #333;
+}
+
+.error-banner {
+  background: #fdecea;
+  color: #b71c1c;
+  padding: 0.75rem 1rem;
+  border-radius: 4px;
+}
+
+.summary-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.summary-tile {
+  border-radius: 10px;
+  padding: 16px;
+  border-left: 4px solid #bdbdbd;
+  background: #fafafa;
+}
+
+/* Money coming in, money going out, and the difference — coloured so the
+   direction is readable before the numbers are. */
+.summary-tile.owed-to {
+  border-left-color: #2e7d32;
+}
+
+.summary-tile.owed-by {
+  border-left-color: #b71c1c;
+}
+
+.summary-tile.net {
+  border-left-color: #1565c0;
+}
+
+.tile-label {
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #666;
+}
+
+.tile-value {
+  font-size: 22px;
+  font-weight: 600;
+  margin-top: 4px;
+}
+
+.tile-note {
+  font-size: 12px;
+  color: #777;
+  margin-top: 4px;
+}
+
+.tab-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-top: 16px;
+}
+
+.filter-row {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.search-input {
+  flex: 1;
+  min-width: 240px;
+}
+
+.full-width {
+  width: 100%;
+}
+
+.owing {
+  color: #b71c1c;
+  font-weight: 600;
+}
+
+.settled {
+  color: #2e7d32;
+}
+
+.empty-row {
+  padding: 16px;
+  text-align: center;
+  color: #777;
+}

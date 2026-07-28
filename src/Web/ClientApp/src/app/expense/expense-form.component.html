@@ -1,0 +1,65 @@
+<div class="expense-form-card mat-elevation-z4" *transloco="let t">
+  <div class="header-row">
+    <h2 class="title">{{ isEdit ? t('expense.editTitle') : t('expense.newTitle') }}</h2>
+    <a mat-stroked-button [routerLink]="['/expense']">
+      <mat-icon>arrow_back</mat-icon> {{ t('common.backToList') }}
+    </a>
+  </div>
+
+  <div *ngIf="errorMessage" class="error-banner">{{ errorMessage }}</div>
+
+  <form [formGroup]="form" (ngSubmit)="save()" class="form-grid">
+    <mat-form-field appearance="outline">
+      <mat-label>{{ t('expense.car') }}</mat-label>
+      <mat-select formControlName="carId">
+        <mat-option *ngFor="let car of cars" [value]="car.id">{{ carLabel(car) }}</mat-option>
+      </mat-select>
+      <mat-error *ngIf="form.get('carId')?.hasError('required')">{{ t('expense.carRequired') }}</mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>{{ t('expense.expenseType') }}</mat-label>
+      <mat-select formControlName="expenseTypeId">
+        <mat-option *ngFor="let type of types" [value]="type.id">{{ type.name }}</mat-option>
+      </mat-select>
+      <mat-error *ngIf="form.get('expenseTypeId')?.hasError('required')">
+        {{ t('expense.typeRequired') }}
+      </mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>{{ t('common.date') }}</mat-label>
+      <input matInput type="date" formControlName="expenseDate" />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>{{ t('common.amount') }}</mat-label>
+      <input matInput type="number" min="0" step="0.01" formControlName="amount" />
+      <mat-error *ngIf="form.get('amount')?.invalid">{{ t('expense.amountRequired') }}</mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" *ngIf="!isEdit">
+      <mat-label>{{ t('expense.paidNow') }}</mat-label>
+      <input matInput type="number" min="0" step="0.01" formControlName="paidAmount" />
+      <mat-hint>{{ t('expense.paidNowHint') }}</mat-hint>
+    </mat-form-field>
+
+    <!-- On edit the settled total is shown but not editable: it only moves
+         through the settle action on the list. -->
+    <div class="settled-note" *ngIf="isEdit">
+      {{ t('expense.alreadySettled', { amount: settled, currency: currency }) }}
+    </div>
+
+    <mat-form-field appearance="outline" class="span-2">
+      <mat-label>{{ t('common.description') }}</mat-label>
+      <textarea matInput rows="3" formControlName="description"></textarea>
+    </mat-form-field>
+
+    <div class="actions span-2">
+      <button mat-raised-button color="primary" type="submit" [disabled]="saving">
+        <mat-icon>save</mat-icon> {{ saving ? t('common.saving') : t('common.save') }}
+      </button>
+      <button mat-stroked-button type="button" (click)="cancel()">{{ t('common.cancel') }}</button>
+    </div>
+  </form>
+</div>

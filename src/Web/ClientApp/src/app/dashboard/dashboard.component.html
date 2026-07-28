@@ -1,0 +1,128 @@
+<div class="dashboard" *transloco="let t">
+  <div class="header-row">
+    <h2 class="title">{{ t('dashboard.title') }}</h2>
+    <span class="period" *ngIf="data">
+      {{ data.periodStart | date:'yyyy-MM-dd' }} → {{ data.periodEnd | date:'yyyy-MM-dd' }}
+    </span>
+  </div>
+
+  <div *ngIf="errorMessage" class="error-banner">{{ errorMessage }}</div>
+  <div *ngIf="loading" class="loading">{{ t('common.loading') }}</div>
+
+  <ng-container *ngIf="data">
+    <!-- Money first: the figures the owner opens the screen for. -->
+    <h3 class="section-title">{{ t('dashboard.moneySection') }}</h3>
+    <div class="tile-grid">
+      <div class="tile money">
+        <div class="tile-label">{{ t('dashboard.collected') }}</div>
+        <div class="tile-value">{{ data.collectedInPeriod?.amount | number:'1.2-2' }} {{ data.currency }}</div>
+        <div class="tile-note">{{ t('dashboard.inPeriod') }}</div>
+      </div>
+
+      <div class="tile money">
+        <div class="tile-label">{{ t('dashboard.charged') }}</div>
+        <div class="tile-value">{{ data.chargedInPeriod?.amount | number:'1.2-2' }} {{ data.currency }}</div>
+        <div class="tile-note">{{ t('dashboard.chargedHint') }}</div>
+      </div>
+
+      <div class="tile expense">
+        <div class="tile-label">{{ t('dashboard.expenses') }}</div>
+        <div class="tile-value">{{ data.expensesInPeriod?.amount | number:'1.2-2' }} {{ data.currency }}</div>
+        <div class="tile-note">{{ t('dashboard.inPeriod') }}</div>
+      </div>
+
+      <div class="tile net">
+        <div class="tile-label">{{ t('dashboard.net') }}</div>
+        <div class="tile-value">{{ data.netInPeriod?.amount | number:'1.2-2' }} {{ data.currency }}</div>
+        <div class="tile-note">{{ t('dashboard.netHint') }}</div>
+      </div>
+
+      <div class="tile owing">
+        <div class="tile-label">{{ t('dashboard.clientsOutstanding') }}</div>
+        <div class="tile-value">{{ data.clientsOutstanding?.amount | number:'1.2-2' }} {{ data.currency }}</div>
+        <div class="tile-note">{{ t('dashboard.allTime') }}</div>
+      </div>
+
+      <div class="tile owing">
+        <div class="tile-label">{{ t('dashboard.expensesOutstanding') }}</div>
+        <div class="tile-value">{{ data.expensesOutstanding?.amount | number:'1.2-2' }} {{ data.currency }}</div>
+        <div class="tile-note">{{ t('dashboard.allTime') }}</div>
+      </div>
+    </div>
+
+    <!-- Collected vs spent per month; bars are relative to the tallest value. -->
+    <h3 class="section-title">{{ t('dashboard.trendSection') }}</h3>
+    <div class="chart">
+      <div class="chart-legend">
+        <span class="legend collected">{{ t('dashboard.collected') }}</span>
+        <span class="legend spent">{{ t('dashboard.expenses') }}</span>
+      </div>
+      <div class="bars">
+        <div class="month" *ngFor="let point of data.monthlySeries">
+          <div class="bar-pair">
+            <div class="bar collected" [style.height]="barHeight(point.collected?.amount)"
+                 [matTooltip]="(point.collected?.amount | number:'1.2-2') + ' ' + data.currency"></div>
+            <div class="bar spent" [style.height]="barHeight(point.expenses?.amount)"
+                 [matTooltip]="(point.expenses?.amount | number:'1.2-2') + ' ' + data.currency"></div>
+          </div>
+          <div class="month-label">{{ monthLabel(point) }}</div>
+        </div>
+      </div>
+    </div>
+
+    <h3 class="section-title">{{ t('dashboard.clientsSection') }}</h3>
+    <div class="tile-grid">
+      <div class="tile">
+        <div class="tile-label">{{ t('dashboard.totalClients') }}</div>
+        <div class="tile-value">{{ data.totalClients }}</div>
+      </div>
+      <div class="tile">
+        <div class="tile-label">{{ t('dashboard.newClients') }}</div>
+        <div class="tile-value">{{ data.newClientsInPeriod }}</div>
+        <div class="tile-note">{{ t('dashboard.inPeriod') }}</div>
+      </div>
+      <div class="tile">
+        <div class="tile-label">{{ t('dashboard.clientsInDebt') }}</div>
+        <div class="tile-value">{{ data.clientsInDebtCount }}</div>
+      </div>
+      <div class="tile">
+        <div class="tile-label">{{ t('dashboard.flaggedClients') }}</div>
+        <div class="tile-value">{{ data.flaggedClients }}</div>
+      </div>
+    </div>
+
+    <h3 class="section-title">{{ t('dashboard.fleetSection') }}</h3>
+    <div class="tile-grid">
+      <div class="tile">
+        <div class="tile-label">{{ t('dashboard.totalCars') }}</div>
+        <div class="tile-value">{{ data.totalCars }}</div>
+      </div>
+      <div class="tile">
+        <div class="tile-label">{{ t('dashboard.activeCars') }}</div>
+        <div class="tile-value">{{ data.activeCars }}</div>
+      </div>
+      <div class="tile">
+        <div class="tile-label">{{ t('dashboard.carsOnRent') }}</div>
+        <div class="tile-value">{{ data.carsOnRent }}</div>
+      </div>
+      <div class="tile">
+        <div class="tile-label">{{ t('dashboard.rentingsInProgress') }}</div>
+        <div class="tile-value">{{ data.rentingsInProgress }}</div>
+      </div>
+      <div class="tile">
+        <div class="tile-label">{{ t('dashboard.rentingsUpcoming') }}</div>
+        <div class="tile-value">{{ data.rentingsUpcoming }}</div>
+      </div>
+      <div class="tile">
+        <div class="tile-label">{{ t('dashboard.returnsDue') }}</div>
+        <div class="tile-value">{{ data.returnsDueInPeriod }}</div>
+        <div class="tile-note">{{ t('dashboard.inPeriod') }}</div>
+      </div>
+      <div class="tile action" *ngIf="data.pendingReservationRequests">
+        <div class="tile-label">{{ t('dashboard.pendingRequests') }}</div>
+        <div class="tile-value">{{ data.pendingReservationRequests }}</div>
+        <a [routerLink]="['/reservation']">{{ t('dashboard.reviewRequests') }}</a>
+      </div>
+    </div>
+  </ng-container>
+</div>

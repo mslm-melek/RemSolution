@@ -68,6 +68,15 @@ public partial class Testing
         _agencyId = agencyId;
     }
 
+    // Act as a user who already exists, without re-creating the account —
+    // e.g. switching back and forth between an agency user and the marketplace
+    // customer they are talking to. Roles and permissions are read from the
+    // database against this id, so this switches capability too.
+    public static void SetCurrentUser(string? userId)
+    {
+        _userId = userId;
+    }
+
     public static async Task<string> RunAsDefaultUserAsync()
     {
         return await RunAsUserAsync("test@local", "Testing1234!", Array.Empty<string>());

@@ -28,7 +28,7 @@ public static class FeatureCatalog
             [FeatureFlags.Factures] = new[] { Permissions.FactureRead, Permissions.FactureGenerate },
             [FeatureFlags.Credits] = new[] { Permissions.CreditRead },
             [FeatureFlags.Dashboard] = new[] { Permissions.DashboardView },
-            [FeatureFlags.Chat] = new[] { Permissions.ChatView },
+            [FeatureFlags.Chat] = new[] { Permissions.ChatView, Permissions.ChatSend },
             [FeatureFlags.OnlineReservations] = Array.Empty<string>(),
             [FeatureFlags.OnlinePayment] = Array.Empty<string>(),
         };

@@ -13,6 +13,9 @@ public class ExpenseConfiguration : IEntityTypeConfiguration<Expense>
         builder.HasAgencyTenant(nameof(Expense.ExpenseDate));
 
         builder.OwnsMoney(e => e.ExpenseAmount, "ExpenseAmount", "ExpenseAmountCurrency");
+        builder.OwnsMoney(e => e.PaidAmount, "PaidAmount", "PaidAmountCurrency");
+
+        builder.Property(e => e.Description).HasMaxLength(1000);
 
         builder.HasOne(e => e.Car)
               .WithMany(c => c.Expenses) // si navigation dans Car

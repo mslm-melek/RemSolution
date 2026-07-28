@@ -43,7 +43,7 @@ export const PERMISSIONS_BY_FEATURE: Record<string, string[]> = {
   Factures: ['Facture.Read', 'Facture.Generate'],
   Credits: ['Credit.Read'],
   Dashboard: ['Dashboard.View'],
-  Chat: ['Chat.View'],
+  Chat: ['Chat.View', 'Chat.Send'],
   OnlineReservations: [],
   OnlinePayment: []
 };

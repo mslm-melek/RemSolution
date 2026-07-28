@@ -53,12 +53,23 @@
            [routerLink]="['/my-reservations']"
            [routerLinkActive]="['link-active']"
            (click)="collapse()">{{ t('nav.myReservations') }}</a>
+        <!-- Not feature-gated: the customer's own threads. An agency without the
+             Chat feature simply never opens one, so the list stays empty. -->
+        <a mat-button
+           [routerLink]="['/my-chats']"
+           [routerLinkActive]="['link-active']"
+           (click)="collapse()">{{ t('nav.myChats') }}</a>
       </ng-container>
 
       <!-- Agency users: primary entities in the bar; all configuration and
            reference data grouped under Config. Each item stays gated by its
            own feature / role. -->
       <ng-container *ngIf="!isPlatformAdmin && !isCustomer">
+        <a mat-button
+           *ngIf="canAccessDashboard"
+           [routerLink]="['/dashboard']"
+           [routerLinkActive]="['link-active']"
+           (click)="collapse()">{{ t('nav.dashboard') }}</a>
         <a mat-button
            *ngIf="canAccessCars"
            [routerLink]="['/car']"
@@ -79,6 +90,21 @@
            [routerLink]="['/client']"
            [routerLinkActive]="['link-active']"
            (click)="collapse()">{{ t('nav.clients') }}</a>
+        <a mat-button
+           *ngIf="canAccessExpenses"
+           [routerLink]="['/expense']"
+           [routerLinkActive]="['link-active']"
+           (click)="collapse()">{{ t('nav.expenses') }}</a>
+        <a mat-button
+           *ngIf="canAccessCredits"
+           [routerLink]="['/credit']"
+           [routerLinkActive]="['link-active']"
+           (click)="collapse()">{{ t('nav.credits') }}</a>
+        <a mat-button
+           *ngIf="canAccessChat"
+           [routerLink]="['/chat']"
+           [routerLinkActive]="['link-active']"
+           (click)="collapse()">{{ t('nav.chat') }}</a>
 
         <!-- Config: reference catalogs, staff and car reference data. -->
         <ng-container *ngIf="canAccessConfig">

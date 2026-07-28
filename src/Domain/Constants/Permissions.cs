@@ -62,6 +62,10 @@ public abstract class Permissions
     public const string DashboardView = "Dashboard.View";
 
     public const string ChatView = "Chat.View";
+    // Reading a client conversation and answering in it are separate grants, the
+    // same way Contract.Read and Contract.Generate are: a supervisor may need to
+    // review threads without speaking for the agency.
+    public const string ChatSend = "Chat.Send";
 
     /// <summary>Every known permission — drives policy registration.</summary>
     public static readonly string[] All =
@@ -78,7 +82,7 @@ public abstract class Permissions
         FactureRead, FactureGenerate,
         CreditRead,
         DashboardView,
-        ChatView,
+        ChatView, ChatSend,
     };
 
     /// <summary>

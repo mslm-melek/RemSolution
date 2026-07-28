@@ -32,5 +32,8 @@
         // document rather than replacing the previous one (see Contract/Facture).
         public virtual ICollection<Contract>? Contracts { get; set; }
         public virtual ICollection<Facture>? Factures { get; set; }
+        // The renting doubles as the agency ⇄ client conversation thread; see
+        // ChatMessage. Ordered by SentAt on read, not stored ordered.
+        public virtual ICollection<ChatMessage>? ChatMessages { get; set; }
     }
 }

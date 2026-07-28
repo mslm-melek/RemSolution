@@ -1,0 +1,177 @@
+.dashboard {
+  max-width: 1100px;
+  margin: 40px auto;
+  padding: 0 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.title {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+  color: #333;
+}
+
+.period {
+  color: #777;
+  font-size: 13px;
+}
+
+.error-banner {
+  background: #fdecea;
+  color: #b71c1c;
+  padding: 0.75rem 1rem;
+  border-radius: 4px;
+}
+
+.loading {
+  color: #777;
+}
+
+.section-title {
+  margin: 16px 0 0;
+  font-size: 15px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #666;
+}
+
+.tile-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.tile {
+  background: #fff;
+  border-radius: 10px;
+  padding: 16px;
+  border-left: 4px solid #bdbdbd;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
+/* Colour carries the meaning: money in, money out, the difference, and debt. */
+.tile.money {
+  border-left-color: #2e7d32;
+}
+
+.tile.expense {
+  border-left-color: #ef6c00;
+}
+
+.tile.net {
+  border-left-color: #1565c0;
+}
+
+.tile.owing {
+  border-left-color: #b71c1c;
+}
+
+.tile.action {
+  border-left-color: #6a1b9a;
+}
+
+.tile-label {
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #666;
+}
+
+.tile-value {
+  font-size: 22px;
+  font-weight: 600;
+  margin-top: 4px;
+}
+
+.tile-note {
+  font-size: 12px;
+  color: #777;
+  margin-top: 4px;
+}
+
+.chart {
+  background: #fff;
+  border-radius: 10px;
+  padding: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
+.chart-legend {
+  display: flex;
+  gap: 16px;
+  font-size: 12px;
+  color: #666;
+  margin-bottom: 8px;
+}
+
+.legend::before {
+  content: '';
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  margin-inline-end: 6px;
+}
+
+.legend.collected::before {
+  background: #2e7d32;
+}
+
+.legend.spent::before {
+  background: #ef6c00;
+}
+
+.bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  height: 160px;
+}
+
+.month {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  height: 100%;
+  gap: 6px;
+}
+
+.bar-pair {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 4px;
+  height: 100%;
+}
+
+.bar {
+  width: 40%;
+  min-height: 2px;
+  border-radius: 3px 3px 0 0;
+}
+
+.bar.collected {
+  background: #2e7d32;
+}
+
+.bar.spent {
+  background: #ef6c00;
+}
+
+.month-label {
+  text-align: center;
+  font-size: 12px;
+  color: #777;
+}
