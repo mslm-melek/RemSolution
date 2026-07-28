@@ -7,7 +7,7 @@
 .hero {
   display: flex;
   justify-content: center;
-  padding: 56px 16px;
+  padding: 56px 16px 32px;
 }
 
 .hero-card {
@@ -58,6 +58,193 @@
   flex-wrap: wrap;
   justify-content: center;
   margin-top: var(--gap-1);
+}
+
+/* --- Shop-window slideshow ----------------------------------------------- */
+
+.showcase {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0 0 48px;
+}
+
+.showcase-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gap-3);
+  margin-bottom: var(--gap-4);
+}
+
+.showcase-head h2 {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+.slider {
+  position: relative;
+}
+
+.viewport {
+  position: relative;
+  /* Fixed ratio: the slides are absolutely positioned, so the viewport cannot
+     take its height from them. */
+  aspect-ratio: 21 / 9;
+  min-height: 260px;
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  background: var(--surface-3);
+  box-shadow: var(--shadow-2);
+}
+
+.slide {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  background-size: cover;
+  background-position: center;
+  text-decoration: none;
+  color: #fff;
+  opacity: 0;
+  /* Cross-fade, not a slide: no direction to get wrong in Arabic. */
+  transition: opacity 520ms ease;
+  pointer-events: none;
+}
+
+.slide.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* The icon centres itself (it is absolutely positioned), so the caption keeps
+   sitting at the bottom exactly as it does on a photographed slide. */
+.slide.placeholder {
+  background: var(--surface-3);
+  color: var(--muted-2);
+}
+
+.slide-placeholder-icon {
+  font-size: 72px;
+  width: 72px;
+  height: 72px;
+  position: absolute;
+  top: 50%;
+  inset-inline-start: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.slide-caption {
+  position: relative;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 56px 28px 22px;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.72), rgba(0, 0, 0, 0));
+}
+
+.slide.placeholder .slide-caption {
+  background: none;
+  color: var(--ink);
+}
+
+.slide-model {
+  font-size: 22px;
+  font-weight: 680;
+  letter-spacing: -0.02em;
+}
+
+.slide-agency {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  opacity: 0.92;
+}
+
+.slide-agency mat-icon {
+  flex: none;
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+}
+
+.slide-price {
+  margin-top: 6px;
+  font-size: 17px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.slider-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--ink);
+  box-shadow: var(--shadow-2);
+  cursor: pointer;
+}
+
+.slider-nav:hover {
+  background: #fff;
+}
+
+.slider-nav.prev {
+  inset-inline-start: 12px;
+}
+
+.slider-nav.next {
+  inset-inline-end: 12px;
+}
+
+/* The chevrons point at the neighbouring slide, so they mirror with the page.
+   :host-context and not a plain `[dir='rtl'] …` descendant selector: dir lives on
+   <html>, and emulated encapsulation would append this component's scoping
+   attribute to that first selector too, which <html> never carries. */
+:host-context([dir='rtl']) .slider-nav mat-icon {
+  transform: scaleX(-1);
+}
+
+.dots {
+  display: flex;
+  justify-content: center;
+  gap: 7px;
+  margin-top: var(--gap-4);
+}
+
+.dots button {
+  width: 8px;
+  height: 8px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: var(--line);
+  cursor: pointer;
+  transition: background 140ms ease, width 140ms ease;
+}
+
+.dots button.active {
+  width: 22px;
+  border-radius: 4px;
+  background: var(--brand-600);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .slide {
+    transition: none;
+  }
 }
 
 /* --- Signed-in landing --------------------------------------------------- */
@@ -164,10 +351,23 @@
 
 @media (max-width: 599px) {
   .hero {
-    padding: 28px 4px;
+    padding: 28px 4px 20px;
   }
 
   .hero-card {
     padding: 32px 22px;
+  }
+
+  /* A 21:9 band is a letterbox strip on a phone. */
+  .viewport {
+    aspect-ratio: 4 / 3;
+  }
+
+  .slide-caption {
+    padding: 44px 18px 16px;
+  }
+
+  .slide-model {
+    font-size: 18px;
   }
 }

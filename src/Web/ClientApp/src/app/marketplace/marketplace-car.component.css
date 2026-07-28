@@ -51,13 +51,32 @@
 
 .agency {
   display: flex;
+  width: fit-content;
   align-items: center;
   gap: 4px;
   color: rgba(0, 0, 0, 0.55);
+  text-decoration: none;
   margin-bottom: 1rem;
 }
 
+.agency:hover {
+  color: var(--brand-700);
+}
+
+/* Names the destination, since the line itself reads as a location. */
+.agency-cta {
+  margin-inline-start: 8px;
+  font-size: 12px;
+  font-weight: 650;
+  color: var(--brand-700);
+}
+
+.agency:hover .agency-cta {
+  text-decoration: underline;
+}
+
 .agency mat-icon {
+  flex: none;
   font-size: 18px;
   width: 18px;
   height: 18px;

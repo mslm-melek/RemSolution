@@ -12,7 +12,13 @@
 
     <div class="info">
       <h1>{{ car.brandName }} {{ car.modelName }}</h1>
-      <div class="agency"><mat-icon>place</mat-icon>{{ car.agencyName }}<span *ngIf="car.branchName"> · {{ car.branchName }}</span></div>
+      <!-- The agency line doubles as the way into its shopfront: other cars and
+           the rates it charges. -->
+      <a class="agency" [routerLink]="['/browse/agency', car.agencyId]">
+        <mat-icon>place</mat-icon>
+        <span>{{ car.agencyName }}<span *ngIf="car.branchName"> · {{ car.branchName }}</span></span>
+        <span class="agency-cta">{{ t('marketplace.viewAgency') }}</span>
+      </a>
 
       <div class="specs">
         <span class="spec" *ngIf="car.fuelType !== null && car.fuelType !== undefined">
@@ -22,7 +28,7 @@
       </div>
 
       <div class="price" *ngIf="car.dailyRate">
-        {{ car.dailyRate.amount | number:'1.2-2' }} {{ car.dailyRate.currency }}<span class="per">{{ t('marketplace.perDaySpaced') }}</span>
+        <span class="money">{{ car.dailyRate.amount | number:'1.2-2' }} {{ car.dailyRate.currency }}</span><span class="per">{{ t('marketplace.perDaySpaced') }}</span>
       </div>
 
       <div class="cta">

@@ -29,6 +29,59 @@
     </div>
   </div>
 
+  <!-- Shop window for visitors and customers. Cross-fades rather than slides so
+       it reads the same way in right-to-left Arabic. -->
+  <section class="showcase" *ngIf="showcase.length && (isAuthenticated === false || isCustomer)">
+    <div class="showcase-head">
+      <h2>{{ t('home.showcaseTitle') }}</h2>
+      <a mat-button color="primary" [routerLink]="['/browse']">
+        {{ t('home.showcaseSeeAll') }} <mat-icon>arrow_forward</mat-icon>
+      </a>
+    </div>
+
+    <div class="slider">
+      <div class="viewport">
+        <a class="slide" *ngFor="let car of showcase; let i = index"
+           [class.active]="i === slide"
+           [class.placeholder]="!car.imageUrl"
+           [style.background-image]="car.imageUrl ? 'url(' + car.imageUrl + ')' : null"
+           [routerLink]="['/browse/car', car.id]"
+           [attr.aria-hidden]="i === slide ? null : 'true'"
+           [attr.tabindex]="i === slide ? null : -1">
+          <mat-icon class="slide-placeholder-icon" *ngIf="!car.imageUrl">directions_car</mat-icon>
+          <div class="slide-caption">
+            <span class="slide-model">{{ car.brandName }} {{ car.modelName }}</span>
+            <span class="slide-agency">
+              <mat-icon>place</mat-icon>
+              <span>{{ car.agencyName }}<span *ngIf="car.branchName"> · {{ car.branchName }}</span></span>
+            </span>
+            <span class="slide-price" *ngIf="car.dailyRate">
+              <span class="money">{{ car.dailyRate.amount | number:'1.2-2' }} {{ car.dailyRate.currency }}</span>{{ t('marketplace.perDaySpaced') }}
+            </span>
+          </div>
+        </a>
+      </div>
+
+      <ng-container *ngIf="showcase.length > 1">
+        <button type="button" class="slider-nav prev" (click)="prevSlide()"
+                [attr.aria-label]="t('home.showcasePrevious')">
+          <mat-icon>chevron_left</mat-icon>
+        </button>
+        <button type="button" class="slider-nav next" (click)="nextSlide()"
+                [attr.aria-label]="t('home.showcaseNext')">
+          <mat-icon>chevron_right</mat-icon>
+        </button>
+      </ng-container>
+    </div>
+
+    <div class="dots" *ngIf="showcase.length > 1">
+      <button type="button" *ngFor="let car of showcase; let i = index"
+              [class.active]="i === slide" (click)="goToSlide(i)"
+              [attr.aria-label]="car.brandName + ' ' + car.modelName"
+              [attr.aria-current]="i === slide ? 'true' : null"></button>
+    </div>
+  </section>
+
   <!-- Signed in (staff / admin): dashboard -->
   <div class="dashboard" *ngIf="isAuthenticated && !isCustomer">
     <div class="dash-header">

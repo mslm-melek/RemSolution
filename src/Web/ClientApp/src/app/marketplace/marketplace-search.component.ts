@@ -1,6 +1,6 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { PageEvent } from '@angular/material/paginator';
-import { MarketplaceClient, MarketplaceCarDto } from '../web-api-client';
+import { MarketplaceClient, MarketplaceCarDto, MarketplaceDestinationDto, MarketplacePlaceDto } from '../web-api-client';
 import { toDateInput, fromDateInput, extractValidationErrors } from '../shared/form-utils';
 import { TranslocoService } from '@jsverse/transloco';
 
@@ -15,6 +15,13 @@ export class MarketplaceSearchComponent implements OnInit {
   private readonly transloco = inject(TranslocoService);
   startDate = '';
   endDate = '';
+
+  // Where: a country, and optionally a pick-up place (branch) inside it. Both
+  // come from the public destinations lookup, which only lists countries and
+  // places that actually have cars on offer.
+  destinations: MarketplaceDestinationDto[] = [];
+  countryId: number | null = null;
+  branchId: number | null = null;
 
   cars: MarketplaceCarDto[] = [];
   totalCount = 0;
@@ -34,7 +41,43 @@ export class MarketplaceSearchComponent implements OnInit {
     end.setDate(end.getDate() + 3);
     this.startDate = toDateInput(start);
     this.endDate = toDateInput(end);
+
+    this.client.getDestinations().subscribe({
+      next: destinations => this.destinations = destinations || [],
+      // The picker is an aid, not the search: losing it must not block browsing.
+      error: err => console.error(err)
+    });
+
     this.search();
+  }
+
+  // Places offered for the chosen country; with no country chosen, every place,
+  // so someone who knows the airport they are flying into can pick it directly.
+  get places(): MarketplacePlaceDto[] {
+    const countries = this.countryId === null
+      ? this.destinations
+      : this.destinations.filter(d => d.countryId === this.countryId);
+
+    return countries.reduce<MarketplacePlaceDto[]>(
+      (all, destination) => all.concat(destination.places || []), []);
+  }
+
+  onCountryChange() {
+    // The chosen place may not be in the new country any more.
+    if (this.branchId !== null && !this.places.some(p => p.branchId === this.branchId)) {
+      this.branchId = null;
+    }
+    this.onSearchClick();
+  }
+
+  // Picking a place implies its country, so the two selects always agree.
+  onPlaceChange() {
+    if (this.branchId !== null) {
+      const owner = this.destinations.find(d =>
+        (d.places || []).some(p => p.branchId === this.branchId));
+      if (owner) this.countryId = owner.countryId;
+    }
+    this.onSearchClick();
   }
 
   search() {
@@ -48,17 +91,19 @@ export class MarketplaceSearchComponent implements OnInit {
     this.loading = true;
     this.searched = true;
 
-    this.client.searchCars(start, end, null, null, null, this.pageNumber, this.pageSize).subscribe({
-      next: result => {
-        this.cars = result.items || [];
-        this.totalCount = result.totalCount || 0;
-        this.loading = false;
-      },
-      error: err => {
-        this.loading = false;
-        this.error = extractValidationErrors(err) ?? 'Could not search cars. Please try again.';
-      }
-    });
+    this.client
+      .searchCars(start, end, this.countryId, this.branchId, null, null, this.pageNumber, this.pageSize)
+      .subscribe({
+        next: result => {
+          this.cars = result.items || [];
+          this.totalCount = result.totalCount || 0;
+          this.loading = false;
+        },
+        error: err => {
+          this.loading = false;
+          this.error = extractValidationErrors(err) ?? 'Could not search cars. Please try again.';
+        }
+      });
   }
 
   onSearchClick() {

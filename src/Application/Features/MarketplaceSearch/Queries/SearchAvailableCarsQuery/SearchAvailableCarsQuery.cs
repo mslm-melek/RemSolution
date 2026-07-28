@@ -15,6 +15,7 @@ namespace RemSolution.Application.Features.MarketplaceSearch.Queries.SearchAvail
         int? CountryId = null,
         int? BranchId = null,
         int? BrandId = null,
+        int? AgencyId = null,
         int PageNumber = 1,
         int PageSize = 12
     ) : IRequest<PaginatedList<MarketplaceCarDto>>;
@@ -35,23 +36,23 @@ namespace RemSolution.Application.Features.MarketplaceSearch.Queries.SearchAvail
             var start = request.StartDate;
             var end = request.EndDate;
 
-            // IgnoreQueryFilters drops BOTH the AgencyId and the !IsDeleted global
-            // filters, so soft-delete is re-applied here explicitly.
-            var query = _context.Cars
-                .IgnoreQueryFilters()
-                .AsNoTracking()
-                .Where(c => !c.IsDeleted
-                            && c.Status == CarStatus.Active
-                            && c.DailyRate != null);
+            // What "on offer" means — and the tenant/soft-delete filter bypass it
+            // needs — lives in MarketplaceCars.Offered.
+            var query = MarketplaceCars.Offered(_context);
 
             if (request.BranchId is int branchId)
                 query = query.Where(c => c.BranchId == branchId);
 
+            // Same branch-else-agency rule the destination picker counts by, so a
+            // country that lists N cars does not then return fewer.
             if (request.CountryId is int countryId)
-                query = query.Where(c => c.Branch != null && c.Branch.CountryId == countryId);
+                query = query.InCountry(countryId);
 
             if (request.BrandId is int brandId)
                 query = query.Where(c => c.Model != null && c.Model.BrandId == brandId);
+
+            if (request.AgencyId is int agencyId)
+                query = query.Where(c => c.AgencyId == agencyId);
 
             // Available = no blocking renting (non-terminal) and no active
             // reservation overlapping the half-open [start, end). Both checks are

@@ -1,0 +1,114 @@
+<div class="agency-page" *transloco="let t">
+  <a mat-stroked-button [routerLink]="['/browse']">
+    <mat-icon>arrow_back</mat-icon> {{ t('marketplace.backToSearch') }}
+  </a>
+
+  <div *ngIf="loadingAgency" class="state">{{ t('common.loading') }}</div>
+  <div *ngIf="notFound" class="state">{{ t('marketplace.agencyNotFound') }}</div>
+
+  <div class="shopfront" *ngIf="agency">
+    <div class="identity">
+      <span class="crest">{{ (agency.name || '?').charAt(0) }}</span>
+      <div class="who">
+        <h1>{{ agency.name }}</h1>
+        <!-- The address and phone are Latin-script runs the agency typed; .num
+             keeps them left-to-right in Arabic, otherwise bidi reorders a
+             leading street number or the country code's "+" to the far side. -->
+        <div class="meta">
+          <span *ngIf="agency.address"><mat-icon>place</mat-icon><span class="num">{{ agency.address }}</span></span>
+          <span *ngIf="agency.countryName"><mat-icon>public</mat-icon>{{ agency.countryName }}</span>
+          <span *ngIf="agency.phoneNumber"><mat-icon>call</mat-icon><span class="num">{{ agency.phoneNumber }}</span></span>
+          <span *ngIf="agency.email"><mat-icon>mail</mat-icon><span class="num">{{ agency.email }}</span></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="figures">
+      <div class="figure">
+        <span class="figure-value">{{ agency.carCount }}</span>
+        <!-- Singular/plural picked here rather than through an ICU plural: there
+             is no messageformat plugin, and these two counts are the only ones
+             on the page. Arabic gets singular-vs-plural, not its dual form. -->
+        <span class="figure-label">
+          {{ t(agency.carCount === 1 ? 'marketplace.carOnOffer' : 'marketplace.carsOnOffer') }}
+        </span>
+      </div>
+      <div class="figure" *ngIf="agency.fromDailyRate">
+        <span class="figure-value money">
+          {{ agency.fromDailyRate.amount | number:'1.2-2' }} {{ agency.fromDailyRate.currency }}
+        </span>
+        <span class="figure-label">{{ t('marketplace.fromPerDay') }}</span>
+      </div>
+      <div class="figure" *ngIf="agency.places.length">
+        <span class="figure-value">{{ agency.places.length }}</span>
+        <span class="figure-label">
+          {{ t(agency.places.length === 1 ? 'marketplace.pickupPlace' : 'marketplace.pickupPlaces') }}
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- The agency's fleet for a window the visitor controls. -->
+  <div class="fleet" *ngIf="agency">
+    <div class="filter-bar">
+      <mat-form-field appearance="outline" class="where" *ngIf="agency.places.length > 1">
+        <mat-label>{{ t('marketplace.place') }}</mat-label>
+        <mat-select [(ngModel)]="branchId" (selectionChange)="onPlaceChange()">
+          <mat-option [value]="null">{{ t('marketplace.anyPlace') }}</mat-option>
+          <!-- Counts stay off the options: they are the fleet on offer, not what
+               is free for the dates on screen. -->
+          <mat-option *ngFor="let place of agency.places" [value]="place.branchId">
+            {{ place.name }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field appearance="outline" class="date">
+        <mat-label>{{ t('marketplace.pickupDate') }}</mat-label>
+        <input matInput type="date" [(ngModel)]="startDate" />
+      </mat-form-field>
+      <mat-form-field appearance="outline" class="date">
+        <mat-label>{{ t('marketplace.returnDate') }}</mat-label>
+        <input matInput type="date" [(ngModel)]="endDate" />
+      </mat-form-field>
+      <button mat-flat-button color="primary" (click)="onSearchClick()">
+        <mat-icon>search</mat-icon> {{ t('common.search') }}
+      </button>
+    </div>
+
+    <div *ngIf="error" class="error">{{ error }}</div>
+
+    <div *ngIf="loading" class="state">{{ t('marketplace.searching') }}</div>
+    <div *ngIf="!loading && cars.length === 0" class="state">
+      {{ t('marketplace.noResults') }}
+    </div>
+
+    <div class="grid" *ngIf="!loading && cars.length">
+      <a class="car-card" *ngFor="let car of cars" [routerLink]="['/browse/car', car.id]">
+        <div class="thumb" [class.placeholder]="!car.imageUrl"
+             [style.background-image]="car.imageUrl ? 'url(' + car.imageUrl + ')' : null">
+          <mat-icon *ngIf="!car.imageUrl">directions_car</mat-icon>
+        </div>
+        <div class="body">
+          <div class="model">{{ car.brandName }} {{ car.modelName }}</div>
+          <div class="branch" *ngIf="car.branchName">
+            <mat-icon>place</mat-icon>{{ car.branchName }}
+          </div>
+          <div class="foot">
+            <span class="price" *ngIf="car.dailyRate">
+              <span class="money">{{ car.dailyRate.amount | number:'1.2-2' }} {{ car.dailyRate.currency }}</span><span class="per">{{ t('marketplace.perDay') }}</span>
+            </span>
+            <span class="book">{{ t('marketplace.viewAndBook') }} <mat-icon>arrow_forward</mat-icon></span>
+          </div>
+        </div>
+      </a>
+    </div>
+
+    <mat-paginator *ngIf="!loading && totalCount > pageSize"
+                   [length]="totalCount"
+                   [pageIndex]="pageNumber - 1"
+                   [pageSize]="pageSize"
+                   [pageSizeOptions]="[12, 24, 48]"
+                   (page)="onPage($event)">
+    </mat-paginator>
+  </div>
+</div>

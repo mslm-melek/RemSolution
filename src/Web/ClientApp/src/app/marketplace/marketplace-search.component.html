@@ -4,6 +4,28 @@
     <p>{{ t('marketplace.findSubtitle') }}</p>
 
     <div class="search-bar">
+      <mat-form-field appearance="outline" class="where">
+        <mat-label>{{ t('marketplace.country') }}</mat-label>
+        <mat-select [(ngModel)]="countryId" (selectionChange)="onCountryChange()">
+          <mat-option [value]="null">{{ t('marketplace.anyCountry') }}</mat-option>
+          <!-- No car count on the option: the destinations lookup counts what an
+               agency offers at all, which is not what the dated search returns. -->
+          <mat-option *ngFor="let destination of destinations" [value]="destination.countryId">
+            {{ destination.countryName }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="where">
+        <mat-label>{{ t('marketplace.place') }}</mat-label>
+        <mat-select [(ngModel)]="branchId" (selectionChange)="onPlaceChange()">
+          <mat-option [value]="null">{{ t('marketplace.anyPlace') }}</mat-option>
+          <mat-option *ngFor="let place of places" [value]="place.branchId">
+            {{ place.name }} — {{ place.agencyName }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+
       <mat-form-field appearance="outline" class="date">
         <mat-label>{{ t('marketplace.pickupDate') }}</mat-label>
         <input matInput type="date" [(ngModel)]="startDate" />
@@ -26,22 +48,34 @@
     </div>
 
     <div class="grid" *ngIf="!loading && cars.length">
-      <a class="car-card" *ngFor="let car of cars" [routerLink]="['/browse/car', car.id]">
-        <div class="thumb" [class.placeholder]="!car.imageUrl"
-             [style.background-image]="car.imageUrl ? 'url(' + car.imageUrl + ')' : null">
+      <!-- Two destinations per card — the car and the agency behind it — so the
+           card is a container rather than one big link. -->
+      <div class="car-card" *ngFor="let car of cars">
+        <a class="thumb" [class.placeholder]="!car.imageUrl"
+           [style.background-image]="car.imageUrl ? 'url(' + car.imageUrl + ')' : null"
+           [routerLink]="['/browse/car', car.id]"
+           [attr.aria-label]="car.brandName + ' ' + car.modelName">
           <mat-icon *ngIf="!car.imageUrl">directions_car</mat-icon>
-        </div>
+        </a>
         <div class="body">
-          <div class="model">{{ car.brandName }} {{ car.modelName }}</div>
-          <div class="agency"><mat-icon>place</mat-icon>{{ car.agencyName }}<span *ngIf="car.branchName"> · {{ car.branchName }}</span></div>
+          <a class="model" [routerLink]="['/browse/car', car.id]">{{ car.brandName }} {{ car.modelName }}</a>
+          <!-- The name and the branch are one text run, so they wrap as a
+               sentence rather than as two side-by-side flex columns. -->
+          <a class="agency" [routerLink]="['/browse/agency', car.agencyId]"
+             [matTooltip]="t('marketplace.viewAgency')">
+            <mat-icon>place</mat-icon>
+            <span>{{ car.agencyName }}<span *ngIf="car.branchName"> · {{ car.branchName }}</span></span>
+          </a>
           <div class="foot">
             <span class="price" *ngIf="car.dailyRate">
-              {{ car.dailyRate.amount | number:'1.2-2' }} {{ car.dailyRate.currency }}<span class="per">{{ t('marketplace.perDay') }}</span>
+              <span class="money">{{ car.dailyRate.amount | number:'1.2-2' }} {{ car.dailyRate.currency }}</span><span class="per">{{ t('marketplace.perDay') }}</span>
             </span>
-            <span class="book">{{ t('marketplace.viewAndBook') }} <mat-icon>arrow_forward</mat-icon></span>
+            <a class="book" [routerLink]="['/browse/car', car.id]">
+              {{ t('marketplace.viewAndBook') }} <mat-icon>arrow_forward</mat-icon>
+            </a>
           </div>
         </div>
-      </a>
+      </div>
     </div>
 
     <mat-paginator *ngIf="!loading && totalCount > pageSize"

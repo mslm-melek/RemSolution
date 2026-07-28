@@ -1,66 +1,10 @@
-.marketplace {
+/* An agency's public shopfront: who they are, then their fleet for a window the
+   visitor picks. The car grid deliberately matches the search results grid. */
+
+.agency-page {
   max-width: 1240px;
   margin: 0 auto;
   padding: 24px 0 40px;
-}
-
-/* The customer-facing banner keeps the brand blue: the app bar is chrome and
-   stays charcoal, this is an inviting surface. */
-.hero {
-  border-radius: var(--r-lg);
-  padding: 30px 30px 24px;
-  color: #fff;
-  background: linear-gradient(100deg, var(--brand-900) 0%, var(--brand-800) 45%, var(--brand-700) 100%);
-  box-shadow: var(--shadow-3);
-  margin-bottom: var(--gap-5);
-}
-
-.hero h1 {
-  margin: 0 0 4px;
-  font-size: 27px;
-  font-weight: 680;
-  letter-spacing: -0.02em;
-  color: #fff;
-}
-
-.hero p {
-  margin: 0 0 1.25rem;
-  opacity: 0.9;
-}
-
-.search-bar {
-  display: flex;
-  align-items: center;
-  gap: var(--gap-3);
-  flex-wrap: wrap;
-  background: rgba(255, 255, 255, 0.14);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  border-radius: var(--r);
-  padding: 12px;
-}
-
-.search-bar .date {
-  flex: 1 1 180px;
-}
-
-.search-bar .where {
-  flex: 1 1 200px;
-}
-
-/* Make the outlined date fields readable on the coloured hero. */
-.search-bar ::ng-deep .mat-mdc-text-field-wrapper {
-  background: #fff;
-  border-radius: 8px;
-}
-
-.error {
-  margin-top: var(--gap-3);
-  background: rgba(255, 255, 255, 0.94);
-  color: var(--danger);
-  padding: 8px 14px;
-  border-radius: var(--r-sm);
-  display: inline-block;
-  font-size: 13.5px;
 }
 
 .state {
@@ -69,14 +13,137 @@
   padding: 40px 16px;
 }
 
+/* --- Shopfront header ---------------------------------------------------- */
+
+.shopfront {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--gap-5);
+  margin-top: var(--gap-4);
+  padding: 24px 26px;
+  border-radius: var(--r-lg);
+  color: #fff;
+  background: linear-gradient(100deg, var(--brand-900) 0%, var(--brand-800) 45%, var(--brand-700) 100%);
+  box-shadow: var(--shadow-3);
+}
+
+.identity {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-4);
+  min-width: 0;
+}
+
+.crest {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 56px;
+  height: 56px;
+  border-radius: 17px;
+  background: rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  font-size: 25px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.who {
+  min-width: 0;
+}
+
+.who h1 {
+  margin: 0 0 6px;
+  font-size: 25px;
+  font-weight: 680;
+  letter-spacing: -0.02em;
+  color: #fff;
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 18px;
+  font-size: 13px;
+  opacity: 0.9;
+}
+
+.meta span {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.meta mat-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+}
+
+.figures {
+  display: flex;
+  gap: var(--gap-5);
+}
+
+.figure {
+  display: flex;
+  flex-direction: column;
+}
+
+.figure-value {
+  font-size: 21px;
+  font-weight: 700;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+}
+
+.figure-label {
+  font-size: 11.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  opacity: 0.82;
+}
+
+/* --- Fleet --------------------------------------------------------------- */
+
+.fleet {
+  margin-top: var(--gap-5);
+}
+
+.filter-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-3);
+  flex-wrap: wrap;
+  margin-bottom: var(--gap-4);
+}
+
+.filter-bar .date {
+  flex: 0 1 180px;
+}
+
+.filter-bar .where {
+  flex: 0 1 240px;
+}
+
+.error {
+  background: var(--danger-bg);
+  color: var(--danger);
+  padding: 8px 14px;
+  border-radius: var(--r-sm);
+  display: inline-block;
+  font-size: 13.5px;
+  margin-bottom: var(--gap-3);
+}
+
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
   gap: 1.25rem;
 }
 
-/* A container, not a link: the thumbnail, the title and the price all lead to
-   the car while the agency line leads to that agency's page. */
 .car-card {
   display: block;
   border: 1px solid var(--line);
@@ -119,38 +186,22 @@
 }
 
 .model {
-  display: block;
   font-weight: 650;
   font-size: 15.5px;
   color: var(--ink);
-  text-decoration: none;
   margin-bottom: 4px;
 }
 
-.model:hover {
-  color: var(--brand-700);
-}
-
-/* fit-content keeps the click target on the name rather than the whole row. */
-.agency {
+.branch {
   display: flex;
-  width: fit-content;
-  align-items: flex-start;
+  align-items: center;
   gap: 4px;
   color: var(--muted);
   font-size: 12.5px;
-  line-height: 1.45;
-  text-decoration: none;
   margin-bottom: var(--gap-3);
 }
 
-.agency:hover {
-  color: var(--brand-700);
-  text-decoration: underline;
-}
-
-.agency mat-icon {
-  flex: none;
+.branch mat-icon {
   font-size: 16px;
   width: 16px;
   height: 16px;
@@ -181,15 +232,20 @@
   font-size: 12.5px;
   color: var(--brand-700);
   font-weight: 650;
-  text-decoration: none;
-}
-
-.book:hover {
-  text-decoration: underline;
 }
 
 .book mat-icon {
   font-size: 18px;
   width: 18px;
   height: 18px;
+}
+
+@media (max-width: 719px) {
+  .shopfront {
+    align-items: flex-start;
+  }
+
+  .figures {
+    gap: var(--gap-4);
+  }
 }

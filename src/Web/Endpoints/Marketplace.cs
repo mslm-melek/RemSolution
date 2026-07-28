@@ -7,10 +7,13 @@ using RemSolution.Application.Features.Marketplace.Commands.CreateCustomerReserv
 using RemSolution.Application.Features.Marketplace.Commands.MarkMyChatReadCommand;
 using RemSolution.Application.Features.Marketplace.Commands.SendCustomerChatMessageCommand;
 using RemSolution.Application.Features.MarketplaceSearch.DTOs;
+using RemSolution.Application.Features.MarketplaceSearch.Queries.GetMarketplaceAgencyQuery;
 using RemSolution.Application.Features.MarketplaceSearch.Queries.GetMarketplaceCarQuery;
+using RemSolution.Application.Features.MarketplaceSearch.Queries.GetMarketplaceDestinationsQuery;
 using RemSolution.Application.Features.MarketplaceSearch.Queries.GetMyChatMessagesQuery;
 using RemSolution.Application.Features.MarketplaceSearch.Queries.GetMyChatThreadsQuery;
 using RemSolution.Application.Features.MarketplaceSearch.Queries.GetMyReservationsQuery;
+using RemSolution.Application.Features.MarketplaceSearch.Queries.GetShowcaseCarsQuery;
 using RemSolution.Application.Features.MarketplaceSearch.Queries.SearchAvailableCarsQuery;
 
 namespace RemSolution.Web.Endpoints;
@@ -27,6 +30,9 @@ public class Marketplace : EndpointGroupBase
         group
             .MapGet(SearchCars, "cars")
             .MapGet(GetCar, "cars/{id}")
+            .MapGet(GetShowcaseCars, "showcase")
+            .MapGet(GetDestinations, "destinations")
+            .MapGet(GetAgency, "agencies/{id}")
             // Customer actions require a signed-in Customer.
             .MapPost(BookCar, "reservations", Policies.CustomerOnly)
             .MapGet(GetMyReservations, "my-reservations", Policies.CustomerOnly)
@@ -49,6 +55,32 @@ public class Marketplace : EndpointGroupBase
     public async Task<Results<Ok<MarketplaceCarDto>, NotFound>> GetCar(ISender sender, int id)
     {
         var result = await sender.Send(new GetMarketplaceCarQuery(id));
+
+        if (result is null)
+            return TypedResults.NotFound();
+
+        return TypedResults.Ok(result);
+    }
+
+    // The home-page slideshow: a handful of cars on offer, no dates involved.
+    public async Task<Ok<IList<MarketplaceCarDto>>> GetShowcaseCars(
+        ISender sender, [AsParameters] GetShowcaseCarsQuery query)
+    {
+        var result = await sender.Send(query);
+        return TypedResults.Ok(result);
+    }
+
+    // Countries and pick-up places that have cars on offer — the "where" half of
+    // the search bar.
+    public async Task<Ok<IList<MarketplaceDestinationDto>>> GetDestinations(ISender sender)
+    {
+        var result = await sender.Send(new GetMarketplaceDestinationsQuery());
+        return TypedResults.Ok(result);
+    }
+
+    public async Task<Results<Ok<MarketplaceAgencyDto>, NotFound>> GetAgency(ISender sender, int id)
+    {
+        var result = await sender.Send(new GetMarketplaceAgencyQuery(id));
 
         if (result is null)
             return TypedResults.NotFound();

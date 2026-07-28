@@ -1,7 +1,10 @@
 using RemSolution.Application.Common.Exceptions;
 using RemSolution.Application.Features.Marketplace.Commands.CancelMyReservationCommand;
 using RemSolution.Application.Features.Marketplace.Commands.CreateCustomerReservationCommand;
+using RemSolution.Application.Features.MarketplaceSearch.Queries.GetMarketplaceAgencyQuery;
+using RemSolution.Application.Features.MarketplaceSearch.Queries.GetMarketplaceDestinationsQuery;
 using RemSolution.Application.Features.MarketplaceSearch.Queries.GetMyReservationsQuery;
+using RemSolution.Application.Features.MarketplaceSearch.Queries.GetShowcaseCarsQuery;
 using RemSolution.Application.Features.MarketplaceSearch.Queries.SearchAvailableCarsQuery;
 using RemSolution.Domain.Constants;
 using RemSolution.Domain.Entities;
@@ -78,6 +81,205 @@ public class MarketplaceTests : BaseTestFixture
 
         result.TotalCount.Should().Be(1);
         result.Items.First().Matricule.Should().Be("MK-FREE");
+    }
+
+    [Test]
+    public async Task SearchFiltersByAgency()
+    {
+        var agencyA = await AddTestAgencyAsync();
+        await AddAsync(new Car { Matricule = "MK-A", Status = CarStatus.Active, DailyRate = Money.Of(50m, "TND") });
+
+        await AddTestAgencyAsync(); // switches current tenant
+        await AddAsync(new Car { Matricule = "MK-B", Status = CarStatus.Active, DailyRate = Money.Of(60m, "TND") });
+
+        var result = await SendAsync(new SearchAvailableCarsQuery(Start, End, AgencyId: agencyA));
+
+        result.TotalCount.Should().Be(1);
+        result.Items.First().Matricule.Should().Be("MK-A");
+    }
+
+    [Test]
+    public async Task SearchByCountryMatchesTheBranchCountry()
+    {
+        await AddTestAgencyAsync();
+
+        var country = new Country { Name = "Marketland" };
+        await AddAsync(country);
+        var branch = new Branch { Name = "Airport", CountryId = country.Id };
+        await AddAsync(branch);
+
+        await AddAsync(new Car
+        {
+            Matricule = "MK-BR", Status = CarStatus.Active,
+            DailyRate = Money.Of(50m, "TND"), BranchId = branch.Id
+        });
+        // Same agency, no branch ⇒ a different country (the agency's own).
+        await AddAsync(new Car { Matricule = "MK-NB", Status = CarStatus.Active, DailyRate = Money.Of(50m, "TND") });
+
+        var result = await SendAsync(new SearchAvailableCarsQuery(Start, End, CountryId: country.Id));
+
+        result.TotalCount.Should().Be(1);
+        result.Items.First().Matricule.Should().Be("MK-BR");
+    }
+
+    [Test]
+    public async Task SearchByCountryFallsBackToTheAgencyCountryForABranchlessCar()
+    {
+        var agencyId = await AddTestAgencyAsync();
+        var agency = await FindIgnoringFiltersAsync<Agency>(a => a.Id == agencyId);
+
+        await AddAsync(new Car { Matricule = "MK-NB", Status = CarStatus.Active, DailyRate = Money.Of(50m, "TND") });
+
+        var result = await SendAsync(new SearchAvailableCarsQuery(Start, End, CountryId: agency!.CountryId));
+
+        result.TotalCount.Should().Be(1);
+        result.Items.First().Matricule.Should().Be("MK-NB");
+    }
+
+    [Test]
+    public async Task DestinationsCountOnlyCarsOnOfferAndListTheirPlaces()
+    {
+        var agencyId = await AddTestAgencyAsync();
+
+        var country = new Country { Name = "Marketland" };
+        await AddAsync(country);
+        var branch = new Branch { Name = "Airport", CountryId = country.Id };
+        await AddAsync(branch);
+
+        await AddAsync(new Car
+        {
+            Matricule = "MK-1", Status = CarStatus.Active,
+            DailyRate = Money.Of(50m, "TND"), BranchId = branch.Id
+        });
+        await AddAsync(new Car
+        {
+            Matricule = "MK-2", Status = CarStatus.Active,
+            DailyRate = Money.Of(70m, "TND"), BranchId = branch.Id
+        });
+        // Neither is on offer, so neither may be counted.
+        await AddAsync(new Car
+        {
+            Matricule = "MK-MAINT", Status = CarStatus.Maintenance,
+            DailyRate = Money.Of(50m, "TND"), BranchId = branch.Id
+        });
+        await AddAsync(new Car
+        {
+            Matricule = "MK-NOPRICE", Status = CarStatus.Active,
+            DailyRate = null, BranchId = branch.Id
+        });
+
+        var destinations = await SendAsync(new GetMarketplaceDestinationsQuery());
+
+        var marketland = destinations.Single(d => d.CountryName == "Marketland");
+        marketland.CountryId.Should().Be(country.Id);
+        marketland.CarCount.Should().Be(2);
+        marketland.Places.Should().HaveCount(1);
+        marketland.Places[0].BranchId.Should().Be(branch.Id);
+        marketland.Places[0].Name.Should().Be("Airport");
+        marketland.Places[0].AgencyId.Should().Be(agencyId);
+        marketland.Places[0].AgencyName.Should().Be("Test Agency");
+        marketland.Places[0].CarCount.Should().Be(2);
+    }
+
+    [Test]
+    public async Task DestinationsCountABranchlessCarUnderItsAgencyCountry()
+    {
+        var agencyId = await AddTestAgencyAsync();
+        var agency = await FindIgnoringFiltersAsync<Agency>(a => a.Id == agencyId);
+
+        await AddAsync(new Car { Matricule = "MK-NB", Status = CarStatus.Active, DailyRate = Money.Of(50m, "TND") });
+
+        var destinations = await SendAsync(new GetMarketplaceDestinationsQuery());
+
+        var home = destinations.Single(d => d.CountryId == agency!.CountryId);
+        home.CarCount.Should().Be(1);
+        // A car with no branch belongs to no place.
+        home.Places.Should().BeEmpty();
+    }
+
+    [Test]
+    public async Task AgencyShopfrontReportsTheCheapestOfferAndItsPlaces()
+    {
+        var agencyId = await AddTestAgencyAsync();
+
+        var country = new Country { Name = "Marketland" };
+        await AddAsync(country);
+        var branch = new Branch { Name = "Airport", CountryId = country.Id };
+        await AddAsync(branch);
+
+        await AddAsync(new Car
+        {
+            Matricule = "MK-CHEAP", Status = CarStatus.Active,
+            DailyRate = Money.Of(45m, "TND"), BranchId = branch.Id
+        });
+        await AddAsync(new Car
+        {
+            Matricule = "MK-DEAR", Status = CarStatus.Active,
+            DailyRate = Money.Of(180m, "TND"), BranchId = branch.Id
+        });
+        // Not on offer, so it counts neither towards the fleet nor the price.
+        await AddAsync(new Car
+        {
+            Matricule = "MK-OFF", Status = CarStatus.Inactive,
+            DailyRate = Money.Of(10m, "TND"), BranchId = branch.Id
+        });
+
+        var shopfront = await SendAsync(new GetMarketplaceAgencyQuery(agencyId));
+
+        shopfront.Should().NotBeNull();
+        shopfront!.Name.Should().Be("Test Agency");
+        shopfront.CarCount.Should().Be(2);
+        shopfront.FromDailyRate!.Amount.Should().Be(45m);
+        shopfront.FromDailyRate.Currency.Should().Be("TND");
+        shopfront.Places.Should().HaveCount(1);
+        shopfront.Places[0].CarCount.Should().Be(2);
+    }
+
+    [Test]
+    public async Task AgencyShopfrontIsNullForAnUnknownAgency()
+    {
+        await AddTestAgencyAsync();
+
+        var shopfront = await SendAsync(new GetMarketplaceAgencyQuery(9_999));
+
+        shopfront.Should().BeNull();
+    }
+
+    [Test]
+    public async Task ShowcaseReturnsOnlyCarsOnOfferUpToTheRequestedCount()
+    {
+        await AddTestAgencyAsync();
+
+        await AddAsync(new Car { Matricule = "MK-1", Status = CarStatus.Active, DailyRate = Money.Of(50m, "TND") });
+        await AddAsync(new Car { Matricule = "MK-2", Status = CarStatus.Active, DailyRate = Money.Of(60m, "TND") });
+        await AddAsync(new Car { Matricule = "MK-3", Status = CarStatus.Active, DailyRate = Money.Of(70m, "TND") });
+        await AddAsync(new Car { Matricule = "MK-OFF", Status = CarStatus.Inactive, DailyRate = Money.Of(80m, "TND") });
+        await AddAsync(new Car { Matricule = "MK-NOPRICE", Status = CarStatus.Active, DailyRate = null });
+
+        var all = await SendAsync(new GetShowcaseCarsQuery(8));
+        all.Should().HaveCount(3);
+        all.Select(c => c.Matricule).Should().NotContain("MK-OFF").And.NotContain("MK-NOPRICE");
+
+        var two = await SendAsync(new GetShowcaseCarsQuery(2));
+        two.Should().HaveCount(2);
+    }
+
+    [Test]
+    public async Task ShowcaseIgnoresWhetherACarIsBookedForAnyParticularWindow()
+    {
+        await AddTestAgencyAsync();
+
+        var booked = new Car { Matricule = "MK-BOOKED", Status = CarStatus.Active, DailyRate = Money.Of(50m, "TND") };
+        await AddAsync(booked);
+        await AddAsync(new Renting
+        {
+            CarId = booked.Id, StartDate = Start, EndDate = End, RentingState = RentingState.InProgress
+        });
+
+        // The shop window advertises the fleet; the dates are chosen on /browse.
+        var showcase = await SendAsync(new GetShowcaseCarsQuery());
+
+        showcase.Should().HaveCount(1);
     }
 
     [Test]

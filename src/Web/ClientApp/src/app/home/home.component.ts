@@ -1,7 +1,11 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Subscription, timer } from 'rxjs';
 import { AuthService } from '../shared/auth.service';
 import { ImpersonationService } from '../shared/impersonation.service';
-import { AgenciesClient, BrandsClient, CarsClient, ClientsClient, ModelCarsClient, SubscriptionPlansClient } from '../web-api-client';
+import {
+  AgenciesClient, BrandsClient, CarsClient, ClientsClient, MarketplaceCarDto,
+  MarketplaceClient, ModelCarsClient, SubscriptionPlansClient
+} from '../web-api-client';
 
 interface StatTile {
   // Transloco key; resolved in the template so a language switch re-renders it.
@@ -17,16 +21,29 @@ interface QuickAction {
   link: string;
 }
 
+// How long each car stays on screen in the home-page slideshow.
+const SLIDE_INTERVAL_MS = 6_000;
+// Slides in the shop window. More than this and nobody reaches the end.
+const SHOWCASE_SIZE = 8;
+
 @Component({
   selector: 'app-home',
   templateUrl: './home.component.html',
   styleUrls: ['./home.component.css']
 })
-export class HomeComponent implements OnInit {
+export class HomeComponent implements OnInit, OnDestroy {
   isAuthenticated: boolean | null = null;
   isPlatformAdmin = false;
   isCustomer = false;
   displayName: string | null | undefined;
+
+  // Shop-window slideshow, shown to visitors and customers (staff get the
+  // dashboard instead). Cars come from the public marketplace, so an anonymous
+  // visitor can see them before signing in.
+  showcase: MarketplaceCarDto[] = [];
+  slide = 0;
+  private autoplay?: Subscription;
+  private showcaseRequested = false;
 
   // Agency-user dashboard (tenant-scoped module counts).
   agencyStats: StatTile[] = [
@@ -63,7 +80,8 @@ export class HomeComponent implements OnInit {
     private modelCarsClient: ModelCarsClient,
     private brandsClient: BrandsClient,
     private agenciesClient: AgenciesClient,
-    private plansClient: SubscriptionPlansClient
+    private plansClient: SubscriptionPlansClient,
+    private marketplaceClient: MarketplaceClient
   ) { }
 
   get stats(): StatTile[] {
@@ -87,6 +105,7 @@ export class HomeComponent implements OnInit {
       // Customers get a browse-oriented home, not the staff dashboard (and none
       // of the staff stat calls, which they aren't authorized for).
       if (!this.isAuthenticated || this.isCustomer) {
+        this.loadShowcase();
         return;
       }
 
@@ -95,6 +114,47 @@ export class HomeComponent implements OnInit {
       } else {
         this.loadAgencyStats();
       }
+    });
+  }
+
+  ngOnDestroy() {
+    this.autoplay?.unsubscribe();
+  }
+
+  // Advancing on a click also stops the timer: a card must not slide away from
+  // under someone who has taken control of the slideshow.
+  prevSlide() {
+    this.autoplay?.unsubscribe();
+    this.slide = (this.slide - 1 + this.showcase.length) % this.showcase.length;
+  }
+
+  nextSlide() {
+    this.autoplay?.unsubscribe();
+    this.slide = (this.slide + 1) % this.showcase.length;
+  }
+
+  goToSlide(index: number) {
+    this.autoplay?.unsubscribe();
+    this.slide = index;
+  }
+
+  private loadShowcase() {
+    // currentUser$ can emit more than once; the slideshow is loaded once.
+    if (this.showcaseRequested) {
+      return;
+    }
+    this.showcaseRequested = true;
+
+    this.marketplaceClient.getShowcaseCars(SHOWCASE_SIZE).subscribe({
+      next: cars => {
+        this.showcase = cars || [];
+        if (this.showcase.length > 1) {
+          this.autoplay = timer(SLIDE_INTERVAL_MS, SLIDE_INTERVAL_MS)
+            .subscribe(() => this.slide = (this.slide + 1) % this.showcase.length);
+        }
+      },
+      // An empty shop window is not worth an error banner on the landing page.
+      error: err => console.error(err)
     });
   }
 

@@ -5337,8 +5337,11 @@ export class FacturesClient implements IFacturesClient {
 }
 
 export interface IMarketplaceClient {
-    searchCars(startDate: Date, endDate: Date, countryId: number | null | undefined, branchId: number | null | undefined, brandId: number | null | undefined, pageNumber: number | undefined, pageSize: number | undefined): Observable<PaginatedListOfMarketplaceCarDto>;
+    searchCars(startDate: Date, endDate: Date, countryId: number | null | undefined, branchId: number | null | undefined, brandId: number | null | undefined, agencyId: number | null | undefined, pageNumber: number | undefined, pageSize: number | undefined): Observable<PaginatedListOfMarketplaceCarDto>;
     getCar(id: number): Observable<MarketplaceCarDto>;
+    getShowcaseCars(count: number | undefined): Observable<MarketplaceCarDto[]>;
+    getDestinations(): Observable<MarketplaceDestinationDto[]>;
+    getAgency(id: number): Observable<MarketplaceAgencyDto>;
     bookCar(command: CreateCustomerReservationCommand): Observable<number>;
     getMyReservations(): Observable<MyReservationDto[]>;
     cancelMyReservation(id: number): Observable<void>;
@@ -5361,7 +5364,7 @@ export class MarketplaceClient implements IMarketplaceClient {
         this.baseUrl = baseUrl ?? "";
     }
 
-    searchCars(startDate: Date, endDate: Date, countryId: number | null | undefined, branchId: number | null | undefined, brandId: number | null | undefined, pageNumber: number | undefined, pageSize: number | undefined): Observable<PaginatedListOfMarketplaceCarDto> {
+    searchCars(startDate: Date, endDate: Date, countryId: number | null | undefined, branchId: number | null | undefined, brandId: number | null | undefined, agencyId: number | null | undefined, pageNumber: number | undefined, pageSize: number | undefined): Observable<PaginatedListOfMarketplaceCarDto> {
         let url_ = this.baseUrl + "/api/Marketplace/cars?";
         if (startDate === undefined || startDate === null)
             throw new Error("The parameter 'startDate' must be defined and cannot be null.");
@@ -5377,6 +5380,8 @@ export class MarketplaceClient implements IMarketplaceClient {
             url_ += "BranchId=" + encodeURIComponent("" + branchId) + "&";
         if (brandId !== undefined && brandId !== null)
             url_ += "BrandId=" + encodeURIComponent("" + brandId) + "&";
+        if (agencyId !== undefined && agencyId !== null)
+            url_ += "AgencyId=" + encodeURIComponent("" + agencyId) + "&";
         if (pageNumber === null)
             throw new Error("The parameter 'pageNumber' cannot be null.");
         else if (pageNumber !== undefined)
@@ -5472,6 +5477,175 @@ export class MarketplaceClient implements IMarketplaceClient {
             let result200: any = null;
             let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
             result200 = MarketplaceCarDto.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status === 404) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("A server side error occurred.", status, _responseText, _headers);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getShowcaseCars(count: number | undefined): Observable<MarketplaceCarDto[]> {
+        let url_ = this.baseUrl + "/api/Marketplace/showcase?";
+        if (count === null)
+            throw new Error("The parameter 'count' cannot be null.");
+        else if (count !== undefined)
+            url_ += "Count=" + encodeURIComponent("" + count) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetShowcaseCars(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetShowcaseCars(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<MarketplaceCarDto[]>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<MarketplaceCarDto[]>;
+        }));
+    }
+
+    protected processGetShowcaseCars(response: HttpResponseBase): Observable<MarketplaceCarDto[]> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            if (Array.isArray(resultData200)) {
+                result200 = [] as any;
+                for (let item of resultData200)
+                    result200!.push(MarketplaceCarDto.fromJS(item));
+            }
+            else {
+                result200 = <any>null;
+            }
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getDestinations(): Observable<MarketplaceDestinationDto[]> {
+        let url_ = this.baseUrl + "/api/Marketplace/destinations";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetDestinations(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetDestinations(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<MarketplaceDestinationDto[]>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<MarketplaceDestinationDto[]>;
+        }));
+    }
+
+    protected processGetDestinations(response: HttpResponseBase): Observable<MarketplaceDestinationDto[]> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            if (Array.isArray(resultData200)) {
+                result200 = [] as any;
+                for (let item of resultData200)
+                    result200!.push(MarketplaceDestinationDto.fromJS(item));
+            }
+            else {
+                result200 = <any>null;
+            }
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getAgency(id: number): Observable<MarketplaceAgencyDto> {
+        let url_ = this.baseUrl + "/api/Marketplace/agencies/{id}";
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetAgency(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetAgency(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<MarketplaceAgencyDto>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<MarketplaceAgencyDto>;
+        }));
+    }
+
+    protected processGetAgency(response: HttpResponseBase): Observable<MarketplaceAgencyDto> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = MarketplaceAgencyDto.fromJS(resultData200);
             return _observableOf(result200);
             }));
         } else if (status === 404) {
@@ -13293,6 +13467,190 @@ export interface IMarketplaceCarDto {
     fuelType?: FuelType | undefined;
     color?: string | undefined;
     imageUrl?: string | undefined;
+}
+
+export class MarketplaceDestinationDto implements IMarketplaceDestinationDto {
+    countryId?: number;
+    countryName?: string | undefined;
+    carCount?: number;
+    places?: MarketplacePlaceDto[];
+
+    constructor(data?: IMarketplaceDestinationDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.countryId = _data["countryId"];
+            this.countryName = _data["countryName"];
+            this.carCount = _data["carCount"];
+            if (Array.isArray(_data["places"])) {
+                this.places = [] as any;
+                for (let item of _data["places"])
+                    this.places!.push(MarketplacePlaceDto.fromJS(item));
+            }
+        }
+    }
+
+    static fromJS(data: any): MarketplaceDestinationDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new MarketplaceDestinationDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["countryId"] = this.countryId;
+        data["countryName"] = this.countryName;
+        data["carCount"] = this.carCount;
+        if (Array.isArray(this.places)) {
+            data["places"] = [];
+            for (let item of this.places)
+                data["places"].push(item.toJSON());
+        }
+        return data;
+    }
+}
+
+export interface IMarketplaceDestinationDto {
+    countryId?: number;
+    countryName?: string | undefined;
+    carCount?: number;
+    places?: MarketplacePlaceDto[];
+}
+
+export class MarketplacePlaceDto implements IMarketplacePlaceDto {
+    branchId?: number;
+    name?: string | undefined;
+    agencyName?: string | undefined;
+    agencyId?: number;
+    carCount?: number;
+
+    constructor(data?: IMarketplacePlaceDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.branchId = _data["branchId"];
+            this.name = _data["name"];
+            this.agencyName = _data["agencyName"];
+            this.agencyId = _data["agencyId"];
+            this.carCount = _data["carCount"];
+        }
+    }
+
+    static fromJS(data: any): MarketplacePlaceDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new MarketplacePlaceDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["branchId"] = this.branchId;
+        data["name"] = this.name;
+        data["agencyName"] = this.agencyName;
+        data["agencyId"] = this.agencyId;
+        data["carCount"] = this.carCount;
+        return data;
+    }
+}
+
+export interface IMarketplacePlaceDto {
+    branchId?: number;
+    name?: string | undefined;
+    agencyName?: string | undefined;
+    agencyId?: number;
+    carCount?: number;
+}
+
+export class MarketplaceAgencyDto implements IMarketplaceAgencyDto {
+    id?: number;
+    name?: string | undefined;
+    countryName?: string | undefined;
+    address?: string | undefined;
+    phoneNumber?: string | undefined;
+    email?: string | undefined;
+    carCount?: number;
+    fromDailyRate?: MoneyDto | undefined;
+    places?: MarketplacePlaceDto[];
+
+    constructor(data?: IMarketplaceAgencyDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.name = _data["name"];
+            this.countryName = _data["countryName"];
+            this.address = _data["address"];
+            this.phoneNumber = _data["phoneNumber"];
+            this.email = _data["email"];
+            this.carCount = _data["carCount"];
+            this.fromDailyRate = _data["fromDailyRate"] ? MoneyDto.fromJS(_data["fromDailyRate"]) : <any>undefined;
+            if (Array.isArray(_data["places"])) {
+                this.places = [] as any;
+                for (let item of _data["places"])
+                    this.places!.push(MarketplacePlaceDto.fromJS(item));
+            }
+        }
+    }
+
+    static fromJS(data: any): MarketplaceAgencyDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new MarketplaceAgencyDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["name"] = this.name;
+        data["countryName"] = this.countryName;
+        data["address"] = this.address;
+        data["phoneNumber"] = this.phoneNumber;
+        data["email"] = this.email;
+        data["carCount"] = this.carCount;
+        data["fromDailyRate"] = this.fromDailyRate ? this.fromDailyRate.toJSON() : <any>undefined;
+        if (Array.isArray(this.places)) {
+            data["places"] = [];
+            for (let item of this.places)
+                data["places"].push(item.toJSON());
+        }
+        return data;
+    }
+}
+
+export interface IMarketplaceAgencyDto {
+    id?: number;
+    name?: string | undefined;
+    countryName?: string | undefined;
+    address?: string | undefined;
+    phoneNumber?: string | undefined;
+    email?: string | undefined;
+    carCount?: number;
+    fromDailyRate?: MoneyDto | undefined;
+    places?: MarketplacePlaceDto[];
 }
 
 export class CreateCustomerReservationCommand implements ICreateCustomerReservationCommand {

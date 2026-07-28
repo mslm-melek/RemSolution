@@ -46,6 +46,7 @@ import { DocumentTemplateFormComponent } from './document-template/document-temp
 import { ProfileComponent } from './profile/profile.component';
 import { MarketplaceSearchComponent } from './marketplace/marketplace-search.component';
 import { MarketplaceCarComponent } from './marketplace/marketplace-car.component';
+import { MarketplaceAgencyComponent } from './marketplace/marketplace-agency.component';
 import { MyReservationsComponent } from './marketplace/my-reservations.component';
 import { MyChatsComponent } from './marketplace/my-chats.component';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
@@ -114,6 +115,7 @@ registerLocaleData(localeAr);
     ProfileComponent,
     MarketplaceSearchComponent,
     MarketplaceCarComponent,
+    MarketplaceAgencyComponent,
     MyReservationsComponent,
     MyChatsComponent
   ],
@@ -171,6 +173,7 @@ registerLocaleData(localeAr);
       { path: 'profile', component: ProfileComponent },
       { path: 'browse', component: MarketplaceSearchComponent },
       { path: 'browse/car/:id', component: MarketplaceCarComponent },
+      { path: 'browse/agency/:id', component: MarketplaceAgencyComponent },
       { path: 'my-reservations', component: MyReservationsComponent },
       { path: 'my-chats', component: MyChatsComponent },
 
