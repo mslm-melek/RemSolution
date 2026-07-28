@@ -1,177 +1,585 @@
+/* The page surface, header and section labels come from styles.scss; this file
+   owns the dashboard's own furniture: the KPI cards, the trend chart, the two
+   ratio widgets and the alert list. */
+
 .dashboard {
-  max-width: 1100px;
-  margin: 40px auto;
-  padding: 0 16px;
+  max-width: 1240px;
+}
+
+.period-picker,
+.metric-picker,
+.granularity mat-button-toggle-group {
+  border-radius: var(--r-pill);
+  overflow: hidden;
+  border-color: var(--line-strong);
+}
+
+/* --- Range & granularity controls ---------------------------------------- */
+
+/* The picked dates on the start side, the bucket size on the end side. They are
+   separate choices — which dates, and how finely to slice them. */
+.controls-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--gap-3);
+}
+
+.picked-range {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: var(--gap-3);
+  padding: 10px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  background: var(--surface-2);
+}
+
+.picked-range label {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 3px;
 }
 
-.header-row {
+.picked-range input {
+  padding: 6px 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-xs);
+  background: var(--surface);
+  font: inherit;
+  font-size: 13px;
+  color: var(--ink);
+}
+
+.picked-range input:focus {
+  outline: 0;
+  border-color: var(--brand-500);
+}
+
+.control-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+
+.range-error {
+  align-self: center;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--danger);
+}
+
+.granularity {
   display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  flex-wrap: wrap;
-  gap: 16px;
+  align-items: center;
+  gap: var(--gap-2);
+  /* Stays on the end side even when the picked-range block is absent. */
+  margin-inline-start: auto;
 }
 
-.title {
-  margin: 0;
-  font-size: 24px;
-  font-weight: 600;
-  color: #333;
-}
+/* --- KPI cards ----------------------------------------------------------- */
 
-.period {
-  color: #777;
-  font-size: 13px;
-}
-
-.error-banner {
-  background: #fdecea;
-  color: #b71c1c;
-  padding: 0.75rem 1rem;
-  border-radius: 4px;
-}
-
-.loading {
-  color: #777;
-}
-
-.section-title {
-  margin: 16px 0 0;
-  font-size: 15px;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: #666;
-}
-
-.tile-grid {
+.kpi-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: var(--gap-4);
 }
 
-.tile {
-  background: #fff;
-  border-radius: 10px;
-  padding: 16px;
-  border-left: 4px solid #bdbdbd;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+.kpi {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 16px 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  background: var(--surface);
+  box-shadow: var(--shadow-1);
+  text-decoration: none;
+  color: inherit;
+  overflow: hidden;
 }
 
-/* Colour carries the meaning: money in, money out, the difference, and debt. */
-.tile.money {
-  border-left-color: #2e7d32;
+/* A thin band of the card's own colour, so the four read as four things. */
+.kpi::before {
+  content: '';
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline: 0;
+  height: 3px;
+  background: var(--muted-2);
 }
 
-.tile.expense {
-  border-left-color: #ef6c00;
+.kpi.in::before { background: var(--ok); }
+.kpi.out::before { background: var(--warn); }
+.kpi.net::before { background: var(--brand-600); }
+.kpi.owed::before { background: var(--danger); }
+
+a.kpi:hover {
+  box-shadow: var(--shadow-2);
+  transform: translateY(-1px);
+  transition: box-shadow 140ms ease, transform 140ms ease;
 }
 
-.tile.net {
-  border-left-color: #1565c0;
+.kpi-head {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-2);
 }
 
-.tile.owing {
-  border-left-color: #b71c1c;
+.kpi-icon {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  background: var(--surface-3);
+  color: var(--ink-2);
 }
 
-.tile.action {
-  border-left-color: #6a1b9a;
+.kpi-icon mat-icon {
+  font-size: 17px;
+  width: 17px;
+  height: 17px;
 }
 
-.tile-label {
+.kpi.in .kpi-icon { background: var(--ok-bg); color: var(--ok); }
+.kpi.out .kpi-icon { background: var(--warn-bg); color: var(--warn); }
+.kpi.net .kpi-icon { background: var(--info-bg); color: var(--info); }
+.kpi.owed .kpi-icon { background: var(--danger-bg); color: var(--danger); }
+
+.kpi .tile-value {
+  margin: 0;
+}
+
+.kpi.net.negative .tile-value {
+  color: var(--danger);
+}
+
+.currency {
   font-size: 13px;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: #666;
-}
-
-.tile-value {
-  font-size: 22px;
   font-weight: 600;
-  margin-top: 4px;
+  color: var(--muted);
 }
 
-.tile-note {
+.kpi-foot {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-2);
+  flex-wrap: wrap;
+  min-height: 20px;
+}
+
+.kpi-foot .tile-note {
+  margin: 0;
+}
+
+.delta {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 1px 7px;
+  border-radius: var(--r-pill);
   font-size: 12px;
-  color: #777;
-  margin-top: 4px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
 }
 
-.chart {
-  background: #fff;
-  border-radius: 10px;
-  padding: 16px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+.delta mat-icon {
+  font-size: 15px;
+  width: 15px;
+  height: 15px;
 }
+
+.delta.good { background: var(--ok-bg); color: var(--ok); }
+.delta.bad { background: var(--danger-bg); color: var(--danger); }
+
+/* --- Panels & layout ----------------------------------------------------- */
+
+.panel {
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  background: var(--surface);
+  box-shadow: var(--shadow-1);
+}
+
+.panel .section-title {
+  margin: 0 0 var(--gap-3);
+}
+
+.panel-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--gap-3);
+}
+
+.panel-head .section-title {
+  margin: 0;
+}
+
+/* Chart takes the width it can get; the ratios sit beside it. */
+.split {
+  display: grid;
+  grid-template-columns: minmax(0, 2.1fr) minmax(260px, 1fr);
+  gap: var(--gap-4);
+  align-items: stretch;
+}
+
+/* --- Trend chart --------------------------------------------------------- */
 
 .chart-legend {
   display: flex;
-  gap: 16px;
+  gap: var(--gap-4);
   font-size: 12px;
-  color: #666;
-  margin-bottom: 8px;
+  color: var(--muted);
 }
 
 .legend::before {
   content: '';
   display: inline-block;
-  width: 10px;
-  height: 10px;
-  border-radius: 2px;
+  width: 9px;
+  height: 9px;
+  border-radius: 3px;
   margin-inline-end: 6px;
 }
 
-.legend.collected::before {
-  background: #2e7d32;
+.legend.collected::before { background: var(--ok); }
+.legend.spent::before { background: var(--warn); }
+.legend.primary::before { background: var(--brand-600); }
+
+.chart-legend {
+  margin-top: var(--gap-2);
 }
 
-.legend.spent::before {
-  background: #ef6c00;
+.chart {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin-top: var(--gap-2);
+  overflow: visible;
 }
 
-.bars {
-  display: flex;
-  align-items: flex-end;
-  gap: 12px;
-  height: 160px;
+.chart .grid line {
+  stroke: var(--line);
+  stroke-width: 1;
 }
 
-.month {
-  flex: 1;
+.chart .grid text {
+  fill: var(--muted-2);
+  font-size: 10px;
+  text-anchor: end;
+  font-variant-numeric: tabular-nums;
+}
+
+.chart .buckets text {
+  fill: var(--muted);
+  font-size: 11px;
+  text-anchor: middle;
+}
+
+.chart .series .line {
+  fill: none;
+  stroke-width: 2.5;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.chart .series circle {
+  stroke: var(--surface);
+  stroke-width: 1.5;
+}
+
+.chart .collected .line,
+.chart .collected circle { stroke: var(--ok); }
+.chart .collected circle { fill: var(--ok); }
+.chart .collected .area { fill: rgba(16, 120, 75, 0.12); }
+
+.chart .spent .line,
+.chart .spent circle { stroke: var(--warn); }
+.chart .spent circle { fill: var(--warn); }
+.chart .spent .area { fill: rgba(167, 90, 9, 0.1); }
+
+/* The single-line metrics (cars, clients, rentings) all use the brand colour:
+   only one is on screen at a time, so a colour per metric would just be noise. */
+.chart .primary .line,
+.chart .primary circle { stroke: var(--brand-600); }
+.chart .primary circle { fill: var(--brand-600); }
+.chart .primary .area { fill: rgba(37, 99, 235, 0.1); }
+
+.chart-empty {
+  margin: var(--gap-2) 0 0;
+  font-size: 12.5px;
+  color: var(--muted);
+  text-align: center;
+}
+
+/* --- Ratios -------------------------------------------------------------- */
+
+.rates {
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
-  height: 100%;
-  gap: 6px;
+  gap: var(--gap-4);
 }
 
-.bar-pair {
+.gauge {
   display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  gap: 4px;
+  align-items: center;
+  gap: var(--gap-3);
+}
+
+.donut {
+  width: 84px;
+  height: 84px;
+  flex: none;
+  transform: rotate(-90deg);
+}
+
+.donut .track {
+  fill: none;
+  stroke: var(--surface-3);
+  stroke-width: 9;
+}
+
+.donut .value {
+  fill: none;
+  stroke: var(--brand-600);
+  stroke-width: 9;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 400ms ease;
+}
+
+.donut-text {
+  /* The <svg> is rotated to start the arc at 12 o'clock; the label is turned
+     back so it reads horizontally. */
+  transform: rotate(90deg);
+  transform-origin: 44px 44px;
+  fill: var(--ink);
+  font-size: 17px;
+  font-weight: 700;
+  text-anchor: middle;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Collection-rate meter: label + value over a progress track. */
+.meter {
+  display: flex;
+  flex-direction: column;
+}
+
+.meter-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--gap-2);
+}
+
+.meter-value {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.meter-track {
+  margin: 6px 0 4px;
+  height: 8px;
+  border-radius: var(--r-pill);
+  background: var(--surface-3);
+  overflow: hidden;
+}
+
+.meter-fill {
   height: 100%;
+  border-radius: var(--r-pill);
+  background: linear-gradient(90deg, var(--brand-500), var(--brand-700));
+  transition: width 400ms ease;
 }
 
-.bar {
-  width: 40%;
-  min-height: 2px;
-  border-radius: 3px 3px 0 0;
+.mini-figures {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--gap-3);
+  padding-top: var(--gap-3);
+  border-top: 1px solid var(--line);
 }
 
-.bar.collected {
-  background: #2e7d32;
+.mini-value {
+  margin-top: 2px;
+  font-size: 15px;
+  font-weight: 650;
+  color: var(--ink);
 }
 
-.bar.spent {
-  background: #ef6c00;
+/* --- Alerts -------------------------------------------------------------- */
+
+.alerts {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-2);
 }
 
-.month-label {
-  text-align: center;
+.alert {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-3);
+  padding: 10px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  text-decoration: none;
+  color: var(--ink-2);
+}
+
+.alert:hover {
+  background: var(--brand-50);
+  border-color: var(--brand-100);
+}
+
+.alert-icon {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  flex: none;
+}
+
+.alert-icon mat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+}
+
+.alert.danger .alert-icon { background: var(--danger-bg); color: var(--danger); }
+.alert.warn .alert-icon { background: var(--warn-bg); color: var(--warn); }
+.alert.info .alert-icon { background: var(--info-bg); color: var(--info); }
+
+.alert-count {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  min-width: 1.5ch;
+}
+
+.alert-label {
+  font-weight: 550;
+}
+
+.alert-action {
+  margin-inline-start: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 12.5px;
+  font-weight: 650;
+  color: var(--brand-700);
+  white-space: nowrap;
+}
+
+.alert-action mat-icon {
+  font-size: 17px;
+  width: 17px;
+  height: 17px;
+}
+
+/* The arrow points along the reading direction. */
+[dir='rtl'] .alert-action mat-icon {
+  transform: scaleX(-1);
+}
+
+.all-clear {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-2);
+  padding: 14px;
+  border-radius: var(--r-sm);
+  background: var(--ok-bg);
+  color: var(--ok);
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+/* --- Standing counts ----------------------------------------------------- */
+
+.count-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--gap-3);
+}
+
+.count {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  text-decoration: none;
+}
+
+.count:hover {
+  background: var(--brand-50);
+  border-color: var(--brand-100);
+}
+
+.count-value {
+  font-size: 21px;
+  font-weight: 680;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+.count-value small {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.count-label {
   font-size: 12px;
-  color: #777;
+  color: var(--muted);
+}
+
+@media (max-width: 959px) {
+  .split {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 599px) {
+  .period-picker,
+  .metric-picker {
+    width: 100%;
+  }
+
+  .controls-row,
+  .picked-range {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .granularity {
+    margin-inline-start: 0;
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--gap-1);
+  }
+
+  /* The whole row is the link, so the "review" affordance can go. */
+  .alert-action {
+    display: none;
+  }
+
+  .mini-figures {
+    grid-template-columns: 1fr;
+  }
 }

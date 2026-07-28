@@ -13,7 +13,11 @@ namespace RemSolution.Application.Features.Client.Queries.GetClientsWithPaginati
         int PageNumber = 1,
         int PageSize = 10,
         string? Search = null,
-        string? CIN = null
+        string? CIN = null,
+        // Column the table is sorted by, named after the Angular matColumnDef;
+        // anything unrecognised falls back to the name.
+        string? SortBy = null,
+        bool SortDescending = false
     ) : IRequest<PaginatedList<ClientDto>>;
 
     public class GetClientsWithPaginationQueryHandler
@@ -38,9 +42,19 @@ namespace RemSolution.Application.Features.Client.Queries.GetClientsWithPaginati
             if (!string.IsNullOrWhiteSpace(request.CIN))
                 query = query.Where(c => c.CIN == request.CIN);
 
-            return await query
-                .OrderBy(c => c.LastName)
-                .ThenBy(c => c.FirstName)
+            var descending = request.SortDescending;
+
+            var ordered = request.SortBy.NormalizeSortKey() switch
+            {
+                "birthdate" => query.OrderByField(c => c.BirthDate, descending),
+                "cin" => query.OrderByField(c => c.CIN, descending),
+                "flagged" => query.OrderByField(c => c.IsFlagged, descending),
+                _ => query.OrderByField(c => c.LastName, descending)
+                          .ThenByField(c => c.FirstName, descending),
+            };
+
+            return await ordered
+                .ThenBy(c => c.Id)
                 .ProjectToType<ClientDto>()
                 .PaginatedListAsync(request.PageNumber, request.PageSize);
         }

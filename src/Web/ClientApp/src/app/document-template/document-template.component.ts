@@ -1,4 +1,6 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, ViewChild, inject } from '@angular/core';
+import { MatSort } from '@angular/material/sort';
+import { MatTableDataSource } from '@angular/material/table';
 import { Router } from '@angular/router';
 import {
   DocumentTemplatesClient, DocumentTemplateDto, DocumentTemplateExampleDto,
@@ -29,6 +31,13 @@ export class DocumentTemplateComponent implements OnInit {
   private readonly language = inject(LanguageService);
 
   templates: DocumentTemplateDto[] = [];
+  dataSource = new MatTableDataSource<DocumentTemplateDto>([]);
+
+  // The table only exists once there is at least one template, so the sort
+  // header arrives later than ngAfterViewInit — take it through a setter.
+  @ViewChild(MatSort) set tableSort(sort: MatSort | undefined) {
+    if (sort) this.dataSource.sort = sort;
+  }
   examples: DocumentTemplateExampleDto[] = [];
   loading = false;
   importing = false;
@@ -44,7 +53,17 @@ export class DocumentTemplateComponent implements OnInit {
   constructor(
     private client: DocumentTemplatesClient,
     private router: Router
-  ) { }
+  ) {
+    this.dataSource.sortingDataAccessor = (template, column) => {
+      switch (column) {
+        case 'kind': return template.kind ?? 0;
+        case 'language': return template.language ?? '';
+        // Status sorts the default template first, retired ones last.
+        case 'status': return template.isDefault ? 0 : (template.isActive ? 1 : 2);
+        default: return template.name ?? '';
+      }
+    };
+  }
 
   ngOnInit() {
     this.reload();
@@ -62,6 +81,7 @@ export class DocumentTemplateComponent implements OnInit {
     this.client.getDocumentTemplates(null, null, this.showInactive).subscribe({
       next: list => {
         this.templates = list || [];
+        this.dataSource.data = this.templates;
         this.loading = false;
       },
       error: err => {

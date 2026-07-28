@@ -1,5 +1,6 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { PageEvent } from '@angular/material/paginator';
+import { Sort, SortDirection } from '@angular/material/sort';
 import { RentingsClient, RentingDto, RentingState } from '../web-api-client';
 import { TranslocoService } from '@jsverse/transloco';
 
@@ -20,6 +21,11 @@ export class RentingComponent implements OnInit {
   pageSize = 10;
   state: RentingState | null = null;
 
+  // Sorting is server-side: the column id doubles as the API's SortBy key, and
+  // the starting values mirror the query's own default order (latest first).
+  sortBy = 'period';
+  sortDirection: SortDirection = 'desc';
+
   RentingState = RentingState;
   states = [
     { value: RentingState.NotYet, labelKey: 'enums.rentingState.notYet' },
@@ -35,7 +41,10 @@ export class RentingComponent implements OnInit {
   }
 
   load() {
-    this.client.getRentings(this.pageNumber, this.pageSize, null, null, this.state, null, null).subscribe({
+    this.client.getRentings(
+      this.pageNumber, this.pageSize, null, null, this.state, null, null,
+      this.sortBy, this.sortDirection === 'desc'
+    ).subscribe({
       next: result => {
         this.rentings = result.items || [];
         this.totalCount = result.totalCount || 0;
@@ -55,9 +64,26 @@ export class RentingComponent implements OnInit {
     this.load();
   }
 
+  onSort(sort: Sort) {
+    this.sortBy = sort.active;
+    this.sortDirection = sort.direction || 'asc';
+    this.pageNumber = 1;
+    this.load();
+  }
+
   // Returns a transloco key; the template pipes it.
   stateLabelKey(state?: RentingState): string {
     return this.states.find(s => s.value === state)?.labelKey ?? '';
+  }
+
+  // Chip tone for the state column: running now, still to come, or finished.
+  stateClass(state?: RentingState): string {
+    switch (state) {
+      case RentingState.InProgress: return 'ok';
+      case RentingState.NotYet: return 'info';
+      case RentingState.Cancelled: return 'danger';
+      default: return 'neutral';
+    }
   }
 
   canCancel(renting: RentingDto): boolean {

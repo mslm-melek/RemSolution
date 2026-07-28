@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { AuthService } from '../shared/auth.service';
+import { ImpersonationService } from '../shared/impersonation.service';
 import { AgenciesClient, BrandsClient, CarsClient, ClientsClient, ModelCarsClient, SubscriptionPlansClient } from '../web-api-client';
 
 interface StatTile {
@@ -56,6 +57,7 @@ export class HomeComponent implements OnInit {
 
   constructor(
     private auth: AuthService,
+    private impersonation: ImpersonationService,
     private carsClient: CarsClient,
     private clientsClient: ClientsClient,
     private modelCarsClient: ModelCarsClient,
@@ -75,7 +77,10 @@ export class HomeComponent implements OnInit {
   ngOnInit() {
     this.auth.currentUser$.subscribe(user => {
       this.isAuthenticated = user.isAuthenticated ?? false;
-      this.isPlatformAdmin = AuthService.isPlatformAdmin(user);
+      // A platform admin inside an agency workspace is looking at that agency, so
+      // the tenant-scoped tiles and quick actions are the right ones — the console
+      // counts (agencies, plans) belong to the screens outside the workspace.
+      this.isPlatformAdmin = AuthService.isPlatformAdmin(user) && !this.impersonation.current;
       this.isCustomer = AuthService.isCustomer(user);
       this.displayName = user.fullName || user.userName;
 
@@ -95,15 +100,15 @@ export class HomeComponent implements OnInit {
 
   private loadAgencyStats() {
     // Page size 1: only totalCount is needed for the tiles.
-    this.carsClient.getCars(1, 1, null, null, null).subscribe({
+    this.carsClient.getCars(1, 1, null, null, null, null, false).subscribe({
       next: r => this.agencyStats[0].value = r.totalCount ?? 0,
       error: err => console.error(err)
     });
-    this.clientsClient.getClients(1, 1, null, null).subscribe({
+    this.clientsClient.getClients(1, 1, null, null, null, false).subscribe({
       next: r => this.agencyStats[1].value = r.totalCount ?? 0,
       error: err => console.error(err)
     });
-    this.modelCarsClient.getModelCars(1, 1, null).subscribe({
+    this.modelCarsClient.getModelCars(1, 1, null, null, false).subscribe({
       next: r => this.agencyStats[2].value = r.totalCount ?? 0,
       error: err => console.error(err)
     });
@@ -122,7 +127,7 @@ export class HomeComponent implements OnInit {
       next: r => this.adminStats[1].value = (r || []).length,
       error: err => console.error(err)
     });
-    this.modelCarsClient.getModelCars(1, 1, null).subscribe({
+    this.modelCarsClient.getModelCars(1, 1, null, null, false).subscribe({
       next: r => this.adminStats[2].value = r.totalCount ?? 0,
       error: err => console.error(err)
     });

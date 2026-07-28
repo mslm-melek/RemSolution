@@ -1,5 +1,6 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { PageEvent } from '@angular/material/paginator';
+import { Sort, SortDirection } from '@angular/material/sort';
 import {
   CreditsClient, ClientCreditDto, ExpenseCreditDto, CreditsSummaryDto
 } from '../web-api-client';
@@ -26,6 +27,10 @@ export class CreditComponent implements OnInit {
   clientPageSize = 10;
   clientOnlyOutstanding = true;
   search = '';
+  // Both tables sort server-side; the defaults mirror each query's own order
+  // (biggest debt first).
+  clientSortBy = 'outstanding';
+  clientSortDirection: SortDirection = 'desc';
 
   // Payable side: what the agency owes on its expenses.
   expenses: ExpenseCreditDto[] = [];
@@ -34,6 +39,8 @@ export class CreditComponent implements OnInit {
   expensePage = 1;
   expensePageSize = 10;
   expenseOnlyOutstanding = true;
+  expenseSortBy = 'outstanding';
+  expenseSortDirection: SortDirection = 'desc';
 
   constructor(private client: CreditsClient) { }
 
@@ -52,7 +59,8 @@ export class CreditComponent implements OnInit {
 
   loadClients() {
     this.client.getClientCredits(
-      this.clientPage, this.clientPageSize, this.clientOnlyOutstanding, this.search || null
+      this.clientPage, this.clientPageSize, this.clientOnlyOutstanding, this.search || null,
+      this.clientSortBy, this.clientSortDirection === 'desc'
     ).subscribe({
       next: result => {
         this.clients = result.items || [];
@@ -64,7 +72,8 @@ export class CreditComponent implements OnInit {
 
   loadExpenses() {
     this.client.getExpenseCredits(
-      this.expensePage, this.expensePageSize, this.expenseOnlyOutstanding, null
+      this.expensePage, this.expensePageSize, this.expenseOnlyOutstanding, null,
+      this.expenseSortBy, this.expenseSortDirection === 'desc'
     ).subscribe({
       next: result => {
         this.expenses = result.items || [];
@@ -93,6 +102,20 @@ export class CreditComponent implements OnInit {
   onExpensePage(event: PageEvent) {
     this.expensePage = event.pageIndex + 1;
     this.expensePageSize = event.pageSize;
+    this.loadExpenses();
+  }
+
+  onClientSort(sort: Sort) {
+    this.clientSortBy = sort.active;
+    this.clientSortDirection = sort.direction || 'asc';
+    this.clientPage = 1;
+    this.loadClients();
+  }
+
+  onExpenseSort(sort: Sort) {
+    this.expenseSortBy = sort.active;
+    this.expenseSortDirection = sort.direction || 'asc';
+    this.expensePage = 1;
     this.loadExpenses();
   }
 

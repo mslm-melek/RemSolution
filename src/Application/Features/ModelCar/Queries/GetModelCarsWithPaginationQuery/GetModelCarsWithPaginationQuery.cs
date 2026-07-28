@@ -9,7 +9,11 @@ namespace RemSolution.Application.Features.ModelCar.Queries.GetModelCarsWithPagi
     public record GetModelCarsWithPaginationQuery(
         int PageNumber = 1,
         int PageSize = 10,
-        int? BrandId = null
+        int? BrandId = null,
+        // Column the table is sorted by, named after the Angular matColumnDef;
+        // anything unrecognised falls back to the model name.
+        string? SortBy = null,
+        bool SortDescending = false
     ) : IRequest<PaginatedList<ModelCarDto>>;
     public class GetModelCarsWithPaginationQueryHandler
         : IRequestHandler<GetModelCarsWithPaginationQuery, PaginatedList<ModelCarDto>>
@@ -28,7 +32,16 @@ namespace RemSolution.Application.Features.ModelCar.Queries.GetModelCarsWithPagi
             if (request.BrandId.HasValue)
                 query = query.Where(c => c.BrandId == request.BrandId);
 
-            return await query
+            var descending = request.SortDescending;
+
+            var ordered = request.SortBy.NormalizeSortKey() switch
+            {
+                "brand" => query.OrderByField(c => c.Brand!.Name, descending),
+                _ => query.OrderByField(c => c.Name, descending),
+            };
+
+            return await ordered
+                .ThenBy(c => c.Id)
                 .ProjectToType<ModelCarDto>()
                 .PaginatedListAsync(request.PageNumber, request.PageSize);
         }

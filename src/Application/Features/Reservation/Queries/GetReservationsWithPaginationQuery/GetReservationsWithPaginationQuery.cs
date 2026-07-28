@@ -15,7 +15,11 @@ namespace RemSolution.Application.Features.Reservation.Queries.GetReservationsWi
         int PageSize = 10,
         int? CarId = null,
         int? ClientId = null,
-        ReservationStatus? Status = null
+        ReservationStatus? Status = null,
+        // Column the table is sorted by, named after the Angular matColumnDef;
+        // anything unrecognised falls back to the latest start date first.
+        string? SortBy = null,
+        bool SortDescending = true
     ) : IRequest<PaginatedList<ReservationDto>>;
 
     public class GetReservationsWithPaginationQueryHandler
@@ -42,8 +46,23 @@ namespace RemSolution.Application.Features.Reservation.Queries.GetReservationsWi
             if (request.Status.HasValue)
                 query = query.Where(r => r.Status == request.Status);
 
-            return await query
-                .OrderByDescending(r => r.StartDate)
+            var descending = request.SortDescending;
+
+            var ordered = request.SortBy.NormalizeSortKey() switch
+            {
+                "car" => query.OrderByField(r => r.Car!.Matricule, descending),
+                "client" => query.OrderByField(r => r.Client!.LastName, descending)
+                                 .ThenByField(r => r.Client!.FirstName, descending),
+                "status" => query.OrderByField(r => r.Status, descending),
+                "paid" => query.OrderByField(r => r.PayedPrice == null ? 0m : r.PayedPrice.Amount, descending),
+                "price" => query.OrderByField(r => r.Price == null ? 0m : r.Price.Amount, descending),
+                "expires" => query.OrderByField(r => r.ExpiresAt, descending),
+                // "period" is one column showing both bounds; it sorts by the start.
+                _ => query.OrderByField(r => r.StartDate, descending),
+            };
+
+            return await ordered
+                .ThenBy(r => r.Id)
                 .ProjectToType<ReservationDto>()
                 .PaginatedListAsync(request.PageNumber, request.PageSize);
         }

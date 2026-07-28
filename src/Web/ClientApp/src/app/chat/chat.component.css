@@ -1,11 +1,6 @@
+/* Surface and spacing come from the shared .page rule in styles.scss. */
 .chat-card {
-  background: #fff;
-  border-radius: 12px;
-  padding: 24px;
   max-width: 1100px;
-  margin: 40px auto;
-  display: flex;
-  flex-direction: column;
   gap: 16px;
 }
 

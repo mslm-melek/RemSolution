@@ -1,4 +1,5 @@
 using RemSolution.Application.Common.Exceptions;
+using RemSolution.Application.Features.Dashboard.DTOs;
 using RemSolution.Application.Features.Dashboard.Queries.GetDashboardQuery;
 using RemSolution.Application.Features.Expense.Commands.CreateExpenseCommand;
 using RemSolution.Application.Features.Payment.Commands.CreatePaymentCommand;
@@ -167,7 +168,7 @@ public class GetDashboardTests : BaseTestFixture
     }
 
     [Test]
-    public async Task MonthlySeriesIsContiguousAndEndsWithThePeriodMonth()
+    public async Task SeriesIsContiguousAndEndsWithThePeriodMonth()
     {
         await RunAsAgencyAdministratorAsync();
         await AddTestAgencyAsync();
@@ -185,15 +186,144 @@ public class GetDashboardTests : BaseTestFixture
             ClientId = client.Id, Amount = 300m, PayementDate = InPeriod
         });
 
-        var result = await SendAsync(new GetDashboardQuery(PeriodStart, PeriodEnd, MonthsOfHistory: 3));
+        var result = await SendAsync(new GetDashboardQuery(PeriodStart, PeriodEnd, Periods: 3));
 
-        result.MonthlySeries.Should().HaveCount(3);
+        result.Granularity.Should().Be(DashboardGranularity.Month);
+        result.Series.Should().HaveCount(3);
         // Oldest first, ending with the period's own month (April 2030).
-        result.MonthlySeries.Select(p => (p.Year, p.Month))
+        result.Series.Select(p => (p.BucketStart.Year, p.BucketStart.Month))
             .Should().Equal((2030, 2), (2030, 3), (2030, 4));
+        // Buckets are half-open and step by a calendar month.
+        result.Series[0].BucketEnd.Should().Be(new DateTime(2030, 3, 1, 0, 0, 0, DateTimeKind.Utc));
         // Months with no activity are emitted as zeroes, not omitted.
-        result.MonthlySeries[0].Collected!.Amount.Should().Be(0m);
-        result.MonthlySeries[2].Collected!.Amount.Should().Be(300m);
+        result.Series[0].Collected!.Amount.Should().Be(0m);
+        result.Series[2].Collected!.Amount.Should().Be(300m);
+        // The renting started in April, so the activity count lands there too.
+        result.Series[2].RentingsStarted.Should().Be(1);
+    }
+
+    [Test]
+    public async Task SeriesEndsWithTheLastMonthOfAMultiMonthWindow()
+    {
+        await RunAsAgencyAdministratorAsync();
+        await AddTestAgencyAsync();
+
+        // A quarter: February through April 2030, half-open.
+        var quarterStart = new DateTime(2030, 2, 1, 0, 0, 0, DateTimeKind.Utc);
+        var quarterEnd = new DateTime(2030, 5, 1, 0, 0, 0, DateTimeKind.Utc);
+
+        var result = await SendAsync(new GetDashboardQuery(quarterStart, quarterEnd, Periods: 3));
+
+        // The chart must end on the month the figures above it end on (April),
+        // not on the month the window opened (February).
+        result.Series.Select(p => (p.BucketStart.Year, p.BucketStart.Month))
+            .Should().Equal((2030, 2), (2030, 3), (2030, 4));
+    }
+
+    [Test]
+    public async Task YearGranularityFoldsEveryMonthOfAYearIntoOneBucket()
+    {
+        await RunAsAgencyAdministratorAsync();
+        await AddTestAgencyAsync();
+
+        var car = await AddCarAsync("DB-YEAR");
+        var client = new Client { FirstName = "Year", LastName = "Client" };
+        await AddAsync(client);
+
+        // Two payments in different months of the same year, one in the year before.
+        await SendAsync(new CreatePaymentCommand
+        {
+            ClientId = client.Id, Amount = 100m, PayementDate = new DateTime(2030, 1, 15, 0, 0, 0, DateTimeKind.Utc)
+        });
+        await SendAsync(new CreatePaymentCommand
+        {
+            ClientId = client.Id, Amount = 250m, PayementDate = new DateTime(2030, 9, 3, 0, 0, 0, DateTimeKind.Utc)
+        });
+        await SendAsync(new CreatePaymentCommand
+        {
+            ClientId = client.Id, Amount = 40m, PayementDate = new DateTime(2029, 6, 1, 0, 0, 0, DateTimeKind.Utc)
+        });
+
+        var result = await SendAsync(new GetDashboardQuery(
+            PeriodStart, PeriodEnd, Periods: 2, Granularity: DashboardGranularity.Year));
+
+        result.Granularity.Should().Be(DashboardGranularity.Year);
+        result.Series.Select(p => p.BucketStart.Year).Should().Equal(2029, 2030);
+        result.Series[0].Collected!.Amount.Should().Be(40m);
+        // January and September of 2030 collapse into the one bucket.
+        result.Series[1].Collected!.Amount.Should().Be(350m);
+        result.Series[1].BucketEnd.Should().Be(new DateTime(2031, 1, 1, 0, 0, 0, DateTimeKind.Utc));
+    }
+
+    [Test]
+    public async Task DayGranularitySeparatesConsecutiveDays()
+    {
+        await RunAsAgencyAdministratorAsync();
+        await AddTestAgencyAsync();
+
+        var client = new Client { FirstName = "Daily", LastName = "Client" };
+        await AddAsync(client);
+
+        await SendAsync(new CreatePaymentCommand
+        {
+            ClientId = client.Id, Amount = 70m, PayementDate = new DateTime(2030, 4, 29, 9, 0, 0, DateTimeKind.Utc)
+        });
+        await SendAsync(new CreatePaymentCommand
+        {
+            ClientId = client.Id, Amount = 30m, PayementDate = new DateTime(2030, 4, 30, 18, 0, 0, DateTimeKind.Utc)
+        });
+
+        // Three days ending with the window's last day (30 April — the window is
+        // half-open, so 1 May is not in it).
+        var result = await SendAsync(new GetDashboardQuery(
+            PeriodStart, PeriodEnd, Periods: 3, Granularity: DashboardGranularity.Day));
+
+        result.Series.Select(p => p.BucketStart.Day).Should().Equal(28, 29, 30);
+        result.Series[0].Collected!.Amount.Should().Be(0m);
+        // Time of day does not smear a payment into the neighbouring bucket.
+        result.Series[1].Collected!.Amount.Should().Be(70m);
+        result.Series[2].Collected!.Amount.Should().Be(30m);
+    }
+
+    [Test]
+    public async Task SeriesCountsCarsAndClientsAddedInEachBucket()
+    {
+        await RunAsAgencyAdministratorAsync();
+        await AddTestAgencyAsync();
+
+        await AddCarAsync("DB-NEW-1");
+        await AddCarAsync("DB-NEW-2");
+        await AddAsync(new Client { FirstName = "Fresh", LastName = "Client" });
+
+        // Rows are stamped as they are written, so they land in the bucket holding
+        // "now" — the window is anchored on it rather than on the fixed test dates.
+        var result = await SendAsync(new GetDashboardQuery(Granularity: DashboardGranularity.Month));
+
+        var current = result.Series.Last();
+        current.NewCars.Should().Be(2);
+        current.NewClients.Should().Be(1);
+        result.NewCarsInPeriod.Should().Be(2);
+        result.NewClientsInPeriod.Should().Be(1);
+    }
+
+    [Test]
+    public async Task TheBucketCountIsCappedPerGranularity()
+    {
+        await RunAsAgencyAdministratorAsync();
+        await AddTestAgencyAsync();
+
+        // A chart cannot show a thousand points; the ceiling is per granularity.
+        (await SendAsync(new GetDashboardQuery(PeriodStart, PeriodEnd, Periods: 1000)))
+            .Series.Should().HaveCount(24);
+        (await SendAsync(new GetDashboardQuery(
+                PeriodStart, PeriodEnd, Periods: 1000, Granularity: DashboardGranularity.Year)))
+            .Series.Should().HaveCount(10);
+        (await SendAsync(new GetDashboardQuery(
+                PeriodStart, PeriodEnd, Periods: 1000, Granularity: DashboardGranularity.Day)))
+            .Series.Should().HaveCount(90);
+        // And never fewer than one.
+        (await SendAsync(new GetDashboardQuery(PeriodStart, PeriodEnd, Periods: 0)))
+            .Series.Should().HaveCount(1);
     }
 
     [Test]

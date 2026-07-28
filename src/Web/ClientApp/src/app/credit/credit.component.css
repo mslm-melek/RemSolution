@@ -1,116 +1,50 @@
+/* Surface, header, filters, tables, tiles and banners come from styles.scss.
+   What is specific to the credits screen: the two directions of money, and the
+   body of each tab. */
 .credit-card {
-  background: #fff;
-  border-radius: 12px;
-  padding: 24px;
-  max-width: 1100px;
-  margin: 40px auto;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
+  max-width: 1180px;
 }
 
-.header-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 16px;
-}
-
-.title {
-  margin: 0;
-  font-size: 24px;
-  font-weight: 600;
-  color: #333;
-}
-
-.error-banner {
-  background: #fdecea;
-  color: #b71c1c;
-  padding: 0.75rem 1rem;
-  border-radius: 4px;
-}
-
+/* Money owed to the agency, money owed by it, and the difference — coloured so
+   the direction is readable before the numbers are. */
 .summary-row {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 16px;
+  gap: var(--gap-4);
 }
 
 .summary-tile {
-  border-radius: 10px;
-  padding: 16px;
-  border-left: 4px solid #bdbdbd;
-  background: #fafafa;
+  border-radius: var(--r);
+  padding: 16px 18px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-inline-start: 4px solid var(--line-strong);
 }
 
-/* Money coming in, money going out, and the difference — coloured so the
-   direction is readable before the numbers are. */
 .summary-tile.owed-to {
-  border-left-color: #2e7d32;
+  border-inline-start-color: var(--ok);
 }
 
 .summary-tile.owed-by {
-  border-left-color: #b71c1c;
+  border-inline-start-color: var(--danger);
 }
 
 .summary-tile.net {
-  border-left-color: #1565c0;
-}
-
-.tile-label {
-  font-size: 13px;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: #666;
-}
-
-.tile-value {
-  font-size: 22px;
-  font-weight: 600;
-  margin-top: 4px;
-}
-
-.tile-note {
-  font-size: 12px;
-  color: #777;
-  margin-top: 4px;
+  border-inline-start-color: var(--brand-600);
 }
 
 .tab-body {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding-top: 16px;
-}
-
-.filter-row {
-  display: flex;
-  gap: 16px;
-  align-items: center;
-  flex-wrap: wrap;
-}
-
-.search-input {
-  flex: 1;
-  min-width: 240px;
-}
-
-.full-width {
-  width: 100%;
+  gap: var(--gap-4);
+  padding-top: var(--gap-4);
 }
 
 .owing {
-  color: #b71c1c;
-  font-weight: 600;
+  color: var(--danger);
+  font-weight: 650;
 }
 
 .settled {
-  color: #2e7d32;
-}
-
-.empty-row {
-  padding: 16px;
-  text-align: center;
-  color: #777;
+  color: var(--ok);
 }

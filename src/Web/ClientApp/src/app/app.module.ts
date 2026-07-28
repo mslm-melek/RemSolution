@@ -25,8 +25,6 @@ import { ClientFormComponent } from './client/client-form.component';
 import { AgencyComponent } from './agency/agency.component';
 import { AgencyFormComponent } from './agency/agency-form.component';
 import { AgencyDetailComponent } from './agency/agency-detail.component';
-import { AgencyCarsComponent } from './agency/agency-cars.component';
-import { AgencyClientsComponent } from './agency/agency-clients.component';
 import { UserFormComponent } from './user/user-form.component';
 import { SubscriptionPlanComponent } from './subscription-plan/subscription-plan.component';
 import { SubscriptionPlanFormComponent } from './subscription-plan/subscription-plan-form.component';
@@ -41,6 +39,7 @@ import { ExpenseComponent } from './expense/expense.component';
 import { ExpenseFormComponent } from './expense/expense-form.component';
 import { CreditComponent } from './credit/credit.component';
 import { DashboardComponent } from './dashboard/dashboard.component';
+import { PlatformDashboardComponent } from './platform-dashboard/platform-dashboard.component';
 import { ChatComponent } from './chat/chat.component';
 import { DocumentTemplateComponent } from './document-template/document-template.component';
 import { DocumentTemplateFormComponent } from './document-template/document-template-form.component';
@@ -54,6 +53,8 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTableModule } from '@angular/material/table';
 import { MatPaginatorModule } from '@angular/material/paginator';
+import { MatSortModule } from '@angular/material/sort';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatToolbarModule } from '@angular/material/toolbar';
@@ -92,8 +93,6 @@ registerLocaleData(localeAr);
     AgencyComponent,
     AgencyFormComponent,
     AgencyDetailComponent,
-    AgencyCarsComponent,
-    AgencyClientsComponent,
     UserFormComponent,
     SubscriptionPlanComponent,
     SubscriptionPlanFormComponent,
@@ -108,6 +107,7 @@ registerLocaleData(localeAr);
     ExpenseFormComponent,
     CreditComponent,
     DashboardComponent,
+    PlatformDashboardComponent,
     ChatComponent,
     DocumentTemplateComponent,
     DocumentTemplateFormComponent,
@@ -124,6 +124,8 @@ registerLocaleData(localeAr);
     ReactiveFormsModule,
     MatTableModule,
     MatPaginatorModule,
+    MatSortModule,
+    MatButtonToggleModule,
     MatButtonModule,
     MatIconModule,
     MatFormFieldModule,
@@ -173,14 +175,13 @@ registerLocaleData(localeAr);
       { path: 'my-chats', component: MyChatsComponent },
 
       // Platform-admin console.
+      { path: 'platform-dashboard', component: PlatformDashboardComponent },
       { path: 'agency', component: AgencyComponent },
       { path: 'agency/new', component: AgencyFormComponent },
       { path: 'agency/:id', component: AgencyDetailComponent },
       { path: 'agency/:id/edit', component: AgencyFormComponent },
       { path: 'agency/:id/user/new', component: UserFormComponent },
       { path: 'agency/:id/user/:userId', component: UserFormComponent },
-      { path: 'agency/:id/cars', component: AgencyCarsComponent },
-      { path: 'agency/:id/clients', component: AgencyClientsComponent },
       { path: 'subscription-plan', component: SubscriptionPlanComponent },
       { path: 'subscription-plan/new', component: SubscriptionPlanFormComponent },
       { path: 'subscription-plan/:id', component: SubscriptionPlanFormComponent },

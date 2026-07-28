@@ -38,6 +38,51 @@
   border-radius: 16px;
 }
 
+/* Change-end-date panel: the date, what it does to the period, and what should
+   happen to the contract. */
+.end-date-panel {
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  background: var(--surface-2);
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-3);
+}
+
+.end-date-panel .section-title,
+.end-date-panel .hint {
+  margin: 0;
+}
+
+.end-date-row {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-3);
+  flex-wrap: wrap;
+}
+
+.end-date-row .mat-mdc-form-field {
+  flex: 0 1 220px;
+}
+
+.end-date-panel .contract-choice {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.end-date-panel .template-field {
+  max-width: 320px;
+}
+
+.actions-row {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-2);
+  flex-wrap: wrap;
+}
+
 .form-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;

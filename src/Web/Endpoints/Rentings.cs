@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using RemSolution.Application.Common.Models;
 using RemSolution.Domain.Constants;
 using RemSolution.Application.Features.Renting.Commands.CancelRentingCommand;
+using RemSolution.Application.Features.Renting.Commands.ChangeRentingEndDateCommand;
 using RemSolution.Application.Features.Renting.Commands.ChangeRentingStateCommand;
 using RemSolution.Application.Features.Renting.Commands.CreateRentingCommand;
 using RemSolution.Application.Features.Renting.Commands.UpdateRentingCommand;
@@ -26,6 +27,7 @@ public class Rentings : EndpointGroupBase
             .MapPost(CreateRenting, policy: Permissions.RentingCreate)
             .MapPut(UpdateRenting, "{id}", Permissions.RentingUpdate)
             .MapPut(ChangeRentingState, "{id}/state", Permissions.RentingUpdate)
+            .MapPut(ChangeRentingEndDate, "{id}/end-date", Permissions.RentingUpdate)
             .MapDelete(CancelRenting, "{id}", Permissions.RentingDelete);
     }
 
@@ -70,6 +72,18 @@ public class Rentings : EndpointGroupBase
 
     public async Task<Results<NoContent, BadRequest>> ChangeRentingState(
         ISender sender, int id, ChangeRentingStateCommand command)
+    {
+        if (id != command.Id)
+            return TypedResults.BadRequest();
+
+        await sender.Send(command);
+        return TypedResults.NoContent();
+    }
+
+    // Extending or shortening a live renting: re-prices the change and,
+    // optionally, issues a new contract covering the new period.
+    public async Task<Results<NoContent, BadRequest>> ChangeRentingEndDate(
+        ISender sender, int id, ChangeRentingEndDateCommand command)
     {
         if (id != command.Id)
             return TypedResults.BadRequest();

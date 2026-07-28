@@ -1,51 +1,9 @@
-.car-card {
-  background: #fff;
-  border-radius: 12px;
-  padding: 24px;
-  max-width: 1100px;
-  margin: 40px auto;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
+/* Layout, filter strip, table and empty state all come from the shared
+   .page / .filter-row / .data-table rules in styles.scss. Only what is specific
+   to the fleet list lives here. */
 
-.header-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 16px;
-}
-
-.title {
-  margin: 0;
-  font-size: 24px;
+.matricule {
   font-weight: 600;
-  color: #333;
-}
-
-.filter-row {
-  display: flex;
-  gap: 16px;
-  align-items: center;
-  flex-wrap: wrap;
-}
-
-.filter-field {
-  flex: 1;
-  min-width: 180px;
-}
-
-.full-width {
-  width: 100%;
-}
-
-.text-center {
-  text-align: center;
-}
-
-.empty-row {
-  padding: 16px;
-  text-align: center;
-  color: #777;
+  color: var(--ink);
+  letter-spacing: 0.02em;
 }

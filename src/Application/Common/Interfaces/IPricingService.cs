@@ -23,4 +23,27 @@ public interface IPricingService
     /// result carries the car's currency (from its DailyRate).
     /// </summary>
     Money CalculateRentalPrice(Car car, DateTime startDate, DateTime endDate);
+
+    /// <summary>
+    /// Re-prices a booking whose end date moved, without re-opening the price of
+    /// the days the client already agreed to.
+    /// <list type="bullet">
+    /// <item>Days ADDED are new business, quoted at the car's current
+    /// <see cref="Car.DailyRate"/>.</item>
+    /// <item>Days GIVEN BACK are credited at the rate this booking was agreed at
+    /// (<paramref name="agreedPrice"/> spread over its own billed days), never at
+    /// today's rate — otherwise an early return could credit more than was
+    /// charged after a rate rise.</item>
+    /// <item>A new end date inside the same billed day returns
+    /// <paramref name="agreedPrice"/> untouched.</item>
+    /// </list>
+    /// That is the difference from <see cref="CalculateRentalPrice"/>, which
+    /// quotes a whole period from scratch: extending a booking must not silently
+    /// re-price the part already agreed (see the snapshot rule above).
+    /// Throws <see cref="InvalidOperationException"/> when days are added and the
+    /// car has no rate, and <see cref="ArgumentException"/> if either end date is
+    /// not after <paramref name="startDate"/>.
+    /// </summary>
+    Money RepriceForNewEndDate(
+        Car car, Money agreedPrice, DateTime startDate, DateTime originalEndDate, DateTime newEndDate);
 }

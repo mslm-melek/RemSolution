@@ -17,7 +17,11 @@ namespace RemSolution.Application.Features.Credit.Queries.GetExpenseCreditsQuery
         int PageSize = 10,
         // Default view is the working set: only expenses still owing.
         bool OnlyOutstanding = true,
-        int? CarId = null
+        int? CarId = null,
+        // Column the table is sorted by, named after the Angular matColumnDef;
+        // anything unrecognised falls back to the biggest debt first.
+        string? SortBy = null,
+        bool SortDescending = true
     ) : IRequest<PaginatedList<ExpenseCreditDto>>;
 
     public class GetExpenseCreditsQueryHandler
@@ -44,10 +48,23 @@ namespace RemSolution.Application.Features.Credit.Queries.GetExpenseCreditsQuery
                     && e.ExpenseAmount.Amount > (e.PaidAmount == null ? 0m : e.PaidAmount.Amount));
             }
 
-            return await query
-                .OrderByDescending(e => e.ExpenseAmount == null
-                    ? 0m
-                    : e.ExpenseAmount.Amount - (e.PaidAmount == null ? 0m : e.PaidAmount.Amount))
+            var descending = request.SortDescending;
+
+            var ordered = request.SortBy.NormalizeSortKey() switch
+            {
+                "date" => query.OrderByField(e => e.ExpenseDate, descending),
+                "car" => query.OrderByField(e => e.Car!.Matricule, descending),
+                "type" => query.OrderByField(e => e.ExpenseType!.Name, descending),
+                "amount" => query.OrderByField(
+                    e => e.ExpenseAmount == null ? 0m : e.ExpenseAmount.Amount, descending),
+                "paid" => query.OrderByField(
+                    e => e.PaidAmount == null ? 0m : e.PaidAmount.Amount, descending),
+                _ => query.OrderByField(
+                    e => (e.ExpenseAmount == null ? 0m : e.ExpenseAmount.Amount)
+                         - (e.PaidAmount == null ? 0m : e.PaidAmount.Amount), descending),
+            };
+
+            return await ordered
                 .ThenByDescending(e => e.ExpenseDate)
                 .Select(e => new ExpenseCreditDto
                 {

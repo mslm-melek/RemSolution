@@ -4,7 +4,7 @@ import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
   RentingsClient, RentingDto, CreateRentingCommand, UpdateRentingCommand,
-  ChangeRentingStateCommand, RentingState, RentingHistoryDto,
+  ChangeRentingStateCommand, ChangeRentingEndDateCommand, RentingState, RentingHistoryDto,
   CarsClient, CarDto, ClientsClient, ClientDto, NewRentingClient,
   UpdateClientCommand, ClientDocumentType, FileParameter,
   ExtraServicesClient, ExtraServiceDto, CreateExtraServiceCommand,
@@ -82,6 +82,16 @@ export class RentingFormComponent implements OnInit {
   documentValues: { [placeholder: string]: string } = {};
 
   DocumentTemplateKind = DocumentTemplateKind;
+
+  // --- Change end date -----------------------------------------------------
+  // The client wants the car for longer, or brings it back early. Kept out of
+  // the main edit form on purpose: the form re-quotes the whole period when a
+  // date moves, whereas this prices only the difference and lets the agent say
+  // what should happen to the contract (see ChangeRentingEndDateCommand).
+  endDatePanelOpen = false;
+  newEndDate = '';
+  reissueContract = true;
+  changingEndDate = false;
 
   // The picked client's own record, viewable and editable without leaving the
   // booking screen. Kept as a form of its own rather than a group inside `form`
@@ -197,11 +207,11 @@ export class RentingFormComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.carsClient.getCars(1, 1000, null, null, null).subscribe({
+    this.carsClient.getCars(1, 1000, null, null, null, null, false).subscribe({
       next: r => this.cars = r.items || [],
       error: err => console.error(err)
     });
-    this.clientsClient.getClients(1, 1000, null, null).subscribe({
+    this.clientsClient.getClients(1, 1000, null, null, null, false).subscribe({
       next: r => this.clients = r.items || [],
       error: err => console.error(err)
     });
@@ -448,7 +458,7 @@ export class RentingFormComponent implements OnInit {
   }
 
   private reloadClientList() {
-    this.clientsClient.getClients(1, 1000, null, null).subscribe({
+    this.clientsClient.getClients(1, 1000, null, null, null, false).subscribe({
       next: r => this.clients = r.items || [],
       error: err => console.error(err)
     });
@@ -569,6 +579,65 @@ export class RentingFormComponent implements OnInit {
       drivingLicenceNumber: value.drivingLicenceNumber || undefined,
       passeportNumber: value.passeportNumber || undefined,
       description: value.description || undefined
+    });
+  }
+
+  // --- Change end date -----------------------------------------------------
+
+  openEndDatePanel() {
+    this.newEndDate = toDateInput(this.renting?.endDate);
+    // Without the permission there is no choice to make: the renting changes and
+    // the existing paperwork stays as it is.
+    this.reissueContract = this.canGenerateContracts;
+    this.errorMessage = '';
+    this.endDatePanelOpen = true;
+  }
+
+  closeEndDatePanel() {
+    this.endDatePanelOpen = false;
+  }
+
+  /** Whole days between the current end date and the one typed; null when unset. */
+  get endDateDeltaDays(): number | null {
+    if (!this.newEndDate || !this.renting?.endDate) return null;
+
+    const current = new Date(toDateInput(this.renting.endDate)).getTime();
+    const next = new Date(this.newEndDate).getTime();
+    if (isNaN(current) || isNaN(next)) return null;
+
+    return Math.round((next - current) / 86_400_000);
+  }
+
+  changeEndDate() {
+    if (!this.rentingId || !this.newEndDate) return;
+
+    const endDate = fromDateInput(this.newEndDate);
+    if (!endDate) return;
+
+    this.changingEndDate = true;
+    this.errorMessage = '';
+
+    const command = new ChangeRentingEndDateCommand({
+      id: this.rentingId,
+      rowVersion: this.renting?.rowVersion,
+      endDate,
+      regenerateContract: this.reissueContract && this.canGenerateContracts,
+      contractTemplateId: this.contractTemplateId ?? undefined,
+      documentValues: this.filledDocumentValues()
+    });
+
+    this.client.changeRentingEndDate(this.rentingId, command).subscribe({
+      next: () => {
+        this.changingEndDate = false;
+        this.endDatePanelOpen = false;
+        // Reload rather than patch: the price changed, and a reissued contract is
+        // a new row in the documents list.
+        this.reload();
+      },
+      error: err => {
+        this.changingEndDate = false;
+        this.handleError(err);
+      }
     });
   }
 

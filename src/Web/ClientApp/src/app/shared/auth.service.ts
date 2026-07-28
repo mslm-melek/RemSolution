@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { Observable, of } from 'rxjs';
 import { catchError, shareReplay } from 'rxjs/operators';
 import { UsersClient, CurrentUserDto } from '../web-api-client';
+import { ImpersonationService } from './impersonation.service';
 
 // Login, register and logout are full-page Razor flows, so the auth state can
 // only change across page reloads — one fetch per app load is enough.
@@ -9,9 +10,22 @@ import { UsersClient, CurrentUserDto } from '../web-api-client';
 export class AuthService {
   readonly currentUser$: Observable<CurrentUserDto>;
 
-  constructor(client: UsersClient) {
+  constructor(client: UsersClient, impersonation: ImpersonationService) {
     this.currentUser$ = client.getCurrentUser().pipe(
-      catchError(() => of(new CurrentUserDto({ isAuthenticated: false }))),
+      catchError(() => {
+        // An open agency workspace stamps its header on this call too, so an
+        // agency that has since been deleted makes the server refuse it — and
+        // every other request with it. Left alone that reads as "signed out"
+        // across the whole app, for a reason the user cannot see. Drop the
+        // workspace and reload into the admin's own context instead; the reload
+        // cannot loop, because the second pass sends no impersonation header.
+        if (impersonation.current) {
+          impersonation.discard();
+          window.location.reload();
+        }
+
+        return of(new CurrentUserDto({ isAuthenticated: false }));
+      }),
       shareReplay(1)
     );
   }

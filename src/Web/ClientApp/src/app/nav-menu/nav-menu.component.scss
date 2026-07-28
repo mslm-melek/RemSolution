@@ -1,13 +1,47 @@
+/* The app bar. A near-black charcoal band across the top: it separates the app
+   from the light canvas without competing with the status colours inside the
+   page. Links read as pills so the active screen is obvious without an
+   underline. */
+:host {
+  display: block;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
 .nav-toolbar {
   flex-wrap: wrap;
-  margin-bottom: 24px;
+  min-height: 60px;
+  padding-inline: 20px;
+  gap: 6px;
+  background: linear-gradient(100deg, #141c2e 0%, #121a2b 55%, #0f172a 100%);
+  color: #fff;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.05), 0 6px 18px -12px rgba(9, 14, 26, 0.9);
 }
 
 .nav-brand {
-  color: inherit;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #fff;
   text-decoration: none;
-  font-size: 20px;
-  font-weight: 500;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+
+  /* Monogram tile, so the product has a mark and not just a word. */
+  &::before {
+    content: 'R';
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    font-size: 14px;
+    font-weight: 800;
+  }
 }
 
 .nav-spacer {
@@ -17,20 +51,52 @@
 .nav-links {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 2px;
 
-  a.link-active {
-    background: rgba(255, 255, 255, 0.15);
+  .mat-mdc-button,
+  a[mat-button],
+  button[mat-button] {
+    --mdc-text-button-label-text-color: rgba(255, 255, 255, 0.82);
+    border-radius: var(--r-pill);
+    font-weight: 600;
+    font-size: 13.5px;
+    letter-spacing: 0.005em;
+    min-width: 0;
+    padding: 0 14px;
+  }
+
+  .mat-mdc-button:hover {
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  /* Active screen — including a dropdown whose screen is open
+     (see NavMenuComponent.isGroupActive). */
+  a.link-active,
+  button.link-active {
+    background: rgba(255, 255, 255, 0.14);
+    --mdc-text-button-label-text-color: #fff;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.16);
+  }
+
+  /* The dropdown carets are decoration, not labels. */
+  .mat-icon {
+    opacity: 0.8;
   }
 }
 
 .nav-register {
-  border-color: rgba(255, 255, 255, 0.6);
+  border-color: rgba(255, 255, 255, 0.5);
   color: #fff;
+  border-radius: var(--r-pill);
 }
 
+/* The account menu is the anchor for "me": set apart from the navigation. */
 .nav-user {
   text-transform: none;
+  margin-inline-start: 8px;
+  padding-inline: 10px !important;
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
 }
 
 .nav-toggler {
@@ -39,15 +105,28 @@
 
 .nav-language {
   text-transform: none;
+  --mdc-text-button-label-text-color: rgba(255, 255, 255, 0.82);
+  border-radius: var(--r-pill);
+  min-width: 0;
+  padding: 0 10px;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.08);
+  }
 
   .nav-language-code {
     margin-inline-start: 4px;
-    font-weight: 600;
-    letter-spacing: 0.5px;
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: 0.06em;
   }
 }
 
 @media (max-width: 767px) {
+  .nav-toolbar {
+    padding-inline: 12px;
+  }
+
   .nav-toggler {
     display: inline-flex;
   }
@@ -57,10 +136,78 @@
     flex-basis: 100%;
     flex-direction: column;
     align-items: stretch;
-    padding-bottom: 8px;
+    padding-bottom: 10px;
+    gap: 2px;
 
     &.expanded {
       display: flex;
     }
+
+    .mat-mdc-button {
+      justify-content: flex-start;
+      border-radius: var(--r-sm);
+    }
+  }
+
+  .nav-user {
+    margin-inline-start: 0;
+  }
+}
+
+/* --------------------------------------------------- agency workspace bar --- */
+
+/* Sits directly under the toolbar, so it reads as part of the chrome rather than
+   as a dismissible page notice — it is a mode, not a message. */
+.workspace-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-3);
+  flex-wrap: wrap;
+  padding: 8px 24px;
+  background: var(--accent-bg);
+  color: var(--accent);
+  border-bottom: 1px solid rgba(109, 40, 217, 0.24);
+  font-size: 13px;
+}
+
+.workspace-icon {
+  flex: none;
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+}
+
+.workspace-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.35;
+}
+
+.workspace-hint {
+  color: var(--ink-2);
+  font-size: 12px;
+}
+
+.workspace-console,
+.workspace-exit {
+  margin-inline-start: auto;
+  flex: none;
+  text-transform: none;
+}
+
+/* Only the first of the two pushes; the second sits next to it. */
+.workspace-console ~ .workspace-exit {
+  margin-inline-start: 0;
+}
+
+@media (max-width: 767px) {
+  .workspace-bar {
+    padding-inline: 12px;
+  }
+
+  .workspace-console,
+  .workspace-exit {
+    margin-inline-start: 0;
   }
 }

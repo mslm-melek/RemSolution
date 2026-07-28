@@ -1,128 +1,283 @@
-<div class="dashboard" *transloco="let t">
+<div class="page dashboard" *transloco="let t">
   <div class="header-row">
-    <h2 class="title">{{ t('dashboard.title') }}</h2>
-    <span class="period" *ngIf="data">
-      {{ data.periodStart | date:'yyyy-MM-dd' }} → {{ data.periodEnd | date:'yyyy-MM-dd' }}
-    </span>
+    <div>
+      <h2 class="title">{{ t('dashboard.title') }}</h2>
+      <p class="page-subtitle" *ngIf="data">
+        {{ data.periodStart | date:'d MMM y' }} → {{ data.periodEnd | date:'d MMM y' }}
+      </p>
+    </div>
+
+    <!-- The window every "in period" figure below is measured over. -->
+    <mat-button-toggle-group class="period-picker" [value]="periodKey"
+                             (change)="selectPeriod($event.value)"
+                             [attr.aria-label]="t('dashboard.period')">
+      <mat-button-toggle *ngFor="let option of periodOptions" [value]="option.key">
+        {{ t(option.labelKey) }}
+      </mat-button-toggle>
+    </mat-button-toggle-group>
   </div>
 
-  <div *ngIf="errorMessage" class="error-banner">{{ errorMessage }}</div>
+  <!-- Two independent choices: which dates, and how finely to slice them. -->
+  <div class="controls-row">
+    <div class="picked-range" *ngIf="periodKey === 'custom'">
+      <label>
+        <span class="control-label">{{ t('common.startDate') }}</span>
+        <input type="date" [(ngModel)]="customFrom" [max]="customTo" />
+      </label>
+      <label>
+        <span class="control-label">{{ t('common.endDate') }}</span>
+        <input type="date" [(ngModel)]="customTo" [min]="customFrom" />
+      </label>
+      <button mat-stroked-button (click)="applyCustomRange()">
+        <mat-icon>search</mat-icon> {{ t('common.apply') }}
+      </button>
+      <span class="range-error" *ngIf="customError">{{ customError }}</span>
+    </div>
+
+    <div class="granularity">
+      <span class="control-label">{{ t('dashboard.groupBy') }}</span>
+      <mat-button-toggle-group [value]="granularity"
+                               (change)="selectGranularity($event.value)"
+                               [attr.aria-label]="t('dashboard.groupBy')">
+        <mat-button-toggle *ngFor="let option of granularityOptions" [value]="option.value">
+          {{ t(option.labelKey) }}
+        </mat-button-toggle>
+      </mat-button-toggle-group>
+    </div>
+  </div>
+
+  <div *ngIf="errorMessage" class="error-banner">
+    <mat-icon>error_outline</mat-icon> {{ errorMessage }}
+  </div>
   <div *ngIf="loading" class="loading">{{ t('common.loading') }}</div>
 
-  <ng-container *ngIf="data">
+  <ng-container *ngIf="data && !loading">
     <!-- Money first: the figures the owner opens the screen for. -->
-    <h3 class="section-title">{{ t('dashboard.moneySection') }}</h3>
-    <div class="tile-grid">
-      <div class="tile money">
-        <div class="tile-label">{{ t('dashboard.collected') }}</div>
-        <div class="tile-value">{{ data.collectedInPeriod?.amount | number:'1.2-2' }} {{ data.currency }}</div>
-        <div class="tile-note">{{ t('dashboard.inPeriod') }}</div>
-      </div>
-
-      <div class="tile money">
-        <div class="tile-label">{{ t('dashboard.charged') }}</div>
-        <div class="tile-value">{{ data.chargedInPeriod?.amount | number:'1.2-2' }} {{ data.currency }}</div>
-        <div class="tile-note">{{ t('dashboard.chargedHint') }}</div>
-      </div>
-
-      <div class="tile expense">
-        <div class="tile-label">{{ t('dashboard.expenses') }}</div>
-        <div class="tile-value">{{ data.expensesInPeriod?.amount | number:'1.2-2' }} {{ data.currency }}</div>
-        <div class="tile-note">{{ t('dashboard.inPeriod') }}</div>
-      </div>
-
-      <div class="tile net">
-        <div class="tile-label">{{ t('dashboard.net') }}</div>
-        <div class="tile-value">{{ data.netInPeriod?.amount | number:'1.2-2' }} {{ data.currency }}</div>
-        <div class="tile-note">{{ t('dashboard.netHint') }}</div>
-      </div>
-
-      <div class="tile owing">
-        <div class="tile-label">{{ t('dashboard.clientsOutstanding') }}</div>
-        <div class="tile-value">{{ data.clientsOutstanding?.amount | number:'1.2-2' }} {{ data.currency }}</div>
-        <div class="tile-note">{{ t('dashboard.allTime') }}</div>
-      </div>
-
-      <div class="tile owing">
-        <div class="tile-label">{{ t('dashboard.expensesOutstanding') }}</div>
-        <div class="tile-value">{{ data.expensesOutstanding?.amount | number:'1.2-2' }} {{ data.currency }}</div>
-        <div class="tile-note">{{ t('dashboard.allTime') }}</div>
-      </div>
-    </div>
-
-    <!-- Collected vs spent per month; bars are relative to the tallest value. -->
-    <h3 class="section-title">{{ t('dashboard.trendSection') }}</h3>
-    <div class="chart">
-      <div class="chart-legend">
-        <span class="legend collected">{{ t('dashboard.collected') }}</span>
-        <span class="legend spent">{{ t('dashboard.expenses') }}</span>
-      </div>
-      <div class="bars">
-        <div class="month" *ngFor="let point of data.monthlySeries">
-          <div class="bar-pair">
-            <div class="bar collected" [style.height]="barHeight(point.collected?.amount)"
-                 [matTooltip]="(point.collected?.amount | number:'1.2-2') + ' ' + data.currency"></div>
-            <div class="bar spent" [style.height]="barHeight(point.expenses?.amount)"
-                 [matTooltip]="(point.expenses?.amount | number:'1.2-2') + ' ' + data.currency"></div>
-          </div>
-          <div class="month-label">{{ monthLabel(point) }}</div>
+    <div class="kpi-grid">
+      <div class="kpi in">
+        <div class="kpi-head">
+          <span class="kpi-icon"><mat-icon>south_west</mat-icon></span>
+          <span class="tile-label">{{ t('dashboard.collected') }}</span>
+        </div>
+        <div class="tile-value">
+          {{ data.collectedInPeriod?.amount | number:'1.2-2' }} <span class="currency">{{ data.currency }}</span>
+        </div>
+        <div class="kpi-foot">
+          <span class="delta" *ngIf="collectedChange !== null"
+                [ngClass]="collectedChange! >= 0 ? 'good' : 'bad'">
+            <mat-icon>{{ collectedChange! >= 0 ? 'trending_up' : 'trending_down' }}</mat-icon>
+            {{ collectedChange! | number:'1.0-1' }}%
+          </span>
+          <span class="tile-note">{{ collectedChange !== null ? t(vsPreviousLabelKey) : t('dashboard.inPeriod') }}</span>
         </div>
       </div>
+
+      <div class="kpi out">
+        <div class="kpi-head">
+          <span class="kpi-icon"><mat-icon>north_east</mat-icon></span>
+          <span class="tile-label">{{ t('dashboard.expenses') }}</span>
+        </div>
+        <div class="tile-value">
+          {{ data.expensesInPeriod?.amount | number:'1.2-2' }} <span class="currency">{{ data.currency }}</span>
+        </div>
+        <div class="kpi-foot">
+          <!-- Spending more than last month is the bad direction here. -->
+          <span class="delta" *ngIf="expensesChange !== null"
+                [ngClass]="expensesChange! > 0 ? 'bad' : 'good'">
+            <mat-icon>{{ expensesChange! > 0 ? 'trending_up' : 'trending_down' }}</mat-icon>
+            {{ expensesChange! | number:'1.0-1' }}%
+          </span>
+          <span class="tile-note">{{ expensesChange !== null ? t(vsPreviousLabelKey) : t('dashboard.inPeriod') }}</span>
+        </div>
+      </div>
+
+      <div class="kpi net" [class.negative]="netIsNegative">
+        <div class="kpi-head">
+          <span class="kpi-icon"><mat-icon>account_balance</mat-icon></span>
+          <span class="tile-label">{{ t('dashboard.net') }}</span>
+        </div>
+        <div class="tile-value">
+          {{ data.netInPeriod?.amount | number:'1.2-2' }} <span class="currency">{{ data.currency }}</span>
+        </div>
+        <div class="kpi-foot">
+          <span class="tile-note">
+            {{ t(averageLabelKey) }}:
+            <span class="num">{{ averageNetPerBucket | number:'1.0-0' }} {{ data.currency }}</span>
+          </span>
+        </div>
+      </div>
+
+      <a class="kpi owed" [routerLink]="['/credit']">
+        <div class="kpi-head">
+          <span class="kpi-icon"><mat-icon>request_quote</mat-icon></span>
+          <span class="tile-label">{{ t('dashboard.clientsOutstanding') }}</span>
+        </div>
+        <div class="tile-value">
+          {{ data.clientsOutstanding?.amount | number:'1.2-2' }} <span class="currency">{{ data.currency }}</span>
+        </div>
+        <div class="kpi-foot">
+          <span class="tile-note">{{ t('dashboard.clientsInDebt') }}: {{ data.clientsInDebtCount }}</span>
+        </div>
+      </a>
     </div>
 
-    <h3 class="section-title">{{ t('dashboard.clientsSection') }}</h3>
-    <div class="tile-grid">
-      <div class="tile">
-        <div class="tile-label">{{ t('dashboard.totalClients') }}</div>
-        <div class="tile-value">{{ data.totalClients }}</div>
-      </div>
-      <div class="tile">
-        <div class="tile-label">{{ t('dashboard.newClients') }}</div>
-        <div class="tile-value">{{ data.newClientsInPeriod }}</div>
-        <div class="tile-note">{{ t('dashboard.inPeriod') }}</div>
-      </div>
-      <div class="tile">
-        <div class="tile-label">{{ t('dashboard.clientsInDebt') }}</div>
-        <div class="tile-value">{{ data.clientsInDebtCount }}</div>
-      </div>
-      <div class="tile">
-        <div class="tile-label">{{ t('dashboard.flaggedClients') }}</div>
-        <div class="tile-value">{{ data.flaggedClients }}</div>
-      </div>
+    <div class="split">
+      <!-- Collected vs spent per month over the trailing window. -->
+      <section class="panel">
+        <div class="panel-head">
+          <h3 class="section-title">{{ t('dashboard.trendSection') }}</h3>
+          <!-- Cars, clients and money share the window but not an axis, so the
+               chart draws one of them at a time. -->
+          <mat-button-toggle-group class="metric-picker" [value]="metricKey"
+                                   (change)="selectMetric($event.value)"
+                                   [attr.aria-label]="t('dashboard.metric')">
+            <mat-button-toggle *ngFor="let metric of metrics" [value]="metric.key">
+              {{ t(metric.labelKey) }}
+            </mat-button-toggle>
+          </mat-button-toggle-group>
+        </div>
+
+        <div class="chart-legend" *ngIf="chart">
+          <span class="legend" *ngFor="let s of chart.legend" [ngClass]="s.key">{{ t(s.labelKey) }}</span>
+        </div>
+
+        <svg *ngIf="chart" class="chart" role="img"
+             [attr.viewBox]="'0 0 ' + chart.width + ' ' + chart.height"
+             [attr.aria-label]="t(activeMetric.labelKey) + ' — ' + t('dashboard.trendSection')">
+          <!-- Gridlines and their value labels. -->
+          <g class="grid">
+            <line *ngFor="let line of chart.gridLines"
+                  [attr.x1]="chart.plotLeft" [attr.x2]="chart.plotRight"
+                  [attr.y1]="line.y" [attr.y2]="line.y" />
+            <text *ngFor="let line of chart.gridLines"
+                  [attr.x]="chart.labelX" [attr.y]="line.y + 4">{{ line.label }}</text>
+          </g>
+
+          <!-- Drawn in order, so a two-line metric puts the first line on top. -->
+          <g class="series" *ngFor="let s of chart.series" [ngClass]="s.key">
+            <path class="area" [attr.d]="s.area" />
+            <path class="line" [attr.d]="s.line" />
+            <circle *ngFor="let point of s.points"
+                    [attr.cx]="point.x" [attr.cy]="point.y" r="3.5">
+              <title>{{ pointTitle(point) }}</title>
+            </circle>
+          </g>
+
+          <g class="buckets">
+            <text *ngFor="let label of chart.bucketLabels"
+                  [attr.x]="label.x" [attr.y]="chart.bucketLabelY">{{ label.text }}</text>
+          </g>
+        </svg>
+
+        <p class="chart-empty" *ngIf="chart && !chart.hasData">{{ t('dashboard.chartNoData') }}</p>
+      </section>
+
+      <!-- The two ratios that say whether the month is working. -->
+      <section class="panel rates">
+        <h3 class="section-title">{{ t('dashboard.healthSection') }}</h3>
+
+        <div class="gauge">
+          <svg viewBox="0 0 88 88" class="donut" role="img"
+               [attr.aria-label]="t('dashboard.utilization')">
+            <circle class="track" cx="44" cy="44" r="32" />
+            <circle class="value" cx="44" cy="44" r="32"
+                    [attr.stroke-dasharray]="201.06"
+                    [attr.stroke-dashoffset]="201.06 * (1 - (utilization || 0) / 100)" />
+            <text class="donut-text" x="44" y="49">
+              {{ utilization === null ? '—' : (utilization | number:'1.0-0') + '%' }}
+            </text>
+          </svg>
+          <div>
+            <div class="tile-label">{{ t('dashboard.utilization') }}</div>
+            <div class="tile-note">
+              {{ t('dashboard.utilizationHint', { onRent: data.carsOnRent, active: data.activeCars }) }}
+            </div>
+          </div>
+        </div>
+
+        <div class="meter">
+          <div class="meter-head">
+            <span class="tile-label">{{ t('dashboard.collectionRate') }}</span>
+            <span class="meter-value num">
+              {{ collectionRate === null ? '—' : (collectionRate | number:'1.0-0') + '%' }}
+            </span>
+          </div>
+          <div class="meter-track">
+            <!-- Capped at 100% width: collecting an older invoice can push the
+                 ratio above 100 for the period, which should not overflow. -->
+            <div class="meter-fill" [style.width.%]="collectionRate === null ? 0 : (collectionRate! > 100 ? 100 : collectionRate)"></div>
+          </div>
+          <div class="tile-note">{{ t('dashboard.collectionRateHint') }}</div>
+        </div>
+
+        <div class="mini-figures">
+          <div>
+            <div class="tile-label">{{ t('dashboard.charged') }}</div>
+            <div class="mini-value num">{{ data.chargedInPeriod?.amount | number:'1.0-0' }} {{ data.currency }}</div>
+          </div>
+          <div>
+            <div class="tile-label">{{ t('dashboard.expensesOutstanding') }}</div>
+            <div class="mini-value num">{{ data.expensesOutstanding?.amount | number:'1.0-0' }} {{ data.currency }}</div>
+          </div>
+        </div>
+      </section>
     </div>
 
-    <h3 class="section-title">{{ t('dashboard.fleetSection') }}</h3>
-    <div class="tile-grid">
-      <div class="tile">
-        <div class="tile-label">{{ t('dashboard.totalCars') }}</div>
-        <div class="tile-value">{{ data.totalCars }}</div>
+    <!-- What the desk still has to do. Empty is a good state, and says so. -->
+    <section class="panel">
+      <h3 class="section-title">{{ t('dashboard.alertsSection') }}</h3>
+
+      <div class="alerts" *ngIf="alerts.length">
+        <a class="alert" *ngFor="let alert of alerts" [ngClass]="alert.tone" [routerLink]="[alert.link]">
+          <span class="alert-icon"><mat-icon>{{ alert.icon }}</mat-icon></span>
+          <span class="alert-count">{{ alert.count }}</span>
+          <span class="alert-label">{{ t(alert.labelKey) }}</span>
+          <span class="alert-action">{{ t(alert.actionKey) }} <mat-icon>chevron_right</mat-icon></span>
+        </a>
       </div>
-      <div class="tile">
-        <div class="tile-label">{{ t('dashboard.activeCars') }}</div>
-        <div class="tile-value">{{ data.activeCars }}</div>
+
+      <div class="all-clear" *ngIf="!alerts.length">
+        <mat-icon>task_alt</mat-icon> {{ t('dashboard.allClear') }}
       </div>
-      <div class="tile">
-        <div class="tile-label">{{ t('dashboard.carsOnRent') }}</div>
-        <div class="tile-value">{{ data.carsOnRent }}</div>
+    </section>
+
+    <!-- Standing counts: the shape of the business, not the month. -->
+    <section class="panel">
+      <h3 class="section-title">{{ t('dashboard.operationsSection') }}</h3>
+      <div class="count-grid">
+        <a class="count" [routerLink]="['/renting']">
+          <span class="count-value">{{ data.rentingsInProgress }}</span>
+          <span class="count-label">{{ t('dashboard.rentingsInProgress') }}</span>
+        </a>
+        <a class="count" [routerLink]="['/renting']">
+          <span class="count-value">{{ data.rentingsUpcoming }}</span>
+          <span class="count-label">{{ t('dashboard.rentingsUpcoming') }}</span>
+        </a>
+        <a class="count" [routerLink]="['/car']">
+          <span class="count-value">{{ data.carsOnRent }}</span>
+          <span class="count-label">{{ t('dashboard.carsOnRent') }}</span>
+        </a>
+        <a class="count" [routerLink]="['/car']">
+          <span class="count-value">{{ data.activeCars }} <small>/ {{ data.totalCars }}</small></span>
+          <span class="count-label">{{ t('dashboard.activeCars') }}</span>
+        </a>
+        <a class="count" [routerLink]="['/client']">
+          <span class="count-value">{{ data.totalClients }}</span>
+          <span class="count-label">{{ t('dashboard.totalClients') }}</span>
+        </a>
+        <a class="count" [routerLink]="['/client']">
+          <span class="count-value">+{{ data.newClientsInPeriod }}</span>
+          <span class="count-label">{{ t('dashboard.newClients') }}</span>
+        </a>
+        <a class="count" [routerLink]="['/car']">
+          <span class="count-value">+{{ data.newCarsInPeriod }}</span>
+          <span class="count-label">{{ t('dashboard.newCars') }}</span>
+        </a>
+        <a class="count" [routerLink]="['/renting']">
+          <span class="count-value">{{ data.rentingsStartedInPeriod }}</span>
+          <span class="count-label">{{ t('dashboard.rentingsStarted') }}</span>
+        </a>
       </div>
-      <div class="tile">
-        <div class="tile-label">{{ t('dashboard.rentingsInProgress') }}</div>
-        <div class="tile-value">{{ data.rentingsInProgress }}</div>
-      </div>
-      <div class="tile">
-        <div class="tile-label">{{ t('dashboard.rentingsUpcoming') }}</div>
-        <div class="tile-value">{{ data.rentingsUpcoming }}</div>
-      </div>
-      <div class="tile">
-        <div class="tile-label">{{ t('dashboard.returnsDue') }}</div>
-        <div class="tile-value">{{ data.returnsDueInPeriod }}</div>
-        <div class="tile-note">{{ t('dashboard.inPeriod') }}</div>
-      </div>
-      <div class="tile action" *ngIf="data.pendingReservationRequests">
-        <div class="tile-label">{{ t('dashboard.pendingRequests') }}</div>
-        <div class="tile-value">{{ data.pendingReservationRequests }}</div>
-        <a [routerLink]="['/reservation']">{{ t('dashboard.reviewRequests') }}</a>
-      </div>
-    </div>
+    </section>
   </ng-container>
 </div>

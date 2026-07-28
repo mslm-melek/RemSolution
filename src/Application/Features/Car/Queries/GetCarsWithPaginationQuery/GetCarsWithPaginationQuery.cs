@@ -15,7 +15,11 @@ namespace RemSolution.Application.Features.Car.Queries.GetCarsWithPaginationQuer
         int PageSize = 10,
         int? ModelId = null,
         string? Color = null,
-        FuelType? FuelType = null
+        FuelType? FuelType = null,
+        // Column the table is sorted by, named after the Angular matColumnDef.
+        // Anything unrecognised falls back to the matricule (see SortingExtensions).
+        string? SortBy = null,
+        bool SortDescending = false
     ) : IRequest<PaginatedList<CarDto>>;
     public class GetCarsWithPaginationQueryHandler
         : IRequestHandler<GetCarsWithPaginationQuery, PaginatedList<CarDto>>
@@ -40,7 +44,25 @@ namespace RemSolution.Application.Features.Car.Queries.GetCarsWithPaginationQuer
             if (request.FuelType.HasValue)
                 query = query.Where(c => c.FuelType == request.FuelType);
 
-            return await query
+            var descending = request.SortDescending;
+
+            // Ordered before the projection so the sort runs on indexed entity
+            // columns; Id is the tie-break that keeps paging stable.
+            var ordered = request.SortBy.NormalizeSortKey() switch
+            {
+                "model" => query.OrderByField(c => c.Model!.Name, descending),
+                "firstcirculationdate" => query.OrderByField(c => c.FirstCirculationDate, descending),
+                "color" => query.OrderByField(c => c.Color, descending),
+                "power" => query.OrderByField(c => c.Power, descending),
+                "fueltype" => query.OrderByField(c => c.FuelType, descending),
+                "status" => query.OrderByField(c => c.Status, descending),
+                "dailyrate" => query.OrderByField(c => c.DailyRate == null ? 0m : c.DailyRate.Amount, descending),
+                "branch" => query.OrderByField(c => c.Branch!.Name, descending),
+                _ => query.OrderByField(c => c.Matricule, descending),
+            };
+
+            return await ordered
+                .ThenBy(c => c.Id)
                 .ProjectToType<CarDto>()
                 .PaginatedListAsync(request.PageNumber, request.PageSize);
         }

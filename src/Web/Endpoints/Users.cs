@@ -5,6 +5,7 @@ using RemSolution.Web.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using RemSolution.Application.Common.Features;
 using RemSolution.Application.Common.Interfaces;
+using RemSolution.Application.Common.Tenancy;
 using RemSolution.Application.Features.Users.Commands.CreateAgencyUserCommand;
 using RemSolution.Application.Features.Users.Commands.CreateAgencyUserByAdminCommand;
 using RemSolution.Application.Features.Users.Commands.UpdateAgencyUserCommand;
@@ -186,7 +187,8 @@ public class Users : EndpointGroupBase
         TimeProvider dateTime)
     {
         if (principal.Identity?.IsAuthenticated != true)
-            return TypedResults.Ok(new CurrentUserDto(false, null, null, null, null, null, Array.Empty<string>(), Array.Empty<string>()));
+            return TypedResults.Ok(new CurrentUserDto(
+                false, null, null, null, null, null, Array.Empty<string>(), Array.Empty<string>(), false));
 
         var user = await userManager.GetUserAsync(principal);
 
@@ -198,7 +200,13 @@ public class Users : EndpointGroupBase
             principal.IsInRole(Roles.AgencyStaff) ? Roles.AgencyStaff :
             principal.IsInRole(Roles.Customer) ? Roles.Customer : null;
 
-        var granted = principal.IsInRole(Roles.AgencyAdministrator)
+        // A platform admin inside an agency workspace satisfies every permission
+        // policy for the duration of the request (see the impersonation
+        // middleware), so the SPA is handed that same set — otherwise the
+        // feature-driven navigation would hide screens the API would allow.
+        var impersonating = principal.IsInRole(Roles.PlatformAdministrator) && ImpersonationScope.IsActive;
+
+        var granted = principal.IsInRole(Roles.AgencyAdministrator) || impersonating
             ? Permissions.All
             : principal.FindAll(Claims.Permission).Select(c => c.Value).ToArray();
 
@@ -231,7 +239,8 @@ public class Users : EndpointGroupBase
             tenant.AgencyId,
             agencyName,
             permissions,
-            features));
+            features,
+            impersonating));
     }
 }
 
@@ -243,4 +252,9 @@ public record CurrentUserDto(
     int? AgencyId,
     string? AgencyName,
     IReadOnlyCollection<string> Permissions,
-    IReadOnlyCollection<string> Features);
+    IReadOnlyCollection<string> Features,
+    // True when the caller is a platform administrator working inside the agency
+    // named above rather than their own context. AgencyId/AgencyName/Permissions/
+    // Features then all describe that agency — the SPA shows the agency's
+    // navigation and a banner saying whose data is on screen.
+    bool IsImpersonating);

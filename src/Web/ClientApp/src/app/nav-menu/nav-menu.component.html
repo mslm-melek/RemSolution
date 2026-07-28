@@ -1,5 +1,5 @@
 <header *transloco="let t">
-  <mat-toolbar color="primary" class="nav-toolbar">
+  <mat-toolbar class="nav-toolbar">
     <a class="nav-brand" [routerLink]="['/']">{{ t('nav.brandName') }}</a>
 
     <span class="nav-spacer"></span>
@@ -12,6 +12,8 @@
       <mat-icon>menu</mat-icon>
     </button>
 
+    <!-- The bar is data-driven: NavMenuComponent decides what the role and the
+         agency's features make reachable, and which screens travel together. -->
     <nav class="nav-links" [class.expanded]="isExpanded" *ngIf="isAuthenticated">
       <a mat-button
          [routerLink]="['/']"
@@ -19,120 +21,48 @@
          [routerLinkActiveOptions]="{ exact: true }"
          (click)="collapse()">{{ t('nav.home') }}</a>
 
-      <!-- Platform administrator: agency-grouped console. Cars & clients are
-           reached inside an agency, not from the top level. -->
-      <ng-container *ngIf="isPlatformAdmin">
-        <a mat-button
-           [routerLink]="['/agency']"
+      <ng-container *ngFor="let entry of navEntries">
+        <a *ngIf="entry.link" mat-button
+           [routerLink]="[entry.link]"
            [routerLinkActive]="['link-active']"
-           (click)="collapse()">{{ t('nav.agencies') }}</a>
-        <a mat-button
-           [routerLink]="['/subscription-plan']"
-           [routerLinkActive]="['link-active']"
-           (click)="collapse()">{{ t('nav.subscriptionPlans') }}</a>
+           (click)="collapse()">{{ t(entry.labelKey) }}</a>
 
-        <!-- Reference & configuration data, grouped. -->
-        <button mat-button [matMenuTriggerFor]="catalogMenu">
-          {{ t('nav.config') }} <mat-icon>arrow_drop_down</mat-icon>
-        </button>
-        <mat-menu #catalogMenu="matMenu">
-          <a mat-menu-item [routerLink]="['/brand']" (click)="collapse()">{{ t('nav.carBrands') }}</a>
-          <a mat-menu-item [routerLink]="['/model-car']" (click)="collapse()">{{ t('nav.carModels') }}</a>
-          <a mat-menu-item [routerLink]="['/extra-service-type']" (click)="collapse()">{{ t('nav.extraServiceTypes') }}</a>
-          <a mat-menu-item [routerLink]="['/expense-type']" (click)="collapse()">{{ t('nav.expenseTypes') }}</a>
-        </mat-menu>
-      </ng-container>
-
-      <!-- Marketplace customer: browse + their reservations only. -->
-      <ng-container *ngIf="isCustomer">
-        <a mat-button
-           [routerLink]="['/browse']"
-           [routerLinkActive]="['link-active']"
-           (click)="collapse()">{{ t('nav.browseCars') }}</a>
-        <a mat-button
-           [routerLink]="['/my-reservations']"
-           [routerLinkActive]="['link-active']"
-           (click)="collapse()">{{ t('nav.myReservations') }}</a>
-        <!-- Not feature-gated: the customer's own threads. An agency without the
-             Chat feature simply never opens one, so the list stays empty. -->
-        <a mat-button
-           [routerLink]="['/my-chats']"
-           [routerLinkActive]="['link-active']"
-           (click)="collapse()">{{ t('nav.myChats') }}</a>
-      </ng-container>
-
-      <!-- Agency users: primary entities in the bar; all configuration and
-           reference data grouped under Config. Each item stays gated by its
-           own feature / role. -->
-      <ng-container *ngIf="!isPlatformAdmin && !isCustomer">
-        <a mat-button
-           *ngIf="canAccessDashboard"
-           [routerLink]="['/dashboard']"
-           [routerLinkActive]="['link-active']"
-           (click)="collapse()">{{ t('nav.dashboard') }}</a>
-        <a mat-button
-           *ngIf="canAccessCars"
-           [routerLink]="['/car']"
-           [routerLinkActive]="['link-active']"
-           (click)="collapse()">{{ t('nav.cars') }}</a>
-        <a mat-button
-           *ngIf="canAccessReservations"
-           [routerLink]="['/reservation']"
-           [routerLinkActive]="['link-active']"
-           (click)="collapse()">{{ t('nav.reservations') }}</a>
-        <a mat-button
-           *ngIf="canAccessRentings"
-           [routerLink]="['/renting']"
-           [routerLinkActive]="['link-active']"
-           (click)="collapse()">{{ t('nav.rentings') }}</a>
-        <a mat-button
-           *ngIf="canAccessClients"
-           [routerLink]="['/client']"
-           [routerLinkActive]="['link-active']"
-           (click)="collapse()">{{ t('nav.clients') }}</a>
-        <a mat-button
-           *ngIf="canAccessExpenses"
-           [routerLink]="['/expense']"
-           [routerLinkActive]="['link-active']"
-           (click)="collapse()">{{ t('nav.expenses') }}</a>
-        <a mat-button
-           *ngIf="canAccessCredits"
-           [routerLink]="['/credit']"
-           [routerLinkActive]="['link-active']"
-           (click)="collapse()">{{ t('nav.credits') }}</a>
-        <a mat-button
-           *ngIf="canAccessChat"
-           [routerLink]="['/chat']"
-           [routerLinkActive]="['link-active']"
-           (click)="collapse()">{{ t('nav.chat') }}</a>
-
-        <!-- Config: reference catalogs, staff and car reference data. -->
-        <ng-container *ngIf="canAccessConfig">
-          <button mat-button [matMenuTriggerFor]="configMenu">
-            {{ t('nav.config') }} <mat-icon>arrow_drop_down</mat-icon>
+        <ng-container *ngIf="entry.links as children">
+          <button mat-button [matMenuTriggerFor]="groupMenu" [class.link-active]="isGroupActive(entry)">
+            {{ t(entry.labelKey) }} <mat-icon>arrow_drop_down</mat-icon>
           </button>
-          <mat-menu #configMenu="matMenu">
-            <a mat-menu-item *ngIf="canAccessExpenses" [routerLink]="['/expense-type']" (click)="collapse()">{{ t('nav.expenseTypes') }}</a>
-            <a mat-menu-item *ngIf="canAccessExtraServices" [routerLink]="['/extra-service-type']" (click)="collapse()">{{ t('nav.extraServiceTypes') }}</a>
-            <a mat-menu-item *ngIf="canAccessCars" [routerLink]="['/brand']" (click)="collapse()">{{ t('nav.carBrands') }}</a>
-            <a mat-menu-item *ngIf="canAccessCars" [routerLink]="['/model-car']" (click)="collapse()">{{ t('nav.carModels') }}</a>
-            <a mat-menu-item *ngIf="canAccessDocumentTemplates" [routerLink]="['/document-template']" (click)="collapse()">{{ t('nav.documentTemplates') }}</a>
+          <mat-menu #groupMenu="matMenu">
+            <a mat-menu-item *ngFor="let child of children" [routerLink]="[child.link]" (click)="collapse()">
+              <mat-icon>{{ child.icon }}</mat-icon> {{ t(child.labelKey) }}
+            </a>
           </mat-menu>
         </ng-container>
       </ng-container>
 
+      <!-- Account menu: the signed-in person's own things, plus the reference
+           catalogs (administration, not day-to-day work) in a submenu. -->
       <button mat-button [matMenuTriggerFor]="userMenu" class="nav-user">
         <mat-icon>person</mat-icon> {{ displayName }} <mat-icon>arrow_drop_down</mat-icon>
       </button>
       <mat-menu #userMenu="matMenu">
+        <button mat-menu-item *ngIf="configLinks.length" [matMenuTriggerFor]="configMenu">
+          <mat-icon>tune</mat-icon> {{ t('nav.config') }}
+        </button>
         <a mat-menu-item *ngIf="isAgencyAdmin" [routerLink]="['/team']" (click)="collapse()">
           <mat-icon>groups</mat-icon> {{ t('nav.myTeam') }}
         </a>
         <a mat-menu-item [routerLink]="['/profile']" (click)="collapse()">
           <mat-icon>manage_accounts</mat-icon> {{ t('nav.editProfile') }}
         </a>
+        <mat-divider></mat-divider>
         <a mat-menu-item href="/Identity/Account/Logout">
           <mat-icon>logout</mat-icon> {{ t('nav.logout') }}
+        </a>
+      </mat-menu>
+
+      <mat-menu #configMenu="matMenu">
+        <a mat-menu-item *ngFor="let item of configLinks" [routerLink]="[item.link]" (click)="collapse()">
+          <mat-icon>{{ item.icon }}</mat-icon> {{ t(item.labelKey) }}
         </a>
       </mat-menu>
     </nav>
@@ -160,4 +90,21 @@
       </button>
     </mat-menu>
   </mat-toolbar>
+
+  <!-- Whose data is on screen. Deliberately loud and always present: from here on
+       every screen is the agency's, and what the platform admin does lands in that
+       agency's records under their own name. -->
+  <div class="workspace-bar" *ngIf="workspace">
+    <mat-icon class="workspace-icon">admin_panel_settings</mat-icon>
+    <span class="workspace-text">
+      <strong>{{ t('workspace.actingAs', { agency: workspace.name }) }}</strong>
+      <span class="workspace-hint">{{ t('workspace.hint') }}</span>
+    </span>
+    <a mat-button class="workspace-console" [routerLink]="['/agency', workspace.id]" (click)="collapse()">
+      <mat-icon>tune</mat-icon> {{ t('workspace.console') }}
+    </a>
+    <button mat-stroked-button class="workspace-exit" (click)="exitWorkspace()">
+      <mat-icon>logout</mat-icon> {{ t('workspace.exit') }}
+    </button>
+  </div>
 </header>

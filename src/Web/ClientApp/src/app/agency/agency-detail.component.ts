@@ -1,4 +1,6 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, ViewChild, inject } from '@angular/core';
+import { MatSort } from '@angular/material/sort';
+import { MatTableDataSource } from '@angular/material/table';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import {
@@ -9,6 +11,7 @@ import {
   SubscriptionPlansClient, SubscriptionPlanDto, SubscriptionStatus
 } from '../web-api-client';
 import { fromDateInput, extractValidationErrors } from '../shared/form-utils';
+import { ImpersonationService } from '../shared/impersonation.service';
 import { TranslocoService } from '@jsverse/transloco';
 
 @Component({
@@ -24,9 +27,40 @@ export class AgencyDetailComponent implements OnInit {
   agency?: AgencyDto;
 
   users: AgencyUserDto[] = [];
+  usersSource = new MatTableDataSource<AgencyUserDto>([]);
   usersColumns: string[] = ['userName', 'role', 'status', 'permissions', 'actions'];
 
   subscriptions: AgencySubscriptionDto[] = [];
+  subscriptionsSource = new MatTableDataSource<AgencySubscriptionDto>([]);
+
+  // Two sortable tables in one component, each behind its own tab, so each sort
+  // header is taken through a setter rather than a single ngAfterViewInit.
+  @ViewChild('usersSort') set usersSort(sort: MatSort | undefined) {
+    if (!sort) return;
+    this.usersSource.sortingDataAccessor = (user, column) => {
+      switch (column) {
+        case 'role': return user.role ?? '';
+        case 'status': return user.isLockedOut ? 1 : 0;
+        case 'permissions': return (user.permissions ?? []).length;
+        default: return user.userName ?? '';
+      }
+    };
+    this.usersSource.sort = sort;
+  }
+
+  @ViewChild('subsSort') set subsSort(sort: MatSort | undefined) {
+    if (!sort) return;
+    this.subscriptionsSource.sortingDataAccessor = (subscription, column) => {
+      switch (column) {
+        case 'status': return subscription.status ?? 0;
+        // The period column shows both bounds; it sorts by the start.
+        case 'period': return subscription.startDate ? new Date(subscription.startDate).getTime() : 0;
+        default: return subscription.planName ?? '';
+      }
+    };
+    this.subscriptionsSource.sort = sort;
+  }
+
   usage?: AgencyUsageDto;
   plans: SubscriptionPlanDto[] = [];
   assignForm: FormGroup;
@@ -46,7 +80,8 @@ export class AgencyDetailComponent implements OnInit {
     private agenciesClient: AgenciesClient,
     private usersClient: UsersClient,
     private subscriptionsClient: AgencySubscriptionsClient,
-    private plansClient: SubscriptionPlansClient
+    private plansClient: SubscriptionPlansClient,
+    private impersonation: ImpersonationService
   ) {
     this.assignForm = this.fb.group({
       planId: [null, Validators.required],
@@ -74,10 +109,25 @@ export class AgencyDetailComponent implements OnInit {
     });
   }
 
+  // Opens this agency's workspace: from here on every module screen reads and
+  // writes this agency's data, until the banner's exit. Reloads the page — the
+  // signed-in user's permissions and enabled features come from one fetch per app
+  // load and both change with the agency.
+  openWorkspace(landOn = '/dashboard') {
+    if (!this.agency) return;
+
+    this.impersonation.enter(
+      { id: this.agencyId, name: this.agency.name || this.transloco.translate('agency.fallbackName') },
+      landOn);
+  }
+
   // --- Users ---
   loadUsers() {
     this.usersClient.getAgencyUsers(this.agencyId).subscribe({
-      next: u => this.users = u || [],
+      next: u => {
+        this.users = u || [];
+        this.usersSource.data = this.users;
+      },
       error: err => console.error(err)
     });
   }
@@ -98,7 +148,10 @@ export class AgencyDetailComponent implements OnInit {
   // --- Subscription & usage ---
   loadSubscription() {
     this.subscriptionsClient.getAgencySubscriptions(this.agencyId).subscribe({
-      next: s => this.subscriptions = s || [],
+      next: s => {
+        this.subscriptions = s || [];
+        this.subscriptionsSource.data = this.subscriptions;
+      },
       error: err => console.error(err)
     });
     this.subscriptionsClient.getAgencyUsage(this.agencyId).subscribe({

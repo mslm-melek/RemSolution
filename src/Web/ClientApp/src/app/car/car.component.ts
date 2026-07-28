@@ -1,5 +1,6 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { PageEvent } from '@angular/material/paginator';
+import { Sort, SortDirection } from '@angular/material/sort';
 import { CarsClient, CarDto, FuelType, ModelCarsClient, ModelCarDto } from '../web-api-client';
 import { TranslocoService } from '@jsverse/transloco';
 
@@ -19,6 +20,11 @@ export class CarComponent implements OnInit {
   totalCount = 0;
   pageNumber = 1;
   pageSize = 10;
+
+  // Sorting is server-side: the column id doubles as the API's SortBy key, and
+  // the starting values mirror the query's own default order.
+  sortBy = 'matricule';
+  sortDirection: SortDirection = 'asc';
 
   filterModelId: number | null = null;
   filterColor = '';
@@ -46,7 +52,9 @@ export class CarComponent implements OnInit {
       this.pageSize,
       this.filterModelId,
       this.filterColor.trim() || null,
-      this.filterFuelType
+      this.filterFuelType,
+      this.sortBy,
+      this.sortDirection === 'desc'
     ).subscribe({
       next: result => {
         this.cars = result.items || [];
@@ -71,6 +79,15 @@ export class CarComponent implements OnInit {
   onPage(event: PageEvent) {
     this.pageNumber = event.pageIndex + 1;
     this.pageSize = event.pageSize;
+    this.load();
+  }
+
+  // A new sort re-queries from page one: the row that was on top of page three
+  // is meaningless once the order changed.
+  onSort(sort: Sort) {
+    this.sortBy = sort.active;
+    this.sortDirection = sort.direction || 'asc';
+    this.pageNumber = 1;
     this.load();
   }
 

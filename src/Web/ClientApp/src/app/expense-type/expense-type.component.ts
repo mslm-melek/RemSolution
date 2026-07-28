@@ -1,4 +1,6 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { AfterViewInit, Component, OnInit, ViewChild, inject } from '@angular/core';
+import { MatSort } from '@angular/material/sort';
+import { MatTableDataSource } from '@angular/material/table';
 import {
   ExpenseTypesClient, ExpenseTypeDto,
   CreateExpenseTypeCommand, UpdateExpenseTypeCommand
@@ -11,11 +13,14 @@ import { TranslocoService } from '@jsverse/transloco';
   templateUrl: './expense-type.component.html',
   styleUrls: ['./expense-type.component.css']
 })
-export class ExpenseTypeComponent implements OnInit {
+export class ExpenseTypeComponent implements OnInit, AfterViewInit {
   // Confirm/prompt dialogs and error banners are plain strings, so they are
   // translated imperatively rather than through the template pipe.
   private readonly transloco = inject(TranslocoService);
   types: ExpenseTypeDto[] = [];
+  dataSource = new MatTableDataSource<ExpenseTypeDto>([]);
+
+  @ViewChild(MatSort) sort!: MatSort;
   displayedColumns: string[] = ['name', 'schedule', 'notify', 'active', 'actions'];
   errorMessage = '';
 
@@ -27,7 +32,22 @@ export class ExpenseTypeComponent implements OnInit {
   afterMonth: number | null = null;
   isActive = true;
 
-  constructor(private client: ExpenseTypesClient) { }
+  constructor(private client: ExpenseTypesClient) {
+    // "Due" shows kilometres and/or months in one column; it sorts by the
+    // interval that is actually set, months first.
+    this.dataSource.sortingDataAccessor = (type, column) => {
+      switch (column) {
+        case 'schedule': return type.afterMonth ?? type.afterKilometer ?? 0;
+        case 'notify': return type.withNotif ? 1 : 0;
+        case 'active': return type.isActive ? 1 : 0;
+        default: return type.name ?? '';
+      }
+    };
+  }
+
+  ngAfterViewInit() {
+    this.dataSource.sort = this.sort;
+  }
 
   ngOnInit() {
     this.load();
@@ -35,7 +55,10 @@ export class ExpenseTypeComponent implements OnInit {
 
   load() {
     this.client.getExpenseTypes(false).subscribe({
-      next: types => this.types = types || [],
+      next: types => {
+        this.types = types || [];
+        this.dataSource.data = this.types;
+      },
       error: err => console.error(err)
     });
   }

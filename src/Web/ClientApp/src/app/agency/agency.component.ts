@@ -1,4 +1,6 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { AfterViewInit, Component, OnInit, ViewChild, inject } from '@angular/core';
+import { MatSort } from '@angular/material/sort';
+import { MatTableDataSource } from '@angular/material/table';
 import { AgenciesClient, AgencyDto } from '../web-api-client';
 import { TranslocoService } from '@jsverse/transloco';
 
@@ -7,14 +9,31 @@ import { TranslocoService } from '@jsverse/transloco';
   templateUrl: './agency.component.html',
   styleUrls: ['./agency.component.css']
 })
-export class AgencyComponent implements OnInit {
+export class AgencyComponent implements OnInit, AfterViewInit {
   // Confirm/prompt dialogs and error banners are plain strings, so they are
   // translated imperatively rather than through the template pipe.
   private readonly transloco = inject(TranslocoService);
   agencies: AgencyDto[] = [];
+  dataSource = new MatTableDataSource<AgencyDto>([]);
   displayedColumns: string[] = ['name', 'country', 'contact', 'currency', 'actions'];
 
-  constructor(private client: AgenciesClient) { }
+  @ViewChild(MatSort) sort!: MatSort;
+
+  constructor(private client: AgenciesClient) {
+    // Columns whose id is not the property name need to say what they sort on.
+    this.dataSource.sortingDataAccessor = (agency, column) => {
+      switch (column) {
+        case 'country': return agency.countryName ?? '';
+        case 'contact': return agency.email ?? agency.phoneNumber ?? '';
+        case 'currency': return agency.currency ?? '';
+        default: return agency.name ?? '';
+      }
+    };
+  }
+
+  ngAfterViewInit() {
+    this.dataSource.sort = this.sort;
+  }
 
   ngOnInit() {
     this.load();
@@ -23,7 +42,10 @@ export class AgencyComponent implements OnInit {
   load() {
     // The API returns the full list (no server-side paging on agencies).
     this.client.getAgencies().subscribe({
-      next: result => this.agencies = result || [],
+      next: result => {
+        this.agencies = result || [];
+        this.dataSource.data = this.agencies;
+      },
       error: err => console.error(err)
     });
   }

@@ -85,15 +85,4 @@ public abstract class Permissions
         ChatView, ChatSend,
     };
 
-    /// <summary>
-    /// The permissions a platform administrator may satisfy while browsing
-    /// another tenant read-only through the impersonation path — every read /
-    /// view permission, and no create/update/delete/generate.
-    /// </summary>
-    public static readonly string[] ReadOnly =
-    {
-        CarRead, ClientRead, BranchRead, RentingRead, ReservationRead,
-        ExpenseRead, ExtraServiceRead, PaymentRead, ContractRead, FactureRead, CreditRead,
-        DashboardView, ChatView,
-    };
 }

@@ -841,6 +841,23 @@
               ]
             },
             "x-position": 5
+          },
+          {
+            "name": "SortBy",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "nullable": true
+            },
+            "x-position": 6
+          },
+          {
+            "name": "SortDescending",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            },
+            "x-position": 7
           }
         ],
         "responses": {
@@ -1432,6 +1449,23 @@
               "nullable": true
             },
             "x-position": 4
+          },
+          {
+            "name": "SortBy",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "nullable": true
+            },
+            "x-position": 5
+          },
+          {
+            "name": "SortDescending",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            },
+            "x-position": 6
           }
         ],
         "responses": {
@@ -1981,6 +2015,23 @@
               "nullable": true
             },
             "x-position": 4
+          },
+          {
+            "name": "SortBy",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "nullable": true
+            },
+            "x-position": 5
+          },
+          {
+            "name": "SortDescending",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            },
+            "x-position": 6
           }
         ],
         "responses": {
@@ -2039,6 +2090,23 @@
               "nullable": true
             },
             "x-position": 4
+          },
+          {
+            "name": "SortBy",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "nullable": true
+            },
+            "x-position": 5
+          },
+          {
+            "name": "SortDescending",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            },
+            "x-position": 6
           }
         ],
         "responses": {
@@ -2083,13 +2151,21 @@
             "x-position": 2
           },
           {
-            "name": "MonthsOfHistory",
+            "name": "Periods",
             "in": "query",
             "schema": {
               "type": "integer",
               "format": "int32"
             },
             "x-position": 3
+          },
+          {
+            "name": "Granularity",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/DashboardGranularity"
+            },
+            "x-position": 4
           }
         ],
         "responses": {
@@ -2554,6 +2630,23 @@
               "type": "boolean"
             },
             "x-position": 7
+          },
+          {
+            "name": "SortBy",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "nullable": true
+            },
+            "x-position": 8
+          },
+          {
+            "name": "SortDescending",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            },
+            "x-position": 9
           }
         ],
         "responses": {
@@ -3604,6 +3697,23 @@
               "nullable": true
             },
             "x-position": 3
+          },
+          {
+            "name": "SortBy",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "nullable": true
+            },
+            "x-position": 4
+          },
+          {
+            "name": "SortDescending",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            },
+            "x-position": 5
           }
         ],
         "responses": {
@@ -4012,6 +4122,37 @@
         }
       }
     },
+    "/api/PlatformDashboard": {
+      "get": {
+        "tags": [
+          "PlatformDashboard"
+        ],
+        "operationId": "GetPlatformDashboard",
+        "parameters": [
+          {
+            "name": "ExpiringWithinDays",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformDashboardDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/Rentings": {
       "get": {
         "tags": [
@@ -4089,6 +4230,23 @@
               "nullable": true
             },
             "x-position": 7
+          },
+          {
+            "name": "SortBy",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "nullable": true
+            },
+            "x-position": 8
+          },
+          {
+            "name": "SortDescending",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            },
+            "x-position": 9
           }
         ],
         "responses": {
@@ -4307,6 +4465,46 @@
         }
       }
     },
+    "/api/Rentings/{id}/end-date": {
+      "put": {
+        "tags": [
+          "Rentings"
+        ],
+        "operationId": "ChangeRentingEndDate",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          }
+        ],
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeRentingEndDateCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 2
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "400": {
+            "description": ""
+          }
+        }
+      }
+    },
     "/api/Reservations": {
       "get": {
         "tags": [
@@ -4364,6 +4562,23 @@
               ]
             },
             "x-position": 5
+          },
+          {
+            "name": "SortBy",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "nullable": true
+            },
+            "x-position": 6
+          },
+          {
+            "name": "SortDescending",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            },
+            "x-position": 7
           }
         ],
         "responses": {
@@ -6923,6 +7138,10 @@
             "type": "integer",
             "format": "int32"
           },
+          "newCarsInPeriod": {
+            "type": "integer",
+            "format": "int32"
+          },
           "rentingsInProgress": {
             "type": "integer",
             "format": "int32"
@@ -6936,6 +7155,10 @@
             "format": "int32"
           },
           "returnsDueInPeriod": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "rentingsStartedInPeriod": {
             "type": "integer",
             "format": "int32"
           },
@@ -6987,23 +7210,52 @@
               }
             ]
           },
-          "monthlySeries": {
+          "granularity": {
+            "$ref": "#/components/schemas/DashboardGranularity"
+          },
+          "series": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/DashboardMonthPointDto"
+              "$ref": "#/components/schemas/DashboardPeriodPointDto"
             }
           }
         }
       },
-      "DashboardMonthPointDto": {
+      "DashboardGranularity": {
+        "type": "integer",
+        "description": "",
+        "x-enumNames": [
+          "Day",
+          "Month",
+          "Year"
+        ],
+        "enum": [
+          1,
+          2,
+          3
+        ]
+      },
+      "DashboardPeriodPointDto": {
         "type": "object",
         "additionalProperties": false,
         "properties": {
-          "year": {
+          "bucketStart": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "bucketEnd": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "newCars": {
             "type": "integer",
             "format": "int32"
           },
-          "month": {
+          "newClients": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "rentingsStarted": {
             "type": "integer",
             "format": "int32"
           },
@@ -8412,6 +8664,214 @@
           }
         }
       },
+      "PlatformDashboardDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "generatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "totalAgencies": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalCountries": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalCars": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalClients": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "activeSubscriptions": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "lapsedSubscriptions": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "suspendedSubscriptions": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "expiredSubscriptions": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "agenciesWithoutSubscription": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "subscriptionsExpiringSoon": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "agenciesAtCarQuota": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "agenciesAtClientQuota": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "activePlanRevenue": {
+            "type": "number",
+            "format": "decimal"
+          },
+          "countries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PlatformCountryRowDto"
+            }
+          },
+          "plans": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PlatformPlanRowDto"
+            }
+          },
+          "agencies": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PlatformAgencyRowDto"
+            }
+          }
+        }
+      },
+      "PlatformCountryRowDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "countryId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "countryName": {
+            "type": "string",
+            "nullable": true
+          },
+          "agencies": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "activeSubscriptions": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "cars": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "clients": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "PlatformPlanRowDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "planId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "planName": {
+            "type": "string"
+          },
+          "price": {
+            "type": "number",
+            "format": "decimal"
+          },
+          "maxCars": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "maxClients": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "subscriptions": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "activeAgencies": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "PlatformAgencyRowDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "agencyId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "name": {
+            "type": "string"
+          },
+          "countryId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "countryName": {
+            "type": "string",
+            "nullable": true
+          },
+          "currency": {
+            "type": "string"
+          },
+          "planId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "planName": {
+            "type": "string",
+            "nullable": true
+          },
+          "subscriptionStatus": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/SubscriptionStatus"
+              }
+            ]
+          },
+          "subscriptionIsActive": {
+            "type": "boolean"
+          },
+          "subscriptionEndDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "cars": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "clients": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "maxCars": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "maxClients": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
       "PaginatedListOfRentingDto": {
         "type": "object",
         "additionalProperties": false,
@@ -8795,6 +9255,40 @@
             "type": "integer",
             "format": "int32",
             "nullable": true
+          }
+        }
+      },
+      "ChangeRentingEndDateCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "rowVersion": {
+            "type": "string",
+            "format": "byte",
+            "nullable": true
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "regenerateContract": {
+            "type": "boolean"
+          },
+          "contractTemplateId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "documentValues": {
+            "type": "object",
+            "nullable": true,
+            "additionalProperties": {
+              "type": "string"
+            }
           }
         }
       },
@@ -9235,6 +9729,9 @@
             "items": {
               "type": "string"
             }
+          },
+          "isImpersonating": {
+            "type": "boolean"
           }
         }
       },

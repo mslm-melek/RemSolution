@@ -1,4 +1,6 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { AfterViewInit, Component, OnInit, ViewChild, inject } from '@angular/core';
+import { MatSort } from '@angular/material/sort';
+import { MatTableDataSource } from '@angular/material/table';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import {
   UsersClient, AgencyUserDto,
@@ -20,11 +22,14 @@ interface FeatureGroup {
   templateUrl: './team.component.html',
   styleUrls: ['./team.component.css']
 })
-export class TeamComponent implements OnInit {
+export class TeamComponent implements OnInit, AfterViewInit {
   // Confirm/prompt dialogs and error banners are plain strings, so they are
   // translated imperatively rather than through the template pipe.
   private readonly transloco = inject(TranslocoService);
   users: AgencyUserDto[] = [];
+  dataSource = new MatTableDataSource<AgencyUserDto>([]);
+
+  @ViewChild(MatSort) sort!: MatSort;
   displayedColumns = ['userName', 'role', 'status', 'permissions', 'actions'];
 
   // Only the agency's enabled features can carry grantable permissions.
@@ -44,6 +49,20 @@ export class TeamComponent implements OnInit {
       userName: ['', [Validators.required, Validators.email]],
       password: ['', Validators.required]
     });
+
+    this.dataSource.sortingDataAccessor = (user, column) => {
+      switch (column) {
+        case 'role': return user.role ?? '';
+        // Sorting by status puts the deactivated accounts together.
+        case 'status': return user.isLockedOut ? 1 : 0;
+        case 'permissions': return (user.permissions ?? []).length;
+        default: return user.userName ?? '';
+      }
+    };
+  }
+
+  ngAfterViewInit() {
+    this.dataSource.sort = this.sort;
   }
 
   ngOnInit() {
@@ -58,7 +77,10 @@ export class TeamComponent implements OnInit {
 
   load() {
     this.client.getMyAgencyUsers().subscribe({
-      next: u => this.users = u || [],
+      next: u => {
+        this.users = u || [];
+        this.dataSource.data = this.users;
+      },
       error: err => console.error(err)
     });
   }

@@ -1,11 +1,13 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { PageEvent } from '@angular/material/paginator';
+import { Sort, SortDirection } from '@angular/material/sort';
 import { Router } from '@angular/router';
 import {
   ReservationsClient, ReservationDto, ReservationStatus, RejectReservationCommand,
   ConvertReservationCommand
 } from '../web-api-client';
 import { TranslocoService } from '@jsverse/transloco';
+import { isInvalidTransition } from '../shared/form-utils';
 
 @Component({
   selector: 'app-reservation',
@@ -25,6 +27,11 @@ export class ReservationComponent implements OnInit {
   status: ReservationStatus | null = null;
   error = '';
 
+  // Sorting is server-side: the column id doubles as the API's SortBy key, and
+  // the starting values mirror the query's own default order (latest first).
+  sortBy = 'period';
+  sortDirection: SortDirection = 'desc';
+
   ReservationStatus = ReservationStatus;
   statuses = [
     { value: ReservationStatus.PendingConfirmation, labelKey: 'enums.reservationStatus.pendingConfirmation' },
@@ -43,7 +50,10 @@ export class ReservationComponent implements OnInit {
   }
 
   load() {
-    this.client.getReservations(this.pageNumber, this.pageSize, null, null, this.status).subscribe({
+    this.client.getReservations(
+      this.pageNumber, this.pageSize, null, null, this.status,
+      this.sortBy, this.sortDirection === 'desc'
+    ).subscribe({
       next: result => {
         this.reservations = result.items || [];
         this.totalCount = result.totalCount || 0;
@@ -60,6 +70,13 @@ export class ReservationComponent implements OnInit {
   onPage(event: PageEvent) {
     this.pageNumber = event.pageIndex + 1;
     this.pageSize = event.pageSize;
+    this.load();
+  }
+
+  onSort(sort: Sort) {
+    this.sortBy = sort.active;
+    this.sortDirection = sort.direction || 'asc';
+    this.pageNumber = 1;
     this.load();
   }
 
@@ -139,6 +156,16 @@ export class ReservationComponent implements OnInit {
   }
 
   private fail(err: any) {
+    // The hold moved on while this list was on screen (someone else confirmed or
+    // cancelled it). The row is stale, so say what happened and reload rather
+    // than leaving the old status and its now-wrong action buttons on screen.
+    if (isInvalidTransition(err)) {
+      this.error = this.transloco.translate('reservation.staleState');
+      this.load();
+      setTimeout(() => this.error = '', 6000);
+      return;
+    }
+
     this.error = err?.response ? this.extract(err.response) : this.transloco.translate('common.actionFailed');
     console.error(err);
     setTimeout(() => this.error = '', 6000);

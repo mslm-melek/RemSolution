@@ -16,16 +16,26 @@ namespace RemSolution.Application.Features.Dashboard.Queries.GetDashboardQuery
     [RequiresFeature(FeatureFlags.Dashboard)]
     public record GetDashboardQuery(
         // Window for the period-scoped figures; defaults to the current calendar
-        // month when either bound is omitted.
+        // month when either bound is omitted. Any [from, to) is accepted, so the
+        // screen's presets and a hand-picked pair of dates take the same path.
         DateTime? From = null,
         DateTime? To = null,
-        // Months of history in MonthlySeries, including the period's own month.
-        int MonthsOfHistory = 6
+        // Buckets of history in Series, ending with the window's LAST bucket (so
+        // a three-month window's chart ends on its third month, not its first).
+        int Periods = 6,
+        // How finely the series is sliced. Independent of the window: "this
+        // quarter by day" and "five years by year" are both askable.
+        DashboardGranularity Granularity = DashboardGranularity.Month
     ) : IRequest<DashboardDto>;
 
     public class GetDashboardQueryHandler : IRequestHandler<GetDashboardQuery, DashboardDto>
     {
-        private const int MaxMonthsOfHistory = 24;
+        // Per-granularity ceilings on the number of buckets. They bound the chart
+        // as much as the query: ninety points is already more than a line chart
+        // can show legibly, and a decade of years is more history than the app has.
+        private const int MaxDayBuckets = 90;
+        private const int MaxMonthBuckets = 24;
+        private const int MaxYearBuckets = 10;
 
         private readonly IApplicationDbContext _context;
         private readonly ITenantProvider _tenant;
@@ -71,6 +81,9 @@ namespace RemSolution.Application.Features.Dashboard.Queries.GetDashboardQuery
             var totalCars = await _context.Cars.CountAsync(cancellationToken);
             var activeCars = await _context.Cars
                 .CountAsync(c => c.Status == CarStatus.Active, cancellationToken);
+            var newCarsInPeriod = await _context.Cars
+                .CountAsync(c => c.CreatedOn >= periodStartOffset && c.CreatedOn < periodEndOffset,
+                            cancellationToken);
             var carsOnRent = await _context.Rentings
                 .Where(r => r.RentingState == RentingState.InProgress && r.CarId != null)
                 .Select(r => r.CarId)
@@ -87,6 +100,9 @@ namespace RemSolution.Application.Features.Dashboard.Queries.GetDashboardQuery
             var returnsDueInPeriod = await _context.Rentings
                 .CountAsync(r => r.RentingState == RentingState.InProgress
                                  && r.EndDate >= periodStart && r.EndDate < periodEnd, cancellationToken);
+            var rentingsStartedInPeriod = await _context.Rentings
+                .CountAsync(r => r.RentingState != RentingState.Cancelled
+                                 && r.StartDate >= periodStart && r.StartDate < periodEnd, cancellationToken);
 
             // --- Money in the period ---
             var chargedInPeriod = await _context.Rentings
@@ -132,8 +148,8 @@ namespace RemSolution.Application.Features.Dashboard.Queries.GetDashboardQuery
                 .SumAsync(e => e.ExpenseAmount!.Amount - (e.PaidAmount == null ? 0m : e.PaidAmount.Amount),
                           cancellationToken);
 
-            var monthlySeries = await BuildMonthlySeriesAsync(
-                periodStart, request.MonthsOfHistory, currency, cancellationToken);
+            var series = await BuildSeriesAsync(
+                periodStart, periodEnd, request.Periods, request.Granularity, currency, cancellationToken);
 
             return new DashboardDto
             {
@@ -147,67 +163,151 @@ namespace RemSolution.Application.Features.Dashboard.Queries.GetDashboardQuery
                 TotalCars = totalCars,
                 ActiveCars = activeCars,
                 CarsOnRent = carsOnRent,
+                NewCarsInPeriod = newCarsInPeriod,
                 RentingsInProgress = rentingsInProgress,
                 RentingsUpcoming = rentingsUpcoming,
                 PendingReservationRequests = pendingRequests,
                 ReturnsDueInPeriod = returnsDueInPeriod,
+                RentingsStartedInPeriod = rentingsStartedInPeriod,
                 ChargedInPeriod = new MoneyDto(chargedInPeriod, currency),
                 CollectedInPeriod = new MoneyDto(collectedInPeriod, currency),
                 ExpensesInPeriod = new MoneyDto(expensesInPeriod, currency),
                 NetInPeriod = new MoneyDto(collectedInPeriod - expensesInPeriod, currency),
                 ClientsOutstanding = new MoneyDto(clientsOutstanding, currency),
                 ExpensesOutstanding = new MoneyDto(expensesOutstanding, currency),
-                MonthlySeries = monthlySeries,
+                Granularity = request.Granularity,
+                Series = series,
             };
         }
 
-        // Collected vs booked-expenses per month over the trailing window. Months
-        // with no activity are emitted as zeroes so the caller gets a contiguous
+        // Fleet, client and money activity per bucket over the trailing window.
+        // Empty buckets are emitted as zeroes so the caller gets a contiguous
         // series and never has to fill gaps itself.
-        private async Task<IList<DashboardMonthPointDto>> BuildMonthlySeriesAsync(
-            DateTime periodStart, int monthsRequested, string currency, CancellationToken cancellationToken)
+        //
+        // Everything is grouped by calendar day in SQL and folded into buckets
+        // here. One shape of query serves all three granularities, and the day
+        // rows cost nothing extra: only days with activity come back, so a
+        // five-year window returns as many rows as the agency had busy days, not
+        // 1826 of them.
+        private async Task<IList<DashboardPeriodPointDto>> BuildSeriesAsync(
+            DateTime periodStart, DateTime periodEnd, int periodsRequested,
+            DashboardGranularity granularity, string currency, CancellationToken cancellationToken)
         {
-            var months = Math.Clamp(monthsRequested, 1, MaxMonthsOfHistory);
+            var buckets = Math.Clamp(periodsRequested, 1, granularity switch
+            {
+                DashboardGranularity.Day => MaxDayBuckets,
+                DashboardGranularity.Year => MaxYearBuckets,
+                _ => MaxMonthBuckets,
+            });
 
-            var seriesEnd = new DateTime(periodStart.Year, periodStart.Month, 1, 0, 0, 0, DateTimeKind.Utc)
-                .AddMonths(1);
-            var seriesStart = seriesEnd.AddMonths(-months);
+            // The series ends on the window's last bucket, not its first. The
+            // window is half-open, so that is the bucket containing the tick
+            // before periodEnd — for a single-month window the two are the same
+            // bucket, but for "last 3 months" or "this year" anchoring on
+            // periodStart would end the chart before the figures above it.
+            var last = periodEnd > periodStart ? periodEnd.AddTicks(-1) : periodStart;
+
+            var seriesEnd = Advance(Truncate(last, granularity), granularity, 1);
+            var seriesStart = Advance(seriesEnd, granularity, -buckets);
+
+            // Audit stamps are DateTimeOffset; the domain dates are UTC DateTime.
+            var seriesStartOffset = new DateTimeOffset(seriesStart, TimeSpan.Zero);
+            var seriesEndOffset = new DateTimeOffset(seriesEnd, TimeSpan.Zero);
 
             var collected = await _context.Payments
                 .Where(p => p.PayementAmount != null
                             && p.PayementDate >= seriesStart && p.PayementDate < seriesEnd)
-                .GroupBy(p => new { p.PayementDate!.Value.Year, p.PayementDate!.Value.Month })
-                .Select(g => new { g.Key.Year, g.Key.Month, Total = g.Sum(p => p.PayementAmount!.Amount) })
+                .GroupBy(p => new { p.PayementDate!.Value.Year, p.PayementDate!.Value.Month, p.PayementDate!.Value.Day })
+                .Select(g => new DailyMoney(g.Key.Year, g.Key.Month, g.Key.Day, g.Sum(p => p.PayementAmount!.Amount)))
                 .ToListAsync(cancellationToken);
 
             var spent = await _context.Expenses
                 .Where(e => e.ExpenseAmount != null
                             && e.ExpenseDate >= seriesStart && e.ExpenseDate < seriesEnd)
-                .GroupBy(e => new { e.ExpenseDate.Year, e.ExpenseDate.Month })
-                .Select(g => new { g.Key.Year, g.Key.Month, Total = g.Sum(e => e.ExpenseAmount!.Amount) })
+                .GroupBy(e => new { e.ExpenseDate.Year, e.ExpenseDate.Month, e.ExpenseDate.Day })
+                .Select(g => new DailyMoney(g.Key.Year, g.Key.Month, g.Key.Day, g.Sum(e => e.ExpenseAmount!.Amount)))
                 .ToListAsync(cancellationToken);
 
-            var points = new List<DashboardMonthPointDto>(months);
+            // Cars and clients are dated by when they were recorded (the audit
+            // stamp), which is the only "added on" the model has.
+            var newCars = await _context.Cars
+                .Where(c => c.CreatedOn >= seriesStartOffset && c.CreatedOn < seriesEndOffset)
+                .GroupBy(c => new { c.CreatedOn!.Value.Year, c.CreatedOn!.Value.Month, c.CreatedOn!.Value.Day })
+                .Select(g => new DailyCount(g.Key.Year, g.Key.Month, g.Key.Day, g.Count()))
+                .ToListAsync(cancellationToken);
 
-            for (var i = 0; i < months; i++)
+            var newClients = await _context.Clients
+                .Where(c => c.CreatedOn >= seriesStartOffset && c.CreatedOn < seriesEndOffset)
+                .GroupBy(c => new { c.CreatedOn!.Value.Year, c.CreatedOn!.Value.Month, c.CreatedOn!.Value.Day })
+                .Select(g => new DailyCount(g.Key.Year, g.Key.Month, g.Key.Day, g.Count()))
+                .ToListAsync(cancellationToken);
+
+            // Dated by when the hire starts, matching ChargedInPeriod above so the
+            // chart and the money tile tell the same story.
+            var rentings = await _context.Rentings
+                .Where(r => r.RentingState != RentingState.Cancelled
+                            && r.StartDate >= seriesStart && r.StartDate < seriesEnd)
+                .GroupBy(r => new { r.StartDate!.Value.Year, r.StartDate!.Value.Month, r.StartDate!.Value.Day })
+                .Select(g => new DailyCount(g.Key.Year, g.Key.Month, g.Key.Day, g.Count()))
+                .ToListAsync(cancellationToken);
+
+            var points = new List<DashboardPeriodPointDto>(buckets);
+
+            for (var i = 0; i < buckets; i++)
             {
-                var month = seriesStart.AddMonths(i);
+                var bucketStart = Advance(seriesStart, granularity, i);
+                var bucketEnd = Advance(seriesStart, granularity, i + 1);
 
-                var monthCollected = collected
-                    .FirstOrDefault(x => x.Year == month.Year && x.Month == month.Month)?.Total ?? 0m;
-                var monthSpent = spent
-                    .FirstOrDefault(x => x.Year == month.Year && x.Month == month.Month)?.Total ?? 0m;
-
-                points.Add(new DashboardMonthPointDto
+                points.Add(new DashboardPeriodPointDto
                 {
-                    Year = month.Year,
-                    Month = month.Month,
-                    Collected = new MoneyDto(monthCollected, currency),
-                    Expenses = new MoneyDto(monthSpent, currency),
+                    BucketStart = bucketStart,
+                    BucketEnd = bucketEnd,
+                    NewCars = SumCounts(newCars, bucketStart, bucketEnd),
+                    NewClients = SumCounts(newClients, bucketStart, bucketEnd),
+                    RentingsStarted = SumCounts(rentings, bucketStart, bucketEnd),
+                    Collected = new MoneyDto(SumMoney(collected, bucketStart, bucketEnd), currency),
+                    Expenses = new MoneyDto(SumMoney(spent, bucketStart, bucketEnd), currency),
                 });
             }
 
             return points;
         }
+
+        // Day-grouped rows, projected straight out of SQL. Named types rather than
+        // anonymous ones so the folding helpers below can take them.
+        private sealed record DailyMoney(int Year, int Month, int Day, decimal Total)
+        {
+            public DateTime On => new(Year, Month, Day, 0, 0, 0, DateTimeKind.Utc);
+        }
+
+        private sealed record DailyCount(int Year, int Month, int Day, int Count)
+        {
+            public DateTime On => new(Year, Month, Day, 0, 0, 0, DateTimeKind.Utc);
+        }
+
+        private static decimal SumMoney(IEnumerable<DailyMoney> rows, DateTime start, DateTime end) =>
+            rows.Where(r => r.On >= start && r.On < end).Sum(r => r.Total);
+
+        private static int SumCounts(IEnumerable<DailyCount> rows, DateTime start, DateTime end) =>
+            rows.Where(r => r.On >= start && r.On < end).Sum(r => r.Count);
+
+        // The start of the calendar bucket a moment falls in.
+        private static DateTime Truncate(DateTime value, DashboardGranularity granularity) =>
+            granularity switch
+            {
+                DashboardGranularity.Day => new DateTime(value.Year, value.Month, value.Day, 0, 0, 0, DateTimeKind.Utc),
+                DashboardGranularity.Year => new DateTime(value.Year, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+                _ => new DateTime(value.Year, value.Month, 1, 0, 0, 0, DateTimeKind.Utc),
+            };
+
+        // Calendar arithmetic, so a month step stays a month across February and a
+        // year step lands on the same date next year.
+        private static DateTime Advance(DateTime value, DashboardGranularity granularity, int steps) =>
+            granularity switch
+            {
+                DashboardGranularity.Day => value.AddDays(steps),
+                DashboardGranularity.Year => value.AddYears(steps),
+                _ => value.AddMonths(steps),
+            };
     }
 }

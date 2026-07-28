@@ -1,51 +1,12 @@
-.client-card {
-  background: #fff;
-  border-radius: 12px;
-  padding: 24px;
-  max-width: 1000px;
-  margin: 40px auto;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
+/* Surface, header, search strip, table and empty state come from the shared
+   .page / .search-row / .data-table rules in styles.scss. */
 
-.header-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 16px;
-}
-
-.title {
-  margin: 0;
-  font-size: 24px;
-  font-weight: 600;
-  color: #333;
-}
-
-.search-row {
-  display: flex;
-  gap: 16px;
-  align-items: center;
-  flex-wrap: wrap;
-}
-
-.search-input {
-  flex: 1;
-  min-width: 250px;
-}
-
-.full-width {
-  width: 100%;
-}
-
-.text-center {
-  text-align: center;
-}
-
-.empty-row {
-  padding: 16px;
-  text-align: center;
-  color: #777;
+/* A flagged client is a risk signal; it rides next to the name. */
+.flag-icon {
+  font-size: 17px;
+  width: 17px;
+  height: 17px;
+  vertical-align: text-bottom;
+  margin-inline-start: 6px;
+  color: var(--danger);
 }

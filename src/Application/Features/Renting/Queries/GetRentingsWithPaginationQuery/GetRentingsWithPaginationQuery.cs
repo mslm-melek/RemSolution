@@ -17,7 +17,11 @@ namespace RemSolution.Application.Features.Renting.Queries.GetRentingsWithPagina
         int? ClientId = null,
         RentingState? State = null,
         DateTime? FromDate = null,
-        DateTime? ToDate = null
+        DateTime? ToDate = null,
+        // Column the table is sorted by, named after the Angular matColumnDef;
+        // anything unrecognised falls back to the latest start date first.
+        string? SortBy = null,
+        bool SortDescending = true
     ) : IRequest<PaginatedList<RentingDto>>;
 
     public class GetRentingsWithPaginationQueryHandler
@@ -50,8 +54,22 @@ namespace RemSolution.Application.Features.Renting.Queries.GetRentingsWithPagina
             if (request.ToDate.HasValue)
                 query = query.Where(r => r.StartDate <= request.ToDate);
 
-            return await query
-                .OrderByDescending(r => r.StartDate)
+            var descending = request.SortDescending;
+
+            var ordered = request.SortBy.NormalizeSortKey() switch
+            {
+                "car" => query.OrderByField(r => r.Car!.Matricule, descending),
+                "client" => query.OrderByField(r => r.Client!.LastName, descending)
+                                 .ThenByField(r => r.Client!.FirstName, descending),
+                "state" => query.OrderByField(r => r.RentingState, descending),
+                "price" => query.OrderByField(r => r.Price == null ? 0m : r.Price.Amount, descending),
+                "enddate" => query.OrderByField(r => r.EndDate, descending),
+                // "period" is one column showing both bounds; it sorts by the start.
+                _ => query.OrderByField(r => r.StartDate, descending),
+            };
+
+            return await ordered
+                .ThenBy(r => r.Id)
                 .ProjectToType<RentingDto>()
                 .PaginatedListAsync(request.PageNumber, request.PageSize);
         }

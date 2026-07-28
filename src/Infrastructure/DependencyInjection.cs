@@ -270,12 +270,16 @@ public static class DependencyInjection
                 options.AddPolicy(permission, policy => policy.RequireAssertion(context =>
                     context.User.IsInRole(Roles.AgencyAdministrator) ||
                     context.User.HasClaim(Claims.Permission, permission) ||
-                    // A platform admin browsing a tenant read-only through the
-                    // impersonation middleware: only while the ambient scope is
-                    // active, and only for the read permissions.
+                    // A platform admin acting inside an agency's workspace
+                    // through the impersonation middleware. The grant is every
+                    // permission, not just the reads: the app owner has to be
+                    // able to fix an agency's data, not only look at it. It is
+                    // bounded elsewhere instead — the scope is only ever opened
+                    // for the PlatformAdministrator role, only for one agency at
+                    // a time, and every impersonated request writes an AuditLog
+                    // row naming the acting user, the agency and the verb.
                     (context.User.IsInRole(Roles.PlatformAdministrator) &&
-                     ImpersonationScope.IsActive &&
-                     Permissions.ReadOnly.Contains(permission))));
+                     ImpersonationScope.IsActive)));
             }
         });
     }

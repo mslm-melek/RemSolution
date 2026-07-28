@@ -1468,7 +1468,7 @@ export class BrandsClient implements IBrandsClient {
 }
 
 export interface ICarsClient {
-    getCars(pageNumber: number | undefined, pageSize: number | undefined, modelId: number | null | undefined, color: string | null | undefined, fuelType: FuelType | null | undefined): Observable<PaginatedListOfCarDto>;
+    getCars(pageNumber: number | undefined, pageSize: number | undefined, modelId: number | null | undefined, color: string | null | undefined, fuelType: FuelType | null | undefined, sortBy: string | null | undefined, sortDescending: boolean | undefined): Observable<PaginatedListOfCarDto>;
     createCar(command: CreateCarCommand): Observable<number>;
     getCarById(id: number): Observable<CarDto>;
     updateCar(id: number, command: UpdateCarCommand): Observable<void>;
@@ -1494,7 +1494,7 @@ export class CarsClient implements ICarsClient {
         this.baseUrl = baseUrl ?? "";
     }
 
-    getCars(pageNumber: number | undefined, pageSize: number | undefined, modelId: number | null | undefined, color: string | null | undefined, fuelType: FuelType | null | undefined): Observable<PaginatedListOfCarDto> {
+    getCars(pageNumber: number | undefined, pageSize: number | undefined, modelId: number | null | undefined, color: string | null | undefined, fuelType: FuelType | null | undefined, sortBy: string | null | undefined, sortDescending: boolean | undefined): Observable<PaginatedListOfCarDto> {
         let url_ = this.baseUrl + "/api/Cars?";
         if (pageNumber === null)
             throw new Error("The parameter 'pageNumber' cannot be null.");
@@ -1510,6 +1510,12 @@ export class CarsClient implements ICarsClient {
             url_ += "Color=" + encodeURIComponent("" + color) + "&";
         if (fuelType !== undefined && fuelType !== null)
             url_ += "FuelType=" + encodeURIComponent("" + fuelType) + "&";
+        if (sortBy !== undefined && sortBy !== null)
+            url_ += "SortBy=" + encodeURIComponent("" + sortBy) + "&";
+        if (sortDescending === null)
+            throw new Error("The parameter 'sortDescending' cannot be null.");
+        else if (sortDescending !== undefined)
+            url_ += "SortDescending=" + encodeURIComponent("" + sortDescending) + "&";
         url_ = url_.replace(/[?&]$/, "");
 
         let options_ : any = {
@@ -2338,7 +2344,7 @@ export class ChatClient implements IChatClient {
 }
 
 export interface IClientsClient {
-    getClients(pageNumber: number | undefined, pageSize: number | undefined, search: string | null | undefined, cIN: string | null | undefined): Observable<PaginatedListOfClientDto>;
+    getClients(pageNumber: number | undefined, pageSize: number | undefined, search: string | null | undefined, cIN: string | null | undefined, sortBy: string | null | undefined, sortDescending: boolean | undefined): Observable<PaginatedListOfClientDto>;
     createClient(command: CreateClientCommand): Observable<number>;
     getClientById(id: number): Observable<ClientDto>;
     updateClient(id: number, command: UpdateClientCommand): Observable<void>;
@@ -2360,7 +2366,7 @@ export class ClientsClient implements IClientsClient {
         this.baseUrl = baseUrl ?? "";
     }
 
-    getClients(pageNumber: number | undefined, pageSize: number | undefined, search: string | null | undefined, cIN: string | null | undefined): Observable<PaginatedListOfClientDto> {
+    getClients(pageNumber: number | undefined, pageSize: number | undefined, search: string | null | undefined, cIN: string | null | undefined, sortBy: string | null | undefined, sortDescending: boolean | undefined): Observable<PaginatedListOfClientDto> {
         let url_ = this.baseUrl + "/api/Clients?";
         if (pageNumber === null)
             throw new Error("The parameter 'pageNumber' cannot be null.");
@@ -2374,6 +2380,12 @@ export class ClientsClient implements IClientsClient {
             url_ += "Search=" + encodeURIComponent("" + search) + "&";
         if (cIN !== undefined && cIN !== null)
             url_ += "CIN=" + encodeURIComponent("" + cIN) + "&";
+        if (sortBy !== undefined && sortBy !== null)
+            url_ += "SortBy=" + encodeURIComponent("" + sortBy) + "&";
+        if (sortDescending === null)
+            throw new Error("The parameter 'sortDescending' cannot be null.");
+        else if (sortDescending !== undefined)
+            url_ += "SortDescending=" + encodeURIComponent("" + sortDescending) + "&";
         url_ = url_.replace(/[?&]$/, "");
 
         let options_ : any = {
@@ -3211,8 +3223,8 @@ export class CountriesClient implements ICountriesClient {
 
 export interface ICreditsClient {
     getCreditsSummary(): Observable<CreditsSummaryDto>;
-    getClientCredits(pageNumber: number | undefined, pageSize: number | undefined, onlyOutstanding: boolean | undefined, search: string | null | undefined): Observable<PaginatedListOfClientCreditDto>;
-    getExpenseCredits(pageNumber: number | undefined, pageSize: number | undefined, onlyOutstanding: boolean | undefined, carId: number | null | undefined): Observable<PaginatedListOfExpenseCreditDto>;
+    getClientCredits(pageNumber: number | undefined, pageSize: number | undefined, onlyOutstanding: boolean | undefined, search: string | null | undefined, sortBy: string | null | undefined, sortDescending: boolean | undefined): Observable<PaginatedListOfClientCreditDto>;
+    getExpenseCredits(pageNumber: number | undefined, pageSize: number | undefined, onlyOutstanding: boolean | undefined, carId: number | null | undefined, sortBy: string | null | undefined, sortDescending: boolean | undefined): Observable<PaginatedListOfExpenseCreditDto>;
 }
 
 @Injectable({
@@ -3276,7 +3288,7 @@ export class CreditsClient implements ICreditsClient {
         return _observableOf(null as any);
     }
 
-    getClientCredits(pageNumber: number | undefined, pageSize: number | undefined, onlyOutstanding: boolean | undefined, search: string | null | undefined): Observable<PaginatedListOfClientCreditDto> {
+    getClientCredits(pageNumber: number | undefined, pageSize: number | undefined, onlyOutstanding: boolean | undefined, search: string | null | undefined, sortBy: string | null | undefined, sortDescending: boolean | undefined): Observable<PaginatedListOfClientCreditDto> {
         let url_ = this.baseUrl + "/api/Credits/clients?";
         if (pageNumber === null)
             throw new Error("The parameter 'pageNumber' cannot be null.");
@@ -3292,6 +3304,12 @@ export class CreditsClient implements ICreditsClient {
             url_ += "OnlyOutstanding=" + encodeURIComponent("" + onlyOutstanding) + "&";
         if (search !== undefined && search !== null)
             url_ += "Search=" + encodeURIComponent("" + search) + "&";
+        if (sortBy !== undefined && sortBy !== null)
+            url_ += "SortBy=" + encodeURIComponent("" + sortBy) + "&";
+        if (sortDescending === null)
+            throw new Error("The parameter 'sortDescending' cannot be null.");
+        else if (sortDescending !== undefined)
+            url_ += "SortDescending=" + encodeURIComponent("" + sortDescending) + "&";
         url_ = url_.replace(/[?&]$/, "");
 
         let options_ : any = {
@@ -3338,7 +3356,7 @@ export class CreditsClient implements ICreditsClient {
         return _observableOf(null as any);
     }
 
-    getExpenseCredits(pageNumber: number | undefined, pageSize: number | undefined, onlyOutstanding: boolean | undefined, carId: number | null | undefined): Observable<PaginatedListOfExpenseCreditDto> {
+    getExpenseCredits(pageNumber: number | undefined, pageSize: number | undefined, onlyOutstanding: boolean | undefined, carId: number | null | undefined, sortBy: string | null | undefined, sortDescending: boolean | undefined): Observable<PaginatedListOfExpenseCreditDto> {
         let url_ = this.baseUrl + "/api/Credits/expenses?";
         if (pageNumber === null)
             throw new Error("The parameter 'pageNumber' cannot be null.");
@@ -3354,6 +3372,12 @@ export class CreditsClient implements ICreditsClient {
             url_ += "OnlyOutstanding=" + encodeURIComponent("" + onlyOutstanding) + "&";
         if (carId !== undefined && carId !== null)
             url_ += "CarId=" + encodeURIComponent("" + carId) + "&";
+        if (sortBy !== undefined && sortBy !== null)
+            url_ += "SortBy=" + encodeURIComponent("" + sortBy) + "&";
+        if (sortDescending === null)
+            throw new Error("The parameter 'sortDescending' cannot be null.");
+        else if (sortDescending !== undefined)
+            url_ += "SortDescending=" + encodeURIComponent("" + sortDescending) + "&";
         url_ = url_.replace(/[?&]$/, "");
 
         let options_ : any = {
@@ -3402,7 +3426,7 @@ export class CreditsClient implements ICreditsClient {
 }
 
 export interface IDashboardClient {
-    getDashboard(from: Date | null | undefined, to: Date | null | undefined, monthsOfHistory: number | undefined): Observable<DashboardDto>;
+    getDashboard(from: Date | null | undefined, to: Date | null | undefined, periods: number | undefined, granularity: DashboardGranularity | undefined): Observable<DashboardDto>;
 }
 
 @Injectable({
@@ -3418,16 +3442,20 @@ export class DashboardClient implements IDashboardClient {
         this.baseUrl = baseUrl ?? "";
     }
 
-    getDashboard(from: Date | null | undefined, to: Date | null | undefined, monthsOfHistory: number | undefined): Observable<DashboardDto> {
+    getDashboard(from: Date | null | undefined, to: Date | null | undefined, periods: number | undefined, granularity: DashboardGranularity | undefined): Observable<DashboardDto> {
         let url_ = this.baseUrl + "/api/Dashboard?";
         if (from !== undefined && from !== null)
             url_ += "From=" + encodeURIComponent(from ? "" + from.toISOString() : "") + "&";
         if (to !== undefined && to !== null)
             url_ += "To=" + encodeURIComponent(to ? "" + to.toISOString() : "") + "&";
-        if (monthsOfHistory === null)
-            throw new Error("The parameter 'monthsOfHistory' cannot be null.");
-        else if (monthsOfHistory !== undefined)
-            url_ += "MonthsOfHistory=" + encodeURIComponent("" + monthsOfHistory) + "&";
+        if (periods === null)
+            throw new Error("The parameter 'periods' cannot be null.");
+        else if (periods !== undefined)
+            url_ += "Periods=" + encodeURIComponent("" + periods) + "&";
+        if (granularity === null)
+            throw new Error("The parameter 'granularity' cannot be null.");
+        else if (granularity !== undefined)
+            url_ += "Granularity=" + encodeURIComponent("" + granularity) + "&";
         url_ = url_.replace(/[?&]$/, "");
 
         let options_ : any = {
@@ -4063,7 +4091,7 @@ export class DocumentTemplatesClient implements IDocumentTemplatesClient {
 }
 
 export interface IExpensesClient {
-    getExpenses(pageNumber: number | undefined, pageSize: number | undefined, carId: number | null | undefined, expenseTypeId: number | null | undefined, from: Date | null | undefined, to: Date | null | undefined, onlyUnpaid: boolean | undefined): Observable<PaginatedListOfExpenseDto>;
+    getExpenses(pageNumber: number | undefined, pageSize: number | undefined, carId: number | null | undefined, expenseTypeId: number | null | undefined, from: Date | null | undefined, to: Date | null | undefined, onlyUnpaid: boolean | undefined, sortBy: string | null | undefined, sortDescending: boolean | undefined): Observable<PaginatedListOfExpenseDto>;
     createExpense(command: CreateExpenseCommand): Observable<number>;
     getExpenseById(id: number): Observable<ExpenseDto>;
     updateExpense(id: number, command: UpdateExpenseCommand): Observable<void>;
@@ -4084,7 +4112,7 @@ export class ExpensesClient implements IExpensesClient {
         this.baseUrl = baseUrl ?? "";
     }
 
-    getExpenses(pageNumber: number | undefined, pageSize: number | undefined, carId: number | null | undefined, expenseTypeId: number | null | undefined, from: Date | null | undefined, to: Date | null | undefined, onlyUnpaid: boolean | undefined): Observable<PaginatedListOfExpenseDto> {
+    getExpenses(pageNumber: number | undefined, pageSize: number | undefined, carId: number | null | undefined, expenseTypeId: number | null | undefined, from: Date | null | undefined, to: Date | null | undefined, onlyUnpaid: boolean | undefined, sortBy: string | null | undefined, sortDescending: boolean | undefined): Observable<PaginatedListOfExpenseDto> {
         let url_ = this.baseUrl + "/api/Expenses?";
         if (pageNumber === null)
             throw new Error("The parameter 'pageNumber' cannot be null.");
@@ -4106,6 +4134,12 @@ export class ExpensesClient implements IExpensesClient {
             throw new Error("The parameter 'onlyUnpaid' cannot be null.");
         else if (onlyUnpaid !== undefined)
             url_ += "OnlyUnpaid=" + encodeURIComponent("" + onlyUnpaid) + "&";
+        if (sortBy !== undefined && sortBy !== null)
+            url_ += "SortBy=" + encodeURIComponent("" + sortBy) + "&";
+        if (sortDescending === null)
+            throw new Error("The parameter 'sortDescending' cannot be null.");
+        else if (sortDescending !== undefined)
+            url_ += "SortDescending=" + encodeURIComponent("" + sortDescending) + "&";
         url_ = url_.replace(/[?&]$/, "");
 
         let options_ : any = {
@@ -5831,7 +5865,7 @@ export class MarketplaceClient implements IMarketplaceClient {
 }
 
 export interface IModelCarsClient {
-    getModelCars(pageNumber: number | undefined, pageSize: number | undefined, brandId: number | null | undefined): Observable<PaginatedListOfModelCarDto>;
+    getModelCars(pageNumber: number | undefined, pageSize: number | undefined, brandId: number | null | undefined, sortBy: string | null | undefined, sortDescending: boolean | undefined): Observable<PaginatedListOfModelCarDto>;
     createModelCar(command: CreateModelCarCommand): Observable<number>;
     getAllModelCars(): Observable<ModelCarDto[]>;
     getModelCarById(id: number): Observable<ModelCarDto>;
@@ -5852,7 +5886,7 @@ export class ModelCarsClient implements IModelCarsClient {
         this.baseUrl = baseUrl ?? "";
     }
 
-    getModelCars(pageNumber: number | undefined, pageSize: number | undefined, brandId: number | null | undefined): Observable<PaginatedListOfModelCarDto> {
+    getModelCars(pageNumber: number | undefined, pageSize: number | undefined, brandId: number | null | undefined, sortBy: string | null | undefined, sortDescending: boolean | undefined): Observable<PaginatedListOfModelCarDto> {
         let url_ = this.baseUrl + "/api/ModelCars?";
         if (pageNumber === null)
             throw new Error("The parameter 'pageNumber' cannot be null.");
@@ -5864,6 +5898,12 @@ export class ModelCarsClient implements IModelCarsClient {
             url_ += "PageSize=" + encodeURIComponent("" + pageSize) + "&";
         if (brandId !== undefined && brandId !== null)
             url_ += "BrandId=" + encodeURIComponent("" + brandId) + "&";
+        if (sortBy !== undefined && sortBy !== null)
+            url_ += "SortBy=" + encodeURIComponent("" + sortBy) + "&";
+        if (sortDescending === null)
+            throw new Error("The parameter 'sortDescending' cannot be null.");
+        else if (sortDescending !== undefined)
+            url_ += "SortDescending=" + encodeURIComponent("" + sortDescending) + "&";
         url_ = url_.replace(/[?&]$/, "");
 
         let options_ : any = {
@@ -6531,14 +6571,85 @@ export class PaymentsClient implements IPaymentsClient {
     }
 }
 
+export interface IPlatformDashboardClient {
+    getPlatformDashboard(expiringWithinDays: number | undefined): Observable<PlatformDashboardDto>;
+}
+
+@Injectable({
+    providedIn: 'root'
+})
+export class PlatformDashboardClient implements IPlatformDashboardClient {
+    private http: HttpClient;
+    private baseUrl: string;
+    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
+
+    constructor(@Inject(HttpClient) http: HttpClient, @Optional() @Inject(API_BASE_URL) baseUrl?: string) {
+        this.http = http;
+        this.baseUrl = baseUrl ?? "";
+    }
+
+    getPlatformDashboard(expiringWithinDays: number | undefined): Observable<PlatformDashboardDto> {
+        let url_ = this.baseUrl + "/api/PlatformDashboard?";
+        if (expiringWithinDays === null)
+            throw new Error("The parameter 'expiringWithinDays' cannot be null.");
+        else if (expiringWithinDays !== undefined)
+            url_ += "ExpiringWithinDays=" + encodeURIComponent("" + expiringWithinDays) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetPlatformDashboard(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetPlatformDashboard(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<PlatformDashboardDto>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<PlatformDashboardDto>;
+        }));
+    }
+
+    protected processGetPlatformDashboard(response: HttpResponseBase): Observable<PlatformDashboardDto> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = PlatformDashboardDto.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+}
+
 export interface IRentingsClient {
-    getRentings(pageNumber: number | undefined, pageSize: number | undefined, carId: number | null | undefined, clientId: number | null | undefined, state: RentingState | null | undefined, fromDate: Date | null | undefined, toDate: Date | null | undefined): Observable<PaginatedListOfRentingDto>;
+    getRentings(pageNumber: number | undefined, pageSize: number | undefined, carId: number | null | undefined, clientId: number | null | undefined, state: RentingState | null | undefined, fromDate: Date | null | undefined, toDate: Date | null | undefined, sortBy: string | null | undefined, sortDescending: boolean | undefined): Observable<PaginatedListOfRentingDto>;
     createRenting(command: CreateRentingCommand): Observable<number>;
     getRentingById(id: number): Observable<RentingDto>;
     updateRenting(id: number, command: UpdateRentingCommand): Observable<void>;
     cancelRenting(id: number): Observable<void>;
     getRentingHistory(id: number): Observable<RentingHistoryDto[]>;
     changeRentingState(id: number, command: ChangeRentingStateCommand): Observable<void>;
+    changeRentingEndDate(id: number, command: ChangeRentingEndDateCommand): Observable<void>;
 }
 
 @Injectable({
@@ -6554,7 +6665,7 @@ export class RentingsClient implements IRentingsClient {
         this.baseUrl = baseUrl ?? "";
     }
 
-    getRentings(pageNumber: number | undefined, pageSize: number | undefined, carId: number | null | undefined, clientId: number | null | undefined, state: RentingState | null | undefined, fromDate: Date | null | undefined, toDate: Date | null | undefined): Observable<PaginatedListOfRentingDto> {
+    getRentings(pageNumber: number | undefined, pageSize: number | undefined, carId: number | null | undefined, clientId: number | null | undefined, state: RentingState | null | undefined, fromDate: Date | null | undefined, toDate: Date | null | undefined, sortBy: string | null | undefined, sortDescending: boolean | undefined): Observable<PaginatedListOfRentingDto> {
         let url_ = this.baseUrl + "/api/Rentings?";
         if (pageNumber === null)
             throw new Error("The parameter 'pageNumber' cannot be null.");
@@ -6574,6 +6685,12 @@ export class RentingsClient implements IRentingsClient {
             url_ += "FromDate=" + encodeURIComponent(fromDate ? "" + fromDate.toISOString() : "") + "&";
         if (toDate !== undefined && toDate !== null)
             url_ += "ToDate=" + encodeURIComponent(toDate ? "" + toDate.toISOString() : "") + "&";
+        if (sortBy !== undefined && sortBy !== null)
+            url_ += "SortBy=" + encodeURIComponent("" + sortBy) + "&";
+        if (sortDescending === null)
+            throw new Error("The parameter 'sortDescending' cannot be null.");
+        else if (sortDescending !== undefined)
+            url_ += "SortDescending=" + encodeURIComponent("" + sortDescending) + "&";
         url_ = url_.replace(/[?&]$/, "");
 
         let options_ : any = {
@@ -6942,10 +7059,65 @@ export class RentingsClient implements IRentingsClient {
         }
         return _observableOf(null as any);
     }
+
+    changeRentingEndDate(id: number, command: ChangeRentingEndDateCommand): Observable<void> {
+        let url_ = this.baseUrl + "/api/Rentings/{id}/end-date";
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(command);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+            })
+        };
+
+        return this.http.request("put", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processChangeRentingEndDate(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processChangeRentingEndDate(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processChangeRentingEndDate(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return _observableOf(null as any);
+            }));
+        } else if (status === 400) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("A server side error occurred.", status, _responseText, _headers);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
 }
 
 export interface IReservationsClient {
-    getReservations(pageNumber: number | undefined, pageSize: number | undefined, carId: number | null | undefined, clientId: number | null | undefined, status: ReservationStatus | null | undefined): Observable<PaginatedListOfReservationDto>;
+    getReservations(pageNumber: number | undefined, pageSize: number | undefined, carId: number | null | undefined, clientId: number | null | undefined, status: ReservationStatus | null | undefined, sortBy: string | null | undefined, sortDescending: boolean | undefined): Observable<PaginatedListOfReservationDto>;
     createReservation(command: CreateReservationCommand): Observable<number>;
     getReservationById(id: number): Observable<ReservationDto>;
     updateReservation(id: number, command: UpdateReservationCommand): Observable<void>;
@@ -6968,7 +7140,7 @@ export class ReservationsClient implements IReservationsClient {
         this.baseUrl = baseUrl ?? "";
     }
 
-    getReservations(pageNumber: number | undefined, pageSize: number | undefined, carId: number | null | undefined, clientId: number | null | undefined, status: ReservationStatus | null | undefined): Observable<PaginatedListOfReservationDto> {
+    getReservations(pageNumber: number | undefined, pageSize: number | undefined, carId: number | null | undefined, clientId: number | null | undefined, status: ReservationStatus | null | undefined, sortBy: string | null | undefined, sortDescending: boolean | undefined): Observable<PaginatedListOfReservationDto> {
         let url_ = this.baseUrl + "/api/Reservations?";
         if (pageNumber === null)
             throw new Error("The parameter 'pageNumber' cannot be null.");
@@ -6984,6 +7156,12 @@ export class ReservationsClient implements IReservationsClient {
             url_ += "ClientId=" + encodeURIComponent("" + clientId) + "&";
         if (status !== undefined && status !== null)
             url_ += "Status=" + encodeURIComponent("" + status) + "&";
+        if (sortBy !== undefined && sortBy !== null)
+            url_ += "SortBy=" + encodeURIComponent("" + sortBy) + "&";
+        if (sortDescending === null)
+            throw new Error("The parameter 'sortDescending' cannot be null.");
+        else if (sortDescending !== undefined)
+            url_ += "SortDescending=" + encodeURIComponent("" + sortDescending) + "&";
         url_ = url_.replace(/[?&]$/, "");
 
         let options_ : any = {
@@ -11240,17 +11418,20 @@ export class DashboardDto implements IDashboardDto {
     totalCars?: number;
     activeCars?: number;
     carsOnRent?: number;
+    newCarsInPeriod?: number;
     rentingsInProgress?: number;
     rentingsUpcoming?: number;
     pendingReservationRequests?: number;
     returnsDueInPeriod?: number;
+    rentingsStartedInPeriod?: number;
     chargedInPeriod?: MoneyDto | undefined;
     collectedInPeriod?: MoneyDto | undefined;
     expensesInPeriod?: MoneyDto | undefined;
     netInPeriod?: MoneyDto | undefined;
     clientsOutstanding?: MoneyDto | undefined;
     expensesOutstanding?: MoneyDto | undefined;
-    monthlySeries?: DashboardMonthPointDto[];
+    granularity?: DashboardGranularity;
+    series?: DashboardPeriodPointDto[];
 
     constructor(data?: IDashboardDto) {
         if (data) {
@@ -11273,20 +11454,23 @@ export class DashboardDto implements IDashboardDto {
             this.totalCars = _data["totalCars"];
             this.activeCars = _data["activeCars"];
             this.carsOnRent = _data["carsOnRent"];
+            this.newCarsInPeriod = _data["newCarsInPeriod"];
             this.rentingsInProgress = _data["rentingsInProgress"];
             this.rentingsUpcoming = _data["rentingsUpcoming"];
             this.pendingReservationRequests = _data["pendingReservationRequests"];
             this.returnsDueInPeriod = _data["returnsDueInPeriod"];
+            this.rentingsStartedInPeriod = _data["rentingsStartedInPeriod"];
             this.chargedInPeriod = _data["chargedInPeriod"] ? MoneyDto.fromJS(_data["chargedInPeriod"]) : <any>undefined;
             this.collectedInPeriod = _data["collectedInPeriod"] ? MoneyDto.fromJS(_data["collectedInPeriod"]) : <any>undefined;
             this.expensesInPeriod = _data["expensesInPeriod"] ? MoneyDto.fromJS(_data["expensesInPeriod"]) : <any>undefined;
             this.netInPeriod = _data["netInPeriod"] ? MoneyDto.fromJS(_data["netInPeriod"]) : <any>undefined;
             this.clientsOutstanding = _data["clientsOutstanding"] ? MoneyDto.fromJS(_data["clientsOutstanding"]) : <any>undefined;
             this.expensesOutstanding = _data["expensesOutstanding"] ? MoneyDto.fromJS(_data["expensesOutstanding"]) : <any>undefined;
-            if (Array.isArray(_data["monthlySeries"])) {
-                this.monthlySeries = [] as any;
-                for (let item of _data["monthlySeries"])
-                    this.monthlySeries!.push(DashboardMonthPointDto.fromJS(item));
+            this.granularity = _data["granularity"];
+            if (Array.isArray(_data["series"])) {
+                this.series = [] as any;
+                for (let item of _data["series"])
+                    this.series!.push(DashboardPeriodPointDto.fromJS(item));
             }
         }
     }
@@ -11310,20 +11494,23 @@ export class DashboardDto implements IDashboardDto {
         data["totalCars"] = this.totalCars;
         data["activeCars"] = this.activeCars;
         data["carsOnRent"] = this.carsOnRent;
+        data["newCarsInPeriod"] = this.newCarsInPeriod;
         data["rentingsInProgress"] = this.rentingsInProgress;
         data["rentingsUpcoming"] = this.rentingsUpcoming;
         data["pendingReservationRequests"] = this.pendingReservationRequests;
         data["returnsDueInPeriod"] = this.returnsDueInPeriod;
+        data["rentingsStartedInPeriod"] = this.rentingsStartedInPeriod;
         data["chargedInPeriod"] = this.chargedInPeriod ? this.chargedInPeriod.toJSON() : <any>undefined;
         data["collectedInPeriod"] = this.collectedInPeriod ? this.collectedInPeriod.toJSON() : <any>undefined;
         data["expensesInPeriod"] = this.expensesInPeriod ? this.expensesInPeriod.toJSON() : <any>undefined;
         data["netInPeriod"] = this.netInPeriod ? this.netInPeriod.toJSON() : <any>undefined;
         data["clientsOutstanding"] = this.clientsOutstanding ? this.clientsOutstanding.toJSON() : <any>undefined;
         data["expensesOutstanding"] = this.expensesOutstanding ? this.expensesOutstanding.toJSON() : <any>undefined;
-        if (Array.isArray(this.monthlySeries)) {
-            data["monthlySeries"] = [];
-            for (let item of this.monthlySeries)
-                data["monthlySeries"].push(item.toJSON());
+        data["granularity"] = this.granularity;
+        if (Array.isArray(this.series)) {
+            data["series"] = [];
+            for (let item of this.series)
+                data["series"].push(item.toJSON());
         }
         return data;
     }
@@ -11340,26 +11527,38 @@ export interface IDashboardDto {
     totalCars?: number;
     activeCars?: number;
     carsOnRent?: number;
+    newCarsInPeriod?: number;
     rentingsInProgress?: number;
     rentingsUpcoming?: number;
     pendingReservationRequests?: number;
     returnsDueInPeriod?: number;
+    rentingsStartedInPeriod?: number;
     chargedInPeriod?: MoneyDto | undefined;
     collectedInPeriod?: MoneyDto | undefined;
     expensesInPeriod?: MoneyDto | undefined;
     netInPeriod?: MoneyDto | undefined;
     clientsOutstanding?: MoneyDto | undefined;
     expensesOutstanding?: MoneyDto | undefined;
-    monthlySeries?: DashboardMonthPointDto[];
+    granularity?: DashboardGranularity;
+    series?: DashboardPeriodPointDto[];
 }
 
-export class DashboardMonthPointDto implements IDashboardMonthPointDto {
-    year?: number;
-    month?: number;
+export enum DashboardGranularity {
+    Day = 1,
+    Month = 2,
+    Year = 3,
+}
+
+export class DashboardPeriodPointDto implements IDashboardPeriodPointDto {
+    bucketStart?: Date;
+    bucketEnd?: Date;
+    newCars?: number;
+    newClients?: number;
+    rentingsStarted?: number;
     collected?: MoneyDto | undefined;
     expenses?: MoneyDto | undefined;
 
-    constructor(data?: IDashboardMonthPointDto) {
+    constructor(data?: IDashboardPeriodPointDto) {
         if (data) {
             for (var property in data) {
                 if (data.hasOwnProperty(property))
@@ -11370,33 +11569,42 @@ export class DashboardMonthPointDto implements IDashboardMonthPointDto {
 
     init(_data?: any) {
         if (_data) {
-            this.year = _data["year"];
-            this.month = _data["month"];
+            this.bucketStart = _data["bucketStart"] ? new Date(_data["bucketStart"].toString()) : <any>undefined;
+            this.bucketEnd = _data["bucketEnd"] ? new Date(_data["bucketEnd"].toString()) : <any>undefined;
+            this.newCars = _data["newCars"];
+            this.newClients = _data["newClients"];
+            this.rentingsStarted = _data["rentingsStarted"];
             this.collected = _data["collected"] ? MoneyDto.fromJS(_data["collected"]) : <any>undefined;
             this.expenses = _data["expenses"] ? MoneyDto.fromJS(_data["expenses"]) : <any>undefined;
         }
     }
 
-    static fromJS(data: any): DashboardMonthPointDto {
+    static fromJS(data: any): DashboardPeriodPointDto {
         data = typeof data === 'object' ? data : {};
-        let result = new DashboardMonthPointDto();
+        let result = new DashboardPeriodPointDto();
         result.init(data);
         return result;
     }
 
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
-        data["year"] = this.year;
-        data["month"] = this.month;
+        data["bucketStart"] = this.bucketStart ? this.bucketStart.toISOString() : <any>undefined;
+        data["bucketEnd"] = this.bucketEnd ? this.bucketEnd.toISOString() : <any>undefined;
+        data["newCars"] = this.newCars;
+        data["newClients"] = this.newClients;
+        data["rentingsStarted"] = this.rentingsStarted;
         data["collected"] = this.collected ? this.collected.toJSON() : <any>undefined;
         data["expenses"] = this.expenses ? this.expenses.toJSON() : <any>undefined;
         return data;
     }
 }
 
-export interface IDashboardMonthPointDto {
-    year?: number;
-    month?: number;
+export interface IDashboardPeriodPointDto {
+    bucketStart?: Date;
+    bucketEnd?: Date;
+    newCars?: number;
+    newClients?: number;
+    rentingsStarted?: number;
     collected?: MoneyDto | undefined;
     expenses?: MoneyDto | undefined;
 }
@@ -13872,6 +14080,334 @@ export interface IUpdatePaymentCommand {
     notes?: string | undefined;
 }
 
+export class PlatformDashboardDto implements IPlatformDashboardDto {
+    generatedAt?: Date;
+    totalAgencies?: number;
+    totalCountries?: number;
+    totalCars?: number;
+    totalClients?: number;
+    activeSubscriptions?: number;
+    lapsedSubscriptions?: number;
+    suspendedSubscriptions?: number;
+    expiredSubscriptions?: number;
+    agenciesWithoutSubscription?: number;
+    subscriptionsExpiringSoon?: number;
+    agenciesAtCarQuota?: number;
+    agenciesAtClientQuota?: number;
+    activePlanRevenue?: number;
+    countries?: PlatformCountryRowDto[];
+    plans?: PlatformPlanRowDto[];
+    agencies?: PlatformAgencyRowDto[];
+
+    constructor(data?: IPlatformDashboardDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.generatedAt = _data["generatedAt"] ? new Date(_data["generatedAt"].toString()) : <any>undefined;
+            this.totalAgencies = _data["totalAgencies"];
+            this.totalCountries = _data["totalCountries"];
+            this.totalCars = _data["totalCars"];
+            this.totalClients = _data["totalClients"];
+            this.activeSubscriptions = _data["activeSubscriptions"];
+            this.lapsedSubscriptions = _data["lapsedSubscriptions"];
+            this.suspendedSubscriptions = _data["suspendedSubscriptions"];
+            this.expiredSubscriptions = _data["expiredSubscriptions"];
+            this.agenciesWithoutSubscription = _data["agenciesWithoutSubscription"];
+            this.subscriptionsExpiringSoon = _data["subscriptionsExpiringSoon"];
+            this.agenciesAtCarQuota = _data["agenciesAtCarQuota"];
+            this.agenciesAtClientQuota = _data["agenciesAtClientQuota"];
+            this.activePlanRevenue = _data["activePlanRevenue"];
+            if (Array.isArray(_data["countries"])) {
+                this.countries = [] as any;
+                for (let item of _data["countries"])
+                    this.countries!.push(PlatformCountryRowDto.fromJS(item));
+            }
+            if (Array.isArray(_data["plans"])) {
+                this.plans = [] as any;
+                for (let item of _data["plans"])
+                    this.plans!.push(PlatformPlanRowDto.fromJS(item));
+            }
+            if (Array.isArray(_data["agencies"])) {
+                this.agencies = [] as any;
+                for (let item of _data["agencies"])
+                    this.agencies!.push(PlatformAgencyRowDto.fromJS(item));
+            }
+        }
+    }
+
+    static fromJS(data: any): PlatformDashboardDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new PlatformDashboardDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["generatedAt"] = this.generatedAt ? this.generatedAt.toISOString() : <any>undefined;
+        data["totalAgencies"] = this.totalAgencies;
+        data["totalCountries"] = this.totalCountries;
+        data["totalCars"] = this.totalCars;
+        data["totalClients"] = this.totalClients;
+        data["activeSubscriptions"] = this.activeSubscriptions;
+        data["lapsedSubscriptions"] = this.lapsedSubscriptions;
+        data["suspendedSubscriptions"] = this.suspendedSubscriptions;
+        data["expiredSubscriptions"] = this.expiredSubscriptions;
+        data["agenciesWithoutSubscription"] = this.agenciesWithoutSubscription;
+        data["subscriptionsExpiringSoon"] = this.subscriptionsExpiringSoon;
+        data["agenciesAtCarQuota"] = this.agenciesAtCarQuota;
+        data["agenciesAtClientQuota"] = this.agenciesAtClientQuota;
+        data["activePlanRevenue"] = this.activePlanRevenue;
+        if (Array.isArray(this.countries)) {
+            data["countries"] = [];
+            for (let item of this.countries)
+                data["countries"].push(item.toJSON());
+        }
+        if (Array.isArray(this.plans)) {
+            data["plans"] = [];
+            for (let item of this.plans)
+                data["plans"].push(item.toJSON());
+        }
+        if (Array.isArray(this.agencies)) {
+            data["agencies"] = [];
+            for (let item of this.agencies)
+                data["agencies"].push(item.toJSON());
+        }
+        return data;
+    }
+}
+
+export interface IPlatformDashboardDto {
+    generatedAt?: Date;
+    totalAgencies?: number;
+    totalCountries?: number;
+    totalCars?: number;
+    totalClients?: number;
+    activeSubscriptions?: number;
+    lapsedSubscriptions?: number;
+    suspendedSubscriptions?: number;
+    expiredSubscriptions?: number;
+    agenciesWithoutSubscription?: number;
+    subscriptionsExpiringSoon?: number;
+    agenciesAtCarQuota?: number;
+    agenciesAtClientQuota?: number;
+    activePlanRevenue?: number;
+    countries?: PlatformCountryRowDto[];
+    plans?: PlatformPlanRowDto[];
+    agencies?: PlatformAgencyRowDto[];
+}
+
+export class PlatformCountryRowDto implements IPlatformCountryRowDto {
+    countryId?: number;
+    countryName?: string | undefined;
+    agencies?: number;
+    activeSubscriptions?: number;
+    cars?: number;
+    clients?: number;
+
+    constructor(data?: IPlatformCountryRowDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.countryId = _data["countryId"];
+            this.countryName = _data["countryName"];
+            this.agencies = _data["agencies"];
+            this.activeSubscriptions = _data["activeSubscriptions"];
+            this.cars = _data["cars"];
+            this.clients = _data["clients"];
+        }
+    }
+
+    static fromJS(data: any): PlatformCountryRowDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new PlatformCountryRowDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["countryId"] = this.countryId;
+        data["countryName"] = this.countryName;
+        data["agencies"] = this.agencies;
+        data["activeSubscriptions"] = this.activeSubscriptions;
+        data["cars"] = this.cars;
+        data["clients"] = this.clients;
+        return data;
+    }
+}
+
+export interface IPlatformCountryRowDto {
+    countryId?: number;
+    countryName?: string | undefined;
+    agencies?: number;
+    activeSubscriptions?: number;
+    cars?: number;
+    clients?: number;
+}
+
+export class PlatformPlanRowDto implements IPlatformPlanRowDto {
+    planId?: number;
+    planName?: string;
+    price?: number;
+    maxCars?: number;
+    maxClients?: number;
+    subscriptions?: number;
+    activeAgencies?: number;
+
+    constructor(data?: IPlatformPlanRowDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.planId = _data["planId"];
+            this.planName = _data["planName"];
+            this.price = _data["price"];
+            this.maxCars = _data["maxCars"];
+            this.maxClients = _data["maxClients"];
+            this.subscriptions = _data["subscriptions"];
+            this.activeAgencies = _data["activeAgencies"];
+        }
+    }
+
+    static fromJS(data: any): PlatformPlanRowDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new PlatformPlanRowDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["planId"] = this.planId;
+        data["planName"] = this.planName;
+        data["price"] = this.price;
+        data["maxCars"] = this.maxCars;
+        data["maxClients"] = this.maxClients;
+        data["subscriptions"] = this.subscriptions;
+        data["activeAgencies"] = this.activeAgencies;
+        return data;
+    }
+}
+
+export interface IPlatformPlanRowDto {
+    planId?: number;
+    planName?: string;
+    price?: number;
+    maxCars?: number;
+    maxClients?: number;
+    subscriptions?: number;
+    activeAgencies?: number;
+}
+
+export class PlatformAgencyRowDto implements IPlatformAgencyRowDto {
+    agencyId?: number;
+    name?: string;
+    countryId?: number;
+    countryName?: string | undefined;
+    currency?: string;
+    planId?: number | undefined;
+    planName?: string | undefined;
+    subscriptionStatus?: SubscriptionStatus | undefined;
+    subscriptionIsActive?: boolean;
+    subscriptionEndDate?: Date | undefined;
+    cars?: number;
+    clients?: number;
+    maxCars?: number;
+    maxClients?: number;
+
+    constructor(data?: IPlatformAgencyRowDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.agencyId = _data["agencyId"];
+            this.name = _data["name"];
+            this.countryId = _data["countryId"];
+            this.countryName = _data["countryName"];
+            this.currency = _data["currency"];
+            this.planId = _data["planId"];
+            this.planName = _data["planName"];
+            this.subscriptionStatus = _data["subscriptionStatus"];
+            this.subscriptionIsActive = _data["subscriptionIsActive"];
+            this.subscriptionEndDate = _data["subscriptionEndDate"] ? new Date(_data["subscriptionEndDate"].toString()) : <any>undefined;
+            this.cars = _data["cars"];
+            this.clients = _data["clients"];
+            this.maxCars = _data["maxCars"];
+            this.maxClients = _data["maxClients"];
+        }
+    }
+
+    static fromJS(data: any): PlatformAgencyRowDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new PlatformAgencyRowDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["agencyId"] = this.agencyId;
+        data["name"] = this.name;
+        data["countryId"] = this.countryId;
+        data["countryName"] = this.countryName;
+        data["currency"] = this.currency;
+        data["planId"] = this.planId;
+        data["planName"] = this.planName;
+        data["subscriptionStatus"] = this.subscriptionStatus;
+        data["subscriptionIsActive"] = this.subscriptionIsActive;
+        data["subscriptionEndDate"] = this.subscriptionEndDate ? this.subscriptionEndDate.toISOString() : <any>undefined;
+        data["cars"] = this.cars;
+        data["clients"] = this.clients;
+        data["maxCars"] = this.maxCars;
+        data["maxClients"] = this.maxClients;
+        return data;
+    }
+}
+
+export interface IPlatformAgencyRowDto {
+    agencyId?: number;
+    name?: string;
+    countryId?: number;
+    countryName?: string | undefined;
+    currency?: string;
+    planId?: number | undefined;
+    planName?: string | undefined;
+    subscriptionStatus?: SubscriptionStatus | undefined;
+    subscriptionIsActive?: boolean;
+    subscriptionEndDate?: Date | undefined;
+    cars?: number;
+    clients?: number;
+    maxCars?: number;
+    maxClients?: number;
+}
+
 export class PaginatedListOfRentingDto implements IPaginatedListOfRentingDto {
     items?: RentingDto[];
     pageNumber?: number;
@@ -14418,6 +14954,74 @@ export interface IChangeRentingStateCommand {
     rowVersion?: string | undefined;
     newState?: RentingState;
     mileage?: number | undefined;
+}
+
+export class ChangeRentingEndDateCommand implements IChangeRentingEndDateCommand {
+    id?: number;
+    rowVersion?: string | undefined;
+    endDate?: Date;
+    regenerateContract?: boolean;
+    contractTemplateId?: number | undefined;
+    documentValues?: { [key: string]: string; } | undefined;
+
+    constructor(data?: IChangeRentingEndDateCommand) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.rowVersion = _data["rowVersion"];
+            this.endDate = _data["endDate"] ? new Date(_data["endDate"].toString()) : <any>undefined;
+            this.regenerateContract = _data["regenerateContract"];
+            this.contractTemplateId = _data["contractTemplateId"];
+            if (_data["documentValues"]) {
+                this.documentValues = {} as any;
+                for (let key in _data["documentValues"]) {
+                    if (_data["documentValues"].hasOwnProperty(key))
+                        (<any>this.documentValues)![key] = _data["documentValues"][key];
+                }
+            }
+        }
+    }
+
+    static fromJS(data: any): ChangeRentingEndDateCommand {
+        data = typeof data === 'object' ? data : {};
+        let result = new ChangeRentingEndDateCommand();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["rowVersion"] = this.rowVersion;
+        data["endDate"] = this.endDate ? this.endDate.toISOString() : <any>undefined;
+        data["regenerateContract"] = this.regenerateContract;
+        data["contractTemplateId"] = this.contractTemplateId;
+        if (this.documentValues) {
+            data["documentValues"] = {};
+            for (let key in this.documentValues) {
+                if (this.documentValues.hasOwnProperty(key))
+                    (<any>data["documentValues"])[key] = (<any>this.documentValues)[key];
+            }
+        }
+        return data;
+    }
+}
+
+export interface IChangeRentingEndDateCommand {
+    id?: number;
+    rowVersion?: string | undefined;
+    endDate?: Date;
+    regenerateContract?: boolean;
+    contractTemplateId?: number | undefined;
+    documentValues?: { [key: string]: string; } | undefined;
 }
 
 export class PaginatedListOfReservationDto implements IPaginatedListOfReservationDto {
@@ -15097,6 +15701,7 @@ export class CurrentUserDto implements ICurrentUserDto {
     agencyName?: string | undefined;
     permissions?: string[];
     features?: string[];
+    isImpersonating?: boolean;
 
     constructor(data?: ICurrentUserDto) {
         if (data) {
@@ -15125,6 +15730,7 @@ export class CurrentUserDto implements ICurrentUserDto {
                 for (let item of _data["features"])
                     this.features!.push(item);
             }
+            this.isImpersonating = _data["isImpersonating"];
         }
     }
 
@@ -15153,6 +15759,7 @@ export class CurrentUserDto implements ICurrentUserDto {
             for (let item of this.features)
                 data["features"].push(item);
         }
+        data["isImpersonating"] = this.isImpersonating;
         return data;
     }
 }
@@ -15166,6 +15773,7 @@ export interface ICurrentUserDto {
     agencyName?: string | undefined;
     permissions?: string[];
     features?: string[];
+    isImpersonating?: boolean;
 }
 
 export class CreateAgencyUserCommand implements ICreateAgencyUserCommand {

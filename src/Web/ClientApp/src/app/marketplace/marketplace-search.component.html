@@ -1,5 +1,5 @@
 <div class="marketplace" *transloco="let t">
-  <div class="hero mat-elevation-z3">
+  <div class="hero">
     <h1>{{ t('marketplace.findYourCar') }}</h1>
     <p>{{ t('marketplace.findSubtitle') }}</p>
 
@@ -26,7 +26,7 @@
     </div>
 
     <div class="grid" *ngIf="!loading && cars.length">
-      <a class="car-card mat-elevation-z2" *ngFor="let car of cars" [routerLink]="['/browse/car', car.id]">
+      <a class="car-card" *ngFor="let car of cars" [routerLink]="['/browse/car', car.id]">
         <div class="thumb" [class.placeholder]="!car.imageUrl"
              [style.background-image]="car.imageUrl ? 'url(' + car.imageUrl + ')' : null">
           <mat-icon *ngIf="!car.imageUrl">directions_car</mat-icon>

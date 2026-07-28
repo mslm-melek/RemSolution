@@ -20,7 +20,11 @@ namespace RemSolution.Application.Features.Credit.Queries.GetClientCreditsQuery
         int PageSize = 10,
         // Default view is the working set: only clients who actually owe money.
         bool OnlyOutstanding = true,
-        string? Search = null
+        string? Search = null,
+        // Column the table is sorted by, named after the Angular matColumnDef;
+        // anything unrecognised falls back to the biggest debt first.
+        string? SortBy = null,
+        bool SortDescending = true
     ) : IRequest<PaginatedList<ClientCreditDto>>;
 
     public class GetClientCreditsQueryHandler
@@ -87,8 +91,20 @@ namespace RemSolution.Application.Features.Credit.Queries.GetClientCreditsQuery
                 rows = rows.Where(x => x.Charged - x.Paid > 0m);
             }
 
-            return await rows
-                .OrderByDescending(x => x.Charged - x.Paid)
+            var descending = request.SortDescending;
+
+            var ordered = request.SortBy.NormalizeSortKey() switch
+            {
+                "name" => rows.OrderByField(x => x.LastName, descending)
+                              .ThenByField(x => x.FirstName, descending),
+                "cin" => rows.OrderByField(x => x.CIN, descending),
+                "openrentings" => rows.OrderByField(x => x.OpenRentingCount, descending),
+                "charged" => rows.OrderByField(x => x.Charged, descending),
+                "paid" => rows.OrderByField(x => x.Paid, descending),
+                _ => rows.OrderByField(x => x.Charged - x.Paid, descending),
+            };
+
+            return await ordered
                 .ThenBy(x => x.ClientId)
                 .Select(x => new ClientCreditDto
                 {

@@ -1,24 +1,713 @@
-/* You can add global styles to this file, and also import other style files */
+/* ============================================================================
+   RemSolution design system.
 
-/* Provide sufficient contrast against white background */
+   Everything that makes a screen look like the rest of the app lives here, not
+   in the components: the canvas, the surfaces, the tables, the filter bars and
+   the status chips. A list page only has to use the shared class names
+   (.page / .page-head / .toolbar / .data-table) and it inherits the whole look.
+
+   Two things to know before editing:
+   - Angular Material's prebuilt azure-blue theme is loaded BEFORE this file
+     (see angular.json), so plain single-class rules here override it.
+   - Component styles are emulated-encapsulated, which adds an attribute
+     selector and therefore one class' worth of specificity. A global rule that
+     has to beat a component rule needs two classes plus an element
+     (`main .page .title`), which this file uses sparingly.
+   ========================================================================== */
+
+:root {
+  /* Brand — sits alongside Material's azure-blue rather than replacing it. */
+  --brand-50: #eef4ff;
+  --brand-100: #dbe6ff;
+  --brand-200: #bdd0ff;
+  --brand-500: #3b6cf6;
+  --brand-600: #2563eb;
+  --brand-700: #1d4ed8;
+  --brand-800: #1b3fa8;
+  --brand-900: #172b63;
+
+  /* Neutrals. */
+  --canvas: #f3f5fa;
+  --surface: #ffffff;
+  --surface-2: #f8fafc;
+  --surface-3: #f1f4f9;
+  --line: #e4e9f2;
+  --line-strong: #d3dae8;
+  --ink: #16233d;
+  --ink-2: #33415c;
+  --muted: #6b7688;
+  --muted-2: #8b95a7;
+
+  /* Semantic. */
+  --ok: #10784b;
+  --ok-bg: #e6f6ed;
+  --warn: #a75a09;
+  --warn-bg: #fdf1e0;
+  --danger: #b3261e;
+  --danger-bg: #fdecec;
+  --info: var(--brand-700);
+  --info-bg: var(--brand-50);
+  --accent: #6d28d9;
+  --accent-bg: #f3ecff;
+
+  /* Shape & depth. */
+  --r-xs: 6px;
+  --r-sm: 10px;
+  --r: 14px;
+  --r-lg: 18px;
+  --r-pill: 999px;
+  --shadow-1: 0 1px 2px rgba(20, 35, 61, 0.05), 0 1px 3px rgba(20, 35, 61, 0.06);
+  --shadow-2: 0 2px 6px rgba(20, 35, 61, 0.06), 0 8px 24px -8px rgba(20, 35, 61, 0.14);
+  --shadow-3: 0 12px 32px -12px rgba(20, 35, 61, 0.28);
+
+  /* Rhythm. */
+  --gap-1: 4px;
+  --gap-2: 8px;
+  --gap-3: 12px;
+  --gap-4: 16px;
+  --gap-5: 24px;
+  --gap-6: 32px;
+
+  --font: 'Inter', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+/* ---------------------------------------------------------------- base ---- */
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font);
+  background: var(--canvas);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
 a {
-  color: #0366d6;
+  color: var(--brand-700);
 }
 
 code {
-  color: #e01a76;
+  color: #b3268c;
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
+  font-size: 0.9em;
 }
 
-html, body { height: 100%; }
-body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
+h1,
+h2,
+h3,
+h4 {
+  color: var(--ink);
+  letter-spacing: -0.011em;
+}
 
-/* Arabic. `dir` is set on <html> before bootstrap (see main.ts) so Angular
-   Material picks the direction up when its injector is built; these rules cover
-   the plain HTML the components render themselves. */
-[dir="rtl"] {
+/* Figures line up in columns wherever they appear. */
+.num,
+.money,
+.mat-mdc-cell.num-cell,
+.mat-mdc-footer-cell.num-cell {
+  font-variant-numeric: tabular-nums;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--line-strong);
+  border-radius: var(--r-pill);
+  border: 2px solid var(--canvas);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--muted-2);
+}
+
+/* -------------------------------------------------------------- layout ---- */
+
+.content-container {
+  max-width: 1340px;
+  margin: 0 auto;
+  padding: 0 24px 48px;
+}
+
+/* A page is one vertical stack. Every screen's wrapper carries `page` next to
+   its own `<entity>-card` class: the shared class brings the surface, the
+   entity class stays for whatever is genuinely specific to that screen. */
+.page {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-1);
+  padding: 24px;
+  margin: 24px auto 0;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-width: 100%;
+}
+
+/* Page header: title on the start side, primary action on the end side. */
+.page-head,
+main .page .header-row,
+main .page .dash-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--gap-4);
+  margin: 0;
+}
+
+main .page .title,
+.page-title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 650;
+  line-height: 1.25;
+  color: var(--ink);
+  letter-spacing: -0.015em;
+}
+
+.page-subtitle {
+  margin: 2px 0 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.page-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-2);
+  flex-wrap: wrap;
+}
+
+.spacer {
+  flex: 1 1 auto;
+}
+
+.full-width {
+  width: 100%;
+}
+
+/* Section label inside a page — small, quiet, uppercase. */
+.section-title,
+.section-label {
+  margin: var(--gap-2) 0 0;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+/* ------------------------------------------------------ filters / toolbar -- */
+
+/* .toolbar is the shared name; .filter-row / .search-row / .inline-add /
+   .add-row are the names the existing screens already use for the same strip. */
+.toolbar,
+main .page .filter-row,
+main .page .search-row,
+main .page .inline-add,
+main .page .add-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--gap-3);
+  padding: 14px 16px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+}
+
+.toolbar .filter-field,
+main .page .filter-row .filter-field,
+main .page .search-row .search-input {
+  flex: 1 1 190px;
+  min-width: 170px;
+  max-width: 320px;
+}
+
+/* Filter fields sit on a tinted strip; kill the stock bottom margin so the
+   strip stays the height of the inputs. */
+.toolbar .mat-mdc-form-field,
+main .page .filter-row .mat-mdc-form-field,
+main .page .search-row .mat-mdc-form-field,
+main .page .inline-add .mat-mdc-form-field,
+main .page .add-row .mat-mdc-form-field {
+  margin-bottom: 0;
+}
+
+/* The hint/error line under a filter field would double the strip's height;
+   filters validate by simply not matching. (This has to live in the global
+   sheet: the subscript wrapper is inside mat-form-field's own template, which
+   an encapsulated component style cannot reach.) */
+.toolbar .mat-mdc-form-field-subscript-wrapper,
+main .page .filter-row .mat-mdc-form-field-subscript-wrapper,
+main .page .search-row .mat-mdc-form-field-subscript-wrapper,
+main .page .inline-add .mat-mdc-form-field-subscript-wrapper,
+main .page .add-row .mat-mdc-form-field-subscript-wrapper {
+  display: none;
+}
+
+/* --------------------------------------------------------------- tables ---- */
+
+/* A list table carries .data-table: it draws its own frame, so no wrapper is
+   needed. Optionally nest it in .table-wrap when the columns are too wide for
+   the viewport and the table should scroll sideways on its own. */
+.table-wrap {
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  overflow-x: auto;
+  overflow-y: hidden;
+  background: var(--surface);
+}
+
+table.mat-mdc-table,
+.mat-mdc-table {
+  width: 100%;
+  background: transparent;
+  --mat-table-header-headline-size: 12px;
+  --mat-table-header-headline-weight: 700;
+  --mat-table-row-item-label-text-size: 14px;
+}
+
+table.data-table {
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+}
+
+/* border-collapse leaves cell backgrounds square, so the two header corners
+   are rounded explicitly to match the frame. */
+table.data-table .mat-mdc-header-cell:first-of-type {
+  border-start-start-radius: var(--r);
+}
+
+table.data-table .mat-mdc-header-cell:last-of-type {
+  border-start-end-radius: var(--r);
+}
+
+/* Inside a scroll wrapper the frame belongs to the wrapper. */
+.table-wrap table.data-table {
+  border: none;
+  border-radius: 0;
+}
+
+.mat-mdc-header-row {
+  background: var(--surface-3);
+  height: 44px;
+}
+
+.mat-mdc-header-cell {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+  padding: 0 14px;
+}
+
+.mat-mdc-cell {
+  color: var(--ink-2);
+  font-size: 14px;
+  border-bottom: 1px solid var(--line);
+  padding: 0 14px;
+}
+
+.mat-mdc-row {
+  height: 52px;
+  transition: background-color 120ms ease;
+}
+
+.mat-mdc-row:hover {
+  background: var(--brand-50);
+}
+
+.mat-mdc-row:last-of-type .mat-mdc-cell {
+  border-bottom: none;
+}
+
+/* First/last cell breathing room matches the card padding rhythm. */
+.mat-mdc-header-cell:first-of-type,
+.mat-mdc-cell:first-of-type {
+  padding-inline-start: 18px;
+}
+
+.mat-mdc-header-cell:last-of-type,
+.mat-mdc-cell:last-of-type {
+  padding-inline-end: 18px;
+}
+
+/* Sort headers. */
+.mat-sort-header-container {
+  border-bottom: none;
+}
+
+.mat-sort-header-content {
+  text-align: start;
+}
+
+.mat-mdc-header-cell .mat-sort-header-arrow {
+  color: var(--brand-600);
+}
+
+.mat-mdc-header-cell:hover .mat-sort-header-content {
+  color: var(--ink);
+}
+
+th.mat-mdc-header-cell[aria-sort='ascending'],
+th.mat-mdc-header-cell[aria-sort='descending'] {
+  color: var(--brand-700);
+  background: var(--brand-50);
+}
+
+/* Numeric and action columns. */
+.mat-mdc-cell.num-cell,
+.mat-mdc-header-cell.num-cell {
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+}
+
+/* A sort header lays its label and arrow out with flexbox, so text-align alone
+   would leave the header of a right-aligned column on the left. */
+th.mat-mdc-header-cell.num-cell .mat-sort-header-container,
+th.mat-mdc-header-cell.actions-cell .mat-sort-header-container {
+  justify-content: flex-end;
+}
+
+.mat-mdc-cell.text-center,
+.mat-mdc-header-cell.text-center,
+.text-center {
+  text-align: center;
+}
+
+.mat-mdc-cell.actions-cell,
+.mat-mdc-header-cell.actions-cell {
+  text-align: end;
+  white-space: nowrap;
+  width: 1%;
+}
+
+/* Row actions stay quiet until the row is hovered on a pointer device. */
+@media (hover: hover) {
+  .data-table .mat-mdc-row .row-actions {
+    opacity: 0.55;
+    transition: opacity 120ms ease;
+  }
+
+  .data-table .mat-mdc-row:hover .row-actions,
+  .data-table .mat-mdc-row:focus-within .row-actions {
+    opacity: 1;
+  }
+}
+
+.empty-row,
+td.empty-row {
+  padding: 40px 16px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.muted,
+.subtle {
+  color: var(--muted);
+}
+
+.mat-mdc-cell .muted {
+  font-size: 12.5px;
+}
+
+/* The identifying value of a row — the one a reader scans the column for. */
+.cell-main {
+  font-weight: 550;
+  color: var(--ink);
+}
+
+/* Stacked two-line cell (primary + secondary text). */
+.cell-stack {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.35;
+  padding: 6px 0;
+}
+
+.cell-stack .cell-sub {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* ----------------------------------------------------------- paginator ---- */
+
+.mat-mdc-paginator {
+  background: transparent;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 12.5px;
+}
+
+.table-wrap + .mat-mdc-paginator {
+  margin-top: -1px;
+  border-top: none;
+}
+
+/* --------------------------------------------------------------- chips ---- */
+
+/* Status pill. Pair .chip with a tone class: .ok .warn .danger .info .accent
+   .neutral — the tone is what the reader actually decodes. */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: var(--r-pill);
+  font-size: 12px;
+  font-weight: 650;
+  line-height: 1.6;
+  white-space: nowrap;
+  background: var(--surface-3);
+  color: var(--ink-2);
+  border: 1px solid transparent;
+}
+
+.chip::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.75;
+}
+
+.chip.no-dot::before {
+  display: none;
+}
+
+.chip.ok {
+  background: var(--ok-bg);
+  color: var(--ok);
+}
+
+.chip.warn,
+.chip.pending {
+  background: var(--warn-bg);
+  color: var(--warn);
+}
+
+.chip.danger {
+  background: var(--danger-bg);
+  color: var(--danger);
+}
+
+.chip.info,
+.chip.converted {
+  background: var(--info-bg);
+  color: var(--info);
+}
+
+.chip.accent {
+  background: var(--accent-bg);
+  color: var(--accent);
+}
+
+.chip.neutral,
+.chip.ended {
+  background: var(--surface-3);
+  color: var(--muted);
+}
+
+/* ------------------------------------------------------------- banners ---- */
+
+.error-banner,
+.info-banner,
+.warn-banner,
+.ok-banner {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-2);
+  padding: 12px 16px;
+  border-radius: var(--r-sm);
+  font-size: 13.5px;
+  border: 1px solid transparent;
+}
+
+.error-banner {
+  background: var(--danger-bg);
+  color: var(--danger);
+  border-color: rgba(179, 38, 30, 0.18);
+}
+
+.warn-banner {
+  background: var(--warn-bg);
+  color: var(--warn);
+  border-color: rgba(167, 90, 9, 0.18);
+}
+
+.ok-banner {
+  background: var(--ok-bg);
+  color: var(--ok);
+  border-color: rgba(16, 120, 75, 0.18);
+}
+
+.info-banner {
+  background: var(--info-bg);
+  color: var(--info);
+  border-color: var(--brand-100);
+}
+
+.loading {
+  color: var(--muted);
+  font-size: 13.5px;
+}
+
+/* ------------------------------------------------------------- buttons ---- */
+
+.mat-mdc-raised-button,
+.mat-mdc-unelevated-button,
+.mat-mdc-outlined-button,
+.mat-mdc-button {
+  --mdc-protected-button-container-shape: var(--r-sm);
+  --mdc-filled-button-container-shape: var(--r-sm);
+  --mdc-outlined-button-container-shape: var(--r-sm);
+  --mdc-text-button-container-shape: var(--r-sm);
+  letter-spacing: 0.01em;
+  font-weight: 600;
+}
+
+.mat-mdc-raised-button:not(:disabled) {
+  box-shadow: var(--shadow-1);
+}
+
+.mat-mdc-raised-button:not(:disabled):hover {
+  box-shadow: var(--shadow-2);
+}
+
+/* An icon immediately before a label needs a hair of space. */
+.mat-mdc-button > .mat-icon,
+.mat-mdc-raised-button > .mat-icon,
+.mat-mdc-outlined-button > .mat-icon,
+.mat-mdc-unelevated-button > .mat-icon {
+  margin-inline-end: 6px;
+  margin-inline-start: 0;
+}
+
+/* Destructive row action: Material has no "warn" palette, so colour it here
+   (the templates already say color="warn"). */
+.mat-mdc-icon-button[color='warn'] {
+  color: var(--danger);
+}
+
+/* --------------------------------------------------------------- forms ---- */
+
+/* Two-column form grid that collapses on narrow screens. */
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--gap-4);
+}
+
+.form-grid .span-2 {
+  grid-column: 1 / -1;
+}
+
+.form-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-3);
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  background: var(--surface-2);
+}
+
+.form-actions {
+  display: flex;
+  gap: var(--gap-2);
+  flex-wrap: wrap;
+  padding-top: var(--gap-2);
+}
+
+.mat-mdc-form-field {
+  width: 100%;
+}
+
+/* ---------------------------------------------------------------- tiles ---- */
+
+/* KPI / stat grid shared by the home screen and the dashboard. */
+.tile-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: var(--gap-4);
+}
+
+.tile {
+  position: relative;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  padding: 16px 18px;
+  box-shadow: var(--shadow-1);
+  transition: box-shadow 140ms ease, transform 140ms ease;
+}
+
+a.tile:hover,
+.tile.clickable:hover {
+  box-shadow: var(--shadow-2);
+  transform: translateY(-1px);
+}
+
+.tile-label {
+  font-size: 11.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--muted);
+}
+
+.tile-value {
+  margin-top: 6px;
+  font-size: 26px;
+  font-weight: 680;
+  line-height: 1.15;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+.tile-note {
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* ----------------------------------------------------------------- tabs ---- */
+
+.mat-mdc-tab-header {
+  border-bottom: 1px solid var(--line);
+}
+
+.mat-mdc-tab .mdc-tab__text-label {
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+/* ------------------------------------------------------------------ rtl ---- */
+
+/* `dir` is set on <html> before bootstrap (see main.ts) so Angular Material
+   picks the direction up when its injector is built; these rules cover the
+   plain HTML the components render themselves. */
+[dir='rtl'] {
   /* Latin-digit numbers, matricules and ISO currency codes must keep their
      left-to-right run inside otherwise right-to-left text. */
   .num,
+  .money,
   code {
     direction: ltr;
     unicode-bidi: embed;
@@ -29,10 +718,47 @@ body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
   .mat-mdc-header-cell {
     text-align: start;
   }
+
+  .mat-mdc-cell.num-cell,
+  .mat-mdc-header-cell.num-cell,
+  .mat-mdc-cell.actions-cell,
+  .mat-mdc-header-cell.actions-cell {
+    text-align: end;
+  }
 }
 
-.content-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 16px;
+/* --------------------------------------------------------------- narrow ---- */
+
+@media (max-width: 767px) {
+  .content-container {
+    padding: 0 12px 32px;
+  }
+
+  .page {
+    padding: 18px 14px;
+    border-radius: var(--r);
+    margin-top: 14px;
+  }
+
+  main .page .title,
+  .page-title {
+    font-size: 19px;
+  }
+
+  .toolbar,
+  main .page .filter-row,
+  main .page .search-row {
+    padding: 12px;
+  }
+
+  .toolbar .filter-field,
+  main .page .filter-row .filter-field,
+  main .page .search-row .search-input {
+    max-width: none;
+    flex-basis: 100%;
+  }
+
+  .tile-value {
+    font-size: 22px;
+  }
 }

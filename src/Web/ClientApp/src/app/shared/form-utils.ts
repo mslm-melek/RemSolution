@@ -42,23 +42,36 @@ export function extractValidationErrors(err: any): string | undefined {
     .join(' ');
 }
 
-// True when the server rejected a write because the record changed since it was
-// loaded (optimistic-concurrency conflict): HTTP 409 carrying the
-// "concurrency_conflict" code. 409 is also used for plan limits, so we key on
-// the code, not the status alone. Handles both the raw HttpClient shape
-// (err.error.code) and the NSwag-wrapped shape (err.response JSON string).
-export function isConcurrencyConflict(err: any): boolean {
-  if (err?.status !== 409) return false;
-
-  if (err?.error?.code === 'concurrency_conflict') return true;
+// The machine-readable discriminator the API puts on a ProblemDetails (see
+// CustomExceptionHandler). Several failures share one status code — 409 covers
+// plan limits, booking conflicts, concurrency and reservation lifecycle — so a
+// caller keys on this rather than on the status alone. Handles both the raw
+// HttpClient shape (err.error.code) and the NSwag-wrapped shape (err.response as
+// a JSON string).
+export function errorCode(err: any): string | undefined {
+  if (typeof err?.error?.code === 'string') return err.error.code;
 
   if (typeof err?.response === 'string') {
     try {
-      return JSON.parse(err.response)?.code === 'concurrency_conflict';
+      const code = JSON.parse(err.response)?.code;
+      return typeof code === 'string' ? code : undefined;
     } catch {
-      return false;
+      return undefined;
     }
   }
 
-  return false;
+  return undefined;
+}
+
+// True when the server rejected a write because the record changed since it was
+// loaded (optimistic-concurrency conflict).
+export function isConcurrencyConflict(err: any): boolean {
+  return err?.status === 409 && errorCode(err) === 'concurrency_conflict';
+}
+
+// True when a reservation lifecycle action was refused because the hold had
+// already moved on — someone else confirmed, cancelled or converted it while
+// this user was looking at the list.
+export function isInvalidTransition(err: any): boolean {
+  return err?.status === 409 && errorCode(err) === 'invalid_transition';
 }

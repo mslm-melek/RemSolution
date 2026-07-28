@@ -32,12 +32,14 @@ public class AmbientTenantUsageTests
         Normalize("Features/AgencySubscription/Queries/GetAgencyUsageQuery/"),
     };
 
-    // The impersonation flag is read only by the authorization policy and set
-    // only by the middleware.
+    // The impersonation flag is set only by the middleware, and read only by the
+    // authorization policy and the current-user endpoint (which has to report the
+    // same effective permissions the policy will enforce).
     private static readonly string[] ImpersonationScopeAllowed =
     {
         Normalize("Infrastructure/DependencyInjection.cs"),
         Normalize("Web/Middleware/PlatformAdminImpersonationMiddleware.cs"),
+        Normalize("Web/Endpoints/Users.cs"),
     };
 
     [Test]
@@ -61,7 +63,7 @@ public class AmbientTenantUsageTests
             .ToList();
 
         offenders.Should().BeEmpty(
-            "ImpersonationScope gates the platform-admin read-only permission bypass and is only referenced by the authorization policy and the impersonation middleware");
+            "ImpersonationScope gates the platform-admin permission bypass and is only referenced by the authorization policy, the impersonation middleware and the current-user endpoint");
     }
 
     private static IEnumerable<string> EnumerateSourceFiles()

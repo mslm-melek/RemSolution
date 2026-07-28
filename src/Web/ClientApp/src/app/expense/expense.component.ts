@@ -1,5 +1,6 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { PageEvent } from '@angular/material/paginator';
+import { Sort, SortDirection } from '@angular/material/sort';
 import {
   ExpensesClient, ExpenseDto, CarsClient, CarDto,
   ExpenseTypesClient, ExpenseTypeDto, RecordExpensePaymentCommand
@@ -24,6 +25,11 @@ export class ExpenseComponent implements OnInit {
   totalCount = 0;
   pageNumber = 1;
   pageSize = 10;
+
+  // Sorting is server-side: the column id doubles as the API's SortBy key, and
+  // the starting values mirror the query's own default order (newest first).
+  sortBy = 'date';
+  sortDirection: SortDirection = 'desc';
 
   // Filters.
   carId: number | null = null;
@@ -53,7 +59,7 @@ export class ExpenseComponent implements OnInit {
     });
 
     // Filter pickers: one page big enough to hold an agency's fleet/catalog.
-    this.carsClient.getCars(1, 1000, null, null, null).subscribe({
+    this.carsClient.getCars(1, 1000, null, null, null, null, false).subscribe({
       next: result => this.cars = result.items || [],
       error: err => console.error(err)
     });
@@ -67,7 +73,8 @@ export class ExpenseComponent implements OnInit {
 
   load() {
     this.client.getExpenses(
-      this.pageNumber, this.pageSize, this.carId, this.expenseTypeId, null, null, this.onlyUnpaid
+      this.pageNumber, this.pageSize, this.carId, this.expenseTypeId, null, null, this.onlyUnpaid,
+      this.sortBy, this.sortDirection === 'desc'
     ).subscribe({
       next: result => {
         this.expenses = result.items || [];
@@ -92,6 +99,13 @@ export class ExpenseComponent implements OnInit {
   onPage(event: PageEvent) {
     this.pageNumber = event.pageIndex + 1;
     this.pageSize = event.pageSize;
+    this.load();
+  }
+
+  onSort(sort: Sort) {
+    this.sortBy = sort.active;
+    this.sortDirection = sort.direction || 'asc';
+    this.pageNumber = 1;
     this.load();
   }
 

@@ -1,4 +1,6 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { AfterViewInit, Component, OnInit, ViewChild, inject } from '@angular/core';
+import { MatSort } from '@angular/material/sort';
+import { MatTableDataSource } from '@angular/material/table';
 import {
   ExtraServiceTypesClient, ExtraServicesTypeDto,
   CreateExtraServicesTypeCommand, UpdateExtraServicesTypeCommand
@@ -11,11 +13,14 @@ import { TranslocoService } from '@jsverse/transloco';
   templateUrl: './extra-service-type.component.html',
   styleUrls: ['./extra-service-type.component.css']
 })
-export class ExtraServiceTypeComponent implements OnInit {
+export class ExtraServiceTypeComponent implements OnInit, AfterViewInit {
   // Confirm/prompt dialogs and error banners are plain strings, so they are
   // translated imperatively rather than through the template pipe.
   private readonly transloco = inject(TranslocoService);
   types: ExtraServicesTypeDto[] = [];
+  dataSource = new MatTableDataSource<ExtraServicesTypeDto>([]);
+
+  @ViewChild(MatSort) sort!: MatSort;
   displayedColumns: string[] = ['name', 'amount', 'active', 'actions'];
   errorMessage = '';
 
@@ -26,7 +31,19 @@ export class ExtraServiceTypeComponent implements OnInit {
   amount: number | null = null;
   isActive = true;
 
-  constructor(private client: ExtraServiceTypesClient) { }
+  constructor(private client: ExtraServiceTypesClient) {
+    this.dataSource.sortingDataAccessor = (type, column) => {
+      switch (column) {
+        case 'amount': return type.amount ?? 0;
+        case 'active': return type.isActive ? 1 : 0;
+        default: return type.name ?? '';
+      }
+    };
+  }
+
+  ngAfterViewInit() {
+    this.dataSource.sort = this.sort;
+  }
 
   ngOnInit() {
     this.load();
@@ -34,7 +51,10 @@ export class ExtraServiceTypeComponent implements OnInit {
 
   load() {
     this.client.getExtraServiceTypes(false).subscribe({
-      next: types => this.types = types || [],
+      next: types => {
+        this.types = types || [];
+        this.dataSource.data = this.types;
+      },
       error: err => console.error(err)
     });
   }

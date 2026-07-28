@@ -1,5 +1,10 @@
 ﻿using RemSolution.Application.Common.Exceptions;
 using RemSolution.Application.Common.Interfaces;
+// Aliased, not imported: RemSolution.Domain.Exceptions also declares
+// NotFoundException and ForbiddenAccessException, which would collide with the
+// Ardalis and Application ones this file already maps.
+using InvalidReservationTransitionException =
+    RemSolution.Domain.Exceptions.InvalidReservationTransitionException;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -28,6 +33,7 @@ public class CustomExceptionHandler : IExceptionHandler
                 { typeof(SubscriptionRequiredException), HandleSubscriptionRequiredException },
                 { typeof(PlanLimitExceededException), HandlePlanLimitExceededException },
                 { typeof(BookingConflictException), HandleBookingConflictException },
+                { typeof(InvalidReservationTransitionException), HandleInvalidTransitionException },
                 { typeof(DbUpdateConcurrencyException), HandleConcurrencyException },
                 { typeof(Exception), HandleUnknownException }
             };
@@ -140,6 +146,31 @@ public class CustomExceptionHandler : IExceptionHandler
         // 409 is also used for plan limits and concurrency; the client keys on
         // this code to show the "car not available" message specifically.
         problemDetails.Extensions["code"] = "booking_conflict";
+
+        await httpContext.Response.WriteAsJsonAsync(problemDetails);
+    }
+
+    // A lifecycle method was called from a state that does not allow it — almost
+    // always because someone else moved the reservation on since this user loaded
+    // the list. That is a conflict, not a server fault: without this the domain
+    // exception would fall through to HandleUnknownException and answer 500.
+    private async Task HandleInvalidTransitionException(HttpContext httpContext, Exception ex)
+    {
+        var exception = (InvalidReservationTransitionException)ex;
+
+        httpContext.Response.StatusCode = StatusCodes.Status409Conflict;
+
+        var problemDetails = new ProblemDetails
+        {
+            Status = StatusCodes.Status409Conflict,
+            Title = _localizer["Error.ReservationTransition.Title"],
+            Detail = exception.Message,
+            Type = "https://tools.ietf.org/html/rfc7231#section-6.5.8"
+        };
+        // 409 also carries plan limits, booking conflicts and concurrency, so the
+        // client keys on this code to reload the row and say what happened.
+        problemDetails.Extensions["code"] = "invalid_transition";
+        problemDetails.Extensions["from"] = exception.From.ToString();
 
         await httpContext.Response.WriteAsJsonAsync(problemDetails);
     }

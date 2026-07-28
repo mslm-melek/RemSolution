@@ -1,63 +1,12 @@
-.reservation-card {
-  padding: 1.5rem;
-  margin: 1rem;
-  border-radius: 8px;
+/* Surface, header, filters, table, chips and the error banner come from
+   styles.scss. What is specific to a hold: a fully paid one is called out, and
+   the expiry countdown is quiet until it matters. */
+.paid-full {
+  color: var(--ok);
+  font-weight: 650;
 }
 
-.header-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 1rem;
-}
-
-.title {
-  margin: 0;
-}
-
-.filter-row {
-  margin-bottom: 1rem;
-}
-
-.full-width {
-  width: 100%;
-}
-
-.text-center {
-  text-align: center;
-}
-
-.muted {
-  color: rgba(0, 0, 0, 0.5);
-  font-size: 0.85em;
-}
-
-.empty-row {
-  text-align: center;
-  padding: 1rem;
-  color: rgba(0, 0, 0, 0.5);
-}
-
-.status-pill {
-  display: inline-block;
-  padding: 0.15rem 0.6rem;
-  border-radius: 999px;
-  font-size: 0.8em;
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.status-pill.pending { background: #fff3cd; color: #8a6d00; }
-.status-pill.ok { background: #d4edda; color: #1b5e20; }
-.status-pill.converted { background: #cfe2ff; color: #0d47a1; }
-.status-pill.ended { background: #eceff1; color: #546e7a; }
-
-.paid-full { color: #1b5e20; font-weight: 600; }
-
-.error-banner {
-  background: #fdecea;
-  color: #b71c1c;
-  padding: 0.6rem 1rem;
-  border-radius: 4px;
-  margin-bottom: 1rem;
+.expiring {
+  color: var(--warn);
+  font-weight: 650;
 }

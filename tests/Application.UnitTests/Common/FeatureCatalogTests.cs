@@ -51,9 +51,4 @@ public class FeatureCatalogTests
         }
     }
 
-    [Test]
-    public void ReadOnlyPermissionsAreAllKnown()
-    {
-        Permissions.ReadOnly.Should().OnlyContain(p => Permissions.All.Contains(p));
-    }
 }

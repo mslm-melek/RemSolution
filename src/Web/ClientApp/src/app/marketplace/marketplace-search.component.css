@@ -1,21 +1,26 @@
 .marketplace {
-  max-width: 1100px;
+  max-width: 1240px;
   margin: 0 auto;
-  padding: 1rem;
+  padding: 24px 0 40px;
 }
 
+/* The customer-facing banner keeps the brand blue: the app bar is chrome and
+   stays charcoal, this is an inviting surface. */
 .hero {
-  border-radius: 16px;
-  padding: 2rem 2rem 1.5rem;
+  border-radius: var(--r-lg);
+  padding: 30px 30px 24px;
   color: #fff;
-  background: linear-gradient(135deg, #3f51b5 0%, #5c6bc0 55%, #7986cb 100%);
-  margin-bottom: 1.5rem;
+  background: linear-gradient(100deg, var(--brand-900) 0%, var(--brand-800) 45%, var(--brand-700) 100%);
+  box-shadow: var(--shadow-3);
+  margin-bottom: var(--gap-5);
 }
 
 .hero h1 {
   margin: 0 0 4px;
-  font-size: 1.8rem;
-  font-weight: 600;
+  font-size: 27px;
+  font-weight: 680;
+  letter-spacing: -0.02em;
+  color: #fff;
 }
 
 .hero p {
@@ -26,11 +31,12 @@
 .search-bar {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: var(--gap-3);
   flex-wrap: wrap;
   background: rgba(255, 255, 255, 0.14);
-  border-radius: 12px;
-  padding: 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: var(--r);
+  padding: 12px;
 }
 
 .search-bar .date {
@@ -44,18 +50,19 @@
 }
 
 .error {
-  margin-top: 0.75rem;
-  background: rgba(255, 255, 255, 0.9);
-  color: #b71c1c;
-  padding: 0.5rem 0.9rem;
-  border-radius: 8px;
+  margin-top: var(--gap-3);
+  background: rgba(255, 255, 255, 0.94);
+  color: var(--danger);
+  padding: 8px 14px;
+  border-radius: var(--r-sm);
   display: inline-block;
+  font-size: 13.5px;
 }
 
 .state {
   text-align: center;
-  color: rgba(0, 0, 0, 0.55);
-  padding: 2rem;
+  color: var(--muted);
+  padding: 40px 16px;
 }
 
 .grid {
@@ -66,17 +73,19 @@
 
 .car-card {
   display: block;
-  border-radius: 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--r);
   overflow: hidden;
-  background: #fff;
+  background: var(--surface);
+  box-shadow: var(--shadow-1);
   color: inherit;
   text-decoration: none;
-  transition: transform .12s ease, box-shadow .12s ease;
+  transition: transform .14s ease, box-shadow .14s ease;
 }
 
 .car-card:hover {
   transform: translateY(-3px);
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.16);
+  box-shadow: var(--shadow-2);
 }
 
 .thumb {
@@ -89,8 +98,8 @@
 }
 
 .thumb.placeholder {
-  background: #eceff1;
-  color: #b0bec5;
+  background: var(--surface-3);
+  color: var(--muted-2);
 }
 
 .thumb.placeholder mat-icon {
@@ -104,8 +113,9 @@
 }
 
 .model {
-  font-weight: 600;
-  font-size: 1.05rem;
+  font-weight: 650;
+  font-size: 15.5px;
+  color: var(--ink);
   margin-bottom: 4px;
 }
 
@@ -113,9 +123,9 @@
   display: flex;
   align-items: center;
   gap: 4px;
-  color: rgba(0, 0, 0, 0.55);
-  font-size: 0.85rem;
-  margin-bottom: 0.75rem;
+  color: var(--muted);
+  font-size: 12.5px;
+  margin-bottom: var(--gap-3);
 }
 
 .agency mat-icon {
@@ -131,23 +141,24 @@
 }
 
 .price {
-  font-weight: 600;
-  color: #3f51b5;
+  font-weight: 700;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
 }
 
 .price .per {
-  font-weight: 400;
-  color: rgba(0, 0, 0, 0.5);
-  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--muted);
+  font-size: 12px;
 }
 
 .book {
   display: inline-flex;
   align-items: center;
   gap: 2px;
-  font-size: 0.85rem;
-  color: #3f51b5;
-  font-weight: 500;
+  font-size: 12.5px;
+  color: var(--brand-700);
+  font-weight: 650;
 }
 
 .book mat-icon {

@@ -45,10 +45,11 @@ public class TenantIsolationTests : BaseTestFixture
         }
     }
 
-    // The bypass only covers read permissions: a write stays forbidden even
-    // while impersonating.
+    // Inside an agency workspace the bypass covers every permission, not only the
+    // reads: the app owner has to be able to fix an agency's data. The row must
+    // land in the impersonated agency, stamped by the ambient tenant.
     [Test]
-    public async Task PlatformAdmin_CannotWriteTenantData_WhileImpersonating()
+    public async Task PlatformAdmin_CanWriteAgencyData_WhileImpersonating()
     {
         await RunAsAgencyAdministratorAsync();
         var agencyA = await AddTestAgencyAsync();
@@ -64,16 +65,45 @@ public class TenantIsolationTests : BaseTestFixture
 
         using (ImpersonationScope.Begin())
         {
-            await FluentActions.Invoking(() =>
-                SendAsync(new CreateCarCommand
-                {
-                    Matricule = "IMP-003",
-                    ModelId = model.Id,
-                    Color = "Red",
-                    FirstCirculationDate = DateTime.UtcNow
-                }))
-                .Should().ThrowAsync<ForbiddenAccessException>();
+            var carId = await SendAsync(new CreateCarCommand
+            {
+                Matricule = "IMP-003",
+                ModelId = model.Id,
+                Color = "Red",
+                FirstCirculationDate = DateTime.UtcNow
+            });
+
+            var car = await FindAsync<Car>(carId);
+            car!.AgencyId.Should().Be(agencyA);
         }
+    }
+
+    // Without the scope the platform admin holds no permission at all — the write
+    // is refused, so the workspace really is the only way in.
+    [Test]
+    public async Task PlatformAdmin_CannotWriteTenantData_WithoutImpersonation()
+    {
+        await RunAsAgencyAdministratorAsync();
+        var agencyA = await AddTestAgencyAsync();
+
+        SetCurrentAgency(agencyA);
+        var brand = new Brand { Name = "Tesla" };
+        await AddAsync(brand);
+        var model = new ModelCar { Name = "Model Y", BrandId = brand.Id };
+        await AddAsync(model);
+
+        await RunAsPlatformAdministratorAsync();
+        SetCurrentAgency(agencyA);
+
+        await FluentActions.Invoking(() =>
+            SendAsync(new CreateCarCommand
+            {
+                Matricule = "IMP-004",
+                ModelId = model.Id,
+                Color = "Red",
+                FirstCirculationDate = DateTime.UtcNow
+            }))
+            .Should().ThrowAsync<ForbiddenAccessException>();
     }
 
     private static async Task SeedCarAsync(int agencyId, string matricule)

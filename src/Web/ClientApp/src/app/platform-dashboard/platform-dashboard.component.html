@@ -1,0 +1,300 @@
+<div class="page platform-dashboard" *transloco="let t">
+  <div class="header-row">
+    <div>
+      <h2 class="title">{{ t('platformDashboard.title') }}</h2>
+      <p class="page-subtitle" *ngIf="data?.generatedAt">
+        {{ t('platformDashboard.asOf', { time: (data!.generatedAt | date:'d MMM y, HH:mm') }) }}
+      </p>
+    </div>
+
+    <button mat-stroked-button (click)="load()" [disabled]="loading">
+      <mat-icon>refresh</mat-icon> {{ t('common.refresh') }}
+    </button>
+  </div>
+
+  <div *ngIf="errorMessage" class="error-banner">
+    <mat-icon>error_outline</mat-icon> {{ errorMessage }}
+  </div>
+  <div *ngIf="loading" class="loading">{{ t('common.loading') }}</div>
+
+  <ng-container *ngIf="data && !loading">
+    <!-- The shape of the installation: who is on board, who is paying, how much
+         data they hold. -->
+    <div class="kpi-grid">
+      <a class="kpi agencies" [routerLink]="['/agency']">
+        <div class="kpi-head">
+          <span class="kpi-icon"><mat-icon>business</mat-icon></span>
+          <span class="tile-label">{{ t('platformDashboard.agencies') }}</span>
+        </div>
+        <div class="tile-value">{{ data.totalAgencies }}</div>
+        <div class="kpi-foot">
+          <span class="tile-note">
+            {{ t('platformDashboard.acrossCountries', { count: data.totalCountries }) }}
+          </span>
+        </div>
+      </a>
+
+      <div class="kpi subs">
+        <div class="kpi-head">
+          <span class="kpi-icon"><mat-icon>verified</mat-icon></span>
+          <span class="tile-label">{{ t('platformDashboard.activeSubscriptions') }}</span>
+        </div>
+        <div class="tile-value">
+          {{ data.activeSubscriptions }} <small>/ {{ data.totalAgencies }}</small>
+        </div>
+        <div class="kpi-foot">
+          <span class="tile-note">
+            {{ subscribedShare === null ? t('platformDashboard.noAgencies')
+               : t('platformDashboard.subscribedShare', { percent: (subscribedShare | number:'1.0-0') }) }}
+          </span>
+        </div>
+      </div>
+
+      <div class="kpi revenue">
+        <div class="kpi-head">
+          <span class="kpi-icon"><mat-icon>payments</mat-icon></span>
+          <span class="tile-label">{{ t('platformDashboard.planRevenue') }}</span>
+        </div>
+        <div class="tile-value">{{ data.activePlanRevenue | number:'1.2-2' }}</div>
+        <div class="kpi-foot">
+          <span class="tile-note" *ngIf="averageRevenuePerActiveAgency !== null">
+            {{ t('platformDashboard.perActiveAgency',
+                 { amount: (averageRevenuePerActiveAgency | number:'1.0-0') }) }}
+          </span>
+        </div>
+      </div>
+
+      <div class="kpi fleet">
+        <div class="kpi-head">
+          <span class="kpi-icon"><mat-icon>directions_car</mat-icon></span>
+          <span class="tile-label">{{ t('platformDashboard.cars') }}</span>
+        </div>
+        <div class="tile-value">{{ data.totalCars | number }}</div>
+        <div class="kpi-foot">
+          <span class="tile-note" *ngIf="averageCarsPerAgency !== null">
+            {{ t('platformDashboard.perAgency', { count: (averageCarsPerAgency | number:'1.0-1') }) }}
+          </span>
+        </div>
+      </div>
+
+      <div class="kpi people">
+        <div class="kpi-head">
+          <span class="kpi-icon"><mat-icon>group</mat-icon></span>
+          <span class="tile-label">{{ t('platformDashboard.clients') }}</span>
+        </div>
+        <div class="tile-value">{{ data.totalClients | number }}</div>
+        <div class="kpi-foot">
+          <span class="tile-note">{{ t('platformDashboard.allAgencies') }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- What the app owner has to act on. Empty is a good state, and says so. -->
+    <section class="panel">
+      <h3 class="section-title">{{ t('platformDashboard.alertsSection') }}</h3>
+
+      <div class="alerts" *ngIf="alerts.length">
+        <div class="alert" *ngFor="let alert of alerts" [ngClass]="alert.tone">
+          <span class="alert-icon"><mat-icon>{{ alert.icon }}</mat-icon></span>
+          <span class="alert-count">{{ alert.count }}</span>
+          <span class="alert-text">
+            <span class="alert-label">{{ t(alert.labelKey) }}</span>
+            <span class="alert-hint">{{ t(alert.hintKey) }}</span>
+          </span>
+        </div>
+      </div>
+
+      <div class="all-clear" *ngIf="!alerts.length">
+        <mat-icon>task_alt</mat-icon> {{ t('platformDashboard.allClear') }}
+      </div>
+    </section>
+
+    <div class="split">
+      <!-- Where the installation actually operates. -->
+      <section class="panel">
+        <div class="panel-head">
+          <h3 class="section-title">{{ t('platformDashboard.countriesSection') }}</h3>
+          <mat-button-toggle-group class="metric-picker" [value]="countryMetric"
+                                   (change)="selectCountryMetric($event.value)"
+                                   [attr.aria-label]="t('platformDashboard.metric')">
+            <mat-button-toggle *ngFor="let option of countryMetricOptions" [value]="option.key">
+              {{ t(option.labelKey) }}
+            </mat-button-toggle>
+          </mat-button-toggle-group>
+        </div>
+
+        <div class="bars" *ngIf="countryBars.length">
+          <!-- Bars are scaled against the leading country, not a round number:
+               the comparison between countries is the point here. -->
+          <div class="bar-row" *ngFor="let bar of countryBars">
+            <div class="bar-head">
+              <span class="bar-label">{{ bar.row.countryName || t('platformDashboard.unknownCountry') }}</span>
+              <span class="bar-value num">{{ bar.value | number }}</span>
+            </div>
+            <div class="bar-track">
+              <div class="bar-fill" [style.width.%]="bar.percent"></div>
+            </div>
+            <div class="bar-foot">
+              <span>{{ t('platformDashboard.agenciesCount', { count: bar.row.agencies }) }}</span>
+              <span>·</span>
+              <span>{{ t('platformDashboard.activeCount', { count: bar.row.activeSubscriptions }) }}</span>
+              <span>·</span>
+              <span>{{ t('platformDashboard.carsCount', { count: bar.row.cars }) }}</span>
+              <span>·</span>
+              <span>{{ t('platformDashboard.clientsCount', { count: bar.row.clients }) }}</span>
+            </div>
+          </div>
+        </div>
+
+        <p class="empty-note" *ngIf="!countryBars.length">{{ t('platformDashboard.noCountries') }}</p>
+      </section>
+
+      <!-- Which plans the portfolio actually sits on. -->
+      <section class="panel">
+        <h3 class="section-title">{{ t('platformDashboard.plansSection') }}</h3>
+
+        <div class="plan-list" *ngIf="plans.length">
+          <a class="plan" *ngFor="let plan of plans" [routerLink]="['/subscription-plan', plan.planId]">
+            <div class="plan-head">
+              <span class="plan-name">{{ plan.planName }}</span>
+              <span class="plan-price num">{{ plan.price | number:'1.0-2' }}</span>
+            </div>
+            <div class="plan-foot">
+              <span class="chip no-dot" [ngClass]="plan.activeAgencies ? 'ok' : 'neutral'">
+                {{ t('platformDashboard.liveAgencies', { count: plan.activeAgencies }) }}
+              </span>
+              <span class="tile-note">
+                {{ t('platformDashboard.planLimits', { cars: plan.maxCars, clients: plan.maxClients }) }}
+              </span>
+            </div>
+          </a>
+        </div>
+
+        <p class="empty-note" *ngIf="!plans.length">{{ t('platformDashboard.noPlans') }}</p>
+      </section>
+    </div>
+
+    <!-- Every agency, with the two figures that decide whether it needs a bigger
+         plan. -->
+    <section class="panel">
+      <div class="panel-head">
+        <h3 class="section-title">{{ t('platformDashboard.agenciesSection') }}</h3>
+        <!-- A plain input rather than a mat-form-field: the stock field's
+             subscript line can only be suppressed from the global sheet, and a
+             one-off filter does not need a label above it. -->
+        <label class="table-filter">
+          <mat-icon>search</mat-icon>
+          <input type="search" (input)="applyFilter($any($event.target).value)"
+                 [attr.aria-label]="t('common.search')"
+                 [placeholder]="t('platformDashboard.filterPlaceholder')" />
+        </label>
+      </div>
+
+      <table mat-table [dataSource]="agenciesSource" class="data-table full-width"
+             matSort matSortDisableClear matSortActive="cars" matSortDirection="desc">
+
+        <ng-container matColumnDef="name">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ t('common.name') }}</th>
+          <td mat-cell *matCellDef="let row">
+            <a class="cell-main" [routerLink]="['/agency', row.agencyId]">{{ row.name }}</a>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="country">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ t('agency.country') }}</th>
+          <td mat-cell *matCellDef="let row">
+            {{ row.countryName || t('platformDashboard.unknownCountry') }}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="plan">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ t('platformDashboard.plan') }}</th>
+          <td mat-cell *matCellDef="let row">
+            <span *ngIf="row.planName">{{ row.planName }}</span>
+            <span class="muted-cell" *ngIf="!row.planName">{{ t('platformDashboard.noPlan') }}</span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ t('common.status') }}</th>
+          <td mat-cell *matCellDef="let row">
+            <span class="chip" [ngClass]="statusTone(row)">
+              <ng-container *ngIf="!row.subscriptionStatus">{{ t('platformDashboard.noPlan') }}</ng-container>
+              <ng-container *ngIf="row.subscriptionStatus">
+                <ng-container *ngIf="row.subscriptionIsActive">{{ t(statusLabelKey(row.subscriptionStatus)) }}</ng-container>
+                <!-- Flagged Active but the period has run out: the agency is
+                     already blocked, so the chip says so rather than "Active". -->
+                <ng-container *ngIf="!row.subscriptionIsActive">
+                  {{ row.subscriptionStatus === SubscriptionStatus.Active
+                     ? t('platformDashboard.lapsed')
+                     : t(statusLabelKey(row.subscriptionStatus)) }}
+                </ng-container>
+              </ng-container>
+            </span>
+            <span class="ends-on" *ngIf="row.subscriptionEndDate">
+              {{ row.subscriptionEndDate | date:'d MMM y' }}
+            </span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="cars">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ t('platformDashboard.cars') }}</th>
+          <td mat-cell *matCellDef="let row">
+            <!-- Opens the agency's workspace on its car screen — the real module,
+                 not a read-only copy. -->
+            <button type="button" class="quota" (click)="openAgency(row, '/car')"
+                    [matTooltip]="t('platformDashboard.openCars', { agency: row.name })">
+              <span class="quota-value num">
+                {{ row.cars | number }}<small *ngIf="row.maxCars"> / {{ row.maxCars }}</small>
+              </span>
+              <span class="quota-track" *ngIf="quotaPercent(row.cars, row.maxCars) !== null">
+                <span class="quota-fill" [class.full]="quotaPercent(row.cars, row.maxCars)! >= 100"
+                      [style.width.%]="quotaPercent(row.cars, row.maxCars)"></span>
+              </span>
+            </button>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="clients">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ t('platformDashboard.clients') }}</th>
+          <td mat-cell *matCellDef="let row">
+            <button type="button" class="quota" (click)="openAgency(row, '/client')"
+                    [matTooltip]="t('platformDashboard.openClients', { agency: row.name })">
+              <span class="quota-value num">
+                {{ row.clients | number }}<small *ngIf="row.maxClients"> / {{ row.maxClients }}</small>
+              </span>
+              <span class="quota-track" *ngIf="quotaPercent(row.clients, row.maxClients) !== null">
+                <span class="quota-fill" [class.full]="quotaPercent(row.clients, row.maxClients)! >= 100"
+                      [style.width.%]="quotaPercent(row.clients, row.maxClients)"></span>
+              </span>
+            </button>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef class="actions-cell">{{ t('common.actions') }}</th>
+          <td mat-cell *matCellDef="let row" class="actions-cell row-actions">
+            <button mat-icon-button color="primary" (click)="openAgency(row)"
+                    [matTooltip]="t('platformDashboard.openWorkspace', { agency: row.name })"
+                    [attr.aria-label]="t('platformDashboard.openWorkspace', { agency: row.name })">
+              <mat-icon>admin_panel_settings</mat-icon>
+            </button>
+            <a mat-icon-button [routerLink]="['/agency', row.agencyId]"
+               [matTooltip]="t('agency.manage')" [attr.aria-label]="t('agency.manage')">
+              <mat-icon>tune</mat-icon>
+            </a>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="agencyColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: agencyColumns"></tr>
+
+        <tr class="mat-row" *matNoDataRow>
+          <td class="mat-cell empty-row" [attr.colspan]="agencyColumns.length">
+            {{ t('platformDashboard.noAgenciesRow') }}
+          </td>
+        </tr>
+      </table>
+    </section>
+  </ng-container>
+</div>

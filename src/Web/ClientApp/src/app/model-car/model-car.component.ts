@@ -1,5 +1,6 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { PageEvent } from '@angular/material/paginator';
+import { Sort, SortDirection } from '@angular/material/sort';
 import { ModelCarsClient, ModelCarDto, BrandsClient, BrandDto } from '../web-api-client';
 import { TranslocoService } from '@jsverse/transloco';
 
@@ -20,6 +21,10 @@ export class ModelCarComponent implements OnInit {
   pageNumber = 1;
   pageSize = 10;
 
+  // Sorting is server-side: the column id doubles as the API's SortBy key.
+  sortBy = 'name';
+  sortDirection: SortDirection = 'asc';
+
   filterBrandId: number | null = null;
 
   constructor(private client: ModelCarsClient, private brandsClient: BrandsClient) { }
@@ -34,7 +39,10 @@ export class ModelCarComponent implements OnInit {
   }
 
   load() {
-    this.client.getModelCars(this.pageNumber, this.pageSize, this.filterBrandId).subscribe({
+    this.client.getModelCars(
+      this.pageNumber, this.pageSize, this.filterBrandId,
+      this.sortBy, this.sortDirection === 'desc'
+    ).subscribe({
       next: result => {
         this.modelCars = result.items || [];
         this.totalCount = result.totalCount || 0;
@@ -56,6 +64,13 @@ export class ModelCarComponent implements OnInit {
   onPage(event: PageEvent) {
     this.pageNumber = event.pageIndex + 1;
     this.pageSize = event.pageSize;
+    this.load();
+  }
+
+  onSort(sort: Sort) {
+    this.sortBy = sort.active;
+    this.sortDirection = sort.direction || 'asc';
+    this.pageNumber = 1;
     this.load();
   }
 

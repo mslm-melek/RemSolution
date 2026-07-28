@@ -373,6 +373,9 @@
   <data name="Error.BookingConflict.Title" xml:space="preserve">
     <value>La voiture n'est pas disponible pour la période choisie.</value>
   </data>
+  <data name="Error.ReservationTransition.Title" xml:space="preserve">
+    <value>La réservation n'est plus dans un état permettant cette action.</value>
+  </data>
   <data name="Error.Concurrency.Title" xml:space="preserve">
     <value>L'enregistrement a été modifié par un autre utilisateur.</value>
   </data>

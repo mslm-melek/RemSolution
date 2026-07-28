@@ -1,7 +1,7 @@
 <ng-container *transloco="let t">
   <!-- Signed out: hero with call to action -->
   <div class="hero" *ngIf="isAuthenticated === false">
-    <div class="hero-card mat-elevation-z4">
+    <div class="hero-card">
       <span class="hero-logo">R</span>
       <h1>{{ t('home.welcomeTitle') }}</h1>
       <p class="hero-tagline">{{ t('home.welcomeTagline') }}</p>
@@ -16,7 +16,7 @@
 
   <!-- Signed-in customer: browse-oriented home (no staff dashboard). -->
   <div class="hero" *ngIf="isCustomer">
-    <div class="hero-card mat-elevation-z4">
+    <div class="hero-card">
       <span class="hero-logo">R</span>
       <h1>{{ displayName ? t('home.customerTitleNamed', { name: displayName }) : t('home.customerTitle') }}</h1>
       <p class="hero-tagline">{{ t('home.customerTagline') }}</p>
@@ -37,7 +37,7 @@
     </div>
 
     <div class="stat-row">
-      <a class="stat-tile mat-elevation-z2" *ngFor="let stat of stats" [routerLink]="[stat.link]">
+      <a class="stat-tile" *ngFor="let stat of stats" [routerLink]="[stat.link]">
         <div class="stat-icon">
           <mat-icon>{{ stat.icon }}</mat-icon>
         </div>
@@ -48,7 +48,7 @@
       </a>
     </div>
 
-    <div class="quick-actions mat-elevation-z2">
+    <div class="quick-actions">
       <h2>{{ t('home.quickActions') }}</h2>
       <div class="action-buttons">
         <a mat-raised-button color="primary" *ngFor="let action of quickActions" [routerLink]="[action.link]">

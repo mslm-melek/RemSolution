@@ -18,7 +18,11 @@ namespace RemSolution.Application.Features.Expense.Queries.GetExpensesWithPagina
         DateTime? To = null,
         // Only expenses the agency still owes money on — the working set of the
         // expense side of the credits screen.
-        bool OnlyUnpaid = false
+        bool OnlyUnpaid = false,
+        // Column the table is sorted by, named after the Angular matColumnDef;
+        // anything unrecognised falls back to the most recent expense first.
+        string? SortBy = null,
+        bool SortDescending = true
     ) : IRequest<PaginatedList<ExpenseDto>>;
 
     public class GetExpensesWithPaginationQueryHandler
@@ -54,8 +58,27 @@ namespace RemSolution.Application.Features.Expense.Queries.GetExpensesWithPagina
                     && e.ExpenseAmount.Amount > (e.PaidAmount == null ? 0m : e.PaidAmount.Amount));
             }
 
-            return await query
-                .OrderByDescending(e => e.ExpenseDate)
+            var descending = request.SortDescending;
+
+            // Money is an optional owned type, so an amount is read through a
+            // null check rather than dereferenced (EF cannot order by a null
+            // owned reference).
+            var ordered = request.SortBy.NormalizeSortKey() switch
+            {
+                "car" => query.OrderByField(e => e.Car!.Matricule, descending),
+                "type" => query.OrderByField(e => e.ExpenseType!.Name, descending),
+                "amount" => query.OrderByField(
+                    e => e.ExpenseAmount == null ? 0m : e.ExpenseAmount.Amount, descending),
+                "paid" => query.OrderByField(
+                    e => e.PaidAmount == null ? 0m : e.PaidAmount.Amount, descending),
+                "outstanding" => query.OrderByField(
+                    e => (e.ExpenseAmount == null ? 0m : e.ExpenseAmount.Amount)
+                         - (e.PaidAmount == null ? 0m : e.PaidAmount.Amount), descending),
+                _ => query.OrderByField(e => e.ExpenseDate, descending),
+            };
+
+            return await ordered
+                .ThenBy(e => e.Id)
                 .ProjectToType<ExpenseDto>()
                 .PaginatedListAsync(request.PageNumber, request.PageSize);
         }

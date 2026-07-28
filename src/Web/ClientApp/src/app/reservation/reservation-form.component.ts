@@ -85,11 +85,11 @@ export class ReservationFormComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.carsClient.getCars(1, 1000, null, null, null).subscribe({
+    this.carsClient.getCars(1, 1000, null, null, null, null, false).subscribe({
       next: r => this.cars = r.items || [],
       error: err => console.error(err)
     });
-    this.clientsClient.getClients(1, 1000, null, null).subscribe({
+    this.clientsClient.getClients(1, 1000, null, null, null, false).subscribe({
       next: r => this.clients = r.items || [],
       // A failed lookup leaves the picker empty, which is otherwise silent.
       error: err => { this.errorMessage = this.transloco.translate('reservation.clientListFailed'); console.error(err); }
