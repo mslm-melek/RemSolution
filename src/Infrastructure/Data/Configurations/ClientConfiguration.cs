@@ -19,8 +19,25 @@ public class ClientConfiguration : IEntityTypeConfiguration<Client>
                .HasMaxLength(100)
                .UseCollation(DatabaseCollations.AccentInsensitive);
 
+        // Matches the Identity email column width. Case-insensitive like the
+        // name columns: an address typed "Leila@X.tn" must find the client
+        // stored as "leila@x.tn" (Identity itself normalises logins the same
+        // way, so the two stay in step).
+        builder.Property(c => c.Email)
+               .HasMaxLength(256)
+               .UseCollation(DatabaseCollations.AccentInsensitive);
+
+        // Provisioning looks a client up by address within the agency before
+        // deciding whether to create an account.
+        builder.HasIndex(c => new { c.AgencyId, c.Email });
+
         builder.Property(c => c.MarketplaceUserId)
                .HasMaxLength(450);
+
+        // Every customer-portal query ("my rentings", "my chats", …) filters on
+        // this column across agencies, so it carries the read load of the whole
+        // marketplace side of the app.
+        builder.HasIndex(c => c.MarketplaceUserId);
 
         // Bad-client moderation notes; bounded so the column stays a plain
         // nvarchar rather than nvarchar(max). IsFlagged is a non-nullable bool

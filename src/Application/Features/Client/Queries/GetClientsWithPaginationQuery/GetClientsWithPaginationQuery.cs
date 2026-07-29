@@ -14,6 +14,11 @@ namespace RemSolution.Application.Features.Client.Queries.GetClientsWithPaginati
         int PageSize = 10,
         string? Search = null,
         string? CIN = null,
+        bool? Flagged = null,
+        // Half-open [AddedFrom, AddedTo) over when the client was recorded, which
+        // is the only "added on" the model has.
+        DateTimeOffset? AddedFrom = null,
+        DateTimeOffset? AddedTo = null,
         // Column the table is sorted by, named after the Angular matColumnDef;
         // anything unrecognised falls back to the name.
         string? SortBy = null,
@@ -41,6 +46,15 @@ namespace RemSolution.Application.Features.Client.Queries.GetClientsWithPaginati
 
             if (!string.IsNullOrWhiteSpace(request.CIN))
                 query = query.Where(c => c.CIN == request.CIN);
+
+            if (request.Flagged.HasValue)
+                query = query.Where(c => c.IsFlagged == request.Flagged);
+
+            if (request.AddedFrom.HasValue)
+                query = query.Where(c => c.CreatedOn >= request.AddedFrom);
+
+            if (request.AddedTo.HasValue)
+                query = query.Where(c => c.CreatedOn < request.AddedTo);
 
             var descending = request.SortDescending;
 

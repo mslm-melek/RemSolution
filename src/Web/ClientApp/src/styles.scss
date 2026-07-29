@@ -523,6 +523,51 @@ td.empty-row {
   color: var(--muted);
 }
 
+/* Filters that arrived by link: a dashboard count or a home tile opens its list
+   already narrowed to the rows it counted. Those filters have no control of
+   their own on the strip, so each shows here as a chip that says what it is and
+   clears itself — a list never quietly shows a subset. */
+.filter-chips {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--gap-2);
+}
+
+.filter-chips .chip {
+  background: var(--info-bg);
+  color: var(--info);
+}
+
+.filter-chips .chip-clear {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  /* Logical property: the ✕ follows the text in Arabic without an RTL rule. */
+  margin-inline-start: 2px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  opacity: 0.7;
+}
+
+.filter-chips .chip-clear:hover {
+  opacity: 1;
+  background: rgba(20, 35, 61, 0.08);
+}
+
+.filter-chips .chip-clear .mat-icon {
+  font-size: 14px;
+  width: 14px;
+  height: 14px;
+  line-height: 14px;
+}
+
 /* ------------------------------------------------------------- banners ---- */
 
 .error-banner,

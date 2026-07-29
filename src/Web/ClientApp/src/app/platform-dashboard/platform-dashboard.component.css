@@ -44,6 +44,8 @@
 .kpi.revenue::before { background: var(--accent); }
 .kpi.fleet::before { background: var(--info); }
 .kpi.people::before { background: var(--warn); }
+.kpi.accounts::before { background: var(--brand-700); }
+.kpi.reach::before { background: var(--ok); }
 
 a.kpi:hover {
   box-shadow: var(--shadow-2);
@@ -78,6 +80,8 @@ a.kpi:hover {
 .kpi.revenue .kpi-icon { background: var(--accent-bg); color: var(--accent); }
 .kpi.fleet .kpi-icon { background: var(--info-bg); color: var(--info); }
 .kpi.people .kpi-icon { background: var(--warn-bg); color: var(--warn); }
+.kpi.accounts .kpi-icon { background: var(--brand-50); color: var(--brand-700); }
+.kpi.reach .kpi-icon { background: var(--ok-bg); color: var(--ok); }
 
 .kpi .tile-value {
   margin: 0;

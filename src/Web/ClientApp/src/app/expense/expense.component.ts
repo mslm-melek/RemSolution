@@ -6,7 +6,9 @@ import {
   ExpenseTypesClient, ExpenseTypeDto, RecordExpensePaymentCommand
 } from '../web-api-client';
 import { extractValidationErrors } from '../shared/form-utils';
+import { applyListFilters, boolParam } from '../shared/list-filters';
 import { AuthService } from '../shared/auth.service';
+import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import { TranslocoService } from '@jsverse/transloco';
 
 @Component({
@@ -49,7 +51,9 @@ export class ExpenseComponent implements OnInit {
     private client: ExpensesClient,
     private carsClient: CarsClient,
     private typesClient: ExpenseTypesClient,
-    private auth: AuthService) { }
+    private auth: AuthService,
+    private route: ActivatedRoute,
+    private router: Router) { }
 
   ngOnInit() {
     this.auth.currentUser$.subscribe(user => {
@@ -59,7 +63,7 @@ export class ExpenseComponent implements OnInit {
     });
 
     // Filter pickers: one page big enough to hold an agency's fleet/catalog.
-    this.carsClient.getCars(1, 1000, null, null, null, null, false).subscribe({
+    this.carsClient.getCars(1, 1000, null, null, null, null, null, null, null, null, false).subscribe({
       next: result => this.cars = result.items || [],
       error: err => console.error(err)
     });
@@ -68,7 +72,23 @@ export class ExpenseComponent implements OnInit {
       error: err => console.error(err)
     });
 
-    this.load();
+    // The filters live in the URL (see shared/list-filters): the home tile counts
+    // unpaid expenses, so its link opens this list already showing those.
+    this.route.queryParamMap.subscribe(params => {
+      this.readFilters(params);
+      this.pageNumber = 1;
+      this.load();
+    });
+  }
+
+  private readFilters(params: ParamMap) {
+    const carId = Number(params.get('car'));
+    this.carId = Number.isInteger(carId) && carId > 0 ? carId : null;
+
+    const typeId = Number(params.get('type'));
+    this.expenseTypeId = Number.isInteger(typeId) && typeId > 0 ? typeId : null;
+
+    this.onlyUnpaid = boolParam(params, 'unpaid') === true;
   }
 
   load() {
@@ -84,16 +104,17 @@ export class ExpenseComponent implements OnInit {
     });
   }
 
+  // Filtering goes through the URL; the subscription above reloads the rows.
   onFilter() {
-    this.pageNumber = 1;
-    this.load();
+    applyListFilters(this.router, this.route, {
+      car: this.carId,
+      type: this.expenseTypeId,
+      unpaid: this.onlyUnpaid ? 'true' : null
+    });
   }
 
   clearFilters() {
-    this.carId = null;
-    this.expenseTypeId = null;
-    this.onlyUnpaid = false;
-    this.onFilter();
+    applyListFilters(this.router, this.route, {});
   }
 
   onPage(event: PageEvent) {

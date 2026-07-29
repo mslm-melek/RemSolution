@@ -1,5 +1,6 @@
 using ValidationException = RemSolution.Application.Common.Exceptions.ValidationException;
 using RemSolution.Application.Common.Interfaces;
+using RemSolution.Application.Common.Models;
 using RemSolution.Application.Common.Security;
 using RemSolution.Application.Common.Subscriptions;
 using RemSolution.Domain.Constants;
@@ -57,6 +58,7 @@ namespace RemSolution.Application.Features.Renting.Commands.CreateRentingCommand
         private readonly IAvailabilityChecker _availability;
         private readonly IRentalDocumentService _documents;
         private readonly IStoredFileService _storedFiles;
+        private readonly IClientAccountService _accounts;
         private readonly IIdentityService _identityService;
         private readonly IUser _user;
         private readonly ITenantProvider _tenant;
@@ -68,6 +70,7 @@ namespace RemSolution.Application.Features.Renting.Commands.CreateRentingCommand
             IAvailabilityChecker availability,
             IRentalDocumentService documents,
             IStoredFileService storedFiles,
+            IClientAccountService accounts,
             IIdentityService identityService,
             IUser user,
             ITenantProvider tenant,
@@ -78,6 +81,7 @@ namespace RemSolution.Application.Features.Renting.Commands.CreateRentingCommand
             _availability = availability;
             _documents = documents;
             _storedFiles = storedFiles;
+            _accounts = accounts;
             _identityService = identityService;
             _user = user;
             _tenant = tenant;
@@ -129,12 +133,12 @@ namespace RemSolution.Application.Features.Renting.Commands.CreateRentingCommand
                 await _availability.EnsureCarAvailableAsync(
                     request.CarId, request.StartDate, request.EndDate, null, null, cancellationToken);
 
-                var clientId = await ResolveClientIdAsync(request, cancellationToken);
+                var client = await ResolveClientAsync(request, cancellationToken);
 
                 var entity = new RentingEntity
                 {
                     CarId = request.CarId,
-                    ClientId = clientId,
+                    ClientId = client.Id,
                     SecondClientId = request.SecondClientId,
                     StartDate = request.StartDate,
                     EndDate = request.EndDate,
@@ -180,7 +184,23 @@ namespace RemSolution.Application.Features.Renting.Commands.CreateRentingCommand
                     await _context.SaveChangesAsync(cancellationToken);
                 }
 
+                // The customer now has something to look at: give them the login
+                // to look at it with. Runs for the picked client as well as the
+                // inline one — an agency that only added an email to an existing
+                // client's record last week should not have to re-enter it here.
+                var account = await _accounts.LinkOrCreateAsync(client, cancellationToken);
+
+                if (account.Outcome is not ClientAccountOutcome.None)
+                {
+                    await _context.SaveChangesAsync(cancellationToken);
+                }
+
                 await transaction.CommitAsync(cancellationToken);
+
+                // Outside the transaction and outside the catch below: the
+                // booking is real now, and an unreachable mail server must not
+                // undo it (see IClientAccountService).
+                await _accounts.SendCredentialsAsync(account, cancellationToken);
 
                 return entity.Id;
             }
@@ -204,12 +224,22 @@ namespace RemSolution.Application.Features.Renting.Commands.CreateRentingCommand
         // ConvertReservationCommand: if the agency already holds a client with
         // that document, the renting links to THEM rather than adding a duplicate
         // for the same person.
-        private async Task<int> ResolveClientIdAsync(CreateRentingCommand request, CancellationToken cancellationToken)
+        private async Task<Domain.Entities.Client> ResolveClientAsync(
+            CreateRentingCommand request, CancellationToken cancellationToken)
         {
             if (request.NewClient is not NewRentingClient payload)
             {
-                // Validated as present when NewClient is absent.
-                return request.ClientId!.Value;
+                // Validated as present when NewClient is absent. Loaded rather
+                // than used as a bare id because the caller also provisions the
+                // client's portal account, which needs the record.
+                var clientId = request.ClientId!.Value;
+
+                var picked = await _context.Clients
+                    .FirstOrDefaultAsync(c => c.Id == clientId, cancellationToken);
+
+                Guard.Against.NotFound(clientId, picked);
+
+                return picked;
             }
 
             await EnsureAsync(Permissions.ClientCreate, FeatureFlags.Clients, cancellationToken);
@@ -229,7 +259,7 @@ namespace RemSolution.Application.Features.Renting.Commands.CreateRentingCommand
                     // Fill blanks only: the stored record is the agency's own and
                     // must not be overwritten by whatever was typed at the counter.
                     Enrich(existing, payload);
-                    return existing.Id;
+                    return existing;
                 }
             }
 
@@ -240,6 +270,7 @@ namespace RemSolution.Application.Features.Renting.Commands.CreateRentingCommand
             {
                 FirstName = payload.FirstName,
                 LastName = payload.LastName,
+                Email = Trimmed(payload.Email),
                 BirthDate = payload.BirthDate,
                 BirthPlace = payload.BirthPlace,
                 BirthCountryId = payload.BirthCountryId,
@@ -265,11 +296,20 @@ namespace RemSolution.Application.Features.Renting.Commands.CreateRentingCommand
             // transaction, so this save is not yet durable either.
             await _context.SaveChangesAsync(cancellationToken);
 
-            return client.Id;
+            return client;
         }
 
         private static void Enrich(Domain.Entities.Client client, NewRentingClient payload)
         {
+            // Including the email: a client the agency has known offline for
+            // years gets a login the first time somebody types their address at
+            // the counter. Still blanks-only — an address already on file is
+            // the one their account is keyed to.
+            if (string.IsNullOrWhiteSpace(client.Email))
+            {
+                client.Email = Trimmed(payload.Email);
+            }
+
             if (string.IsNullOrWhiteSpace(client.CIN))
             {
                 client.CIN = Trimmed(payload.CIN);

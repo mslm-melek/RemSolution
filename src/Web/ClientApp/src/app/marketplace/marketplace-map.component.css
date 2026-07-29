@@ -1,0 +1,104 @@
+.map-shell {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 320px;
+  border-radius: var(--r);
+  overflow: hidden;
+  background: var(--surface-3);
+}
+
+.canvas {
+  width: 100%;
+  height: 100%;
+}
+
+.search-area {
+  position: absolute;
+  top: var(--gap-3);
+  left: 50%;
+  transform: translateX(-50%);
+  /* Above Leaflet's own panes and controls, which sit in the 400-1000 range. */
+  z-index: 1001;
+  box-shadow: var(--shadow-2);
+}
+
+.empty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--gap-4);
+  text-align: center;
+  color: var(--muted);
+  background: rgba(243, 245, 250, 0.85);
+  z-index: 1000;
+  pointer-events: none;
+}
+
+/* --------------------------------------------------------------- pins ----
+   The marker element itself is a zero-size anchor sitting exactly on the
+   coordinate; the pill inside is what is seen, lifted above the point so it
+   does not cover it. Not scoped to :host — Leaflet appends markers to its own
+   panes, which are outside this component's emulated encapsulation, so these
+   rules are declared ::ng-deep on purpose. */
+:host ::ng-deep .map-pin-wrap {
+  width: 0 !important;
+  height: 0 !important;
+}
+
+:host ::ng-deep .map-pin {
+  position: absolute;
+  transform: translate(-50%, -100%);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+  padding: 5px 10px;
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  color: var(--ink);
+  border: 1px solid var(--line-strong);
+  box-shadow: var(--shadow-1);
+  font: 600 0.78rem/1 var(--font);
+  cursor: pointer;
+  transition: background-color 120ms ease, color 120ms ease, transform 120ms ease;
+}
+
+:host ::ng-deep .map-pin:hover,
+:host ::ng-deep .map-pin-wrap.is-highlighted .map-pin {
+  background: var(--brand-600);
+  border-color: var(--brand-700);
+  color: #fff;
+  transform: translate(-50%, -100%) scale(1.06);
+}
+
+:host ::ng-deep .pin-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: var(--r-pill);
+  background: var(--brand-50);
+  color: var(--brand-700);
+  font-size: 0.68rem;
+}
+
+:host ::ng-deep .map-pin-wrap.is-highlighted .pin-count,
+:host ::ng-deep .map-pin:hover .pin-count {
+  background: rgba(255, 255, 255, 0.22);
+  color: #fff;
+}
+
+/* Leaflet's attribution defaults to a size that fights the app's type scale. */
+:host ::ng-deep .leaflet-container {
+  font-family: var(--font);
+  background: var(--surface-3);
+}
+
+:host ::ng-deep .leaflet-control-attribution {
+  font-size: 0.65rem;
+}

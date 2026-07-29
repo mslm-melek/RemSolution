@@ -142,6 +142,13 @@
   color: #1b5e20;
 }
 
+/* Amber rather than red: being asked to choose a password is an instruction,
+   not something the user got wrong. */
+.banner.warning {
+  background: #fff4e5;
+  color: #8a5300;
+}
+
 /* Dark theme friendliness */
 @media (prefers-color-scheme: dark) {
   .card {

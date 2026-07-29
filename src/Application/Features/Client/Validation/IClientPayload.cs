@@ -6,6 +6,11 @@ namespace RemSolution.Application.Features.Client.Validation
     {
         string FirstName { get; }
         string LastName { get; }
+        // Optional, but load-bearing when present: it becomes the login of the
+        // customer-portal account provisioned for this client (see
+        // IClientAccountService), so the same format rule has to hold on every
+        // path that can set it.
+        string? Email { get; }
         DateTime? BirthDate { get; }
         string? BirthPlace { get; }
         int? BirthCountryId { get; }

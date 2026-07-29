@@ -18,12 +18,14 @@ namespace RemSolution.Application.Features.Client.Commands.UpdateClientCommand
         // The row version the client last read; the update targets exactly that
         // version so a concurrent change surfaces as a 409 (see P.8).
         public byte[]? RowVersion { get; init; }
-        // MarketplaceUserId is not editable here (linked once by the Phase 6
-        // marketplace flow), and the document image URLs are owned by
+        // MarketplaceUserId is not editable here — it is a link the account
+        // service owns, and the handler below explains why editing Email does
+        // not move it. The document image URLs are owned by
         // UploadClientDocumentCommand, which manages the stored files'
         // lifecycle.
         public string FirstName { get; init; } = string.Empty;
         public string LastName { get; init; } = string.Empty;
+        public string? Email { get; init; }
         public DateTime? BirthDate { get; init; }
         public string? BirthPlace { get; init; }
         public int? BirthCountryId { get; init; }
@@ -45,10 +47,12 @@ namespace RemSolution.Application.Features.Client.Commands.UpdateClientCommand
     public class UpdateClientCommandHandler : IRequestHandler<UpdateClientCommand>
     {
         private readonly IApplicationDbContext _context;
+        private readonly IClientAccountService _accounts;
 
-        public UpdateClientCommandHandler(IApplicationDbContext context)
+        public UpdateClientCommandHandler(IApplicationDbContext context, IClientAccountService accounts)
         {
             _context = context;
+            _accounts = accounts;
         }
 
         public async Task Handle(UpdateClientCommand request, CancellationToken cancellationToken)
@@ -62,6 +66,7 @@ namespace RemSolution.Application.Features.Client.Commands.UpdateClientCommand
 
             entity.FirstName = request.FirstName;
             entity.LastName = request.LastName;
+            entity.Email = Trimmed(request.Email);
             entity.BirthDate = request.BirthDate;
             entity.BirthPlace = request.BirthPlace;
             entity.BirthCountryId = request.BirthCountryId;
@@ -79,7 +84,28 @@ namespace RemSolution.Application.Features.Client.Commands.UpdateClientCommand
             entity.DrivingLicenceDeliveranceCountryId = request.DrivingLicenceDeliveranceCountryId;
             entity.Description = request.Description;
 
+            // Adding an email to a client who never had one gives them a login;
+            // this is the same provisioning the create path does, so an agency
+            // that fills the field in later gets the same result as one that
+            // filled it in from the start.
+            //
+            // Two things it deliberately does NOT do (both enforced inside the
+            // service): re-point an already-linked client at a different
+            // account when the address is edited, and unlink when the address
+            // is cleared. The account outlives the contact field — it owns the
+            // customer's bookings, documents and chat threads.
+            await using var transaction = await _context.BeginTransactionAsync(cancellationToken);
+
+            var account = await _accounts.LinkOrCreateAsync(entity, cancellationToken);
+
             await _context.SaveChangesAsync(cancellationToken);
+
+            await transaction.CommitAsync(cancellationToken);
+
+            await _accounts.SendCredentialsAsync(account, cancellationToken);
         }
+
+        private static string? Trimmed(string? value) =>
+            string.IsNullOrWhiteSpace(value) ? null : value.Trim();
     }
 }

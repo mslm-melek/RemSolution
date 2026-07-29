@@ -79,6 +79,8 @@ interface Alert {
   count: number;
   tone: 'danger' | 'warn' | 'info';
   link: string;
+  /** The filter the count was measured with — see `linkParams` below. */
+  queryParams?: Record<string, string>;
   actionKey: string;
 }
 
@@ -107,6 +109,17 @@ export class DashboardComponent implements OnInit {
 
   chart?: Chart;
   alerts: Alert[] = [];
+
+  // Every figure on this screen is a link into the list it was counted from, and
+  // carries the filter that produced it — a count of running rentings opens the
+  // running rentings, not the whole table. The standing counts filter on one
+  // fixed thing; the period ones are rebuilt on each load, below.
+  readonly inProgressParams = { state: 'InProgress' };
+  readonly upcomingParams = { state: 'NotYet' };
+  readonly onRentParams = { onRent: 'true' };
+  readonly activeCarsParams = { status: 'Active' };
+  addedInPeriodParams: Record<string, string> = {};
+  startedInPeriodParams: Record<string, string> = {};
 
   // Chart geometry, in SVG user units; the <svg> scales to its container.
   private static readonly W = 760;
@@ -226,7 +239,8 @@ export class DashboardComponent implements OnInit {
       next: data => {
         this.data = data;
         this.chart = this.buildChart(data);
-        this.alerts = this.buildAlerts(data);
+        this.buildPeriodLinks(period);
+        this.alerts = this.buildAlerts(data, period);
         this.loading = false;
       },
       error: err => {
@@ -494,19 +508,28 @@ export class DashboardComponent implements OnInit {
 
   // --- Needs attention -----------------------------------------------------
 
-  private buildAlerts(data: DashboardDto): Alert[] {
+  private buildAlerts(data: DashboardDto, period: Period): Alert[] {
     const all: Alert[] = [
       {
         labelKey: 'dashboard.pendingRequests', icon: 'inbox', tone: 'warn',
         count: data.pendingReservationRequests ?? 0,
-        link: '/reservation', actionKey: 'dashboard.reviewRequests'
+        link: '/reservation', queryParams: { status: 'PendingConfirmation' },
+        actionKey: 'dashboard.reviewRequests'
       },
       {
+        // Running hires whose end date falls inside the window.
         labelKey: 'dashboard.returnsDue', icon: 'assignment_return', tone: 'info',
         count: data.returnsDueInPeriod ?? 0,
-        link: '/renting', actionKey: 'dashboard.goToRentings'
+        link: '/renting',
+        queryParams: {
+          state: 'InProgress', dateBasis: 'Ends',
+          from: this.day(period.from), to: this.day(period.to)
+        },
+        actionKey: 'dashboard.goToRentings'
       },
       {
+        // The credits screen opens on the outstanding balances by default, which
+        // is exactly this count.
         labelKey: 'dashboard.clientsInDebt', icon: 'account_balance_wallet', tone: 'danger',
         count: data.clientsInDebtCount ?? 0,
         link: '/credit', actionKey: 'dashboard.goToCredits'
@@ -514,10 +537,31 @@ export class DashboardComponent implements OnInit {
       {
         labelKey: 'dashboard.flaggedClients', icon: 'flag', tone: 'danger',
         count: data.flaggedClients ?? 0,
-        link: '/client', actionKey: 'dashboard.goToClients'
+        link: '/client', queryParams: { flagged: 'true' },
+        actionKey: 'dashboard.goToClients'
       }
     ];
 
     return all.filter(alert => alert.count > 0);
+  }
+
+  // --- Links into the lists -------------------------------------------------
+
+  // The window the period figures were measured over, as the lists take it: a
+  // half-open [from, to) pair of yyyy-MM-dd days. Built from the resolved period
+  // rather than the response, whose dates are parsed as local time.
+  private buildPeriodLinks(period: Period) {
+    const from = this.day(period.from);
+    const to = this.day(period.to);
+
+    this.addedInPeriodParams = { addedFrom: from, addedTo: to };
+    // Cancelled hires are left out of the count, so the list leaves them out too.
+    this.startedInPeriodParams = {
+      dateBasis: 'Starts', excludeCancelled: 'true', from, to
+    };
+  }
+
+  private day(value: Date): string {
+    return value.toISOString().slice(0, 10);
   }
 }

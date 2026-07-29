@@ -23,5 +23,9 @@ namespace RemSolution.Application.Features.MarketplaceSearch.DTOs
         public string? AgencyName { get; init; }
         public int AgencyId { get; init; }
         public int CarCount { get; init; }
+        // Where the place is, for the map. Null until the branch is geocoded —
+        // it is still a valid pick-up point, it just cannot be pinned.
+        public double? Latitude { get; init; }
+        public double? Longitude { get; init; }
     }
 }

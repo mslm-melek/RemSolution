@@ -228,7 +228,8 @@
       <h3 class="section-title">{{ t('dashboard.alertsSection') }}</h3>
 
       <div class="alerts" *ngIf="alerts.length">
-        <a class="alert" *ngFor="let alert of alerts" [ngClass]="alert.tone" [routerLink]="[alert.link]">
+        <a class="alert" *ngFor="let alert of alerts" [ngClass]="alert.tone"
+           [routerLink]="[alert.link]" [queryParams]="alert.queryParams || null">
           <span class="alert-icon"><mat-icon>{{ alert.icon }}</mat-icon></span>
           <span class="alert-count">{{ alert.count }}</span>
           <span class="alert-label">{{ t(alert.labelKey) }}</span>
@@ -244,20 +245,21 @@
     <!-- Standing counts: the shape of the business, not the month. -->
     <section class="panel">
       <h3 class="section-title">{{ t('dashboard.operationsSection') }}</h3>
+      <!-- Each count opens its list filtered to the rows behind the figure. -->
       <div class="count-grid">
-        <a class="count" [routerLink]="['/renting']">
+        <a class="count" [routerLink]="['/renting']" [queryParams]="inProgressParams">
           <span class="count-value">{{ data.rentingsInProgress }}</span>
           <span class="count-label">{{ t('dashboard.rentingsInProgress') }}</span>
         </a>
-        <a class="count" [routerLink]="['/renting']">
+        <a class="count" [routerLink]="['/renting']" [queryParams]="upcomingParams">
           <span class="count-value">{{ data.rentingsUpcoming }}</span>
           <span class="count-label">{{ t('dashboard.rentingsUpcoming') }}</span>
         </a>
-        <a class="count" [routerLink]="['/car']">
+        <a class="count" [routerLink]="['/car']" [queryParams]="onRentParams">
           <span class="count-value">{{ data.carsOnRent }}</span>
           <span class="count-label">{{ t('dashboard.carsOnRent') }}</span>
         </a>
-        <a class="count" [routerLink]="['/car']">
+        <a class="count" [routerLink]="['/car']" [queryParams]="activeCarsParams">
           <span class="count-value">{{ data.activeCars }} <small>/ {{ data.totalCars }}</small></span>
           <span class="count-label">{{ t('dashboard.activeCars') }}</span>
         </a>
@@ -265,15 +267,15 @@
           <span class="count-value">{{ data.totalClients }}</span>
           <span class="count-label">{{ t('dashboard.totalClients') }}</span>
         </a>
-        <a class="count" [routerLink]="['/client']">
+        <a class="count" [routerLink]="['/client']" [queryParams]="addedInPeriodParams">
           <span class="count-value">+{{ data.newClientsInPeriod }}</span>
           <span class="count-label">{{ t('dashboard.newClients') }}</span>
         </a>
-        <a class="count" [routerLink]="['/car']">
+        <a class="count" [routerLink]="['/car']" [queryParams]="addedInPeriodParams">
           <span class="count-value">+{{ data.newCarsInPeriod }}</span>
           <span class="count-label">{{ t('dashboard.newCars') }}</span>
         </a>
-        <a class="count" [routerLink]="['/renting']">
+        <a class="count" [routerLink]="['/renting']" [queryParams]="startedInPeriodParams">
           <span class="count-value">{{ data.rentingsStartedInPeriod }}</span>
           <span class="count-label">{{ t('dashboard.rentingsStarted') }}</span>
         </a>

@@ -123,8 +123,12 @@ public partial class Testing
             // Production seeds the full role set at startup; the per-test DB
             // reset wipes it, so restore it whenever a role-carrying user is
             // needed — handlers may assign roles beyond the caller's own
-            // (e.g. CreateAgencyUser adds AgencyStaff).
-            var standardRoles = new[] { Roles.PlatformAdministrator, Roles.AgencyAdministrator, Roles.AgencyStaff };
+            // (e.g. CreateAgencyUser adds AgencyStaff, and provisioning a
+            // client's portal account adds Customer).
+            var standardRoles = new[]
+            {
+                Roles.PlatformAdministrator, Roles.AgencyAdministrator, Roles.AgencyStaff, Roles.Customer
+            };
 
             foreach (var role in standardRoles.Union(roles))
             {

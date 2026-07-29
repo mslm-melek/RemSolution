@@ -3,7 +3,8 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
   ClientsClient, CountriesClient, CountryDto, ClientDto,
-  CreateClientCommand, UpdateClientCommand, ClientDocumentType, FileParameter
+  CreateClientCommand, UpdateClientCommand, ClientDocumentType, FileParameter,
+  ClientAccountOutcome
 } from '../web-api-client';
 import { toDateInput, fromDateInput, extractValidationErrors, isConcurrencyConflict } from '../shared/form-utils';
 import { TranslocoService } from '@jsverse/transloco';
@@ -30,6 +31,15 @@ export class ClientFormComponent implements OnInit {
   saving = false;
   errorMessage = '';
 
+  // Customer-portal account state, refreshed from the invite response so the
+  // panel is right without re-fetching the whole client.
+  hasPortalAccount = false;
+  inviting = false;
+  inviteMessage = '';
+  // Distinguishes "we could not do what you asked" from "done": both land in
+  // inviteMessage, and only one of them should read as a success.
+  inviteWarning = false;
+
   // Optimistic-concurrency token read with the client and echoed back on update.
   private rowVersion?: string;
 
@@ -49,6 +59,9 @@ export class ClientFormComponent implements OnInit {
     this.form = this.fb.group({
       firstName: ['', [Validators.required, Validators.maxLength(100)]],
       lastName: ['', [Validators.required, Validators.maxLength(100)]],
+      // Optional, but saving one provisions the client's portal login — the
+      // server mirrors this rule, this is only the early feedback.
+      email: ['', [Validators.email, Validators.maxLength(256)]],
       birthDate: ['', Validators.required],
       birthPlace: [''],
       birthCountryId: [null],
@@ -92,6 +105,7 @@ export class ClientFormComponent implements OnInit {
     this.form.patchValue({
       firstName: dto.firstName ?? '',
       lastName: dto.lastName ?? '',
+      email: dto.email ?? '',
       birthDate: toDateInput(dto.birthDate),
       birthPlace: dto.birthPlace ?? '',
       birthCountryId: dto.birthCountryId ?? null,
@@ -114,6 +128,7 @@ export class ClientFormComponent implements OnInit {
     this.documents[1].url = dto.drivingLicenceImageUrl;
     this.documents[2].url = dto.passerportImageUrl;
 
+    this.hasPortalAccount = dto.hasPortalAccount === true;
     this.rowVersion = dto.rowVersion;
   }
 
@@ -143,6 +158,76 @@ export class ClientFormComponent implements OnInit {
     }
   }
 
+  // Sends, or re-sends, the customer's invitation. Every branch reports what
+  // actually happened: an agency that clicks this is about to tell the customer
+  // "check your email", and "there was nothing to send" or "the mail bounced
+  // off our own server" have to reach them before they do.
+  invite() {
+    if (!this.clientId) return;
+
+    this.inviting = true;
+    this.inviteMessage = '';
+    this.inviteWarning = false;
+
+    this.client.inviteClient(this.clientId).subscribe({
+      next: result => {
+        this.inviting = false;
+
+        if (result.outcome === ClientAccountOutcome.Created ||
+            result.outcome === ClientAccountOutcome.Linked ||
+            result.outcome === ClientAccountOutcome.AlreadyLinked ||
+            result.outcome === ClientAccountOutcome.PasswordReset ||
+            result.outcome === ClientAccountOutcome.AlreadyActive) {
+          this.hasPortalAccount = true;
+        }
+
+        this.applyInviteOutcome(result.outcome, result.emailSent === true);
+      },
+      error: err => {
+        this.inviting = false;
+        this.handleError(err);
+      }
+    });
+  }
+
+  private applyInviteOutcome(outcome: ClientAccountOutcome | undefined, emailSent: boolean) {
+    // The two outcomes that issue a temporary password are the only ones that
+    // should have produced an email, so they are also the only ones where a
+    // silent send failure would mislead.
+    const issuedCredentials =
+      outcome === ClientAccountOutcome.Created || outcome === ClientAccountOutcome.PasswordReset;
+
+    if (issuedCredentials && !emailSent) {
+      this.inviteWarning = true;
+      this.inviteMessage = this.transloco.translate('client.inviteMailFailed');
+      return;
+    }
+
+    switch (outcome) {
+      case ClientAccountOutcome.Created:
+        this.inviteMessage = this.transloco.translate('client.inviteCreated');
+        break;
+      case ClientAccountOutcome.PasswordReset:
+        this.inviteMessage = this.transloco.translate('client.inviteResent');
+        break;
+      case ClientAccountOutcome.Linked:
+      case ClientAccountOutcome.AlreadyLinked:
+        this.inviteMessage = this.transloco.translate('client.inviteLinked');
+        break;
+      case ClientAccountOutcome.AlreadyActive:
+        this.inviteMessage = this.transloco.translate('client.inviteAlreadyActive');
+        break;
+      case ClientAccountOutcome.EmailBelongsToStaff:
+        this.inviteWarning = true;
+        this.inviteMessage = this.transloco.translate('client.inviteStaffEmail');
+        break;
+      default:
+        this.inviteWarning = true;
+        this.inviteMessage = this.transloco.translate('client.accountNeedsEmail');
+        break;
+    }
+  }
+
   onFileSelected(slot: DocumentSlot, input: HTMLInputElement) {
     const file = input.files?.[0];
     input.value = ''; // allow re-selecting the same file
@@ -169,6 +254,7 @@ export class ClientFormComponent implements OnInit {
     return {
       firstName: v.firstName,
       lastName: v.lastName,
+      email: v.email || undefined,
       birthDate: fromDateInput(v.birthDate),
       birthPlace: v.birthPlace || undefined,
       birthCountryId: v.birthCountryId ?? undefined,

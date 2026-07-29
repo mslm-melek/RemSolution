@@ -58,6 +58,19 @@
     "actionFailed": "L'action n'a pas pu être effectuée.",
     "resultCount": "{{ count }} enregistrements"
   },
+  "filters": {
+    "clear": "Retirer ce filtre",
+    "rentingStarts": "Débute : {{ range }}",
+    "rentingEnds": "Se termine : {{ range }}",
+    "rentingRuns": "En cours : {{ range }}",
+    "excludingCancelled": "Annulées exclues",
+    "carStatus": "Statut : {{ status }}",
+    "onRent": "En location",
+    "notOnRent": "Pas en location",
+    "added": "Ajouté : {{ range }}",
+    "flagged": "Signalés",
+    "notFlagged": "Non signalés"
+  },
   "nav": {
     "brandName": "RemSolution",
     "toggle": "Afficher le menu",
@@ -88,7 +101,8 @@
     "myChats": "Mes messages",
     "bookings": "Réservations & locations",
     "finance": "Finances",
-    "clientsList": "Tous les clients"
+    "clientsList": "Tous les clients",
+    "myRentings": "Mes locations"
   },
   "home": {
     "welcomeTitle": "Bienvenue sur RemSolution",
@@ -106,20 +120,57 @@
     "showcaseNext": "Voiture suivante",
     "welcomeBack": "Bon retour",
     "quickActions": "Actions rapides",
-    "stats": {
+    "customize": "Personnaliser",
+    "customizeTitle": "Vos raccourcis d'accueil",
+    "customizeHint": "Choisissez les listes à garder à portée de clic — {{ max }} au maximum. Seules celles auxquelles vous avez accès sont proposées.",
+    "pinnedWidgets": "Sur votre accueil",
+    "pinnedNone": "Aucun raccourci épinglé.",
+    "moreWidgets": "Autres raccourcis",
+    "widgetsFull": "Vous avez atteint {{ max }} raccourcis. Retirez-en un pour en ajouter un autre.",
+    "moveUp": "Monter",
+    "moveDown": "Descendre",
+    "noWidgets": "Votre accueil n'a encore aucun raccourci.",
+    "noWidgetsAvailable": "Aucune liste n'est encore disponible pour votre compte.",
+    "chooseWidgets": "Choisir des raccourcis",
+    "widgetsSaveFailed": "Impossible d'enregistrer vos raccourcis.",
+    "customizeActions": "Choisir les actions",
+    "customizeActionsHint": "Choisissez les actions à garder sur votre accueil — {{ max }} au maximum. Seules celles auxquelles vous avez accès sont proposées.",
+    "pickedActions": "Sur votre accueil",
+    "pickedNone": "Aucune action sélectionnée.",
+    "moreActions": "Autres actions",
+    "actionsFull": "Vous avez atteint {{ max }} actions. Retirez-en une pour en ajouter une autre.",
+    "noActions": "Aucune action rapide sur votre accueil.",
+    "actionsSaveFailed": "Impossible d'enregistrer vos actions rapides.",
+    "widgets": {
       "cars": "Voitures",
       "clients": "Clients",
-      "carModels": "Modèles",
+      "rentings": "Locations en cours",
+      "reservations": "Demandes à confirmer",
+      "expenses": "Dépenses impayées",
+      "credits": "Clients débiteurs",
+      "chat": "Conversations non lues",
       "brands": "Marques",
-      "agencies": "Agences",
-      "subscriptionPlans": "Formules d'abonnement"
+      "carModels": "Modèles",
+      "expenseTypes": "Types de dépenses",
+      "extraServiceTypes": "Types de services additionnels",
+      "documentTemplates": "Modèles de documents"
     },
     "quick": {
       "newCar": "Nouvelle voiture",
+      "newRenting": "Nouvelle location",
+      "newReservation": "Nouvelle réservation",
       "newClient": "Nouveau client",
-      "newModel": "Nouveau modèle",
+      "newExpense": "Nouvelle dépense",
       "newAgency": "Nouvelle agence",
-      "newPlan": "Nouvelle formule"
+      "newPlan": "Nouvelle formule",
+      "agencies": "Agences",
+      "plans": "Formules d'abonnement",
+      "newCarModel": "Nouveau modèle",
+      "carBrands": "Marques",
+      "carModels": "Modèles",
+      "expenseTypes": "Types de dépenses",
+      "extraServiceTypes": "Types de services additionnels",
+      "browseMarketplace": "Voir la marketplace"
     }
   },
   "brand": {
@@ -198,6 +249,22 @@
     "identity": "Identité",
     "firstName": "Prénom",
     "lastName": "Nom",
+    "email": "E-mail",
+    "emailHint": "Sert d'identifiant de connexion à l'espace client.",
+    "emailInvalid": "Saisissez une adresse e-mail valide.",
+    "account": "Compte espace client",
+    "accountActive": "Ce client peut se connecter à l'espace client.",
+    "accountNone": "Ce client n'a pas encore de compte.",
+    "accountNeedsEmail": "Ajoutez une adresse e-mail pour créer un compte à ce client.",
+    "sendInvite": "Envoyer l'invitation",
+    "resendInvite": "Renvoyer l'invitation",
+    "inviting": "Envoi…",
+    "inviteCreated": "Compte créé. Les identifiants ont été envoyés par e-mail au client.",
+    "inviteResent": "Un nouveau mot de passe temporaire a été envoyé par e-mail au client.",
+    "inviteLinked": "Ce client est désormais rattaché à son compte existant. Il se connecte avec le mot de passe qu'il utilise déjà.",
+    "inviteAlreadyActive": "Ce client a déjà choisi son propre mot de passe : rien n'a été envoyé. Il peut utiliser le lien de mot de passe oublié si besoin.",
+    "inviteStaffEmail": "Cette adresse appartient à un compte du personnel et ne peut pas servir d'identifiant client. Utilisez une autre adresse.",
+    "inviteMailFailed": "Le compte est prêt, mais l'e-mail n'a pas pu être envoyé. Vérifiez la configuration de messagerie et réessayez.",
     "birthPlace": "Lieu de naissance",
     "birthCountry": "Pays de naissance",
     "cinSection": "CIN",
@@ -282,7 +349,8 @@
     "reissueContract": "Émettre un nouveau contrat pour la nouvelle période",
     "keepContract": "Conserver le contrat actuel",
     "daysAdded": "+{{ count }} jour(s)",
-    "daysRemoved": "−{{ count }} jour(s)"
+    "daysRemoved": "−{{ count }} jour(s)",
+    "clientEmailHint": "Facultatif — envoie au client ses identifiants de connexion à l'espace client."
   },
   "reservation": {
     "title": "Réservations",
@@ -365,7 +433,17 @@
     "confirmCancel": "Annuler cette demande de réservation ?",
     "noReservations": "Vous n'avez encore aucune réservation.",
     "findACar": "Trouvez une voiture à réserver.",
-    "holdsUntil": "Valable jusqu'au {{ date }}"
+    "holdsUntil": "Valable jusqu'au {{ date }}",
+    "resultCount": "{{ count }} voitures disponibles",
+    "viewMode": "Affichage des résultats",
+    "viewList": "Liste",
+    "viewMap": "Carte",
+    "mapLabel": "Carte des voitures disponibles",
+    "searchThisArea": "Rechercher dans cette zone",
+    "noPlacesOnMap": "Aucun lieu de prise en charge à afficher sur la carte pour cette recherche.",
+    "whereToFindUs": "Où nous trouver",
+    "myRentings": "Mes locations",
+    "noRentings": "Vous n’avez encore aucune location."
   },
   "profile": {
     "accountDetails": "Détails du compte",
@@ -383,7 +461,8 @@
     "passwordChanged": "Votre mot de passe a été modifié.",
     "passwordFailed": "Impossible de changer votre mot de passe.",
     "language": "Langue de l'interface",
-    "languageHint": "S'applique partout où vous vous connectez."
+    "languageHint": "S'applique partout où vous vous connectez.",
+    "mustChangePassword": "Votre compte utilise encore le mot de passe temporaire reçu par e-mail. Choisissez un nouveau mot de passe ci-dessous pour accéder au reste de l'application."
   },
   "team": {
     "title": "Équipe",
@@ -774,6 +853,10 @@
     "perActiveAgency": "{{ amount }} par agence active",
     "perAgency": "{{ count }} par agence en moyenne",
     "allAgencies": "Toutes agences confondues",
+    "clientAccounts": "Clients avec un compte",
+    "clientAccountShare": "{{ percent }} % des clients ont un accès",
+    "carCountries": "Pays avec véhicules",
+    "carPlaces": "{{ count }} lieux de prise en charge",
     "alertsSection": "À traiter",
     "allClear": "Rien en attente — chaque agence est abonnée et dans les limites de sa formule.",
     "lapsedSubscriptions": "Abonnements échus",
@@ -831,5 +914,23 @@
     "closedNote": "Cette location est terminée : l’historique reste consultable mais aucun nouveau message n’est possible.",
     "readOnlyNote": "Vous pouvez lire cette conversation mais pas y répondre.",
     "pickThread": "Sélectionnez une conversation."
+  },
+  "reviews": {
+    "whatCustomersSay": "Ce que disent les clients",
+    "reviewCount": "{{ count }} avis",
+    "noReviewsYet": "Aucun avis pour le moment.",
+    "notRated": "Pas encore noté",
+    "outOfFive": "{{ value }} sur 5",
+    "starsCount": "{{ count }} étoiles",
+    "rateThisRental": "Noter cette location",
+    "yourRating": "Votre note",
+    "commentOptional": "Commentaire (facultatif)",
+    "commentPlaceholder": "Comment était la voiture, et l’agence ?",
+    "submit": "Publier l’avis",
+    "pickAStar": "Choisissez une note de une à cinq étoiles.",
+    "saveFailed": "Votre avis n’a pas pu être enregistré. Veuillez réessayer.",
+    "ratedOn": "Noté le {{ date }}",
+    "showMore": "Voir plus d’avis",
+    "anonymous": "Un client"
   }
 }

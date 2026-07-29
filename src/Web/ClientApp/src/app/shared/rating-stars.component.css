@@ -1,0 +1,109 @@
+.rating {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gap-1);
+  line-height: 1;
+}
+
+/* The two rows are stacked, so the filled one has to be taken out of flow and
+   pinned over the outline one. */
+.stars {
+  position: relative;
+  display: inline-block;
+}
+
+.track,
+.fill {
+  display: flex;
+  align-items: center;
+}
+
+.track {
+  color: var(--line-strong);
+}
+
+/* Logical inset, so the clip grows from the right in Arabic — where the flex
+   row also starts — with no RTL override needed. */
+.fill {
+  position: absolute;
+  inset-inline-start: 0;
+  top: 0;
+  overflow: hidden;
+  color: #f2a413;
+}
+
+/* Without this the icons shrink as the overlay narrows instead of being cut. */
+.fill mat-icon {
+  flex: none;
+}
+
+.picker {
+  display: inline-flex;
+  align-items: center;
+}
+
+.star-btn {
+  background: none;
+  border: 0;
+  padding: 0 2px;
+  cursor: pointer;
+  color: #f2a413;
+  line-height: 0;
+}
+
+.star-btn:focus-visible {
+  outline: 2px solid var(--brand-500);
+  outline-offset: 2px;
+  border-radius: var(--r-xs);
+}
+
+.score {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.count,
+.none {
+  color: var(--muted);
+}
+
+/* Three sizes rather than a free-form input: the star, the score and the count
+   have to scale together or the row stops looking like one control. */
+.sm mat-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+}
+
+.sm .score,
+.sm .count,
+.sm .none {
+  font-size: 0.8rem;
+}
+
+.md mat-icon {
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+}
+
+.md .score,
+.md .count,
+.md .none {
+  font-size: 0.9rem;
+}
+
+.lg mat-icon {
+  font-size: 32px;
+  width: 32px;
+  height: 32px;
+}
+
+.lg .score {
+  font-size: 1.4rem;
+}
+
+.lg .count,
+.lg .none {
+  font-size: 1rem;
+}

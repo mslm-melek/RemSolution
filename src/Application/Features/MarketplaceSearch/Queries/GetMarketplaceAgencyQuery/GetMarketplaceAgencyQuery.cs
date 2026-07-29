@@ -1,6 +1,7 @@
 using RemSolution.Application.Common.Interfaces;
 using RemSolution.Application.Common.Models;
 using RemSolution.Application.Features.MarketplaceSearch.DTOs;
+using RemSolution.Domain.Entities;
 
 namespace RemSolution.Application.Features.MarketplaceSearch.Queries.GetMarketplaceAgencyQuery
 {
@@ -55,9 +56,28 @@ namespace RemSolution.Application.Features.MarketplaceSearch.Queries.GetMarketpl
 
             var places = await offered
                 .Where(c => c.Branch != null)
-                .GroupBy(c => new { BranchId = c.Branch!.Id, BranchName = c.Branch.Name })
+                .GroupBy(c => new
+                {
+                    BranchId = c.Branch!.Id,
+                    BranchName = c.Branch.Name,
+                    // Geography is (longitude, latitude): X long, Y lat.
+                    Latitude = c.Branch.Location != null ? (double?)c.Branch.Location.Y : null,
+                    Longitude = c.Branch.Location != null ? (double?)c.Branch.Location.X : null,
+                })
                 .Select(g => new { g.Key, CarCount = g.Count() })
                 .ToListAsync(cancellationToken);
+
+            // One grouped pass over the agency's reviews gives the average, the
+            // count and the star breakdown; the page needs all three, and reviews
+            // are platform-level so there is no filter to bypass here.
+            var byStar = await _context.AgencyReviews
+                .AsNoTracking()
+                .Where(r => r.AgencyId == request.Id)
+                .GroupBy(r => r.Rating)
+                .Select(g => new { Rating = g.Key, Count = g.Count() })
+                .ToListAsync(cancellationToken);
+
+            var reviewCount = byStar.Sum(s => s.Count);
 
             return new MarketplaceAgencyDto
             {
@@ -69,6 +89,22 @@ namespace RemSolution.Application.Features.MarketplaceSearch.Queries.GetMarketpl
                 CountryName = agency.CountryName,
                 CarCount = carCount,
                 FromDailyRate = cheapest is null ? null : new MoneyDto(cheapest.Amount, cheapest.Currency),
+                Rating = new AgencyRatingSummaryDto
+                {
+                    ReviewCount = reviewCount,
+                    // Null, not 0: an agency nobody has rated yet is unrated, and
+                    // the page says so instead of showing it as the worst on the
+                    // marketplace.
+                    AverageRating = reviewCount == 0
+                        ? null
+                        : (double)byStar.Sum(s => s.Rating * s.Count) / reviewCount,
+                    // Always five slots, one star … five stars, so the bars line
+                    // up whether or not a rating was ever given.
+                    Counts = Enumerable
+                        .Range(AgencyReview.MinRating, AgencyReview.MaxRating - AgencyReview.MinRating + 1)
+                        .Select(star => byStar.FirstOrDefault(s => s.Rating == star)?.Count ?? 0)
+                        .ToList(),
+                },
                 Places = places
                     .Select(p => new MarketplacePlaceDto
                     {
@@ -76,7 +112,9 @@ namespace RemSolution.Application.Features.MarketplaceSearch.Queries.GetMarketpl
                         Name = p.Key.BranchName,
                         AgencyId = agency.Id,
                         AgencyName = agency.Name,
-                        CarCount = p.CarCount
+                        CarCount = p.CarCount,
+                        Latitude = p.Key.Latitude,
+                        Longitude = p.Key.Longitude,
                     })
                     .OrderBy(p => p.Name)
                     .ToList()

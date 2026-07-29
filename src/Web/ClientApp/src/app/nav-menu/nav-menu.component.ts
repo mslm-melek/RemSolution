@@ -123,8 +123,9 @@ export class NavMenuComponent implements OnInit {
     // returns the agency's features and the full permission set, so the same
     // feature-driven rules below produce exactly the screens that will work.
     if (this.isPlatformAdmin && !this.workspace) {
+      // No dashboard entry: the console dashboard IS the platform admin's home,
+      // so the Home link above already leads there.
       return [
-        { labelKey: 'nav.dashboard', link: '/platform-dashboard' },
         { labelKey: 'nav.agencies', link: '/agency' },
         { labelKey: 'nav.subscriptionPlans', link: '/subscription-plan' }
       ];
@@ -134,6 +135,8 @@ export class NavMenuComponent implements OnInit {
       return [
         { labelKey: 'nav.browseCars', link: '/browse' },
         { labelKey: 'nav.myReservations', link: '/my-reservations' },
+        // Past and current rentals — and where a finished one gets rated.
+        { labelKey: 'nav.myRentings', link: '/my-rentings' },
         // Not feature-gated: the customer's own threads. An agency without the
         // Chat feature simply never opens one, so the list stays empty.
         { labelKey: 'nav.myChats', link: '/my-chats' }

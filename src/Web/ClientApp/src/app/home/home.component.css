@@ -174,6 +174,22 @@
   height: 16px;
 }
 
+/* The caption sits over a photo, so the stars' outline track and the count both
+   need forcing to white — their default greys vanish on a dark image. */
+.slide-rating {
+  margin-top: 2px;
+  color: #fff;
+}
+
+.slide-rating ::ng-deep .track {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.slide-rating ::ng-deep .score,
+.slide-rating ::ng-deep .count {
+  color: #fff;
+}
+
 .slide-price {
   margin-top: 6px;
   font-size: 17px;
@@ -258,6 +274,16 @@
   gap: var(--gap-5);
 }
 
+/* Greeting on one side, the Customize button on the other; it wraps under on a
+   narrow screen rather than squeezing the heading. */
+.dash-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--gap-3);
+  flex-wrap: wrap;
+}
+
 .dash-header h1 {
   margin: 0;
   font-size: 24px;
@@ -326,7 +352,36 @@
   color: var(--muted);
 }
 
-.quick-actions {
+/* --- Nothing pinned ------------------------------------------------------- */
+
+.empty-widgets {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--gap-3);
+  background: var(--surface);
+  border: 1px dashed var(--line);
+  border-radius: var(--r);
+  padding: 40px 24px;
+  text-align: center;
+}
+
+.empty-widgets mat-icon {
+  font-size: 40px;
+  width: 40px;
+  height: 40px;
+  color: var(--muted-2);
+}
+
+.empty-widgets p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+/* --- Shortcut picker ------------------------------------------------------ */
+
+.customize {
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--r);
@@ -334,8 +389,8 @@
   padding: 18px 20px 20px;
 }
 
-.quick-actions h2 {
-  margin: 0 0 var(--gap-4);
+.customize h2 {
+  margin: 0;
   font-size: 12px;
   font-weight: 700;
   text-transform: uppercase;
@@ -343,11 +398,85 @@
   color: var(--muted);
 }
 
-.action-buttons {
+.customize-hint {
+  margin: 6px 0 var(--gap-4);
+  color: var(--muted);
+  font-size: 13px;
+  max-width: 70ch;
+}
+
+.customize h3 {
+  margin: var(--gap-4) 0 var(--gap-2);
+  font-size: 13px;
+  font-weight: 640;
+  color: var(--ink);
+}
+
+.customize h3:first-child {
+  margin-top: 0;
+}
+
+.picker-empty,
+.picker-full {
+  margin: 0 0 var(--gap-2);
+  color: var(--muted);
+  font-size: 12.5px;
+}
+
+.widget-picker {
+  display: flex;
+  flex-direction: column;
+}
+
+/* One row per shortcut, hairline-separated: the pinned rows carry order buttons
+   on the trailing edge, so a column layout keeps both sides lined up. */
+.picker-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gap-3);
+  padding: 2px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.picker-row:last-child {
+  border-bottom: none;
+}
+
+.picker-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13.5px;
+}
+
+.picker-label mat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+  color: var(--brand-700);
+}
+
+.picker-order {
+  display: flex;
+  flex: none;
+  gap: 2px;
+}
+
+.customize-actions {
   display: flex;
   gap: var(--gap-3);
-  flex-wrap: wrap;
+  align-items: center;
+  margin-top: var(--gap-4);
 }
+
+.customize .error-banner {
+  margin-top: var(--gap-3);
+}
+
+/* The quick-action strip is its own component (app-quick-actions), which brings
+   its own card styling — the .dashboard grid only has to space it like the panels
+   above it. */
 
 @media (max-width: 599px) {
   .hero {

@@ -8,6 +8,16 @@ using RemSolution.Domain.Enums;
 
 namespace RemSolution.Application.Features.Renting.Queries.GetRentingsWithPaginationQuery
 {
+    // Which of a renting's two dates the [FromDate, ToDate) window is applied to.
+    // "Running in July", "starting in July" and "ending in July" are three
+    // different questions, and the dashboard asks all three.
+    public enum RentingDateBasis
+    {
+        Overlaps = 0,
+        Starts = 1,
+        Ends = 2,
+    }
+
     [Authorize(Policy = Permissions.RentingRead)]
     [RequiresFeature(FeatureFlags.Rentings)]
     public record GetRentingsWithPaginationQuery(
@@ -16,8 +26,14 @@ namespace RemSolution.Application.Features.Renting.Queries.GetRentingsWithPagina
         int? CarId = null,
         int? ClientId = null,
         RentingState? State = null,
+        // Half-open [FromDate, ToDate), the same convention as the dashboard's
+        // period — so a link from one of its counts selects the rows it counted.
         DateTime? FromDate = null,
         DateTime? ToDate = null,
+        RentingDateBasis DateBasis = RentingDateBasis.Overlaps,
+        // A cancelled renting is still a row, but never part of "what happened":
+        // the period counts leave it out, so a link from one of them can too.
+        bool ExcludeCancelled = false,
         // Column the table is sorted by, named after the Angular matColumnDef;
         // anything unrecognised falls back to the latest start date first.
         string? SortBy = null,
@@ -48,11 +64,30 @@ namespace RemSolution.Application.Features.Renting.Queries.GetRentingsWithPagina
             if (request.State.HasValue)
                 query = query.Where(r => r.RentingState == request.State);
 
-            if (request.FromDate.HasValue)
-                query = query.Where(r => r.EndDate >= request.FromDate);
+            if (request.ExcludeCancelled)
+                query = query.Where(r => r.RentingState != RentingState.Cancelled);
 
-            if (request.ToDate.HasValue)
-                query = query.Where(r => r.StartDate <= request.ToDate);
+            var from = request.FromDate;
+            var to = request.ToDate;
+
+            switch (request.DateBasis)
+            {
+                case RentingDateBasis.Starts:
+                    if (from.HasValue) query = query.Where(r => r.StartDate >= from);
+                    if (to.HasValue) query = query.Where(r => r.StartDate < to);
+                    break;
+
+                case RentingDateBasis.Ends:
+                    if (from.HasValue) query = query.Where(r => r.EndDate >= from);
+                    if (to.HasValue) query = query.Where(r => r.EndDate < to);
+                    break;
+
+                // Overlaps: everything running at some point inside the window.
+                default:
+                    if (from.HasValue) query = query.Where(r => r.EndDate >= from);
+                    if (to.HasValue) query = query.Where(r => r.StartDate < to);
+                    break;
+            }
 
             var descending = request.SortDescending;
 

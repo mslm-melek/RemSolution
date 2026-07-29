@@ -56,6 +56,14 @@ public class ApplicationUserClaimsPrincipalFactory : UserClaimsPrincipalFactory<
             identity.AddClaim(new Claim(Claims.PreferredLanguage, language));
         }
 
+        // A provisioned account carries this until it picks its own password;
+        // the middleware that enforces it reads the claim rather than the user
+        // row, so the check costs nothing per request.
+        if (user.MustChangePassword)
+        {
+            identity.AddClaim(new Claim(Claims.MustChangePassword, "true"));
+        }
+
         // Agency administrators hold every permission implicitly — the
         // policies accept the role itself, so materializing claims for
         // them would only bloat the cookie and go stale as permissions

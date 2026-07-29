@@ -69,10 +69,85 @@
   padding: 40px 16px;
 }
 
+.results-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gap-3);
+  flex-wrap: wrap;
+  margin-bottom: var(--gap-4);
+}
+
+.results-head .count {
+  color: var(--muted);
+  font-size: 13.5px;
+}
+
+/* Pushed to the end even when there is no count yet on its left. */
+.view-toggle {
+  margin-inline-start: auto;
+}
+
+.view-toggle mat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+  margin-inline-end: 4px;
+}
+
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
   gap: 1.25rem;
+}
+
+/* ------------------------------------------------------- map split view ----
+   Below the breakpoint the two panes stack, map first: on a phone the map is
+   the thing you came to the map view for, and a side-by-side split would leave
+   neither pane usable. */
+.panes {
+  display: grid;
+  gap: var(--gap-4);
+}
+
+.split .panes {
+  grid-template-areas: 'map' 'list';
+}
+
+.split .map-pane {
+  grid-area: map;
+  height: 55vh;
+  min-height: 320px;
+}
+
+.split .list-pane {
+  grid-area: list;
+}
+
+@media (min-width: 1080px) {
+  .split .panes {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-areas: 'list map';
+    align-items: start;
+  }
+
+  /* The map stays put while the results scroll past it — the whole point of
+     the split. Offset by the app bar so it is not pinned under it. */
+  .split .map-pane {
+    position: sticky;
+    top: 88px;
+    height: calc(100vh - 120px);
+  }
+
+  /* Two columns' worth of grid in half the width would make each card too
+     narrow to read; one column of wider cards is the better trade. */
+  .split .grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .split .thumb {
+    height: 170px;
+  }
 }
 
 /* A container, not a link: the thumbnail, the title and the price all lead to
@@ -154,6 +229,15 @@
   font-size: 16px;
   width: 16px;
   height: 16px;
+}
+
+/* The stars lead to the same place as the agency name, so the whole reputation
+   line is one target. Pulled up under the name — .agency owns the gap below. */
+.rating {
+  display: inline-block;
+  margin-top: -8px;
+  margin-bottom: var(--gap-3);
+  text-decoration: none;
 }
 
 .foot {

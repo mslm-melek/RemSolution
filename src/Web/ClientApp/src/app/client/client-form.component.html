@@ -26,6 +26,13 @@
       </mat-form-field>
 
       <mat-form-field appearance="outline">
+        <mat-label>{{ t('client.email') }}</mat-label>
+        <input matInput type="email" formControlName="email" autocomplete="email" />
+        <mat-hint>{{ t('client.emailHint') }}</mat-hint>
+        <mat-error *ngIf="form.get('email')?.hasError('email')">{{ t('client.emailInvalid') }}</mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
         <mat-label>{{ t('client.birthDate') }}</mat-label>
         <input matInput type="date" formControlName="birthDate" required />
         <mat-error *ngIf="form.get('birthDate')?.hasError('required')">{{ t('client.birthDateRequired') }}</mat-error>
@@ -131,6 +138,32 @@
       <mat-label>{{ t('common.description') }}</mat-label>
       <textarea matInput formControlName="description" rows="3"></textarea>
     </mat-form-field>
+
+    <!-- Customer portal account. Only on edit: before the first save there is
+         no client for an account to belong to, and the save itself provisions
+         one anyway when an email was filled in. -->
+    <ng-container *ngIf="isEdit">
+      <h3 class="section-title">{{ t('client.account') }}</h3>
+
+      <div class="account-row">
+        <span class="account-state">
+          <mat-icon [class.linked]="hasPortalAccount">{{ hasPortalAccount ? 'verified_user' : 'no_accounts' }}</mat-icon>
+          {{ hasPortalAccount ? t('client.accountActive') : t('client.accountNone') }}
+        </span>
+
+        <span *ngIf="!form.get('email')?.value" class="hint">{{ t('client.accountNeedsEmail') }}</span>
+
+        <button type="button" mat-stroked-button
+                *ngIf="form.get('email')?.value"
+                [disabled]="inviting"
+                (click)="invite()">
+          <mat-icon>mail</mat-icon>
+          {{ inviting ? t('client.inviting') : (hasPortalAccount ? t('client.resendInvite') : t('client.sendInvite')) }}
+        </button>
+      </div>
+
+      <p *ngIf="inviteMessage" class="invite-message" [class.invite-warning]="inviteWarning">{{ inviteMessage }}</p>
+    </ng-container>
 
     <!-- Document images -->
     <h3 class="section-title">{{ t('client.documentImages') }}</h3>

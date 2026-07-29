@@ -178,6 +178,24 @@
   <data name="Validation.Language.Unsupported" xml:space="preserve">
     <value>La langue doit être : en, fr ou ar.</value>
   </data>
+  <data name="Validation.HomeWidgets.TooMany" xml:space="preserve">
+    <value>Vous pouvez épingler au maximum {0} raccourcis sur votre accueil.</value>
+  </data>
+  <data name="Validation.HomeWidgets.Duplicate" xml:space="preserve">
+    <value>Un même raccourci ne peut pas être épinglé deux fois.</value>
+  </data>
+  <data name="Validation.HomeWidgets.Unknown" xml:space="preserve">
+    <value>L'un des raccourcis sélectionnés est inconnu.</value>
+  </data>
+  <data name="Validation.HomeActions.TooMany" xml:space="preserve">
+    <value>Vous pouvez conserver au maximum {0} actions rapides sur votre accueil.</value>
+  </data>
+  <data name="Validation.HomeActions.Duplicate" xml:space="preserve">
+    <value>Une même action rapide ne peut pas être ajoutée deux fois.</value>
+  </data>
+  <data name="Validation.HomeActions.Unknown" xml:space="preserve">
+    <value>L'une des actions rapides sélectionnées est inconnue.</value>
+  </data>
   <data name="Property.Name" xml:space="preserve">
     <value>Nom</value>
   </data>
@@ -768,5 +786,44 @@
   </data>
   <data name="Validation.DocumentTemplate.ExampleUnknown" xml:space="preserve">
     <value>Le modèle d'exemple sélectionné est introuvable.</value>
+  </data>
+  <data name="Validation.Client.EmailFormat" xml:space="preserve">
+    <value>Saisissez une adresse e-mail valide.</value>
+  </data>
+  <data name="Validation.Client.EmailTooLong" xml:space="preserve">
+    <value>L'adresse e-mail est trop longue.</value>
+  </data>
+  <data name="Email.ClientAccount.Subject" xml:space="preserve">
+    <value>Votre compte client chez {0}</value>
+  </data>
+  <data name="Email.ClientAccount.Hello" xml:space="preserve">
+    <value>Bonjour {0},</value>
+  </data>
+  <data name="Email.ClientAccount.Created" xml:space="preserve">
+    <value>{0} vous a créé un compte client. Connectez-vous pour suivre vos réservations, télécharger vos documents et échanger avec l'agence.</value>
+  </data>
+  <data name="Email.ClientAccount.Reissued" xml:space="preserve">
+    <value>{0} vous a envoyé de nouveaux identifiants pour votre compte client.</value>
+  </data>
+  <data name="Email.ClientAccount.Login" xml:space="preserve">
+    <value>Identifiant</value>
+  </data>
+  <data name="Email.ClientAccount.Password" xml:space="preserve">
+    <value>Mot de passe temporaire</value>
+  </data>
+  <data name="Email.ClientAccount.MustChange" xml:space="preserve">
+    <value>Un nouveau mot de passe vous sera demandé lors de votre première connexion.</value>
+  </data>
+  <data name="Email.ClientAccount.SignIn" xml:space="preserve">
+    <value>Se connecter</value>
+  </data>
+  <data name="Email.ClientAccount.Ignore" xml:space="preserve">
+    <value>Si vous n'attendiez pas cet e-mail, vous pouvez l'ignorer.</value>
+  </data>
+  <data name="Error.PasswordChangeRequired.Title" xml:space="preserve">
+    <value>Choisissez d'abord un mot de passe</value>
+  </data>
+  <data name="Error.PasswordChangeRequired.Detail" xml:space="preserve">
+    <value>Votre compte utilise encore le mot de passe temporaire qui vous a été envoyé par e-mail. Choisissez un nouveau mot de passe pour continuer.</value>
   </data>
 </root>

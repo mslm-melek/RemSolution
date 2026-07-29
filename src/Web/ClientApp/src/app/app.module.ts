@@ -47,8 +47,12 @@ import { ProfileComponent } from './profile/profile.component';
 import { MarketplaceSearchComponent } from './marketplace/marketplace-search.component';
 import { MarketplaceCarComponent } from './marketplace/marketplace-car.component';
 import { MarketplaceAgencyComponent } from './marketplace/marketplace-agency.component';
+import { MarketplaceMapComponent } from './marketplace/marketplace-map.component';
 import { MyReservationsComponent } from './marketplace/my-reservations.component';
+import { MyRentingsComponent } from './marketplace/my-rentings.component';
 import { MyChatsComponent } from './marketplace/my-chats.component';
+import { RatingStarsComponent } from './shared/rating-stars.component';
+import { QuickActionsComponent } from './shared/quick-actions.component';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -69,6 +73,7 @@ import { MatDividerModule } from '@angular/material/divider';
 import { MatMenuModule } from '@angular/material/menu';
 import { TranslocoHttpLoader } from './shared/transloco-loader';
 import { LanguageInterceptor } from './shared/language.interceptor';
+import { guardRoutes } from './shared/must-change-password.guard';
 import { DEFAULT_LANGUAGE, SUPPORTED_LANGUAGES, resolveLanguage } from './shared/language';
 import { environment } from 'src/environments/environment';
 
@@ -116,8 +121,12 @@ registerLocaleData(localeAr);
     MarketplaceSearchComponent,
     MarketplaceCarComponent,
     MarketplaceAgencyComponent,
+    MarketplaceMapComponent,
     MyReservationsComponent,
-    MyChatsComponent
+    MyRentingsComponent,
+    MyChatsComponent,
+    RatingStarsComponent,
+    QuickActionsComponent
   ],
   bootstrap: [AppComponent],
   imports: [
@@ -141,7 +150,9 @@ registerLocaleData(localeAr);
     MatProgressBarModule,
     MatDividerModule,
     MatMenuModule,
-    RouterModule.forRoot([
+    // guardRoutes wraps every route below (bar the profile page) in the
+    // temporary-password guard, so a route added later cannot forget it.
+    RouterModule.forRoot(guardRoutes([
       { path: '', component: HomeComponent, pathMatch: 'full' },
       { path: 'brand', component: BrandComponent },
       { path: 'model-car', component: ModelCarComponent },
@@ -175,10 +186,13 @@ registerLocaleData(localeAr);
       { path: 'browse/car/:id', component: MarketplaceCarComponent },
       { path: 'browse/agency/:id', component: MarketplaceAgencyComponent },
       { path: 'my-reservations', component: MyReservationsComponent },
+      { path: 'my-rentings', component: MyRentingsComponent },
       { path: 'my-chats', component: MyChatsComponent },
 
-      // Platform-admin console.
-      { path: 'platform-dashboard', component: PlatformDashboardComponent },
+      // Platform-admin console. The dashboard is the admin's home screen (see
+      // HomeComponent), so its old route only survives to keep bookmarks and the
+      // links inside the console working.
+      { path: 'platform-dashboard', redirectTo: '', pathMatch: 'full' },
       { path: 'agency', component: AgencyComponent },
       { path: 'agency/new', component: AgencyFormComponent },
       { path: 'agency/:id', component: AgencyDetailComponent },
@@ -191,7 +205,7 @@ registerLocaleData(localeAr);
 
       // Agency-admin self-service.
       { path: 'team', component: TeamComponent }
-    ]),
+    ])),
     TranslocoModule,
     BrowserAnimationsModule],
   providers: [

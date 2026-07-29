@@ -8,6 +8,7 @@ namespace RemSolution.Application.Features.Client.DTOs
         public byte[]? RowVersion { get; init; }
         public string? FirstName { get; init; }
         public string? LastName { get; init; }
+        public string? Email { get; init; }
         public DateTime? BirthDate { get; init; }
         public string? BirthPlace { get; init; }
         public int? BirthCountryId { get; init; }
@@ -33,12 +34,21 @@ namespace RemSolution.Application.Features.Client.DTOs
         public string? Notes { get; init; }
         public string? MarketplaceUserId { get; init; }
 
+        /// <summary>
+        /// Whether this client can sign in to the customer portal. The raw
+        /// MarketplaceUserId above is an Identity key the UI has no use for;
+        /// this is the question the client screen actually asks, and what the
+        /// Invite action is shown or hidden on.
+        /// </summary>
+        public bool HasPortalAccount { get; init; }
+
         public class Mapping : IRegister
         {
             public void Register(TypeAdapterConfig config)
             {
                 config.NewConfig<Domain.Entities.Client, ClientDto>()
                       .Map(dest => dest.BirthCountryName, src => src.BirthCountry != null ? src.BirthCountry.Name : null)
+                      .Map(dest => dest.HasPortalAccount, src => src.MarketplaceUserId != null)
                       // Document URLs now live on StoredFile records; surface the
                       // plain URL so the API contract is unchanged for readers.
                       .Map(dest => dest.CINImageUrl, src => src.CINFile != null ? src.CINFile.Url : null)

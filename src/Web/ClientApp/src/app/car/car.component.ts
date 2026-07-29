@@ -1,7 +1,13 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { PageEvent } from '@angular/material/paginator';
 import { Sort, SortDirection } from '@angular/material/sort';
-import { CarsClient, CarDto, FuelType, ModelCarsClient, ModelCarDto } from '../web-api-client';
+import { ActivatedRoute, ParamMap, Router } from '@angular/router';
+import {
+  CarsClient, CarDto, CarStatus, FuelType, ModelCarsClient, ModelCarDto
+} from '../web-api-client';
+import {
+  FilterChip, applyListFilters, boolParam, dateParam, enumName, enumParam, rangeText, withoutParams
+} from '../shared/list-filters';
 import { TranslocoService } from '@jsverse/transloco';
 
 @Component({
@@ -30,20 +36,81 @@ export class CarComponent implements OnInit {
   filterColor = '';
   filterFuelType: FuelType | null = null;
 
+  // Filters that arrive by link (from the dashboard's fleet counts) and have no
+  // control on the strip; they show as removable chips instead.
+  filterStatus: CarStatus | null = null;
+  filterOnRent: boolean | null = null;
+  addedFrom: Date | null = null;
+  addedTo: Date | null = null;
+  chips: FilterChip[] = [];
+
   fuelTypes = [
     { value: FuelType.Gasoline, labelKey: 'enums.fuelType.gasoline' },
     { value: FuelType.Diesel, labelKey: 'enums.fuelType.diesel' }
   ];
 
-  constructor(private client: CarsClient, private modelCarsClient: ModelCarsClient) { }
+  private static readonly statusLabelKeys: Record<number, string> = {
+    [CarStatus.Active]: 'enums.carStatus.active',
+    [CarStatus.Maintenance]: 'enums.carStatus.maintenance',
+    [CarStatus.Inactive]: 'enums.carStatus.inactive'
+  };
 
+  constructor(
+    private client: CarsClient,
+    private modelCarsClient: ModelCarsClient,
+    private route: ActivatedRoute,
+    private router: Router) { }
+
+  // The URL holds the filters (see shared/list-filters), so the list reloads
+  // whenever they change — including when the menu's plain "Cars" link clears
+  // the ones a dashboard tile arrived with.
   ngOnInit() {
     this.modelCarsClient.getAllModelCars().subscribe({
       next: models => this.models = models || [],
       error: err => console.error(err)
     });
 
-    this.load();
+    this.route.queryParamMap.subscribe(params => {
+      this.readFilters(params);
+      this.pageNumber = 1;
+      this.load();
+    });
+  }
+
+  private readFilters(params: ParamMap) {
+    const modelId = Number(params.get('model'));
+    this.filterModelId = Number.isInteger(modelId) && modelId > 0 ? modelId : null;
+    this.filterColor = params.get('color') ?? '';
+    this.filterFuelType = enumParam(params, 'fuel', FuelType) as FuelType | null;
+    this.filterStatus = enumParam(params, 'status', CarStatus) as CarStatus | null;
+    this.filterOnRent = boolParam(params, 'onRent');
+    this.addedFrom = dateParam(params, 'addedFrom');
+    this.addedTo = dateParam(params, 'addedTo');
+
+    this.chips = [];
+
+    if (this.filterStatus !== null) {
+      this.chips.push({
+        params: ['status'],
+        labelKey: 'filters.carStatus',
+        labelArgs: { status: this.transloco.translate(CarComponent.statusLabelKeys[this.filterStatus]) }
+      });
+    }
+
+    if (this.filterOnRent !== null) {
+      this.chips.push({
+        params: ['onRent'],
+        labelKey: this.filterOnRent ? 'filters.onRent' : 'filters.notOnRent'
+      });
+    }
+
+    if (this.addedFrom || this.addedTo) {
+      this.chips.push({
+        params: ['addedFrom', 'addedTo'],
+        labelKey: 'filters.added',
+        labelArgs: { range: rangeText(params.get('addedFrom'), params.get('addedTo')) }
+      });
+    }
   }
 
   load() {
@@ -53,6 +120,10 @@ export class CarComponent implements OnInit {
       this.filterModelId,
       this.filterColor.trim() || null,
       this.filterFuelType,
+      this.filterStatus,
+      this.filterOnRent,
+      this.addedFrom,
+      this.addedTo,
       this.sortBy,
       this.sortDirection === 'desc'
     ).subscribe({
@@ -64,16 +135,25 @@ export class CarComponent implements OnInit {
     });
   }
 
+  // Filtering goes through the URL; the subscription above reloads the rows.
   onFilter() {
-    this.pageNumber = 1;
-    this.load();
+    applyListFilters(this.router, this.route, {
+      ...withoutParams(this.route.snapshot.queryParamMap, ['model', 'color', 'fuel']),
+      model: this.filterModelId,
+      color: this.filterColor.trim() || null,
+      fuel: enumName(FuelType, this.filterFuelType)
+    });
   }
 
+  // Clears the chips too: a Clear button that left filters behind would be the
+  // very thing the chips exist to prevent.
   clearFilters() {
-    this.filterModelId = null;
-    this.filterColor = '';
-    this.filterFuelType = null;
-    this.onFilter();
+    applyListFilters(this.router, this.route, {});
+  }
+
+  clearChip(chip: FilterChip) {
+    applyListFilters(
+      this.router, this.route, withoutParams(this.route.snapshot.queryParamMap, chip.params));
   }
 
   onPage(event: PageEvent) {

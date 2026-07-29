@@ -157,6 +157,9 @@ export class RentingFormComponent implements OnInit {
       newClient: this.fb.group({
         firstName: ['', [Validators.required, Validators.maxLength(100)]],
         lastName: ['', [Validators.required, Validators.maxLength(100)]],
+        // Filling this in gets the customer a portal login emailed to them
+        // when the booking is saved.
+        email: ['', [Validators.email, Validators.maxLength(256)]],
         birthDate: ['', Validators.required],
         cin: [''],
         drivingLicenceNumber: [''],
@@ -207,11 +210,11 @@ export class RentingFormComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.carsClient.getCars(1, 1000, null, null, null, null, false).subscribe({
+    this.carsClient.getCars(1, 1000, null, null, null, null, null, null, null, null, false).subscribe({
       next: r => this.cars = r.items || [],
       error: err => console.error(err)
     });
-    this.clientsClient.getClients(1, 1000, null, null, null, false).subscribe({
+    this.clientsClient.getClients(1, 1000, null, null, null, null, null, null, false).subscribe({
       next: r => this.clients = r.items || [],
       error: err => console.error(err)
     });
@@ -458,7 +461,7 @@ export class RentingFormComponent implements OnInit {
   }
 
   private reloadClientList() {
-    this.clientsClient.getClients(1, 1000, null, null, null, false).subscribe({
+    this.clientsClient.getClients(1, 1000, null, null, null, null, null, null, false).subscribe({
       next: r => this.clients = r.items || [],
       error: err => console.error(err)
     });
@@ -574,6 +577,7 @@ export class RentingFormComponent implements OnInit {
     return new NewRentingClient({
       firstName: value.firstName,
       lastName: value.lastName,
+      email: value.email || undefined,
       birthDate: fromDateInput(value.birthDate),
       cin: value.cin || undefined,
       drivingLicenceNumber: value.drivingLicenceNumber || undefined,

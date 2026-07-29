@@ -1,0 +1,16 @@
+<!-- Translated with the pipe rather than *transloco="let t": the structural
+     directive would put the canvas in an embedded view, and a @ViewChild on it
+     could then not be static — which is exactly what Leaflet needs, since it
+     takes the container element before the first change-detection pass. -->
+<div class="map-shell">
+  <div class="canvas" #canvas role="application"
+       [attr.aria-label]="'marketplace.mapLabel' | transloco"></div>
+
+  <!-- Offered rather than applied: re-running the search under someone who is
+       still reading the current results is disorienting. -->
+  <button mat-flat-button color="primary" class="search-area" *ngIf="moved" (click)="searchThisArea()">
+    <mat-icon>refresh</mat-icon> {{ 'marketplace.searchThisArea' | transloco }}
+  </button>
+
+  <div class="empty" *ngIf="!points.length">{{ 'marketplace.noPlacesOnMap' | transloco }}</div>
+</div>

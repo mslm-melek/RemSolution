@@ -6,7 +6,9 @@ import {
   SendChatMessageCommand, RentingState
 } from '../web-api-client';
 import { extractValidationErrors } from '../shared/form-utils';
+import { applyListFilters, boolParam } from '../shared/list-filters';
 import { AuthService } from '../shared/auth.service';
+import { ActivatedRoute, Router } from '@angular/router';
 import { TranslocoService } from '@jsverse/transloco';
 
 // Poll interval while a thread is open. Deliberately not a socket: the API
@@ -37,14 +39,23 @@ export class ChatComponent implements OnInit, OnDestroy {
 
   private poll?: Subscription;
 
-  constructor(private client: ChatClient, private auth: AuthService) { }
+  constructor(
+    private client: ChatClient,
+    private auth: AuthService,
+    private route: ActivatedRoute,
+    private router: Router) { }
 
   ngOnInit() {
     this.auth.currentUser$.subscribe(user => {
       this.canSend = AuthService.canAccessModule(user, 'Chat', 'Chat.Send');
     });
 
-    this.loadThreads();
+    // The unread filter lives in the URL (see shared/list-filters): the home tile
+    // counts threads waiting for a reply, so its link opens those.
+    this.route.queryParamMap.subscribe(params => {
+      this.onlyUnread = boolParam(params, 'unread') === true;
+      this.loadThreads();
+    });
   }
 
   ngOnDestroy() {
@@ -66,8 +77,9 @@ export class ChatComponent implements OnInit, OnDestroy {
     });
   }
 
+  // The filter goes through the URL; the subscription above reloads the threads.
   onUnreadFilter() {
-    this.loadThreads();
+    applyListFilters(this.router, this.route, { unread: this.onlyUnread ? 'true' : null });
   }
 
   open(thread: ChatThreadDto) {

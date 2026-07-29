@@ -3,6 +3,7 @@ using RemSolution.Application.Common.Models;
 using RemSolution.Application.Features.Client.Commands.CreateClientCommand;
 using RemSolution.Application.Features.Client.Commands.DeleteClientCommand;
 using RemSolution.Application.Features.Client.Commands.FlagClientCommand;
+using RemSolution.Application.Features.Client.Commands.InviteClientCommand;
 using RemSolution.Application.Features.Client.Commands.UpdateClientCommand;
 using RemSolution.Application.Features.Client.DTOs;
 using RemSolution.Application.Features.Client.Commands.UploadClientDocumentCommand;
@@ -31,6 +32,9 @@ public class Clients : EndpointGroupBase
             // Raising/clearing the bad-client flag is an edit of the client
             // record: Client.Update.
             .MapPut(FlagClient, "{id}/flag", Permissions.ClientUpdate)
+            // Sending the customer-portal invitation is likewise an edit of the
+            // client record (it writes the account link): Client.Update.
+            .MapPost(InviteClient, "{id}/invite", Permissions.ClientUpdate)
             .MapDelete(DeleteClient, "{id}", Permissions.ClientDelete);
 
         // The only form-binding endpoint in the API; antiforgery middleware is
@@ -82,6 +86,17 @@ public class Clients : EndpointGroupBase
         await sender.Send(command);
 
         return TypedResults.NoContent();
+    }
+
+    // Returns what happened rather than a bare 204: "already linked to an
+    // account the customer chose their own password for" and "temporary
+    // password re-sent" are different answers, and the agency is the one who
+    // has to tell the customer which.
+    public async Task<Ok<ClientInvitationDto>> InviteClient(ISender sender, int id)
+    {
+        var result = await sender.Send(new InviteClientCommand(id));
+
+        return TypedResults.Ok(result);
     }
 
     public async Task<NoContent> DeleteClient(ISender sender, int id)

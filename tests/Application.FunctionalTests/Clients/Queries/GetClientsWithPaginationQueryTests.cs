@@ -38,4 +38,26 @@ public class GetClientsWithPaginationQueryTests : BaseTestFixture
         result.TotalCount.Should().Be(1);
         result.Items.First().LastName.Should().Be("Smith");
     }
+
+    // The dashboard's "flagged clients" alert links into this list, so the filter
+    // has to select exactly the clients it counted.
+    [Test]
+    public async Task ShouldFilterFlaggedClients()
+    {
+        await RunAsAgencyAdministratorAsync();
+        await AddTestAgencyAsync();
+
+        await AddAsync(new Domain.Entities.Client { FirstName = "Trouble", LastName = "Maker", IsFlagged = true });
+        await AddAsync(new Domain.Entities.Client { FirstName = "Regular", LastName = "Customer" });
+
+        var flagged = await SendAsync(new GetClientsWithPaginationQuery { Flagged = true });
+
+        flagged.TotalCount.Should().Be(1);
+        flagged.Items.First().LastName.Should().Be("Maker");
+
+        var rest = await SendAsync(new GetClientsWithPaginationQuery { Flagged = false });
+
+        rest.TotalCount.Should().Be(1);
+        rest.Items.First().LastName.Should().Be("Customer");
+    }
 }

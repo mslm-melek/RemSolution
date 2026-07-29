@@ -1,6 +1,21 @@
 /* Surface, header, search strip, table and empty state come from the shared
    .page / .search-row / .data-table rules in styles.scss. */
 
+/* The address and, when they have one, a mark that it is also a working portal
+   login — the two facts belong in one cell. */
+.email-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.account-icon {
+  font-size: 17px;
+  width: 17px;
+  height: 17px;
+  color: var(--success, #2e7d32);
+}
+
 /* A flagged client is a risk signal; it rides next to the name. */
 .flag-icon {
   font-size: 17px;

@@ -82,6 +82,27 @@
   height: 18px;
 }
 
+/* Pulled up under the agency line — that line owns the 1rem gap below the
+   pair, so the rating sits with it rather than floating between blocks. */
+.agency-rating {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gap-2);
+  margin-top: -0.75rem;
+  margin-bottom: 1rem;
+  text-decoration: none;
+}
+
+.agency-rating .review-link {
+  font-size: 12.5px;
+  color: var(--brand-700);
+  font-weight: 650;
+}
+
+.agency-rating:hover .review-link {
+  text-decoration: underline;
+}
+
 .specs {
   display: flex;
   gap: 1rem;

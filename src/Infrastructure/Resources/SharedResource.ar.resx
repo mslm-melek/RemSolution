@@ -178,6 +178,24 @@
   <data name="Validation.Language.Unsupported" xml:space="preserve">
     <value>يجب أن تكون اللغة إحدى التالي: en أو fr أو ar.</value>
   </data>
+  <data name="Validation.HomeWidgets.TooMany" xml:space="preserve">
+    <value>يمكنك تثبيت {0} اختصارات على الأكثر في الصفحة الرئيسية.</value>
+  </data>
+  <data name="Validation.HomeWidgets.Duplicate" xml:space="preserve">
+    <value>لا يمكن تثبيت الاختصار نفسه مرتين.</value>
+  </data>
+  <data name="Validation.HomeWidgets.Unknown" xml:space="preserve">
+    <value>أحد الاختصارات المحددة غير معروف.</value>
+  </data>
+  <data name="Validation.HomeActions.TooMany" xml:space="preserve">
+    <value>يمكنك الاحتفاظ بـ {0} إجراءات سريعة على الأكثر في الصفحة الرئيسية.</value>
+  </data>
+  <data name="Validation.HomeActions.Duplicate" xml:space="preserve">
+    <value>لا يمكن إضافة الإجراء السريع نفسه مرتين.</value>
+  </data>
+  <data name="Validation.HomeActions.Unknown" xml:space="preserve">
+    <value>أحد الإجراءات السريعة المحددة غير معروف.</value>
+  </data>
   <data name="Property.Name" xml:space="preserve">
     <value>الاسم</value>
   </data>
@@ -768,5 +786,44 @@
   </data>
   <data name="Validation.DocumentTemplate.ExampleUnknown" xml:space="preserve">
     <value>لم يتم العثور على النموذج المثال المحدد.</value>
+  </data>
+  <data name="Validation.Client.EmailFormat" xml:space="preserve">
+    <value>أدخل عنوان بريد إلكتروني صالحًا.</value>
+  </data>
+  <data name="Validation.Client.EmailTooLong" xml:space="preserve">
+    <value>عنوان البريد الإلكتروني طويل جدًا.</value>
+  </data>
+  <data name="Email.ClientAccount.Subject" xml:space="preserve">
+    <value>حسابك كعميل لدى {0}</value>
+  </data>
+  <data name="Email.ClientAccount.Hello" xml:space="preserve">
+    <value>مرحبًا {0}،</value>
+  </data>
+  <data name="Email.ClientAccount.Created" xml:space="preserve">
+    <value>أنشأت {0} لك حساب عميل. سجّل الدخول لمتابعة حجوزاتك وتنزيل وثائقك ومراسلة الوكالة.</value>
+  </data>
+  <data name="Email.ClientAccount.Reissued" xml:space="preserve">
+    <value>أرسلت {0} إليك بيانات دخول جديدة لحساب العميل الخاص بك.</value>
+  </data>
+  <data name="Email.ClientAccount.Login" xml:space="preserve">
+    <value>اسم المستخدم</value>
+  </data>
+  <data name="Email.ClientAccount.Password" xml:space="preserve">
+    <value>كلمة مرور مؤقتة</value>
+  </data>
+  <data name="Email.ClientAccount.MustChange" xml:space="preserve">
+    <value>سيُطلب منك اختيار كلمة مرور جديدة عند أول تسجيل دخول.</value>
+  </data>
+  <data name="Email.ClientAccount.SignIn" xml:space="preserve">
+    <value>تسجيل الدخول</value>
+  </data>
+  <data name="Email.ClientAccount.Ignore" xml:space="preserve">
+    <value>إذا لم تكن تتوقع هذه الرسالة، يمكنك تجاهلها.</value>
+  </data>
+  <data name="Error.PasswordChangeRequired.Title" xml:space="preserve">
+    <value>اختر كلمة مرور أولًا</value>
+  </data>
+  <data name="Error.PasswordChangeRequired.Detail" xml:space="preserve">
+    <value>لا يزال حسابك يستخدم كلمة المرور المؤقتة التي أُرسلت إليك بالبريد الإلكتروني. اختر كلمة مرور جديدة للمتابعة.</value>
   </data>
 </root>

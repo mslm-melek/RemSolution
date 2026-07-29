@@ -86,6 +86,15 @@ public class LoginModel : PageModel
                 CultureCookie.Write(Response, language);
             }
 
+            // A customer arriving with the temporary password from their
+            // invitation email goes straight to choosing a real one. Sending
+            // them to the app instead would show a shell whose every request
+            // the password-change middleware refuses.
+            if (user?.MustChangePassword == true)
+            {
+                return RedirectToPage("./Manage/ChangePassword");
+            }
+
             return LocalRedirect(returnUrl);
         }
 

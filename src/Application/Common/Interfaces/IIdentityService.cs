@@ -62,6 +62,21 @@ public interface IIdentityService
     /// </summary>
     Task<Result> SetPreferredLanguageAsync(string userId, string language, CancellationToken cancellationToken);
 
+    /// <summary>
+    /// Stores the home-screen tiles the user pinned, in their chosen order (keys
+    /// from <see cref="Domain.Constants.HomeWidgets"/>). An empty list is stored
+    /// as a deliberate "no tiles" rather than as "never chosen".
+    /// </summary>
+    Task<Result> SetHomeWidgetsAsync(string userId, IReadOnlyCollection<string> widgets, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Stores the quick actions the user keeps on their landing screen, in their
+    /// chosen order (keys from <see cref="Domain.Constants.HomeActions"/>). An
+    /// empty list is stored as a deliberate "no actions" rather than as "never
+    /// chosen".
+    /// </summary>
+    Task<Result> SetHomeActionsAsync(string userId, IReadOnlyCollection<string> actions, CancellationToken cancellationToken);
+
     /// <summary>Changes the user's own password, verifying the current one first.</summary>
     Task<Result> ChangePasswordAsync(string userId, string currentPassword, string newPassword, CancellationToken cancellationToken);
 

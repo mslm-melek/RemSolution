@@ -1,13 +1,14 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { PageEvent } from '@angular/material/paginator';
 import { Sort, SortDirection } from '@angular/material/sort';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import {
   ReservationsClient, ReservationDto, ReservationStatus, RejectReservationCommand,
   ConvertReservationCommand
 } from '../web-api-client';
 import { TranslocoService } from '@jsverse/transloco';
 import { isInvalidTransition } from '../shared/form-utils';
+import { applyListFilters, enumName, enumParam } from '../shared/list-filters';
 
 @Component({
   selector: 'app-reservation',
@@ -43,10 +44,19 @@ export class ReservationComponent implements OnInit {
     { value: ReservationStatus.Expired, labelKey: 'enums.reservationStatus.expired' }
   ];
 
-  constructor(private client: ReservationsClient, private router: Router) { }
+  constructor(
+    private client: ReservationsClient,
+    private route: ActivatedRoute,
+    private router: Router) { }
 
+  // The status filter lives in the URL (see shared/list-filters): the dashboard's
+  // "requests to review" links here already narrowed to the rows it counted.
   ngOnInit() {
-    this.load();
+    this.route.queryParamMap.subscribe(params => {
+      this.status = enumParam(params, 'status', ReservationStatus) as ReservationStatus | null;
+      this.pageNumber = 1;
+      this.load();
+    });
   }
 
   load() {
@@ -62,9 +72,11 @@ export class ReservationComponent implements OnInit {
     });
   }
 
+  // Filtering goes through the URL; the subscription above reloads the rows.
   onFilter() {
-    this.pageNumber = 1;
-    this.load();
+    applyListFilters(this.router, this.route, {
+      status: enumName(ReservationStatus, this.status)
+    });
   }
 
   onPage(event: PageEvent) {

@@ -73,6 +73,11 @@
         <h3>{{ t('profile.changePassword') }}</h3>
       </div>
 
+      <!-- Says why the rest of the app is unreachable; without it a customer
+           who just followed an invitation email sees a bare form and a
+           navigation that keeps bouncing them back here. -->
+      <div *ngIf="mustChangePassword" class="banner warning">{{ t('profile.mustChangePassword') }}</div>
+
       <div *ngIf="passwordError" class="banner error">{{ passwordError }}</div>
       <div *ngIf="passwordSuccess" class="banner success">{{ passwordSuccess }}</div>
 

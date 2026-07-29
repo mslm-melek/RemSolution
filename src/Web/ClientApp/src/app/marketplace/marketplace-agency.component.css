@@ -62,6 +62,37 @@
   color: #fff;
 }
 
+/* On the coloured header the muted greys the stars use elsewhere disappear, so
+   the whole line is forced back to white. */
+.headline-rating {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gap-2);
+  margin-bottom: 8px;
+  color: #fff;
+  text-decoration: none;
+}
+
+.headline-rating ::ng-deep .track {
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.headline-rating ::ng-deep .score {
+  color: #fff;
+}
+
+.headline-rating .review-link {
+  font-size: 13px;
+  text-decoration: underline;
+  opacity: 0.9;
+}
+
+.headline-rating.none {
+  font-size: 13px;
+  opacity: 0.8;
+  text-decoration: none;
+}
+
 .meta {
   display: flex;
   flex-wrap: wrap;
@@ -240,12 +271,167 @@
   height: 18px;
 }
 
+/* --- Places map ---------------------------------------------------------- */
+
+.places-map {
+  margin-top: var(--gap-5);
+}
+
+.places-map h2,
+.reviews h2 {
+  font-size: 18px;
+  font-weight: 650;
+  color: var(--ink);
+  margin: 0 0 var(--gap-3);
+}
+
+.places-map app-marketplace-map {
+  display: block;
+  height: 340px;
+}
+
+/* --- Reviews ------------------------------------------------------------- */
+
+.reviews {
+  margin-top: var(--gap-6);
+  padding-top: var(--gap-5);
+  border-top: 1px solid var(--line);
+}
+
+.summary {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-6);
+  flex-wrap: wrap;
+  margin-bottom: var(--gap-5);
+}
+
+.headline {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.average {
+  font-size: 40px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.based-on {
+  font-size: 12.5px;
+  color: var(--muted);
+}
+
+.breakdown {
+  flex: 1 1 260px;
+  max-width: 380px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.bar-row {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-2);
+  font-size: 12.5px;
+  color: var(--muted);
+}
+
+.star-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  width: 34px;
+  flex: none;
+  font-variant-numeric: tabular-nums;
+}
+
+.star-label mat-icon {
+  font-size: 14px;
+  width: 14px;
+  height: 14px;
+  color: #f2a413;
+}
+
+.bar {
+  flex: 1;
+  height: 8px;
+  border-radius: var(--r-pill);
+  background: var(--surface-3);
+  overflow: hidden;
+}
+
+.bar .fill {
+  display: block;
+  height: 100%;
+  border-radius: var(--r-pill);
+  background: #f2a413;
+}
+
+.bar-count {
+  width: 28px;
+  flex: none;
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+}
+
+.review {
+  padding: var(--gap-4) 0;
+  border-top: 1px solid var(--line);
+}
+
+.review-head {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-3);
+  flex-wrap: wrap;
+}
+
+.review-head .author {
+  font-weight: 650;
+  color: var(--ink);
+  font-size: 14px;
+}
+
+.review-head .when {
+  font-size: 12.5px;
+  color: var(--muted);
+}
+
+.review .what {
+  font-size: 12.5px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+.review .comment {
+  margin: var(--gap-2) 0 0;
+  color: var(--ink-2);
+  line-height: 1.55;
+  /* Reviews are user text: a pasted URL or an unbroken run must not push the
+     page sideways. */
+  overflow-wrap: anywhere;
+  white-space: pre-line;
+}
+
+.reviews .more {
+  margin-top: var(--gap-4);
+}
+
 @media (max-width: 719px) {
   .shopfront {
     align-items: flex-start;
   }
 
   .figures {
+    gap: var(--gap-4);
+  }
+
+  .summary {
     gap: var(--gap-4);
   }
 }

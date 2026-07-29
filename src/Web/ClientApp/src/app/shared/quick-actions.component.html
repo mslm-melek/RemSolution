@@ -1,0 +1,77 @@
+<ng-container *transloco="let t">
+<!-- Nothing this user could ever be offered (no create permission anywhere, no
+     module on) ⇒ no card at all, rather than an empty one. -->
+<section class="quick-actions" *ngIf="available.length">
+  <div class="qa-head">
+    <h2>{{ t('home.quickActions') }}</h2>
+    <button type="button" mat-button color="primary"
+            *ngIf="!customizing" (click)="startCustomizing()">
+      <mat-icon>tune</mat-icon> {{ t('home.customizeActions') }}
+    </button>
+  </div>
+
+  <div class="action-buttons" *ngIf="actions.length && !customizing">
+    <a mat-raised-button color="primary" *ngFor="let action of actions" [routerLink]="[action.link]">
+      <mat-icon>{{ action.icon }}</mat-icon> {{ t(action.labelKey) }}
+    </a>
+  </div>
+
+  <!-- The user cleared the strip: say so, rather than leaving a blank row. -->
+  <p class="qa-empty" *ngIf="!actions.length && !customizing">{{ t('home.noActions') }}</p>
+
+  <!-- Picker. Editing a draft, so the strip above only changes on save. -->
+  <div class="qa-picker" *ngIf="customizing">
+    <p class="customize-hint">{{ t('home.customizeActionsHint', { max: maxActions }) }}</p>
+
+    <h3>{{ t('home.pickedActions') }}</h3>
+    <p class="picker-empty" *ngIf="!draft.length">{{ t('home.pickedNone') }}</p>
+
+    <div class="picker-row" *ngFor="let action of draftActions; let i = index">
+      <mat-checkbox [checked]="true" (change)="togglePick(action.key)">
+        <span class="picker-label">
+          <mat-icon>{{ action.icon }}</mat-icon>
+          <span>{{ t(action.labelKey) }}</span>
+        </span>
+      </mat-checkbox>
+      <span class="picker-order">
+        <button type="button" mat-icon-button [disabled]="i === 0" (click)="moveUp(i)"
+                [attr.aria-label]="t('home.moveUp')">
+          <mat-icon>arrow_upward</mat-icon>
+        </button>
+        <button type="button" mat-icon-button [disabled]="i === draftActions.length - 1"
+                (click)="moveDown(i)" [attr.aria-label]="t('home.moveDown')">
+          <mat-icon>arrow_downward</mat-icon>
+        </button>
+      </span>
+    </div>
+
+    <ng-container *ngIf="unpickedActions.length">
+      <h3>{{ t('home.moreActions') }}</h3>
+      <p class="picker-full" *ngIf="isFull">{{ t('home.actionsFull', { max: maxActions }) }}</p>
+
+      <div class="picker-row" *ngFor="let action of unpickedActions">
+        <mat-checkbox [checked]="false" [disabled]="isFull" (change)="togglePick(action.key)">
+          <span class="picker-label">
+            <mat-icon>{{ action.icon }}</mat-icon>
+            <span>{{ t(action.labelKey) }}</span>
+          </span>
+        </mat-checkbox>
+      </div>
+    </ng-container>
+
+    <div class="error-banner" *ngIf="saveError">
+      <mat-icon>error_outline</mat-icon>
+      <span>{{ saveError }}</span>
+    </div>
+
+    <div class="customize-actions">
+      <button type="button" mat-raised-button color="primary" [disabled]="saving" (click)="save()">
+        {{ saving ? t('common.saving') : t('common.save') }}
+      </button>
+      <button type="button" mat-button [disabled]="saving" (click)="cancelCustomizing()">
+        {{ t('common.cancel') }}
+      </button>
+    </div>
+  </div>
+</section>
+</ng-container>

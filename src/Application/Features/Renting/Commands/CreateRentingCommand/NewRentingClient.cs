@@ -23,6 +23,9 @@ namespace RemSolution.Application.Features.Renting.Commands.CreateRentingCommand
     {
         public string FirstName { get; init; } = string.Empty;
         public string LastName { get; init; } = string.Empty;
+        // Supplying this is what gets the customer a login to follow the
+        // booking they are standing at the counter making.
+        public string? Email { get; init; }
         public DateTime? BirthDate { get; init; }
         public string? BirthPlace { get; init; }
         public int? BirthCountryId { get; init; }

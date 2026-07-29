@@ -16,6 +16,14 @@ namespace RemSolution.Application.Features.Car.Queries.GetCarsWithPaginationQuer
         int? ModelId = null,
         string? Color = null,
         FuelType? FuelType = null,
+        CarStatus? Status = null,
+        // Cars with a hire running right now (or, false, everything else) — the
+        // fleet figure the dashboard calls "on rent".
+        bool? OnRent = null,
+        // Half-open [AddedFrom, AddedTo) over when the car was recorded, which is
+        // the only "added on" the model has.
+        DateTimeOffset? AddedFrom = null,
+        DateTimeOffset? AddedTo = null,
         // Column the table is sorted by, named after the Angular matColumnDef.
         // Anything unrecognised falls back to the matricule (see SortingExtensions).
         string? SortBy = null,
@@ -43,6 +51,20 @@ namespace RemSolution.Application.Features.Car.Queries.GetCarsWithPaginationQuer
 
             if (request.FuelType.HasValue)
                 query = query.Where(c => c.FuelType == request.FuelType);
+
+            if (request.Status.HasValue)
+                query = query.Where(c => c.Status == request.Status);
+
+            if (request.OnRent.HasValue)
+                query = request.OnRent.Value
+                    ? query.Where(c => c.Rentings!.Any(r => r.RentingState == RentingState.InProgress))
+                    : query.Where(c => !c.Rentings!.Any(r => r.RentingState == RentingState.InProgress));
+
+            if (request.AddedFrom.HasValue)
+                query = query.Where(c => c.CreatedOn >= request.AddedFrom);
+
+            if (request.AddedTo.HasValue)
+                query = query.Where(c => c.CreatedOn < request.AddedTo);
 
             var descending = request.SortDescending;
 

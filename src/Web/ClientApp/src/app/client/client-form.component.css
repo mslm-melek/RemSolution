@@ -64,6 +64,42 @@
   font-style: italic;
 }
 
+/* Customer-portal account panel: same bordered-row treatment as a document
+   slot, so the two "state + action" strips on this page read alike. */
+.account-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 8px 12px;
+  border: 1px solid #eee;
+  border-radius: 8px;
+}
+
+.account-state {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  color: #555;
+}
+
+/* Green only when an account really exists; the "no account" icon stays in the
+   neutral text colour rather than reading as an error — not having a login is
+   a perfectly ordinary state for a walk-in client. */
+.account-state mat-icon.linked {
+  color: #2e7d32;
+}
+
+.invite-message {
+  margin: 8px 0 0;
+  color: #2e7d32;
+}
+
+.invite-message.invite-warning {
+  color: #b71c1c;
+}
+
 .error-banner {
   background: #fdecea;
   color: #b71c1c;

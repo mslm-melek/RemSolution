@@ -24,6 +24,14 @@ namespace RemSolution.Application.Features.Client.Validation
                 .NotEmpty()
                 .MaximumLength(100);
 
+            // An address that fails here would fail Identity's own check a
+            // moment later, deep inside account provisioning, where the error
+            // could not be attributed to a field.
+            RuleFor(c => c.Email)
+                .EmailAddress().WithMessage(_ => localizer["Validation.Client.EmailFormat"])
+                .MaximumLength(256).WithMessage(_ => localizer["Validation.Client.EmailTooLong"])
+                .When(c => !string.IsNullOrWhiteSpace(c.Email));
+
             RuleFor(c => c.BirthDate)
                 .NotNull().WithMessage(_ => localizer["Validation.Client.BirthDateRequired"])
                 .Must(BeInThePast).WithMessage(_ => localizer["Validation.Client.BirthDateInPast"]);

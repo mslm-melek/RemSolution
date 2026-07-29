@@ -2,13 +2,16 @@ using RemSolution.Application.Common.Interfaces;
 using RemSolution.Application.Common.Mappings;
 using RemSolution.Application.Common.Models;
 using RemSolution.Application.Features.MarketplaceSearch.DTOs;
-using RemSolution.Domain.Enums;
 
 namespace RemSolution.Application.Features.MarketplaceSearch.Queries.SearchAvailableCarsQuery
 {
     // Public, cross-agency search: no [Authorize]/[RequiresFeature] and no tenant.
     // This is one of the two sanctioned IgnoreQueryFilters locations (see
     // TenantEnforcementTests); it MUST live under Features/MarketplaceSearch/.
+    //
+    // South/West/North/East are the map viewport, sent by the "search as I move
+    // the map" mode so the list and the pins always describe the same set. They
+    // are optional: the list-only view sends none and searches everywhere.
     public record SearchAvailableCarsQuery(
         DateTime StartDate,
         DateTime EndDate,
@@ -16,6 +19,10 @@ namespace RemSolution.Application.Features.MarketplaceSearch.Queries.SearchAvail
         int? BranchId = null,
         int? BrandId = null,
         int? AgencyId = null,
+        double? South = null,
+        double? West = null,
+        double? North = null,
+        double? East = null,
         int PageNumber = 1,
         int PageSize = 12
     ) : IRequest<PaginatedList<MarketplaceCarDto>>;
@@ -33,48 +40,13 @@ namespace RemSolution.Application.Features.MarketplaceSearch.Queries.SearchAvail
         public async Task<PaginatedList<MarketplaceCarDto>> Handle(
             SearchAvailableCarsQuery request, CancellationToken cancellationToken)
         {
-            var start = request.StartDate;
-            var end = request.EndDate;
-
-            // What "on offer" means — and the tenant/soft-delete filter bypass it
-            // needs — lives in MarketplaceCars.Offered.
-            var query = MarketplaceCars.Offered(_context);
-
-            if (request.BranchId is int branchId)
-                query = query.Where(c => c.BranchId == branchId);
-
-            // Same branch-else-agency rule the destination picker counts by, so a
-            // country that lists N cars does not then return fewer.
-            if (request.CountryId is int countryId)
-                query = query.InCountry(countryId);
-
-            if (request.BrandId is int brandId)
-                query = query.Where(c => c.Model != null && c.Model.BrandId == brandId);
-
-            if (request.AgencyId is int agencyId)
-                query = query.Where(c => c.AgencyId == agencyId);
-
-            // Available = no blocking renting (non-terminal) and no active
-            // reservation overlapping the half-open [start, end). Both checks are
-            // written as correlated sub-queries with their OWN IgnoreQueryFilters:
-            // the customer has no tenant, so a sub-query that re-applied the tenant
-            // filter would match nothing and wrongly show a booked car. (Relying on
-            // the root's IgnoreQueryFilters to propagate through the Car.Rentings
-            // navigation is not something to depend on.)
-            query = query.Where(c => !_context.Rentings.IgnoreQueryFilters().Any(r =>
-                r.CarId == c.Id
-                && r.RentingState != RentingState.Done
-                && r.RentingState != RentingState.Cancelled
-                && r.StartDate < end
-                && r.EndDate > start));
-
-            query = query.Where(c => !_context.Reservations.IgnoreQueryFilters().Any(r =>
-                r.CarId == c.Id
-                && (r.Status == ReservationStatus.PendingConfirmation
-                    || r.Status == ReservationStatus.Confirmed
-                    || r.Status == ReservationStatus.Paid)
-                && r.StartDate < end
-                && r.EndDate > start));
+            // What "on offer", "matches the filters" and "is free for the window"
+            // mean all live in MarketplaceCars — the same three steps the map
+            // query runs, so a pin and a result card can never disagree.
+            var query = MarketplaceCars.Offered(_context)
+                .Matching(request.CountryId, request.BranchId, request.BrandId, request.AgencyId)
+                .WithinBounds(request.South, request.West, request.North, request.East)
+                .AvailableBetween(_context, request.StartDate, request.EndDate);
 
             return await query
                 .OrderBy(c => c.DailyRate!.Amount)
@@ -96,6 +68,13 @@ namespace RemSolution.Application.Features.MarketplaceSearch.Queries.SearchAvail
                 .GreaterThan(v => v.StartDate)
                     .WithMessage(_ => localizer["Validation.Booking.EndAfterStart"]);
             RuleFor(v => v.PageSize).InclusiveBetween(1, 50);
+
+            // A viewport out of range is a bug in the caller, not a search with
+            // no results — say so rather than quietly returning an empty page.
+            RuleFor(v => v.South).InclusiveBetween(-90, 90).When(v => v.South.HasValue);
+            RuleFor(v => v.North).InclusiveBetween(-90, 90).When(v => v.North.HasValue);
+            RuleFor(v => v.West).InclusiveBetween(-180, 180).When(v => v.West.HasValue);
+            RuleFor(v => v.East).InclusiveBetween(-180, 180).When(v => v.East.HasValue);
         }
     }
 }

@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Observable, of } from 'rxjs';
-import { catchError, shareReplay } from 'rxjs/operators';
+import { catchError, map, shareReplay } from 'rxjs/operators';
 import { UsersClient, CurrentUserDto } from '../web-api-client';
 import { ImpersonationService } from './impersonation.service';
 
@@ -9,6 +9,23 @@ import { ImpersonationService } from './impersonation.service';
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   readonly currentUser$: Observable<CurrentUserDto>;
+
+  // Set by the profile page the moment a password change succeeds. The probe
+  // above is fetched once and replayed, so without this the user would keep
+  // being bounced back to the password form by a cached "true" they have
+  // already acted on — the one piece of auth state that changes without a page
+  // reload.
+  private passwordChanged = false;
+
+  // Same idea for the home-screen tiles: the probe is fetched once and replayed,
+  // so a user who customizes their home, navigates away and comes back would
+  // otherwise be handed the choice they had before saving. Null = nothing saved
+  // this session, so the probe's value stands.
+  private homeWidgetsOverride: string[] | null = null;
+
+  // Same again for the landing screen's quick actions, saved separately from the
+  // tiles.
+  private homeActionsOverride: string[] | null = null;
 
   constructor(client: UsersClient, impersonation: ImpersonationService) {
     this.currentUser$ = client.getCurrentUser().pipe(
@@ -28,6 +45,56 @@ export class AuthService {
       }),
       shareReplay(1)
     );
+  }
+
+  /**
+   * True while the account is still on the temporary password it was
+   * provisioned with. The API refuses everything but the change-password call
+   * in that state, so the SPA keeps the user on the one screen that can end it.
+   */
+  // A getter, not a field: field initializers run before the constructor body,
+  // where currentUser$ is assigned.
+  get mustChangePassword$(): Observable<boolean> {
+    return this.currentUser$.pipe(
+      map(user => user.mustChangePassword === true && !this.passwordChanged)
+    );
+  }
+
+  /** Called once the user has chosen their own password. */
+  markPasswordChanged() {
+    this.passwordChanged = true;
+  }
+
+  /**
+   * The tiles the user pinned to their home screen, in their order, or null when
+   * they have never chosen (the home screen then shows its defaults). An empty
+   * array is the deliberate "no tiles" and is returned as such.
+   */
+  get homeWidgets$(): Observable<string[] | null> {
+    return this.currentUser$.pipe(
+      map(user => this.homeWidgetsOverride ?? user.homeWidgets ?? null)
+    );
+  }
+
+  /** Called once a new selection has been saved on the account. */
+  markHomeWidgets(widgets: string[]) {
+    this.homeWidgetsOverride = widgets;
+  }
+
+  /**
+   * The quick actions the user keeps on their landing screen, in their order, or
+   * null when they have never chosen (the screen then shows its defaults). An
+   * empty array is the deliberate "no actions" and is returned as such.
+   */
+  get homeActions$(): Observable<string[] | null> {
+    return this.currentUser$.pipe(
+      map(user => this.homeActionsOverride ?? user.homeActions ?? null)
+    );
+  }
+
+  /** Called once a new action selection has been saved on the account. */
+  markHomeActions(actions: string[]) {
+    this.homeActionsOverride = actions;
   }
 
   // A module is visible when the agency has the feature switched on AND the

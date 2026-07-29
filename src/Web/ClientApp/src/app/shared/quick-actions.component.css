@@ -1,0 +1,120 @@
+/* The quick-action strip and its picker. A card like the tile rows above it, so
+   the landing screens read as one column of panels. Tokens and .error-banner come
+   from styles.scss. */
+
+/* Both landing screens are flex columns with a gap; `contents` hands the card
+   itself to that column, so it spaces like the panels around it — and a user with
+   no actions available leaves no empty slot behind. */
+:host {
+  display: contents;
+}
+
+.quick-actions {
+  display: block;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  box-shadow: var(--shadow-1);
+  padding: 18px 20px 20px;
+}
+
+/* Title on one side, the customize control on the other — and it wraps rather
+   than squeezing the button on a narrow screen. */
+.qa-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gap-3);
+  flex-wrap: wrap;
+  margin-bottom: var(--gap-4);
+}
+
+.qa-head h2 {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+.action-buttons {
+  display: flex;
+  gap: var(--gap-3);
+  flex-wrap: wrap;
+}
+
+.qa-empty {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* --- Picker ---------------------------------------------------------------- */
+
+.customize-hint {
+  margin: 0 0 var(--gap-4);
+  color: var(--muted);
+  font-size: 13px;
+  max-width: 70ch;
+}
+
+.qa-picker h3 {
+  margin: var(--gap-4) 0 var(--gap-2);
+  font-size: 13px;
+  font-weight: 640;
+  color: var(--ink);
+}
+
+.picker-empty,
+.picker-full {
+  margin: 0 0 var(--gap-2);
+  color: var(--muted);
+  font-size: 12.5px;
+}
+
+/* One row per action, hairline-separated: the picked rows carry order buttons on
+   the trailing edge, so a column layout keeps both sides lined up. */
+.picker-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gap-3);
+  padding: 2px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.picker-row:last-child {
+  border-bottom: none;
+}
+
+.picker-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13.5px;
+}
+
+.picker-label mat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+  color: var(--brand-700);
+}
+
+.picker-order {
+  display: flex;
+  flex: none;
+  gap: 2px;
+}
+
+.qa-picker .error-banner {
+  margin-top: var(--gap-3);
+}
+
+.customize-actions {
+  display: flex;
+  gap: var(--gap-3);
+  align-items: center;
+  margin-top: var(--gap-4);
+}

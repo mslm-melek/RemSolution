@@ -1,6 +1,7 @@
 ﻿using RemSolution.Application.Features.Car.Commands.CreateCarCommand;
 using RemSolution.Application.Features.Car.Queries.GetCarsWithPaginationQuery;
 using RemSolution.Domain.Entities;
+using RemSolution.Domain.Enums;
 
 namespace RemSolution.Application.FunctionalTests.Cars.Queries;
 
@@ -28,5 +29,78 @@ public class GetCarsWithPaginationQueryTests : BaseTestFixture
 
         result.Items.Should().HaveCountGreaterThan(0);
         result.TotalCount.Should().BeGreaterThan(1);
+    }
+
+    // The dashboard's fleet counts link into this list, so the filters below have
+    // to select exactly the cars those counts measured.
+
+    [Test]
+    public async Task ShouldFilterByStatus()
+    {
+        await RunAsAgencyAdministratorAsync();
+        await AddTestAgencyAsync();
+
+        await AddAsync(new Car { Matricule = "ACTIVE-1", Status = CarStatus.Active });
+        await AddAsync(new Car { Matricule = "GARAGE-1", Status = CarStatus.Maintenance });
+
+        var result = await SendAsync(new GetCarsWithPaginationQuery { Status = CarStatus.Active });
+
+        result.TotalCount.Should().Be(1);
+        result.Items.First().Matricule.Should().Be("ACTIVE-1");
+    }
+
+    [Test]
+    public async Task ShouldFilterCarsThatAreOutOnAHire()
+    {
+        await RunAsAgencyAdministratorAsync();
+        await AddTestAgencyAsync();
+
+        var onRent = new Car { Matricule = "OUT-1", Status = CarStatus.Active };
+        await AddAsync(onRent);
+        await AddAsync(new Car { Matricule = "IN-1", Status = CarStatus.Active });
+
+        await AddAsync(new Renting
+        {
+            CarId = onRent.Id,
+            StartDate = DateTime.UtcNow.AddDays(-1),
+            EndDate = DateTime.UtcNow.AddDays(1),
+            RentingState = RentingState.InProgress
+        });
+
+        var out_ = await SendAsync(new GetCarsWithPaginationQuery { OnRent = true });
+
+        out_.TotalCount.Should().Be(1);
+        out_.Items.First().Matricule.Should().Be("OUT-1");
+
+        var available = await SendAsync(new GetCarsWithPaginationQuery { OnRent = false });
+
+        available.TotalCount.Should().Be(1);
+        available.Items.First().Matricule.Should().Be("IN-1");
+    }
+
+    [Test]
+    public async Task ShouldFilterByWhenTheCarWasAdded()
+    {
+        await RunAsAgencyAdministratorAsync();
+        await AddTestAgencyAsync();
+
+        await AddAsync(new Car { Matricule = "NEW-1", Status = CarStatus.Active });
+
+        var now = DateTimeOffset.UtcNow;
+
+        var inWindow = await SendAsync(new GetCarsWithPaginationQuery
+        {
+            AddedFrom = now.AddDays(-1), AddedTo = now.AddDays(1)
+        });
+
+        inWindow.TotalCount.Should().Be(1);
+
+        // The window is half-open, and this one is entirely in the future.
+        var afterwards = await SendAsync(new GetCarsWithPaginationQuery
+        {
+            AddedFrom = now.AddDays(1), AddedTo = now.AddDays(2)
+        });
+
+        afterwards.TotalCount.Should().Be(0);
     }
 }

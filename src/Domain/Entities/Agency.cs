@@ -16,5 +16,9 @@ namespace RemSolution.Domain.Entities
         public string? Address { get; set; }
         public int CountryId { get; set; }
         public virtual Country? Country { get; set; }
+        // Public customer ratings. Platform-level like the agency itself (see
+        // AgencyReview), so this navigation is safe to project from anonymous
+        // marketplace queries without any query-filter bypass.
+        public virtual ICollection<AgencyReview>? Reviews { get; set; }
     }
 }

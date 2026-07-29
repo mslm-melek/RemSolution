@@ -35,7 +35,11 @@ namespace RemSolution.Application.Features.MarketplaceSearch.Queries.GetMarketpl
                     BranchId = c.Branch.Id,
                     BranchName = c.Branch.Name,
                     c.AgencyId,
-                    AgencyName = c.Agency!.Name
+                    AgencyName = c.Agency!.Name,
+                    // Geography is (longitude, latitude): X long, Y lat. Carried
+                    // so the picker and the map agree on where a place is.
+                    Latitude = c.Branch.Location != null ? (double?)c.Branch.Location.Y : null,
+                    Longitude = c.Branch.Location != null ? (double?)c.Branch.Location.X : null,
                 })
                 .Select(g => new { g.Key, CarCount = g.Count() })
                 .ToListAsync(cancellationToken);
@@ -67,7 +71,9 @@ namespace RemSolution.Application.Features.MarketplaceSearch.Queries.GetMarketpl
                     Name = row.Key.BranchName,
                     AgencyId = row.Key.AgencyId,
                     AgencyName = row.Key.AgencyName,
-                    CarCount = row.CarCount
+                    CarCount = row.CarCount,
+                    Latitude = row.Key.Latitude,
+                    Longitude = row.Key.Longitude
                 });
             }
 

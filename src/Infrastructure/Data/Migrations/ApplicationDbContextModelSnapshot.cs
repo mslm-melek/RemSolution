@@ -252,6 +252,72 @@ namespace RemSolution.Infrastructure.Data.Migrations
                     b.ToTable("AgencyFeatures");
                 });
 
+            modelBuilder.Entity("RemSolution.Domain.Entities.AgencyReview", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AgencyId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("AuthorName")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("AuthorUserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("CarName")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<int?>("ClientId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Comment")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTimeOffset?>("CreatedOn")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<int>("Rating")
+                        .HasColumnType("int");
+
+                    b.Property<int>("RentingId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("SubmittedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTimeOffset?>("UpdatedOn")
+                        .HasColumnType("datetimeoffset");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ClientId");
+
+                    b.HasIndex("RentingId")
+                        .IsUnique();
+
+                    b.HasIndex("AgencyId", "SubmittedAt");
+
+                    b.ToTable("AgencyReviews", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_AgencyReviews_Rating", "[Rating] BETWEEN 1 AND 5");
+                        });
+                });
+
             modelBuilder.Entity("RemSolution.Domain.Entities.AgencySettings", b =>
                 {
                     b.Property<int>("Id")
@@ -742,6 +808,11 @@ namespace RemSolution.Infrastructure.Data.Migrations
                     b.Property<string>("DrivingLicenceNumber")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("Email")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)")
+                        .UseCollation("Latin1_General_100_CI_AI");
+
                     b.Property<string>("FirstName")
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)")
@@ -806,9 +877,13 @@ namespace RemSolution.Infrastructure.Data.Migrations
 
                     b.HasIndex("DrivingLicenceFileId");
 
+                    b.HasIndex("MarketplaceUserId");
+
                     b.HasIndex("PasseportDeliveranceCountryId");
 
                     b.HasIndex("PasseportFileId");
+
+                    b.HasIndex("AgencyId", "Email");
 
                     b.ToTable("Clients");
                 });
@@ -1806,11 +1881,20 @@ namespace RemSolution.Infrastructure.Data.Migrations
                     b.Property<string>("FullName")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("HomeActions")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("HomeWidgets")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("bit");
 
                     b.Property<DateTimeOffset?>("LockoutEnd")
                         .HasColumnType("datetimeoffset");
+
+                    b.Property<bool>("MustChangePassword")
+                        .HasColumnType("bit");
 
                     b.Property<string>("NormalizedEmail")
                         .HasMaxLength(256)
@@ -1975,6 +2059,32 @@ namespace RemSolution.Infrastructure.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("Agency");
+                });
+
+            modelBuilder.Entity("RemSolution.Domain.Entities.AgencyReview", b =>
+                {
+                    b.HasOne("RemSolution.Domain.Entities.Agency", "Agency")
+                        .WithMany("Reviews")
+                        .HasForeignKey("AgencyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("RemSolution.Domain.Entities.Client", "Client")
+                        .WithMany()
+                        .HasForeignKey("ClientId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("RemSolution.Domain.Entities.Renting", "Renting")
+                        .WithMany()
+                        .HasForeignKey("RentingId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Agency");
+
+                    b.Navigation("Client");
+
+                    b.Navigation("Renting");
                 });
 
             modelBuilder.Entity("RemSolution.Domain.Entities.AgencySettings", b =>
@@ -2887,6 +2997,8 @@ namespace RemSolution.Infrastructure.Data.Migrations
 
             modelBuilder.Entity("RemSolution.Domain.Entities.Agency", b =>
                 {
+                    b.Navigation("Reviews");
+
                     b.Navigation("Settings");
                 });
 

@@ -1,0 +1,32 @@
+<div class="rating" [ngClass]="size" *transloco="let t">
+  <!-- Input mode: five real buttons, so the control is keyboard-reachable and
+       each star announces the score it sets. -->
+  <div class="picker" *ngIf="editable" role="radiogroup"
+       [attr.aria-label]="t('reviews.yourRating')" (mouseleave)="hovered = null">
+    <button type="button" class="star-btn" *ngFor="let star of stars"
+            role="radio" [attr.aria-checked]="score === star"
+            [attr.aria-label]="t('reviews.starsCount', { count: star })"
+            (mouseenter)="hovered = star"
+            (focus)="hovered = star"
+            (blur)="hovered = null"
+            (click)="pick(star)">
+      <mat-icon>{{ star <= shown ? 'star' : 'star_border' }}</mat-icon>
+    </button>
+  </div>
+
+  <!-- Display mode: an outline row with a filled row clipped over it, so a
+       fractional average is drawn as the fraction it is. -->
+  <div class="stars" *ngIf="!editable"
+       [attr.aria-label]="value ? t('reviews.outOfFive', { value: (value | number:'1.1-1') }) : t('reviews.notRated')">
+    <div class="track" aria-hidden="true">
+      <mat-icon *ngFor="let star of stars">star</mat-icon>
+    </div>
+    <div class="fill" aria-hidden="true" [style.width.%]="fillPercent">
+      <mat-icon *ngFor="let star of stars">star</mat-icon>
+    </div>
+  </div>
+
+  <span class="score" *ngIf="!editable && showValue && value != null">{{ value | number:'1.1-1' }}</span>
+  <span class="count" *ngIf="!editable && count">({{ count }})</span>
+  <span class="none" *ngIf="!editable && value == null">{{ t('reviews.notRated') }}</span>
+</div>

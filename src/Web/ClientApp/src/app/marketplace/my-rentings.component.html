@@ -1,0 +1,74 @@
+<div class="my-rentings" *transloco="let t">
+  <div class="head">
+    <h2>{{ t('marketplace.myRentings') }}</h2>
+    <a mat-stroked-button [routerLink]="['/browse']"><mat-icon>search</mat-icon> {{ t('nav.browseCars') }}</a>
+  </div>
+
+  <div *ngIf="error" class="error">{{ error }}</div>
+  <div *ngIf="loading" class="state">{{ t('common.loading') }}</div>
+
+  <div *ngIf="!loading && rentings.length === 0" class="state">
+    {{ t('marketplace.noRentings') }} <a [routerLink]="['/browse']">{{ t('marketplace.findACar') }}</a>
+  </div>
+
+  <div class="list" *ngIf="!loading && rentings.length">
+    <div class="renting-card mat-elevation-z2" *ngFor="let r of rentings">
+      <div class="row">
+        <div class="thumb" [class.placeholder]="!r.carImageUrl"
+             [style.background-image]="r.carImageUrl ? 'url(' + r.carImageUrl + ')' : null">
+          <mat-icon *ngIf="!r.carImageUrl">directions_car</mat-icon>
+        </div>
+
+        <div class="main">
+          <div class="car">{{ r.carBrandName }} {{ r.carModelName }}</div>
+          <a class="agency" [routerLink]="['/browse/agency', r.agencyId]">
+            <mat-icon>place</mat-icon>{{ r.agencyName }}
+          </a>
+          <div class="dates">{{ r.startDate | date:'yyyy-MM-dd' }} → {{ r.endDate | date:'yyyy-MM-dd' }}</div>
+        </div>
+
+        <div class="side">
+          <span class="status" [ngClass]="stateClass(r.rentingState)">
+            {{ stateLabelKey(r.rentingState) ? t(stateLabelKey(r.rentingState)) : '' }}
+          </span>
+          <span class="price" *ngIf="r.price">{{ r.price.amount | number:'1.2-2' }} {{ r.price.currency }}</span>
+
+          <!-- Three mutually exclusive states, decided by the server: already
+               rated, rateable now, or nothing to offer yet. -->
+          <div class="mine" *ngIf="r.myRating != null">
+            <app-rating-stars [value]="r.myRating" [showValue]="false"></app-rating-stars>
+            <span class="rated-on">{{ t('reviews.ratedOn', { date: (r.reviewedAt | date:'yyyy-MM-dd') }) }}</span>
+          </div>
+
+          <button mat-flat-button color="primary" *ngIf="r.canReview && ratingFor !== r"
+                  (click)="openRating(r)">
+            <mat-icon>star</mat-icon> {{ t('reviews.rateThisRental') }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Inline rather than a dialog: the rating belongs to the rental above
+           it, and keeping it in place keeps that obvious. -->
+      <div class="rate-form" *ngIf="ratingFor === r">
+        <label class="label">{{ t('reviews.yourRating') }}</label>
+        <app-rating-stars [value]="rating" [editable]="true" size="lg"
+                          (valueChange)="rating = $event"></app-rating-stars>
+
+        <mat-form-field appearance="outline" class="comment">
+          <mat-label>{{ t('reviews.commentOptional') }}</mat-label>
+          <textarea matInput rows="3" maxlength="2000" [(ngModel)]="comment"
+                    [placeholder]="t('reviews.commentPlaceholder')"></textarea>
+        </mat-form-field>
+
+        <div class="form-error" *ngIf="formError">{{ formError }}</div>
+
+        <div class="actions">
+          <button mat-stroked-button (click)="cancelRating()" [disabled]="saving">{{ t('common.cancel') }}</button>
+          <button mat-flat-button color="primary" (click)="submitRating()" [disabled]="saving">
+            {{ saving ? t('common.saving') : t('reviews.submit') }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

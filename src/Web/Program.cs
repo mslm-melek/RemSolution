@@ -85,6 +85,13 @@ try
     app.UseRequestLocalization(RequestLocalizationSetup.Build());
 
     app.UseAuthorization();
+
+    // After authorization so it is the last word on an otherwise-permitted API
+    // call, and after UseRequestLocalization so its problem response is in the
+    // caller's language. Deliberately before the endpoints: an account still
+    // holding a mailed temporary password may do nothing but replace it.
+    app.UseMiddleware<PasswordChangeRequiredMiddleware>();
+
     app.UseMiddleware<RequestContextLoggingMiddleware>();
 
     // Emits one enriched summary event per HTTP request; sits inside the

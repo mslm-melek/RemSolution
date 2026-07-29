@@ -20,6 +20,14 @@
         <span class="agency-cta">{{ t('marketplace.viewAgency') }}</span>
       </a>
 
+      <!-- Who you would be renting from, rated. Links into the shopfront's
+           reviews section rather than repeating the reviews here. -->
+      <a class="agency-rating" *ngIf="car.agencyRating != null"
+         [routerLink]="['/browse/agency', car.agencyId]" fragment="reviews">
+        <app-rating-stars [value]="car.agencyRating" size="md"></app-rating-stars>
+        <span class="review-link">{{ t('reviews.reviewCount', { count: car.agencyReviewCount }) }}</span>
+      </a>
+
       <div class="specs">
         <span class="spec" *ngIf="car.fuelType !== null && car.fuelType !== undefined">
           <mat-icon>local_gas_station</mat-icon>{{ t(car.fuelType === 0 ? 'enums.fuelType.gasoline' : 'enums.fuelType.diesel') }}

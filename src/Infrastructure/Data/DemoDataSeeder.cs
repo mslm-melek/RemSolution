@@ -267,6 +267,26 @@ public class DemoDataSeeder
         _context.Rentings.AddRange(rentings);
         await _context.SaveChangesAsync(cancellationToken);
 
+        // Public ratings on SOME of the finished rentals — deliberately not all
+        // of them: most customers never review, and an agency where every rental
+        // carries five stars does not look like a real one. The spread is what
+        // makes the shopfront's breakdown bars worth looking at.
+        _context.AgencyReviews.AddRange(
+            Review(agency, rentings[0], clients[0], "Renault Clio 5", 5, -57,
+                "Voiture impeccable et prise en charge en dix minutes. Je relouerai."),
+            Review(agency, rentings[2], clients[2], "Volkswagen Polo", 4, -40,
+                "Bon rapport qualité-prix. Un peu d'attente au comptoir de l'aéroport."),
+            Review(agency, rentings[4], clients[4], "Renault Symbol", 5, -29,
+                "Équipe très arrangeante sur l'heure de retour."),
+            Review(agency, rentings[6], clients[7], "Volkswagen Golf 8", 3, -16,
+                "La voiture était bien, mais elle m'a été livrée avec un demi-réservoir."),
+            Review(agency, rentings[8], clients[6], "Dacia Logan", 5, -9,
+                "Rien à redire, tout était conforme au devis."),
+            // A rating with no comment: stars alone are a complete review.
+            Review(agency, rentings[9], clients[13], "Renault Clio 5", 4, -4, comment: null));
+
+        await _context.SaveChangesAsync(cancellationToken);
+
         await SeedExtraServicesAsync(rentings, extras, cancellationToken);
         await SeedPaymentsAsync(rentings, cancellationToken);
         await SeedReservationsAsync(cars, clients, cancellationToken);
@@ -551,10 +571,21 @@ public class DemoDataSeeder
         _context.Clients.AddRange(clients);
         await _context.SaveChangesAsync(cancellationToken);
 
-        _context.Rentings.AddRange(
+        var rentings = new[]
+        {
             Renting(cars[0], clients[0], -18, -14, RentingState.Done, 22_100, 22_640),
             Renting(cars[3], clients[2], -3, +2, RentingState.InProgress, 48_300),
-            Renting(cars[1], clients[3], +4, +9, RentingState.NotYet));
+            Renting(cars[1], clients[3], +4, +9, RentingState.NotYet),
+        };
+
+        _context.Rentings.AddRange(rentings);
+        await _context.SaveChangesAsync(cancellationToken);
+
+        // A single, middling review: the second agency is there to look different
+        // from the first, reputation included.
+        _context.AgencyReviews.Add(
+            Review(agency, rentings[0], clients[0], "Hyundai i10", 3, -13,
+                "Correct pour le prix, mais la voiture accusait son kilométrage."));
 
         await _context.SaveChangesAsync(cancellationToken);
     }
@@ -889,6 +920,26 @@ public class DemoDataSeeder
             Notes = notes
         };
     }
+
+    // A published rating. AgencyReview is platform-level shop-window content
+    // rather than tenant data, so the agency is written explicitly here instead
+    // of being stamped from the ambient tenant like everything around it. The
+    // author's name and the car's are snapshots, which is what lets the public
+    // shopfront render a review without reading tenant-filtered tables.
+    private AgencyReview Review(
+        Agency agency, Renting renting, Client client, string carName,
+        int rating, int daysAgo, string? comment)
+        => new()
+        {
+            AgencyId = agency.Id,
+            RentingId = renting.Id,
+            ClientId = client.Id,
+            AuthorName = $"{client.FirstName} {client.LastName}",
+            CarName = carName,
+            Rating = rating,
+            Comment = comment,
+            SubmittedAt = Today.AddDays(daysAgo),
+        };
 
     private Reservation Hold(
         Car car, Client client, int startOffsetDays, int endOffsetDays, int expiryOffsetHours)

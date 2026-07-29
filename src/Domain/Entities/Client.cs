@@ -40,6 +40,12 @@
         public virtual StoredFile? DrivingLicenceFile { get; set; }
         public int? PasseportFileId { get; set; }
         public virtual StoredFile? PasseportFile { get; set; }
+        // The client's email address, and the hinge of the customer-account
+        // link below: it is both a contact detail and the login of the
+        // portal account provisioned for them (see MarketplaceUserId).
+        // Not unique — the same household address may appear on several
+        // clients, and the same person is a separate Client row per agency.
+        public string? Email { get; set; }
         public string? Description { get; set; }
         // Per-agency bad-client flag: a risk signal raised by the owning agency,
         // with free-text Notes carrying the reason. Deliberately NOT a
@@ -50,9 +56,15 @@
         // FlagClientCommand, which audits the change.
         public bool IsFlagged { get; set; }
         public string? Notes { get; set; }
-        // Phase 6 marketplace: a self-registered marketplace user has one
-        // global account and a linked Client row per agency; null for
-        // agency-created clients.
+        // The customer-portal account this client signs in with — one global
+        // Identity user (Roles.Customer) with a linked Client row per agency.
+        // The link is set two ways, and both land on the same kind of account:
+        //   - the customer self-registered on the marketplace and booked here;
+        //   - the agency recorded an Email on this client, so an account was
+        //     provisioned for them (see IClientAccountService).
+        // Null while the client has no email / no account. The link is what
+        // every "my …" marketplace query filters on, so it is the single
+        // answer to "which portal user is this client?".
         public string? MarketplaceUserId { get; set; }
         public virtual ICollection<Renting>? Rentings { get; set; }
         public virtual ICollection<Renting>? SecondRentings { get; set; }

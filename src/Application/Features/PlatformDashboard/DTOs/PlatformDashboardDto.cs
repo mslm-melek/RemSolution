@@ -20,6 +20,16 @@ namespace RemSolution.Application.Features.PlatformDashboard.DTOs
         // Live (non-archived) rows across every agency.
         public int TotalCars { get; init; }
         public int TotalClients { get; init; }
+        // Of those clients, the ones who hold a portal login (Client.MarketplaceUserId):
+        // either they registered on the marketplace themselves, or their agency
+        // recorded an email and an account was provisioned for them.
+        public int TotalClientAccounts { get; init; }
+        // Where the fleet actually is, which is not where the agencies are
+        // registered: countries with at least one live car, and the branches
+        // ("places") holding them. Cars kept at an agency with no branch count
+        // towards their agency's country but towards no place.
+        public int CarCountries { get; init; }
+        public int CarPlaces { get; init; }
 
         // --- Subscriptions ---
         // Status Active AND the period covers GeneratedAt — the same rule that

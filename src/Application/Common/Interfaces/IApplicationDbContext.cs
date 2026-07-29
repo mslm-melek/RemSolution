@@ -8,6 +8,7 @@ public interface IApplicationDbContext
     DbSet<Agency> Agencies { get; }
     DbSet<AgencySettings> AgencySettings { get; }
     DbSet<AgencyFeature> AgencyFeatures { get; }
+    DbSet<AgencyReview> AgencyReviews { get; }
     DbSet<AgencySubscription> AgencySubscriptions { get; }
     DbSet<Branch> Branches { get; }
     DbSet<Brand> Brands { get; }

@@ -55,6 +55,11 @@
               <mat-icon>place</mat-icon>
               <span>{{ car.agencyName }}<span *ngIf="car.branchName"> · {{ car.branchName }}</span></span>
             </span>
+            <!-- Only for an agency that has actually been rated: "not rated" on
+                 the home slideshow reads as a warning it is not. -->
+            <span class="slide-rating" *ngIf="car.agencyRating != null">
+              <app-rating-stars [value]="car.agencyRating" [count]="car.agencyReviewCount"></app-rating-stars>
+            </span>
             <span class="slide-price" *ngIf="car.dailyRate">
               <span class="money">{{ car.dailyRate.amount | number:'1.2-2' }} {{ car.dailyRate.currency }}</span>{{ t('marketplace.perDaySpaced') }}
             </span>
@@ -82,32 +87,107 @@
     </div>
   </section>
 
-  <!-- Signed in (staff / admin): dashboard -->
-  <div class="dashboard" *ngIf="isAuthenticated && !isCustomer">
+  <!-- Platform administrator: the console dashboard IS their landing screen, so
+       it is rendered here rather than behind a separate route. -->
+  <app-platform-dashboard *ngIf="isPlatformAdmin"></app-platform-dashboard>
+
+  <!-- Signed in agency staff / admin: their pinned tiles and quick actions. -->
+  <div class="dashboard" *ngIf="isAuthenticated && !isCustomer && !isPlatformAdmin">
     <div class="dash-header">
-      <h1>{{ t('home.welcomeBack') }}</h1>
-      <p class="dash-subtitle">{{ displayName }}</p>
+      <div>
+        <h1>{{ t('home.welcomeBack') }}</h1>
+        <p class="dash-subtitle">{{ displayName }}</p>
+      </div>
+      <button type="button" mat-stroked-button color="primary"
+              *ngIf="!customizing && availableWidgets.length"
+              (click)="startCustomizing()">
+        <mat-icon>tune</mat-icon> {{ t('home.customize') }}
+      </button>
     </div>
 
-    <div class="stat-row">
-      <a class="stat-tile" *ngFor="let stat of stats" [routerLink]="[stat.link]">
+    <div class="stat-row" *ngIf="pinnedWidgets.length">
+      <a class="stat-tile" *ngFor="let widget of pinnedWidgets"
+         [routerLink]="[widget.link]" [queryParams]="widget.queryParams || null">
         <div class="stat-icon">
-          <mat-icon>{{ stat.icon }}</mat-icon>
+          <mat-icon>{{ widget.icon }}</mat-icon>
         </div>
         <div class="stat-body">
-          <span class="stat-value">{{ stat.value === null ? '—' : stat.value }}</span>
-          <span class="stat-label">{{ t(stat.labelKey) }}</span>
+          <span class="stat-value">{{ counts[widget.key] === undefined ? '—' : counts[widget.key] }}</span>
+          <span class="stat-label">{{ t(widget.labelKey) }}</span>
         </div>
       </a>
     </div>
 
-    <div class="quick-actions">
-      <h2>{{ t('home.quickActions') }}</h2>
-      <div class="action-buttons">
-        <a mat-raised-button color="primary" *ngFor="let action of quickActions" [routerLink]="[action.link]">
-          <mat-icon>{{ action.icon }}</mat-icon> {{ t(action.labelKey) }}
-        </a>
-      </div>
+    <!-- Nothing pinned: either the user cleared their home, or their plan and
+         permissions reach none of the lists. The two need different words. -->
+    <div class="empty-widgets" *ngIf="!pinnedWidgets.length && !customizing">
+      <mat-icon>dashboard_customize</mat-icon>
+      <p *ngIf="availableWidgets.length">{{ t('home.noWidgets') }}</p>
+      <p *ngIf="!availableWidgets.length">{{ t('home.noWidgetsAvailable') }}</p>
+      <button type="button" mat-raised-button color="primary"
+              *ngIf="availableWidgets.length" (click)="startCustomizing()">
+        <mat-icon>tune</mat-icon> {{ t('home.chooseWidgets') }}
+      </button>
     </div>
+
+    <!-- Picker. Editing a draft, so the tiles above only move on save. -->
+    <section class="customize" *ngIf="customizing">
+      <h2>{{ t('home.customizeTitle') }}</h2>
+      <p class="customize-hint">{{ t('home.customizeHint', { max: maxWidgets }) }}</p>
+
+      <div class="widget-picker">
+        <h3>{{ t('home.pinnedWidgets') }}</h3>
+        <p class="picker-empty" *ngIf="!draft.length">{{ t('home.pinnedNone') }}</p>
+
+        <div class="picker-row" *ngFor="let widget of draftWidgets; let i = index">
+          <mat-checkbox [checked]="true" (change)="toggleWidget(widget.key)">
+            <span class="picker-label">
+              <mat-icon>{{ widget.icon }}</mat-icon>
+              <span>{{ t(widget.labelKey) }}</span>
+            </span>
+          </mat-checkbox>
+          <span class="picker-order">
+            <button type="button" mat-icon-button [disabled]="i === 0" (click)="moveUp(i)"
+                    [attr.aria-label]="t('home.moveUp')">
+              <mat-icon>arrow_upward</mat-icon>
+            </button>
+            <button type="button" mat-icon-button [disabled]="i === draftWidgets.length - 1"
+                    (click)="moveDown(i)" [attr.aria-label]="t('home.moveDown')">
+              <mat-icon>arrow_downward</mat-icon>
+            </button>
+          </span>
+        </div>
+
+        <ng-container *ngIf="unpinnedWidgets.length">
+          <h3>{{ t('home.moreWidgets') }}</h3>
+          <p class="picker-full" *ngIf="isFull">{{ t('home.widgetsFull', { max: maxWidgets }) }}</p>
+
+          <div class="picker-row" *ngFor="let widget of unpinnedWidgets">
+            <mat-checkbox [checked]="false" [disabled]="isFull" (change)="toggleWidget(widget.key)">
+              <span class="picker-label">
+                <mat-icon>{{ widget.icon }}</mat-icon>
+                <span>{{ t(widget.labelKey) }}</span>
+              </span>
+            </mat-checkbox>
+          </div>
+        </ng-container>
+      </div>
+
+      <div class="error-banner" *ngIf="saveError">
+        <mat-icon>error_outline</mat-icon>
+        <span>{{ saveError }}</span>
+      </div>
+
+      <div class="customize-actions">
+        <button type="button" mat-raised-button color="primary" [disabled]="saving" (click)="saveWidgets()">
+          {{ saving ? t('common.saving') : t('common.save') }}
+        </button>
+        <button type="button" mat-button [disabled]="saving" (click)="cancelCustomizing()">
+          {{ t('common.cancel') }}
+        </button>
+      </div>
+    </section>
+
+    <app-quick-actions scope="agency"></app-quick-actions>
   </div>
 </ng-container>

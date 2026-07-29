@@ -32,6 +32,10 @@ export class ProfileComponent implements OnInit {
   headerName = '';
   initial = '?';
 
+  // The account is still on the temporary password from its invitation email;
+  // the rest of the app is closed until this form is submitted.
+  mustChangePassword = false;
+
   savingProfile = false;
   savingPassword = false;
   profileError = '';
@@ -70,6 +74,7 @@ export class ProfileComponent implements OnInit {
     this.auth.currentUser$.subscribe((user: CurrentUserDto) => {
       this.role = user.role;
       this.agencyName = user.agencyName;
+      this.mustChangePassword = user.mustChangePassword === true;
     });
   }
 
@@ -134,6 +139,13 @@ export class ProfileComponent implements OnInit {
         this.savingPassword = false;
         this.passwordSuccess = this.transloco.translate('profile.passwordChanged');
         this.passwordForm.reset();
+
+        // A provisioned account was pinned to this page until now; tell the
+        // guard it may let go, and drop the banner.
+        if (this.mustChangePassword) {
+          this.mustChangePassword = false;
+          this.auth.markPasswordChanged();
+        }
       },
       error: err => {
         this.savingPassword = false;

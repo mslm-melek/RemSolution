@@ -843,13 +843,55 @@
             "x-position": 5
           },
           {
+            "name": "Status",
+            "in": "query",
+            "schema": {
+              "nullable": true,
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/CarStatus"
+                }
+              ]
+            },
+            "x-position": 6
+          },
+          {
+            "name": "OnRent",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "nullable": true
+            },
+            "x-position": 7
+          },
+          {
+            "name": "AddedFrom",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "nullable": true
+            },
+            "x-position": 8
+          },
+          {
+            "name": "AddedTo",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "nullable": true
+            },
+            "x-position": 9
+          },
+          {
             "name": "SortBy",
             "in": "query",
             "schema": {
               "type": "string",
               "nullable": true
             },
-            "x-position": 6
+            "x-position": 10
           },
           {
             "name": "SortDescending",
@@ -857,7 +899,7 @@
             "schema": {
               "type": "boolean"
             },
-            "x-position": 7
+            "x-position": 11
           }
         ],
         "responses": {
@@ -1451,13 +1493,42 @@
             "x-position": 4
           },
           {
+            "name": "Flagged",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "nullable": true
+            },
+            "x-position": 5
+          },
+          {
+            "name": "AddedFrom",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "nullable": true
+            },
+            "x-position": 6
+          },
+          {
+            "name": "AddedTo",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "nullable": true
+            },
+            "x-position": 7
+          },
+          {
             "name": "SortBy",
             "in": "query",
             "schema": {
               "type": "string",
               "nullable": true
             },
-            "x-position": 5
+            "x-position": 8
           },
           {
             "name": "SortDescending",
@@ -1465,7 +1536,7 @@
             "schema": {
               "type": "boolean"
             },
-            "x-position": 6
+            "x-position": 9
           }
         ],
         "responses": {
@@ -1642,6 +1713,38 @@
           },
           "400": {
             "description": ""
+          }
+        }
+      }
+    },
+    "/api/Clients/{id}/invite": {
+      "post": {
+        "tags": [
+          "Clients"
+        ],
+        "operationId": "InviteClient",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientInvitationDto"
+                }
+              }
+            }
           }
         }
       }
@@ -3384,13 +3487,53 @@
             "x-position": 6
           },
           {
+            "name": "South",
+            "in": "query",
+            "schema": {
+              "type": "number",
+              "format": "double",
+              "nullable": true
+            },
+            "x-position": 7
+          },
+          {
+            "name": "West",
+            "in": "query",
+            "schema": {
+              "type": "number",
+              "format": "double",
+              "nullable": true
+            },
+            "x-position": 8
+          },
+          {
+            "name": "North",
+            "in": "query",
+            "schema": {
+              "type": "number",
+              "format": "double",
+              "nullable": true
+            },
+            "x-position": 9
+          },
+          {
+            "name": "East",
+            "in": "query",
+            "schema": {
+              "type": "number",
+              "format": "double",
+              "nullable": true
+            },
+            "x-position": 10
+          },
+          {
             "name": "PageNumber",
             "in": "query",
             "schema": {
               "type": "integer",
               "format": "int32"
             },
-            "x-position": 7
+            "x-position": 11
           },
           {
             "name": "PageSize",
@@ -3399,7 +3542,7 @@
               "type": "integer",
               "format": "int32"
             },
-            "x-position": 8
+            "x-position": 12
           }
         ],
         "responses": {
@@ -3447,6 +3590,131 @@
           },
           "404": {
             "description": ""
+          }
+        }
+      }
+    },
+    "/api/Marketplace/map": {
+      "get": {
+        "tags": [
+          "Marketplace"
+        ],
+        "operationId": "SearchCarsOnMap",
+        "parameters": [
+          {
+            "name": "StartDate",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "EndDate",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "x-position": 2
+          },
+          {
+            "name": "CountryId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "nullable": true
+            },
+            "x-position": 3
+          },
+          {
+            "name": "BranchId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "nullable": true
+            },
+            "x-position": 4
+          },
+          {
+            "name": "BrandId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "nullable": true
+            },
+            "x-position": 5
+          },
+          {
+            "name": "AgencyId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "nullable": true
+            },
+            "x-position": 6
+          },
+          {
+            "name": "South",
+            "in": "query",
+            "schema": {
+              "type": "number",
+              "format": "double",
+              "nullable": true
+            },
+            "x-position": 7
+          },
+          {
+            "name": "West",
+            "in": "query",
+            "schema": {
+              "type": "number",
+              "format": "double",
+              "nullable": true
+            },
+            "x-position": 8
+          },
+          {
+            "name": "North",
+            "in": "query",
+            "schema": {
+              "type": "number",
+              "format": "double",
+              "nullable": true
+            },
+            "x-position": 9
+          },
+          {
+            "name": "East",
+            "in": "query",
+            "schema": {
+              "type": "number",
+              "format": "double",
+              "nullable": true
+            },
+            "x-position": 10
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MarketplaceMapPointDto"
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -3543,6 +3811,58 @@
         }
       }
     },
+    "/api/Marketplace/agencies/{id}/reviews": {
+      "get": {
+        "tags": [
+          "Marketplace"
+        ],
+        "operationId": "GetAgencyReviews",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "pageNumber",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "nullable": true
+            },
+            "x-position": 2
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "nullable": true
+            },
+            "x-position": 3
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedListOfAgencyReviewDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/Marketplace/reservations": {
       "post": {
         "tags": [
@@ -3619,6 +3939,77 @@
         ],
         "responses": {
           "204": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/Marketplace/my-rentings": {
+      "get": {
+        "tags": [
+          "Marketplace"
+        ],
+        "operationId": "GetMyRentings",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MyRentingDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Marketplace/my-rentings/{rentingId}/review": {
+      "post": {
+        "tags": [
+          "Marketplace"
+        ],
+        "operationId": "ReviewMyRenting",
+        "parameters": [
+          {
+            "name": "rentingId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          }
+        ],
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateMyReviewCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 2
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              }
+            }
+          },
+          "400": {
             "description": ""
           }
         }
@@ -4334,13 +4725,29 @@
             "x-position": 7
           },
           {
+            "name": "DateBasis",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/RentingDateBasis"
+            },
+            "x-position": 8
+          },
+          {
+            "name": "ExcludeCancelled",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            },
+            "x-position": 9
+          },
+          {
             "name": "SortBy",
             "in": "query",
             "schema": {
               "type": "string",
               "nullable": true
             },
-            "x-position": 8
+            "x-position": 10
           },
           {
             "name": "SortDescending",
@@ -4348,7 +4755,7 @@
             "schema": {
               "type": "boolean"
             },
-            "x-position": 9
+            "x-position": 11
           }
         ],
         "responses": {
@@ -5547,6 +5954,56 @@
           }
         }
       }
+    },
+    "/api/Users/me/home-widgets": {
+      "put": {
+        "tags": [
+          "Users"
+        ],
+        "operationId": "UpdateMyHomeWidgets",
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateMyHomeWidgetsCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/Users/me/home-actions": {
+      "put": {
+        "tags": [
+          "Users"
+        ],
+        "operationId": "UpdateMyHomeActions",
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateMyHomeActionsCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        }
+      }
     }
   },
   "components": {
@@ -6561,6 +7018,10 @@
             "type": "string",
             "nullable": true
           },
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
           "birthDate": {
             "type": "string",
             "format": "date-time",
@@ -6659,6 +7120,9 @@
           "marketplaceUserId": {
             "type": "string",
             "nullable": true
+          },
+          "hasPortalAccount": {
+            "type": "boolean"
           }
         }
       },
@@ -6671,6 +7135,10 @@
           },
           "lastName": {
             "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
           },
           "birthDate": {
             "type": "string",
@@ -6765,6 +7233,10 @@
           "lastName": {
             "type": "string"
           },
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
           "birthDate": {
             "type": "string",
             "format": "date-time",
@@ -6855,6 +7327,44 @@
             "nullable": true
           }
         }
+      },
+      "ClientInvitationDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "outcome": {
+            "$ref": "#/components/schemas/ClientAccountOutcome"
+          },
+          "emailSent": {
+            "type": "boolean"
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "ClientAccountOutcome": {
+        "type": "integer",
+        "description": "",
+        "x-enumNames": [
+          "None",
+          "Created",
+          "Linked",
+          "AlreadyLinked",
+          "PasswordReset",
+          "EmailBelongsToStaff",
+          "AlreadyActive"
+        ],
+        "enum": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ]
       },
       "ClientDocumentType": {
         "type": "integer",
@@ -8244,8 +8754,23 @@
             "type": "string",
             "nullable": true
           },
+          "branchId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
           "branchName": {
             "type": "string",
+            "nullable": true
+          },
+          "latitude": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "longitude": {
+            "type": "number",
+            "format": "double",
             "nullable": true
           },
           "matricule": {
@@ -8283,6 +8808,66 @@
           "imageUrl": {
             "type": "string",
             "nullable": true
+          },
+          "agencyRating": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "agencyReviewCount": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "MarketplaceMapPointDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "branchId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "branchName": {
+            "type": "string",
+            "nullable": true
+          },
+          "agencyId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "agencyName": {
+            "type": "string",
+            "nullable": true
+          },
+          "latitude": {
+            "type": "number",
+            "format": "double"
+          },
+          "longitude": {
+            "type": "number",
+            "format": "double"
+          },
+          "carCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "fromDailyRate": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/MoneyDto"
+              }
+            ]
+          },
+          "agencyRating": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "agencyReviewCount": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },
@@ -8333,6 +8918,16 @@
           "carCount": {
             "type": "integer",
             "format": "int32"
+          },
+          "latitude": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "longitude": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
           }
         }
       },
@@ -8376,11 +8971,96 @@
               }
             ]
           },
+          "rating": {
+            "$ref": "#/components/schemas/AgencyRatingSummaryDto"
+          },
           "places": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/MarketplacePlaceDto"
             }
+          }
+        }
+      },
+      "AgencyRatingSummaryDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "averageRating": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "reviewCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "counts": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        }
+      },
+      "PaginatedListOfAgencyReviewDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AgencyReviewDto"
+            }
+          },
+          "pageNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "hasPreviousPage": {
+            "type": "boolean"
+          },
+          "hasNextPage": {
+            "type": "boolean"
+          }
+        }
+      },
+      "AgencyReviewDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "rating": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "comment": {
+            "type": "string",
+            "nullable": true
+          },
+          "authorName": {
+            "type": "string",
+            "nullable": true
+          },
+          "submittedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "carName": {
+            "type": "string",
+            "nullable": true
           }
         }
       },
@@ -8485,6 +9165,92 @@
           5,
           6
         ]
+      },
+      "MyRentingDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "rentingId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "agencyId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "agencyName": {
+            "type": "string",
+            "nullable": true
+          },
+          "carBrandName": {
+            "type": "string",
+            "nullable": true
+          },
+          "carModelName": {
+            "type": "string",
+            "nullable": true
+          },
+          "carImageUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "rentingState": {
+            "$ref": "#/components/schemas/RentingState"
+          },
+          "price": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/MoneyDto"
+              }
+            ]
+          },
+          "canReview": {
+            "type": "boolean"
+          },
+          "myRating": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "myComment": {
+            "type": "string",
+            "nullable": true
+          },
+          "reviewedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        }
+      },
+      "CreateMyReviewCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "rentingId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "rating": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "comment": {
+            "type": "string",
+            "nullable": true
+          }
+        }
       },
       "MyChatThreadDto": {
         "type": "object",
@@ -8888,6 +9654,18 @@
             "type": "integer",
             "format": "int32"
           },
+          "totalClientAccounts": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "carCountries": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "carPlaces": {
+            "type": "integer",
+            "format": "int32"
+          },
           "activeSubscriptions": {
             "type": "integer",
             "format": "int32"
@@ -9187,6 +9965,20 @@
           }
         }
       },
+      "RentingDateBasis": {
+        "type": "integer",
+        "description": "",
+        "x-enumNames": [
+          "Overlaps",
+          "Starts",
+          "Ends"
+        ],
+        "enum": [
+          0,
+          1,
+          2
+        ]
+      },
       "RentingHistoryDto": {
         "type": "object",
         "additionalProperties": false,
@@ -9310,6 +10102,10 @@
           },
           "lastName": {
             "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
           },
           "birthDate": {
             "type": "string",
@@ -9932,6 +10728,23 @@
           },
           "isImpersonating": {
             "type": "boolean"
+          },
+          "mustChangePassword": {
+            "type": "boolean"
+          },
+          "homeWidgets": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "string"
+            }
+          },
+          "homeActions": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "string"
+            }
           }
         }
       },
@@ -10128,6 +10941,30 @@
         "properties": {
           "language": {
             "type": "string"
+          }
+        }
+      },
+      "UpdateMyHomeWidgetsCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "widgets": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "UpdateMyHomeActionsCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "actions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         }
       }

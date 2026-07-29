@@ -58,6 +58,19 @@
     "actionFailed": "The action could not be completed.",
     "resultCount": "{{ count }} records"
   },
+  "filters": {
+    "clear": "Remove this filter",
+    "rentingStarts": "Starts: {{ range }}",
+    "rentingEnds": "Ends: {{ range }}",
+    "rentingRuns": "Running: {{ range }}",
+    "excludingCancelled": "Cancelled excluded",
+    "carStatus": "Status: {{ status }}",
+    "onRent": "On rent",
+    "notOnRent": "Not on rent",
+    "added": "Added: {{ range }}",
+    "flagged": "Flagged",
+    "notFlagged": "Not flagged"
+  },
   "nav": {
     "brandName": "RemSolution",
     "toggle": "Toggle navigation",
@@ -88,7 +101,8 @@
     "myChats": "My messages",
     "bookings": "Bookings",
     "finance": "Finance",
-    "clientsList": "All clients"
+    "clientsList": "All clients",
+    "myRentings": "My rentals"
   },
   "home": {
     "welcomeTitle": "Welcome to RemSolution",
@@ -106,20 +120,57 @@
     "showcaseNext": "Next car",
     "welcomeBack": "Welcome back",
     "quickActions": "Quick actions",
-    "stats": {
+    "customize": "Customize",
+    "customizeTitle": "Your home shortcuts",
+    "customizeHint": "Pick the lists you want one click away — up to {{ max }}. Only the ones you have access to are offered.",
+    "pinnedWidgets": "On your home screen",
+    "pinnedNone": "Nothing pinned yet.",
+    "moreWidgets": "More shortcuts",
+    "widgetsFull": "You have reached {{ max }} shortcuts. Remove one to add another.",
+    "moveUp": "Move up",
+    "moveDown": "Move down",
+    "noWidgets": "Your home screen has no shortcuts yet.",
+    "noWidgetsAvailable": "No lists are available for your account yet.",
+    "chooseWidgets": "Choose shortcuts",
+    "widgetsSaveFailed": "Could not save your shortcuts.",
+    "customizeActions": "Choose actions",
+    "customizeActionsHint": "Pick the actions you want on your home screen — up to {{ max }}. Only the ones you have access to are offered.",
+    "pickedActions": "On your home screen",
+    "pickedNone": "No actions selected.",
+    "moreActions": "More actions",
+    "actionsFull": "You have reached {{ max }} actions. Remove one to add another.",
+    "noActions": "No quick actions on your home screen.",
+    "actionsSaveFailed": "Could not save your quick actions.",
+    "widgets": {
       "cars": "Cars",
       "clients": "Clients",
-      "carModels": "Car models",
+      "rentings": "Ongoing rentings",
+      "reservations": "Requests to confirm",
+      "expenses": "Unpaid expenses",
+      "credits": "Clients in debt",
+      "chat": "Unread conversations",
       "brands": "Brands",
-      "agencies": "Agencies",
-      "subscriptionPlans": "Subscription plans"
+      "carModels": "Car models",
+      "expenseTypes": "Expense types",
+      "extraServiceTypes": "Extra service types",
+      "documentTemplates": "Document layouts"
     },
     "quick": {
       "newCar": "New car",
+      "newRenting": "New renting",
+      "newReservation": "New reservation",
       "newClient": "New client",
-      "newModel": "New model",
+      "newExpense": "New expense",
       "newAgency": "New agency",
-      "newPlan": "New plan"
+      "newPlan": "New plan",
+      "agencies": "Agencies",
+      "plans": "Subscription plans",
+      "newCarModel": "New car model",
+      "carBrands": "Brands",
+      "carModels": "Car models",
+      "expenseTypes": "Expense types",
+      "extraServiceTypes": "Extra service types",
+      "browseMarketplace": "View marketplace"
     }
   },
   "brand": {
@@ -198,6 +249,22 @@
     "identity": "Identity",
     "firstName": "First name",
     "lastName": "Last name",
+    "email": "Email",
+    "emailHint": "Used as the client's sign-in name for the customer portal.",
+    "emailInvalid": "Enter a valid email address.",
+    "account": "Customer portal account",
+    "accountActive": "This client can sign in to the customer portal.",
+    "accountNone": "This client has no portal account yet.",
+    "accountNeedsEmail": "Add an email address to give this client a portal account.",
+    "sendInvite": "Send invitation",
+    "resendInvite": "Resend invitation",
+    "inviting": "Sending…",
+    "inviteCreated": "Account created. The sign-in details have been emailed to the client.",
+    "inviteResent": "A new temporary password has been emailed to the client.",
+    "inviteLinked": "This client is now linked to their existing account. They sign in with the password they already use.",
+    "inviteAlreadyActive": "This client has already chosen their own password, so nothing was sent. They can use the forgotten-password link if they need to.",
+    "inviteStaffEmail": "This address belongs to a staff account and cannot be used as a customer login. Use a different address.",
+    "inviteMailFailed": "The account is ready, but the email could not be sent. Check the mail settings and try again.",
     "birthPlace": "Birth place",
     "birthCountry": "Birth country",
     "cinSection": "CIN",
@@ -282,7 +349,8 @@
     "reissueContract": "Issue a new contract for the new period",
     "keepContract": "Keep the current contract",
     "daysAdded": "+{{ count }} day(s)",
-    "daysRemoved": "−{{ count }} day(s)"
+    "daysRemoved": "−{{ count }} day(s)",
+    "clientEmailHint": "Optional — sends the client their sign-in details for the customer portal."
   },
   "reservation": {
     "title": "Reservations",
@@ -365,7 +433,17 @@
     "confirmCancel": "Cancel this reservation request?",
     "noReservations": "You have no reservations yet.",
     "findACar": "Find a car to book.",
-    "holdsUntil": "Holds until {{ date }}"
+    "holdsUntil": "Holds until {{ date }}",
+    "resultCount": "{{ count }} cars available",
+    "viewMode": "Result view",
+    "viewList": "List",
+    "viewMap": "Map",
+    "mapLabel": "Map of available cars",
+    "searchThisArea": "Search this area",
+    "noPlacesOnMap": "No pick-up place to show on the map for this search.",
+    "whereToFindUs": "Where to find us",
+    "myRentings": "My rentals",
+    "noRentings": "You have no rentals yet."
   },
   "profile": {
     "accountDetails": "Account details",
@@ -383,7 +461,8 @@
     "passwordChanged": "Your password has been changed.",
     "passwordFailed": "Could not change your password.",
     "language": "Interface language",
-    "languageHint": "Applies everywhere you sign in."
+    "languageHint": "Applies everywhere you sign in.",
+    "mustChangePassword": "Your account is still using the temporary password that was emailed to you. Choose a new password below to unlock the rest of the app."
   },
   "team": {
     "title": "Team",
@@ -774,6 +853,10 @@
     "perActiveAgency": "{{ amount }} per active agency",
     "perAgency": "{{ count }} per agency on average",
     "allAgencies": "All agencies together",
+    "clientAccounts": "Clients with an account",
+    "clientAccountShare": "{{ percent }}% of clients can sign in",
+    "carCountries": "Countries with cars",
+    "carPlaces": "{{ count }} pick-up places",
     "alertsSection": "Needs attention",
     "allClear": "Nothing waiting — every agency is subscribed and inside its plan.",
     "lapsedSubscriptions": "Lapsed subscriptions",
@@ -831,5 +914,23 @@
     "closedNote": "This renting is over: the history stays readable but no new message can be posted.",
     "readOnlyNote": "You can read this conversation but not reply to it.",
     "pickThread": "Pick a conversation."
+  },
+  "reviews": {
+    "whatCustomersSay": "What customers say",
+    "reviewCount": "{{ count }} reviews",
+    "noReviewsYet": "No reviews yet.",
+    "notRated": "Not rated yet",
+    "outOfFive": "{{ value }} out of 5",
+    "starsCount": "{{ count }} stars",
+    "rateThisRental": "Rate this rental",
+    "yourRating": "Your rating",
+    "commentOptional": "Comment (optional)",
+    "commentPlaceholder": "How was the car, and how was the agency to deal with?",
+    "submit": "Publish review",
+    "pickAStar": "Pick a rating from one to five stars.",
+    "saveFailed": "Your review could not be saved. Please try again.",
+    "ratedOn": "Rated on {{ date }}",
+    "showMore": "Show more reviews",
+    "anonymous": "A customer"
   }
 }

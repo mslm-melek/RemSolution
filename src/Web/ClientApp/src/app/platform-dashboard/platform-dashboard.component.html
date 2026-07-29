@@ -17,6 +17,11 @@
   </div>
   <div *ngIf="loading" class="loading">{{ t('common.loading') }}</div>
 
+  <!-- Shortcuts the admin chooses for themselves. Outside the loading guard
+       below: this screen is their landing page, so the actions must be there even
+       while the figures are still coming — or failed to. -->
+  <app-quick-actions scope="platform"></app-quick-actions>
+
   <ng-container *ngIf="data && !loading">
     <!-- The shape of the installation: who is on board, who is paying, how much
          data they hold. -->
@@ -87,6 +92,36 @@
           <span class="tile-note">{{ t('platformDashboard.allAgencies') }}</span>
         </div>
       </div>
+
+      <!-- Clients who can actually sign in — the platform's own audience, as
+           opposed to the client records their agencies keep. -->
+      <div class="kpi accounts">
+        <div class="kpi-head">
+          <span class="kpi-icon"><mat-icon>badge</mat-icon></span>
+          <span class="tile-label">{{ t('platformDashboard.clientAccounts') }}</span>
+        </div>
+        <div class="tile-value">{{ data.totalClientAccounts | number }}</div>
+        <div class="kpi-foot">
+          <span class="tile-note" *ngIf="clientAccountShare !== null">
+            {{ t('platformDashboard.clientAccountShare',
+                 { percent: (clientAccountShare | number:'1.0-0') }) }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Where the fleet is, which is not where the agencies are registered. -->
+      <a class="kpi reach" [routerLink]="['/browse']">
+        <div class="kpi-head">
+          <span class="kpi-icon"><mat-icon>public</mat-icon></span>
+          <span class="tile-label">{{ t('platformDashboard.carCountries') }}</span>
+        </div>
+        <div class="tile-value">{{ data.carCountries | number }}</div>
+        <div class="kpi-foot">
+          <span class="tile-note">
+            {{ t('platformDashboard.carPlaces', { count: data.carPlaces }) }}
+          </span>
+        </div>
+      </a>
     </div>
 
     <!-- What the app owner has to act on. Empty is a good state, and says so. -->

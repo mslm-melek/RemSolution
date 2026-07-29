@@ -214,6 +214,40 @@ public class IdentityService : IIdentityService
         return (await _userManager.UpdateAsync(user)).ToApplicationResult();
     }
 
+    public async Task<Result> SetHomeWidgetsAsync(
+        string userId, IReadOnlyCollection<string> widgets, CancellationToken cancellationToken)
+    {
+        var user = await _userManager.FindByIdAsync(userId);
+
+        if (user is null)
+        {
+            return Result.Failure(new[] { $"User '{userId}' not found." });
+        }
+
+        // Serialize even an empty selection: the stored empty string is what
+        // separates "chose nothing" from the null of "never chose".
+        user.HomeWidgets = Domain.Constants.HomeWidgets.Serialize(widgets);
+
+        return (await _userManager.UpdateAsync(user)).ToApplicationResult();
+    }
+
+    public async Task<Result> SetHomeActionsAsync(
+        string userId, IReadOnlyCollection<string> actions, CancellationToken cancellationToken)
+    {
+        var user = await _userManager.FindByIdAsync(userId);
+
+        if (user is null)
+        {
+            return Result.Failure(new[] { $"User '{userId}' not found." });
+        }
+
+        // Serialize even an empty selection: the stored empty string is what
+        // separates "chose nothing" from the null of "never chose".
+        user.HomeActions = Domain.Constants.HomeActions.Serialize(actions);
+
+        return (await _userManager.UpdateAsync(user)).ToApplicationResult();
+    }
+
     public async Task<Result> UpdateProfileAsync(string userId, string? fullName, string email, CancellationToken cancellationToken)
     {
         var user = await _userManager.FindByIdAsync(userId);
@@ -255,7 +289,16 @@ public class IdentityService : IIdentityService
             return Result.Failure(new[] { $"User '{userId}' not found." });
         }
 
-        return (await _userManager.ChangePasswordAsync(user, currentPassword, newPassword)).ToApplicationResult();
+        var result = await _userManager.ChangePasswordAsync(user, currentPassword, newPassword);
+
+        if (result.Succeeded)
+        {
+            // The password is now the user's own, so the account stops being
+            // confined to this one action (see PasswordChangeRequiredMiddleware).
+            await _userManager.ClearMustChangePasswordAsync(user);
+        }
+
+        return result.ToApplicationResult();
     }
 
     public async Task<bool> IsInRoleAsync(string userId, string role)

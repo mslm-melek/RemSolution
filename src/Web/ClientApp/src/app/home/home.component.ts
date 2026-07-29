@@ -1,25 +1,20 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
-import { Subscription, timer } from 'rxjs';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Observable, Subscription, of, timer } from 'rxjs';
+import { map } from 'rxjs/operators';
+import { TranslocoService } from '@jsverse/transloco';
 import { AuthService } from '../shared/auth.service';
 import { ImpersonationService } from '../shared/impersonation.service';
+import { extractValidationErrors } from '../shared/form-utils';
 import {
-  AgenciesClient, BrandsClient, CarsClient, ClientsClient, MarketplaceCarDto,
-  MarketplaceClient, ModelCarsClient, SubscriptionPlansClient
+  HomeWidgetMeta, MAX_HOME_WIDGETS, availableHomeWidgets, resolveHomeWidgets
+} from '../shared/home-widgets';
+import {
+  BrandsClient, CarsClient, ChatClient, ClientsClient, CreditsClient,
+  CurrentUserDto, DocumentTemplatesClient, ExpenseTypesClient, ExpensesClient,
+  ExtraServiceTypesClient, MarketplaceCarDto, MarketplaceClient, ModelCarsClient,
+  RentingState, RentingsClient, ReservationStatus, ReservationsClient,
+  UpdateMyHomeWidgetsCommand, UsersClient
 } from '../web-api-client';
-
-interface StatTile {
-  // Transloco key; resolved in the template so a language switch re-renders it.
-  labelKey: string;
-  value: number | null;
-  icon: string;
-  link: string;
-}
-
-interface QuickAction {
-  labelKey: string;
-  icon: string;
-  link: string;
-}
 
 // How long each car stays on screen in the home-page slideshow.
 const SLIDE_INTERVAL_MS = 6_000;
@@ -32,87 +27,79 @@ const SHOWCASE_SIZE = 8;
   styleUrls: ['./home.component.css']
 })
 export class HomeComponent implements OnInit, OnDestroy {
+  private readonly transloco = inject(TranslocoService);
+
   isAuthenticated: boolean | null = null;
   isPlatformAdmin = false;
   isCustomer = false;
   displayName: string | null | undefined;
 
-  // Shop-window slideshow, shown to visitors and customers (staff get the
-  // dashboard instead). Cars come from the public marketplace, so an anonymous
+  // Shop-window slideshow, shown to visitors and customers (staff get their
+  // pinned tiles instead). Cars come from the public marketplace, so an anonymous
   // visitor can see them before signing in.
   showcase: MarketplaceCarDto[] = [];
   slide = 0;
   private autoplay?: Subscription;
   private showcaseRequested = false;
 
-  // Agency-user dashboard (tenant-scoped module counts).
-  agencyStats: StatTile[] = [
-    { labelKey: 'home.stats.cars', value: null, icon: 'directions_car', link: '/car' },
-    { labelKey: 'home.stats.clients', value: null, icon: 'group', link: '/client' },
-    { labelKey: 'home.stats.carModels', value: null, icon: 'category', link: '/model-car' },
-    { labelKey: 'home.stats.brands', value: null, icon: 'sell', link: '/brand' }
-  ];
+  // --- Agency home: the tiles the user pinned -------------------------------
 
-  agencyQuickActions: QuickAction[] = [
-    { labelKey: 'home.quick.newCar', icon: 'add', link: '/car/new' },
-    { labelKey: 'home.quick.newClient', icon: 'person_add', link: '/client/new' },
-    { labelKey: 'home.quick.newModel', icon: 'playlist_add', link: '/model-car/new' }
-  ];
+  // Everything this user could pin, and what they have pinned, in their order.
+  availableWidgets: HomeWidgetMeta[] = [];
+  pinnedWidgets: HomeWidgetMeta[] = [];
+  // Counts, by widget key: undefined while loading, so a tile shows "—" rather
+  // than a zero it has not confirmed.
+  counts: Record<string, number | undefined> = {};
 
-  // Platform-admin dashboard (cross-tenant catalog counts).
-  adminStats: StatTile[] = [
-    { labelKey: 'home.stats.agencies', value: null, icon: 'business', link: '/agency' },
-    { labelKey: 'home.stats.subscriptionPlans', value: null, icon: 'workspace_premium', link: '/subscription-plan' },
-    { labelKey: 'home.stats.carModels', value: null, icon: 'category', link: '/model-car' },
-    { labelKey: 'home.stats.brands', value: null, icon: 'sell', link: '/brand' }
-  ];
+  // Open while the user is choosing their tiles. `draft` is the selection being
+  // edited — the tiles on screen only change once it is saved.
+  customizing = false;
+  draft: string[] = [];
+  saving = false;
+  saveError = '';
 
-  adminQuickActions: QuickAction[] = [
-    { labelKey: 'home.quick.newAgency', icon: 'add_business', link: '/agency/new' },
-    { labelKey: 'home.quick.newPlan', icon: 'add', link: '/subscription-plan/new' }
-  ];
+  readonly maxWidgets = MAX_HOME_WIDGETS;
 
   constructor(
     private auth: AuthService,
     private impersonation: ImpersonationService,
+    private usersClient: UsersClient,
     private carsClient: CarsClient,
     private clientsClient: ClientsClient,
+    private rentingsClient: RentingsClient,
+    private reservationsClient: ReservationsClient,
+    private expensesClient: ExpensesClient,
+    private expenseTypesClient: ExpenseTypesClient,
+    private extraServiceTypesClient: ExtraServiceTypesClient,
+    private creditsClient: CreditsClient,
+    private chatClient: ChatClient,
+    private documentTemplatesClient: DocumentTemplatesClient,
     private modelCarsClient: ModelCarsClient,
     private brandsClient: BrandsClient,
-    private agenciesClient: AgenciesClient,
-    private plansClient: SubscriptionPlansClient,
     private marketplaceClient: MarketplaceClient
   ) { }
-
-  get stats(): StatTile[] {
-    return this.isPlatformAdmin ? this.adminStats : this.agencyStats;
-  }
-
-  get quickActions(): QuickAction[] {
-    return this.isPlatformAdmin ? this.adminQuickActions : this.agencyQuickActions;
-  }
 
   ngOnInit() {
     this.auth.currentUser$.subscribe(user => {
       this.isAuthenticated = user.isAuthenticated ?? false;
       // A platform admin inside an agency workspace is looking at that agency, so
       // the tenant-scoped tiles and quick actions are the right ones — the console
-      // counts (agencies, plans) belong to the screens outside the workspace.
+      // dashboard belongs outside the workspace.
       this.isPlatformAdmin = AuthService.isPlatformAdmin(user) && !this.impersonation.current;
       this.isCustomer = AuthService.isCustomer(user);
       this.displayName = user.fullName || user.userName;
 
-      // Customers get a browse-oriented home, not the staff dashboard (and none
-      // of the staff stat calls, which they aren't authorized for).
+      // Customers get a browse-oriented home, not the staff one (and none of the
+      // staff count calls, which they aren't authorized for).
       if (!this.isAuthenticated || this.isCustomer) {
         this.loadShowcase();
         return;
       }
 
-      if (this.isPlatformAdmin) {
-        this.loadAdminStats();
-      } else {
-        this.loadAgencyStats();
+      // The platform admin's landing screen IS the console dashboard, rendered
+      // straight into the home route — so nothing else to set up here.
+      if (!this.isPlatformAdmin) {
+        this.setUpAgencyHome(user);
       }
     });
   }
@@ -120,6 +107,178 @@ export class HomeComponent implements OnInit, OnDestroy {
   ngOnDestroy() {
     this.autoplay?.unsubscribe();
   }
+
+  // --- Pinned tiles ---------------------------------------------------------
+
+  private setUpAgencyHome(user: CurrentUserDto) {
+    // A platform admin working inside an agency workspace counts as that agency's
+    // administrator, exactly as the navigation's Configuration menu does: the
+    // reference-data screens accept either administrator role.
+    const isAgencyAdmin = user.role === 'AgencyAdministrator' || !!this.impersonation.current;
+
+    this.availableWidgets = availableHomeWidgets(user, isAgencyAdmin);
+
+    this.auth.homeWidgets$.subscribe(stored => {
+      this.pinnedWidgets = resolveHomeWidgets(stored, this.availableWidgets);
+      this.loadCounts();
+    });
+  }
+
+  // Only the tiles on screen are counted, and each is counted once: revisiting
+  // the page after pinning something new fetches the new tile alone.
+  private loadCounts() {
+    for (const widget of this.pinnedWidgets) {
+      if (widget.key in this.counts) continue;
+
+      // Reserve the slot before the call so a second pass cannot re-request it.
+      this.counts[widget.key] = undefined;
+
+      this.countOf(widget.key).subscribe({
+        next: value => this.counts[widget.key] = value,
+        // A tile that cannot be counted keeps its "—" and stays a working link;
+        // the landing page is not the place for an error banner about one figure.
+        error: err => console.error(err)
+      });
+    }
+  }
+
+  // Each tile counts what its label says. Where a list has an obvious "needs
+  // doing" subset (unconfirmed requests, running rentings, unpaid expenses), the
+  // tile counts that rather than the whole table — a total nobody acts on is
+  // decoration. Page size 1: only totalCount is wanted.
+  //
+  // Whatever is filtered here MUST match the tile's `queryParams` in
+  // shared/home-widgets, or clicking the figure opens a list that disagrees
+  // with it.
+  private countOf(key: string): Observable<number> {
+    switch (key) {
+      case 'Cars':
+        return this.carsClient.getCars(1, 1, null, null, null, null, null, null, null, null, false)
+          .pipe(map(r => r.totalCount ?? 0));
+      case 'Clients':
+        return this.clientsClient.getClients(1, 1, null, null, null, null, null, null, false)
+          .pipe(map(r => r.totalCount ?? 0));
+      case 'Rentings':
+        return this.rentingsClient
+          .getRentings(
+            1, 1, null, null, RentingState.InProgress, null, null, undefined, false, null, false)
+          .pipe(map(r => r.totalCount ?? 0));
+      case 'Reservations':
+        return this.reservationsClient
+          .getReservations(1, 1, null, null, ReservationStatus.PendingConfirmation, null, false)
+          .pipe(map(r => r.totalCount ?? 0));
+      case 'Expenses':
+        return this.expensesClient
+          .getExpenses(1, 1, null, null, null, null, true, null, false)
+          .pipe(map(r => r.totalCount ?? 0));
+      case 'Credits':
+        return this.creditsClient.getClientCredits(1, 1, true, null, null, false)
+          .pipe(map(r => r.totalCount ?? 0));
+      case 'Chat':
+        return this.chatClient.getThreads(1, 1, true)
+          .pipe(map(r => r.totalCount ?? 0));
+      case 'Brands':
+        return this.brandsClient.getBrands().pipe(map(r => (r || []).length));
+      case 'CarModels':
+        return this.modelCarsClient.getModelCars(1, 1, null, null, false)
+          .pipe(map(r => r.totalCount ?? 0));
+      case 'ExpenseTypes':
+        return this.expenseTypesClient.getExpenseTypes(true).pipe(map(r => (r || []).length));
+      case 'ExtraServiceTypes':
+        return this.extraServiceTypesClient.getExtraServiceTypes(true).pipe(map(r => (r || []).length));
+      case 'DocumentTemplates':
+        return this.documentTemplatesClient.getDocumentTemplates(null, null, false)
+          .pipe(map(r => (r || []).length));
+      default:
+        return of(0);
+    }
+  }
+
+  // --- Customizing ----------------------------------------------------------
+
+  startCustomizing() {
+    this.draft = this.pinnedWidgets.map(w => w.key);
+    this.saveError = '';
+    this.customizing = true;
+  }
+
+  cancelCustomizing() {
+    this.customizing = false;
+    this.saveError = '';
+  }
+
+  isPinned(key: string): boolean {
+    return this.draft.includes(key);
+  }
+
+  // The pinned list is what the panel shows in order; everything else is offered
+  // below it. Newly checked tiles join the end, where the user can see them.
+  toggleWidget(key: string) {
+    if (this.isPinned(key)) {
+      this.draft = this.draft.filter(k => k !== key);
+      return;
+    }
+
+    if (this.draft.length >= MAX_HOME_WIDGETS) return;
+
+    this.draft = [...this.draft, key];
+  }
+
+  get draftWidgets(): HomeWidgetMeta[] {
+    return this.draft
+      .map(key => this.availableWidgets.find(w => w.key === key))
+      .filter((w): w is HomeWidgetMeta => w !== undefined);
+  }
+
+  get unpinnedWidgets(): HomeWidgetMeta[] {
+    return this.availableWidgets.filter(w => !this.isPinned(w.key));
+  }
+
+  get isFull(): boolean {
+    return this.draft.length >= MAX_HOME_WIDGETS;
+  }
+
+  // Up/down rather than drag: it works from the keyboard, and it mirrors itself
+  // in Arabic without any right-to-left handling.
+  moveUp(index: number) {
+    if (index <= 0) return;
+    const next = [...this.draft];
+    [next[index - 1], next[index]] = [next[index], next[index - 1]];
+    this.draft = next;
+  }
+
+  moveDown(index: number) {
+    if (index >= this.draft.length - 1) return;
+    const next = [...this.draft];
+    [next[index], next[index + 1]] = [next[index + 1], next[index]];
+    this.draft = next;
+  }
+
+  saveWidgets() {
+    this.saving = true;
+    this.saveError = '';
+
+    const widgets = [...this.draft];
+
+    this.usersClient.updateMyHomeWidgets(new UpdateMyHomeWidgetsCommand({ widgets })).subscribe({
+      next: () => {
+        this.saving = false;
+        this.customizing = false;
+        this.pinnedWidgets = resolveHomeWidgets(widgets, this.availableWidgets);
+        // The current-user probe is fetched once per page load, so the service
+        // has to be told — otherwise coming back to the home screen would show
+        // the selection from before this save.
+        this.auth.markHomeWidgets(widgets);
+        this.loadCounts();
+      },
+      error: err => {
+        this.saving = false;
+        this.saveError = extractValidationErrors(err) ?? this.transloco.translate('home.widgetsSaveFailed');
+      }
+    });
+  }
+
+  // --- Slideshow ------------------------------------------------------------
 
   // Advancing on a click also stops the timer: a card must not slide away from
   // under someone who has taken control of the slideshow.
@@ -158,42 +317,4 @@ export class HomeComponent implements OnInit, OnDestroy {
     });
   }
 
-  private loadAgencyStats() {
-    // Page size 1: only totalCount is needed for the tiles.
-    this.carsClient.getCars(1, 1, null, null, null, null, false).subscribe({
-      next: r => this.agencyStats[0].value = r.totalCount ?? 0,
-      error: err => console.error(err)
-    });
-    this.clientsClient.getClients(1, 1, null, null, null, false).subscribe({
-      next: r => this.agencyStats[1].value = r.totalCount ?? 0,
-      error: err => console.error(err)
-    });
-    this.modelCarsClient.getModelCars(1, 1, null, null, false).subscribe({
-      next: r => this.agencyStats[2].value = r.totalCount ?? 0,
-      error: err => console.error(err)
-    });
-    this.brandsClient.getBrands().subscribe({
-      next: r => this.agencyStats[3].value = (r || []).length,
-      error: err => console.error(err)
-    });
-  }
-
-  private loadAdminStats() {
-    this.agenciesClient.getAgencies().subscribe({
-      next: r => this.adminStats[0].value = (r || []).length,
-      error: err => console.error(err)
-    });
-    this.plansClient.getSubscriptionPlans().subscribe({
-      next: r => this.adminStats[1].value = (r || []).length,
-      error: err => console.error(err)
-    });
-    this.modelCarsClient.getModelCars(1, 1, null, null, false).subscribe({
-      next: r => this.adminStats[2].value = r.totalCount ?? 0,
-      error: err => console.error(err)
-    });
-    this.brandsClient.getBrands().subscribe({
-      next: r => this.adminStats[3].value = (r || []).length,
-      error: err => console.error(err)
-    });
-  }
 }

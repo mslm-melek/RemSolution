@@ -58,6 +58,19 @@
     "actionFailed": "تعذّر تنفيذ الإجراء.",
     "resultCount": "{{ count }} سجلات"
   },
+  "filters": {
+    "clear": "إزالة هذا الفلتر",
+    "rentingStarts": "يبدأ: {{ range }}",
+    "rentingEnds": "ينتهي: {{ range }}",
+    "rentingRuns": "جارية: {{ range }}",
+    "excludingCancelled": "باستثناء الملغاة",
+    "carStatus": "الحالة: {{ status }}",
+    "onRent": "قيد التأجير",
+    "notOnRent": "غير مؤجّرة",
+    "added": "أُضيف: {{ range }}",
+    "flagged": "معلّمون",
+    "notFlagged": "غير معلّمين"
+  },
   "nav": {
     "brandName": "RemSolution",
     "toggle": "إظهار القائمة",
@@ -88,7 +101,8 @@
     "myChats": "رسائلي",
     "bookings": "الحجوزات والكراء",
     "finance": "المالية",
-    "clientsList": "كل العملاء"
+    "clientsList": "كل العملاء",
+    "myRentings": "إيجاراتي"
   },
   "home": {
     "welcomeTitle": "مرحبًا بك في RemSolution",
@@ -106,20 +120,57 @@
     "showcaseNext": "السيارة التالية",
     "welcomeBack": "أهلًا بعودتك",
     "quickActions": "إجراءات سريعة",
-    "stats": {
+    "customize": "تخصيص",
+    "customizeTitle": "اختصارات صفحتك الرئيسية",
+    "customizeHint": "اختر القوائم التي تريدها على بُعد نقرة واحدة — {{ max }} كحد أقصى. تُعرض فقط القوائم التي لديك صلاحية عليها.",
+    "pinnedWidgets": "على صفحتك الرئيسية",
+    "pinnedNone": "لا يوجد أي اختصار مثبَّت.",
+    "moreWidgets": "اختصارات أخرى",
+    "widgetsFull": "لقد بلغت {{ max }} اختصارات. أزِل واحدًا لإضافة آخر.",
+    "moveUp": "تحريك للأعلى",
+    "moveDown": "تحريك للأسفل",
+    "noWidgets": "لا توجد اختصارات على صفحتك الرئيسية بعد.",
+    "noWidgetsAvailable": "لا تتوفّر أي قائمة لحسابك بعد.",
+    "chooseWidgets": "اختيار الاختصارات",
+    "widgetsSaveFailed": "تعذّر حفظ اختصاراتك.",
+    "customizeActions": "اختيار الإجراءات",
+    "customizeActionsHint": "اختر الإجراءات التي تريدها على صفحتك الرئيسية — {{ max }} كحد أقصى. تُعرض فقط الإجراءات التي لديك صلاحية عليها.",
+    "pickedActions": "على صفحتك الرئيسية",
+    "pickedNone": "لم يتم اختيار أي إجراء.",
+    "moreActions": "إجراءات أخرى",
+    "actionsFull": "لقد بلغت {{ max }} إجراءات. أزِل واحدًا لإضافة آخر.",
+    "noActions": "لا توجد إجراءات سريعة على صفحتك الرئيسية.",
+    "actionsSaveFailed": "تعذّر حفظ الإجراءات السريعة.",
+    "widgets": {
       "cars": "السيارات",
       "clients": "العملاء",
-      "carModels": "الطُرز",
+      "rentings": "عمليات كراء جارية",
+      "reservations": "طلبات في انتظار التأكيد",
+      "expenses": "مصاريف غير مدفوعة",
+      "credits": "عملاء مَدينون",
+      "chat": "محادثات غير مقروءة",
       "brands": "الماركات",
-      "agencies": "الوكالات",
-      "subscriptionPlans": "باقات الاشتراك"
+      "carModels": "الطُرز",
+      "expenseTypes": "أنواع المصاريف",
+      "extraServiceTypes": "أنواع الخدمات الإضافية",
+      "documentTemplates": "نماذج الوثائق"
     },
     "quick": {
       "newCar": "سيارة جديدة",
+      "newRenting": "كراء جديد",
+      "newReservation": "حجز جديد",
       "newClient": "عميل جديد",
-      "newModel": "طراز جديد",
+      "newExpense": "مصروف جديد",
       "newAgency": "وكالة جديدة",
-      "newPlan": "باقة جديدة"
+      "newPlan": "باقة جديدة",
+      "agencies": "الوكالات",
+      "plans": "باقات الاشتراك",
+      "newCarModel": "طراز جديد",
+      "carBrands": "الماركات",
+      "carModels": "الطُرز",
+      "expenseTypes": "أنواع المصاريف",
+      "extraServiceTypes": "أنواع الخدمات الإضافية",
+      "browseMarketplace": "عرض السوق"
     }
   },
   "brand": {
@@ -198,6 +249,22 @@
     "identity": "الهوية",
     "firstName": "الاسم",
     "lastName": "اللقب",
+    "email": "البريد الإلكتروني",
+    "emailHint": "يُستعمل كاسم دخول إلى فضاء العميل.",
+    "emailInvalid": "أدخل عنوان بريد إلكتروني صالحًا.",
+    "account": "حساب فضاء العميل",
+    "accountActive": "يمكن لهذا العميل الدخول إلى فضاء العميل.",
+    "accountNone": "لا يملك هذا العميل حسابًا بعد.",
+    "accountNeedsEmail": "أضف عنوان بريد إلكتروني لإنشاء حساب لهذا العميل.",
+    "sendInvite": "إرسال الدعوة",
+    "resendInvite": "إعادة إرسال الدعوة",
+    "inviting": "جارٍ الإرسال…",
+    "inviteCreated": "تم إنشاء الحساب. أُرسلت بيانات الدخول إلى بريد العميل.",
+    "inviteResent": "أُرسلت كلمة مرور مؤقتة جديدة إلى بريد العميل.",
+    "inviteLinked": "تم ربط هذا العميل بحسابه الموجود. يدخل بكلمة المرور التي يستعملها أصلًا.",
+    "inviteAlreadyActive": "اختار هذا العميل كلمة مروره الخاصة، لذلك لم يُرسل شيء. يمكنه استعمال رابط نسيت كلمة المرور عند الحاجة.",
+    "inviteStaffEmail": "هذا العنوان يخص حساب موظف ولا يصلح كاسم دخول لعميل. استعمل عنوانًا آخر.",
+    "inviteMailFailed": "الحساب جاهز، لكن تعذّر إرسال البريد. تحقّق من إعدادات البريد وأعد المحاولة.",
     "birthPlace": "مكان الميلاد",
     "birthCountry": "بلد الميلاد",
     "cinSection": "بطاقة التعريف",
@@ -282,7 +349,8 @@
     "reissueContract": "إصدار عقد جديد للفترة الجديدة",
     "keepContract": "الإبقاء على العقد الحالي",
     "daysAdded": "+{{ count }} يوم",
-    "daysRemoved": "−{{ count }} يوم"
+    "daysRemoved": "−{{ count }} يوم",
+    "clientEmailHint": "اختياري — يرسل إلى العميل بيانات الدخول إلى فضاء العميل."
   },
   "reservation": {
     "title": "الحجوزات",
@@ -365,7 +433,17 @@
     "confirmCancel": "هل تريد إلغاء طلب الحجز هذا؟",
     "noReservations": "ليس لديك أي حجز بعد.",
     "findACar": "ابحث عن سيارة لحجزها.",
-    "holdsUntil": "محجوزة إلى غاية {{ date }}"
+    "holdsUntil": "محجوزة إلى غاية {{ date }}",
+    "resultCount": "{{ count }} سيارة متاحة",
+    "viewMode": "طريقة عرض النتائج",
+    "viewList": "قائمة",
+    "viewMap": "خريطة",
+    "mapLabel": "خريطة السيارات المتاحة",
+    "searchThisArea": "البحث في هذه المنطقة",
+    "noPlacesOnMap": "لا يوجد مكان استلام لعرضه على الخريطة لهذا البحث.",
+    "whereToFindUs": "أين تجدنا",
+    "myRentings": "إيجاراتي",
+    "noRentings": "ليس لديك أي إيجار بعد."
   },
   "profile": {
     "accountDetails": "بيانات الحساب",
@@ -383,7 +461,8 @@
     "passwordChanged": "تم تغيير كلمة المرور.",
     "passwordFailed": "تعذّر تغيير كلمة المرور.",
     "language": "لغة الواجهة",
-    "languageHint": "تُطبَّق في كل مرة تسجّل فيها الدخول."
+    "languageHint": "تُطبَّق في كل مرة تسجّل فيها الدخول.",
+    "mustChangePassword": "لا يزال حسابك يستخدم كلمة المرور المؤقتة التي وصلتك بالبريد. اختر كلمة مرور جديدة أدناه لفتح بقية التطبيق."
   },
   "team": {
     "title": "الفريق",
@@ -774,6 +853,10 @@
     "perActiveAgency": "{{ amount }} لكل وكالة نشطة",
     "perAgency": "{{ count }} لكل وكالة في المتوسط",
     "allAgencies": "جميع الوكالات معًا",
+    "clientAccounts": "عملاء لديهم حساب",
+    "clientAccountShare": "{{ percent }} % من العملاء يمكنهم الدخول",
+    "carCountries": "بلدان بها سيارات",
+    "carPlaces": "{{ count }} أماكن استلام",
     "alertsSection": "يتطلب المعالجة",
     "allClear": "لا شيء معلق — كل وكالة مشتركة وداخل حدود خطتها.",
     "lapsedSubscriptions": "اشتراكات منتهية المدة",
@@ -831,5 +914,23 @@
     "closedNote": "انتهت عملية الكراء: يبقى السجل متاحا للقراءة دون إمكانية إرسال رسائل جديدة.",
     "readOnlyNote": "يمكنك قراءة هذه المحادثة دون الرد عليها.",
     "pickThread": "اختر محادثة."
+  },
+  "reviews": {
+    "whatCustomersSay": "آراء العملاء",
+    "reviewCount": "{{ count }} تقييمات",
+    "noReviewsYet": "لا توجد تقييمات بعد.",
+    "notRated": "لم يُقيَّم بعد",
+    "outOfFive": "{{ value }} من 5",
+    "starsCount": "{{ count }} نجوم",
+    "rateThisRental": "قيّم هذا الإيجار",
+    "yourRating": "تقييمك",
+    "commentOptional": "تعليق (اختياري)",
+    "commentPlaceholder": "كيف كانت السيارة، وكيف كان التعامل مع الوكالة؟",
+    "submit": "نشر التقييم",
+    "pickAStar": "اختر تقييمًا من نجمة إلى خمس نجوم.",
+    "saveFailed": "تعذّر حفظ تقييمك. يرجى المحاولة مرة أخرى.",
+    "ratedOn": "قُيّم في {{ date }}",
+    "showMore": "عرض المزيد من التقييمات",
+    "anonymous": "عميل"
   }
 }

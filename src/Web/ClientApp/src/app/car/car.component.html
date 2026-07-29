@@ -40,6 +40,18 @@
       <mat-icon>filter_alt</mat-icon> {{ t('common.apply') }}
     </button>
     <button mat-button (click)="clearFilters()">{{ t('common.clear') }}</button>
+
+    <!-- Filters this list was opened with (from a dashboard count), which have
+         no control of their own. -->
+    <div class="filter-chips" *ngIf="chips.length">
+      <span class="chip no-dot" *ngFor="let chip of chips">
+        {{ t(chip.labelKey, chip.labelArgs) }}
+        <button type="button" class="chip-clear" (click)="clearChip(chip)"
+                [matTooltip]="t('filters.clear')" [attr.aria-label]="t('filters.clear')">
+          <mat-icon>close</mat-icon>
+        </button>
+      </span>
+    </div>
   </div>
 
   <!-- Sorting is server-side (see onSort): clicking a header re-queries the

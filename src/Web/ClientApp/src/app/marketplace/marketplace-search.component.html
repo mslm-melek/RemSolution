@@ -41,49 +41,88 @@
     <div *ngIf="error" class="error">{{ error }}</div>
   </div>
 
-  <div class="results">
-    <div *ngIf="loading" class="state">{{ t('marketplace.searching') }}</div>
-    <div *ngIf="!loading && searched && cars.length === 0" class="state">
-      {{ t('marketplace.noResults') }}
+  <div class="results" [class.split]="view === 'map'">
+    <div class="results-head">
+      <span class="count" *ngIf="!loading && searched">
+        {{ t('marketplace.resultCount', { count: totalCount }) }}
+      </span>
+      <mat-button-toggle-group class="view-toggle" [value]="view"
+                               [attr.aria-label]="t('marketplace.viewMode')">
+        <mat-button-toggle value="list" (click)="setView('list')">
+          <mat-icon>view_list</mat-icon> {{ t('marketplace.viewList') }}
+        </mat-button-toggle>
+        <mat-button-toggle value="map" (click)="setView('map')">
+          <mat-icon>map</mat-icon> {{ t('marketplace.viewMap') }}
+        </mat-button-toggle>
+      </mat-button-toggle-group>
     </div>
 
-    <div class="grid" *ngIf="!loading && cars.length">
-      <!-- Two destinations per card — the car and the agency behind it — so the
-           card is a container rather than one big link. -->
-      <div class="car-card" *ngFor="let car of cars">
-        <a class="thumb" [class.placeholder]="!car.imageUrl"
-           [style.background-image]="car.imageUrl ? 'url(' + car.imageUrl + ')' : null"
-           [routerLink]="['/browse/car', car.id]"
-           [attr.aria-label]="car.brandName + ' ' + car.modelName">
-          <mat-icon *ngIf="!car.imageUrl">directions_car</mat-icon>
-        </a>
-        <div class="body">
-          <a class="model" [routerLink]="['/browse/car', car.id]">{{ car.brandName }} {{ car.modelName }}</a>
-          <!-- The name and the branch are one text run, so they wrap as a
-               sentence rather than as two side-by-side flex columns. -->
-          <a class="agency" [routerLink]="['/browse/agency', car.agencyId]"
-             [matTooltip]="t('marketplace.viewAgency')">
-            <mat-icon>place</mat-icon>
-            <span>{{ car.agencyName }}<span *ngIf="car.branchName"> · {{ car.branchName }}</span></span>
-          </a>
-          <div class="foot">
-            <span class="price" *ngIf="car.dailyRate">
-              <span class="money">{{ car.dailyRate.amount | number:'1.2-2' }} {{ car.dailyRate.currency }}</span><span class="per">{{ t('marketplace.perDay') }}</span>
-            </span>
-            <a class="book" [routerLink]="['/browse/car', car.id]">
-              {{ t('marketplace.viewAndBook') }} <mat-icon>arrow_forward</mat-icon>
+    <div class="panes">
+      <div class="list-pane">
+        <div *ngIf="loading" class="state">{{ t('marketplace.searching') }}</div>
+        <div *ngIf="!loading && searched && cars.length === 0" class="state">
+          {{ t('marketplace.noResults') }}
+        </div>
+
+        <div class="grid" *ngIf="!loading && cars.length">
+          <!-- Two destinations per card — the car and the agency behind it — so the
+               card is a container rather than one big link. -->
+          <div class="car-card" *ngFor="let car of cars"
+               (mouseenter)="highlightedBranchId = car.branchId ?? null"
+               (mouseleave)="highlightedBranchId = null">
+            <a class="thumb" [class.placeholder]="!car.imageUrl"
+               [style.background-image]="car.imageUrl ? 'url(' + car.imageUrl + ')' : null"
+               [routerLink]="['/browse/car', car.id]"
+               [attr.aria-label]="car.brandName + ' ' + car.modelName">
+              <mat-icon *ngIf="!car.imageUrl">directions_car</mat-icon>
             </a>
+            <div class="body">
+              <a class="model" [routerLink]="['/browse/car', car.id]">{{ car.brandName }} {{ car.modelName }}</a>
+              <!-- The name and the branch are one text run, so they wrap as a
+                   sentence rather than as two side-by-side flex columns. -->
+              <a class="agency" [routerLink]="['/browse/agency', car.agencyId]"
+                 [matTooltip]="t('marketplace.viewAgency')">
+                <mat-icon>place</mat-icon>
+                <span>{{ car.agencyName }}<span *ngIf="car.branchName"> · {{ car.branchName }}</span></span>
+              </a>
+              <!-- The seller's reputation, next to who they are. Hidden entirely
+                   for an unrated agency: "not rated" on every card would be
+                   noise, and it is not a mark against them. -->
+              <a class="rating" *ngIf="car.agencyRating != null"
+                 [routerLink]="['/browse/agency', car.agencyId]"
+                 [matTooltip]="t('reviews.reviewCount', { count: car.agencyReviewCount })">
+                <app-rating-stars [value]="car.agencyRating" [count]="car.agencyReviewCount"></app-rating-stars>
+              </a>
+              <div class="foot">
+                <span class="price" *ngIf="car.dailyRate">
+                  <span class="money">{{ car.dailyRate.amount | number:'1.2-2' }} {{ car.dailyRate.currency }}</span><span class="per">{{ t('marketplace.perDay') }}</span>
+                </span>
+                <a class="book" [routerLink]="['/browse/car', car.id]">
+                  {{ t('marketplace.viewAndBook') }} <mat-icon>arrow_forward</mat-icon>
+                </a>
+              </div>
+            </div>
           </div>
         </div>
+
+        <mat-paginator *ngIf="!loading && totalCount > pageSize"
+                       [length]="totalCount"
+                       [pageIndex]="pageNumber - 1"
+                       [pageSize]="pageSize"
+                       [pageSizeOptions]="[12, 24, 48]"
+                       (page)="onPage($event)">
+        </mat-paginator>
+      </div>
+
+      <div class="map-pane" *ngIf="view === 'map'">
+        <app-marketplace-map
+          [points]="mapPoints"
+          [highlightedBranchId]="highlightedBranchId"
+          [searchOnMove]="true"
+          (placeSelected)="onPlaceSelected($event)"
+          (searchArea)="onSearchArea($event)">
+        </app-marketplace-map>
       </div>
     </div>
-
-    <mat-paginator *ngIf="!loading && totalCount > pageSize"
-                   [length]="totalCount"
-                   [pageIndex]="pageNumber - 1"
-                   [pageSize]="pageSize"
-                   [pageSizeOptions]="[12, 24, 48]"
-                   (page)="onPage($event)">
-    </mat-paginator>
   </div>
 </div>

@@ -1,0 +1,187 @@
+/* Same shell as the reservations page next door: the two are siblings in the
+   customer's account and should not look like different products. */
+.my-rentings {
+  max-width: 820px;
+  margin: 1.5rem auto;
+  padding: 0 1rem;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.head h2 {
+  margin: 0;
+}
+
+.error,
+.form-error {
+  background: var(--danger-bg);
+  color: var(--danger);
+  padding: 0.6rem 0.9rem;
+  border-radius: var(--r-sm);
+  margin-bottom: 1rem;
+}
+
+.state {
+  text-align: center;
+  color: var(--muted);
+  padding: 2rem;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.renting-card {
+  border-radius: var(--r);
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.row {
+  display: flex;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+}
+
+.thumb {
+  flex: none;
+  width: 108px;
+  height: 72px;
+  border-radius: var(--r-sm);
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.thumb.placeholder {
+  background: var(--surface-3);
+  color: var(--muted-2);
+}
+
+.main {
+  flex: 1;
+  min-width: 0;
+}
+
+.main .car {
+  font-weight: 600;
+  font-size: 1.05rem;
+}
+
+.main .agency {
+  display: flex;
+  width: fit-content;
+  align-items: center;
+  gap: 4px;
+  color: var(--muted);
+  font-size: 0.85rem;
+  margin: 2px 0;
+  text-decoration: none;
+}
+
+.main .agency:hover {
+  color: var(--brand-700);
+  text-decoration: underline;
+}
+
+.main .agency mat-icon {
+  font-size: 15px;
+  width: 15px;
+  height: 15px;
+}
+
+.main .dates {
+  color: var(--ink-2);
+  font-size: 0.9rem;
+}
+
+.side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  text-align: end;
+}
+
+.status {
+  padding: 3px 12px;
+  border-radius: var(--r-pill);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.status.upcoming { background: var(--warn-bg); color: var(--warn); }
+.status.active { background: var(--info-bg); color: var(--info); }
+.status.done { background: var(--ok-bg); color: var(--ok); }
+.status.cancelled { background: var(--surface-3); color: var(--muted); }
+
+.price {
+  font-weight: 600;
+  color: var(--brand-700);
+}
+
+.mine {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.rated-on {
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+
+/* Reads as a continuation of the card above it, not a second card. */
+.rate-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-2);
+  padding: 1rem 1.25rem 1.25rem;
+  border-top: 1px solid var(--line);
+  background: var(--surface-2);
+}
+
+.rate-form .label {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.rate-form .comment {
+  width: 100%;
+  margin-top: var(--gap-2);
+}
+
+.rate-form .form-error {
+  margin-bottom: 0;
+}
+
+.rate-form .actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--gap-2);
+}
+
+@media (max-width: 620px) {
+  .row {
+    flex-wrap: wrap;
+  }
+
+  .side {
+    align-items: flex-start;
+    text-align: start;
+    width: 100%;
+  }
+
+  .mine {
+    align-items: flex-start;
+  }
+}

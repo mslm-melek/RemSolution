@@ -81,6 +81,10 @@ public class ChangePasswordModel : PageModel
             return Page();
         }
 
+        // Before RefreshSignInAsync, so the ticket it mints below is already
+        // free of the MustChangePassword claim (see the extension).
+        await _userManager.ClearMustChangePasswordAsync(user);
+
         await _signInManager.RefreshSignInAsync(user);
         _logger.LogInformation("User changed their password successfully");
         StatusMessage = _localizer["Identity.Manage.PasswordChanged"];

@@ -16,6 +16,8 @@ using RemSolution.Application.Features.Users.Commands.SetMyAgencyUserActiveComma
 using RemSolution.Application.Features.Users.Commands.UpdateMyProfileCommand;
 using RemSolution.Application.Features.Users.Commands.ChangeMyPasswordCommand;
 using RemSolution.Application.Features.Users.Commands.UpdateMyLanguageCommand;
+using RemSolution.Application.Features.Users.Commands.UpdateMyHomeWidgetsCommand;
+using RemSolution.Application.Features.Users.Commands.UpdateMyHomeActionsCommand;
 using RemSolution.Application.Features.Users.Queries.GetMyProfileQuery;
 using RemSolution.Application.Features.Users.Queries.GetAgencyUsersQuery;
 using RemSolution.Application.Features.Users.Queries.GetAgencyUserByIdQuery;
@@ -53,6 +55,8 @@ public class Users : EndpointGroupBase
         group.MapPut("me/profile", UpdateMyProfile).WithName(nameof(UpdateMyProfile)).RequireAuthorization();
         group.MapPut("me/password", ChangeMyPassword).WithName(nameof(ChangeMyPassword)).RequireAuthorization();
         group.MapPut("me/language", UpdateMyLanguage).WithName(nameof(UpdateMyLanguage)).RequireAuthorization();
+        group.MapPut("me/home-widgets", UpdateMyHomeWidgets).WithName(nameof(UpdateMyHomeWidgets)).RequireAuthorization();
+        group.MapPut("me/home-actions", UpdateMyHomeActions).WithName(nameof(UpdateMyHomeActions)).RequireAuthorization();
     }
 
     public async Task<Ok<MyProfileDto>> GetMyProfile(ISender sender)
@@ -85,6 +89,23 @@ public class Users : EndpointGroupBase
 
         CultureCookie.Write(httpContext.Response, command.Language);
 
+        return TypedResults.NoContent();
+    }
+
+    // The tiles the caller pinned to their own home screen, in their order. The
+    // choice rides back on the current-user probe (below), so the home screen
+    // renders from the one call the SPA already makes at startup.
+    public async Task<NoContent> UpdateMyHomeWidgets(ISender sender, UpdateMyHomeWidgetsCommand command)
+    {
+        await sender.Send(command);
+        return TypedResults.NoContent();
+    }
+
+    // The quick actions the caller keeps on their landing screen, in their order.
+    // Rides back on the current-user probe like the tiles do.
+    public async Task<NoContent> UpdateMyHomeActions(ISender sender, UpdateMyHomeActionsCommand command)
+    {
+        await sender.Send(command);
         return TypedResults.NoContent();
     }
 
@@ -188,7 +209,7 @@ public class Users : EndpointGroupBase
     {
         if (principal.Identity?.IsAuthenticated != true)
             return TypedResults.Ok(new CurrentUserDto(
-                false, null, null, null, null, null, Array.Empty<string>(), Array.Empty<string>(), false));
+                false, null, null, null, null, null, Array.Empty<string>(), Array.Empty<string>(), false, false, null, null));
 
         var user = await userManager.GetUserAsync(principal);
 
@@ -240,7 +261,16 @@ public class Users : EndpointGroupBase
             agencyName,
             permissions,
             features,
-            impersonating));
+            impersonating,
+            // Read from the user row rather than the claim: this endpoint is
+            // what the SPA polls to decide where to send someone, and it must
+            // agree with the middleware that will accept or refuse their next
+            // call — which also reads the row.
+            user?.MustChangePassword == true,
+            // Null when the user has never chosen, which is what tells the home
+            // screen to show its default tiles instead of none.
+            HomeWidgets.Parse(user?.HomeWidgets),
+            HomeActions.Parse(user?.HomeActions)));
     }
 }
 
@@ -257,4 +287,18 @@ public record CurrentUserDto(
     // named above rather than their own context. AgencyId/AgencyName/Permissions/
     // Features then all describe that agency — the SPA shows the agency's
     // navigation and a banner saying whose data is on screen.
-    bool IsImpersonating);
+    bool IsImpersonating,
+    // The account is still on the temporary password it was provisioned with.
+    // Every other API call will be refused until it is replaced, so the SPA
+    // routes straight to the change-password screen rather than rendering an
+    // app whose every request 403s.
+    bool MustChangePassword,
+    // The home-screen shortcut tiles this user pinned, in their chosen order
+    // (Domain.Constants.HomeWidgets keys). Null means they never chose, and the
+    // home screen falls back to its default set — an empty list is the
+    // deliberate "no tiles", so the two must stay distinguishable.
+    IReadOnlyList<string>? HomeWidgets,
+    // The quick actions this user keeps on their landing screen, in their chosen
+    // order (Domain.Constants.HomeActions keys). Null / empty read exactly as
+    // HomeWidgets above: never chose ⇒ defaults, empty ⇒ deliberately none.
+    IReadOnlyList<string>? HomeActions);

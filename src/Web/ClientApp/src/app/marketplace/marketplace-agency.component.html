@@ -11,6 +11,17 @@
       <span class="crest">{{ (agency.name || '?').charAt(0) }}</span>
       <div class="who">
         <h1>{{ agency.name }}</h1>
+        <!-- Reputation sits with the name, above the contact details: it is the
+             first thing a visitor weighs, not a footnote. -->
+        <a class="headline-rating" *ngIf="agency.rating.reviewCount" href="#reviews">
+          <app-rating-stars [value]="agency.rating.averageRating" size="md"></app-rating-stars>
+          <span class="review-link">
+            {{ t('reviews.reviewCount', { count: agency.rating.reviewCount }) }}
+          </span>
+        </a>
+        <span class="headline-rating none" *ngIf="!agency.rating.reviewCount">
+          {{ t('reviews.noReviewsYet') }}
+        </span>
         <!-- The address and phone are Latin-script runs the agency typed; .num
              keeps them left-to-right in Arabic, otherwise bidi reorders a
              leading street number or the country code's "+" to the far side. -->
@@ -47,6 +58,13 @@
       </div>
     </div>
   </div>
+
+  <!-- Where you can actually collect a car. Only rendered once at least one
+       place is geocoded — an empty map says less than no map. -->
+  <section class="places-map" *ngIf="agency && placePoints.length">
+    <h2>{{ t('marketplace.whereToFindUs') }}</h2>
+    <app-marketplace-map [points]="placePoints"></app-marketplace-map>
+  </section>
 
   <!-- The agency's fleet for a window the visitor controls. -->
   <div class="fleet" *ngIf="agency">
@@ -111,4 +129,44 @@
                    (page)="onPage($event)">
     </mat-paginator>
   </div>
+
+  <!-- What customers said. Below the fleet: a visitor comes for the cars and
+       checks the reviews to decide, not the other way round. -->
+  <section class="reviews" id="reviews" *ngIf="agency">
+    <h2>{{ t('reviews.whatCustomersSay') }}</h2>
+
+    <div class="summary" *ngIf="agency.rating.reviewCount">
+      <div class="headline">
+        <span class="average">{{ agency.rating.averageRating | number:'1.1-1' }}</span>
+        <app-rating-stars [value]="agency.rating.averageRating" size="md" [showValue]="false"></app-rating-stars>
+        <span class="based-on">{{ t('reviews.reviewCount', { count: agency.rating.reviewCount }) }}</span>
+      </div>
+
+      <!-- Five stars down to one, the order people read a breakdown in. -->
+      <div class="breakdown">
+        <div class="bar-row" *ngFor="let count of agency.rating.counts.slice().reverse(); let i = index">
+          <span class="star-label">{{ 5 - i }}<mat-icon>star</mat-icon></span>
+          <span class="bar"><span class="fill" [style.width.%]="breakdownWidth(count)"></span></span>
+          <span class="bar-count">{{ count }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="state" *ngIf="!agency.rating.reviewCount">{{ t('reviews.noReviewsYet') }}</div>
+
+    <div class="review" *ngFor="let review of reviews">
+      <div class="review-head">
+        <app-rating-stars [value]="review.rating" [showValue]="false"></app-rating-stars>
+        <span class="author">{{ review.authorName || t('reviews.anonymous') }}</span>
+        <span class="when">{{ review.submittedAt | date:'yyyy-MM-dd' }}</span>
+      </div>
+      <div class="what" *ngIf="review.carName">{{ review.carName }}</div>
+      <p class="comment" *ngIf="review.comment">{{ review.comment }}</p>
+    </div>
+
+    <button mat-stroked-button class="more" *ngIf="reviews.length < reviewsTotal"
+            [disabled]="loadingReviews" (click)="showMoreReviews()">
+      {{ loadingReviews ? t('common.loading') : t('reviews.showMore') }}
+    </button>
+  </section>
 </div>

@@ -4,17 +4,21 @@ using RemSolution.Domain.Constants;
 using RemSolution.Application.Features.Chat.DTOs;
 using RemSolution.Application.Features.Marketplace.Commands.CancelMyReservationCommand;
 using RemSolution.Application.Features.Marketplace.Commands.CreateCustomerReservationCommand;
+using RemSolution.Application.Features.Marketplace.Commands.CreateMyReviewCommand;
 using RemSolution.Application.Features.Marketplace.Commands.MarkMyChatReadCommand;
 using RemSolution.Application.Features.Marketplace.Commands.SendCustomerChatMessageCommand;
 using RemSolution.Application.Features.MarketplaceSearch.DTOs;
+using RemSolution.Application.Features.MarketplaceSearch.Queries.GetAgencyReviewsQuery;
 using RemSolution.Application.Features.MarketplaceSearch.Queries.GetMarketplaceAgencyQuery;
 using RemSolution.Application.Features.MarketplaceSearch.Queries.GetMarketplaceCarQuery;
 using RemSolution.Application.Features.MarketplaceSearch.Queries.GetMarketplaceDestinationsQuery;
 using RemSolution.Application.Features.MarketplaceSearch.Queries.GetMyChatMessagesQuery;
 using RemSolution.Application.Features.MarketplaceSearch.Queries.GetMyChatThreadsQuery;
+using RemSolution.Application.Features.MarketplaceSearch.Queries.GetMyRentingsQuery;
 using RemSolution.Application.Features.MarketplaceSearch.Queries.GetMyReservationsQuery;
 using RemSolution.Application.Features.MarketplaceSearch.Queries.GetShowcaseCarsQuery;
 using RemSolution.Application.Features.MarketplaceSearch.Queries.SearchAvailableCarsQuery;
+using RemSolution.Application.Features.MarketplaceSearch.Queries.SearchCarsMapQuery;
 
 namespace RemSolution.Web.Endpoints;
 
@@ -30,13 +34,20 @@ public class Marketplace : EndpointGroupBase
         group
             .MapGet(SearchCars, "cars")
             .MapGet(GetCar, "cars/{id}")
+            // Sibling of "cars", not "cars/map": a literal would sit under the
+            // {id} route and read as a car called "map".
+            .MapGet(SearchCarsOnMap, "map")
             .MapGet(GetShowcaseCars, "showcase")
             .MapGet(GetDestinations, "destinations")
             .MapGet(GetAgency, "agencies/{id}")
+            .MapGet(GetAgencyReviews, "agencies/{id}/reviews")
             // Customer actions require a signed-in Customer.
             .MapPost(BookCar, "reservations", Policies.CustomerOnly)
             .MapGet(GetMyReservations, "my-reservations", Policies.CustomerOnly)
             .MapPost(CancelMyReservation, "reservations/{id}/cancel", Policies.CustomerOnly)
+            // "My trips" and the rating a finished trip can carry.
+            .MapGet(GetMyRentings, "my-rentings", Policies.CustomerOnly)
+            .MapPost(ReviewMyRenting, "my-rentings/{rentingId}/review", Policies.CustomerOnly)
             // The customer half of the renting conversations (the agency half is
             // the Chat group). Same polling contract: re-read with ?afterId=.
             .MapGet(GetMyChatThreads, "my-chats", Policies.CustomerOnly)
@@ -59,6 +70,16 @@ public class Marketplace : EndpointGroupBase
         if (result is null)
             return TypedResults.NotFound();
 
+        return TypedResults.Ok(result);
+    }
+
+    // The same search, reduced to one pin per pick-up place. Separate from
+    // SearchCars because the two are read differently: the list is paged, the map
+    // is not (see SearchCarsMapQuery).
+    public async Task<Ok<IList<MarketplaceMapPointDto>>> SearchCarsOnMap(
+        ISender sender, [AsParameters] SearchCarsMapQuery query)
+    {
+        var result = await sender.Send(query);
         return TypedResults.Ok(result);
     }
 
@@ -88,6 +109,17 @@ public class Marketplace : EndpointGroupBase
         return TypedResults.Ok(result);
     }
 
+    // Public: the ratings behind the agency's average. Paged — a well-reviewed
+    // agency accumulates hundreds and the shopfront shows the first page.
+    public async Task<Ok<PaginatedList<AgencyReviewDto>>> GetAgencyReviews(
+        ISender sender, int id, int? pageNumber, int? pageSize)
+    {
+        var result = await sender.Send(
+            new GetAgencyReviewsQuery(id, pageNumber ?? 1, pageSize ?? 10));
+
+        return TypedResults.Ok(result);
+    }
+
     public async Task<Created<int>> BookCar(ISender sender, CreateCustomerReservationCommand command)
     {
         var id = await sender.Send(command);
@@ -104,6 +136,22 @@ public class Marketplace : EndpointGroupBase
     {
         await sender.Send(new CancelMyReservationCommand(id));
         return TypedResults.NoContent();
+    }
+
+    public async Task<Ok<IList<MyRentingDto>>> GetMyRentings(ISender sender)
+    {
+        var result = await sender.Send(new GetMyRentingsQuery());
+        return TypedResults.Ok(result);
+    }
+
+    public async Task<Results<Created<int>, BadRequest>> ReviewMyRenting(
+        ISender sender, int rentingId, CreateMyReviewCommand command)
+    {
+        if (rentingId != command.RentingId)
+            return TypedResults.BadRequest();
+
+        var id = await sender.Send(command);
+        return TypedResults.Created($"/marketplace/agencies/reviews/{id}", id);
     }
 
     public async Task<Ok<IList<MyChatThreadDto>>> GetMyChatThreads(ISender sender)

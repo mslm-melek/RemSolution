@@ -10,6 +10,7 @@ using RemSolution.Infrastructure.Booking;
 using RemSolution.Infrastructure.Data;
 using RemSolution.Infrastructure.Data.Interceptors;
 using RemSolution.Infrastructure.Documents;
+using RemSolution.Infrastructure.Email;
 using RemSolution.Infrastructure.Identity;
 using RemSolution.Infrastructure.Jobs;
 using RemSolution.Infrastructure.Localization;
@@ -20,6 +21,7 @@ using RemSolution.Infrastructure.Settings;
 using RemSolution.Infrastructure.Storage;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
@@ -75,13 +77,55 @@ public static class DependencyInjection
         builder.Services.AddSingleton<ILocalizer, ResourceLocalizer>();
 
         builder.Services
-            .AddDefaultIdentity<ApplicationUser>()
+            .AddDefaultIdentity<ApplicationUser>(options =>
+            {
+                // The login IS the email everywhere in this app, and real email
+                // addresses hold characters Identity's ASCII default rejects —
+                // an accented or non-Latin local part would make "josé@…"
+                // unregisterable, and worse, would make provisioning a client
+                // account fail for a name the agency typed correctly. Empty
+                // disables the character check; the address is still validated
+                // as an email by the form/command that supplies it.
+                options.User.AllowedUserNameCharacters = string.Empty;
+
+                // Provisioning resolves an account BY email
+                // (ClientAccountService), so two accounts sharing one address
+                // would make "which user is this client?" ambiguous.
+                options.User.RequireUniqueEmail = true;
+            })
             .AddRoles<IdentityRole>()
             .AddEntityFrameworkStores<ApplicationDbContext>()
             .AddClaimsPrincipalFactory<ApplicationUserClaimsPrincipalFactory>()
             // Identity's own failure text ("Email 'x' is already taken") is shown
             // verbatim on Register / ChangePassword, so it needs translating too.
             .AddErrorDescriber<LocalizedIdentityErrorDescriber>();
+
+        // Outbound mail. Which sender is registered is a startup decision, not a
+        // per-send branch: with no SMTP host configured the app takes the
+        // logging fallback so a fresh checkout runs without a mail server (see
+        // LoggingEmailSender). Registered AFTER AddDefaultIdentity, whose
+        // Identity.UI default is a TryAdd no-op sender that would otherwise win.
+        builder.Services.AddOptions<EmailOptions>()
+            .Bind(builder.Configuration.GetSection(EmailOptions.SectionName))
+            .ValidateDataAnnotations();
+
+        var emailOptions = builder.Configuration.GetSection(EmailOptions.SectionName).Get<EmailOptions>()
+            ?? new EmailOptions();
+
+        if (emailOptions.IsConfigured)
+        {
+            builder.Services.AddSingleton<IEmailSender, SmtpEmailSender>();
+        }
+        else
+        {
+            builder.Services.AddSingleton<IEmailSender, LoggingEmailSender>();
+        }
+
+        // Turns a client's email into a customer-portal login. Scoped: it
+        // creates the Identity user through the request's DbContext, so the
+        // insert joins the caller's transaction (same reason as
+        // CreateAgencyUserAsync).
+        builder.Services.AddScoped<IClientAccountService, ClientAccountService>();
 
         // JWT bearer + refresh tokens for API/SPA clients. The access token
         // carries the same claims the cookie does (minted by the same claims

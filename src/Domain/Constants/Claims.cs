@@ -22,4 +22,15 @@ public abstract class Claims
     /// Absent when the user has never picked a language.
     /// </summary>
     public const string PreferredLanguage = nameof(PreferredLanguage);
+
+    /// <summary>
+    /// Present (value "true") while the account still holds a password somebody
+    /// else chose — see ApplicationUser.MustChangePassword. Minted from the user
+    /// row like every other claim here, so clearing the flag needs the security
+    /// stamp refreshed to take effect before the 10-minute validation interval;
+    /// the change-password paths do exactly that. Read by
+    /// PasswordChangeRequiredMiddleware, which lets only the change-password
+    /// endpoints through, and surfaced to the SPA on /users/me.
+    /// </summary>
+    public const string MustChangePassword = nameof(MustChangePassword);
 }

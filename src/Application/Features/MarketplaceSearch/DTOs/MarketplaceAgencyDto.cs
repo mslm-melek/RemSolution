@@ -19,6 +19,9 @@ namespace RemSolution.Application.Features.MarketplaceSearch.DTOs
         public int CarCount { get; init; }
         // Cheapest offered daily rate, for the "from X / day" line.
         public MoneyDto? FromDailyRate { get; init; }
+        // Public reputation. Null average = never reviewed, which the page says
+        // in words rather than rendering as zero stars.
+        public AgencyRatingSummaryDto Rating { get; init; } = new();
         public IList<MarketplacePlaceDto> Places { get; init; } = new List<MarketplacePlaceDto>();
     }
 }

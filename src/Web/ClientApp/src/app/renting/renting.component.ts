@@ -1,7 +1,13 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { PageEvent } from '@angular/material/paginator';
 import { Sort, SortDirection } from '@angular/material/sort';
-import { RentingsClient, RentingDto, RentingState } from '../web-api-client';
+import { ActivatedRoute, ParamMap, Router } from '@angular/router';
+import {
+  RentingsClient, RentingDto, RentingState, RentingDateBasis
+} from '../web-api-client';
+import {
+  FilterChip, applyListFilters, boolParam, dateParam, enumName, enumParam, rangeText, withoutParams
+} from '../shared/list-filters';
 import { TranslocoService } from '@jsverse/transloco';
 
 @Component({
@@ -19,7 +25,15 @@ export class RentingComponent implements OnInit {
   totalCount = 0;
   pageNumber = 1;
   pageSize = 10;
+
+  // Filters. `state` has a control of its own; the rest arrive by link (from the
+  // dashboard's counts) and show as removable chips.
   state: RentingState | null = null;
+  dateBasis: RentingDateBasis | null = null;
+  fromDate: Date | null = null;
+  toDate: Date | null = null;
+  excludeCancelled = false;
+  chips: FilterChip[] = [];
 
   // Sorting is server-side: the column id doubles as the API's SortBy key, and
   // the starting values mirror the query's own default order (latest first).
@@ -34,15 +48,49 @@ export class RentingComponent implements OnInit {
     { value: RentingState.Cancelled, labelKey: 'enums.rentingState.cancelled' }
   ];
 
-  constructor(private client: RentingsClient) { }
+  constructor(
+    private client: RentingsClient,
+    private route: ActivatedRoute,
+    private router: Router) { }
 
+  // The URL holds the filters (see shared/list-filters), so the list reloads
+  // whenever they change — including when the menu's plain "Rentings" link
+  // clears the ones a dashboard tile arrived with.
   ngOnInit() {
-    this.load();
+    this.route.queryParamMap.subscribe(params => {
+      this.readFilters(params);
+      this.pageNumber = 1;
+      this.load();
+    });
+  }
+
+  private readFilters(params: ParamMap) {
+    this.state = enumParam(params, 'state', RentingState) as RentingState | null;
+    this.dateBasis = enumParam(params, 'dateBasis', RentingDateBasis) as RentingDateBasis | null;
+    this.fromDate = dateParam(params, 'from');
+    this.toDate = dateParam(params, 'to');
+    this.excludeCancelled = boolParam(params, 'excludeCancelled') === true;
+
+    this.chips = [];
+
+    if (this.fromDate || this.toDate) {
+      const range = rangeText(params.get('from'), params.get('to'));
+      const labelKey = this.dateBasis === RentingDateBasis.Starts ? 'filters.rentingStarts'
+        : this.dateBasis === RentingDateBasis.Ends ? 'filters.rentingEnds'
+          : 'filters.rentingRuns';
+      this.chips.push({ params: ['from', 'to', 'dateBasis'], labelKey, labelArgs: { range } });
+    }
+
+    if (this.excludeCancelled) {
+      this.chips.push({ params: ['excludeCancelled'], labelKey: 'filters.excludingCancelled' });
+    }
   }
 
   load() {
     this.client.getRentings(
-      this.pageNumber, this.pageSize, null, null, this.state, null, null,
+      this.pageNumber, this.pageSize, null, null, this.state,
+      this.fromDate, this.toDate,
+      this.dateBasis ?? undefined, this.excludeCancelled,
       this.sortBy, this.sortDirection === 'desc'
     ).subscribe({
       next: result => {
@@ -53,9 +101,17 @@ export class RentingComponent implements OnInit {
     });
   }
 
+  // Filtering goes through the URL; the subscription above reloads the rows.
   onFilter() {
-    this.pageNumber = 1;
-    this.load();
+    applyListFilters(this.router, this.route, {
+      ...withoutParams(this.route.snapshot.queryParamMap, ['state']),
+      state: enumName(RentingState, this.state)
+    });
+  }
+
+  clearChip(chip: FilterChip) {
+    applyListFilters(
+      this.router, this.route, withoutParams(this.route.snapshot.queryParamMap, chip.params));
   }
 
   onPage(event: PageEvent) {

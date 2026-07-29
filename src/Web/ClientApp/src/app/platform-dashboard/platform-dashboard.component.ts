@@ -165,6 +165,14 @@ export class PlatformDashboardComponent implements OnInit, AfterViewInit {
     return (this.data?.totalCars ?? 0) / agencies;
   }
 
+  // Share of client records that carry a portal login. Null with no clients at
+  // all: "0% of nobody" says nothing.
+  get clientAccountShare(): number | null {
+    const clients = this.data?.totalClients ?? 0;
+    if (clients <= 0) return null;
+    return ((this.data?.totalClientAccounts ?? 0) / clients) * 100;
+  }
+
   get averageRevenuePerActiveAgency(): number | null {
     const active = this.data?.activeSubscriptions ?? 0;
     if (active <= 0) return null;

@@ -1,4 +1,5 @@
 using RemSolution.Application.Common.Interfaces;
+using RemSolution.Application.Common.Models;
 using RemSolution.Application.Common.Security;
 using RemSolution.Application.Common.Subscriptions;
 using RemSolution.Application.Features.Client.Validation;
@@ -16,6 +17,9 @@ namespace RemSolution.Application.Features.Client.Commands.CreateClientCommand
         // stamps it from the current tenant on insert.
         public string FirstName { get; init; } = string.Empty;
         public string LastName { get; init; } = string.Empty;
+        // Setting this provisions the client's customer-portal account (see the
+        // handler); leaving it blank keeps the client offline-only.
+        public string? Email { get; init; }
         public DateTime? BirthDate { get; init; }
         public string? BirthPlace { get; init; }
         public int? BirthCountryId { get; init; }
@@ -41,12 +45,18 @@ namespace RemSolution.Application.Features.Client.Commands.CreateClientCommand
     public class CreateClientCommandHandler : IRequestHandler<CreateClientCommand, int>
     {
         private readonly IApplicationDbContext _context;
+        private readonly IClientAccountService _accounts;
         private readonly ITenantProvider _tenant;
         private readonly TimeProvider _dateTime;
 
-        public CreateClientCommandHandler(IApplicationDbContext context, ITenantProvider tenant, TimeProvider dateTime)
+        public CreateClientCommandHandler(
+            IApplicationDbContext context,
+            IClientAccountService accounts,
+            ITenantProvider tenant,
+            TimeProvider dateTime)
         {
             _context = context;
+            _accounts = accounts;
             _tenant = tenant;
             _dateTime = dateTime;
         }
@@ -57,6 +67,7 @@ namespace RemSolution.Application.Features.Client.Commands.CreateClientCommand
             {
                 FirstName = request.FirstName,
                 LastName = request.LastName,
+                Email = Trimmed(request.Email),
                 BirthDate = request.BirthDate,
                 BirthPlace = request.BirthPlace,
                 BirthCountryId = request.BirthCountryId,
@@ -85,11 +96,29 @@ namespace RemSolution.Application.Features.Client.Commands.CreateClientCommand
 
             _context.Clients.Add(entity);
 
+            // Saved before provisioning so the client has its key and its
+            // stamped AgencyId: the account service logs against them, and
+            // creating the Identity user flushes this context anyway.
             await _context.SaveChangesAsync(cancellationToken);
+
+            var account = await _accounts.LinkOrCreateAsync(entity, cancellationToken);
+
+            if (account.Outcome is not ClientAccountOutcome.None)
+            {
+                // Persists the MarketplaceUserId link the service just set.
+                await _context.SaveChangesAsync(cancellationToken);
+            }
 
             await transaction.CommitAsync(cancellationToken);
 
+            // Only now: an email cannot be recalled if the commit above had
+            // failed (see IClientAccountService).
+            await _accounts.SendCredentialsAsync(account, cancellationToken);
+
             return entity.Id;
         }
+
+        private static string? Trimmed(string? value) =>
+            string.IsNullOrWhiteSpace(value) ? null : value.Trim();
     }
 }

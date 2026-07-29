@@ -178,6 +178,24 @@
   <data name="Validation.Language.Unsupported" xml:space="preserve">
     <value>Language must be one of: en, fr, ar.</value>
   </data>
+  <data name="Validation.HomeWidgets.TooMany" xml:space="preserve">
+    <value>You can pin at most {0} shortcuts to your home screen.</value>
+  </data>
+  <data name="Validation.HomeWidgets.Duplicate" xml:space="preserve">
+    <value>The same shortcut cannot be pinned twice.</value>
+  </data>
+  <data name="Validation.HomeWidgets.Unknown" xml:space="preserve">
+    <value>One of the selected shortcuts is not recognised.</value>
+  </data>
+  <data name="Validation.HomeActions.TooMany" xml:space="preserve">
+    <value>You can keep at most {0} quick actions on your home screen.</value>
+  </data>
+  <data name="Validation.HomeActions.Duplicate" xml:space="preserve">
+    <value>The same quick action cannot be added twice.</value>
+  </data>
+  <data name="Validation.HomeActions.Unknown" xml:space="preserve">
+    <value>One of the selected quick actions is not recognised.</value>
+  </data>
   <data name="Property.Name" xml:space="preserve">
     <value>Name</value>
   </data>
@@ -768,5 +786,44 @@
   </data>
   <data name="Validation.DocumentTemplate.ExampleUnknown" xml:space="preserve">
     <value>The chosen example template could not be found.</value>
+  </data>
+  <data name="Validation.Client.EmailFormat" xml:space="preserve">
+    <value>Enter a valid email address.</value>
+  </data>
+  <data name="Validation.Client.EmailTooLong" xml:space="preserve">
+    <value>The email address is too long.</value>
+  </data>
+  <data name="Email.ClientAccount.Subject" xml:space="preserve">
+    <value>Your customer account at {0}</value>
+  </data>
+  <data name="Email.ClientAccount.Hello" xml:space="preserve">
+    <value>Hello {0},</value>
+  </data>
+  <data name="Email.ClientAccount.Created" xml:space="preserve">
+    <value>{0} has created a customer account for you. Sign in to follow your bookings, download your documents and message the agency.</value>
+  </data>
+  <data name="Email.ClientAccount.Reissued" xml:space="preserve">
+    <value>{0} has sent you new sign-in details for your customer account.</value>
+  </data>
+  <data name="Email.ClientAccount.Login" xml:space="preserve">
+    <value>Login</value>
+  </data>
+  <data name="Email.ClientAccount.Password" xml:space="preserve">
+    <value>Temporary password</value>
+  </data>
+  <data name="Email.ClientAccount.MustChange" xml:space="preserve">
+    <value>You will be asked to choose a new password the first time you sign in.</value>
+  </data>
+  <data name="Email.ClientAccount.SignIn" xml:space="preserve">
+    <value>Sign in</value>
+  </data>
+  <data name="Email.ClientAccount.Ignore" xml:space="preserve">
+    <value>If you were not expecting this email, you can ignore it.</value>
+  </data>
+  <data name="Error.PasswordChangeRequired.Title" xml:space="preserve">
+    <value>Choose a password first</value>
+  </data>
+  <data name="Error.PasswordChangeRequired.Detail" xml:space="preserve">
+    <value>Your account is still using the temporary password that was emailed to you. Choose a new password to continue.</value>
   </data>
 </root>

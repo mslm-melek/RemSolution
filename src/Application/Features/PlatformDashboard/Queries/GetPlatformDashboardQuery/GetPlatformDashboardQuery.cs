@@ -101,7 +101,26 @@ namespace RemSolution.Application.Features.PlatformDashboard.Queries.GetPlatform
                         .ThenByDescending(s => s.EndDate)
                         .First());
 
-            var (carsByAgency, clientsByAgency) = await CountTenantDataAsync(cancellationToken);
+            var tenantData = await CountTenantDataAsync(cancellationToken);
+            var carsByAgency = tenantData.Cars;
+            var clientsByAgency = tenantData.Clients;
+
+            // Where the cars are, which is not the same question as where the
+            // agencies are registered: a car sitting at a branch counts towards
+            // that branch's country, one kept at the agency towards the agency's.
+            var countryOfAgency = agencies.ToDictionary(a => a.Id, a => a.CountryId);
+
+            var carCountries = tenantData.CarPlacements
+                .Select(p => p.BranchCountryId ?? countryOfAgency.GetValueOrDefault(p.AgencyId))
+                .Where(countryId => countryId != 0)
+                .Distinct()
+                .Count();
+
+            var carPlaces = tenantData.CarPlacements
+                .Where(p => p.BranchId is not null)
+                .Select(p => p.BranchId!.Value)
+                .Distinct()
+                .Count();
 
             var agencyRows = agencies
                 .Select(a =>
@@ -175,6 +194,9 @@ namespace RemSolution.Application.Features.PlatformDashboard.Queries.GetPlatform
                 TotalCountries = countryRows.Count,
                 TotalCars = agencyRows.Sum(r => r.Cars),
                 TotalClients = agencyRows.Sum(r => r.Clients),
+                TotalClientAccounts = tenantData.ClientAccounts,
+                CarCountries = carCountries,
+                CarPlaces = carPlaces,
 
                 ActiveSubscriptions =
                     subscriptions.Count(s => IsLive(s.Status, s.StartDate, s.EndDate)),
@@ -204,14 +226,25 @@ namespace RemSolution.Application.Features.PlatformDashboard.Queries.GetPlatform
             };
         }
 
+        // What the cross-tenant pass brings back: the per-agency counts the table
+        // needs, plus the two platform-wide figures the landing screen shows.
+        private sealed record TenantData(
+            Dictionary<int, int> Cars,
+            Dictionary<int, int> Clients,
+            int ClientAccounts,
+            IReadOnlyList<CarPlacement> CarPlacements);
+
+        // One row per distinct place a car is kept — not per car, which is why the
+        // fleet's geographic spread costs a handful of rows rather than thousands.
+        private sealed record CarPlacement(int AgencyId, int? BranchId, int? BranchCountryId);
+
         // Live car and client counts per agency. The caller has no tenant, so the
         // global tenant filter would hide every row — the audited cross-tenant
         // path is the sanctioned bypass, and only counts escape it, never rows.
-        private async Task<(Dictionary<int, int> Cars, Dictionary<int, int> Clients)>
-            CountTenantDataAsync(CancellationToken cancellationToken)
+        private async Task<TenantData> CountTenantDataAsync(CancellationToken cancellationToken)
         {
             var scope = await _crossTenant.BeginAuditedAccessAsync(
-                "Platform dashboard: fleet and client totals per agency", cancellationToken);
+                "Platform dashboard: fleet, client and portal-account totals", cancellationToken);
 
             // That queryable drops EVERY global filter, soft delete included, so
             // !IsDeleted is re-applied here: an archived car is not part of a
@@ -229,7 +262,33 @@ namespace RemSolution.Application.Features.PlatformDashboard.Queries.GetPlatform
                 .Select(g => new { AgencyId = g.Key, Count = g.Count() })
                 .ToDictionaryAsync(x => x.AgencyId, x => x.Count, cancellationToken);
 
-            return (cars, clients);
+            // Clients who can sign in: the link to the portal account, however it
+            // came about (self-registered on the marketplace, or provisioned from
+            // the email their agency recorded).
+            var clientAccounts = await scope.Query<Domain.Entities.Client>()
+                .Where(c => !c.IsDeleted && c.MarketplaceUserId != null)
+                .CountAsync(cancellationToken);
+
+            // Distinct placements, not cars: the countries and branches the fleet
+            // is spread across is a handful of rows however large the fleet is.
+            var placements = await scope.Query<Domain.Entities.Car>()
+                .Where(c => !c.IsDeleted)
+                .Select(c => new
+                {
+                    c.AgencyId,
+                    c.BranchId,
+                    BranchCountryId = c.Branch != null ? (int?)c.Branch.CountryId : null,
+                })
+                .Distinct()
+                .ToListAsync(cancellationToken);
+
+            return new TenantData(
+                cars,
+                clients,
+                clientAccounts,
+                placements
+                    .Select(p => new CarPlacement(p.AgencyId, p.BranchId, p.BranchCountryId))
+                    .ToList());
         }
     }
 }

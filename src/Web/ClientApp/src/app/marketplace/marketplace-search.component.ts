@@ -1,8 +1,14 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, ViewChild, inject } from '@angular/core';
 import { PageEvent } from '@angular/material/paginator';
-import { MarketplaceClient, MarketplaceCarDto, MarketplaceDestinationDto, MarketplacePlaceDto } from '../web-api-client';
+import {
+  MarketplaceClient, MarketplaceCarDto, MarketplaceDestinationDto,
+  MarketplaceMapPointDto, MarketplacePlaceDto
+} from '../web-api-client';
 import { toDateInput, fromDateInput, extractValidationErrors } from '../shared/form-utils';
 import { TranslocoService } from '@jsverse/transloco';
+import { MapBounds, MarketplaceMapComponent } from './marketplace-map.component';
+
+export type SearchView = 'list' | 'map';
 
 @Component({
   selector: 'app-marketplace-search',
@@ -13,6 +19,11 @@ export class MarketplaceSearchComponent implements OnInit {
   // Confirm/prompt dialogs and error banners are plain strings, so they are
   // translated imperatively rather than through the template pipe.
   private readonly transloco = inject(TranslocoService);
+
+  // Only present while the map view is on (*ngIf), which is also why every use
+  // is optional-chained.
+  @ViewChild(MarketplaceMapComponent) map?: MarketplaceMapComponent;
+
   startDate = '';
   endDate = '';
 
@@ -30,6 +41,16 @@ export class MarketplaceSearchComponent implements OnInit {
   loading = false;
   searched = false;
   error = '';
+
+  view: SearchView = 'list';
+  mapPoints: MarketplaceMapPointDto[] = [];
+  // The place under the pointer in the results list, lighting up its pin.
+  highlightedBranchId: number | null = null;
+  // Set by "search this area". Applied to BOTH the list and the map, so the two
+  // never describe different sets of cars. Cleared whenever the visitor changes
+  // a filter, otherwise a viewport they have forgotten about keeps silently
+  // narrowing their results.
+  private bounds: MapBounds | null = null;
 
   constructor(private client: MarketplaceClient) { }
 
@@ -80,6 +101,26 @@ export class MarketplaceSearchComponent implements OnInit {
     this.onSearchClick();
   }
 
+  setView(view: SearchView) {
+    if (this.view === view) return;
+
+    this.view = view;
+
+    if (view === 'list') {
+      // Leaving the map drops the viewport with it: a filter the visitor can no
+      // longer see must not keep narrowing the list.
+      this.bounds = null;
+      this.search();
+      return;
+    }
+
+    this.loadMapPoints();
+    // The map is created inside an *ngIf that has only just become true, so it
+    // measures its container on the next turn — before Angular has laid the
+    // panel out, Leaflet would size it 0×0.
+    setTimeout(() => this.map?.refresh());
+  }
+
   search() {
     const start = fromDateInput(this.startDate);
     const end = fromDateInput(this.endDate);
@@ -92,7 +133,11 @@ export class MarketplaceSearchComponent implements OnInit {
     this.searched = true;
 
     this.client
-      .searchCars(start, end, this.countryId, this.branchId, null, null, this.pageNumber, this.pageSize)
+      .searchCars(
+        start, end, this.countryId, this.branchId, null, null,
+        this.bounds?.south ?? null, this.bounds?.west ?? null,
+        this.bounds?.north ?? null, this.bounds?.east ?? null,
+        this.pageNumber, this.pageSize)
       .subscribe({
         next: result => {
           this.cars = result.items || [];
@@ -108,12 +153,48 @@ export class MarketplaceSearchComponent implements OnInit {
 
   onSearchClick() {
     this.pageNumber = 1;
+    // A new search is a new intent; the old viewport does not survive it.
+    this.bounds = null;
     this.search();
+    if (this.view === 'map') this.loadMapPoints();
   }
 
   onPage(event: PageEvent) {
     this.pageNumber = event.pageIndex + 1;
     this.pageSize = event.pageSize;
     this.search();
+  }
+
+  // "Search this area": the viewport becomes a filter on both halves.
+  onSearchArea(bounds: MapBounds) {
+    this.bounds = bounds;
+    this.pageNumber = 1;
+    this.search();
+    this.loadMapPoints();
+  }
+
+  // Clicking a pin narrows to that pick-up place — the same filter the place
+  // select drives, so "Any place" is how you get back out.
+  onPlaceSelected(point: MarketplaceMapPointDto) {
+    this.branchId = point.branchId ?? null;
+    this.onPlaceChange();
+  }
+
+  private loadMapPoints() {
+    const start = fromDateInput(this.startDate);
+    const end = fromDateInput(this.endDate);
+    if (!start || !end || end <= start) return;
+
+    this.client
+      .searchCarsOnMap(
+        start, end, this.countryId, this.branchId, null, null,
+        this.bounds?.south ?? null, this.bounds?.west ?? null,
+        this.bounds?.north ?? null, this.bounds?.east ?? null)
+      .subscribe({
+        next: points => this.mapPoints = points || [],
+        // The list is the search; a map that fails to load must not take the
+        // results down with it.
+        error: err => console.error(err)
+      });
   }
 }
