@@ -64,6 +64,7 @@ public class CreateBranchTests : BaseTestFixture
         {
             Name = "Downtown",
             CountryId = country.Id,
+            Address = "12 Avenue Habib Bourguiba, Tunis",
             Latitude = 36.8065,
             Longitude = 10.1815
         });
@@ -73,6 +74,7 @@ public class CreateBranchTests : BaseTestFixture
         branch.Should().NotBeNull();
         branch!.Name.Should().Be("Downtown");
         branch.CountryId.Should().Be(country.Id);
+        branch.Address.Should().Be("12 Avenue Habib Bourguiba, Tunis");
         branch.AgencyId.Should().Be(agencyId);
         branch.CreatedBy.Should().Be(userId);
         branch.Location.Should().NotBeNull();

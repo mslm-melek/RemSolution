@@ -88,7 +88,6 @@
     "reservations": "Reservations",
     "rentings": "Rentings",
     "clients": "Clients",
-    "myTeam": "My team",
     "editProfile": "Edit profile",
     "logout": "Log out",
     "login": "Log in",
@@ -102,7 +101,8 @@
     "bookings": "Bookings",
     "finance": "Finance",
     "clientsList": "All clients",
-    "myRentings": "My rentals"
+    "myRentings": "My rentals",
+    "myAgency": "My agency"
   },
   "home": {
     "welcomeTitle": "Welcome to RemSolution",
@@ -541,7 +541,8 @@
     "carsReadOnly": "Cars (read-only)",
     "clientsReadOnly": "Clients (read-only)",
     "confirmToggleUser": "{{ verb }} user \"{{ user }}\"?",
-    "concurrency": "This agency was reloaded by another user since you opened it. Reload the page to get the latest version, then re-apply your changes."
+    "concurrency": "This agency was reloaded by another user since you opened it. Reload the page to get the latest version, then re-apply your changes.",
+    "addressHint": "Search for the address on the map below, or drop the pin by hand."
   },
   "plan": {
     "title": "Subscription plans",
@@ -932,5 +933,45 @@
     "ratedOn": "Rated on {{ date }}",
     "showMore": "Show more reviews",
     "anonymous": "A customer"
+  },
+  "myAgency": {
+    "title": "My agency",
+    "currencyLocked": "The currency is set by the platform administrator.",
+    "tabs": {
+      "details": "Details",
+      "branches": "Branches",
+      "team": "Team"
+    }
+  },
+  "branch": {
+    "title": "Branches",
+    "add": "Add a branch",
+    "hint": "The places customers collect cars from. The pin on the map is what lets them find you in a search by distance.",
+    "empty": "No branches yet.",
+    "newTitle": "New branch",
+    "editTitle": "Edit branch",
+    "addThis": "Add this branch",
+    "address": "Address",
+    "addressHint": "Search for the address on the map below, or drop the pin by hand.",
+    "country": "Country",
+    "countryRequired": "Country is required.",
+    "nameRequired": "Name is required.",
+    "nameTooLong": "Name is too long.",
+    "pin": "Map",
+    "pinSet": "located",
+    "pinMissing": "no pin",
+    "confirmDelete": "Delete branch \"{{ name }}\"? Cars based there will be left without a branch.",
+    "savedImmediately": "Branch changes are saved immediately.",
+    "savedWithAgency": "These branches will be created with the agency when you save."
+  },
+  "mapPicker": {
+    "searchLabel": "Search for an address",
+    "hint": "Pick a result, or click the map to place the pin.",
+    "searching": "Searching…",
+    "noResults": "No address found.",
+    "mapLabel": "Address picker map",
+    "clearPin": "Remove pin",
+    "coordinates": "Pin: {{ latitude }}, {{ longitude }}",
+    "noPin": "No pin placed."
   }
 }

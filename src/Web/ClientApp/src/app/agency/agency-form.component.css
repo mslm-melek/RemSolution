@@ -51,3 +51,18 @@
   align-items: center;
   margin-top: 16px;
 }
+
+/* Separates the branches editor from the agency form's own save button, which
+   does not apply to it. */
+app-branches-editor {
+  display: block;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid #eee;
+}
+
+.branches-note {
+  margin: 8px 0 0;
+  font-size: 0.8rem;
+  color: var(--muted);
+}

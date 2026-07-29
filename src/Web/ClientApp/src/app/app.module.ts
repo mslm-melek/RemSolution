@@ -29,6 +29,7 @@ import { UserFormComponent } from './user/user-form.component';
 import { SubscriptionPlanComponent } from './subscription-plan/subscription-plan.component';
 import { SubscriptionPlanFormComponent } from './subscription-plan/subscription-plan-form.component';
 import { TeamComponent } from './team/team.component';
+import { MyAgencyComponent } from './my-agency/my-agency.component';
 import { RentingComponent } from './renting/renting.component';
 import { RentingFormComponent } from './renting/renting-form.component';
 import { ReservationComponent } from './reservation/reservation.component';
@@ -53,6 +54,8 @@ import { MyRentingsComponent } from './marketplace/my-rentings.component';
 import { MyChatsComponent } from './marketplace/my-chats.component';
 import { RatingStarsComponent } from './shared/rating-stars.component';
 import { QuickActionsComponent } from './shared/quick-actions.component';
+import { MapPickerComponent } from './shared/map-picker.component';
+import { BranchesEditorComponent } from './shared/branches-editor.component';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -103,6 +106,7 @@ registerLocaleData(localeAr);
     SubscriptionPlanComponent,
     SubscriptionPlanFormComponent,
     TeamComponent,
+    MyAgencyComponent,
     RentingComponent,
     RentingFormComponent,
     ReservationComponent,
@@ -126,7 +130,9 @@ registerLocaleData(localeAr);
     MyRentingsComponent,
     MyChatsComponent,
     RatingStarsComponent,
-    QuickActionsComponent
+    QuickActionsComponent,
+    MapPickerComponent,
+    BranchesEditorComponent
   ],
   bootstrap: [AppComponent],
   imports: [
@@ -203,8 +209,11 @@ registerLocaleData(localeAr);
       { path: 'subscription-plan/new', component: SubscriptionPlanFormComponent },
       { path: 'subscription-plan/:id', component: SubscriptionPlanFormComponent },
 
-      // Agency-admin self-service.
-      { path: 'team', component: TeamComponent }
+      // Agency-admin self-service. The team screen is a tab of "My agency"
+      // rather than a page of its own now; its old route survives to keep
+      // bookmarks and any links to it working.
+      { path: 'my-agency', component: MyAgencyComponent },
+      { path: 'team', redirectTo: 'my-agency', pathMatch: 'full' }
     ])),
     TranslocoModule,
     BrowserAnimationsModule],

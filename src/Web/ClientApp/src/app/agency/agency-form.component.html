@@ -47,11 +47,19 @@
         </mat-error>
       </mat-form-field>
 
-      <mat-form-field appearance="outline" class="span-2">
+      <!-- subscriptSizing="dynamic": the default reserves one line under the
+           field, and this hint wraps to two on a narrow column. -->
+      <mat-form-field appearance="outline" class="span-2" subscriptSizing="dynamic">
         <mat-label>{{ t('agency.address') }}</mat-label>
         <input matInput formControlName="address" />
+        <mat-hint>{{ t('agency.addressHint') }}</mat-hint>
       </mat-form-field>
     </div>
+
+    <!-- The head office on the map. Searching an address here fills the field
+         above; so does dropping the pin, and either can then be corrected. -->
+    <app-map-picker [latitude]="latitude" [longitude]="longitude"
+                    (picked)="onPicked($event)"></app-map-picker>
 
     <h3 class="section-title">{{ t('agency.bookingRules') }}</h3>
     <div class="field-grid">
@@ -75,4 +83,20 @@
       <a mat-button [routerLink]="['/agency']">{{ t('common.cancel') }}</a>
     </div>
   </form>
+
+  <!-- Outside the form above, not inside it: the editor has fields of its own and
+       nesting forms is invalid HTML. On a new agency the rows collected here are
+       created with it when the form is saved; on an existing one each change is
+       already stored by the time it appears in the list, which is why the note
+       below says so rather than leaving it ambiguous. -->
+  <app-branches-editor [branches]="branches" [countries]="countries"
+                       [saving]="branchesSaving"
+                       [defaultCountryId]="form.value.countryId"
+                       (added)="onBranchAdded($event)"
+                       (updated)="onBranchUpdated($event)"
+                       (removed)="onBranchRemoved($event)"></app-branches-editor>
+
+  <p class="branches-note">
+    {{ isEdit ? t('branch.savedImmediately') : t('branch.savedWithAgency') }}
+  </p>
 </div>

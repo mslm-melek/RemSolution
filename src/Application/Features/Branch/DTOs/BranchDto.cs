@@ -7,6 +7,7 @@ namespace RemSolution.Application.Features.Branch.DTOs
         public string Name { get; init; } = string.Empty;
         public int CountryId { get; init; }
         public string? CountryName { get; init; }
+        public string? Address { get; init; }
         public double? Latitude { get; init; }
         public double? Longitude { get; init; }
 

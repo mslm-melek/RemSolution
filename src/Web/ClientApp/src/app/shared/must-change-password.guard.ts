@@ -28,10 +28,15 @@ export const mustChangePasswordGuard: CanActivateFn = () => {
  * Applies the guard to every route except the password screen itself, so a new
  * route cannot be added without it and quietly become a hole. Routes that
  * already declare canActivate keep theirs and gain this one.
+ *
+ * Pure redirects are skipped, and must be: Angular rejects a route carrying both
+ * redirectTo and canActivate (NG04014), because redirection happens before
+ * activation and the guard could never run. Nothing is left unguarded by that —
+ * a redirect is not a screen, and the route it lands on carries the guard.
  */
 export function guardRoutes(routes: Routes): Routes {
   return routes.map(route =>
-    route.path === PASSWORD_ROUTE
+    route.path === PASSWORD_ROUTE || route.redirectTo !== undefined
       ? route
       : { ...route, canActivate: [...(route.canActivate ?? []), mustChangePasswordGuard] });
 }

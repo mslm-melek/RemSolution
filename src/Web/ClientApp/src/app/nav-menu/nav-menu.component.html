@@ -48,8 +48,12 @@
         <button mat-menu-item *ngIf="configLinks.length" [matMenuTriggerFor]="configMenu">
           <mat-icon>tune</mat-icon> {{ t('nav.config') }}
         </button>
-        <a mat-menu-item *ngIf="isAgencyAdmin" [routerLink]="['/team']" (click)="collapse()">
-          <mat-icon>groups</mat-icon> {{ t('nav.myTeam') }}
+        <!-- Not offered inside an agency workspace: the platform admin keeps the
+             PlatformAdministrator role there, and this screen answers for the
+             caller's own agency, which they do not have. They edit an agency's
+             details and branches from the agency form instead. -->
+        <a mat-menu-item *ngIf="isAgencyAdmin" [routerLink]="['/my-agency']" (click)="collapse()">
+          <mat-icon>store</mat-icon> {{ t('nav.myAgency') }}
         </a>
         <a mat-menu-item [routerLink]="['/profile']" (click)="collapse()">
           <mat-icon>manage_accounts</mat-icon> {{ t('nav.editProfile') }}

@@ -36,6 +36,49 @@
         }
       }
     },
+    "/api/Agencies/me": {
+      "get": {
+        "tags": [
+          "Agencies"
+        ],
+        "operationId": "GetMyAgency",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgencyDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Agencies"
+        ],
+        "operationId": "UpdateMyAgency",
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateMyAgencyCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        }
+      }
+    },
     "/api/Agencies": {
       "get": {
         "tags": [
@@ -254,6 +297,170 @@
             "description": ""
           },
           "400": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/Agencies/{id}/branches": {
+      "get": {
+        "tags": [
+          "Agencies"
+        ],
+        "operationId": "GetAgencyBranches",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BranchDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Agencies"
+        ],
+        "operationId": "CreateAgencyBranch",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          }
+        ],
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAgencyBranchCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 2
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/Agencies/{id}/branches/{branchId}": {
+      "put": {
+        "tags": [
+          "Agencies"
+        ],
+        "operationId": "UpdateAgencyBranch",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "branchId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 2
+          }
+        ],
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAgencyBranchCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 3
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "400": {
+            "description": ""
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Agencies"
+        ],
+        "operationId": "DeleteAgencyBranch",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "branchId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 2
+          }
+        ],
+        "responses": {
+          "204": {
             "description": ""
           }
         }
@@ -6036,6 +6243,16 @@
             "type": "string",
             "nullable": true
           },
+          "latitude": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "longitude": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
           "countryId": {
             "type": "integer",
             "format": "int32"
@@ -6046,6 +6263,54 @@
           },
           "currency": {
             "type": "string"
+          },
+          "cancellationWindowHours": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "reservationExpiryHours": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "UpdateMyAgencyCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "rowVersion": {
+            "type": "string",
+            "format": "byte",
+            "nullable": true
+          },
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "phoneNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "address": {
+            "type": "string",
+            "nullable": true
+          },
+          "latitude": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "longitude": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "countryId": {
+            "type": "integer",
+            "format": "int32"
           },
           "cancellationWindowHours": {
             "type": "integer",
@@ -6076,6 +6341,16 @@
             "type": "string",
             "nullable": true
           },
+          "latitude": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "longitude": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
           "countryId": {
             "type": "integer",
             "format": "int32"
@@ -6090,6 +6365,39 @@
           "reservationExpiryHours": {
             "type": "integer",
             "format": "int32"
+          },
+          "branches": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AgencyBranchInput"
+            }
+          }
+        }
+      },
+      "AgencyBranchInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "countryId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "address": {
+            "type": "string",
+            "nullable": true
+          },
+          "latitude": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "longitude": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
           }
         }
       },
@@ -6119,6 +6427,16 @@
           },
           "address": {
             "type": "string",
+            "nullable": true
+          },
+          "latitude": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "longitude": {
+            "type": "number",
+            "format": "double",
             "nullable": true
           },
           "countryId": {
@@ -6163,6 +6481,107 @@
           },
           "enabled": {
             "type": "boolean"
+          }
+        }
+      },
+      "BranchDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "name": {
+            "type": "string"
+          },
+          "countryId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "countryName": {
+            "type": "string",
+            "nullable": true
+          },
+          "address": {
+            "type": "string",
+            "nullable": true
+          },
+          "latitude": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "longitude": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          }
+        }
+      },
+      "CreateAgencyBranchCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "agencyId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "name": {
+            "type": "string"
+          },
+          "countryId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "address": {
+            "type": "string",
+            "nullable": true
+          },
+          "latitude": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "longitude": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          }
+        }
+      },
+      "UpdateAgencyBranchCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "agencyId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "name": {
+            "type": "string"
+          },
+          "countryId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "address": {
+            "type": "string",
+            "nullable": true
+          },
+          "latitude": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "longitude": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
           }
         }
       },
@@ -6378,37 +6797,6 @@
           }
         }
       },
-      "BranchDto": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "id": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "name": {
-            "type": "string"
-          },
-          "countryId": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "countryName": {
-            "type": "string",
-            "nullable": true
-          },
-          "latitude": {
-            "type": "number",
-            "format": "double",
-            "nullable": true
-          },
-          "longitude": {
-            "type": "number",
-            "format": "double",
-            "nullable": true
-          }
-        }
-      },
       "CreateBranchCommand": {
         "type": "object",
         "additionalProperties": false,
@@ -6419,6 +6807,10 @@
           "countryId": {
             "type": "integer",
             "format": "int32"
+          },
+          "address": {
+            "type": "string",
+            "nullable": true
           },
           "latitude": {
             "type": "number",
@@ -6446,6 +6838,10 @@
           "countryId": {
             "type": "integer",
             "format": "int32"
+          },
+          "address": {
+            "type": "string",
+            "nullable": true
           },
           "latitude": {
             "type": "number",

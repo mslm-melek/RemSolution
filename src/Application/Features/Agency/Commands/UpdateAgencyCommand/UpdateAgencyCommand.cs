@@ -1,3 +1,4 @@
+using RemSolution.Application.Common.Geo;
 using RemSolution.Application.Common.Interfaces;
 using RemSolution.Application.Common.Security;
 using RemSolution.Application.Common.Settings;
@@ -16,6 +17,10 @@ namespace RemSolution.Application.Features.Agency.Commands.UpdateAgencyCommand
         public string? Email { get; init; }
         public string? PhoneNumber { get; init; }
         public string? Address { get; init; }
+        // The HQ pin for the address above, as picked on the map. Set as a pair
+        // or not at all (see the validator).
+        public double? Latitude { get; init; }
+        public double? Longitude { get; init; }
         public int CountryId { get; init; }
         // Persisted to the agency's AgencySettings row (see P.9).
         public string Currency { get; init; } = "TND";
@@ -47,6 +52,7 @@ namespace RemSolution.Application.Features.Agency.Commands.UpdateAgencyCommand
             entity.Email = request.Email;
             entity.PhoneNumber = request.PhoneNumber;
             entity.Address = request.Address;
+            entity.Location = GeoPoint.ToPoint(request.Latitude, request.Longitude);
             entity.CountryId = request.CountryId;
 
             var settings = await _context.AgencySettings

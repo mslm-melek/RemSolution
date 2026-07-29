@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using NetTopologySuite.Geometries;
 using RemSolution.Application.Common.Documents;
+using RemSolution.Application.Common.Geo;
 using RemSolution.Application.Common.Interfaces;
 using RemSolution.Application.Common.Tenancy;
 using RemSolution.Domain.Constants;
@@ -15,15 +15,24 @@ namespace RemSolution.Infrastructure.Data;
 
 /// <summary>
 /// Fills a development database with a coherent dataset you can actually click
-/// through: two agencies on different plans, logins for every role, priced cars,
-/// clients, bookings in every state, money movements, reservations in every
-/// status, document templates and a few already-issued PDFs.
+/// through: five agencies across four countries and three currencies, on
+/// different plans, with logins for every role, branches placed on the map,
+/// priced cars, clients, bookings in every state, money movements, reservations
+/// in every status, document templates and a few already-issued PDFs.
 /// <para>
 /// Design notes:
 /// </para>
 /// <list type="bullet">
 /// <item><b>Opt-in.</b> Runs only when <see cref="DemoDataOptions.Enabled"/> is set
 /// AND the host is Development (see InitialiserExtensions).</item>
+/// <item><b>One currency per agency.</b> Amounts are a Money value object
+/// carrying their ISO code, and the agency's AgencySettings row is what the app
+/// reads them back against — so the Casablanca agency's cars are priced in MAD,
+/// not in the Tunisian dinar the first two agencies use. <see cref="ActAs"/>
+/// switches both the tenant and the currency together.</item>
+/// <item><b>Branches carry an address AND a pin.</b> Both are what the map
+/// picker writes, and the pin is what puts an agency on the marketplace map —
+/// a branch without one is invisible to search by distance.</item>
 /// <item><b>Idempotent.</b> Presence of the first demo agency means "already
 /// seeded" and the whole thing is skipped, so restarting the app does not
 /// duplicate anything. To start over, drop the database
@@ -46,7 +55,13 @@ public class DemoDataSeeder
     private const string SecondaryAgencyName = "Sahara Cars Djerba";
 
     private const string DemoPassword = "Demo1234!";
-    private const string Currency = "TND";
+
+    // ISO 4217 codes, one per agency. Every Money an agency stores is in its own
+    // code — see _currency.
+    private const string TunisianDinar = "TND";
+    private const string MoroccanDirham = "MAD";
+    private const string Euro = "EUR";
+    private const string UaeDirham = "AED";
 
     private readonly ApplicationDbContext _context;
     private readonly UserManager<ApplicationUser> _userManager;
@@ -77,6 +92,17 @@ public class DemoDataSeeder
     /// <summary>Today at midnight UTC — every seeded date hangs off this.</summary>
     private DateTime Today => _dateTime.GetUtcNow().UtcDateTime.Date;
 
+    /// <summary>
+    /// The currency of the agency being seeded right now. Every Money the seeder
+    /// writes has to be in its own agency's currency — the agency's
+    /// AgencySettings row is what the app reads amounts back against, so a Paris
+    /// agency priced in dinars would render as nonsense. Set by
+    /// <see cref="ActAs"/> alongside the ambient tenant, and for the same
+    /// reason: the helpers below then need no currency argument, and adding an
+    /// agency cannot forget to pass one.
+    /// </summary>
+    private string _currency = "TND";
+
     public async Task SeedAsync(CancellationToken cancellationToken = default)
     {
         if (await _context.Agencies.AnyAsync(a => a.Name == PrimaryAgencyName, cancellationToken))
@@ -104,7 +130,8 @@ public class DemoDataSeeder
         var full = await PlanAsync("Full", cancellationToken);
         var carthage = await SeedAgencyAsync(
             PrimaryAgencyName, "12 avenue Habib Bourguiba, Tunis",
-            "+216 71 240 100", "contact@carthagerent.tn", tunisia, full, cancellationToken);
+            "+216 71 240 100", "contact@carthagerent.tn", tunisia, full,
+            TunisianDinar, 36.7996, 10.1815, cancellationToken);
 
         await SeedUserAsync("admin@demo.tn", "Nadia Ben Amor", Roles.AgencyAdministrator, carthage.Id);
 
@@ -123,7 +150,7 @@ public class DemoDataSeeder
             Permissions.FactureRead,
         });
 
-        using (AmbientTenant.Push(carthage.Id))
+        using (ActAs(carthage))
         {
             await SeedCarthageAsync(carthage, tunisia, models, extras, cancellationToken);
         }
@@ -133,20 +160,32 @@ public class DemoDataSeeder
         var starter = await PlanAsync("Starter", cancellationToken);
         var sahara = await SeedAgencyAsync(
             SecondaryAgencyName, "Route de Midoun, Djerba",
-            "+216 75 650 200", "contact@saharacars.tn", tunisia, starter, cancellationToken);
+            "+216 75 650 200", "contact@saharacars.tn", tunisia, starter,
+            TunisianDinar, 33.8076, 10.9963, cancellationToken);
 
         await SeedUserAsync("admin@sahara.tn", "Hichem Gharbi", Roles.AgencyAdministrator, sahara.Id);
 
-        using (AmbientTenant.Push(sahara.Id))
+        using (ActAs(sahara))
         {
             await SeedSaharaAsync(sahara, tunisia, models, cancellationToken);
         }
+
+        // ---- Agencies 3-5: other countries and other currencies. Each trades in
+        // its own, which is what makes a cross-agency screen (the marketplace, the
+        // platform dashboard) show prices that must not be added together — and
+        // each spreads its branches over more than one city, so the map and the
+        // "pick-up place" filters have something to work with. ----
+        await SeedAtlasAsync(models, extras, full, cancellationToken);
+        await SeedRivieraAsync(models, extras, full, cancellationToken);
+        await SeedGulfDriveAsync(models, starter, cancellationToken);
 
         // A marketplace customer: no agency, browses across agencies.
         await SeedUserAsync("customer@demo.tn", "Leïla Msakni", Roles.Customer, agencyId: null);
 
         _logger.LogInformation(
-            "Demo data seeded. Logins: admin@demo.tn / staff@demo.tn / admin@sahara.tn / customer@demo.tn (password {Password}).",
+            "Demo data seeded. Logins: admin@demo.tn / staff@demo.tn / admin@sahara.tn / " +
+            "admin@atlasrent.ma / admin@riviera.fr / admin@gulfdrive.ae / customer@demo.tn " +
+            "(password {Password}).",
             DemoPassword);
     }
 
@@ -159,20 +198,11 @@ public class DemoDataSeeder
         IReadOnlyList<ExtraServicesType> extras,
         CancellationToken cancellationToken)
     {
-        var centre = new Branch
-        {
-            Name = "Agence Tunis Centre",
-            CountryId = country.Id,
-            // SRID 4326 = WGS84 lon/lat, which is what the spatial queries expect.
-            Location = new Point(10.1815, 36.7996) { SRID = 4326 }
-        };
+        var centre = Branch("Agence Tunis Centre", country,
+            "12 avenue Habib Bourguiba, Tunis", 36.7996, 10.1815);
 
-        var airport = new Branch
-        {
-            Name = "Aéroport Tunis-Carthage",
-            CountryId = country.Id,
-            Location = new Point(10.2272, 36.8510) { SRID = 4326 }
-        };
+        var airport = Branch("Aéroport Tunis-Carthage", country,
+            "Aéroport Tunis-Carthage, Tunis", 36.8510, 10.2272);
 
         _context.Branches.AddRange(centre, airport);
         await _context.SaveChangesAsync(cancellationToken);
@@ -360,7 +390,7 @@ public class DemoDataSeeder
             ClientId = cancelled.ClientId,
             RentingId = cancelled.Id,
             PayementDate = Today.AddDays(-18),
-            PayementAmount = Money.Of(-240m, Currency),
+            PayementAmount = Money.Of(-240m, _currency),
             Method = PaymentMethod.Cash,
             IsRefund = true,
             Notes = "Remboursement suite à l'annulation."
@@ -377,7 +407,7 @@ public class DemoDataSeeder
             ClientId = mistaken.ClientId,
             RentingId = mistaken.RentingId,
             PayementDate = Today.AddDays(-11),
-            PayementAmount = Money.Of(-500m, Currency),
+            PayementAmount = Money.Of(-500m, _currency),
             Method = PaymentMethod.Card,
             ReversesPaymentId = mistaken.Id,
             Notes = "Contrepassation de la saisie erronée."
@@ -538,12 +568,8 @@ public class DemoDataSeeder
         IReadOnlyDictionary<string, ModelCar> models,
         CancellationToken cancellationToken)
     {
-        var branch = new Branch
-        {
-            Name = "Agence Djerba Midoun",
-            CountryId = country.Id,
-            Location = new Point(10.9963, 33.8076) { SRID = 4326 }
-        };
+        var branch = Branch("Agence Djerba Midoun", country,
+            "Route de Midoun, Djerba", 33.8076, 10.9963);
 
         _context.Branches.Add(branch);
         await _context.SaveChangesAsync(cancellationToken);
@@ -587,6 +613,326 @@ public class DemoDataSeeder
             Review(agency, rentings[0], clients[0], "Hyundai i10", 3, -13,
                 "Correct pour le prix, mais la voiture accusait son kilométrage."));
 
+        await _context.SaveChangesAsync(cancellationToken);
+    }
+
+    // ------------------------------------------------- agencies 3-5: abroad
+    //
+    // Each of these is deliberately smaller than Carthage: that agency is the
+    // "everything switched on" showcase, and these three exist to make the app
+    // stop looking like a single-country, single-currency one. What they add is
+    // breadth — other currencies, branches in more than one city, and a fleet
+    // priced in local money.
+
+    /// <summary>
+    /// Morocco, in dirhams. Three branches over two cities, so a search near
+    /// Marrakech and one near Casablanca return different fleets from the same
+    /// agency.
+    /// </summary>
+    private async Task SeedAtlasAsync(
+        IReadOnlyDictionary<string, ModelCar> models,
+        IReadOnlyList<ExtraServicesType> extras,
+        SubscriptionPlan plan,
+        CancellationToken cancellationToken)
+    {
+        var morocco = await CountryAsync("Maroc", cancellationToken);
+
+        var agency = await SeedAgencyAsync(
+            "Atlas Rent Casablanca", "45 boulevard d'Anfa, Casablanca",
+            "+212 522 27 41 00", "contact@atlasrent.ma", morocco, plan,
+            MoroccanDirham, 33.5883, -7.6114, cancellationToken);
+
+        await SeedUserAsync("admin@atlasrent.ma", "Youssef El Fassi", Roles.AgencyAdministrator, agency.Id);
+
+        // Everything below belongs to this agency and is priced in dirhams.
+        using var acting = ActAs(agency);
+
+        var anfa = Branch("Agence Casablanca Anfa", morocco,
+            "45 boulevard d'Anfa, Casablanca", 33.5883, -7.6114);
+        var airport = Branch("Aéroport Mohammed V", morocco,
+            "Aéroport Mohammed V, Nouaceur", 33.3675, -7.5898);
+        var marrakech = Branch("Agence Marrakech Guéliz", morocco,
+            "Avenue Mohammed V, Guéliz, Marrakech", 31.6340, -8.0089);
+
+        _context.Branches.AddRange(anfa, airport, marrakech);
+        await _context.SaveChangesAsync(cancellationToken);
+
+        var cars = new[]
+        {
+            Car("45821-A-6", models["Clio 5"], anfa, 320m, "Blanc", 90, FuelType.Diesel, 2023),
+            Car("31207-B-6", models["208"], anfa, 340m, "Gris", 100, FuelType.Gasoline, 2023),
+            Car("52940-A-6", models["Duster"], airport, 620m, "Beige", 115, FuelType.Diesel, 2022),
+            Car("18663-C-6", models["Logan"], airport, 300m, "Blanc", 90, FuelType.Diesel, 2021),
+            Car("77104-A-44", models["Sportage"], marrakech, 780m, "Noir", 136, FuelType.Diesel, 2023),
+            Car("20518-B-44", models["Picanto"], marrakech, 260m, "Rouge", 67, FuelType.Gasoline, 2024),
+        };
+
+        _context.Cars.AddRange(cars);
+        await _context.SaveChangesAsync(cancellationToken);
+
+        var clients = new[]
+        {
+            Client("Rachid", "Benjelloun", 1984, 5, 9, "BE445120", null, "12/338745", place: "Casablanca"),
+            Client("Khadija", "Amrani", 1991, 10, 22, "BK901233", null, "14/220198", place: "Casablanca"),
+            Client("Omar", "Tazi", 1977, 2, 14, "BH112907", "MA4471203", "07/889012", place: "Rabat"),
+            Client("Latifa", "Ouazzani", 1995, 8, 3, "MC338710", null, "16/447712", place: "Marrakech"),
+            Client("Hamid", "Chraibi", 1988, 12, 17, "BJ667401", null, "10/112938", place: "Casablanca"),
+            // A European visitor renting on a passport.
+            Client("Sofia", "Marchetti", 1990, 6, 28, null, "YB7741209", "MI9930221", place: "Milan"),
+        };
+
+        _context.Clients.AddRange(clients);
+        await _context.SaveChangesAsync(cancellationToken);
+
+        // Windows per car stay disjoint, so the availability rule holds.
+        var rentings = new[]
+        {
+            Renting(cars[0], clients[0], -31, -27, RentingState.Done, 22_400, 23_150),
+            Renting(cars[4], clients[2], -24, -19, RentingState.Done, 9_800, 11_240),
+            Renting(cars[1], clients[1], -14, -10, RentingState.Done, 31_050, 31_720),
+            Renting(cars[2], clients[3], -2, +3, RentingState.InProgress, 47_600),
+            Renting(cars[5], clients[4], -1, +4, RentingState.InProgress, 6_320),
+            // Car 0 is free again: its earlier booking ended 27 days ago.
+            Renting(cars[0], clients[5], +5, +12, RentingState.NotYet,
+                notes: "Cliente italienne, permis international vérifié."),
+            Renting(cars[3], clients[1], +7, +11, RentingState.NotYet),
+        };
+
+        _context.Rentings.AddRange(rentings);
+        await _context.SaveChangesAsync(cancellationToken);
+
+        _context.AgencyReviews.AddRange(
+            Review(agency, rentings[0], clients[0], "Renault Clio 5", 5, -26,
+                "Prise en charge rapide à Anfa, voiture très propre."),
+            Review(agency, rentings[1], clients[2], "Kia Sportage", 4, -18,
+                "Excellent 4x4 pour l'Atlas. Retour à Marrakech accepté sans frais."),
+            Review(agency, rentings[2], clients[1], "Peugeot 208", 3, -9,
+                "Voiture correcte mais climatisation faible en plein été."));
+
+        await _context.SaveChangesAsync(cancellationToken);
+
+        // Amounts are given explicitly rather than taken from the type's list
+        // price: ExtraServicesType carries a bare number with no currency, and
+        // this agency's dirhams are not the dinars that number was written in.
+        _context.ExtraServices.AddRange(
+            Extra(rentings[1], extras[0], 90m),
+            Extra(rentings[1], extras[3], 320m),
+            Extra(rentings[3], extras[1], 140m),
+            Extra(rentings[5], extras[2], 200m));
+
+        await _context.SaveChangesAsync(cancellationToken);
+
+        // Finished bookings settled in full, live ones part-paid.
+        var payments = new List<Payment>();
+
+        for (var index = 0; index < 3; index++)
+        {
+            payments.Add(Payment(rentings[index], rentings[index].Price!.Amount,
+                index == 1 ? PaymentMethod.Transfer : PaymentMethod.Card,
+                DaysFromToday(rentings[index].StartDate!.Value)));
+        }
+
+        payments.Add(Payment(rentings[3], 900m, PaymentMethod.Cash, -2));
+        payments.Add(Payment(rentings[4], 500m, PaymentMethod.Card, -1));
+
+        _context.Payments.AddRange(payments);
+        await _context.SaveChangesAsync(cancellationToken);
+
+        var pending = Hold(cars[4], clients[3], +14, +19, 48);
+        var confirmed = Hold(cars[1], clients[0], +16, +20, 48);
+        confirmed.Confirm();
+
+        _context.Reservations.AddRange(pending, confirmed);
+        await _context.SaveChangesAsync(cancellationToken);
+    }
+
+    /// <summary>
+    /// France, in euros — the agency that shows the app working in a currency
+    /// and a market with no relation to the Tunisian ones.
+    /// </summary>
+    private async Task SeedRivieraAsync(
+        IReadOnlyDictionary<string, ModelCar> models,
+        IReadOnlyList<ExtraServicesType> extras,
+        SubscriptionPlan plan,
+        CancellationToken cancellationToken)
+    {
+        var france = await CountryAsync("France", cancellationToken);
+
+        var agency = await SeedAgencyAsync(
+            "Riviera Location Nice", "18 promenade des Anglais, Nice",
+            "+33 4 93 87 12 40", "contact@riviera-location.fr", france, plan,
+            Euro, 43.6952, 7.2650, cancellationToken);
+
+        await SeedUserAsync("admin@riviera.fr", "Camille Rousseau", Roles.AgencyAdministrator, agency.Id);
+
+        using var acting = ActAs(agency);
+
+        var promenade = Branch("Agence Nice Promenade", france,
+            "18 promenade des Anglais, Nice", 43.6952, 7.2650);
+        var airport = Branch("Aéroport Nice Côte d'Azur", france,
+            "Terminal 2, Aéroport Nice Côte d'Azur, Nice", 43.6584, 7.2159);
+        var cannes = Branch("Agence Cannes Gare", france,
+            "1 place de la Gare, Cannes", 43.5528, 7.0174);
+
+        _context.Branches.AddRange(promenade, airport, cannes);
+        await _context.SaveChangesAsync(cancellationToken);
+
+        var cars = new[]
+        {
+            Car("AB-274-CD", models["Clio 5"], promenade, 52m, "Gris", 90, FuelType.Diesel, 2023),
+            Car("BF-118-KL", models["Polo"], promenade, 55m, "Blanc", 95, FuelType.Gasoline, 2024),
+            Car("CG-903-RT", models["Golf 8"], airport, 84m, "Noir", 130, FuelType.Diesel, 2023),
+            Car("DH-556-MN", models["308"], airport, 68m, "Bleu", 130, FuelType.Diesel, 2022),
+            Car("EJ-741-PQ", models["Tucson"], cannes, 118m, "Blanc", 136, FuelType.Diesel, 2023),
+            Car("FK-320-ST", models["Corolla"], cannes, 72m, "Argent", 122, FuelType.Gasoline, 2024),
+        };
+
+        _context.Cars.AddRange(cars);
+        await _context.SaveChangesAsync(cancellationToken);
+
+        var clients = new[]
+        {
+            Client("Julien", "Moreau", 1986, 3, 11, null, "19FR88201", "060411223", place: "Nice"),
+            Client("Élodie", "Girard", 1993, 7, 26, null, "20FR11947", "930722118", place: "Cannes"),
+            Client("Thomas", "Lambert", 1979, 11, 4, null, "17FR55103", "790112004", place: "Lyon"),
+            Client("Chloé", "Petit", 1997, 1, 19, null, "21FR33472", "970119338", place: "Nice"),
+            // A British visitor: the passport-only path again, in another market.
+            Client("Daniel", "Whitfield", 1982, 9, 8, null, "GB4471902", "WHITF802091", place: "Londres"),
+        };
+
+        _context.Clients.AddRange(clients);
+        await _context.SaveChangesAsync(cancellationToken);
+
+        var rentings = new[]
+        {
+            Renting(cars[2], clients[0], -27, -22, RentingState.Done, 34_900, 36_180),
+            Renting(cars[0], clients[1], -19, -16, RentingState.Done, 21_400, 21_910),
+            Renting(cars[4], clients[4], -12, -6, RentingState.Done, 15_200, 17_050,
+                notes: "Client britannique, retour à Cannes."),
+            Renting(cars[1], clients[2], -3, +2, RentingState.InProgress, 8_760),
+            Renting(cars[5], clients[3], 0, +7, RentingState.InProgress, 4_120),
+            Renting(cars[2], clients[1], +6, +10, RentingState.NotYet),
+            Renting(cars[3], clients[0], +8, +15, RentingState.NotYet,
+                notes: "Livraison au terminal 2, vol AF 1006.", secondDriver: clients[1]),
+        };
+
+        _context.Rentings.AddRange(rentings);
+        await _context.SaveChangesAsync(cancellationToken);
+
+        _context.AgencyReviews.AddRange(
+            Review(agency, rentings[0], clients[0], "Volkswagen Golf 8", 5, -21,
+                "Voiture neuve, comptoir à deux pas de l'hôtel. Parfait."),
+            Review(agency, rentings[1], clients[1], "Renault Clio 5", 4, -15,
+                "Tout s'est bien passé, mais le plein était à faire au départ."),
+            Review(agency, rentings[2], clients[4], "Hyundai Tucson", 5, -5, comment: null));
+
+        await _context.SaveChangesAsync(cancellationToken);
+
+        _context.ExtraServices.AddRange(
+            Extra(rentings[0], extras[3], 28m),
+            Extra(rentings[2], extras[0], 9m),
+            Extra(rentings[2], extras[1], 14m),
+            Extra(rentings[6], extras[2], 22m));
+
+        await _context.SaveChangesAsync(cancellationToken);
+
+        var payments = new List<Payment>();
+
+        for (var index = 0; index < 3; index++)
+        {
+            payments.Add(Payment(rentings[index], rentings[index].Price!.Amount,
+                PaymentMethod.Card, DaysFromToday(rentings[index].StartDate!.Value)));
+        }
+
+        payments.Add(Payment(rentings[3], 150m, PaymentMethod.Card, -3));
+        payments.Add(Payment(rentings[6], 200m, PaymentMethod.Transfer, 0, "Acompte à la réservation."));
+
+        _context.Payments.AddRange(payments);
+        await _context.SaveChangesAsync(cancellationToken);
+
+        var pending = Hold(cars[4], clients[2], +12, +17, 48);
+        var paid = Hold(cars[0], clients[3], +14, +18, 48);
+        paid.Confirm();
+        paid.MarkPaid();
+
+        _context.Reservations.AddRange(pending, paid);
+        await _context.SaveChangesAsync(cancellationToken);
+    }
+
+    /// <summary>
+    /// The United Arab Emirates, in dirhams, on the Starter plan — so this one
+    /// deliberately has no payments, extras or paperwork: those modules are off,
+    /// and seeding data its own screens cannot show would be misleading.
+    /// Its Arabic-market names also give the RTL layout something real to render.
+    /// </summary>
+    private async Task SeedGulfDriveAsync(
+        IReadOnlyDictionary<string, ModelCar> models,
+        SubscriptionPlan plan,
+        CancellationToken cancellationToken)
+    {
+        var emirates = await CountryAsync("Émirats arabes unis", cancellationToken);
+
+        var agency = await SeedAgencyAsync(
+            "Gulf Drive Dubaï", "Sheikh Zayed Road, Business Bay, Dubaï",
+            "+971 4 321 88 00", "contact@gulfdrive.ae", emirates, plan,
+            UaeDirham, 25.1857, 55.2664, cancellationToken);
+
+        await SeedUserAsync("admin@gulfdrive.ae", "Omar Al Marzooqi", Roles.AgencyAdministrator, agency.Id);
+
+        using var acting = ActAs(agency);
+
+        var businessBay = Branch("Agence Business Bay", emirates,
+            "Sheikh Zayed Road, Business Bay, Dubaï", 25.1857, 55.2664);
+        var airport = Branch("Aéroport international de Dubaï", emirates,
+            "Terminal 3, Aéroport international de Dubaï", 25.2532, 55.3657);
+
+        _context.Branches.AddRange(businessBay, airport);
+        await _context.SaveChangesAsync(cancellationToken);
+
+        var cars = new[]
+        {
+            Car("N 41287", models["Corolla"], businessBay, 240m, "Blanc", 122, FuelType.Gasoline, 2024),
+            Car("K 60934", models["Sportage"], businessBay, 420m, "Gris", 136, FuelType.Gasoline, 2023),
+            Car("P 15502", models["Yaris"], airport, 190m, "Argent", 100, FuelType.Gasoline, 2023),
+            Car("Q 88710", models["Tucson"], airport, 460m, "Noir", 136, FuelType.Gasoline, 2024),
+        };
+
+        _context.Cars.AddRange(cars);
+        await _context.SaveChangesAsync(cancellationToken);
+
+        var clients = new[]
+        {
+            Client("Ahmed", "Al Suwaidi", 1985, 4, 16, "784198512345", null, "DXB4471203", place: "Dubaï"),
+            Client("Fatima", "Al Hashimi", 1992, 11, 2, "784199223317", null, "DXB9930118", place: "Charjah"),
+            Client("Rajesh", "Menon", 1980, 6, 25, null, "IN7741023", "KL1102934", place: "Kochi"),
+            Client("Sarah", "Kensington", 1989, 2, 8, null, "GB9920471", "KENSI890208", place: "Manchester"),
+        };
+
+        _context.Clients.AddRange(clients);
+        await _context.SaveChangesAsync(cancellationToken);
+
+        var rentings = new[]
+        {
+            Renting(cars[0], clients[0], -21, -17, RentingState.Done, 12_400, 13_050),
+            Renting(cars[3], clients[2], -9, -4, RentingState.Done, 5_100, 6_720),
+            Renting(cars[1], clients[1], -1, +4, RentingState.InProgress, 28_900),
+            Renting(cars[2], clients[3], +3, +8, RentingState.NotYet),
+        };
+
+        _context.Rentings.AddRange(rentings);
+        await _context.SaveChangesAsync(cancellationToken);
+
+        _context.AgencyReviews.AddRange(
+            Review(agency, rentings[0], clients[0], "Toyota Corolla", 5, -16,
+                "خدمة سريعة والسيارة نظيفة تماما."),
+            Review(agency, rentings[1], clients[2], "Hyundai Tucson", 4, -3,
+                "Smooth pick-up at Terminal 3, would rent again."));
+
+        await _context.SaveChangesAsync(cancellationToken);
+
+        var pending = Hold(cars[3], clients[1], +10, +14, 48);
+
+        _context.Reservations.Add(pending);
         await _context.SaveChangesAsync(cancellationToken);
     }
 
@@ -703,6 +1049,54 @@ public class DemoDataSeeder
 
     // ------------------------------------------------------------------ helpers
 
+    /// <summary>
+    /// Acts as one agency for everything written inside the scope: the ambient
+    /// tenant (so AgencyId is stamped and the query filters match) and the
+    /// currency every Money is written in. Both are restored on dispose, so
+    /// agencies cannot bleed into each other.
+    /// </summary>
+    private IDisposable ActAs(Agency agency)
+    {
+        var previousCurrency = _currency;
+        var tenant = AmbientTenant.Push(agency.Id);
+
+        _currency = agency.Settings?.CurrencyCode ?? previousCurrency;
+
+        return new Acting(tenant, () => _currency = previousCurrency);
+    }
+
+    private sealed class Acting : IDisposable
+    {
+        private readonly IDisposable _tenant;
+        private readonly Action _restore;
+
+        public Acting(IDisposable tenant, Action restore)
+        {
+            _tenant = tenant;
+            _restore = restore;
+        }
+
+        public void Dispose()
+        {
+            _restore();
+            _tenant.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// A branch with its street address and its pin — the two halves the map
+    /// picker fills in together. Latitude first, as it is written and said;
+    /// GeoPoint does the swap into the Point's (X=longitude, Y=latitude) order.
+    /// </summary>
+    private static Branch Branch(string name, Country country, string address, double latitude, double longitude)
+        => new()
+        {
+            Name = name,
+            CountryId = country.Id,
+            Address = address,
+            Location = GeoPoint.ToPoint(latitude, longitude)
+        };
+
     private async Task<Country> CountryAsync(string name, CancellationToken cancellationToken)
     {
         var country = await _context.Countries.FirstOrDefaultAsync(c => c.Name == name, cancellationToken);
@@ -772,7 +1166,8 @@ public class DemoDataSeeder
 
     private async Task<Agency> SeedAgencyAsync(
         string name, string address, string phone, string email,
-        Country country, SubscriptionPlan plan, CancellationToken cancellationToken)
+        Country country, SubscriptionPlan plan, string currency,
+        double latitude, double longitude, CancellationToken cancellationToken)
     {
         var now = _dateTime.GetUtcNow();
 
@@ -783,9 +1178,13 @@ public class DemoDataSeeder
             PhoneNumber = phone,
             Email = email,
             CountryId = country.Id,
+            // The head-office pin, as the agency form's map picker would have set
+            // it. Coordinates are given latitude-first here and swapped once, in
+            // GeoPoint, rather than at each call site.
+            Location = GeoPoint.ToPoint(latitude, longitude),
             Settings = new AgencySettings
             {
-                CurrencyCode = Currency,
+                CurrencyCode = currency,
                 CancellationWindowHours = 24,
                 ReservationExpiryHours = 48
             }
@@ -864,33 +1263,37 @@ public class DemoDataSeeder
             ModelId = model.Id,
             BranchId = branch.Id,
             Status = status,
-            DailyRate = Money.Of(dailyRate, Currency),
+            DailyRate = Money.Of(dailyRate, _currency),
             Color = colour,
             Power = power,
             FuelType = fuel,
             FirstCirculationDate = new DateTime(firstCirculationYear, 3, 1, 0, 0, 0, DateTimeKind.Utc)
         };
 
+    // `place` is where the client and their papers come from. It defaults to Tunis
+    // for the two Tunisian agencies, which were the only ones here first; the
+    // international agencies pass their own city so a Nice client is not recorded
+    // as holding a Tunisian ID card.
     private static Client Client(
         string firstName, string lastName, int birthYear, int birthMonth, int birthDay,
         string? cin, string? passport, string? licence,
-        bool flagged = false, string? notes = null) => new()
+        bool flagged = false, string? notes = null, string place = "Tunis") => new()
         {
             FirstName = firstName,
             LastName = lastName,
             BirthDate = new DateTime(birthYear, birthMonth, birthDay, 0, 0, 0, DateTimeKind.Utc),
-            BirthPlace = "Tunis",
+            BirthPlace = place,
             CIN = cin,
             CINDeliveranceDate = cin is null
                 ? null
                 : new DateTime(birthYear + 18, birthMonth, birthDay, 0, 0, 0, DateTimeKind.Utc),
-            CINDeliverancePlace = cin is null ? null : "Tunis",
+            CINDeliverancePlace = cin is null ? null : place,
             PasseportNumber = passport,
             DrivingLicenceNumber = licence,
             DrivingLicenceDeliveranceDate = licence is null
                 ? null
                 : new DateTime(birthYear + 20, 6, 1, 0, 0, 0, DateTimeKind.Utc),
-            DrivingLicenceDeliverancePlace = licence is null ? null : "Tunis",
+            DrivingLicenceDeliverancePlace = licence is null ? null : place,
             IsFlagged = flagged,
             Notes = notes
         };
@@ -915,7 +1318,7 @@ public class DemoDataSeeder
             // From the pricing seam rather than a second copy of the arithmetic, so
             // seeded prices match what the app would have quoted.
             Price = _pricing.CalculateRentalPrice(car, start, end),
-            DepositAmount = Money.Of(300m, Currency),
+            DepositAmount = Money.Of(300m, _currency),
             RentingState = state,
             Notes = notes
         };
@@ -954,14 +1357,14 @@ public class DemoDataSeeder
             _pricing.CalculateRentalPrice(car, start, end),
             _dateTime.GetUtcNow().UtcDateTime.AddHours(expiryOffsetHours),
             client.Id,
-            depositAmount: Money.Of(200m, Currency));
+            depositAmount: Money.Of(200m, _currency));
     }
 
     private ExtraService Extra(Renting renting, ExtraServicesType type, decimal? overrideAmount = null) => new()
     {
         RentingId = renting.Id,
         ExtraServicesTypeId = type.Id,
-        TotalAmount = Money.Of(overrideAmount ?? type.Amount ?? 0m, Currency)
+        TotalAmount = Money.Of(overrideAmount ?? type.Amount ?? 0m, _currency)
     };
 
     private Payment Payment(
@@ -970,7 +1373,7 @@ public class DemoDataSeeder
             ClientId = renting.ClientId,
             RentingId = renting.Id,
             PayementDate = Today.AddDays(dayOffset),
-            PayementAmount = Money.Of(amount, Currency),
+            PayementAmount = Money.Of(amount, _currency),
             Method = method,
             Notes = notes
         };
@@ -980,7 +1383,7 @@ public class DemoDataSeeder
         CarId = car.Id,
         ExpenseTypeId = type.Id,
         ExpenseDate = Today.AddDays(dayOffset),
-        ExpenseAmount = Money.Of(amount, Currency),
+        ExpenseAmount = Money.Of(amount, _currency),
         Description = notes
     };
 

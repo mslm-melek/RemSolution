@@ -1,0 +1,106 @@
+<div class="page my-agency-card" *transloco="let t">
+  <div class="header-row">
+    <h2 class="title">{{ t('myAgency.title') }}</h2>
+  </div>
+
+  <div *ngIf="errorMessage" class="error-banner">{{ errorMessage }}</div>
+
+  <mat-tab-group (selectedTabChange)="onTabChange()">
+    <!-- DETAILS -->
+    <mat-tab [label]="t('myAgency.tabs.details')">
+      <div class="tab-body">
+        <form [formGroup]="form" (ngSubmit)="save()">
+          <div class="field-grid">
+            <mat-form-field appearance="outline" class="span-2">
+              <mat-label>{{ t('common.name') }}</mat-label>
+              <input matInput formControlName="name" required />
+              <mat-error *ngIf="form.get('name')?.hasError('required')">{{ t('agency.nameRequired') }}</mat-error>
+              <mat-error *ngIf="form.get('name')?.hasError('maxlength')">{{ t('agency.nameTooLong') }}</mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>{{ t('agency.email') }}</mat-label>
+              <input matInput formControlName="email" type="email" />
+              <mat-error *ngIf="form.get('email')?.hasError('email')">{{ t('agency.emailInvalid') }}</mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>{{ t('agency.phoneNumber') }}</mat-label>
+              <input matInput formControlName="phoneNumber" />
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>{{ t('agency.country') }}</mat-label>
+              <mat-select formControlName="countryId" required>
+                <mat-option *ngFor="let country of countries" [value]="country.id">{{ country.name }}</mat-option>
+              </mat-select>
+              <mat-error *ngIf="form.get('countryId')?.hasError('required')">{{ t('agency.countryRequired') }}</mat-error>
+            </mat-form-field>
+
+            <!-- Read-only on purpose: see myAgency.currencyLocked.
+                 subscriptSizing="dynamic" on the hinted fields: the default
+                 reserves exactly one line under the field, and both of these
+                 hints wrap to two on a narrow column — which overlapped the
+                 field below instead of pushing it down. -->
+            <mat-form-field appearance="outline" subscriptSizing="dynamic">
+              <mat-label>{{ t('agency.currencyIso') }}</mat-label>
+              <input matInput [value]="currency" disabled />
+              <mat-hint>{{ t('myAgency.currencyLocked') }}</mat-hint>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="span-2" subscriptSizing="dynamic">
+              <mat-label>{{ t('agency.address') }}</mat-label>
+              <input matInput formControlName="address" />
+              <mat-hint>{{ t('agency.addressHint') }}</mat-hint>
+            </mat-form-field>
+          </div>
+
+          <app-map-picker [latitude]="latitude" [longitude]="longitude"
+                          (picked)="onPicked($event)"></app-map-picker>
+
+          <h3 class="section-title">{{ t('agency.bookingRules') }}</h3>
+          <div class="field-grid">
+            <mat-form-field appearance="outline">
+              <mat-label>{{ t('agency.cancellationWindow') }}</mat-label>
+              <input matInput type="number" formControlName="cancellationWindowHours" min="0" />
+              <mat-error *ngIf="form.get('cancellationWindowHours')?.invalid">{{ t('agency.cancellationWindowInvalid') }}</mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>{{ t('agency.reservationExpiry') }}</mat-label>
+              <input matInput type="number" formControlName="reservationExpiryHours" min="1" />
+              <mat-error *ngIf="form.get('reservationExpiryHours')?.invalid">{{ t('agency.reservationExpiryInvalid') }}</mat-error>
+            </mat-form-field>
+          </div>
+
+          <div class="actions-row">
+            <button mat-raised-button color="primary" type="submit" [disabled]="saving">
+              <mat-icon>save</mat-icon> {{ saving ? t('common.saving') : t('common.save') }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </mat-tab>
+
+    <!-- BRANCHES -->
+    <mat-tab [label]="t('myAgency.tabs.branches')" *ngIf="canBranches">
+      <div class="tab-body">
+        <app-branches-editor [branches]="branches" [countries]="countries"
+                             [saving]="branchesSaving"
+                             [defaultCountryId]="form.value.countryId"
+                             (added)="onBranchAdded($event)"
+                             (updated)="onBranchUpdated($event)"
+                             (removed)="onBranchRemoved($event)"></app-branches-editor>
+
+        <p class="branches-note">{{ t('branch.savedImmediately') }}</p>
+      </div>
+    </mat-tab>
+
+    <!-- TEAM -->
+    <mat-tab [label]="t('myAgency.tabs.team')">
+      <div class="tab-body">
+        <app-team></app-team>
+      </div>
+    </mat-tab>
+  </mat-tab-group>
+</div>

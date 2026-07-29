@@ -195,12 +195,20 @@ main .page .title,
   width: 100%;
 }
 
-/* Section label inside a page — small, quiet, uppercase. */
+/* Section label inside a page — small, quiet, uppercase.
+   Qualified with .mat-typography (which Material puts on <body>) purely to win a
+   specificity fight: these labels are nearly always put on an <h3>/<h4>, and
+   `.mat-typography h3` is [0,1,1] against a bare class's [0,1,0]. Unqualified,
+   this rule lost only the font properties — leaving a 36px display heading that
+   was still uppercase and grey. Kept at [0,2,0] on purpose: component styles are
+   also [0,2,0] and are injected later, so a screen that wants its own size (the
+   agency, client and plan forms do) still overrides this without needing !important. */
+.mat-typography .section-title,
+.mat-typography .section-label,
 .section-title,
 .section-label {
   margin: var(--gap-2) 0 0;
-  font-size: 12px;
-  font-weight: 700;
+  font: 700 12px/1.4 var(--font);
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--muted);

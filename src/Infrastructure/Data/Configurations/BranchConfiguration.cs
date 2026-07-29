@@ -17,6 +17,9 @@ public class BranchConfiguration : IEntityTypeConfiguration<Branch>
                .HasMaxLength(200)
                .UseCollation(DatabaseCollations.AccentInsensitive);
 
+        builder.Property(b => b.Address)
+               .HasMaxLength(500);
+
         // The spatial index on Location cannot be expressed through the EF
         // model (SQL Server spatial indexes aren't supported by the
         // provider); it is created by raw SQL in the AddBranch migration.

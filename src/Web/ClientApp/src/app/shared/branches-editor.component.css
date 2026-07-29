@@ -1,0 +1,68 @@
+.branches {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-2);
+}
+
+.header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gap-3);
+  flex-wrap: wrap;
+}
+
+/* main .page wins over a bare .section-title, so the heading is addressed the
+   same way the shared page styles are (see styles.scss). */
+.header-row .section-title {
+  margin: 0;
+}
+
+.hint,
+.empty-note {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-3);
+  padding: var(--gap-3);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  background: var(--surface-2);
+}
+
+.panel .section-title {
+  margin: 0;
+}
+
+.field-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--gap-2) var(--gap-3);
+  margin-bottom: var(--gap-2);
+}
+
+.field-grid .span-2 {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 720px) {
+  .field-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.actions-row {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-2);
+  flex-wrap: wrap;
+}
+
+.muted {
+  color: var(--muted);
+}

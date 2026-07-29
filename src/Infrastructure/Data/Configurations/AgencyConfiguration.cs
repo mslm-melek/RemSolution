@@ -22,6 +22,11 @@ public class AgencyConfiguration : IEntityTypeConfiguration<Agency>
         builder.Property(a => a.Address)
                .HasMaxLength(500);
 
+        // The HQ pin. No spatial index, unlike Branch.Location: this column is
+        // only ever read for one known agency, never searched over.
+        builder.Property(a => a.Location)
+               .HasColumnType("geography");
+
         // Countries are seeded reference data; never cascade a country delete into agencies.
         builder.HasOne(a => a.Country)
                .WithMany()

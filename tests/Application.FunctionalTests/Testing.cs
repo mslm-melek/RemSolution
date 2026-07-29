@@ -212,6 +212,21 @@ public partial class Testing
         return await context.Set<TEntity>().IgnoreQueryFilters().FirstOrDefaultAsync(predicate);
     }
 
+    // Lists rows bypassing global query filters (tenant + soft-delete). Needed to
+    // assert on what a platform-administrator command wrote for an agency: that
+    // caller has no tenant of their own, so an ordinary read here sees nothing —
+    // and filtering by the tenant instead would make "stamped with the right
+    // agency" assertions tautological.
+    public static async Task<List<TEntity>> AllIgnoringFiltersAsync<TEntity>()
+        where TEntity : class
+    {
+        using var scope = _scopeFactory.CreateScope();
+
+        var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+        return await context.Set<TEntity>().IgnoreQueryFilters().AsNoTracking().ToListAsync();
+    }
+
     public static async Task AddAsync<TEntity>(TEntity entity)
         where TEntity : class
     {

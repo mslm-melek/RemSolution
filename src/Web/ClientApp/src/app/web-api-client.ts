@@ -84,6 +84,8 @@ export class Client implements IClient {
 }
 
 export interface IAgenciesClient {
+    getMyAgency(): Observable<AgencyDto>;
+    updateMyAgency(command: UpdateMyAgencyCommand): Observable<void>;
     getAgencies(): Observable<AgencyDto[]>;
     createAgency(command: CreateAgencyCommand): Observable<number>;
     getAgencyById(id: number): Observable<AgencyDto>;
@@ -91,6 +93,10 @@ export interface IAgenciesClient {
     deleteAgency(id: number): Observable<void>;
     getAgencyFeatures(id: number): Observable<AgencyFeatureDto[]>;
     setAgencyFeature(id: number, command: SetAgencyFeatureCommand): Observable<void>;
+    getAgencyBranches(id: number): Observable<BranchDto[]>;
+    createAgencyBranch(id: number, command: CreateAgencyBranchCommand): Observable<number>;
+    updateAgencyBranch(id: number, branchId: number, command: UpdateAgencyBranchCommand): Observable<void>;
+    deleteAgencyBranch(id: number, branchId: number): Observable<void>;
 }
 
 @Injectable({
@@ -104,6 +110,102 @@ export class AgenciesClient implements IAgenciesClient {
     constructor(@Inject(HttpClient) http: HttpClient, @Optional() @Inject(API_BASE_URL) baseUrl?: string) {
         this.http = http;
         this.baseUrl = baseUrl ?? "";
+    }
+
+    getMyAgency(): Observable<AgencyDto> {
+        let url_ = this.baseUrl + "/api/Agencies/me";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetMyAgency(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetMyAgency(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<AgencyDto>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<AgencyDto>;
+        }));
+    }
+
+    protected processGetMyAgency(response: HttpResponseBase): Observable<AgencyDto> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = AgencyDto.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    updateMyAgency(command: UpdateMyAgencyCommand): Observable<void> {
+        let url_ = this.baseUrl + "/api/Agencies/me";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(command);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+            })
+        };
+
+        return this.http.request("put", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processUpdateMyAgency(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processUpdateMyAgency(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processUpdateMyAgency(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return _observableOf(null as any);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
     }
 
     getAgencies(): Observable<AgencyDto[]> {
@@ -475,6 +577,232 @@ export class AgenciesClient implements IAgenciesClient {
         } else if (status === 400) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
             return throwException("A server side error occurred.", status, _responseText, _headers);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getAgencyBranches(id: number): Observable<BranchDto[]> {
+        let url_ = this.baseUrl + "/api/Agencies/{id}/branches";
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetAgencyBranches(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetAgencyBranches(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<BranchDto[]>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<BranchDto[]>;
+        }));
+    }
+
+    protected processGetAgencyBranches(response: HttpResponseBase): Observable<BranchDto[]> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            if (Array.isArray(resultData200)) {
+                result200 = [] as any;
+                for (let item of resultData200)
+                    result200!.push(BranchDto.fromJS(item));
+            }
+            else {
+                result200 = <any>null;
+            }
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    createAgencyBranch(id: number, command: CreateAgencyBranchCommand): Observable<number> {
+        let url_ = this.baseUrl + "/api/Agencies/{id}/branches";
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(command);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processCreateAgencyBranch(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processCreateAgencyBranch(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<number>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<number>;
+        }));
+    }
+
+    protected processCreateAgencyBranch(response: HttpResponseBase): Observable<number> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 201) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result201: any = null;
+            let resultData201 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+                result201 = resultData201 !== undefined ? resultData201 : <any>null;
+    
+            return _observableOf(result201);
+            }));
+        } else if (status === 400) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("A server side error occurred.", status, _responseText, _headers);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    updateAgencyBranch(id: number, branchId: number, command: UpdateAgencyBranchCommand): Observable<void> {
+        let url_ = this.baseUrl + "/api/Agencies/{id}/branches/{branchId}";
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        if (branchId === undefined || branchId === null)
+            throw new Error("The parameter 'branchId' must be defined.");
+        url_ = url_.replace("{branchId}", encodeURIComponent("" + branchId));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(command);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+            })
+        };
+
+        return this.http.request("put", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processUpdateAgencyBranch(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processUpdateAgencyBranch(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processUpdateAgencyBranch(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return _observableOf(null as any);
+            }));
+        } else if (status === 400) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("A server side error occurred.", status, _responseText, _headers);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    deleteAgencyBranch(id: number, branchId: number): Observable<void> {
+        let url_ = this.baseUrl + "/api/Agencies/{id}/branches/{branchId}";
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        if (branchId === undefined || branchId === null)
+            throw new Error("The parameter 'branchId' must be defined.");
+        url_ = url_.replace("{branchId}", encodeURIComponent("" + branchId));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+            })
+        };
+
+        return this.http.request("delete", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processDeleteAgencyBranch(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processDeleteAgencyBranch(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processDeleteAgencyBranch(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return _observableOf(null as any);
             }));
         } else if (status !== 200 && status !== 204) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
@@ -9319,6 +9647,8 @@ export class AgencyDto implements IAgencyDto {
     email?: string | undefined;
     phoneNumber?: string | undefined;
     address?: string | undefined;
+    latitude?: number | undefined;
+    longitude?: number | undefined;
     countryId?: number;
     countryName?: string | undefined;
     currency?: string;
@@ -9342,6 +9672,8 @@ export class AgencyDto implements IAgencyDto {
             this.email = _data["email"];
             this.phoneNumber = _data["phoneNumber"];
             this.address = _data["address"];
+            this.latitude = _data["latitude"];
+            this.longitude = _data["longitude"];
             this.countryId = _data["countryId"];
             this.countryName = _data["countryName"];
             this.currency = _data["currency"];
@@ -9365,6 +9697,8 @@ export class AgencyDto implements IAgencyDto {
         data["email"] = this.email;
         data["phoneNumber"] = this.phoneNumber;
         data["address"] = this.address;
+        data["latitude"] = this.latitude;
+        data["longitude"] = this.longitude;
         data["countryId"] = this.countryId;
         data["countryName"] = this.countryName;
         data["currency"] = this.currency;
@@ -9381,9 +9715,83 @@ export interface IAgencyDto {
     email?: string | undefined;
     phoneNumber?: string | undefined;
     address?: string | undefined;
+    latitude?: number | undefined;
+    longitude?: number | undefined;
     countryId?: number;
     countryName?: string | undefined;
     currency?: string;
+    cancellationWindowHours?: number;
+    reservationExpiryHours?: number;
+}
+
+export class UpdateMyAgencyCommand implements IUpdateMyAgencyCommand {
+    rowVersion?: string | undefined;
+    name?: string;
+    email?: string | undefined;
+    phoneNumber?: string | undefined;
+    address?: string | undefined;
+    latitude?: number | undefined;
+    longitude?: number | undefined;
+    countryId?: number;
+    cancellationWindowHours?: number;
+    reservationExpiryHours?: number;
+
+    constructor(data?: IUpdateMyAgencyCommand) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.rowVersion = _data["rowVersion"];
+            this.name = _data["name"];
+            this.email = _data["email"];
+            this.phoneNumber = _data["phoneNumber"];
+            this.address = _data["address"];
+            this.latitude = _data["latitude"];
+            this.longitude = _data["longitude"];
+            this.countryId = _data["countryId"];
+            this.cancellationWindowHours = _data["cancellationWindowHours"];
+            this.reservationExpiryHours = _data["reservationExpiryHours"];
+        }
+    }
+
+    static fromJS(data: any): UpdateMyAgencyCommand {
+        data = typeof data === 'object' ? data : {};
+        let result = new UpdateMyAgencyCommand();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["rowVersion"] = this.rowVersion;
+        data["name"] = this.name;
+        data["email"] = this.email;
+        data["phoneNumber"] = this.phoneNumber;
+        data["address"] = this.address;
+        data["latitude"] = this.latitude;
+        data["longitude"] = this.longitude;
+        data["countryId"] = this.countryId;
+        data["cancellationWindowHours"] = this.cancellationWindowHours;
+        data["reservationExpiryHours"] = this.reservationExpiryHours;
+        return data;
+    }
+}
+
+export interface IUpdateMyAgencyCommand {
+    rowVersion?: string | undefined;
+    name?: string;
+    email?: string | undefined;
+    phoneNumber?: string | undefined;
+    address?: string | undefined;
+    latitude?: number | undefined;
+    longitude?: number | undefined;
+    countryId?: number;
     cancellationWindowHours?: number;
     reservationExpiryHours?: number;
 }
@@ -9393,10 +9801,13 @@ export class CreateAgencyCommand implements ICreateAgencyCommand {
     email?: string | undefined;
     phoneNumber?: string | undefined;
     address?: string | undefined;
+    latitude?: number | undefined;
+    longitude?: number | undefined;
     countryId?: number;
     currency?: string;
     cancellationWindowHours?: number;
     reservationExpiryHours?: number;
+    branches?: AgencyBranchInput[];
 
     constructor(data?: ICreateAgencyCommand) {
         if (data) {
@@ -9413,10 +9824,17 @@ export class CreateAgencyCommand implements ICreateAgencyCommand {
             this.email = _data["email"];
             this.phoneNumber = _data["phoneNumber"];
             this.address = _data["address"];
+            this.latitude = _data["latitude"];
+            this.longitude = _data["longitude"];
             this.countryId = _data["countryId"];
             this.currency = _data["currency"];
             this.cancellationWindowHours = _data["cancellationWindowHours"];
             this.reservationExpiryHours = _data["reservationExpiryHours"];
+            if (Array.isArray(_data["branches"])) {
+                this.branches = [] as any;
+                for (let item of _data["branches"])
+                    this.branches!.push(AgencyBranchInput.fromJS(item));
+            }
         }
     }
 
@@ -9433,10 +9851,17 @@ export class CreateAgencyCommand implements ICreateAgencyCommand {
         data["email"] = this.email;
         data["phoneNumber"] = this.phoneNumber;
         data["address"] = this.address;
+        data["latitude"] = this.latitude;
+        data["longitude"] = this.longitude;
         data["countryId"] = this.countryId;
         data["currency"] = this.currency;
         data["cancellationWindowHours"] = this.cancellationWindowHours;
         data["reservationExpiryHours"] = this.reservationExpiryHours;
+        if (Array.isArray(this.branches)) {
+            data["branches"] = [];
+            for (let item of this.branches)
+                data["branches"].push(item.toJSON());
+        }
         return data;
     }
 }
@@ -9446,10 +9871,65 @@ export interface ICreateAgencyCommand {
     email?: string | undefined;
     phoneNumber?: string | undefined;
     address?: string | undefined;
+    latitude?: number | undefined;
+    longitude?: number | undefined;
     countryId?: number;
     currency?: string;
     cancellationWindowHours?: number;
     reservationExpiryHours?: number;
+    branches?: AgencyBranchInput[];
+}
+
+export class AgencyBranchInput implements IAgencyBranchInput {
+    name?: string;
+    countryId?: number;
+    address?: string | undefined;
+    latitude?: number | undefined;
+    longitude?: number | undefined;
+
+    constructor(data?: IAgencyBranchInput) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.name = _data["name"];
+            this.countryId = _data["countryId"];
+            this.address = _data["address"];
+            this.latitude = _data["latitude"];
+            this.longitude = _data["longitude"];
+        }
+    }
+
+    static fromJS(data: any): AgencyBranchInput {
+        data = typeof data === 'object' ? data : {};
+        let result = new AgencyBranchInput();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["name"] = this.name;
+        data["countryId"] = this.countryId;
+        data["address"] = this.address;
+        data["latitude"] = this.latitude;
+        data["longitude"] = this.longitude;
+        return data;
+    }
+}
+
+export interface IAgencyBranchInput {
+    name?: string;
+    countryId?: number;
+    address?: string | undefined;
+    latitude?: number | undefined;
+    longitude?: number | undefined;
 }
 
 export class UpdateAgencyCommand implements IUpdateAgencyCommand {
@@ -9459,6 +9939,8 @@ export class UpdateAgencyCommand implements IUpdateAgencyCommand {
     email?: string | undefined;
     phoneNumber?: string | undefined;
     address?: string | undefined;
+    latitude?: number | undefined;
+    longitude?: number | undefined;
     countryId?: number;
     currency?: string;
     cancellationWindowHours?: number;
@@ -9481,6 +9963,8 @@ export class UpdateAgencyCommand implements IUpdateAgencyCommand {
             this.email = _data["email"];
             this.phoneNumber = _data["phoneNumber"];
             this.address = _data["address"];
+            this.latitude = _data["latitude"];
+            this.longitude = _data["longitude"];
             this.countryId = _data["countryId"];
             this.currency = _data["currency"];
             this.cancellationWindowHours = _data["cancellationWindowHours"];
@@ -9503,6 +9987,8 @@ export class UpdateAgencyCommand implements IUpdateAgencyCommand {
         data["email"] = this.email;
         data["phoneNumber"] = this.phoneNumber;
         data["address"] = this.address;
+        data["latitude"] = this.latitude;
+        data["longitude"] = this.longitude;
         data["countryId"] = this.countryId;
         data["currency"] = this.currency;
         data["cancellationWindowHours"] = this.cancellationWindowHours;
@@ -9518,6 +10004,8 @@ export interface IUpdateAgencyCommand {
     email?: string | undefined;
     phoneNumber?: string | undefined;
     address?: string | undefined;
+    latitude?: number | undefined;
+    longitude?: number | undefined;
     countryId?: number;
     currency?: string;
     cancellationWindowHours?: number;
@@ -9606,6 +10094,182 @@ export interface ISetAgencyFeatureCommand {
     agencyId?: number;
     feature?: string;
     enabled?: boolean;
+}
+
+export class BranchDto implements IBranchDto {
+    id?: number;
+    name?: string;
+    countryId?: number;
+    countryName?: string | undefined;
+    address?: string | undefined;
+    latitude?: number | undefined;
+    longitude?: number | undefined;
+
+    constructor(data?: IBranchDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.name = _data["name"];
+            this.countryId = _data["countryId"];
+            this.countryName = _data["countryName"];
+            this.address = _data["address"];
+            this.latitude = _data["latitude"];
+            this.longitude = _data["longitude"];
+        }
+    }
+
+    static fromJS(data: any): BranchDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new BranchDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["name"] = this.name;
+        data["countryId"] = this.countryId;
+        data["countryName"] = this.countryName;
+        data["address"] = this.address;
+        data["latitude"] = this.latitude;
+        data["longitude"] = this.longitude;
+        return data;
+    }
+}
+
+export interface IBranchDto {
+    id?: number;
+    name?: string;
+    countryId?: number;
+    countryName?: string | undefined;
+    address?: string | undefined;
+    latitude?: number | undefined;
+    longitude?: number | undefined;
+}
+
+export class CreateAgencyBranchCommand implements ICreateAgencyBranchCommand {
+    agencyId?: number;
+    name?: string;
+    countryId?: number;
+    address?: string | undefined;
+    latitude?: number | undefined;
+    longitude?: number | undefined;
+
+    constructor(data?: ICreateAgencyBranchCommand) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.agencyId = _data["agencyId"];
+            this.name = _data["name"];
+            this.countryId = _data["countryId"];
+            this.address = _data["address"];
+            this.latitude = _data["latitude"];
+            this.longitude = _data["longitude"];
+        }
+    }
+
+    static fromJS(data: any): CreateAgencyBranchCommand {
+        data = typeof data === 'object' ? data : {};
+        let result = new CreateAgencyBranchCommand();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["agencyId"] = this.agencyId;
+        data["name"] = this.name;
+        data["countryId"] = this.countryId;
+        data["address"] = this.address;
+        data["latitude"] = this.latitude;
+        data["longitude"] = this.longitude;
+        return data;
+    }
+}
+
+export interface ICreateAgencyBranchCommand {
+    agencyId?: number;
+    name?: string;
+    countryId?: number;
+    address?: string | undefined;
+    latitude?: number | undefined;
+    longitude?: number | undefined;
+}
+
+export class UpdateAgencyBranchCommand implements IUpdateAgencyBranchCommand {
+    agencyId?: number;
+    id?: number;
+    name?: string;
+    countryId?: number;
+    address?: string | undefined;
+    latitude?: number | undefined;
+    longitude?: number | undefined;
+
+    constructor(data?: IUpdateAgencyBranchCommand) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.agencyId = _data["agencyId"];
+            this.id = _data["id"];
+            this.name = _data["name"];
+            this.countryId = _data["countryId"];
+            this.address = _data["address"];
+            this.latitude = _data["latitude"];
+            this.longitude = _data["longitude"];
+        }
+    }
+
+    static fromJS(data: any): UpdateAgencyBranchCommand {
+        data = typeof data === 'object' ? data : {};
+        let result = new UpdateAgencyBranchCommand();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["agencyId"] = this.agencyId;
+        data["id"] = this.id;
+        data["name"] = this.name;
+        data["countryId"] = this.countryId;
+        data["address"] = this.address;
+        data["latitude"] = this.latitude;
+        data["longitude"] = this.longitude;
+        return data;
+    }
+}
+
+export interface IUpdateAgencyBranchCommand {
+    agencyId?: number;
+    id?: number;
+    name?: string;
+    countryId?: number;
+    address?: string | undefined;
+    latitude?: number | undefined;
+    longitude?: number | undefined;
 }
 
 export class AgencySubscriptionDto implements IAgencySubscriptionDto {
@@ -10026,65 +10690,10 @@ export interface IRefreshRequest {
     refreshToken?: string;
 }
 
-export class BranchDto implements IBranchDto {
-    id?: number;
-    name?: string;
-    countryId?: number;
-    countryName?: string | undefined;
-    latitude?: number | undefined;
-    longitude?: number | undefined;
-
-    constructor(data?: IBranchDto) {
-        if (data) {
-            for (var property in data) {
-                if (data.hasOwnProperty(property))
-                    (<any>this)[property] = (<any>data)[property];
-            }
-        }
-    }
-
-    init(_data?: any) {
-        if (_data) {
-            this.id = _data["id"];
-            this.name = _data["name"];
-            this.countryId = _data["countryId"];
-            this.countryName = _data["countryName"];
-            this.latitude = _data["latitude"];
-            this.longitude = _data["longitude"];
-        }
-    }
-
-    static fromJS(data: any): BranchDto {
-        data = typeof data === 'object' ? data : {};
-        let result = new BranchDto();
-        result.init(data);
-        return result;
-    }
-
-    toJSON(data?: any) {
-        data = typeof data === 'object' ? data : {};
-        data["id"] = this.id;
-        data["name"] = this.name;
-        data["countryId"] = this.countryId;
-        data["countryName"] = this.countryName;
-        data["latitude"] = this.latitude;
-        data["longitude"] = this.longitude;
-        return data;
-    }
-}
-
-export interface IBranchDto {
-    id?: number;
-    name?: string;
-    countryId?: number;
-    countryName?: string | undefined;
-    latitude?: number | undefined;
-    longitude?: number | undefined;
-}
-
 export class CreateBranchCommand implements ICreateBranchCommand {
     name?: string;
     countryId?: number;
+    address?: string | undefined;
     latitude?: number | undefined;
     longitude?: number | undefined;
 
@@ -10101,6 +10710,7 @@ export class CreateBranchCommand implements ICreateBranchCommand {
         if (_data) {
             this.name = _data["name"];
             this.countryId = _data["countryId"];
+            this.address = _data["address"];
             this.latitude = _data["latitude"];
             this.longitude = _data["longitude"];
         }
@@ -10117,6 +10727,7 @@ export class CreateBranchCommand implements ICreateBranchCommand {
         data = typeof data === 'object' ? data : {};
         data["name"] = this.name;
         data["countryId"] = this.countryId;
+        data["address"] = this.address;
         data["latitude"] = this.latitude;
         data["longitude"] = this.longitude;
         return data;
@@ -10126,6 +10737,7 @@ export class CreateBranchCommand implements ICreateBranchCommand {
 export interface ICreateBranchCommand {
     name?: string;
     countryId?: number;
+    address?: string | undefined;
     latitude?: number | undefined;
     longitude?: number | undefined;
 }
@@ -10134,6 +10746,7 @@ export class UpdateBranchCommand implements IUpdateBranchCommand {
     id?: number;
     name?: string;
     countryId?: number;
+    address?: string | undefined;
     latitude?: number | undefined;
     longitude?: number | undefined;
 
@@ -10151,6 +10764,7 @@ export class UpdateBranchCommand implements IUpdateBranchCommand {
             this.id = _data["id"];
             this.name = _data["name"];
             this.countryId = _data["countryId"];
+            this.address = _data["address"];
             this.latitude = _data["latitude"];
             this.longitude = _data["longitude"];
         }
@@ -10168,6 +10782,7 @@ export class UpdateBranchCommand implements IUpdateBranchCommand {
         data["id"] = this.id;
         data["name"] = this.name;
         data["countryId"] = this.countryId;
+        data["address"] = this.address;
         data["latitude"] = this.latitude;
         data["longitude"] = this.longitude;
         return data;
@@ -10178,6 +10793,7 @@ export interface IUpdateBranchCommand {
     id?: number;
     name?: string;
     countryId?: number;
+    address?: string | undefined;
     latitude?: number | undefined;
     longitude?: number | undefined;
 }

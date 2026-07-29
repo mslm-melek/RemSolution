@@ -1,0 +1,47 @@
+<!-- Translated with the pipe rather than *transloco="let t": the structural
+     directive would put the canvas in an embedded view, and a @ViewChild on it
+     could then not be static — which is what Leaflet needs, since it takes the
+     container element before the first change-detection pass. -->
+<div class="picker">
+  <div class="search">
+    <mat-form-field appearance="outline" class="search-field">
+      <mat-label>{{ 'mapPicker.searchLabel' | transloco }}</mat-label>
+      <input matInput [ngModel]="query" (ngModelChange)="onQueryChange($event)"
+             [ngModelOptions]="{ standalone: true }"
+             autocomplete="off" [attr.aria-label]="'mapPicker.searchLabel' | transloco" />
+      <mat-icon matSuffix>search</mat-icon>
+      <mat-hint>{{ 'mapPicker.hint' | transloco }}</mat-hint>
+    </mat-form-field>
+
+    <!-- The candidate list is a listbox rather than a mat-autocomplete: results
+         arrive from a debounced request, and the overlay closing on every
+         keystroke made picking one a race. -->
+    <ul class="results" *ngIf="results.length" role="listbox">
+      <li *ngFor="let result of results" role="option">
+        <button type="button" (click)="choose(result)">
+          <mat-icon>place</mat-icon> <span>{{ result.label }}</span>
+        </button>
+      </li>
+    </ul>
+
+    <p class="search-note" *ngIf="searching">{{ 'mapPicker.searching' | transloco }}</p>
+    <p class="search-note" *ngIf="noResults && !searching">{{ 'mapPicker.noResults' | transloco }}</p>
+  </div>
+
+  <div class="map-shell">
+    <div class="canvas" #canvas role="application"
+         [attr.aria-label]="'mapPicker.mapLabel' | transloco"></div>
+
+    <button mat-flat-button type="button" class="clear-pin"
+            *ngIf="latitude != null && longitude != null" (click)="clear()">
+      <mat-icon>location_off</mat-icon> {{ 'mapPicker.clearPin' | transloco }}
+    </button>
+  </div>
+
+  <p class="coords" *ngIf="latitude != null && longitude != null">
+    {{ 'mapPicker.coordinates' | transloco:{ latitude: (latitude | number:'1.5-5'), longitude: (longitude | number:'1.5-5') } }}
+  </p>
+  <p class="coords muted" *ngIf="latitude == null || longitude == null">
+    {{ 'mapPicker.noPin' | transloco }}
+  </p>
+</div>

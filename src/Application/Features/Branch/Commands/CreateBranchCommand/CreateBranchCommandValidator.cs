@@ -14,6 +14,9 @@ namespace RemSolution.Application.Features.Branch.Commands.CreateBranchCommand
             RuleFor(v => v.CountryId)
                 .GreaterThan(0);
 
+            RuleFor(v => v.Address)
+                .MaximumLength(500);
+
             RuleFor(v => v.Latitude)
                 .InclusiveBetween(-90, 90)
                 .When(v => v.Latitude.HasValue);

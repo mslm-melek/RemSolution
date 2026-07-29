@@ -1,3 +1,4 @@
+using RemSolution.Application.Common.Geo;
 using RemSolution.Application.Common.Interfaces;
 using RemSolution.Application.Common.Security;
 using RemSolution.Domain.Constants;
@@ -11,6 +12,7 @@ namespace RemSolution.Application.Features.Branch.Commands.UpdateBranchCommand
         public int Id { get; init; }
         public string Name { get; init; } = string.Empty;
         public int CountryId { get; init; }
+        public string? Address { get; init; }
         public double? Latitude { get; init; }
         public double? Longitude { get; init; }
     }
@@ -33,7 +35,8 @@ namespace RemSolution.Application.Features.Branch.Commands.UpdateBranchCommand
 
             entity.Name = request.Name;
             entity.CountryId = request.CountryId;
-            entity.Location = BranchLocation.ToPoint(request.Latitude, request.Longitude);
+            entity.Address = request.Address;
+            entity.Location = GeoPoint.ToPoint(request.Latitude, request.Longitude);
 
             await _context.SaveChangesAsync(cancellationToken);
         }

@@ -88,7 +88,6 @@
     "reservations": "Réservations",
     "rentings": "Locations",
     "clients": "Clients",
-    "myTeam": "Mon équipe",
     "editProfile": "Modifier le profil",
     "logout": "Déconnexion",
     "login": "Connexion",
@@ -102,7 +101,8 @@
     "bookings": "Réservations & locations",
     "finance": "Finances",
     "clientsList": "Tous les clients",
-    "myRentings": "Mes locations"
+    "myRentings": "Mes locations",
+    "myAgency": "Mon agence"
   },
   "home": {
     "welcomeTitle": "Bienvenue sur RemSolution",
@@ -541,7 +541,8 @@
     "carsReadOnly": "Voitures (lecture seule)",
     "clientsReadOnly": "Clients (lecture seule)",
     "confirmToggleUser": "{{ verb }} l'utilisateur « {{ user }} » ?",
-    "concurrency": "Cette agence a été modifiée par un autre utilisateur depuis son ouverture. Rechargez la page pour obtenir la dernière version, puis réappliquez vos modifications."
+    "concurrency": "Cette agence a été modifiée par un autre utilisateur depuis son ouverture. Rechargez la page pour obtenir la dernière version, puis réappliquez vos modifications.",
+    "addressHint": "Cherchez l'adresse sur la carte ci-dessous, ou placez le repère à la main."
   },
   "plan": {
     "title": "Formules d'abonnement",
@@ -932,5 +933,45 @@
     "ratedOn": "Noté le {{ date }}",
     "showMore": "Voir plus d’avis",
     "anonymous": "Un client"
+  },
+  "myAgency": {
+    "title": "Mon agence",
+    "currencyLocked": "La devise est fixée par l'administrateur de la plateforme.",
+    "tabs": {
+      "details": "Détails",
+      "branches": "Succursales",
+      "team": "Équipe"
+    }
+  },
+  "branch": {
+    "title": "Succursales",
+    "add": "Ajouter une succursale",
+    "hint": "Les lieux où les clients récupèrent les voitures. C'est le repère sur la carte qui permet de vous trouver dans la recherche par proximité.",
+    "empty": "Aucune succursale pour l’instant.",
+    "newTitle": "Nouvelle succursale",
+    "editTitle": "Modifier la succursale",
+    "addThis": "Ajouter cette succursale",
+    "address": "Adresse",
+    "addressHint": "Cherchez l'adresse sur la carte ci-dessous, ou placez le repère à la main.",
+    "country": "Pays",
+    "countryRequired": "Le pays est obligatoire.",
+    "nameRequired": "Le nom est obligatoire.",
+    "nameTooLong": "Le nom est trop long.",
+    "pin": "Carte",
+    "pinSet": "localisée",
+    "pinMissing": "sans repère",
+    "confirmDelete": "Supprimer la succursale « {{ name }} » ? Les voitures qui y sont rattachées seront sans succursale.",
+    "savedImmediately": "Les modifications des succursales sont enregistrées immédiatement.",
+    "savedWithAgency": "Ces succursales seront créées avec l'agence lors de l'enregistrement."
+  },
+  "mapPicker": {
+    "searchLabel": "Rechercher une adresse",
+    "hint": "Choisissez un résultat, ou cliquez sur la carte pour placer le repère.",
+    "searching": "Recherche…",
+    "noResults": "Aucune adresse trouvée.",
+    "mapLabel": "Carte de sélection de l’adresse",
+    "clearPin": "Retirer le repère",
+    "coordinates": "Repère : {{ latitude }}, {{ longitude }}",
+    "noPin": "Aucun repère placé."
   }
 }

@@ -10,6 +10,9 @@ namespace RemSolution.Application.Features.Agency.DTOs
         public string? Email { get; init; }
         public string? PhoneNumber { get; init; }
         public string? Address { get; init; }
+        // The HQ pin, so the address can be shown back on a map.
+        public double? Latitude { get; init; }
+        public double? Longitude { get; init; }
         public int CountryId { get; init; }
         public string? CountryName { get; init; }
         // Settings surfaced from the agency's AgencySettings row (see P.9).
@@ -23,6 +26,9 @@ namespace RemSolution.Application.Features.Agency.DTOs
             {
                 config.NewConfig<Domain.Entities.Agency, AgencyDto>()
                     .Map(d => d.CountryName, s => s.Country != null ? s.Country.Name : null)
+                    // A Point is (X, Y): X is the longitude, Y the latitude.
+                    .Map(d => d.Latitude, s => s.Location != null ? (double?)s.Location.Y : null)
+                    .Map(d => d.Longitude, s => s.Location != null ? (double?)s.Location.X : null)
                     .Map(d => d.Currency, s => s.Settings != null ? s.Settings.CurrencyCode : string.Empty)
                     .Map(d => d.CancellationWindowHours, s => s.Settings != null ? s.Settings.CancellationWindowHours : 0)
                     .Map(d => d.ReservationExpiryHours, s => s.Settings != null ? s.Settings.ReservationExpiryHours : 0);

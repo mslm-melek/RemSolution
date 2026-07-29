@@ -1,0 +1,145 @@
+.picker {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-2);
+}
+
+.search {
+  position: relative;
+}
+
+.search-field {
+  width: 100%;
+}
+
+.search-note {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+/* --------------------------------------------------------------- results ----
+   Overlaid rather than in flow, so the map below does not jump down and back up
+   as candidates arrive and are dismissed. */
+.results {
+  position: absolute;
+  z-index: 1002;
+  left: 0;
+  right: 0;
+  /* Clear of the field's hint line. */
+  top: calc(100% - var(--gap-3));
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+  max-height: 240px;
+  overflow-y: auto;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  box-shadow: var(--shadow-2);
+}
+
+.results button {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--gap-1);
+  width: 100%;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: calc(var(--r) - 2px);
+  background: none;
+  color: var(--ink);
+  font: 400 0.85rem/1.35 var(--font);
+  text-align: start;
+  cursor: pointer;
+}
+
+.results button:hover,
+.results button:focus-visible {
+  background: var(--brand-50);
+  color: var(--brand-700);
+}
+
+.results mat-icon {
+  flex: none;
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+  color: var(--muted);
+}
+
+/* ------------------------------------------------------------------ map ----- */
+.map-shell {
+  position: relative;
+  width: 100%;
+  height: 320px;
+  border-radius: var(--r);
+  overflow: hidden;
+  border: 1px solid var(--line);
+  background: var(--surface-3);
+}
+
+.canvas {
+  width: 100%;
+  height: 100%;
+}
+
+.clear-pin {
+  position: absolute;
+  top: var(--gap-2);
+  /* Start-relative, so it moves to the other corner under RTL. */
+  inset-inline-end: var(--gap-2);
+  /* Above Leaflet's own panes and controls, which sit in the 400-1000 range. */
+  z-index: 1001;
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: var(--shadow-1);
+}
+
+.coords {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--ink-2);
+}
+
+.coords.muted {
+  color: var(--muted);
+}
+
+/* ------------------------------------------------------------------ pin -----
+   A zero-size anchor on the coordinate, with the visible pin lifted above it.
+   Not scoped to :host — Leaflet appends markers to its own panes, outside this
+   component's emulated encapsulation, so ::ng-deep is deliberate here. */
+:host ::ng-deep .map-pick-wrap {
+  width: 0 !important;
+  height: 0 !important;
+}
+
+:host ::ng-deep .map-pick {
+  position: absolute;
+  /* Bottom tip of the teardrop sits exactly on the point. */
+  transform: translate(-50%, -100%);
+  display: block;
+  width: 22px;
+  height: 22px;
+  border-radius: 50% 50% 50% 0;
+  rotate: -45deg;
+  background: var(--brand-600);
+  border: 2px solid #fff;
+  box-shadow: var(--shadow-1);
+  cursor: grab;
+}
+
+:host ::ng-deep .leaflet-dragging .map-pick {
+  cursor: grabbing;
+}
+
+/* Leaflet's own type scale fights the app's. */
+:host ::ng-deep .leaflet-container {
+  font-family: var(--font);
+  background: var(--surface-3);
+}
+
+:host ::ng-deep .leaflet-control-attribution {
+  font-size: 0.65rem;
+}

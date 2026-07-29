@@ -30,6 +30,23 @@ public class AmbientTenantUsageTests
         Normalize("Features/Agency/Queries/GetAgencyFeaturesQuery/"),
         Normalize("Features/Agency/Commands/SetAgencyFeatureCommand/"),
         Normalize("Features/AgencySubscription/Queries/GetAgencyUsageQuery/"),
+        // Reading one agency's branches (an ITenantEntity) while the platform
+        // administrator edits that agency.
+        Normalize("Features/Agency/Queries/GetAgencyBranchesQuery/"),
+    };
+
+    // The administrative push additionally exempts its writes from subscription
+    // enforcement, so it is pinned separately and more tightly: only the
+    // platform-admin handlers that set an agency's branches up, where the agency
+    // either has no subscription yet or has one that lapsed.
+    private static readonly string[] AmbientTenantAdministrativeAllowed =
+    {
+        Normalize("Features/Agency/Commands/CreateAgencyCommand/"),
+        Normalize("Features/Agency/Commands/CreateAgencyBranchCommand/"),
+        Normalize("Features/Agency/Commands/UpdateAgencyBranchCommand/"),
+        Normalize("Features/Agency/Commands/DeleteAgencyBranchCommand/"),
+        // Where the exemption is read.
+        Normalize("Infrastructure/Data/Interceptors/SubscriptionEnforcementInterceptor.cs"),
     };
 
     // The impersonation flag is set only by the middleware, and read only by the
@@ -52,6 +69,24 @@ public class AmbientTenantUsageTests
 
         offenders.Should().BeEmpty(
             "AmbientTenant.Push acts as another tenant and is only allowed in the image job, the impersonation middleware, and the platform-admin agency handlers");
+    }
+
+    [Test]
+    public void AmbientTenantPushAdministrativeIsOnlyUsedInAllowedLocations()
+    {
+        var offenders = EnumerateSourceFiles()
+            .Where(f =>
+            {
+                var source = File.ReadAllText(f);
+                return source.Contains("AmbientTenant.PushAdministrative(") ||
+                       source.Contains("AmbientTenant.CurrentIsAdministrative");
+            })
+            .Where(f => !f.EndsWith(Normalize("Application/Common/Tenancy/AmbientTenant.cs")))
+            .Where(f => !AmbientTenantAdministrativeAllowed.Any(allowed => Normalize(f).Contains(allowed)))
+            .ToList();
+
+        offenders.Should().BeEmpty(
+            "PushAdministrative acts as another tenant AND exempts the write from subscription enforcement, so it is only allowed in the platform-admin handlers that set an agency's branches up");
     }
 
     [Test]

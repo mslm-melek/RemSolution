@@ -1,5 +1,6 @@
 using RemSolution.Application.Common.Exceptions;
 using RemSolution.Application.Common.Interfaces;
+using RemSolution.Application.Common.Tenancy;
 using RemSolution.Domain.Common;
 using RemSolution.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -13,7 +14,9 @@ namespace RemSolution.Infrastructure.Data.Interceptors;
 /// present requires an active subscription, otherwise
 /// <see cref="SubscriptionRequiredException"/> (402). Registered after
 /// TenantEntityInterceptor so tenant violations (403) win over billing (402).
-/// Without a tenant (seeding, platform admin) writes pass through untouched.
+/// Without a tenant (seeding, platform admin) writes pass through untouched —
+/// as do writes made under <see cref="AmbientTenant.PushAdministrative"/>, where
+/// the app owner is administering an agency rather than the agency working.
 /// </summary>
 public class SubscriptionEnforcementInterceptor : SaveChangesInterceptor
 {
@@ -54,6 +57,15 @@ public class SubscriptionEnforcementInterceptor : SaveChangesInterceptor
         agencyId = default;
 
         if (eventContext is null || _tenant.AgencyId is not int tenantAgencyId)
+        {
+            return false;
+        }
+
+        // The tenant was pushed by the platform administrator to set this agency
+        // up, not read from an agency user's claim. Billing does not gate the app
+        // owner: a new agency has no subscription yet, and a lapsed one is
+        // exactly the sort that still needs administering.
+        if (AmbientTenant.CurrentIsAdministrative)
         {
             return false;
         }

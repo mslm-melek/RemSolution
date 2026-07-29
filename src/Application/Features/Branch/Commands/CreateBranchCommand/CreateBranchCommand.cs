@@ -1,3 +1,4 @@
+using RemSolution.Application.Common.Geo;
 using RemSolution.Application.Common.Interfaces;
 using RemSolution.Application.Common.Security;
 using RemSolution.Domain.Constants;
@@ -12,6 +13,7 @@ namespace RemSolution.Application.Features.Branch.Commands.CreateBranchCommand
         // stamps it from the current tenant on insert.
         public string Name { get; init; } = string.Empty;
         public int CountryId { get; init; }
+        public string? Address { get; init; }
         public double? Latitude { get; init; }
         public double? Longitude { get; init; }
     }
@@ -31,7 +33,8 @@ namespace RemSolution.Application.Features.Branch.Commands.CreateBranchCommand
             {
                 Name = request.Name,
                 CountryId = request.CountryId,
-                Location = BranchLocation.ToPoint(request.Latitude, request.Longitude),
+                Address = request.Address,
+                Location = GeoPoint.ToPoint(request.Latitude, request.Longitude),
             };
 
             _context.Branches.Add(entity);

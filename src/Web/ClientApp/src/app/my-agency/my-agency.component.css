@@ -1,0 +1,62 @@
+/* Surface, header, tabs, tables and banner come from styles.scss. What is
+   specific to this screen: the details form's grid, and unwrapping the team
+   screen so it does not draw a second card inside the tab. */
+.my-agency-card {
+  max-width: 1080px;
+}
+
+/* Same padding the agency console's tabs use. The top half is not decoration:
+   without it the first field's floating label is clipped by the tab bar. */
+.tab-body {
+  padding: 24px 4px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-3);
+}
+
+/* The shared label carries a top margin only. Here the thing directly under it
+   is a form field, whose floating label would otherwise sit on top of it. */
+.section-title {
+  margin-bottom: var(--gap-3);
+}
+
+.field-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: var(--gap-3) var(--gap-4);
+}
+
+.field-grid .span-2 {
+  grid-column: 1 / -1;
+}
+
+app-map-picker {
+  display: block;
+  margin: var(--gap-3) 0;
+}
+
+.actions-row {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-4);
+  margin-top: var(--gap-4);
+}
+
+.branches-note {
+  margin: var(--gap-2) 0 0;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+/* The team screen is a page in its own right (it still owns the /team route's
+   old job), so inside a tab its card chrome is one border too many. Only the
+   chrome is dropped — the shared `main .page .header-row` and table rules still
+   apply, because this component's own root is the .page they look for. */
+:host ::ng-deep app-team > .page {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
+  max-width: none;
+}

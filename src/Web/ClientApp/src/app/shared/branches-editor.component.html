@@ -1,0 +1,109 @@
+<div class="branches" *transloco="let t">
+  <div class="header-row">
+    <h3 class="section-title">{{ t('branch.title') }}</h3>
+    <button mat-raised-button color="primary" type="button" (click)="openNew()" [disabled]="saving">
+      <mat-icon>add_location_alt</mat-icon> {{ t('branch.add') }}
+    </button>
+  </div>
+
+  <p class="hint">{{ t('branch.hint') }}</p>
+
+  <table mat-table [dataSource]="branches" class="data-table full-width" *ngIf="branches.length">
+    <ng-container matColumnDef="name">
+      <th mat-header-cell *matHeaderCellDef>{{ t('common.name') }}</th>
+      <td mat-cell *matCellDef="let branch"><span class="cell-main">{{ branch.name }}</span></td>
+    </ng-container>
+
+    <ng-container matColumnDef="address">
+      <th mat-header-cell *matHeaderCellDef>{{ t('branch.address') }}</th>
+      <td mat-cell *matCellDef="let branch">
+        <span *ngIf="branch.address">{{ branch.address }}</span>
+        <span class="muted" *ngIf="!branch.address">{{ t('common.none') }}</span>
+      </td>
+    </ng-container>
+
+    <ng-container matColumnDef="country">
+      <th mat-header-cell *matHeaderCellDef>{{ t('branch.country') }}</th>
+      <td mat-cell *matCellDef="let branch">{{ countryName(branch.countryId) }}</td>
+    </ng-container>
+
+    <!-- Whether the place is actually on the map is what decides if customers
+         can find it, so it is worth a column of its own rather than being
+         inferred from the address text. -->
+    <ng-container matColumnDef="pin">
+      <th mat-header-cell *matHeaderCellDef>{{ t('branch.pin') }}</th>
+      <td mat-cell *matCellDef="let branch">
+        <span class="chip" [ngClass]="branch.latitude != null ? 'ok' : 'warn'">
+          {{ branch.latitude != null ? t('branch.pinSet') : t('branch.pinMissing') }}
+        </span>
+      </td>
+    </ng-container>
+
+    <ng-container matColumnDef="actions">
+      <th mat-header-cell *matHeaderCellDef class="actions-cell">{{ t('common.actions') }}</th>
+      <td mat-cell *matCellDef="let branch" class="actions-cell row-actions">
+        <button mat-icon-button color="primary" type="button" (click)="edit(branch)"
+                [disabled]="saving" [matTooltip]="t('common.edit')">
+          <mat-icon>edit</mat-icon>
+        </button>
+        <button mat-icon-button type="button" (click)="remove(branch)"
+                [disabled]="saving" [matTooltip]="t('common.delete')">
+          <mat-icon>delete</mat-icon>
+        </button>
+      </td>
+    </ng-container>
+
+    <tr mat-header-row *matHeaderRowDef="columns"></tr>
+    <tr mat-row *matRowDef="let row; columns: columns"></tr>
+  </table>
+
+  <p class="empty-note" *ngIf="!branches.length">{{ t('branch.empty') }}</p>
+
+  <!-- Built by *ngIf rather than hidden, so Leaflet measures its container while
+       the panel is on screen.
+       A <div> and not a <form>: this editor is dropped into screens that are
+       themselves a form, and nesting forms is invalid HTML — the inner submit
+       would surface as the outer one. Hence type="button" on the confirm below,
+       and no ngSubmit anywhere in here. -->
+  <div class="panel" *ngIf="panelOpen">
+    <h4 class="section-title">{{ editing ? t('branch.editTitle') : t('branch.newTitle') }}</h4>
+
+    <div [formGroup]="form">
+      <div class="field-grid">
+        <mat-form-field appearance="outline">
+          <mat-label>{{ t('common.name') }}</mat-label>
+          <input matInput formControlName="name" required />
+          <mat-error *ngIf="form.get('name')?.hasError('required')">{{ t('branch.nameRequired') }}</mat-error>
+          <mat-error *ngIf="form.get('name')?.hasError('maxlength')">{{ t('branch.nameTooLong') }}</mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>{{ t('branch.country') }}</mat-label>
+          <mat-select formControlName="countryId" required>
+            <mat-option *ngFor="let country of countries" [value]="country.id">{{ country.name }}</mat-option>
+          </mat-select>
+          <mat-error *ngIf="form.get('countryId')?.hasError('required')">{{ t('branch.countryRequired') }}</mat-error>
+        </mat-form-field>
+
+        <!-- subscriptSizing="dynamic": the default reserves one line under the
+             field, and this hint wraps to two on a narrow column. -->
+        <mat-form-field appearance="outline" class="span-2" subscriptSizing="dynamic">
+          <mat-label>{{ t('branch.address') }}</mat-label>
+          <input matInput formControlName="address" />
+          <mat-hint>{{ t('branch.addressHint') }}</mat-hint>
+        </mat-form-field>
+      </div>
+
+      <app-map-picker [latitude]="latitude" [longitude]="longitude"
+                      (picked)="onPicked($event)"></app-map-picker>
+
+      <div class="actions-row">
+        <button mat-raised-button color="primary" type="button" (click)="submit()" [disabled]="saving">
+          <mat-icon>check</mat-icon>
+          {{ editing ? t('common.saveChanges') : t('branch.addThis') }}
+        </button>
+        <button mat-button type="button" (click)="cancel()">{{ t('common.cancel') }}</button>
+      </div>
+    </div>
+  </div>
+</div>
