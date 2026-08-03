@@ -22,6 +22,14 @@ namespace RemSolution.Application.Features.Renting.DTOs
         public int? EndMileage { get; init; }
         // Snapshot price agreed at creation (see IPricingService).
         public MoneyDto? Price { get; init; }
+        // Net collected against this renting — refunds and reversals are negative
+        // entries, so a plain sum is the true figure. Price − Paid is what is
+        // still owed, and it is the same ceiling CreatePaymentCommand enforces
+        // (extra services are billed separately and are not in it), so a caller
+        // can tell whether there is anything left to collect without reading the
+        // ledger. Null when the renting carries no price.
+        public MoneyDto? Paid { get; init; }
+        public MoneyDto? Outstanding { get; init; }
         public RentingState RentingState { get; init; }
         public string? Notes { get; init; }
 
@@ -36,7 +44,25 @@ namespace RemSolution.Application.Features.Renting.DTOs
                       .Map(dest => dest.ClientName,
                            src => src.Client != null ? src.Client.FirstName + " " + src.Client.LastName : null)
                       .Map(dest => dest.SecondClientName,
-                           src => src.SecondClient != null ? src.SecondClient.FirstName + " " + src.SecondClient.LastName : null);
+                           src => src.SecondClient != null ? src.SecondClient.FirstName + " " + src.SecondClient.LastName : null)
+                      // Projected in SQL over the owned amount columns, like the
+                      // credits screen's sums; an optional owned reference is read
+                      // through a null check rather than dereferenced.
+                      .Map(dest => dest.Paid,
+                           src => src.Price == null
+                               ? null
+                               : new MoneyDto(
+                                   src.Payments!.Where(p => p.PayementAmount != null)
+                                                .Sum(p => p.PayementAmount!.Amount),
+                                   src.Price.Currency))
+                      .Map(dest => dest.Outstanding,
+                           src => src.Price == null
+                               ? null
+                               : new MoneyDto(
+                                   src.Price.Amount
+                                   - src.Payments!.Where(p => p.PayementAmount != null)
+                                                  .Sum(p => p.PayementAmount!.Amount),
+                                   src.Price.Currency));
             }
         }
     }

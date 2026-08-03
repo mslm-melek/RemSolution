@@ -138,10 +138,15 @@ export class ReservationComponent implements OnInit {
     return this.isPending(r) || this.isConvertible(r);
   }
 
-  // Only a confirmed hold takes money — the same rule CreatePaymentCommand
-  // enforces, so the button never offers a call the server would refuse.
+  // Only a confirmed hold with something left to collect: the status rule is the
+  // one CreatePaymentCommand enforces, and the price is the ceiling it caps at —
+  // so the button never offers a call the server would refuse.
   canPayFor(r: ReservationDto): boolean {
-    return this.canPay && this.isConvertible(r);
+    return this.canPay && this.isConvertible(r) && this.outstandingOf(r) > 0;
+  }
+
+  private outstandingOf(r: ReservationDto): number {
+    return (r.price?.amount ?? 0) - (r.payedPrice?.amount ?? 0);
   }
 
   // Takes the deposit or the balance without opening the hold first. The row
@@ -149,14 +154,11 @@ export class ReservationComponent implements OnInit {
   pay(r: ReservationDto) {
     if (!r.id) return;
 
-    const price = r.price?.amount;
-    const paid = r.payedPrice?.amount ?? 0;
-
     this.dialog.open(PaymentDialogComponent, {
       data: {
         target: { kind: 'reservation', id: r.id },
         subtitle: [r.clientName, r.carMatricule].filter(Boolean).join(' — '),
-        outstanding: price === undefined ? undefined : Math.max(0, price - paid),
+        outstanding: r.price === undefined ? undefined : this.outstandingOf(r),
         currency: r.price?.currency
       },
       autoFocus: 'first-tabbable'

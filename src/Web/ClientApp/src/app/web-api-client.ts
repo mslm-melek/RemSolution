@@ -16594,6 +16594,8 @@ export class RentingDto implements IRentingDto {
     startMileage?: number | undefined;
     endMileage?: number | undefined;
     price?: MoneyDto | undefined;
+    paid?: MoneyDto | undefined;
+    outstanding?: MoneyDto | undefined;
     rentingState?: RentingState;
     notes?: string | undefined;
 
@@ -16623,6 +16625,8 @@ export class RentingDto implements IRentingDto {
             this.startMileage = _data["startMileage"];
             this.endMileage = _data["endMileage"];
             this.price = _data["price"] ? MoneyDto.fromJS(_data["price"]) : <any>undefined;
+            this.paid = _data["paid"] ? MoneyDto.fromJS(_data["paid"]) : <any>undefined;
+            this.outstanding = _data["outstanding"] ? MoneyDto.fromJS(_data["outstanding"]) : <any>undefined;
             this.rentingState = _data["rentingState"];
             this.notes = _data["notes"];
         }
@@ -16652,6 +16656,8 @@ export class RentingDto implements IRentingDto {
         data["startMileage"] = this.startMileage;
         data["endMileage"] = this.endMileage;
         data["price"] = this.price ? this.price.toJSON() : <any>undefined;
+        data["paid"] = this.paid ? this.paid.toJSON() : <any>undefined;
+        data["outstanding"] = this.outstanding ? this.outstanding.toJSON() : <any>undefined;
         data["rentingState"] = this.rentingState;
         data["notes"] = this.notes;
         return data;
@@ -16674,6 +16680,8 @@ export interface IRentingDto {
     startMileage?: number | undefined;
     endMileage?: number | undefined;
     price?: MoneyDto | undefined;
+    paid?: MoneyDto | undefined;
+    outstanding?: MoneyDto | undefined;
     rentingState?: RentingState;
     notes?: string | undefined;
 }

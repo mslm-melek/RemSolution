@@ -28,13 +28,11 @@ export interface PaymentDialogData {
   target: PaymentDialogTarget;
   // Who or what the money concerns, shown under the title (client name, plate…).
   subtitle?: string;
-  // Prefills the amount and states the ceiling the server enforces anyway.
+  // Prefills the amount and states the ceiling the server enforces anyway. Every
+  // caller knows it: the credit rows and the client panel carry the balance, and
+  // the booking lists carry Price − Paid on the row itself.
   outstanding?: number;
   currency?: string;
-  // The agreed price, for a caller that knows what was charged but not what has
-  // been collected — a renting row carries no paid figure. The dialog then works
-  // the remaining balance out from the entries themselves.
-  charged?: number;
 }
 
 // Records money in one step from wherever the debt is displayed — the credits
@@ -94,42 +92,10 @@ export class PaymentDialogComponent {
       date: [this.today()],
       notes: ['', Validators.maxLength(1000)]
     });
-
-    if (this.outstanding === undefined) this.resolveOutstanding();
   }
 
   private prefillAmount(): number | null {
     return this.outstanding !== undefined && this.outstanding > 0 ? this.outstanding : null;
-  }
-
-  // A booking row knows its agreed price but not what has been collected against
-  // it, so the balance is read from the entries. Needs Payment.Read: without it
-  // the amount is simply left blank rather than guessed at.
-  private resolveOutstanding() {
-    const target = this.data.target;
-    const charged = this.data.charged;
-
-    if (charged === undefined || (target.kind !== 'renting' && target.kind !== 'reservation')) return;
-
-    this.payments.getPayments(
-      1, 200,
-      target.kind === 'renting' ? target.id : null,
-      null,
-      target.kind === 'reservation' ? target.id : null
-    ).subscribe({
-      next: result => {
-        const net = (result.items || [])
-          .reduce((sum, p) => sum + (p.payementAmount?.amount ?? 0), 0);
-        // Rounded back to cents: summing decimals in floating point otherwise
-        // leaves a tail the amount field would show.
-        this.outstanding = Math.max(0, Math.round((charged - net) * 100) / 100);
-
-        if (!this.form.get('amount')!.value) {
-          this.form.patchValue({ amount: this.prefillAmount() });
-        }
-      },
-      error: () => { /* no read permission: leave the amount to the user */ }
-    });
   }
 
   // The outgoing direction settles an expense: no method, no notes, no proof of

@@ -153,15 +153,17 @@ export class RentingComponent implements OnInit {
     }
   }
 
-  // A cancelled renting is not collected on; everything else can still take
-  // money, including a finished one being settled late.
+  // Only a renting that still owes money is collected on: a cancelled one is
+  // never paid, and a settled one would have any amount refused by the server
+  // anyway (the price is the ceiling). A finished renting settled late still
+  // qualifies — what matters is the balance, not the state.
   canPayFor(renting: RentingDto): boolean {
-    return this.canPay && renting.rentingState !== RentingState.Cancelled;
+    return this.canPay
+      && renting.rentingState !== RentingState.Cancelled
+      && (renting.outstanding?.amount ?? 0) > 0;
   }
 
-  // Takes the money without opening the booking first. The row carries the
-  // agreed price but not what has been collected, so the dialog reads the
-  // remaining balance from the entries itself.
+  // Takes the money without opening the booking first.
   pay(renting: RentingDto) {
     if (!renting.id) return;
 
@@ -169,8 +171,8 @@ export class RentingComponent implements OnInit {
       data: {
         target: { kind: 'renting', id: renting.id },
         subtitle: [renting.clientName, renting.carMatricule].filter(Boolean).join(' — '),
-        charged: renting.price?.amount,
-        currency: renting.price?.currency
+        outstanding: renting.outstanding?.amount,
+        currency: renting.outstanding?.currency ?? renting.price?.currency
       },
       autoFocus: 'first-tabbable'
     }).afterClosed().subscribe(recorded => {
