@@ -15,5 +15,9 @@ public enum DocumentType
     // and the client invoice rendered for a renting. Same StoredFile plumbing
     // (hash, dedup, size) so a generated PDF is archived like any other file.
     RentalContract = 5,
-    RentalFacture = 6
+    RentalFacture = 6,
+    // Proof kept against a payment entry: a receipt, a transfer slip, or the
+    // supplier invoice behind it. Distinct from ExpenseFacture, which is the
+    // invoice attached to the expense record itself.
+    PaymentProof = 7
 }

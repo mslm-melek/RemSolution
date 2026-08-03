@@ -1,0 +1,80 @@
+<ng-container *transloco="let t">
+  <h2 mat-dialog-title>{{ t(titleKey) }}</h2>
+
+  <mat-dialog-content>
+    <p class="dialog-subtitle" *ngIf="data.subtitle">{{ data.subtitle }}</p>
+
+    <p class="dialog-hint" *ngIf="outstanding !== undefined">
+      {{ t('payment.outstandingHint', {
+            amount: (outstanding | number:'1.2-2'),
+            currency: data.currency || ''
+         }) }}
+    </p>
+
+    <div *ngIf="errorMessage" class="error-banner">
+      <mat-icon>error_outline</mat-icon> {{ errorMessage }}
+    </div>
+
+    <form [formGroup]="form" class="dialog-form" (ngSubmit)="submit()">
+      <mat-form-field appearance="outline">
+        <mat-label>{{ t('common.amount') }}</mat-label>
+        <input matInput type="number" min="0.01" step="0.01" formControlName="amount" />
+        <span matSuffix *ngIf="data.currency">&nbsp;{{ data.currency }}</span>
+        <mat-error *ngIf="form.get('amount')?.invalid">
+          {{ isExpense ? t('payment.amountNonZero') : t('payment.amountRequired') }}
+        </mat-error>
+      </mat-form-field>
+
+      <!-- The settlement is a delta, so say that the correction direction exists. -->
+      <p class="dialog-hint" *ngIf="isExpense">{{ t('payment.settleHint') }}</p>
+
+      <!-- The outgoing direction only moves the settled total. -->
+      <ng-container *ngIf="!isExpense">
+        <mat-form-field appearance="outline">
+          <mat-label>{{ t('common.method') }}</mat-label>
+          <mat-select formControlName="method">
+            <mat-option *ngFor="let m of paymentMethods" [value]="m.value">{{ t(m.labelKey) }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>{{ t('common.date') }}</mat-label>
+          <input matInput type="date" formControlName="date" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>{{ t('common.notes') }}</mat-label>
+          <input matInput formControlName="notes" />
+        </mat-form-field>
+
+        <!-- Proof of the movement: the receipt, slip or invoice behind the entry. -->
+        <div class="proof-row">
+          <span class="proof-label">{{ t('payment.proof') }}</span>
+
+          <span class="proof-name" *ngIf="proofFile">{{ proofFile.name }}</span>
+          <span class="hint" *ngIf="!proofFile">{{ t('common.optional') }}</span>
+
+          <button type="button" mat-stroked-button (click)="fileInput.click()" [disabled]="saving">
+            <mat-icon>attach_file</mat-icon>
+            {{ proofFile ? t('common.replace') : t('common.upload') }}
+          </button>
+          <button type="button" mat-icon-button *ngIf="proofFile" (click)="clearFile()"
+                  [matTooltip]="t('common.remove')" [attr.aria-label]="t('common.remove')">
+            <mat-icon>close</mat-icon>
+          </button>
+          <input #fileInput hidden type="file" accept=".jpg,.jpeg,.png,.webp,.pdf"
+                 (change)="onFileSelected(fileInput)" />
+        </div>
+      </ng-container>
+    </form>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-button type="button" (click)="cancel()">{{ t('common.cancel') }}</button>
+    <button mat-raised-button color="primary" type="button" (click)="submit()"
+            [disabled]="saving || (awaitingProof && !proofFile)">
+      <mat-icon>{{ awaitingProof ? 'attach_file' : 'check' }}</mat-icon>
+      {{ saving ? t('common.saving') : t(submitKey) }}
+    </button>
+  </mat-dialog-actions>
+</ng-container>

@@ -18,6 +18,9 @@ namespace RemSolution.Application.Features.Credit.Queries.GetExpenseCreditsQuery
         // Default view is the working set: only expenses still owing.
         bool OnlyOutstanding = true,
         int? CarId = null,
+        // Same car/type narrowing the standalone expense list used to offer, kept
+        // when the payable tab took over from it.
+        int? ExpenseTypeId = null,
         // Column the table is sorted by, named after the Angular matColumnDef;
         // anything unrecognised falls back to the biggest debt first.
         string? SortBy = null,
@@ -41,6 +44,9 @@ namespace RemSolution.Application.Features.Credit.Queries.GetExpenseCreditsQuery
 
             if (request.CarId.HasValue)
                 query = query.Where(e => e.CarId == request.CarId);
+
+            if (request.ExpenseTypeId.HasValue)
+                query = query.Where(e => e.ExpenseTypeId == request.ExpenseTypeId);
 
             if (request.OnlyOutstanding)
             {
@@ -71,6 +77,7 @@ namespace RemSolution.Application.Features.Credit.Queries.GetExpenseCreditsQuery
                     ExpenseId = e.Id,
                     CarId = e.CarId,
                     CarMatricule = e.Car != null ? e.Car.Matricule : null,
+                    ExpenseTypeId = e.ExpenseTypeId,
                     ExpenseTypeName = e.ExpenseType != null ? e.ExpenseType.Name : null,
                     ExpenseDate = e.ExpenseDate,
                     Amount = e.ExpenseAmount == null
@@ -85,6 +92,8 @@ namespace RemSolution.Application.Features.Credit.Queries.GetExpenseCreditsQuery
                             e.ExpenseAmount.Amount - (e.PaidAmount == null ? 0m : e.PaidAmount.Amount),
                             e.ExpenseAmount.Currency),
                     Description = e.Description,
+                    FactureFileUrl = e.FactureFile != null ? e.FactureFile.Url : null,
+                    FactureFileName = e.FactureFile != null ? e.FactureFile.OriginalFileName : null,
                 })
                 .PaginatedListAsync(request.PageNumber, request.PageSize);
         }

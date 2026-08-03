@@ -19,6 +19,10 @@ namespace RemSolution.Application.Features.Expense.DTOs
         // ExpenseAmount − PaidAmount: what the agency still owes on this expense.
         public MoneyDto? Outstanding { get; init; }
         public string? Description { get; init; }
+        // Supplier invoice attached to the expense, as a plain URL like every
+        // other file-carrying DTO (see StoredFile); null when none is attached.
+        public string? FactureFileUrl { get; init; }
+        public string? FactureFileName { get; init; }
 
         public class Mapping : IRegister
         {
@@ -26,6 +30,9 @@ namespace RemSolution.Application.Features.Expense.DTOs
             {
                 config.NewConfig<Domain.Entities.Expense, ExpenseDto>()
                       .Map(dest => dest.CarMatricule, src => src.Car != null ? src.Car.Matricule : null)
+                      .Map(dest => dest.FactureFileUrl, src => src.FactureFile != null ? src.FactureFile.Url : null)
+                      .Map(dest => dest.FactureFileName,
+                           src => src.FactureFile != null ? src.FactureFile.OriginalFileName : null)
                       .Map(dest => dest.CarModelName,
                            src => src.Car != null && src.Car.Model != null ? src.Car.Model.Name : null)
                       .Map(dest => dest.ExpenseTypeName, src => src.ExpenseType != null ? src.ExpenseType.Name : null)

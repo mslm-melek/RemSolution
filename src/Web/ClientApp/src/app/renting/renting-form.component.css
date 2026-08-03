@@ -1,58 +1,516 @@
+/* Booking screen. The shared design system (styles.scss) already provides
+   .page / .form-grid / .form-section / .tile / .chip / .data-table, so what is
+   here is only what is genuinely specific to a renting: the wizard's step
+   chrome, the price breakdown and the review recap. */
+
 .renting-form-card {
-  padding: 1.5rem;
-  margin: 1rem;
-  border-radius: 8px;
-  max-width: 900px;
+  max-width: 1040px;
 }
 
-.header-row {
+/* --------------------------------------------------------------- wizard ---- */
+
+/* The stepper draws its own card; inside a .page it must not draw a second one. */
+.renting-stepper {
+  background: transparent;
+}
+
+.renting-stepper ::ng-deep .mat-horizontal-content-container {
+  padding: 0;
+  overflow: visible;
+}
+
+.renting-stepper ::ng-deep .mat-horizontal-stepper-header-container {
+  margin-bottom: var(--gap-5);
+}
+
+.renting-stepper ::ng-deep .mat-step-label {
+  font-weight: 600;
+}
+
+.step-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-4);
+}
+
+/* Forward on the end side, back on the start side — in both directions. */
+.step-actions {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  margin-bottom: 1rem;
+  justify-content: flex-end;
+  gap: var(--gap-2);
+  flex-wrap: wrap;
+  margin-top: var(--gap-5);
+  padding-top: var(--gap-4);
+  border-top: 1px solid var(--line);
 }
 
-.title {
+.step-actions button:first-child {
+  margin-inline-end: auto;
+}
+
+/* ---------------------------------------------------------------- price ---- */
+
+/* The one panel that answers "why that number?". Tinted so it reads as the
+   screen's conclusion rather than as another input group. */
+.price-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-3);
+  padding: 18px;
+  border: 1px solid var(--brand-100);
+  border-radius: var(--r);
+  background: var(--brand-50);
+}
+
+/* An agreed price is the agency's decision, not a calculation — coloured to say so. */
+.price-card.overridden {
+  border-color: rgba(109, 40, 217, 0.25);
+  background: var(--accent-bg);
+}
+
+.price-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--gap-3);
+}
+
+.price-head .section-label {
   margin: 0;
 }
 
-.error-banner {
-  background: #fdecea;
-  color: #b71c1c;
-  padding: 0.75rem 1rem;
-  border-radius: 4px;
-  margin-bottom: 1rem;
-}
-
-.state-row {
+.price-body {
   display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  margin-bottom: 1rem;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--gap-4);
   flex-wrap: wrap;
 }
 
-.state-chip {
-  padding: 0.25rem 0.75rem;
-  background: rgba(0, 0, 0, 0.06);
-  border-radius: 16px;
+.price-calc {
+  display: flex;
+  align-items: baseline;
+  gap: var(--gap-2);
+  flex-wrap: wrap;
+  font-size: 14px;
+  color: var(--ink-2);
 }
 
-/* Change-end-date panel: the date, what it does to the period, and what should
-   happen to the contract. */
-.end-date-panel {
+.calc-part {
+  font-weight: 600;
+}
+
+.calc-op {
+  color: var(--muted);
+}
+
+.calc-note {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* Aligned with text-align rather than the flex cross axis: `end` maps to right in
+   French and left in Arabic, which is the panel's outer edge in both — whereas a
+   cross-axis flex-start/flex-end has to be flipped per direction to say the same
+   thing. Nothing here needs an RTL rule as a result. */
+.price-total {
+  display: flex;
+  flex-direction: column;
+  text-align: end;
+  line-height: 1.2;
+}
+
+.price-total-label {
+  font-size: 11.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--muted);
+}
+
+.price-total-value {
+  font-size: 26px;
+  font-weight: 680;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+
+.price-adjust {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-2);
+  padding-top: var(--gap-2);
+  border-top: 1px solid rgba(20, 35, 61, 0.08);
+}
+
+.price-input-row {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-3);
+  flex-wrap: wrap;
+}
+
+/* Width via max-width, NOT flex-basis: this field is used both in a row (the
+   wizard's adjust row) and in a column (the change-end-date panel), and in a
+   column container a flex-basis would size its HEIGHT instead. */
+.price-field {
+  max-width: 240px;
+}
+
+.price-input-row .price-field {
+  flex: 0 1 240px;
+}
+
+/* The number spinners squeeze a money field until the currency suffix is
+   clipped, and nobody nudges a price one unit at a time. */
+.price-field input[type='number'] {
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+.price-field input[type='number']::-webkit-outer-spin-button,
+.price-field input[type='number']::-webkit-inner-spin-button {
+  appearance: none;
+  margin: 0;
+}
+
+/* The subscript line is wanted here (validation messages), so unlike the filter
+   strips it is left alone; only the stock bottom margin goes. */
+.price-input-row .mat-mdc-form-field {
+  margin-bottom: 0;
+}
+
+.price-card .hint {
+  margin: 0;
+  font-size: 12.5px;
+}
+
+.warn-text {
+  color: var(--warn);
+}
+
+.info-text {
+  color: var(--info);
+}
+
+.ok-text {
+  color: var(--ok);
+}
+
+/* --------------------------------------------------------------- review ---- */
+
+.review {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-3);
+  padding: 18px;
   border: 1px solid var(--line);
   border-radius: var(--r);
   background: var(--surface-2);
+}
+
+.review .section-label {
+  margin: 0;
+}
+
+.review-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--gap-4);
+  margin: 0;
+}
+
+.review-item dt {
+  font-size: 11.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--muted);
+}
+
+.review-item dd {
+  margin: 4px 0 0;
+  font-size: 15px;
+  font-weight: 550;
+  color: var(--ink);
+}
+
+/* The figure the client will be asked for: the one line that has to stand out. */
+.review-item.total dd {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-2);
+  flex-wrap: wrap;
+  font-size: 20px;
+  font-weight: 680;
+}
+
+/* ------------------------------------------------------------- summary ----- */
+
+.summary {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-4);
+}
+
+/* One bar: what state the booking is in, and what can be done to it. */
+.summary-head {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-2);
+  flex-wrap: wrap;
+  padding: 10px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  background: var(--surface-2);
+}
+
+.state-label {
+  font-size: 11.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--muted);
+}
+
+/* Four facts side by side; the tile itself comes from the design system. */
+.summary .tile-value.small {
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+/* See the template: flex items so the wrap lands between the two dates. */
+.period-value {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 6px;
+}
+
+.period-value > span {
+  white-space: nowrap;
+}
+
+/* ----------------------------------------------------------------- tabs ---- */
+
+.renting-tabs {
+  margin-top: var(--gap-2);
+}
+
+.tab-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-4);
+  padding: var(--gap-5) 2px 0;
+}
+
+/* Two columns rather than as-many-as-fit, so the fields pair up (the two dates on
+   one line, the two mileages on the next) instead of leaving the last one alone on
+   a row of its own — which is what auto-fit produces at this width. */
+@media (min-width: 768px) {
+  .tab-body .form-section > .form-grid,
+  .step-body .form-section > .form-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* The shared .inline-add strip is a flex row, but every mat-form-field carries
+   width:100% from the design system — so without a basis each field claims a
+   whole line and the "add" strip becomes a column. */
+.tab-body .inline-add .mat-mdc-form-field {
+  flex: 1 1 170px;
+  max-width: 240px;
+}
+
+/* Money inputs: no spinners, so the currency suffix is not squeezed out. */
+.tab-body .inline-add input[type='number'] {
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+.tab-body .inline-add input[type='number']::-webkit-outer-spin-button,
+.tab-body .inline-add input[type='number']::-webkit-inner-spin-button {
+  appearance: none;
+  margin: 0;
+}
+
+/* --------------------------------------------------------------- pickers --- */
+
+/* Search row pinned above a select's options. Not a <mat-option>: that would be
+   selectable and would blank the control (see the template). */
+.select-search-row {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: 8px 12px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+}
+
+.select-search {
+  width: 100%;
+  padding: 7px 10px;
+  font: inherit;
+  font-size: 14px;
+  color: var(--ink);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-xs);
+  outline: none;
+  background: var(--surface);
+}
+
+.select-search:focus {
+  border-color: var(--brand-500);
+}
+
+/* A car or client option carries its identifier next to its name, so the right
+   row is picked without opening another screen to check. */
+.option-main {
+  font-weight: 550;
+}
+
+.option-sub {
+  margin-inline-start: 8px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.option-price {
+  margin-inline-start: 8px;
+  font-size: 12px;
+  color: var(--brand-700);
+}
+
+/* Save action, separated from the last field so it does not read as one. */
+.save-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-3);
+  flex-wrap: wrap;
+  padding-top: var(--gap-4);
+  border-top: 1px solid var(--line);
+}
+
+.save-bar .hint {
+  margin: 0;
+}
+
+/* --------------------------------------------------------------- client ---- */
+
+/* The existing/new switches are choices, not fields: they keep their own width
+   and a little air before the field they govern. */
+.client-mode,
+.driver-mode {
+  align-self: flex-start;
+  margin-bottom: var(--gap-2);
+}
+
+.client-picker,
+.driver-picker {
+  max-width: 420px;
+}
+
+/* The second driver is its own subject on the screen, not a trailing field. */
+.second-driver .section-label,
+.second-driver .hint {
+  margin: 0;
+}
+
+.selected-client {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-2);
+}
+
+.client-toggle {
+  align-self: flex-start;
+  padding-inline-start: 0;
+}
+
+.client-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-3);
   padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  background: var(--surface-2);
+}
+
+.client-panel .hint {
+  margin: 0;
+}
+
+.papers {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-1);
+}
+
+.paper {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-3);
+  flex-wrap: wrap;
+}
+
+.paper-label {
+  min-width: 11rem;
+  font-size: 13.5px;
+  color: var(--muted);
+}
+
+.client-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-3);
+  flex-wrap: wrap;
+}
+
+/* ------------------------------------------------------------ paperwork ---- */
+
+.paperwork {
   display: flex;
   flex-direction: column;
   gap: var(--gap-3);
 }
 
-.end-date-panel .section-title,
-.end-date-panel .hint {
-  margin: 0;
+.generate-options {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-5);
+  flex-wrap: wrap;
+}
+
+.generate-label {
+  font-size: 13.5px;
+  color: var(--muted);
+}
+
+.template-row {
+  display: flex;
+  gap: var(--gap-4);
+  flex-wrap: wrap;
+}
+
+/* Same reason as .price-field: this one appears in .template-row and .doc-header
+   (rows) and in the change-end-date panel (a column). */
+.template-picker {
+  max-width: 280px;
+}
+
+.template-row .template-picker,
+.doc-header .template-picker {
+  flex: 0 1 260px;
+  min-width: 220px;
+}
+
+/* --------------------------------------------------- change the end date --- */
+
+.end-date-panel {
+  align-items: flex-start;
 }
 
 .end-date-row {
@@ -66,198 +524,81 @@
   flex: 0 1 220px;
 }
 
-.end-date-panel .contract-choice {
+.contract-choice {
   display: flex;
   flex-direction: column;
   gap: 2px;
 }
 
-.end-date-panel .template-field {
-  max-width: 320px;
-}
-
-.actions-row {
-  display: flex;
-  align-items: center;
-  gap: var(--gap-2);
-  flex-wrap: wrap;
-}
-
-.form-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0 1rem;
-}
-
-.span-2 {
-  grid-column: 1 / -1;
-}
-
-.actions {
-  margin-top: 0.5rem;
-}
-
-.panel {
-  margin: 1rem 0;
-}
-
-.full-width {
-  width: 100%;
-}
-
-.inline-add {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  flex-wrap: wrap;
-  margin-top: 0.75rem;
-}
-
-.muted {
-  color: rgba(0, 0, 0, 0.5);
-}
-
-.hint {
-  margin: 0 0 0.75rem;
-  font-size: 0.85rem;
-}
-
-.client-source {
-  margin-bottom: 0.75rem;
-}
-
-.client-mode {
-  display: flex;
-  gap: 1.5rem;
-}
-
-.new-client-panel {
-  border: 1px solid rgba(0, 0, 0, 0.12);
-  border-radius: 4px;
-  padding: 0.75rem 1rem 0;
-  margin: 0 0 1rem;
-}
-
-.new-client-panel legend {
-  padding: 0 0.35rem;
-  font-size: 0.85rem;
-  color: rgba(0, 0, 0, 0.6);
-}
-
-.new-client-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0 1rem;
-}
-
-.selected-client {
-  margin: 0 0 1rem;
-}
-
-.client-toggle {
-  padding-left: 0;
-}
-
-.client-panel {
-  border: 1px solid rgba(0, 0, 0, 0.12);
-  border-radius: 4px;
-  padding: 1rem 1rem 0;
-}
-
-.papers-title {
-  margin: 0.25rem 0 0.5rem;
-  font-size: 0.9rem;
-}
-
-.papers {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.paper {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  flex-wrap: wrap;
-}
-
-.paper-label {
-  min-width: 10rem;
-  color: rgba(0, 0, 0, 0.6);
-}
-
-.client-actions {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  flex-wrap: wrap;
-  margin: 1rem 0;
-}
-
-.saved-message {
-  color: #2e7d32;
-}
-
-.generate-options {
-  display: flex;
-  align-items: center;
-  gap: 1.25rem;
-  flex-wrap: wrap;
-  margin-bottom: 0.5rem;
-}
-
-.generate-label {
-  color: rgba(0, 0, 0, 0.6);
-}
-
-.prompt-panel {
-  border: 1px solid rgba(0, 0, 0, 0.12);
-  border-radius: 4px;
-  padding: 0.75rem 1rem 0;
-  margin: 0 0 1rem;
-}
-
-.prompt-panel legend {
-  padding: 0 0.35rem;
-  font-size: 0.85rem;
-  color: rgba(0, 0, 0, 0.6);
-}
-
-.prompt-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0 1rem;
-}
-
-.template-picker {
-  min-width: 14rem;
-}
+/* ------------------------------------------------------------ documents ---- */
 
 .doc-group {
-  margin-bottom: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-2);
 }
 
 .doc-header {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: var(--gap-4);
   flex-wrap: wrap;
 }
 
-.doc-header h4 {
+.doc-header .section-label {
   margin: 0;
+}
+
+/* The pickers sit on a header row, so their subscript line would push it taller. */
+.doc-header .mat-mdc-form-field {
+  margin-bottom: 0;
 }
 
 .doc-list {
   list-style: none;
   padding: 0;
-  margin: 0.25rem 0 0;
+  margin: 0;
 }
 
 .doc-list li {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: var(--gap-4);
   flex-wrap: wrap;
+}
+
+.doc-list .muted {
+  font-size: 12.5px;
+}
+
+/* Proof column of the payments table: never wider than its buttons. */
+.proof-cell {
+  white-space: nowrap;
+  width: 1%;
+}
+
+/* --------------------------------------------------------------- narrow ---- */
+
+@media (max-width: 767px) {
+  .price-body {
+    align-items: flex-start;
+  }
+
+  /* Stacked on a phone, so the total reads from the same edge as the sum above it. */
+  .price-total {
+    text-align: start;
+  }
+
+  .price-total-value {
+    font-size: 22px;
+  }
+
+  /* A three-step wizard's headers do not fit side by side on a phone. */
+  .renting-stepper ::ng-deep .mat-horizontal-stepper-header {
+    padding: 0 12px;
+  }
+
+  .renting-stepper ::ng-deep .mat-step-label {
+    display: none;
+  }
 }

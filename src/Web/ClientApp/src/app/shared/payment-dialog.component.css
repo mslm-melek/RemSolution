@@ -1,0 +1,56 @@
+/* The app's dialogs are narrow single-column forms: one field per row, so the
+   amount stays the thing the eye lands on. Tokens come from styles.scss. */
+.dialog-subtitle {
+  margin: 0 0 4px;
+  font-weight: 600;
+  color: var(--ink-2);
+}
+
+.dialog-hint,
+.hint {
+  margin: 0 0 12px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.dialog-form {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 320px;
+  padding-top: 8px;
+}
+
+.dialog-form mat-form-field {
+  width: 100%;
+}
+
+/* File pickers show the chosen name next to the button rather than in it, so a
+   long file name cannot stretch the dialog. */
+.proof-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 4px 0 8px;
+}
+
+.proof-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-2);
+}
+
+.proof-name {
+  flex: 1 1 120px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.error-banner {
+  margin-bottom: 8px;
+}

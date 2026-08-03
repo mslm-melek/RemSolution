@@ -4,6 +4,7 @@ using RemSolution.Application.Common.Models;
 using RemSolution.Application.Features.Client.Commands.CreateClientCommand;
 using RemSolution.Application.Features.Client.Commands.InviteClientCommand;
 using RemSolution.Application.Features.Client.Commands.UpdateClientCommand;
+using RemSolution.Application.Features.Renting.Booking;
 using RemSolution.Application.Features.Renting.Commands.CreateRentingCommand;
 using RemSolution.Domain.Constants;
 using RemSolution.Domain.Entities;

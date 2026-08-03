@@ -1,6 +1,7 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { PageEvent } from '@angular/material/paginator';
 import { Sort, SortDirection } from '@angular/material/sort';
+import { MatDialog } from '@angular/material/dialog';
 import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import {
   RentingsClient, RentingDto, RentingState, RentingDateBasis
@@ -8,6 +9,8 @@ import {
 import {
   FilterChip, applyListFilters, boolParam, dateParam, enumName, enumParam, rangeText, withoutParams
 } from '../shared/list-filters';
+import { AuthService } from '../shared/auth.service';
+import { PaymentDialogComponent } from '../shared/payment-dialog.component';
 import { TranslocoService } from '@jsverse/transloco';
 
 @Component({
@@ -19,8 +22,11 @@ export class RentingComponent implements OnInit {
   // Confirm/prompt dialogs and error banners are plain strings, so they are
   // translated imperatively rather than through the template pipe.
   private readonly transloco = inject(TranslocoService);
+  private readonly dialog = inject(MatDialog);
   rentings: RentingDto[] = [];
   displayedColumns: string[] = ['car', 'client', 'period', 'state', 'price', 'actions'];
+  // Money can be taken straight from a row (see pay).
+  canPay = false;
 
   totalCount = 0;
   pageNumber = 1;
@@ -50,6 +56,7 @@ export class RentingComponent implements OnInit {
 
   constructor(
     private client: RentingsClient,
+    private auth: AuthService,
     private route: ActivatedRoute,
     private router: Router) { }
 
@@ -57,6 +64,10 @@ export class RentingComponent implements OnInit {
   // whenever they change — including when the menu's plain "Rentings" link
   // clears the ones a dashboard tile arrived with.
   ngOnInit() {
+    this.auth.currentUser$.subscribe(user => {
+      this.canPay = AuthService.canAccessModule(user, 'Payments', 'Payment.Create');
+    });
+
     this.route.queryParamMap.subscribe(params => {
       this.readFilters(params);
       this.pageNumber = 1;
@@ -140,6 +151,31 @@ export class RentingComponent implements OnInit {
       case RentingState.Cancelled: return 'danger';
       default: return 'neutral';
     }
+  }
+
+  // A cancelled renting is not collected on; everything else can still take
+  // money, including a finished one being settled late.
+  canPayFor(renting: RentingDto): boolean {
+    return this.canPay && renting.rentingState !== RentingState.Cancelled;
+  }
+
+  // Takes the money without opening the booking first. The row carries the
+  // agreed price but not what has been collected, so the dialog reads the
+  // remaining balance from the entries itself.
+  pay(renting: RentingDto) {
+    if (!renting.id) return;
+
+    this.dialog.open(PaymentDialogComponent, {
+      data: {
+        target: { kind: 'renting', id: renting.id },
+        subtitle: [renting.clientName, renting.carMatricule].filter(Boolean).join(' — '),
+        charged: renting.price?.amount,
+        currency: renting.price?.currency
+      },
+      autoFocus: 'first-tabbable'
+    }).afterClosed().subscribe(recorded => {
+      if (recorded) this.load();
+    });
   }
 
   canCancel(renting: RentingDto): boolean {

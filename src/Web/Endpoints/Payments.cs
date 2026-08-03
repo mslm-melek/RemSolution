@@ -4,6 +4,7 @@ using RemSolution.Domain.Constants;
 using RemSolution.Application.Features.Payment.Commands.CreatePaymentCommand;
 using RemSolution.Application.Features.Payment.Commands.ReversePaymentCommand;
 using RemSolution.Application.Features.Payment.Commands.UpdatePaymentCommand;
+using RemSolution.Application.Features.Payment.Commands.UploadPaymentProofCommand;
 using RemSolution.Application.Features.Payment.DTOs;
 using RemSolution.Application.Features.Payment.Queries.GetClientBalanceQuery;
 using RemSolution.Application.Features.Payment.Queries.GetPaymentByIdQuery;
@@ -25,6 +26,14 @@ public class Payments : EndpointGroupBase
             .MapPost(CreatePayment, policy: Permissions.PaymentCreate)
             .MapPost(ReversePayment, "{id}/reverse", Permissions.PaymentDelete)
             .MapPut(UpdatePayment, "{id}", Permissions.PaymentUpdate);
+
+        // Form-binding route (like the client-document upload): antiforgery
+        // middleware is not configured, so form binding must opt out explicitly.
+        // Attaching the proof is an edit of the entry: Payment.Update.
+        group.MapPost("{id}/proof", UploadPaymentProof)
+            .WithName(nameof(UploadPaymentProof))
+            .RequireAuthorization(Permissions.PaymentUpdate)
+            .DisableAntiforgery();
     }
 
     public async Task<Results<Ok<ClientBalanceDto>, NotFound>> GetClientBalance(ISender sender, int clientId)
@@ -75,5 +84,23 @@ public class Payments : EndpointGroupBase
 
         await sender.Send(command);
         return TypedResults.NoContent();
+    }
+
+    // Attaches (or replaces) the receipt / transfer slip / invoice kept as proof
+    // of this entry; returns the stored file's public URL.
+    public async Task<Ok<string>> UploadPaymentProof(ISender sender, int id, IFormFile file)
+    {
+        await using var content = file.OpenReadStream();
+
+        var url = await sender.Send(new UploadPaymentProofCommand
+        {
+            PaymentId = id,
+            FileName = file.FileName,
+            ContentType = file.ContentType,
+            Length = file.Length,
+            Content = content
+        });
+
+        return TypedResults.Ok(url);
     }
 }

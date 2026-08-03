@@ -175,6 +175,9 @@
   <data name="Validation.Renting.SecondDriverDistinct" xml:space="preserve">
     <value>يجب أن يكون السائق الثاني عميلًا مختلفًا.</value>
   </data>
+  <data name="Validation.Renting.SecondDriverOneSource" xml:space="preserve">
+    <value>اختر عميلًا موجودًا كسائق ثانٍ أو أدخل عميلًا جديدًا — لا الاثنين.</value>
+  </data>
   <data name="Validation.Language.Unsupported" xml:space="preserve">
     <value>يجب أن تكون اللغة إحدى التالي: en أو fr أو ar.</value>
   </data>

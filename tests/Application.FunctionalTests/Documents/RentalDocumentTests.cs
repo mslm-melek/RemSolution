@@ -3,6 +3,7 @@ using RemSolution.Application.Features.Contract.Commands.GenerateContractCommand
 using RemSolution.Application.Features.Contract.Queries.GetContractsByRentingQuery;
 using RemSolution.Application.Features.Facture.Commands.GenerateFactureCommand;
 using RemSolution.Application.Features.Facture.Queries.GetFacturesByRentingQuery;
+using RemSolution.Application.Features.Renting.Booking;
 using RemSolution.Application.Features.Renting.Commands.CreateRentingCommand;
 using RemSolution.Domain.Constants;
 using RemSolution.Domain.Entities;

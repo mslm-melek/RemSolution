@@ -79,6 +79,10 @@
       <th mat-header-cell *matHeaderCellDef class="actions-cell">{{ t('common.actions') }}</th>
       <td mat-cell *matCellDef="let r" class="actions-cell">
         <span class="row-actions">
+          <button mat-icon-button color="primary" *ngIf="canPayFor(r)" (click)="pay(r)"
+                  [matTooltip]="t('payment.pay')" [attr.aria-label]="t('payment.pay')">
+            <mat-icon>payments</mat-icon>
+          </button>
           <a mat-icon-button color="primary" [routerLink]="['/renting', r.id]"
              [matTooltip]="t('common.open')" [attr.aria-label]="t('common.open')">
             <mat-icon>edit</mat-icon>

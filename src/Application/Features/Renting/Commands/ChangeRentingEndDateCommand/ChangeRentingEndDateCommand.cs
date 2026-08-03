@@ -2,9 +2,11 @@ using ValidationException = RemSolution.Application.Common.Exceptions.Validation
 using RemSolution.Application.Common.Audit;
 using RemSolution.Application.Common.Interfaces;
 using RemSolution.Application.Common.Security;
+using RemSolution.Application.Common.Settings;
 using RemSolution.Domain.Constants;
 using RemSolution.Domain.Entities;
 using RemSolution.Domain.Enums;
+using RemSolution.Domain.ValueObjects;
 using FluentValidation.Results;
 
 namespace RemSolution.Application.Features.Renting.Commands.ChangeRentingEndDateCommand
@@ -45,6 +47,14 @@ namespace RemSolution.Application.Features.Renting.Commands.ChangeRentingEndDate
         public DateTime EndDate { get; init; }
 
         /// <summary>
+        /// The total agreed for the new period, when the difference was negotiated
+        /// rather than taken from the rate — the extension the agent threw in, the
+        /// early return credited as a gesture. Null re-prices the difference
+        /// automatically (see IPricingService.RepriceForNewEndDate).
+        /// </summary>
+        public decimal? PriceOverride { get; init; }
+
+        /// <summary>
         /// Issue a new numbered contract covering the new period. Gated on
         /// Contract.Generate AND the Contracts feature, checked in the handler —
         /// asking for a document the agency does not have is a 403, not a silently
@@ -69,6 +79,7 @@ namespace RemSolution.Application.Features.Renting.Commands.ChangeRentingEndDate
     {
         private readonly IApplicationDbContext _context;
         private readonly IPricingService _pricing;
+        private readonly IAgencySettingsProvider _settings;
         private readonly IAvailabilityChecker _availability;
         private readonly IRentalDocumentService _documents;
         private readonly IStoredFileService _storedFiles;
@@ -80,6 +91,7 @@ namespace RemSolution.Application.Features.Renting.Commands.ChangeRentingEndDate
         public ChangeRentingEndDateCommandHandler(
             IApplicationDbContext context,
             IPricingService pricing,
+            IAgencySettingsProvider settings,
             IAvailabilityChecker availability,
             IRentalDocumentService documents,
             IStoredFileService storedFiles,
@@ -90,6 +102,7 @@ namespace RemSolution.Application.Features.Renting.Commands.ChangeRentingEndDate
         {
             _context = context;
             _pricing = pricing;
+            _settings = settings;
             _availability = availability;
             _documents = documents;
             _storedFiles = storedFiles;
@@ -156,11 +169,26 @@ namespace RemSolution.Application.Features.Renting.Commands.ChangeRentingEndDate
 
                 var originalEnd = entity.EndDate;
 
-                // With no agreed price to preserve there is nothing to carry over,
-                // so the new period is quoted from scratch.
-                entity.Price = entity.Price is { } agreedPrice && originalEnd is DateTime previousEnd
-                    ? _pricing.RepriceForNewEndDate(car, agreedPrice, startDate, previousEnd, request.EndDate)
-                    : _pricing.CalculateRentalPrice(car, startDate, request.EndDate);
+                if (request.PriceOverride is decimal negotiated)
+                {
+                    // The agent has said what the whole period now costs, so there
+                    // is no difference left to price. Same currency rule as the
+                    // other renting writes: the car's, then the agency's.
+                    entity.Price = Money.Of(
+                        negotiated,
+                        entity.Price?.Currency
+                            ?? car.DailyRate?.Currency
+                            ?? (await _settings.GetAsync(car.AgencyId, cancellationToken)).CurrencyCode)
+                        .Round();
+                }
+                else
+                {
+                    // With no agreed price to preserve there is nothing to carry
+                    // over, so the new period is quoted from scratch.
+                    entity.Price = entity.Price is { } agreedPrice && originalEnd is DateTime previousEnd
+                        ? _pricing.RepriceForNewEndDate(car, agreedPrice, startDate, previousEnd, request.EndDate)
+                        : _pricing.CalculateRentalPrice(car, startDate, request.EndDate);
+                }
 
                 entity.EndDate = request.EndDate;
 
@@ -215,6 +243,8 @@ namespace RemSolution.Application.Features.Renting.Commands.ChangeRentingEndDate
         {
             RuleFor(v => v.Id).GreaterThan(0);
             RuleFor(v => v.EndDate).NotEmpty();
+            RuleFor(v => v.PriceOverride)
+                .GreaterThanOrEqualTo(0).When(v => v.PriceOverride.HasValue);
             RuleFor(v => v.ContractTemplateId)
                 .GreaterThan(0).When(v => v.ContractTemplateId.HasValue);
         }

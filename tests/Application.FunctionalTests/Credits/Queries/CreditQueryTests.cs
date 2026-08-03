@@ -208,6 +208,43 @@ public class CreditQueryTests : BaseTestFixture
         summary.ClientsOutstanding!.Amount.Should().Be(0m);
     }
 
+    // The payable tab replaced the standalone expense list, so it offers the same
+    // car/type narrowing that list did.
+    [Test]
+    public async Task ExpenseCreditsFilterByCarAndByType()
+    {
+        await RunAsAgencyAdministratorAsync();
+        await AddTestAgencyAsync();
+
+        var garage = new ExpenseTypeEntity { Name = "Garage", IsActive = true };
+        var fuel = new ExpenseTypeEntity { Name = "Fuel", IsActive = true };
+        await AddAsync(garage);
+        await AddAsync(fuel);
+
+        var carA = new Car { Matricule = "CR-FIL-A", Status = CarStatus.Active };
+        var carB = new Car { Matricule = "CR-FIL-B", Status = CarStatus.Active };
+        await AddAsync(carA);
+        await AddAsync(carB);
+
+        // Car A owes on both types; car B owes on fuel only.
+        await SendAsync(new CreateExpenseCommand { CarId = carA.Id, ExpenseTypeId = garage.Id, Amount = 300m });
+        await SendAsync(new CreateExpenseCommand { CarId = carA.Id, ExpenseTypeId = fuel.Id, Amount = 90m });
+        await SendAsync(new CreateExpenseCommand { CarId = carB.Id, ExpenseTypeId = fuel.Id, Amount = 60m });
+
+        (await SendAsync(new GetExpenseCreditsQuery())).TotalCount.Should().Be(3);
+        (await SendAsync(new GetExpenseCreditsQuery(CarId: carA.Id))).TotalCount.Should().Be(2);
+        (await SendAsync(new GetExpenseCreditsQuery(ExpenseTypeId: fuel.Id))).TotalCount.Should().Be(2);
+
+        var both = await SendAsync(new GetExpenseCreditsQuery(CarId: carA.Id, ExpenseTypeId: garage.Id));
+        both.TotalCount.Should().Be(1);
+        var row = both.Items.Single();
+        row.ExpenseTypeId.Should().Be(garage.Id);
+        row.Amount!.Amount.Should().Be(300m);
+        // Nothing has been attached, so the invoice reads as absent rather than
+        // as an empty string.
+        row.FactureFileUrl.Should().BeNull();
+    }
+
     [Test]
     public async Task StaffWithoutTheCreditPermissionIsDenied()
     {

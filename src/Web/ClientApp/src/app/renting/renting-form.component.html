@@ -1,6 +1,9 @@
 <div class="page renting-form-card" *transloco="let t">
   <div class="header-row">
-    <h2 class="title">{{ isEdit ? t('renting.detailTitle') : t('renting.new') }}</h2>
+    <div>
+      <h2 class="title">{{ isEdit ? t('renting.detailTitle') : t('renting.new') }}</h2>
+      <p class="page-subtitle">{{ isEdit ? t('renting.detailSubtitle') : t('renting.wizardSubtitle') }}</p>
+    </div>
     <a mat-stroked-button [routerLink]="['/renting']">
       <mat-icon>arrow_back</mat-icon> {{ t('common.back') }}
     </a>
@@ -8,116 +11,112 @@
 
   <div *ngIf="errorMessage" class="error-banner">{{ errorMessage }}</div>
 
-  <div *ngIf="isEdit && renting" class="state-row">
-    <span class="state-chip">{{ t('renting.stateLabel') }}:
-      <strong>{{ stateLabelKey(renting.rentingState) ? t(stateLabelKey(renting.rentingState)) : '' }}</strong>
-    </span>
-    <button mat-raised-button color="primary"
-            *ngIf="renting.rentingState === RentingState.NotYet"
-            (click)="startRenting()">
-      <mat-icon>play_arrow</mat-icon> {{ t('renting.start') }}
-    </button>
-    <button mat-raised-button color="primary"
-            *ngIf="renting.rentingState === RentingState.InProgress"
-            (click)="completeRenting()">
-      <mat-icon>check</mat-icon> {{ t('renting.complete') }}
-    </button>
-    <button mat-stroked-button color="warn"
-            *ngIf="!isTerminal"
-            (click)="cancelRenting()">
-      <mat-icon>cancel</mat-icon> {{ t('common.cancel') }}
-    </button>
+  <!-- ======================================================== price block ==
+       Shared by the wizard's first step and the edit form's booking tab: the
+       automatic quote, and the one control that lets the agent disagree with it.
+       The quote is asked of the server (see GetRentingQuoteQuery) so what is on
+       screen is what gets stored. -->
+  <ng-template #priceBlock>
+    <section class="price-card" [class.overridden]="overridingPrice">
+      <div class="price-head">
+        <span class="section-label">{{ t('renting.priceSection') }}</span>
+        <span class="loading" *ngIf="loadingQuote">{{ t('common.loading') }}</span>
+      </div>
 
-    <span class="spacer"></span>
+      <!-- The sum, spelled out: this is where "why that number?" is answered. The
+           calculation is shown as a reference on the start side, the figure that
+           will actually be stored as the headline on the end side. They differ
+           whenever a price was negotiated, and the chip below says so. -->
+      <div class="price-body">
+        <div class="price-calc">
+          <ng-container *ngIf="billedDays !== null; else pickDates">
+            <span class="calc-part">{{ t('renting.daysCount', { count: billedDays }) }}</span>
+            <ng-container *ngIf="dailyRateAmount !== null">
+              <span class="calc-op">×</span>
+              <span class="calc-part num">{{ dailyRateAmount | number:'1.2-2' }} {{ priceCurrency }}</span>
+              <span class="calc-note">{{ t('renting.perDay') }}</span>
+            </ng-container>
+            <ng-container *ngIf="quotedAmount !== null">
+              <span class="calc-op">=</span>
+              <span class="calc-part num">{{ quotedAmount | number:'1.2-2' }} {{ priceCurrency }}</span>
+              <span class="calc-note">{{ t('renting.calculatedPrice') }}</span>
+            </ng-container>
+          </ng-container>
+          <ng-template #pickDates>
+            <span class="muted">{{ t('renting.pickDatesForPrice') }}</span>
+          </ng-template>
+        </div>
 
-    <button mat-stroked-button *ngIf="!isTerminal && !endDatePanelOpen" (click)="openEndDatePanel()">
-      <mat-icon>event_repeat</mat-icon> {{ t('renting.changeEndDate') }}
-    </button>
-  </div>
+        <div class="price-total">
+          <span class="price-total-label">{{ t('renting.agreedPrice') }}</span>
+          <span class="price-total-value num" *ngIf="effectiveAmount !== null">
+            {{ effectiveAmount | number:'1.2-2' }} {{ priceCurrency }}
+          </span>
+          <span class="price-total-value muted" *ngIf="effectiveAmount === null">—</span>
+          <span class="chip no-dot accent" *ngIf="showsNegotiatedPrice">
+            {{ t('renting.negotiatedPrice') }}
+          </span>
+        </div>
+      </div>
 
-  <!-- The client wants the car for longer, or brings it back early. Separate from
-       the edit form below because only the difference is priced here: the days
-       already agreed keep the price they were agreed at. -->
-  <section class="panel end-date-panel" *ngIf="isEdit && renting && !isTerminal && endDatePanelOpen">
-    <h4 class="section-title">{{ t('renting.changeEndDate') }}</h4>
-    <p class="hint">{{ t('renting.changeEndDateHint') }}</p>
+      <!-- No rate on the car: there is nothing to quote, so the price has to be
+           typed. Said plainly rather than left as a blank total. -->
+      <p class="hint warn-text" *ngIf="dailyRateAmount === null && vehicleGroup.get('carId')?.value">
+        {{ t('renting.noDailyRate') }}
+      </p>
 
-    <div class="end-date-row">
-      <mat-form-field appearance="outline">
-        <mat-label>{{ t('renting.newEndDate') }}</mat-label>
-        <input matInput type="date" [(ngModel)]="newEndDate" [ngModelOptions]="{ standalone: true }" />
-      </mat-form-field>
+      <div class="price-adjust">
+        <mat-checkbox [formControl]="overridePriceControl">{{ t('renting.adjustPrice') }}</mat-checkbox>
 
-      <span class="chip" *ngIf="endDateDeltaDays"
-            [ngClass]="endDateDeltaDays! > 0 ? 'info' : 'warn'">
-        {{ endDateDeltaDays! > 0
-            ? t('renting.daysAdded', { count: endDateDeltaDays })
-            : t('renting.daysRemoved', { count: -endDateDeltaDays! }) }}
-      </span>
+        <div class="price-input-row" *ngIf="overridingPrice">
+          <mat-form-field appearance="outline" class="price-field">
+            <mat-label>{{ t('renting.agreedPrice') }}</mat-label>
+            <input matInput type="number" min="0" step="0.01" [formControl]="manualPriceControl" />
+            <span matSuffix *ngIf="priceCurrency">&nbsp;{{ priceCurrency }}</span>
+            <mat-error *ngIf="manualPriceControl.hasError('required')">
+              {{ t('renting.priceRequired') }}
+            </mat-error>
+            <mat-error *ngIf="manualPriceControl.hasError('min')">
+              {{ t('renting.priceNegative') }}
+            </mat-error>
+          </mat-form-field>
+
+          <!-- How far the agreed figure sits from the quote, so a mistyped
+               amount is obvious before it is saved. -->
+          <span class="chip no-dot" *ngIf="priceDelta !== null"
+                [ngClass]="priceDelta! < 0 ? 'warn' : 'info'">
+            {{ priceDelta! < 0
+                ? t('renting.priceBelowQuote', { amount: (-priceDelta! | number:'1.2-2') })
+                : t('renting.priceAboveQuote', { amount: (priceDelta! | number:'1.2-2') }) }}
+          </span>
+        </div>
+
+        <p class="hint muted" *ngIf="!overridingPrice">{{ t('renting.autoPriceHint') }}</p>
+      </div>
+
+      <!-- Editing: saying up front that moving a date re-quotes the booking. -->
+      <p class="hint info-text" *ngIf="willReprice && quotedAmount !== null">
+        {{ t('renting.willReprice', { amount: (quotedAmount | number:'1.2-2'), currency: priceCurrency }) }}
+      </p>
+    </section>
+  </ng-template>
+
+  <!-- ============================================== period-warning block == -->
+  <ng-template #periodWarnings>
+    <div class="warn-banner" *ngIf="vehicleGroup.hasError('endBeforeStart')">
+      <mat-icon>error_outline</mat-icon> {{ t('renting.endAfterStart') }}
     </div>
-
-    <!-- What happens to the paperwork is the agent's call, not a side effect. -->
-    <mat-radio-group class="contract-choice" *ngIf="canGenerateContracts"
-                     [(ngModel)]="reissueContract" [ngModelOptions]="{ standalone: true }">
-      <mat-radio-button [value]="true">{{ t('renting.reissueContract') }}</mat-radio-button>
-      <mat-radio-button [value]="false">{{ t('renting.keepContract') }}</mat-radio-button>
-    </mat-radio-group>
-
-    <mat-form-field appearance="outline" class="template-field"
-                    *ngIf="canGenerateContracts && reissueContract && contractTemplates.length">
-      <mat-label>{{ t('renting.contractTemplate') }}</mat-label>
-      <mat-select [(ngModel)]="contractTemplateId" [ngModelOptions]="{ standalone: true }"
-                  (ngModelChange)="loadPrompts(DocumentTemplateKind.Contract)">
-        <mat-option [value]="null">{{ t('renting.defaultTemplate') }}</mat-option>
-        <mat-option *ngFor="let template of contractTemplates" [value]="template.id">
-          {{ template.name }}
-        </mat-option>
-      </mat-select>
-    </mat-form-field>
-
-    <div class="actions-row">
-      <button mat-raised-button color="primary" (click)="changeEndDate()"
-              [disabled]="changingEndDate || !newEndDate || !endDateDeltaDays">
-        <mat-icon>check</mat-icon> {{ t('common.saveChanges') }}
-      </button>
-      <button mat-button (click)="closeEndDatePanel()">{{ t('common.cancel') }}</button>
+    <div class="error-banner" *ngIf="periodConflicts">
+      <mat-icon>event_busy</mat-icon> {{ t('renting.carTakenForPeriod') }}
     </div>
-  </section>
-
-  <form [formGroup]="form" (ngSubmit)="save()" class="form-grid">
-    <mat-form-field appearance="outline">
-      <mat-label>{{ t('renting.car') }}</mat-label>
-      <mat-select formControlName="carId">
-        <mat-option *ngFor="let c of cars" [value]="c.id">
-          {{ c.modelName }} — {{ c.matricule }}
-        </mat-option>
-      </mat-select>
-      <mat-error *ngIf="form.get('carId')?.hasError('required')">{{ t('renting.carRequired') }}</mat-error>
-    </mat-form-field>
-
-    <!-- Existing client, or a new one created with the renting. The toggle only
-         appears on create: editing a renting reassigns it to a known client. -->
-    <div class="span-2 client-source" *ngIf="!isEdit">
-      <mat-radio-group formControlName="clientMode" class="client-mode">
-        <mat-radio-button value="existing">{{ t('renting.existingClient') }}</mat-radio-button>
-        <mat-radio-button value="new">{{ t('renting.newClient') }}</mat-radio-button>
-      </mat-radio-group>
+    <div class="warn-banner" *ngIf="carNotBookable">
+      <mat-icon>build</mat-icon> {{ t('renting.carNotBookable') }}
     </div>
+  </ng-template>
 
-    <mat-form-field appearance="outline" *ngIf="!isNewClient">
-      <mat-label>{{ t('renting.client') }}</mat-label>
-      <mat-select formControlName="clientId">
-        <mat-option *ngFor="let c of clients" [value]="c.id">
-          {{ c.lastName }}, {{ c.firstName }}
-        </mat-option>
-      </mat-select>
-      <mat-error *ngIf="form.get('clientId')?.hasError('required')">{{ t('renting.clientRequired') }}</mat-error>
-    </mat-form-field>
-
-    <!-- The picked client's own file, checkable and correctable here: at the
-         counter their papers are in hand, and leaving the booking to fix a typo
-         loses it. Read-only unless the user may edit clients. -->
-    <div class="span-2 selected-client" *ngIf="!isNewClient && selectedClient">
+  <!-- ================================================= client-file block == -->
+  <ng-template #clientFileBlock>
+    <div class="selected-client" *ngIf="!isNewClient && selectedClient">
       <button type="button" mat-button class="client-toggle" (click)="toggleClientPanel()">
         <mat-icon>{{ clientPanelOpen ? 'expand_less' : 'expand_more' }}</mat-icon>
         {{ t('renting.clientDetails') }}
@@ -126,7 +125,7 @@
       <div class="client-panel" *ngIf="clientPanelOpen">
         <p class="muted hint" *ngIf="!canUpdateClients">{{ t('renting.clientReadOnly') }}</p>
 
-        <div [formGroup]="clientForm" class="new-client-grid">
+        <div [formGroup]="clientForm" class="form-grid">
           <mat-form-field appearance="outline">
             <mat-label>{{ t('client.firstName') }}</mat-label>
             <input matInput formControlName="firstName" />
@@ -169,7 +168,7 @@
         </div>
 
         <!-- Identity papers: view what is on file, replace what is out of date. -->
-        <h4 class="papers-title">{{ t('renting.clientPapers') }}</h4>
+        <h4 class="section-label">{{ t('renting.clientPapers') }}</h4>
         <div class="papers">
           <div class="paper" *ngFor="let doc of clientDocuments">
             <span class="paper-label">{{ t(doc.labelKey) }}</span>
@@ -198,20 +197,62 @@
           <a mat-button [routerLink]="['/client', selectedClient.id]">
             {{ t('renting.openClientFile') }}
           </a>
-          <span class="saved-message" *ngIf="clientSavedMessage">{{ clientSavedMessage }}</span>
+          <span class="ok-text" *ngIf="clientSavedMessage">{{ clientSavedMessage }}</span>
         </div>
       </div>
     </div>
+  </ng-template>
 
-    <fieldset class="span-2 new-client-panel" *ngIf="isNewClient" formGroupName="newClient">
-      <legend>{{ t('renting.newClient') }}</legend>
-      <p class="muted hint">{{ t('renting.newClientHint') }}</p>
+  <!-- ============================================== second-driver block ==
+       Three states, because "none" is the common one and the person who does
+       drive is as likely to be a walk-in as the renter. Controls are bound one
+       by one rather than through a container: this block is rendered inside two
+       different form contexts (the wizard's step and the edit form's tab). -->
+  <ng-template #secondDriverBlock>
+    <section class="form-section second-driver">
+      <span class="section-label">{{ t('renting.secondDriver') }}</span>
+      <p class="hint muted">{{ t('renting.secondDriverHint') }}</p>
 
-      <div class="new-client-grid">
+      <mat-button-toggle-group [formControl]="secondModeControl" class="driver-mode">
+        <mat-button-toggle value="none">{{ t('common.none') }}</mat-button-toggle>
+        <mat-button-toggle value="existing">
+          <mat-icon>person_search</mat-icon> {{ t('renting.existingClient') }}
+        </mat-button-toggle>
+        <mat-button-toggle value="new">
+          <mat-icon>person_add</mat-icon> {{ t('renting.newClient') }}
+        </mat-button-toggle>
+      </mat-button-toggle-group>
+
+      <mat-form-field appearance="outline" class="driver-picker" *ngIf="secondMode === 'existing'">
+        <mat-label>{{ t('renting.secondDriver') }}</mat-label>
+        <mat-select [formControl]="secondClientIdControl">
+          <mat-select-trigger>{{ secondDriverTriggerLabel }}</mat-select-trigger>
+
+          <div class="select-search-row">
+            <input class="select-search" type="text" [(ngModel)]="secondClientFilter"
+                   [ngModelOptions]="{ standalone: true }"
+                   [placeholder]="t('common.search')"
+                   (click)="$event.stopPropagation()"
+                   (keydown)="$event.stopPropagation()" />
+          </div>
+          <mat-option *ngFor="let c of filteredSecondClients" [value]="c.id">
+            <span class="option-main">{{ c.lastName }}, {{ c.firstName }}</span>
+            <span class="option-sub num" *ngIf="c.cin">{{ c.cin }}</span>
+          </mat-option>
+        </mat-select>
+        <mat-error *ngIf="secondClientIdControl.hasError('required')">
+          {{ t('renting.secondDriverRequired') }}
+        </mat-error>
+      </mat-form-field>
+
+      <!-- No email field: on a second driver it would be stored but provision no
+           portal login, because the portal lists a person's bookings as the
+           renter (see NewRentingClient). -->
+      <div class="form-grid" *ngIf="isNewSecondClient" [formGroup]="secondNewClientGroup">
         <mat-form-field appearance="outline">
           <mat-label>{{ t('client.firstName') }}</mat-label>
           <input matInput formControlName="firstName" required />
-          <mat-error *ngIf="form.get('newClient.firstName')?.hasError('required')">
+          <mat-error *ngIf="secondNewClientGroup.get('firstName')?.hasError('required')">
             {{ t('client.firstNameRequired') }}
           </mat-error>
         </mat-form-field>
@@ -219,31 +260,17 @@
         <mat-form-field appearance="outline">
           <mat-label>{{ t('client.lastName') }}</mat-label>
           <input matInput formControlName="lastName" required />
-          <mat-error *ngIf="form.get('newClient.lastName')?.hasError('required')">
+          <mat-error *ngIf="secondNewClientGroup.get('lastName')?.hasError('required')">
             {{ t('client.lastNameRequired') }}
-          </mat-error>
-        </mat-form-field>
-
-        <mat-form-field appearance="outline">
-          <mat-label>{{ t('client.email') }}</mat-label>
-          <input matInput type="email" formControlName="email" autocomplete="email" />
-          <mat-hint>{{ t('renting.clientEmailHint') }}</mat-hint>
-          <mat-error *ngIf="form.get('newClient.email')?.hasError('email')">
-            {{ t('client.emailInvalid') }}
           </mat-error>
         </mat-form-field>
 
         <mat-form-field appearance="outline">
           <mat-label>{{ t('client.birthDate') }}</mat-label>
           <input matInput type="date" formControlName="birthDate" required />
-          <mat-error *ngIf="form.get('newClient.birthDate')?.hasError('required')">
+          <mat-error *ngIf="secondNewClientGroup.get('birthDate')?.hasError('required')">
             {{ t('client.birthDateRequired') }}
           </mat-error>
-        </mat-form-field>
-
-        <mat-form-field appearance="outline">
-          <mat-label>{{ t('client.cinNumber') }}</mat-label>
-          <input matInput formControlName="cin" />
         </mat-form-field>
 
         <mat-form-field appearance="outline">
@@ -252,74 +279,463 @@
         </mat-form-field>
 
         <mat-form-field appearance="outline">
+          <mat-label>{{ t('client.cinNumber') }}</mat-label>
+          <input matInput formControlName="cin" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
           <mat-label>{{ t('client.passeportNumber') }}</mat-label>
           <input matInput formControlName="passeportNumber" />
         </mat-form-field>
 
-        <mat-form-field appearance="outline" class="span-2">
+        <mat-form-field appearance="outline">
           <mat-label>{{ t('common.description') }}</mat-label>
           <input matInput formControlName="description" />
         </mat-form-field>
       </div>
-    </fieldset>
+    </section>
+  </ng-template>
 
-    <mat-form-field appearance="outline">
-      <mat-label>{{ t('renting.secondDriver') }}</mat-label>
-      <mat-select formControlName="secondClientId">
-        <mat-option [value]="null">{{ t('common.none') }}</mat-option>
-        <mat-option *ngFor="let c of clients" [value]="c.id">
-          {{ c.lastName }}, {{ c.firstName }}
-        </mat-option>
-      </mat-select>
-    </mat-form-field>
+  <!-- ================================================ document-ask block == -->
+  <ng-template #promptBlock>
+    <section class="form-section" *ngIf="activePrompts.length">
+      <span class="section-label">{{ t('renting.documentFields') }}</span>
+      <p class="muted hint">{{ t('renting.documentFieldsHint') }}</p>
 
-    <mat-form-field appearance="outline">
-      <mat-label>{{ t('common.startDate') }}</mat-label>
-      <input matInput type="date" formControlName="startDate" />
-      <mat-error *ngIf="form.get('startDate')?.hasError('required')">{{ t('renting.startDateRequired') }}</mat-error>
-    </mat-form-field>
+      <div class="form-grid">
+        <mat-form-field appearance="outline" *ngFor="let field of activePrompts">
+          <mat-label>{{ field.label || field.placeholder }}</mat-label>
+          <input matInput [ngModel]="documentValues[field.placeholder!]"
+                 (ngModelChange)="documentValues[field.placeholder!] = $event"
+                 [ngModelOptions]="{ standalone: true }" [required]="!!field.isRequired" />
+        </mat-form-field>
+      </div>
+    </section>
+  </ng-template>
 
-    <mat-form-field appearance="outline">
-      <mat-label>{{ t('common.endDate') }}</mat-label>
-      <input matInput type="date" formControlName="endDate" />
-      <mat-error *ngIf="form.get('endDate')?.hasError('required')">{{ t('renting.endDateRequired') }}</mat-error>
-    </mat-form-field>
+  <!-- ==================================================================== -->
+  <!-- CREATE — a wizard. Three questions in the order they are asked at the
+       counter: which car and for how long, who is taking it, and what leaves
+       with them. Each step is validated on its own, so the agent is never told
+       about a missing field two screens later. -->
+  <!-- ==================================================================== -->
+  <form *ngIf="!isEdit" [formGroup]="form" (ngSubmit)="save()">
+    <!-- linear: a step whose stepControl is invalid cannot be walked past, so
+         the wizard cannot reach its own submit button in a state the API would
+         refuse. -->
+    <mat-stepper linear class="renting-stepper">
 
-    <mat-form-field appearance="outline">
-      <mat-label>{{ t('renting.pickupMileage') }}</mat-label>
-      <input matInput type="number" min="0" formControlName="startMileage" />
-    </mat-form-field>
+      <!-- Step 1 — vehicle, period, price. -->
+      <mat-step [stepControl]="vehicleGroup" [label]="t('renting.stepVehicle')">
+        <div class="step-body" formGroupName="vehicle">
+          <div class="form-grid">
+            <mat-form-field appearance="outline" class="span-2">
+              <mat-label>{{ t('renting.car') }}</mat-label>
+              <mat-select formControlName="carId">
+                <!-- The closed field shows a clean label. Without this the trigger
+                     is the selected option's raw text content, and an option built
+                     from several <span>s runs them together ("208178 TU 8802"). -->
+                <mat-select-trigger>{{ carLabel(selectedCar) }}</mat-select-trigger>
 
-    <mat-form-field appearance="outline" *ngIf="isEdit">
-      <mat-label>{{ t('renting.returnMileage') }}</mat-label>
-      <input matInput type="number" min="0" formControlName="endMileage" />
-    </mat-form-field>
+                <!-- Typed filter: the picker has to work for an agency with a
+                     fleet, not just a demo one. A plain row rather than a
+                     <mat-option>, which would be selectable and would set the
+                     control to nothing; mat-select renders non-option content in
+                     its panel quite happily. Both handlers are stopped so the
+                     panel's own click/typeahead keydown never sees the typing. -->
+                <div class="select-search-row">
+                  <input class="select-search" type="text" [(ngModel)]="carFilter"
+                         [ngModelOptions]="{ standalone: true }"
+                         [placeholder]="t('common.search')"
+                         (click)="$event.stopPropagation()"
+                         (keydown)="$event.stopPropagation()" />
+                </div>
+                <mat-option *ngFor="let c of filteredCars" [value]="c.id">
+                  <span class="option-main">{{ c.modelName }}</span>
+                  <span class="option-sub num">{{ c.matricule }}</span>
+                  <span class="option-price num" *ngIf="c.dailyRate">
+                    {{ c.dailyRate.amount | number:'1.2-2' }} {{ c.dailyRate.currency }}/{{ t('renting.dayShort') }}
+                  </span>
+                </mat-option>
+              </mat-select>
+              <mat-error *ngIf="vehicleGroup.get('carId')?.hasError('required')">
+                {{ t('renting.carRequired') }}
+              </mat-error>
+            </mat-form-field>
 
-    <mat-form-field appearance="outline" class="span-2">
-      <mat-label>{{ t('common.notes') }}</mat-label>
-      <textarea matInput rows="2" formControlName="notes"></textarea>
-    </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>{{ t('common.startDate') }}</mat-label>
+              <input matInput type="date" formControlName="startDate" />
+              <mat-error *ngIf="vehicleGroup.get('startDate')?.hasError('required')">
+                {{ t('renting.startDateRequired') }}
+              </mat-error>
+            </mat-form-field>
 
-    <!-- Paperwork to issue with the renting. Create-only: once the renting
-         exists, the Documents panel below issues (and re-issues) on demand. Each
-         box appears only with the matching feature AND permission — the API
-         enforces the same pair and answers 403 otherwise. -->
-    <div class="span-2 generate-options"
-         *ngIf="!isEdit && (canGenerateContracts || canGenerateFactures)">
-      <span class="generate-label">{{ t('renting.onSaveGenerate') }}</span>
-      <mat-checkbox formControlName="generateContract" *ngIf="canGenerateContracts">
-        {{ t('renting.contract') }}
+            <mat-form-field appearance="outline">
+              <mat-label>{{ t('common.endDate') }}</mat-label>
+              <input matInput type="date" formControlName="endDate" />
+              <mat-error *ngIf="vehicleGroup.get('endDate')?.hasError('required')">
+                {{ t('renting.endDateRequired') }}
+              </mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>{{ t('renting.pickupMileage') }}</mat-label>
+              <input matInput type="number" min="0" formControlName="startMileage" />
+              <mat-hint>{{ t('common.optional') }}</mat-hint>
+            </mat-form-field>
+          </div>
+
+          <ng-container *ngTemplateOutlet="periodWarnings"></ng-container>
+          <ng-container *ngTemplateOutlet="priceBlock"></ng-container>
+        </div>
+
+        <div class="step-actions">
+          <button type="button" mat-raised-button color="primary" matStepperNext
+                  [disabled]="vehicleGroup.invalid || periodConflicts">
+            {{ t('common.next') }} <mat-icon>arrow_forward</mat-icon>
+          </button>
+        </div>
+      </mat-step>
+
+      <!-- Step 2 — who is renting. -->
+      <mat-step [stepControl]="clientGroup" [label]="t('renting.stepClient')">
+        <div class="step-body" formGroupName="client">
+          <mat-button-toggle-group formControlName="clientMode" class="client-mode">
+            <mat-button-toggle value="existing">
+              <mat-icon>person_search</mat-icon> {{ t('renting.existingClient') }}
+            </mat-button-toggle>
+            <mat-button-toggle value="new">
+              <mat-icon>person_add</mat-icon> {{ t('renting.newClient') }}
+            </mat-button-toggle>
+          </mat-button-toggle-group>
+
+          <mat-form-field appearance="outline" class="client-picker" *ngIf="!isNewClient">
+            <mat-label>{{ t('renting.client') }}</mat-label>
+            <mat-select formControlName="clientId">
+              <!-- See the car picker: a multi-span option needs its own trigger. -->
+              <mat-select-trigger>{{ renterTriggerLabel }}</mat-select-trigger>
+
+              <div class="select-search-row">
+                <input class="select-search" type="text" [(ngModel)]="clientFilter"
+                       [ngModelOptions]="{ standalone: true }"
+                       [placeholder]="t('common.search')"
+                       (click)="$event.stopPropagation()"
+                       (keydown)="$event.stopPropagation()" />
+              </div>
+              <mat-option *ngFor="let c of filteredClients" [value]="c.id">
+                <span class="option-main">{{ c.lastName }}, {{ c.firstName }}</span>
+                <span class="option-sub num" *ngIf="c.cin">{{ c.cin }}</span>
+              </mat-option>
+            </mat-select>
+            <mat-error *ngIf="clientGroup.get('clientId')?.hasError('required')">
+              {{ t('renting.clientRequired') }}
+            </mat-error>
+          </mat-form-field>
+
+          <ng-container *ngTemplateOutlet="clientFileBlock"></ng-container>
+
+          <section class="form-section" *ngIf="isNewClient" formGroupName="newClient">
+            <span class="section-label">{{ t('renting.newClient') }}</span>
+            <p class="muted hint">{{ t('renting.newClientHint') }}</p>
+
+            <div class="form-grid">
+              <mat-form-field appearance="outline">
+                <mat-label>{{ t('client.firstName') }}</mat-label>
+                <input matInput formControlName="firstName" required />
+                <mat-error *ngIf="clientGroup.get('newClient.firstName')?.hasError('required')">
+                  {{ t('client.firstNameRequired') }}
+                </mat-error>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>{{ t('client.lastName') }}</mat-label>
+                <input matInput formControlName="lastName" required />
+                <mat-error *ngIf="clientGroup.get('newClient.lastName')?.hasError('required')">
+                  {{ t('client.lastNameRequired') }}
+                </mat-error>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>{{ t('client.email') }}</mat-label>
+                <input matInput type="email" formControlName="email" autocomplete="email" />
+                <mat-hint>{{ t('renting.clientEmailHint') }}</mat-hint>
+                <mat-error *ngIf="clientGroup.get('newClient.email')?.hasError('email')">
+                  {{ t('client.emailInvalid') }}
+                </mat-error>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>{{ t('client.birthDate') }}</mat-label>
+                <input matInput type="date" formControlName="birthDate" required />
+                <mat-error *ngIf="clientGroup.get('newClient.birthDate')?.hasError('required')">
+                  {{ t('client.birthDateRequired') }}
+                </mat-error>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>{{ t('client.cinNumber') }}</mat-label>
+                <input matInput formControlName="cin" />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>{{ t('client.licenceNumber') }}</mat-label>
+                <input matInput formControlName="drivingLicenceNumber" />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>{{ t('client.passeportNumber') }}</mat-label>
+                <input matInput formControlName="passeportNumber" />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>{{ t('common.description') }}</mat-label>
+                <input matInput formControlName="description" />
+              </mat-form-field>
+            </div>
+          </section>
+
+          <ng-container *ngTemplateOutlet="secondDriverBlock"></ng-container>
+        </div>
+
+        <div class="step-actions">
+          <button type="button" mat-stroked-button matStepperPrevious>
+            <mat-icon>arrow_back</mat-icon> {{ t('common.previous') }}
+          </button>
+          <button type="button" mat-raised-button color="primary" matStepperNext
+                  [disabled]="clientGroup.invalid">
+            {{ t('common.next') }} <mat-icon>arrow_forward</mat-icon>
+          </button>
+        </div>
+      </mat-step>
+
+      <!-- Step 3 — paperwork, and one last look at the whole thing. -->
+      <mat-step [label]="t('renting.stepConfirm')">
+        <div class="step-body">
+          <!-- The recap is the point of the last step: everything decided so far,
+               on one screen, before it becomes a contract. -->
+          <section class="review">
+            <span class="section-label">{{ t('renting.review') }}</span>
+            <dl class="review-grid">
+              <div class="review-item">
+                <dt>{{ t('renting.car') }}</dt>
+                <dd>{{ carLabel(selectedCar) || '—' }}</dd>
+              </div>
+              <div class="review-item">
+                <dt>{{ t('renting.client') }}</dt>
+                <dd>{{ reviewClientName || '—' }}</dd>
+              </div>
+              <div class="review-item" *ngIf="reviewSecondClientName">
+                <dt>{{ t('renting.secondDriver') }}</dt>
+                <dd>{{ reviewSecondClientName }}</dd>
+              </div>
+              <div class="review-item">
+                <dt>{{ t('common.period') }}</dt>
+                <dd>
+                  <span class="num">{{ periodStart | date:'yyyy-MM-dd' }}</span>
+                  →
+                  <span class="num">{{ periodEnd | date:'yyyy-MM-dd' }}</span>
+                  <span class="muted" *ngIf="billedDays !== null">
+                    ({{ t('renting.daysCount', { count: billedDays }) }})
+                  </span>
+                </dd>
+              </div>
+              <div class="review-item total">
+                <dt>{{ t('renting.agreedPrice') }}</dt>
+                <dd class="num">
+                  <span *ngIf="effectiveAmount !== null">
+                    {{ effectiveAmount | number:'1.2-2' }} {{ priceCurrency }}
+                  </span>
+                  <span class="muted" *ngIf="effectiveAmount === null">—</span>
+                  <span class="chip no-dot accent" *ngIf="overridingPrice">{{ t('renting.manualPrice') }}</span>
+                </dd>
+              </div>
+            </dl>
+          </section>
+
+          <div formGroupName="paperwork" class="paperwork">
+            <mat-form-field appearance="outline">
+              <mat-label>{{ t('common.notes') }}</mat-label>
+              <textarea matInput rows="2" formControlName="notes"></textarea>
+            </mat-form-field>
+
+            <!-- Paperwork to issue with the renting. Each box appears only with
+                 the matching feature AND permission — the API enforces the same
+                 pair and answers 403 otherwise. -->
+            <div class="generate-options" *ngIf="canGenerateContracts || canGenerateFactures">
+              <span class="generate-label">{{ t('renting.onSaveGenerate') }}</span>
+              <mat-checkbox formControlName="generateContract" *ngIf="canGenerateContracts">
+                {{ t('renting.contract') }}
+              </mat-checkbox>
+              <mat-checkbox formControlName="generateFacture" *ngIf="canGenerateFactures">
+                {{ t('renting.facture') }}
+              </mat-checkbox>
+            </div>
+          </div>
+
+          <!-- Which layout each requested document uses. Only shown when the
+               agency has built more than the shipped default. -->
+          <div class="template-row">
+            <mat-form-field appearance="outline" class="template-picker"
+                            *ngIf="paperworkGroup.get('generateContract')?.value && contractTemplates.length">
+              <mat-label>{{ t('renting.contractTemplate') }}</mat-label>
+              <mat-select [(ngModel)]="contractTemplateId" [ngModelOptions]="{ standalone: true }"
+                          (ngModelChange)="loadPrompts(DocumentTemplateKind.Contract)">
+                <mat-option [value]="null">{{ t('renting.defaultTemplate') }}</mat-option>
+                <mat-option *ngFor="let template of contractTemplates" [value]="template.id">
+                  {{ template.name }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="template-picker"
+                            *ngIf="paperworkGroup.get('generateFacture')?.value && factureTemplates.length">
+              <mat-label>{{ t('renting.factureTemplate') }}</mat-label>
+              <mat-select [(ngModel)]="factureTemplateId" [ngModelOptions]="{ standalone: true }"
+                          (ngModelChange)="loadPrompts(DocumentTemplateKind.Facture)">
+                <mat-option [value]="null">{{ t('renting.defaultTemplate') }}</mat-option>
+                <mat-option *ngFor="let template of factureTemplates" [value]="template.id">
+                  {{ template.name }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+
+          <ng-container *ngTemplateOutlet="promptBlock"></ng-container>
+        </div>
+
+        <div class="step-actions">
+          <button type="button" mat-stroked-button matStepperPrevious>
+            <mat-icon>arrow_back</mat-icon> {{ t('common.previous') }}
+          </button>
+          <button mat-raised-button color="primary" type="submit" [disabled]="saving || form.invalid">
+            <mat-icon>check</mat-icon>
+            {{ saving ? t('common.saving') : t('renting.createRenting') }}
+          </button>
+        </div>
+      </mat-step>
+    </mat-stepper>
+  </form>
+
+  <!-- ==================================================================== -->
+  <!-- EDIT — a detail screen. The booking exists, so the summary comes first
+       and the rest is grouped into tabs instead of one long scroll. -->
+  <!-- ==================================================================== -->
+  <ng-container *ngIf="isEdit && renting">
+    <section class="summary">
+      <!-- State on the reading-start side, the things you can do to the booking on
+           the other: one bar rather than a chip floating above loose buttons. -->
+      <div class="summary-head">
+        <span class="state-label">{{ t('renting.stateLabel') }}</span>
+        <span class="chip" [ngClass]="stateClass(renting.rentingState)">
+          {{ stateLabelKey(renting.rentingState) ? t(stateLabelKey(renting.rentingState)) : '' }}
+        </span>
+
+        <span class="spacer"></span>
+
+        <button mat-raised-button color="primary"
+                *ngIf="renting.rentingState === RentingState.NotYet"
+                (click)="startRenting()">
+          <mat-icon>play_arrow</mat-icon> {{ t('renting.start') }}
+        </button>
+        <button mat-raised-button color="primary"
+                *ngIf="renting.rentingState === RentingState.InProgress"
+                (click)="completeRenting()">
+          <mat-icon>check</mat-icon> {{ t('renting.complete') }}
+        </button>
+        <button mat-stroked-button *ngIf="!isTerminal && !endDatePanelOpen" (click)="openEndDatePanel()">
+          <mat-icon>event_repeat</mat-icon> {{ t('renting.changeEndDate') }}
+        </button>
+        <button mat-stroked-button color="warn" *ngIf="!isTerminal" (click)="cancelRenting()">
+          <mat-icon>cancel</mat-icon> {{ t('common.cancel') }}
+        </button>
+      </div>
+
+      <div class="tile-grid">
+        <div class="tile">
+          <div class="tile-label">{{ t('renting.car') }}</div>
+          <div class="tile-value small">{{ renting.carModelName }}</div>
+          <div class="tile-note num">{{ renting.carMatricule }}</div>
+        </div>
+        <div class="tile">
+          <div class="tile-label">{{ t('renting.client') }}</div>
+          <div class="tile-value small">{{ renting.clientName }}</div>
+          <div class="tile-note" *ngIf="renting.secondClientName">
+            + {{ renting.secondClientName }}
+          </div>
+        </div>
+        <div class="tile">
+          <div class="tile-label">{{ t('common.period') }}</div>
+          <!-- Laid out as flex items so a tile too narrow for one line wraps
+               between the dates instead of splitting one of them ("2026-09-" /
+               "15"), which is what inline text does here at any font size. -->
+          <div class="tile-value small period-value">
+            <span class="num">{{ renting.startDate | date:'yyyy-MM-dd' }}</span>
+            <span aria-hidden="true">→</span>
+            <span class="num">{{ renting.endDate | date:'yyyy-MM-dd' }}</span>
+          </div>
+          <div class="tile-note" *ngIf="billedDays !== null">
+            {{ t('renting.daysCount', { count: billedDays }) }}
+          </div>
+        </div>
+        <div class="tile">
+          <div class="tile-label">{{ t('common.price') }}</div>
+          <div class="tile-value num" *ngIf="renting.price">
+            {{ renting.price.amount | number:'1.2-2' }} {{ renting.price.currency }}
+          </div>
+          <!-- Only when payments are readable: otherwise the figure would be a
+               half-truth (see the Payments feature gate). -->
+          <div class="tile-note num" *ngIf="canUsePayments">
+            {{ t('renting.paidOf', { paid: (paidAmount | number:'1.2-2'),
+                                     due: (balanceDue | number:'1.2-2') }) }}
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- The client wants the car for longer, or brings it back early. Separate
+         from the edit form because only the difference is priced here: the days
+         already agreed keep the price they were agreed at. -->
+    <section class="form-section end-date-panel" *ngIf="!isTerminal && endDatePanelOpen">
+      <span class="section-label">{{ t('renting.changeEndDate') }}</span>
+      <p class="hint muted">{{ t('renting.changeEndDateHint') }}</p>
+
+      <div class="end-date-row">
+        <mat-form-field appearance="outline">
+          <mat-label>{{ t('renting.newEndDate') }}</mat-label>
+          <input matInput type="date" [(ngModel)]="newEndDate" [ngModelOptions]="{ standalone: true }" />
+        </mat-form-field>
+
+        <span class="chip" *ngIf="endDateDeltaDays"
+              [ngClass]="endDateDeltaDays! > 0 ? 'info' : 'warn'">
+          {{ endDateDeltaDays! > 0
+              ? t('renting.daysAdded', { count: endDateDeltaDays })
+              : t('renting.daysRemoved', { count: -endDateDeltaDays! }) }}
+        </span>
+      </div>
+
+      <!-- The amended total, when the difference was agreed rather than priced. -->
+      <mat-checkbox [ngModel]="overrideEndDatePrice" [ngModelOptions]="{ standalone: true }"
+                    (ngModelChange)="onOverrideEndDatePrice($event)">
+        {{ t('renting.adjustPriceForChange') }}
       </mat-checkbox>
-      <mat-checkbox formControlName="generateFacture" *ngIf="canGenerateFactures">
-        {{ t('renting.facture') }}
-      </mat-checkbox>
-    </div>
 
-    <!-- Which layout each requested document uses. Only shown when the agency has
-         built more than the shipped default, so the common case stays a checkbox. -->
-    <div class="span-2 generate-options"
-         *ngIf="!isEdit && form.get('generateContract')?.value && contractTemplates.length">
-      <mat-form-field appearance="outline">
+      <mat-form-field appearance="outline" class="price-field" *ngIf="overrideEndDatePrice">
+        <mat-label>{{ t('renting.newTotalPrice') }}</mat-label>
+        <input matInput type="number" min="0" step="0.01"
+               [(ngModel)]="endDatePrice" [ngModelOptions]="{ standalone: true }" />
+        <span matSuffix *ngIf="priceCurrency">&nbsp;{{ priceCurrency }}</span>
+      </mat-form-field>
+
+      <!-- What happens to the paperwork is the agent's call, not a side effect. -->
+      <mat-radio-group class="contract-choice" *ngIf="canGenerateContracts"
+                       [(ngModel)]="reissueContract" [ngModelOptions]="{ standalone: true }">
+        <mat-radio-button [value]="true">{{ t('renting.reissueContract') }}</mat-radio-button>
+        <mat-radio-button [value]="false">{{ t('renting.keepContract') }}</mat-radio-button>
+      </mat-radio-group>
+
+      <mat-form-field appearance="outline" class="template-picker"
+                      *ngIf="canGenerateContracts && reissueContract && contractTemplates.length">
         <mat-label>{{ t('renting.contractTemplate') }}</mat-label>
         <mat-select [(ngModel)]="contractTemplateId" [ngModelOptions]="{ standalone: true }"
                     (ngModelChange)="loadPrompts(DocumentTemplateKind.Contract)">
@@ -329,258 +745,363 @@
           </mat-option>
         </mat-select>
       </mat-form-field>
-    </div>
 
-    <div class="span-2 generate-options"
-         *ngIf="!isEdit && form.get('generateFacture')?.value && factureTemplates.length">
-      <mat-form-field appearance="outline">
-        <mat-label>{{ t('renting.factureTemplate') }}</mat-label>
-        <mat-select [(ngModel)]="factureTemplateId" [ngModelOptions]="{ standalone: true }"
-                    (ngModelChange)="loadPrompts(DocumentTemplateKind.Facture)">
-          <mat-option [value]="null">{{ t('renting.defaultTemplate') }}</mat-option>
-          <mat-option *ngFor="let template of factureTemplates" [value]="template.id">
-            {{ template.name }}
-          </mat-option>
-        </mat-select>
-      </mat-form-field>
-    </div>
-
-    <!-- The template's ask-each-time fields: what it could not work out on its own. -->
-    <fieldset class="span-2 prompt-panel" *ngIf="!isEdit && activePrompts.length">
-      <legend>{{ t('renting.documentFields') }}</legend>
-      <p class="muted hint">{{ t('renting.documentFieldsHint') }}</p>
-
-      <div class="prompt-grid">
-        <mat-form-field appearance="outline" *ngFor="let field of activePrompts">
-          <mat-label>{{ field.label || field.placeholder }}</mat-label>
-          <input matInput [ngModel]="documentValues[field.placeholder!]"
-                 (ngModelChange)="documentValues[field.placeholder!] = $event"
-                 [ngModelOptions]="{ standalone: true }" [required]="!!field.isRequired" />
-        </mat-form-field>
-      </div>
-    </fieldset>
-
-    <div class="span-2 actions" *ngIf="!isTerminal">
-      <button mat-raised-button color="primary" type="submit" [disabled]="saving">
-        {{ isEdit ? t('common.saveChanges') : t('renting.createRenting') }}
-      </button>
-    </div>
-  </form>
-
-  <!-- Extra services, payments & paperwork only exist once the renting does. -->
-  <ng-container *ngIf="isEdit">
-    <mat-divider *ngIf="canReadContracts || canReadFactures"></mat-divider>
-
-    <section class="panel" *ngIf="canReadContracts || canReadFactures">
-      <h3>{{ t('renting.documents') }}</h3>
-      <p class="muted hint">{{ t('renting.documentsHint') }}</p>
-
-      <!-- Values the chosen templates need before either document can be issued. -->
-      <fieldset class="prompt-panel" *ngIf="activePrompts.length">
-        <legend>{{ t('renting.documentFields') }}</legend>
-        <p class="muted hint">{{ t('renting.documentFieldsHint') }}</p>
-
-        <div class="prompt-grid">
-          <mat-form-field appearance="outline" *ngFor="let field of activePrompts">
-            <mat-label>{{ field.label || field.placeholder }}</mat-label>
-            <input matInput [ngModel]="documentValues[field.placeholder!]"
-                   (ngModelChange)="documentValues[field.placeholder!] = $event"
-                   [ngModelOptions]="{ standalone: true }" [required]="!!field.isRequired" />
-          </mat-form-field>
-        </div>
-      </fieldset>
-
-      <div class="doc-group" *ngIf="canReadContracts">
-        <div class="doc-header">
-          <h4>{{ t('renting.contracts') }}</h4>
-
-          <mat-form-field appearance="outline" class="template-picker"
-                          *ngIf="canGenerateContracts && contractTemplates.length">
-            <mat-label>{{ t('renting.contractTemplate') }}</mat-label>
-            <mat-select [(ngModel)]="contractTemplateId" [ngModelOptions]="{ standalone: true }"
-                        (ngModelChange)="loadPrompts(DocumentTemplateKind.Contract)">
-              <mat-option [value]="null">{{ t('renting.defaultTemplate') }}</mat-option>
-              <mat-option *ngFor="let template of contractTemplates" [value]="template.id">
-                {{ template.name }}
-              </mat-option>
-            </mat-select>
-          </mat-form-field>
-
-          <button mat-stroked-button *ngIf="canGenerateContracts && !isTerminal"
-                  (click)="generateContract()" [disabled]="generatingContract">
-            <mat-icon>description</mat-icon> {{ t('renting.generateContract') }}
-          </button>
-        </div>
-        <ul class="doc-list" *ngIf="contracts.length">
-          <li *ngFor="let c of contracts">
-            <button mat-button color="primary" (click)="downloadContract(c)">
-              <mat-icon>picture_as_pdf</mat-icon> {{ c.number }}
-            </button>
-            <span class="muted">{{ c.issuedAt | date:'yyyy-MM-dd HH:mm' }}</span>
-          </li>
-        </ul>
-        <p *ngIf="!contracts.length" class="muted">{{ t('renting.noContracts') }}</p>
-      </div>
-
-      <div class="doc-group" *ngIf="canReadFactures">
-        <div class="doc-header">
-          <h4>{{ t('renting.factures') }}</h4>
-
-          <mat-form-field appearance="outline" class="template-picker"
-                          *ngIf="canGenerateFactures && factureTemplates.length">
-            <mat-label>{{ t('renting.factureTemplate') }}</mat-label>
-            <mat-select [(ngModel)]="factureTemplateId" [ngModelOptions]="{ standalone: true }"
-                        (ngModelChange)="loadPrompts(DocumentTemplateKind.Facture)">
-              <mat-option [value]="null">{{ t('renting.defaultTemplate') }}</mat-option>
-              <mat-option *ngFor="let template of factureTemplates" [value]="template.id">
-                {{ template.name }}
-              </mat-option>
-            </mat-select>
-          </mat-form-field>
-
-          <button mat-stroked-button *ngIf="canGenerateFactures"
-                  (click)="generateFacture()" [disabled]="generatingFacture">
-            <mat-icon>receipt_long</mat-icon> {{ t('renting.generateFacture') }}
-          </button>
-        </div>
-        <ul class="doc-list" *ngIf="factures.length">
-          <li *ngFor="let f of factures">
-            <button mat-button color="primary" (click)="downloadFacture(f)">
-              <mat-icon>picture_as_pdf</mat-icon> {{ f.number }}
-            </button>
-            <span *ngIf="f.totalAmount">{{ f.totalAmount.amount | number:'1.2-2' }} {{ f.totalAmount.currency }}</span>
-            <span class="muted">{{ f.issuedAt | date:'yyyy-MM-dd HH:mm' }}</span>
-          </li>
-        </ul>
-        <p *ngIf="!factures.length" class="muted">{{ t('renting.noFactures') }}</p>
-      </div>
-    </section>
-
-    <mat-divider *ngIf="canUseExtraServices"></mat-divider>
-
-    <section class="panel" *ngIf="canUseExtraServices">
-      <h3>{{ t('renting.extraServices') }}</h3>
-      <table mat-table [dataSource]="extraServices" class="data-table full-width" *ngIf="extraServices.length">
-        <ng-container matColumnDef="type">
-          <th mat-header-cell *matHeaderCellDef>{{ t('common.type') }}</th>
-          <td mat-cell *matCellDef="let e">{{ e.extraServicesTypeName }}</td>
-        </ng-container>
-        <ng-container matColumnDef="amount">
-          <th mat-header-cell *matHeaderCellDef>{{ t('common.amount') }}</th>
-          <td mat-cell *matCellDef="let e">
-            <span *ngIf="e.totalAmount">{{ e.totalAmount.amount | number:'1.2-2' }} {{ e.totalAmount.currency }}</span>
-          </td>
-        </ng-container>
-        <ng-container matColumnDef="actions">
-          <th mat-header-cell *matHeaderCellDef></th>
-          <td mat-cell *matCellDef="let e">
-            <button mat-icon-button color="warn" (click)="deleteExtraService(e)" [attr.aria-label]="t('common.remove')">
-              <mat-icon>delete</mat-icon>
-            </button>
-          </td>
-        </ng-container>
-        <tr mat-header-row *matHeaderRowDef="['type', 'amount', 'actions']"></tr>
-        <tr mat-row *matRowDef="let row; columns: ['type', 'amount', 'actions']"></tr>
-      </table>
-      <p *ngIf="!extraServices.length" class="muted">{{ t('renting.noExtraServices') }}</p>
-
-      <div class="inline-add" *ngIf="!isTerminal">
-        <mat-form-field appearance="outline">
-          <mat-label>{{ t('common.type') }}</mat-label>
-          <!-- Row variable is `type`, not `t`: `t` is the transloco accessor. -->
-          <mat-select [(ngModel)]="newExtraTypeId">
-            <mat-option *ngFor="let type of extraServiceTypes" [value]="type.id">{{ type.name }}</mat-option>
-          </mat-select>
-        </mat-form-field>
-        <mat-form-field appearance="outline">
-          <mat-label>{{ t('renting.amountOverride') }}</mat-label>
-          <input matInput type="number" min="0" step="0.01" [(ngModel)]="newExtraAmount" />
-          <span matSuffix *ngIf="currency">&nbsp;{{ currency }}</span>
-        </mat-form-field>
-        <button mat-raised-button (click)="addExtraService()" [disabled]="!newExtraTypeId">
-          <mat-icon>add</mat-icon> {{ t('common.add') }}
+      <div class="form-actions">
+        <button mat-raised-button color="primary" (click)="changeEndDate()"
+                [disabled]="changingEndDate || !newEndDate || !endDateDeltaDays">
+          <mat-icon>check</mat-icon> {{ t('common.saveChanges') }}
         </button>
+        <button mat-button (click)="closeEndDatePanel()">{{ t('common.cancel') }}</button>
       </div>
     </section>
 
-    <mat-divider *ngIf="canUsePayments"></mat-divider>
+    <mat-tab-group class="renting-tabs" animationDuration="120ms">
+      <!-- The booking itself. -->
+      <mat-tab [label]="t('renting.tabBooking')">
+        <!-- Grouped into the same three subjects the wizard walks through, so the
+             screen that edits a booking reads like the one that made it. -->
+        <form [formGroup]="form" (ngSubmit)="save()" class="tab-body">
+          <p class="warn-banner" *ngIf="isTerminal">
+            <mat-icon>lock</mat-icon> {{ t('renting.terminalReadOnly') }}
+          </p>
 
-    <section class="panel" *ngIf="canUsePayments">
-      <h3>{{ t('renting.payments') }}</h3>
-      <table mat-table [dataSource]="payments" class="data-table full-width" *ngIf="payments.length">
-        <ng-container matColumnDef="date">
-          <th mat-header-cell *matHeaderCellDef>{{ t('common.date') }}</th>
-          <td mat-cell *matCellDef="let p">{{ p.payementDate | date:'yyyy-MM-dd' }}</td>
-        </ng-container>
-        <ng-container matColumnDef="amount">
-          <th mat-header-cell *matHeaderCellDef>{{ t('common.amount') }}</th>
-          <td mat-cell *matCellDef="let p">
-            <span *ngIf="p.payementAmount">{{ p.payementAmount.amount | number:'1.2-2' }} {{ p.payementAmount.currency }}</span>
-          </td>
-        </ng-container>
-        <ng-container matColumnDef="method">
-          <th mat-header-cell *matHeaderCellDef>{{ t('common.method') }}</th>
-          <td mat-cell *matCellDef="let p">{{ methodLabelKey(p.method) ? t(methodLabelKey(p.method)) : '' }}</td>
-        </ng-container>
-        <ng-container matColumnDef="actions">
-          <th mat-header-cell *matHeaderCellDef></th>
-          <td mat-cell *matCellDef="let p">
-            <button mat-icon-button color="warn" *ngIf="!p.reversesPaymentId" (click)="reversePayment(p)"
-                    [matTooltip]="t('renting.reverse')" [attr.aria-label]="t('renting.reverse')">
-              <mat-icon>undo</mat-icon>
+          <section class="form-section" formGroupName="vehicle">
+            <span class="section-label">{{ t('renting.stepVehicle') }}</span>
+
+            <div class="form-grid">
+              <mat-form-field appearance="outline" class="span-2">
+                <mat-label>{{ t('renting.car') }}</mat-label>
+                <mat-select formControlName="carId">
+                  <!-- See the wizard's car picker: the trigger is set explicitly. -->
+                  <mat-select-trigger>{{ carLabel(selectedCar) }}</mat-select-trigger>
+
+                  <div class="select-search-row">
+                    <input class="select-search" type="text" [(ngModel)]="carFilter"
+                           [ngModelOptions]="{ standalone: true }"
+                           [placeholder]="t('common.search')"
+                           (click)="$event.stopPropagation()"
+                           (keydown)="$event.stopPropagation()" />
+                  </div>
+                  <mat-option *ngFor="let c of filteredCars" [value]="c.id">
+                    <span class="option-main">{{ c.modelName }}</span>
+                    <span class="option-sub num">{{ c.matricule }}</span>
+                  </mat-option>
+                </mat-select>
+                <mat-error *ngIf="vehicleGroup.get('carId')?.hasError('required')">
+                  {{ t('renting.carRequired') }}
+                </mat-error>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>{{ t('common.startDate') }}</mat-label>
+                <input matInput type="date" formControlName="startDate" />
+                <mat-error *ngIf="vehicleGroup.get('startDate')?.hasError('required')">
+                  {{ t('renting.startDateRequired') }}
+                </mat-error>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>{{ t('common.endDate') }}</mat-label>
+                <input matInput type="date" formControlName="endDate" />
+                <mat-error *ngIf="vehicleGroup.get('endDate')?.hasError('required')">
+                  {{ t('renting.endDateRequired') }}
+                </mat-error>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>{{ t('renting.pickupMileage') }}</mat-label>
+                <input matInput type="number" min="0" formControlName="startMileage" />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>{{ t('renting.returnMileage') }}</mat-label>
+                <input matInput type="number" min="0" formControlName="endMileage" />
+              </mat-form-field>
+            </div>
+          </section>
+
+          <ng-container *ngTemplateOutlet="periodWarnings"></ng-container>
+          <ng-container *ngTemplateOutlet="priceBlock"></ng-container>
+
+          <section class="form-section" formGroupName="client">
+            <span class="section-label">{{ t('renting.renter') }}</span>
+
+            <mat-form-field appearance="outline" class="client-picker">
+              <mat-label>{{ t('renting.client') }}</mat-label>
+              <mat-select formControlName="clientId">
+                <!-- See the car picker: a multi-span option needs its own trigger. -->
+                <mat-select-trigger>{{ renterTriggerLabel }}</mat-select-trigger>
+
+                <div class="select-search-row">
+                  <input class="select-search" type="text" [(ngModel)]="clientFilter"
+                         [ngModelOptions]="{ standalone: true }"
+                         [placeholder]="t('common.search')"
+                         (click)="$event.stopPropagation()"
+                         (keydown)="$event.stopPropagation()" />
+                </div>
+                <mat-option *ngFor="let c of filteredClients" [value]="c.id">
+                  <span class="option-main">{{ c.lastName }}, {{ c.firstName }}</span>
+                  <span class="option-sub num" *ngIf="c.cin">{{ c.cin }}</span>
+                </mat-option>
+              </mat-select>
+              <mat-error *ngIf="clientGroup.get('clientId')?.hasError('required')">
+                {{ t('renting.clientRequired') }}
+              </mat-error>
+            </mat-form-field>
+
+            <ng-container *ngTemplateOutlet="clientFileBlock"></ng-container>
+          </section>
+
+          <ng-container *ngTemplateOutlet="secondDriverBlock"></ng-container>
+
+          <section class="form-section" formGroupName="paperwork">
+            <span class="section-label">{{ t('common.notes') }}</span>
+            <mat-form-field appearance="outline">
+              <mat-label>{{ t('common.notes') }}</mat-label>
+              <textarea matInput rows="2" formControlName="notes"></textarea>
+            </mat-form-field>
+          </section>
+
+          <div class="save-bar" *ngIf="!isTerminal">
+            <button mat-raised-button color="primary" type="submit"
+                    [disabled]="saving || form.invalid">
+              <mat-icon>save</mat-icon>
+              {{ saving ? t('common.saving') : t('common.saveChanges') }}
             </button>
-          </td>
-        </ng-container>
-        <tr mat-header-row *matHeaderRowDef="['date', 'amount', 'method', 'actions']"></tr>
-        <tr mat-row *matRowDef="let row; columns: ['date', 'amount', 'method', 'actions']"></tr>
-      </table>
-      <p *ngIf="!payments.length" class="muted">{{ t('renting.noPayments') }}</p>
+            <span class="hint muted" *ngIf="form.dirty">{{ t('renting.unsavedChanges') }}</span>
+          </div>
+        </form>
+      </mat-tab>
 
-      <div class="inline-add">
-        <mat-form-field appearance="outline">
-          <mat-label>{{ t('common.amount') }}</mat-label>
-          <input matInput type="number" min="0" step="0.01" [(ngModel)]="newPaymentAmount" />
-          <span matSuffix *ngIf="currency">&nbsp;{{ currency }}</span>
-        </mat-form-field>
-        <mat-form-field appearance="outline">
-          <mat-label>{{ t('common.method') }}</mat-label>
-          <mat-select [(ngModel)]="newPaymentMethod">
-            <mat-option *ngFor="let m of paymentMethods" [value]="m.value">{{ t(m.labelKey) }}</mat-option>
-          </mat-select>
-        </mat-form-field>
-        <mat-form-field appearance="outline">
-          <mat-label>{{ t('common.notes') }}</mat-label>
-          <input matInput [(ngModel)]="newPaymentNotes" />
-        </mat-form-field>
-        <button mat-raised-button (click)="addPayment()" [disabled]="!newPaymentAmount">
-          <mat-icon>add</mat-icon> {{ t('renting.addPayment') }}
-        </button>
-      </div>
-    </section>
+      <!-- Paperwork. -->
+      <mat-tab [label]="t('renting.documents')" *ngIf="canReadContracts || canReadFactures">
+        <div class="tab-body">
+          <p class="muted hint">{{ t('renting.documentsHint') }}</p>
 
-    <ng-container *ngIf="history.length">
-      <mat-divider></mat-divider>
-      <section class="panel">
-        <h3>{{ t('common.history') }}</h3>
-        <table mat-table [dataSource]="history" class="data-table full-width">
-          <ng-container matColumnDef="period">
-            <th mat-header-cell *matHeaderCellDef>{{ t('common.period') }}</th>
-            <td mat-cell *matCellDef="let h">{{ h.startDate | date:'yyyy-MM-dd' }} → {{ h.endDate | date:'yyyy-MM-dd' }}</td>
-          </ng-container>
-          <ng-container matColumnDef="mileage">
-            <th mat-header-cell *matHeaderCellDef>{{ t('renting.mileage') }}</th>
-            <td mat-cell *matCellDef="let h">{{ h.startMileage }} → {{ h.endMileage }}</td>
-          </ng-container>
-          <ng-container matColumnDef="price">
-            <th mat-header-cell *matHeaderCellDef>{{ t('common.price') }}</th>
-            <td mat-cell *matCellDef="let h">
-              <span *ngIf="h.price">{{ h.price.amount | number:'1.2-2' }} {{ h.price.currency }}</span>
-            </td>
-          </ng-container>
-          <tr mat-header-row *matHeaderRowDef="['period', 'mileage', 'price']"></tr>
-          <tr mat-row *matRowDef="let row; columns: ['period', 'mileage', 'price']"></tr>
-        </table>
-      </section>
-    </ng-container>
+          <ng-container *ngTemplateOutlet="promptBlock"></ng-container>
+
+          <div class="doc-group" *ngIf="canReadContracts">
+            <div class="doc-header">
+              <h4 class="section-label">{{ t('renting.contracts') }}</h4>
+
+              <mat-form-field appearance="outline" class="template-picker"
+                              *ngIf="canGenerateContracts && contractTemplates.length">
+                <mat-label>{{ t('renting.contractTemplate') }}</mat-label>
+                <mat-select [(ngModel)]="contractTemplateId" [ngModelOptions]="{ standalone: true }"
+                            (ngModelChange)="loadPrompts(DocumentTemplateKind.Contract)">
+                  <mat-option [value]="null">{{ t('renting.defaultTemplate') }}</mat-option>
+                  <mat-option *ngFor="let template of contractTemplates" [value]="template.id">
+                    {{ template.name }}
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              <button mat-stroked-button *ngIf="canGenerateContracts && !isTerminal"
+                      (click)="generateContract()" [disabled]="generatingContract">
+                <mat-icon>description</mat-icon> {{ t('renting.generateContract') }}
+              </button>
+            </div>
+            <ul class="doc-list" *ngIf="contracts.length">
+              <li *ngFor="let c of contracts">
+                <button mat-button color="primary" (click)="downloadContract(c)">
+                  <mat-icon>picture_as_pdf</mat-icon> {{ c.number }}
+                </button>
+                <span class="muted">{{ c.issuedAt | date:'yyyy-MM-dd HH:mm' }}</span>
+              </li>
+            </ul>
+            <p *ngIf="!contracts.length" class="muted">{{ t('renting.noContracts') }}</p>
+          </div>
+
+          <div class="doc-group" *ngIf="canReadFactures">
+            <div class="doc-header">
+              <h4 class="section-label">{{ t('renting.factures') }}</h4>
+
+              <mat-form-field appearance="outline" class="template-picker"
+                              *ngIf="canGenerateFactures && factureTemplates.length">
+                <mat-label>{{ t('renting.factureTemplate') }}</mat-label>
+                <mat-select [(ngModel)]="factureTemplateId" [ngModelOptions]="{ standalone: true }"
+                            (ngModelChange)="loadPrompts(DocumentTemplateKind.Facture)">
+                  <mat-option [value]="null">{{ t('renting.defaultTemplate') }}</mat-option>
+                  <mat-option *ngFor="let template of factureTemplates" [value]="template.id">
+                    {{ template.name }}
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              <button mat-stroked-button *ngIf="canGenerateFactures"
+                      (click)="generateFacture()" [disabled]="generatingFacture">
+                <mat-icon>receipt_long</mat-icon> {{ t('renting.generateFacture') }}
+              </button>
+            </div>
+            <ul class="doc-list" *ngIf="factures.length">
+              <li *ngFor="let f of factures">
+                <button mat-button color="primary" (click)="downloadFacture(f)">
+                  <mat-icon>picture_as_pdf</mat-icon> {{ f.number }}
+                </button>
+                <span class="num" *ngIf="f.totalAmount">
+                  {{ f.totalAmount.amount | number:'1.2-2' }} {{ f.totalAmount.currency }}
+                </span>
+                <span class="muted">{{ f.issuedAt | date:'yyyy-MM-dd HH:mm' }}</span>
+              </li>
+            </ul>
+            <p *ngIf="!factures.length" class="muted">{{ t('renting.noFactures') }}</p>
+          </div>
+        </div>
+      </mat-tab>
+
+      <!-- Money: what was added to the rental, and what came in for it. -->
+      <mat-tab [label]="t('renting.tabMoney')" *ngIf="canUseExtraServices || canUsePayments">
+        <div class="tab-body">
+          <div class="doc-group" *ngIf="canUseExtraServices">
+            <h4 class="section-label">{{ t('renting.extraServices') }}</h4>
+            <table mat-table [dataSource]="extraServices" class="data-table full-width"
+                   *ngIf="extraServices.length">
+              <ng-container matColumnDef="type">
+                <th mat-header-cell *matHeaderCellDef>{{ t('common.type') }}</th>
+                <td mat-cell *matCellDef="let e">{{ e.extraServicesTypeName }}</td>
+              </ng-container>
+              <ng-container matColumnDef="amount">
+                <th mat-header-cell *matHeaderCellDef class="num-cell">{{ t('common.amount') }}</th>
+                <td mat-cell *matCellDef="let e" class="num-cell">
+                  <span *ngIf="e.totalAmount">{{ e.totalAmount.amount | number:'1.2-2' }} {{ e.totalAmount.currency }}</span>
+                </td>
+              </ng-container>
+              <ng-container matColumnDef="actions">
+                <th mat-header-cell *matHeaderCellDef class="actions-cell"></th>
+                <td mat-cell *matCellDef="let e" class="actions-cell">
+                  <button mat-icon-button color="warn" (click)="deleteExtraService(e)"
+                          [attr.aria-label]="t('common.remove')">
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </td>
+              </ng-container>
+              <tr mat-header-row *matHeaderRowDef="['type', 'amount', 'actions']"></tr>
+              <tr mat-row *matRowDef="let row; columns: ['type', 'amount', 'actions']"></tr>
+            </table>
+            <p *ngIf="!extraServices.length" class="muted">{{ t('renting.noExtraServices') }}</p>
+
+            <div class="inline-add" *ngIf="!isTerminal">
+              <mat-form-field appearance="outline">
+                <mat-label>{{ t('common.type') }}</mat-label>
+                <!-- Row variable is `type`, not `t`: `t` is the transloco accessor. -->
+                <mat-select [(ngModel)]="newExtraTypeId">
+                  <mat-option *ngFor="let type of extraServiceTypes" [value]="type.id">{{ type.name }}</mat-option>
+                </mat-select>
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>{{ t('renting.amountOverride') }}</mat-label>
+                <input matInput type="number" min="0" step="0.01" [(ngModel)]="newExtraAmount" />
+                <span matSuffix *ngIf="currency">&nbsp;{{ currency }}</span>
+              </mat-form-field>
+              <button mat-raised-button (click)="addExtraService()" [disabled]="!newExtraTypeId">
+                <mat-icon>add</mat-icon> {{ t('common.add') }}
+              </button>
+            </div>
+          </div>
+
+          <mat-divider *ngIf="canUseExtraServices && canUsePayments"></mat-divider>
+
+          <div class="doc-group" *ngIf="canUsePayments">
+            <h4 class="section-label">{{ t('renting.payments') }}</h4>
+            <table mat-table [dataSource]="payments" class="data-table full-width" *ngIf="payments.length">
+              <ng-container matColumnDef="date">
+                <th mat-header-cell *matHeaderCellDef>{{ t('common.date') }}</th>
+                <td mat-cell *matCellDef="let p" class="num">{{ p.payementDate | date:'yyyy-MM-dd' }}</td>
+              </ng-container>
+              <ng-container matColumnDef="amount">
+                <th mat-header-cell *matHeaderCellDef class="num-cell">{{ t('common.amount') }}</th>
+                <td mat-cell *matCellDef="let p" class="num-cell">
+                  <span *ngIf="p.payementAmount">{{ p.payementAmount.amount | number:'1.2-2' }} {{ p.payementAmount.currency }}</span>
+                </td>
+              </ng-container>
+              <ng-container matColumnDef="method">
+                <th mat-header-cell *matHeaderCellDef>{{ t('common.method') }}</th>
+                <td mat-cell *matCellDef="let p">{{ methodLabelKey(p.method) ? t(methodLabelKey(p.method)) : '' }}</td>
+              </ng-container>
+              <!-- Receipt / slip / invoice kept against the entry. -->
+              <ng-container matColumnDef="proof">
+                <th mat-header-cell *matHeaderCellDef>{{ t('payment.proof') }}</th>
+                <td mat-cell *matCellDef="let p" class="proof-cell">
+                  <a *ngIf="p.proofFileUrl" [href]="p.proofFileUrl" target="_blank"
+                     mat-icon-button color="primary"
+                     [matTooltip]="p.proofFileName || t('common.view')" [attr.aria-label]="t('common.view')">
+                    <mat-icon>description</mat-icon>
+                  </a>
+                  <span *ngIf="!p.proofFileUrl && !canAttachProof" class="muted">—</span>
+
+                  <button mat-icon-button *ngIf="canAttachProof" (click)="proofInput.click()"
+                          [disabled]="uploadingProofFor === p.id"
+                          [matTooltip]="p.proofFileUrl ? t('common.replace') : t('payment.attachProof')"
+                          [attr.aria-label]="p.proofFileUrl ? t('common.replace') : t('payment.attachProof')">
+                    <mat-icon>{{ uploadingProofFor === p.id ? 'hourglass_top' : 'attach_file' }}</mat-icon>
+                  </button>
+                  <input #proofInput hidden type="file" accept=".jpg,.jpeg,.png,.webp,.pdf"
+                         (change)="onProofSelected(p, proofInput)" />
+                </td>
+              </ng-container>
+              <ng-container matColumnDef="actions">
+                <th mat-header-cell *matHeaderCellDef class="actions-cell"></th>
+                <td mat-cell *matCellDef="let p" class="actions-cell">
+                  <button mat-icon-button color="warn" *ngIf="!p.reversesPaymentId" (click)="reversePayment(p)"
+                          [matTooltip]="t('renting.reverse')" [attr.aria-label]="t('renting.reverse')">
+                    <mat-icon>undo</mat-icon>
+                  </button>
+                </td>
+              </ng-container>
+              <tr mat-header-row *matHeaderRowDef="paymentColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: paymentColumns"></tr>
+            </table>
+            <p *ngIf="!payments.length" class="muted">{{ t('renting.noPayments') }}</p>
+
+            <div class="inline-add">
+              <mat-form-field appearance="outline">
+                <mat-label>{{ t('common.amount') }}</mat-label>
+                <input matInput type="number" min="0" step="0.01" [(ngModel)]="newPaymentAmount" />
+                <span matSuffix *ngIf="currency">&nbsp;{{ currency }}</span>
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>{{ t('common.method') }}</mat-label>
+                <mat-select [(ngModel)]="newPaymentMethod">
+                  <mat-option *ngFor="let m of paymentMethods" [value]="m.value">{{ t(m.labelKey) }}</mat-option>
+                </mat-select>
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>{{ t('common.notes') }}</mat-label>
+                <input matInput [(ngModel)]="newPaymentNotes" />
+              </mat-form-field>
+              <button mat-raised-button (click)="addPayment()" [disabled]="!newPaymentAmount">
+                <mat-icon>add</mat-icon> {{ t('renting.addPayment') }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </mat-tab>
+
+      <!-- Finished periods this car/client already went through. -->
+      <mat-tab [label]="t('common.history')" *ngIf="history.length">
+        <div class="tab-body">
+          <table mat-table [dataSource]="history" class="data-table full-width">
+            <ng-container matColumnDef="period">
+              <th mat-header-cell *matHeaderCellDef>{{ t('common.period') }}</th>
+              <td mat-cell *matCellDef="let h" class="num">
+                {{ h.startDate | date:'yyyy-MM-dd' }} → {{ h.endDate | date:'yyyy-MM-dd' }}
+              </td>
+            </ng-container>
+            <ng-container matColumnDef="mileage">
+              <th mat-header-cell *matHeaderCellDef>{{ t('renting.mileage') }}</th>
+              <td mat-cell *matCellDef="let h" class="num">{{ h.startMileage }} → {{ h.endMileage }}</td>
+            </ng-container>
+            <ng-container matColumnDef="price">
+              <th mat-header-cell *matHeaderCellDef class="num-cell">{{ t('common.price') }}</th>
+              <td mat-cell *matCellDef="let h" class="num-cell">
+                <span *ngIf="h.price">{{ h.price.amount | number:'1.2-2' }} {{ h.price.currency }}</span>
+              </td>
+            </ng-container>
+            <tr mat-header-row *matHeaderRowDef="['period', 'mileage', 'price']"></tr>
+            <tr mat-row *matRowDef="let row; columns: ['period', 'mileage', 'price']"></tr>
+          </table>
+        </div>
+      </mat-tab>
+    </mat-tab-group>
   </ng-container>
 </div>

@@ -21,6 +21,11 @@ namespace RemSolution.Domain.Entities
         // as opposed to a reversal (below), which corrects a mistaken entry.
         public bool IsRefund { get; set; }
         public string? Notes { get; set; }
+        // Proof of the movement — the receipt, transfer slip or invoice scan the
+        // agency keeps against this entry. A StoredFile FK like every other file
+        // (see StoredFile); at most one per payment, re-uploading replaces it.
+        public int? ProofFileId { get; set; }
+        public virtual StoredFile? ProofFile { get; set; }
         // A payment is never deleted; a mistaken one is reversed by an offsetting
         // entry that points back at the original via this self-reference.
         public int? ReversesPaymentId { get; set; }

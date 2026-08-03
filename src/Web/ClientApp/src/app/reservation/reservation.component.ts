@@ -1,6 +1,7 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { PageEvent } from '@angular/material/paginator';
 import { Sort, SortDirection } from '@angular/material/sort';
+import { MatDialog } from '@angular/material/dialog';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
   ReservationsClient, ReservationDto, ReservationStatus, RejectReservationCommand,
@@ -9,6 +10,8 @@ import {
 import { TranslocoService } from '@jsverse/transloco';
 import { isInvalidTransition } from '../shared/form-utils';
 import { applyListFilters, enumName, enumParam } from '../shared/list-filters';
+import { AuthService } from '../shared/auth.service';
+import { PaymentDialogComponent } from '../shared/payment-dialog.component';
 
 @Component({
   selector: 'app-reservation',
@@ -19,7 +22,10 @@ export class ReservationComponent implements OnInit {
   // Confirm/prompt dialogs and error banners are plain strings, so they are
   // translated imperatively rather than through the template pipe.
   private readonly transloco = inject(TranslocoService);
+  private readonly dialog = inject(MatDialog);
   reservations: ReservationDto[] = [];
+  // Money can be taken straight from a row (see pay).
+  canPay = false;
   displayedColumns: string[] = ['car', 'client', 'period', 'paid', 'status', 'expires', 'actions'];
 
   totalCount = 0;
@@ -46,12 +52,17 @@ export class ReservationComponent implements OnInit {
 
   constructor(
     private client: ReservationsClient,
+    private auth: AuthService,
     private route: ActivatedRoute,
     private router: Router) { }
 
   // The status filter lives in the URL (see shared/list-filters): the dashboard's
   // "requests to review" links here already narrowed to the rows it counted.
   ngOnInit() {
+    this.auth.currentUser$.subscribe(user => {
+      this.canPay = AuthService.canAccessModule(user, 'Payments', 'Payment.Create');
+    });
+
     this.route.queryParamMap.subscribe(params => {
       this.status = enumParam(params, 'status', ReservationStatus) as ReservationStatus | null;
       this.pageNumber = 1;
@@ -125,6 +136,33 @@ export class ReservationComponent implements OnInit {
 
   isActive(r: ReservationDto): boolean {
     return this.isPending(r) || this.isConvertible(r);
+  }
+
+  // Only a confirmed hold takes money — the same rule CreatePaymentCommand
+  // enforces, so the button never offers a call the server would refuse.
+  canPayFor(r: ReservationDto): boolean {
+    return this.canPay && this.isConvertible(r);
+  }
+
+  // Takes the deposit or the balance without opening the hold first. The row
+  // carries both figures, so the remaining balance is known here.
+  pay(r: ReservationDto) {
+    if (!r.id) return;
+
+    const price = r.price?.amount;
+    const paid = r.payedPrice?.amount ?? 0;
+
+    this.dialog.open(PaymentDialogComponent, {
+      data: {
+        target: { kind: 'reservation', id: r.id },
+        subtitle: [r.clientName, r.carMatricule].filter(Boolean).join(' — '),
+        outstanding: price === undefined ? undefined : Math.max(0, price - paid),
+        currency: r.price?.currency
+      },
+      autoFocus: 'first-tabbable'
+    }).afterClosed().subscribe(recorded => {
+      if (recorded) this.load();
+    });
   }
 
   confirm(r: ReservationDto) {

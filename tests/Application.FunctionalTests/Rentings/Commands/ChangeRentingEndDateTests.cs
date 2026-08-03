@@ -59,6 +59,25 @@ public class ChangeRentingEndDateTests : BaseTestFixture
     }
 
     [Test]
+    public async Task AnAgreedTotalReplacesTheCalculatedDifference()
+    {
+        var (id, _) = await BookedRentingAsync("EXT-6");
+        // 5 days × 100 = 500 agreed; three more days would come to 800.
+
+        await SendAsync(new ChangeRentingEndDateCommand
+        {
+            Id = id,
+            EndDate = End.AddDays(3),
+            // The extension was thrown in at a flat 600.
+            PriceOverride = 600m
+        });
+
+        var renting = await FindAsync<RentingEntity>(id);
+        renting!.EndDate.Should().Be(End.AddDays(3));
+        renting.Price!.Amount.Should().Be(600m);
+    }
+
+    [Test]
     public async Task ExtendingIntoAnotherBookingIsRefused()
     {
         var (id, car) = await BookedRentingAsync("EXT-3");

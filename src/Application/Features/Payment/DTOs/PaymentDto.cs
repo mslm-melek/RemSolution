@@ -18,6 +18,10 @@ namespace RemSolution.Application.Features.Payment.DTOs
         public string? Notes { get; init; }
         // Set on a reversal entry: the payment it offsets.
         public int? ReversesPaymentId { get; init; }
+        // Proof kept against this entry, exposed as a plain URL like every other
+        // file-carrying DTO (see StoredFile); null when nothing is attached.
+        public string? ProofFileUrl { get; init; }
+        public string? ProofFileName { get; init; }
 
         public class Mapping : IRegister
         {
@@ -25,7 +29,10 @@ namespace RemSolution.Application.Features.Payment.DTOs
             {
                 config.NewConfig<Domain.Entities.Payment, PaymentDto>()
                       .Map(dest => dest.ClientName,
-                           src => src.Client != null ? src.Client.FirstName + " " + src.Client.LastName : null);
+                           src => src.Client != null ? src.Client.FirstName + " " + src.Client.LastName : null)
+                      .Map(dest => dest.ProofFileUrl, src => src.ProofFile != null ? src.ProofFile.Url : null)
+                      .Map(dest => dest.ProofFileName,
+                           src => src.ProofFile != null ? src.ProofFile.OriginalFileName : null);
             }
         }
     }

@@ -3618,7 +3618,7 @@ export class CountriesClient implements ICountriesClient {
 export interface ICreditsClient {
     getCreditsSummary(): Observable<CreditsSummaryDto>;
     getClientCredits(pageNumber: number | undefined, pageSize: number | undefined, onlyOutstanding: boolean | undefined, search: string | null | undefined, sortBy: string | null | undefined, sortDescending: boolean | undefined): Observable<PaginatedListOfClientCreditDto>;
-    getExpenseCredits(pageNumber: number | undefined, pageSize: number | undefined, onlyOutstanding: boolean | undefined, carId: number | null | undefined, sortBy: string | null | undefined, sortDescending: boolean | undefined): Observable<PaginatedListOfExpenseCreditDto>;
+    getExpenseCredits(pageNumber: number | undefined, pageSize: number | undefined, onlyOutstanding: boolean | undefined, carId: number | null | undefined, expenseTypeId: number | null | undefined, sortBy: string | null | undefined, sortDescending: boolean | undefined): Observable<PaginatedListOfExpenseCreditDto>;
 }
 
 @Injectable({
@@ -3750,7 +3750,7 @@ export class CreditsClient implements ICreditsClient {
         return _observableOf(null as any);
     }
 
-    getExpenseCredits(pageNumber: number | undefined, pageSize: number | undefined, onlyOutstanding: boolean | undefined, carId: number | null | undefined, sortBy: string | null | undefined, sortDescending: boolean | undefined): Observable<PaginatedListOfExpenseCreditDto> {
+    getExpenseCredits(pageNumber: number | undefined, pageSize: number | undefined, onlyOutstanding: boolean | undefined, carId: number | null | undefined, expenseTypeId: number | null | undefined, sortBy: string | null | undefined, sortDescending: boolean | undefined): Observable<PaginatedListOfExpenseCreditDto> {
         let url_ = this.baseUrl + "/api/Credits/expenses?";
         if (pageNumber === null)
             throw new Error("The parameter 'pageNumber' cannot be null.");
@@ -3766,6 +3766,8 @@ export class CreditsClient implements ICreditsClient {
             url_ += "OnlyOutstanding=" + encodeURIComponent("" + onlyOutstanding) + "&";
         if (carId !== undefined && carId !== null)
             url_ += "CarId=" + encodeURIComponent("" + carId) + "&";
+        if (expenseTypeId !== undefined && expenseTypeId !== null)
+            url_ += "ExpenseTypeId=" + encodeURIComponent("" + expenseTypeId) + "&";
         if (sortBy !== undefined && sortBy !== null)
             url_ += "SortBy=" + encodeURIComponent("" + sortBy) + "&";
         if (sortDescending === null)
@@ -4491,6 +4493,7 @@ export interface IExpensesClient {
     updateExpense(id: number, command: UpdateExpenseCommand): Observable<void>;
     deleteExpense(id: number): Observable<void>;
     recordExpensePayment(id: number, command: RecordExpensePaymentCommand): Observable<void>;
+    uploadExpenseFacture(id: number, file: FileParameter | null | undefined): Observable<string>;
 }
 
 @Injectable({
@@ -4836,6 +4839,63 @@ export class ExpensesClient implements IExpensesClient {
         } else if (status === 400) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
             return throwException("A server side error occurred.", status, _responseText, _headers);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    uploadExpenseFacture(id: number, file: FileParameter | null | undefined): Observable<string> {
+        let url_ = this.baseUrl + "/api/Expenses/{id}/facture";
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = new FormData();
+        if (file !== null && file !== undefined)
+            content_.append("file", file.data, file.fileName ? file.fileName : "file");
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processUploadExpenseFacture(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processUploadExpenseFacture(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<string>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<string>;
+        }));
+    }
+
+    protected processUploadExpenseFacture(response: HttpResponseBase): Observable<string> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+                result200 = resultData200 !== undefined ? resultData200 : <any>null;
+    
+            return _observableOf(result200);
             }));
         } else if (status !== 200 && status !== 204) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
@@ -7052,6 +7112,7 @@ export interface IPaymentsClient {
     getPaymentById(id: number): Observable<PaymentDto>;
     updatePayment(id: number, command: UpdatePaymentCommand): Observable<void>;
     reversePayment(id: number): Observable<number>;
+    uploadPaymentProof(id: number, file: FileParameter | null | undefined): Observable<string>;
 }
 
 @Injectable({
@@ -7398,6 +7459,63 @@ export class PaymentsClient implements IPaymentsClient {
         }
         return _observableOf(null as any);
     }
+
+    uploadPaymentProof(id: number, file: FileParameter | null | undefined): Observable<string> {
+        let url_ = this.baseUrl + "/api/Payments/{id}/proof";
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = new FormData();
+        if (file !== null && file !== undefined)
+            content_.append("file", file.data, file.fileName ? file.fileName : "file");
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processUploadPaymentProof(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processUploadPaymentProof(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<string>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<string>;
+        }));
+    }
+
+    protected processUploadPaymentProof(response: HttpResponseBase): Observable<string> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+                result200 = resultData200 !== undefined ? resultData200 : <any>null;
+    
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
 }
 
 export interface IPlatformDashboardClient {
@@ -7473,6 +7591,7 @@ export class PlatformDashboardClient implements IPlatformDashboardClient {
 export interface IRentingsClient {
     getRentings(pageNumber: number | undefined, pageSize: number | undefined, carId: number | null | undefined, clientId: number | null | undefined, state: RentingState | null | undefined, fromDate: Date | null | undefined, toDate: Date | null | undefined, dateBasis: RentingDateBasis | undefined, excludeCancelled: boolean | undefined, sortBy: string | null | undefined, sortDescending: boolean | undefined): Observable<PaginatedListOfRentingDto>;
     createRenting(command: CreateRentingCommand): Observable<number>;
+    getRentingQuote(carId: number, startDate: Date, endDate: Date, excludeRentingId: number | null | undefined): Observable<RentingQuoteDto>;
     getRentingById(id: number): Observable<RentingDto>;
     updateRenting(id: number, command: UpdateRentingCommand): Observable<void>;
     cancelRenting(id: number): Observable<void>;
@@ -7618,6 +7737,68 @@ export class RentingsClient implements IRentingsClient {
                 result201 = resultData201 !== undefined ? resultData201 : <any>null;
     
             return _observableOf(result201);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getRentingQuote(carId: number, startDate: Date, endDate: Date, excludeRentingId: number | null | undefined): Observable<RentingQuoteDto> {
+        let url_ = this.baseUrl + "/api/Rentings/quote?";
+        if (carId === undefined || carId === null)
+            throw new Error("The parameter 'carId' must be defined and cannot be null.");
+        else
+            url_ += "CarId=" + encodeURIComponent("" + carId) + "&";
+        if (startDate === undefined || startDate === null)
+            throw new Error("The parameter 'startDate' must be defined and cannot be null.");
+        else
+            url_ += "StartDate=" + encodeURIComponent(startDate ? "" + startDate.toISOString() : "") + "&";
+        if (endDate === undefined || endDate === null)
+            throw new Error("The parameter 'endDate' must be defined and cannot be null.");
+        else
+            url_ += "EndDate=" + encodeURIComponent(endDate ? "" + endDate.toISOString() : "") + "&";
+        if (excludeRentingId !== undefined && excludeRentingId !== null)
+            url_ += "ExcludeRentingId=" + encodeURIComponent("" + excludeRentingId) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetRentingQuote(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetRentingQuote(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<RentingQuoteDto>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<RentingQuoteDto>;
+        }));
+    }
+
+    protected processGetRentingQuote(response: HttpResponseBase): Observable<RentingQuoteDto> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = RentingQuoteDto.fromJS(resultData200);
+            return _observableOf(result200);
             }));
         } else if (status !== 200 && status !== 204) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
@@ -12642,6 +12823,9 @@ export class ExpenseCreditDto implements IExpenseCreditDto {
     paid?: MoneyDto | undefined;
     outstanding?: MoneyDto | undefined;
     description?: string | undefined;
+    expenseTypeId?: number;
+    factureFileUrl?: string | undefined;
+    factureFileName?: string | undefined;
 
     constructor(data?: IExpenseCreditDto) {
         if (data) {
@@ -12663,6 +12847,9 @@ export class ExpenseCreditDto implements IExpenseCreditDto {
             this.paid = _data["paid"] ? MoneyDto.fromJS(_data["paid"]) : <any>undefined;
             this.outstanding = _data["outstanding"] ? MoneyDto.fromJS(_data["outstanding"]) : <any>undefined;
             this.description = _data["description"];
+            this.expenseTypeId = _data["expenseTypeId"];
+            this.factureFileUrl = _data["factureFileUrl"];
+            this.factureFileName = _data["factureFileName"];
         }
     }
 
@@ -12684,6 +12871,9 @@ export class ExpenseCreditDto implements IExpenseCreditDto {
         data["paid"] = this.paid ? this.paid.toJSON() : <any>undefined;
         data["outstanding"] = this.outstanding ? this.outstanding.toJSON() : <any>undefined;
         data["description"] = this.description;
+        data["expenseTypeId"] = this.expenseTypeId;
+        data["factureFileUrl"] = this.factureFileUrl;
+        data["factureFileName"] = this.factureFileName;
         return data;
     }
 }
@@ -12698,6 +12888,9 @@ export interface IExpenseCreditDto {
     paid?: MoneyDto | undefined;
     outstanding?: MoneyDto | undefined;
     description?: string | undefined;
+    expenseTypeId?: number;
+    factureFileUrl?: string | undefined;
+    factureFileName?: string | undefined;
 }
 
 export class DashboardDto implements IDashboardDto {
@@ -13649,6 +13842,8 @@ export class ExpenseDto implements IExpenseDto {
     paidAmount?: MoneyDto | undefined;
     outstanding?: MoneyDto | undefined;
     description?: string | undefined;
+    factureFileUrl?: string | undefined;
+    factureFileName?: string | undefined;
 
     constructor(data?: IExpenseDto) {
         if (data) {
@@ -13673,6 +13868,8 @@ export class ExpenseDto implements IExpenseDto {
             this.paidAmount = _data["paidAmount"] ? MoneyDto.fromJS(_data["paidAmount"]) : <any>undefined;
             this.outstanding = _data["outstanding"] ? MoneyDto.fromJS(_data["outstanding"]) : <any>undefined;
             this.description = _data["description"];
+            this.factureFileUrl = _data["factureFileUrl"];
+            this.factureFileName = _data["factureFileName"];
         }
     }
 
@@ -13697,6 +13894,8 @@ export class ExpenseDto implements IExpenseDto {
         data["paidAmount"] = this.paidAmount ? this.paidAmount.toJSON() : <any>undefined;
         data["outstanding"] = this.outstanding ? this.outstanding.toJSON() : <any>undefined;
         data["description"] = this.description;
+        data["factureFileUrl"] = this.factureFileUrl;
+        data["factureFileName"] = this.factureFileName;
         return data;
     }
 }
@@ -13714,6 +13913,8 @@ export interface IExpenseDto {
     paidAmount?: MoneyDto | undefined;
     outstanding?: MoneyDto | undefined;
     description?: string | undefined;
+    factureFileUrl?: string | undefined;
+    factureFileName?: string | undefined;
 }
 
 export class CreateExpenseCommand implements ICreateExpenseCommand {
@@ -15719,6 +15920,8 @@ export class PaymentDto implements IPaymentDto {
     isRefund?: boolean;
     notes?: string | undefined;
     reversesPaymentId?: number | undefined;
+    proofFileUrl?: string | undefined;
+    proofFileName?: string | undefined;
 
     constructor(data?: IPaymentDto) {
         if (data) {
@@ -15743,6 +15946,8 @@ export class PaymentDto implements IPaymentDto {
             this.isRefund = _data["isRefund"];
             this.notes = _data["notes"];
             this.reversesPaymentId = _data["reversesPaymentId"];
+            this.proofFileUrl = _data["proofFileUrl"];
+            this.proofFileName = _data["proofFileName"];
         }
     }
 
@@ -15767,6 +15972,8 @@ export class PaymentDto implements IPaymentDto {
         data["isRefund"] = this.isRefund;
         data["notes"] = this.notes;
         data["reversesPaymentId"] = this.reversesPaymentId;
+        data["proofFileUrl"] = this.proofFileUrl;
+        data["proofFileName"] = this.proofFileName;
         return data;
     }
 }
@@ -15784,6 +15991,8 @@ export interface IPaymentDto {
     isRefund?: boolean;
     notes?: string | undefined;
     reversesPaymentId?: number | undefined;
+    proofFileUrl?: string | undefined;
+    proofFileName?: string | undefined;
 }
 
 export enum PaymentMethod {
@@ -16475,6 +16684,70 @@ export enum RentingDateBasis {
     Ends = 2,
 }
 
+export class RentingQuoteDto implements IRentingQuoteDto {
+    carId?: number;
+    dailyRate?: MoneyDto | undefined;
+    billedDays?: number;
+    price?: MoneyDto | undefined;
+    currency?: string;
+    carStatus?: CarStatus;
+    isCarBookable?: boolean;
+    isAvailable?: boolean;
+
+    constructor(data?: IRentingQuoteDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.carId = _data["carId"];
+            this.dailyRate = _data["dailyRate"] ? MoneyDto.fromJS(_data["dailyRate"]) : <any>undefined;
+            this.billedDays = _data["billedDays"];
+            this.price = _data["price"] ? MoneyDto.fromJS(_data["price"]) : <any>undefined;
+            this.currency = _data["currency"];
+            this.carStatus = _data["carStatus"];
+            this.isCarBookable = _data["isCarBookable"];
+            this.isAvailable = _data["isAvailable"];
+        }
+    }
+
+    static fromJS(data: any): RentingQuoteDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new RentingQuoteDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["carId"] = this.carId;
+        data["dailyRate"] = this.dailyRate ? this.dailyRate.toJSON() : <any>undefined;
+        data["billedDays"] = this.billedDays;
+        data["price"] = this.price ? this.price.toJSON() : <any>undefined;
+        data["currency"] = this.currency;
+        data["carStatus"] = this.carStatus;
+        data["isCarBookable"] = this.isCarBookable;
+        data["isAvailable"] = this.isAvailable;
+        return data;
+    }
+}
+
+export interface IRentingQuoteDto {
+    carId?: number;
+    dailyRate?: MoneyDto | undefined;
+    billedDays?: number;
+    price?: MoneyDto | undefined;
+    currency?: string;
+    carStatus?: CarStatus;
+    isCarBookable?: boolean;
+    isAvailable?: boolean;
+}
+
 export class RentingHistoryDto implements IRentingHistoryDto {
     id?: number;
     rentingId?: number | undefined;
@@ -16544,9 +16817,11 @@ export class CreateRentingCommand implements ICreateRentingCommand {
     clientId?: number | undefined;
     newClient?: NewRentingClient | undefined;
     secondClientId?: number | undefined;
+    secondNewClient?: NewRentingClient | undefined;
     startDate?: Date;
     endDate?: Date;
     startMileage?: number | undefined;
+    priceOverride?: number | undefined;
     notes?: string | undefined;
     generateContract?: boolean;
     generateFacture?: boolean;
@@ -16569,9 +16844,11 @@ export class CreateRentingCommand implements ICreateRentingCommand {
             this.clientId = _data["clientId"];
             this.newClient = _data["newClient"] ? NewRentingClient.fromJS(_data["newClient"]) : <any>undefined;
             this.secondClientId = _data["secondClientId"];
+            this.secondNewClient = _data["secondNewClient"] ? NewRentingClient.fromJS(_data["secondNewClient"]) : <any>undefined;
             this.startDate = _data["startDate"] ? new Date(_data["startDate"].toString()) : <any>undefined;
             this.endDate = _data["endDate"] ? new Date(_data["endDate"].toString()) : <any>undefined;
             this.startMileage = _data["startMileage"];
+            this.priceOverride = _data["priceOverride"];
             this.notes = _data["notes"];
             this.generateContract = _data["generateContract"];
             this.generateFacture = _data["generateFacture"];
@@ -16600,9 +16877,11 @@ export class CreateRentingCommand implements ICreateRentingCommand {
         data["clientId"] = this.clientId;
         data["newClient"] = this.newClient ? this.newClient.toJSON() : <any>undefined;
         data["secondClientId"] = this.secondClientId;
+        data["secondNewClient"] = this.secondNewClient ? this.secondNewClient.toJSON() : <any>undefined;
         data["startDate"] = this.startDate ? this.startDate.toISOString() : <any>undefined;
         data["endDate"] = this.endDate ? this.endDate.toISOString() : <any>undefined;
         data["startMileage"] = this.startMileage;
+        data["priceOverride"] = this.priceOverride;
         data["notes"] = this.notes;
         data["generateContract"] = this.generateContract;
         data["generateFacture"] = this.generateFacture;
@@ -16624,9 +16903,11 @@ export interface ICreateRentingCommand {
     clientId?: number | undefined;
     newClient?: NewRentingClient | undefined;
     secondClientId?: number | undefined;
+    secondNewClient?: NewRentingClient | undefined;
     startDate?: Date;
     endDate?: Date;
     startMileage?: number | undefined;
+    priceOverride?: number | undefined;
     notes?: string | undefined;
     generateContract?: boolean;
     generateFacture?: boolean;
@@ -16749,10 +17030,12 @@ export class UpdateRentingCommand implements IUpdateRentingCommand {
     carId?: number;
     clientId?: number;
     secondClientId?: number | undefined;
+    secondNewClient?: NewRentingClient | undefined;
     startDate?: Date;
     endDate?: Date;
     startMileage?: number | undefined;
     endMileage?: number | undefined;
+    priceOverride?: number | undefined;
     notes?: string | undefined;
 
     constructor(data?: IUpdateRentingCommand) {
@@ -16771,10 +17054,12 @@ export class UpdateRentingCommand implements IUpdateRentingCommand {
             this.carId = _data["carId"];
             this.clientId = _data["clientId"];
             this.secondClientId = _data["secondClientId"];
+            this.secondNewClient = _data["secondNewClient"] ? NewRentingClient.fromJS(_data["secondNewClient"]) : <any>undefined;
             this.startDate = _data["startDate"] ? new Date(_data["startDate"].toString()) : <any>undefined;
             this.endDate = _data["endDate"] ? new Date(_data["endDate"].toString()) : <any>undefined;
             this.startMileage = _data["startMileage"];
             this.endMileage = _data["endMileage"];
+            this.priceOverride = _data["priceOverride"];
             this.notes = _data["notes"];
         }
     }
@@ -16793,10 +17078,12 @@ export class UpdateRentingCommand implements IUpdateRentingCommand {
         data["carId"] = this.carId;
         data["clientId"] = this.clientId;
         data["secondClientId"] = this.secondClientId;
+        data["secondNewClient"] = this.secondNewClient ? this.secondNewClient.toJSON() : <any>undefined;
         data["startDate"] = this.startDate ? this.startDate.toISOString() : <any>undefined;
         data["endDate"] = this.endDate ? this.endDate.toISOString() : <any>undefined;
         data["startMileage"] = this.startMileage;
         data["endMileage"] = this.endMileage;
+        data["priceOverride"] = this.priceOverride;
         data["notes"] = this.notes;
         return data;
     }
@@ -16808,10 +17095,12 @@ export interface IUpdateRentingCommand {
     carId?: number;
     clientId?: number;
     secondClientId?: number | undefined;
+    secondNewClient?: NewRentingClient | undefined;
     startDate?: Date;
     endDate?: Date;
     startMileage?: number | undefined;
     endMileage?: number | undefined;
+    priceOverride?: number | undefined;
     notes?: string | undefined;
 }
 
@@ -16867,6 +17156,7 @@ export class ChangeRentingEndDateCommand implements IChangeRentingEndDateCommand
     id?: number;
     rowVersion?: string | undefined;
     endDate?: Date;
+    priceOverride?: number | undefined;
     regenerateContract?: boolean;
     contractTemplateId?: number | undefined;
     documentValues?: { [key: string]: string; } | undefined;
@@ -16885,6 +17175,7 @@ export class ChangeRentingEndDateCommand implements IChangeRentingEndDateCommand
             this.id = _data["id"];
             this.rowVersion = _data["rowVersion"];
             this.endDate = _data["endDate"] ? new Date(_data["endDate"].toString()) : <any>undefined;
+            this.priceOverride = _data["priceOverride"];
             this.regenerateContract = _data["regenerateContract"];
             this.contractTemplateId = _data["contractTemplateId"];
             if (_data["documentValues"]) {
@@ -16909,6 +17200,7 @@ export class ChangeRentingEndDateCommand implements IChangeRentingEndDateCommand
         data["id"] = this.id;
         data["rowVersion"] = this.rowVersion;
         data["endDate"] = this.endDate ? this.endDate.toISOString() : <any>undefined;
+        data["priceOverride"] = this.priceOverride;
         data["regenerateContract"] = this.regenerateContract;
         data["contractTemplateId"] = this.contractTemplateId;
         if (this.documentValues) {
@@ -16926,6 +17218,7 @@ export interface IChangeRentingEndDateCommand {
     id?: number;
     rowVersion?: string | undefined;
     endDate?: Date;
+    priceOverride?: number | undefined;
     regenerateContract?: boolean;
     contractTemplateId?: number | undefined;
     documentValues?: { [key: string]: string; } | undefined;

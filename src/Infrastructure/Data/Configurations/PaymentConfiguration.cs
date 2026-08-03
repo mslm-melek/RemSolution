@@ -34,6 +34,14 @@ public class PaymentConfiguration : IEntityTypeConfiguration<Payment>
                .HasForeignKey(c => c.ReservationId)
                .OnDelete(DeleteBehavior.Restrict);
 
+        // Proof file (receipt / transfer slip / invoice scan). Restrict: the file
+        // record is dropped by the upload handler once nothing points at it, not
+        // by cascading from a payment that is itself never deleted.
+        builder.HasOne(c => c.ProofFile)
+               .WithMany()
+               .HasForeignKey(c => c.ProofFileId)
+               .OnDelete(DeleteBehavior.Restrict);
+
         // Self-reference: a reversal entry points back at the payment it offsets.
         builder.HasOne(c => c.ReversesPayment)
                .WithMany()

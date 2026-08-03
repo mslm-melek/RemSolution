@@ -5,6 +5,7 @@ using RemSolution.Application.Features.Expense.Commands.CreateExpenseCommand;
 using RemSolution.Application.Features.Expense.Commands.DeleteExpenseCommand;
 using RemSolution.Application.Features.Expense.Commands.RecordExpensePaymentCommand;
 using RemSolution.Application.Features.Expense.Commands.UpdateExpenseCommand;
+using RemSolution.Application.Features.Expense.Commands.UploadExpenseFactureCommand;
 using RemSolution.Application.Features.Expense.DTOs;
 using RemSolution.Application.Features.Expense.Queries.GetExpenseByIdQuery;
 using RemSolution.Application.Features.Expense.Queries.GetExpensesWithPaginationQuery;
@@ -27,6 +28,14 @@ public class Expenses : EndpointGroupBase
             .MapPost(RecordExpensePayment, "{id}/payments", Permissions.ExpenseUpdate)
             .MapPut(UpdateExpense, "{id}", Permissions.ExpenseUpdate)
             .MapDelete(DeleteExpense, "{id}", Permissions.ExpenseDelete);
+
+        // Form-binding route (like the client-document upload): antiforgery
+        // middleware is not configured, so form binding must opt out explicitly.
+        // Attaching the invoice is an edit of the expense: Expense.Update.
+        group.MapPost("{id}/facture", UploadExpenseFacture)
+            .WithName(nameof(UploadExpenseFacture))
+            .RequireAuthorization(Permissions.ExpenseUpdate)
+            .DisableAntiforgery();
     }
 
     public async Task<Ok<PaginatedList<ExpenseDto>>> GetExpenses(
@@ -76,5 +85,23 @@ public class Expenses : EndpointGroupBase
     {
         await sender.Send(new DeleteExpenseCommand(id));
         return TypedResults.NoContent();
+    }
+
+    // Attaches (or replaces) the supplier invoice behind this expense; returns
+    // the stored file's public URL.
+    public async Task<Ok<string>> UploadExpenseFacture(ISender sender, int id, IFormFile file)
+    {
+        await using var content = file.OpenReadStream();
+
+        var url = await sender.Send(new UploadExpenseFactureCommand
+        {
+            ExpenseId = id,
+            FileName = file.FileName,
+            ContentType = file.ContentType,
+            Length = file.Length,
+            Content = content
+        });
+
+        return TypedResults.Ok(url);
     }
 }

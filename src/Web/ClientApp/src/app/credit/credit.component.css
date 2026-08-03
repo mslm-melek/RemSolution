@@ -48,3 +48,22 @@
 .settled {
   color: var(--ok);
 }
+
+/* Booking an expense belongs to the payable tab only, so its button sits in the
+   tab body rather than in the page header. */
+.tab-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* Unlike the row actions, the invoice buttons stay visible without hovering:
+   whether an expense has its invoice is part of reading the row. */
+.facture-cell {
+  white-space: nowrap;
+  width: 1%;
+}
+
+.hint {
+  color: var(--muted);
+  font-size: 13px;
+}

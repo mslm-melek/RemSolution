@@ -159,11 +159,14 @@ export class NavMenuComponent implements OnInit {
         can('Chat', 'Chat.View')
           ? { labelKey: 'nav.chat', link: '/chat', icon: 'forum' } : null
       ]),
+      // One finance screen: the credits page carries both directions of money and
+      // absorbed the expense list. Either entitlement opens it, and the label
+      // says which half the user will actually find there.
       this.group('nav.finance', [
-        can('Expenses', 'Expense.Read')
-          ? { labelKey: 'nav.expenses', link: '/expense', icon: 'payments' } : null,
         can('Credits', 'Credit.Read')
-          ? { labelKey: 'nav.credits', link: '/credit', icon: 'request_quote' } : null
+          ? { labelKey: 'nav.credits', link: '/credit', icon: 'request_quote' }
+          : can('Expenses', 'Expense.Read')
+            ? { labelKey: 'nav.expenses', link: '/credit', icon: 'payments' } : null
       ])
     ];
 

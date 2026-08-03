@@ -2,10 +2,12 @@ using ValidationException = RemSolution.Application.Common.Exceptions.Validation
 using RemSolution.Application.Common.Interfaces;
 using RemSolution.Application.Common.Models;
 using RemSolution.Application.Common.Security;
-using RemSolution.Application.Common.Subscriptions;
+using RemSolution.Application.Common.Settings;
+using RemSolution.Application.Features.Renting.Booking;
 using RemSolution.Domain.Constants;
 using RemSolution.Domain.Entities;
 using RemSolution.Domain.Enums;
+using RemSolution.Domain.ValueObjects;
 using FluentValidation.Results;
 using RentingEntity = RemSolution.Domain.Entities.Renting;
 
@@ -27,10 +29,30 @@ namespace RemSolution.Application.Features.Renting.Commands.CreateRentingCommand
         public int? ClientId { get; init; }
         public NewRentingClient? NewClient { get; init; }
 
+        // The second driver, who is just as likely to be a walk-in as the renter —
+        // a couple at the counter, one of whom has never rented here. At most one
+        // of the two is supplied; neither means no second driver.
         public int? SecondClientId { get; init; }
+        public NewRentingClient? SecondNewClient { get; init; }
         public DateTime StartDate { get; init; }
         public DateTime EndDate { get; init; }
         public int? StartMileage { get; init; }
+
+        /// <summary>
+        /// The agreed price for the whole period, when it is not the automatic one.
+        /// Null — the normal case — prices the period through IPricingService.
+        /// <para>
+        /// Rentals get negotiated at the counter (a returning customer, a weekly
+        /// deal, a car whose rate has not been set yet), so the quote is a default
+        /// rather than a rule. Whichever way the figure is arrived at it is then
+        /// snapshotted on the renting exactly the same way, and the paperwork
+        /// renders it — there is no "manual price" mode downstream.
+        /// </para>
+        /// Taken to be in the car's currency, falling back to the agency's; an
+        /// agency has one currency, so there is nothing to choose.
+        /// </summary>
+        public decimal? PriceOverride { get; init; }
+
         public string? Notes { get; init; }
 
         // Paperwork to issue alongside the renting. Each is gated on its own
@@ -55,6 +77,7 @@ namespace RemSolution.Application.Features.Renting.Commands.CreateRentingCommand
     {
         private readonly IApplicationDbContext _context;
         private readonly IPricingService _pricing;
+        private readonly IAgencySettingsProvider _settings;
         private readonly IAvailabilityChecker _availability;
         private readonly IRentalDocumentService _documents;
         private readonly IStoredFileService _storedFiles;
@@ -67,6 +90,7 @@ namespace RemSolution.Application.Features.Renting.Commands.CreateRentingCommand
         public CreateRentingCommandHandler(
             IApplicationDbContext context,
             IPricingService pricing,
+            IAgencySettingsProvider settings,
             IAvailabilityChecker availability,
             IRentalDocumentService documents,
             IStoredFileService storedFiles,
@@ -78,6 +102,7 @@ namespace RemSolution.Application.Features.Renting.Commands.CreateRentingCommand
         {
             _context = context;
             _pricing = pricing;
+            _settings = settings;
             _availability = availability;
             _documents = documents;
             _storedFiles = storedFiles;
@@ -104,17 +129,25 @@ namespace RemSolution.Application.Features.Renting.Commands.CreateRentingCommand
                 });
             }
 
-            if (car.DailyRate is null)
+            // Only the automatic quote needs a rate to work from. An unpriced car
+            // can still be booked at a price the agent types in — which is the
+            // realistic order of events for a car that has just arrived.
+            if (car.DailyRate is null && request.PriceOverride is null)
             {
                 throw new ValidationException(new[]
                 {
                     new ValidationFailure(nameof(request.CarId),
-                        "The car has no daily rate; set a price before booking it.")
+                        "The car has no daily rate; set a price before booking it, " +
+                        "or agree a price for this renting.")
                 });
             }
 
-            // Snapshot the agreed price once, at creation (see IPricingService).
-            var price = _pricing.CalculateRentalPrice(car, request.StartDate, request.EndDate);
+            // Snapshot the agreed price once, at creation (see IPricingService) —
+            // the negotiated figure when there is one, the quote otherwise.
+            var price = request.PriceOverride is decimal agreed
+                ? Money.Of(agreed, car.DailyRate?.Currency
+                    ?? (await _settings.GetAsync(car.AgencyId, cancellationToken)).CurrencyCode).Round()
+                : _pricing.CalculateRentalPrice(car, request.StartDate, request.EndDate);
 
             // Rendered PDFs are written to storage before their rows commit, so a
             // rollback has to take the bytes with it (same ordering as the
@@ -133,13 +166,20 @@ namespace RemSolution.Application.Features.Renting.Commands.CreateRentingCommand
                 await _availability.EnsureCarAvailableAsync(
                     request.CarId, request.StartDate, request.EndDate, null, null, cancellationToken);
 
-                var client = await ResolveClientAsync(request, cancellationToken);
+                var clients = new RentingClientContext(
+                    _context, _user, _identityService, _tenant, _dateTime);
+
+                var client = await RentingClients.ResolveAsync(
+                    clients, request.ClientId, request.NewClient, cancellationToken);
+
+                var secondClient = await RentingClients.ResolveSecondDriverAsync(
+                    clients, client, request.SecondClientId, request.SecondNewClient, cancellationToken);
 
                 var entity = new RentingEntity
                 {
                     CarId = request.CarId,
                     ClientId = client.Id,
-                    SecondClientId = request.SecondClientId,
+                    SecondClientId = secondClient?.Id,
                     StartDate = request.StartDate,
                     EndDate = request.EndDate,
                     StartMileage = request.StartMileage,
@@ -215,117 +255,6 @@ namespace RemSolution.Application.Features.Renting.Commands.CreateRentingCommand
             }
         }
 
-        // Returns the client the renting attaches to: the one that was picked, or
-        // one created from the inline payload.
-        //
-        // Creating inline applies the same three gates the standalone
-        // CreateClientCommand does — Client.Create + the Clients feature, the
-        // plan's MaxClients quota — plus the CIN/passport dedup rule from
-        // ConvertReservationCommand: if the agency already holds a client with
-        // that document, the renting links to THEM rather than adding a duplicate
-        // for the same person.
-        private async Task<Domain.Entities.Client> ResolveClientAsync(
-            CreateRentingCommand request, CancellationToken cancellationToken)
-        {
-            if (request.NewClient is not NewRentingClient payload)
-            {
-                // Validated as present when NewClient is absent. Loaded rather
-                // than used as a bare id because the caller also provisions the
-                // client's portal account, which needs the record.
-                var clientId = request.ClientId!.Value;
-
-                var picked = await _context.Clients
-                    .FirstOrDefaultAsync(c => c.Id == clientId, cancellationToken);
-
-                Guard.Against.NotFound(clientId, picked);
-
-                return picked;
-            }
-
-            await EnsureAsync(Permissions.ClientCreate, FeatureFlags.Clients, cancellationToken);
-
-            var cin = Trimmed(payload.CIN);
-            var passport = Trimmed(payload.PasseportNumber);
-
-            if (cin is not null || passport is not null)
-            {
-                var existing = await _context.Clients
-                    .FirstOrDefaultAsync(
-                        c => (cin != null && c.CIN == cin) || (passport != null && c.PasseportNumber == passport),
-                        cancellationToken);
-
-                if (existing is not null)
-                {
-                    // Fill blanks only: the stored record is the agency's own and
-                    // must not be overwritten by whatever was typed at the counter.
-                    Enrich(existing, payload);
-                    return existing;
-                }
-            }
-
-            await SubscriptionGuard.EnsureWithinPlanLimitAsync(
-                _context, _tenant, _dateTime, _context.Clients, p => p.MaxClients, "clients", cancellationToken);
-
-            var client = new Domain.Entities.Client
-            {
-                FirstName = payload.FirstName,
-                LastName = payload.LastName,
-                Email = Trimmed(payload.Email),
-                BirthDate = payload.BirthDate,
-                BirthPlace = payload.BirthPlace,
-                BirthCountryId = payload.BirthCountryId,
-                CIN = cin,
-                CINDeliveranceDate = payload.CINDeliveranceDate,
-                CINDeliverancePlace = payload.CINDeliverancePlace,
-                CINDeliveranceCountryId = payload.CINDeliveranceCountryId,
-                PasseportNumber = passport,
-                PasseportDeliveranceDate = payload.PasseportDeliveranceDate,
-                PasseportDeliverancePlace = payload.PasseportDeliverancePlace,
-                PasseportDeliveranceCountryId = payload.PasseportDeliveranceCountryId,
-                DrivingLicenceNumber = Trimmed(payload.DrivingLicenceNumber),
-                DrivingLicenceDeliveranceDate = payload.DrivingLicenceDeliveranceDate,
-                DrivingLicenceDeliverancePlace = payload.DrivingLicenceDeliverancePlace,
-                DrivingLicenceDeliveranceCountryId = payload.DrivingLicenceDeliveranceCountryId,
-                Description = payload.Description
-                // AgencyId is stamped by TenantEntityInterceptor on insert.
-            };
-
-            _context.Clients.Add(client);
-
-            // The renting needs the client's key, and both are inside the same
-            // transaction, so this save is not yet durable either.
-            await _context.SaveChangesAsync(cancellationToken);
-
-            return client;
-        }
-
-        private static void Enrich(Domain.Entities.Client client, NewRentingClient payload)
-        {
-            // Including the email: a client the agency has known offline for
-            // years gets a login the first time somebody types their address at
-            // the counter. Still blanks-only — an address already on file is
-            // the one their account is keyed to.
-            if (string.IsNullOrWhiteSpace(client.Email))
-            {
-                client.Email = Trimmed(payload.Email);
-            }
-
-            if (string.IsNullOrWhiteSpace(client.CIN))
-            {
-                client.CIN = Trimmed(payload.CIN);
-            }
-
-            if (string.IsNullOrWhiteSpace(client.PasseportNumber))
-            {
-                client.PasseportNumber = Trimmed(payload.PasseportNumber);
-            }
-
-            if (string.IsNullOrWhiteSpace(client.DrivingLicenceNumber))
-            {
-                client.DrivingLicenceNumber = Trimmed(payload.DrivingLicenceNumber);
-            }
-        }
-
         private Task EnsureAsync(string permission, string feature, CancellationToken cancellationToken) =>
             Entitlements.EnsureAsync(
                 _user, _identityService, _context, _tenant, _dateTime, permission, feature, cancellationToken);
@@ -337,9 +266,6 @@ namespace RemSolution.Application.Features.Renting.Commands.CreateRentingCommand
                 files.Add(file);
             }
         }
-
-        private static string? Trimmed(string? value) =>
-            string.IsNullOrWhiteSpace(value) ? null : value.Trim();
     }
 }
 
@@ -362,10 +288,22 @@ namespace RemSolution.Application.Features.Renting.Commands.CreateRentingCommand
                 .SetValidator(new NewRentingClientValidator(context, dateTime, localizer))
                 .When(v => v.NewClient is not null);
 
+            // At most one second-driver source. Unlike the renter, none is valid.
+            RuleFor(v => v.SecondClientId)
+                .Must((command, secondClientId) => secondClientId is null || command.SecondNewClient is null)
+                    .WithMessage(_ => localizer["Validation.Renting.SecondDriverOneSource"]);
+
             RuleFor(v => v.SecondClientId)
                 .GreaterThan(0).When(v => v.SecondClientId.HasValue)
                 .NotEqual(v => v.ClientId).When(v => v.SecondClientId.HasValue)
                     .WithMessage(_ => localizer["Validation.Renting.SecondDriverDistinct"]);
+
+            // The same identity rules as the renter's payload; the "not the same
+            // person" rule needs both rows and so lives in the handler (see
+            // RentingClients.ResolveSecondDriverAsync).
+            RuleFor(v => v.SecondNewClient!)
+                .SetValidator(new NewRentingClientValidator(context, dateTime, localizer))
+                .When(v => v.SecondNewClient is not null);
             RuleFor(v => v.StartDate).NotEmpty();
             RuleFor(v => v.EndDate)
                 .NotEmpty()
@@ -373,6 +311,10 @@ namespace RemSolution.Application.Features.Renting.Commands.CreateRentingCommand
                     .WithMessage(_ => localizer["Validation.Booking.EndAfterStart"]);
             RuleFor(v => v.StartMileage)
                 .GreaterThanOrEqualTo(0).When(v => v.StartMileage.HasValue);
+            // Zero is allowed on purpose: a courtesy car is a real booking at no
+            // charge, and refusing it would push the agent to invent a price.
+            RuleFor(v => v.PriceOverride)
+                .GreaterThanOrEqualTo(0).When(v => v.PriceOverride.HasValue);
             RuleFor(v => v.Notes).MaximumLength(1000);
         }
     }

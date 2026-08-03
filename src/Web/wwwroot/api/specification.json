@@ -2402,13 +2402,23 @@
             "x-position": 4
           },
           {
+            "name": "ExpenseTypeId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "nullable": true
+            },
+            "x-position": 5
+          },
+          {
             "name": "SortBy",
             "in": "query",
             "schema": {
               "type": "string",
               "nullable": true
             },
-            "x-position": 5
+            "x-position": 6
           },
           {
             "name": "SortDescending",
@@ -2416,7 +2426,7 @@
             "schema": {
               "type": "boolean"
             },
-            "x-position": 6
+            "x-position": 7
           }
         ],
         "responses": {
@@ -3136,6 +3146,54 @@
           },
           "400": {
             "description": ""
+          }
+        }
+      }
+    },
+    "/api/Expenses/{id}/facture": {
+      "post": {
+        "tags": [
+          "Expenses"
+        ],
+        "operationId": "UploadExpenseFacture",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "nullable": true
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
           }
         }
       }
@@ -4822,6 +4880,54 @@
         }
       }
     },
+    "/api/Payments/{id}/proof": {
+      "post": {
+        "tags": [
+          "Payments"
+        ],
+        "operationId": "UploadPaymentProof",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "nullable": true
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/PlatformDashboard": {
       "get": {
         "tags": [
@@ -5003,6 +5109,68 @@
                 "schema": {
                   "type": "integer",
                   "format": "int32"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Rentings/quote": {
+      "get": {
+        "tags": [
+          "Rentings"
+        ],
+        "operationId": "GetRentingQuote",
+        "parameters": [
+          {
+            "name": "CarId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "StartDate",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "x-position": 2
+          },
+          {
+            "name": "EndDate",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "x-position": 3
+          },
+          {
+            "name": "ExcludeRentingId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "nullable": true
+            },
+            "x-position": 4
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RentingQuoteDto"
                 }
               }
             }
@@ -8100,6 +8268,18 @@
           "description": {
             "type": "string",
             "nullable": true
+          },
+          "expenseTypeId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "factureFileUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "factureFileName": {
+            "type": "string",
+            "nullable": true
           }
         }
       },
@@ -8721,6 +8901,14 @@
             ]
           },
           "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "factureFileUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "factureFileName": {
             "type": "string",
             "nullable": true
           }
@@ -9900,6 +10088,14 @@
             "type": "integer",
             "format": "int32",
             "nullable": true
+          },
+          "proofFileUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "proofFileName": {
+            "type": "string",
+            "nullable": true
           }
         }
       },
@@ -10375,6 +10571,48 @@
           2
         ]
       },
+      "RentingQuoteDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "carId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "dailyRate": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/MoneyDto"
+              }
+            ]
+          },
+          "billedDays": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "price": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/MoneyDto"
+              }
+            ]
+          },
+          "currency": {
+            "type": "string"
+          },
+          "carStatus": {
+            "$ref": "#/components/schemas/CarStatus"
+          },
+          "isCarBookable": {
+            "type": "boolean"
+          },
+          "isAvailable": {
+            "type": "boolean"
+          }
+        }
+      },
       "RentingHistoryDto": {
         "type": "object",
         "additionalProperties": false,
@@ -10447,6 +10685,14 @@
             "format": "int32",
             "nullable": true
           },
+          "secondNewClient": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/NewRentingClient"
+              }
+            ]
+          },
           "startDate": {
             "type": "string",
             "format": "date-time"
@@ -10458,6 +10704,11 @@
           "startMileage": {
             "type": "integer",
             "format": "int32",
+            "nullable": true
+          },
+          "priceOverride": {
+            "type": "number",
+            "format": "decimal",
             "nullable": true
           },
           "notes": {
@@ -10603,6 +10854,14 @@
             "format": "int32",
             "nullable": true
           },
+          "secondNewClient": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/NewRentingClient"
+              }
+            ]
+          },
           "startDate": {
             "type": "string",
             "format": "date-time"
@@ -10619,6 +10878,11 @@
           "endMileage": {
             "type": "integer",
             "format": "int32",
+            "nullable": true
+          },
+          "priceOverride": {
+            "type": "number",
+            "format": "decimal",
             "nullable": true
           },
           "notes": {
@@ -10666,6 +10930,11 @@
           "endDate": {
             "type": "string",
             "format": "date-time"
+          },
+          "priceOverride": {
+            "type": "number",
+            "format": "decimal",
+            "nullable": true
           },
           "regenerateContract": {
             "type": "boolean"

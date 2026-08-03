@@ -65,8 +65,13 @@ export const HOME_WIDGETS: HomeWidgetMeta[] = [
     link: '/chat', queryParams: { unread: 'true' }, gates: gate('Chat', 'Chat.View')
   },
   {
+    // The unsettled-expense count opens the finance screen's payable tab narrowed
+    // to those rows. Gated on the expense module and not on Credits: the figure
+    // itself is counted with the expense list query (see home's countOf), so a
+    // credits-only user would get a tile that could never show its number.
     key: 'Expenses', labelKey: 'home.widgets.expenses', icon: 'payments',
-    link: '/expense', queryParams: { unpaid: 'true' }, gates: gate('Expenses', 'Expense.Read')
+    link: '/credit', queryParams: { unpaid: 'true' },
+    gates: gate('Expenses', 'Expense.Read')
   },
   {
     key: 'Credits', labelKey: 'home.widgets.credits', icon: 'request_quote',

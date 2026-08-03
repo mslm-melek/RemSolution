@@ -3,7 +3,7 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
   ExpensesClient, ExpenseDto, CreateExpenseCommand, UpdateExpenseCommand,
-  CarsClient, CarDto, ExpenseTypesClient, ExpenseTypeDto
+  CarsClient, CarDto, ExpenseTypesClient, ExpenseTypeDto, FileParameter
 } from '../web-api-client';
 import { extractValidationErrors } from '../shared/form-utils';
 import { TranslocoService } from '@jsverse/transloco';
@@ -24,9 +24,13 @@ export class ExpenseFormComponent implements OnInit {
   saving = false;
   errorMessage = '';
   // Read-only on edit: the settled total is moved by the settle action on the
-  // list, never by re-typing it here (see RecordExpensePaymentCommand).
+  // finance screen, never by re-typing it here (see RecordExpensePaymentCommand).
   settled = 0;
   currency = '';
+  // The supplier invoice; only attachable once the expense exists.
+  factureUrl = '';
+  factureName = '';
+  uploadingFacture = false;
 
   constructor(
     private fb: FormBuilder,
@@ -42,7 +46,7 @@ export class ExpenseFormComponent implements OnInit {
       expenseDate: [this.today(), Validators.required],
       amount: [null, [Validators.required, Validators.min(0.01)]],
       // Only offered when booking a new expense; an existing one is settled
-      // through the list action.
+      // through the finance screen's settle action.
       paidAmount: [0, Validators.min(0)],
       description: ['', Validators.maxLength(1000)]
     });
@@ -85,6 +89,8 @@ export class ExpenseFormComponent implements OnInit {
   private populate(dto: ExpenseDto) {
     this.settled = dto.paidAmount?.amount ?? 0;
     this.currency = dto.expenseAmount?.currency ?? '';
+    this.factureUrl = dto.factureFileUrl ?? '';
+    this.factureName = dto.factureFileName ?? '';
 
     this.form.patchValue({
       carId: dto.carId ?? null,
@@ -97,6 +103,28 @@ export class ExpenseFormComponent implements OnInit {
     });
 
     this.form.get('paidAmount')!.disable();
+  }
+
+  onFactureSelected(input: HTMLInputElement) {
+    const file = input.files?.[0];
+    input.value = ''; // allow re-selecting the same file
+    if (!file || !this.expenseId) return;
+
+    this.uploadingFacture = true;
+    this.errorMessage = '';
+    const parameter: FileParameter = { data: file, fileName: file.name };
+
+    this.client.uploadExpenseFacture(this.expenseId, parameter).subscribe({
+      next: url => {
+        this.factureUrl = url;
+        this.factureName = file.name;
+        this.uploadingFacture = false;
+      },
+      error: err => {
+        this.uploadingFacture = false;
+        this.handleError(err);
+      }
+    });
   }
 
   save() {
@@ -122,7 +150,7 @@ export class ExpenseFormComponent implements OnInit {
         description: v.description || undefined
       });
       this.client.updateExpense(this.expenseId!, command).subscribe({
-        next: () => this.router.navigate(['/expense']),
+        next: () => this.router.navigate(['/credit']),
         error: err => this.handleError(err)
       });
     } else {
@@ -135,14 +163,14 @@ export class ExpenseFormComponent implements OnInit {
         description: v.description || undefined
       });
       this.client.createExpense(command).subscribe({
-        next: () => this.router.navigate(['/expense']),
+        next: () => this.router.navigate(['/credit']),
         error: err => this.handleError(err)
       });
     }
   }
 
   cancel() {
-    this.router.navigate(['/expense']);
+    this.router.navigate(['/credit']);
   }
 
   private handleError(err: any) {

@@ -80,4 +80,69 @@ public class UpdateRentingTests : BaseTestFixture
         var renting = await FindAsync<Renting>(id);
         renting!.Price!.Amount.Should().Be(250m);
     }
+
+    [Test]
+    public async Task AnAgreedPriceShouldBeAppliedWithoutMovingTheDates()
+    {
+        await RunAsAgencyAdministratorAsync();
+        await AddTestAgencyAsync();
+        await AddAsync(new AgencyFeature { Feature = FeatureFlags.Rentings, Enabled = true });
+
+        var car = new Car { Matricule = "UPD-3", Status = CarStatus.Active, DailyRate = Money.Of(50m, "TND") };
+        await AddAsync(car);
+        var client = new Client { FirstName = "Test", LastName = "Client" };
+        await AddAsync(client);
+
+        var id = await SendAsync(new CreateRentingCommand
+        {
+            CarId = car.Id, ClientId = client.Id, StartDate = Start, EndDate = End
+        });
+
+        // Correcting only the price: nothing about the period changed.
+        await SendAsync(new UpdateRentingCommand
+        {
+            Id = id,
+            CarId = car.Id,
+            ClientId = client.Id,
+            StartDate = Start,
+            EndDate = End,
+            PriceOverride = 135m
+        });
+
+        var renting = await FindAsync<Renting>(id);
+        renting!.Price!.Amount.Should().Be(135m);
+    }
+
+    [Test]
+    public async Task AnAgreedPriceShouldWinOverTheRequoteWhenDatesMove()
+    {
+        await RunAsAgencyAdministratorAsync();
+        await AddTestAgencyAsync();
+        await AddAsync(new AgencyFeature { Feature = FeatureFlags.Rentings, Enabled = true });
+
+        var car = new Car { Matricule = "UPD-4", Status = CarStatus.Active, DailyRate = Money.Of(50m, "TND") };
+        await AddAsync(car);
+        var client = new Client { FirstName = "Test", LastName = "Client" };
+        await AddAsync(client);
+
+        var id = await SendAsync(new CreateRentingCommand
+        {
+            CarId = car.Id, ClientId = client.Id, StartDate = Start, EndDate = End
+        });
+
+        // Two extra days would re-quote to 250; the agent agreed 200 instead.
+        await SendAsync(new UpdateRentingCommand
+        {
+            Id = id,
+            CarId = car.Id,
+            ClientId = client.Id,
+            StartDate = Start,
+            EndDate = End.AddDays(2),
+            PriceOverride = 200m
+        });
+
+        var renting = await FindAsync<Renting>(id);
+        renting!.Price!.Amount.Should().Be(200m);
+        renting.EndDate.Should().Be(End.AddDays(2));
+    }
 }

@@ -175,6 +175,9 @@
   <data name="Validation.Renting.SecondDriverDistinct" xml:space="preserve">
     <value>Le second conducteur doit être un client différent.</value>
   </data>
+  <data name="Validation.Renting.SecondDriverOneSource" xml:space="preserve">
+    <value>Choisissez un client existant comme second conducteur, ou saisissez-en un nouveau — pas les deux.</value>
+  </data>
   <data name="Validation.Language.Unsupported" xml:space="preserve">
     <value>La langue doit être : en, fr ou ar.</value>
   </data>

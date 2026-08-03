@@ -33,6 +33,12 @@ namespace RemSolution.Application.Features.Credit.DTOs
         public MoneyDto? Paid { get; init; }
         public MoneyDto? Outstanding { get; init; }
         public string? Description { get; init; }
+        // The payable tab is where expenses are managed now (the standalone
+        // expense list is gone), so the row carries what its actions need: the
+        // type to re-filter by, and the attached invoice to show or replace.
+        public int ExpenseTypeId { get; init; }
+        public string? FactureFileUrl { get; init; }
+        public string? FactureFileName { get; init; }
     }
 
     // Both sides of the agency's credit position in one figure set, so the screen

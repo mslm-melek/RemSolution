@@ -91,6 +91,10 @@
                   [matTooltip]="t('reservation.rejectWithReason')" [attr.aria-label]="t('reservation.reject')">
             <mat-icon>block</mat-icon>
           </button>
+          <button mat-icon-button color="primary" *ngIf="canPayFor(r)" (click)="pay(r)"
+                  [matTooltip]="t('payment.pay')" [attr.aria-label]="t('payment.pay')">
+            <mat-icon>payments</mat-icon>
+          </button>
           <button mat-icon-button color="primary" *ngIf="isConvertible(r)" (click)="convert(r)"
                   [matTooltip]="t('reservation.convert')" [attr.aria-label]="t('reservation.convert')">
             <mat-icon>directions_car</mat-icon>

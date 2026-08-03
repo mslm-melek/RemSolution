@@ -9,6 +9,7 @@ using RemSolution.Application.Features.Renting.Commands.UpdateRentingCommand;
 using RemSolution.Application.Features.Renting.DTOs;
 using RemSolution.Application.Features.Renting.Queries.GetRentingByIdQuery;
 using RemSolution.Application.Features.Renting.Queries.GetRentingHistoryQuery;
+using RemSolution.Application.Features.Renting.Queries.GetRentingQuoteQuery;
 using RemSolution.Application.Features.Renting.Queries.GetRentingsWithPaginationQuery;
 
 namespace RemSolution.Web.Endpoints;
@@ -22,6 +23,8 @@ public class Rentings : EndpointGroupBase
 
         group
             .MapGet(GetRentings, policy: Permissions.RentingRead)
+            // Literal segment, so it is matched ahead of "{id}" whatever the order.
+            .MapGet(GetRentingQuote, "quote", Permissions.RentingRead)
             .MapGet(GetRentingById, "{id}", Permissions.RentingRead)
             .MapGet(GetRentingHistory, "{id}/history", Permissions.RentingRead)
             .MapPost(CreateRenting, policy: Permissions.RentingCreate)
@@ -33,6 +36,15 @@ public class Rentings : EndpointGroupBase
 
     public async Task<Ok<PaginatedList<RentingDto>>> GetRentings(
         ISender sender, [AsParameters] GetRentingsWithPaginationQuery query)
+    {
+        var result = await sender.Send(query);
+        return TypedResults.Ok(result);
+    }
+
+    // What the booking about to be made would cost, and whether the car is free
+    // for it. Read-only: the create/update handlers price again for themselves.
+    public async Task<Ok<RentingQuoteDto>> GetRentingQuote(
+        ISender sender, [AsParameters] GetRentingQuoteQuery query)
     {
         var result = await sender.Send(query);
         return TypedResults.Ok(result);

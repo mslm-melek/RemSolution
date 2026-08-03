@@ -115,6 +115,90 @@ public class CreateRentingTests : BaseTestFixture
         })).Should().ThrowAsync<ValidationException>();
     }
 
+    [Test]
+    public async Task ShouldStoreTheAgreedPriceInsteadOfTheQuote()
+    {
+        await RunAsAgencyAdministratorAsync();
+        await AddTestAgencyAsync();
+        await AddAsync(new AgencyFeature { Feature = FeatureFlags.Rentings, Enabled = true });
+
+        var carId = await SeedBookableCarAsync(dailyRate: 50m);
+        var clientId = await SeedClientAsync();
+
+        var id = await SendAsync(new CreateRentingCommand
+        {
+            CarId = carId,
+            ClientId = clientId,
+            StartDate = Start,
+            EndDate = End,
+            // The quote would be 150 (3 × 50); this is the deal that was struck.
+            PriceOverride = 120m
+        });
+
+        var renting = await FindAsync<Renting>(id);
+
+        renting!.Price!.Amount.Should().Be(120m);
+        renting.Price.Currency.Should().Be("TND");
+    }
+
+    [Test]
+    public async Task ShouldAllowAgreedPriceOfZero()
+    {
+        await RunAsAgencyAdministratorAsync();
+        await AddTestAgencyAsync();
+        await AddAsync(new AgencyFeature { Feature = FeatureFlags.Rentings, Enabled = true });
+
+        var carId = await SeedBookableCarAsync(dailyRate: 50m);
+        var clientId = await SeedClientAsync();
+
+        // A courtesy car is a real booking at no charge.
+        var id = await SendAsync(new CreateRentingCommand
+        {
+            CarId = carId, ClientId = clientId, StartDate = Start, EndDate = End, PriceOverride = 0m
+        });
+
+        (await FindAsync<Renting>(id))!.Price!.Amount.Should().Be(0m);
+    }
+
+    [Test]
+    public async Task ShouldRejectNegativeAgreedPrice()
+    {
+        await RunAsAgencyAdministratorAsync();
+        await AddTestAgencyAsync();
+        await AddAsync(new AgencyFeature { Feature = FeatureFlags.Rentings, Enabled = true });
+
+        var carId = await SeedBookableCarAsync(dailyRate: 50m);
+        var clientId = await SeedClientAsync();
+
+        await FluentActions.Invoking(() => SendAsync(new CreateRentingCommand
+        {
+            CarId = carId, ClientId = clientId, StartDate = Start, EndDate = End, PriceOverride = -1m
+        })).Should().ThrowAsync<ValidationException>();
+    }
+
+    [Test]
+    public async Task ShouldBookAnUnpricedCarAtAnAgreedPrice()
+    {
+        await RunAsAgencyAdministratorAsync();
+        await AddTestAgencyAsync();
+        await AddAsync(new AgencyFeature { Feature = FeatureFlags.Rentings, Enabled = true });
+
+        // No rate to quote from, which is exactly when a price is negotiated;
+        // the currency then comes from the agency's settings.
+        var carId = await SeedBookableCarAsync(dailyRate: null);
+        var clientId = await SeedClientAsync();
+
+        var id = await SendAsync(new CreateRentingCommand
+        {
+            CarId = carId, ClientId = clientId, StartDate = Start, EndDate = End, PriceOverride = 200m
+        });
+
+        var renting = await FindAsync<Renting>(id);
+
+        renting!.Price!.Amount.Should().Be(200m);
+        renting.Price.Currency.Should().Be("TND");
+    }
+
     private static async Task<int> SeedBookableCarAsync(decimal? dailyRate)
     {
         var car = new Car

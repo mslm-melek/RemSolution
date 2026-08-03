@@ -1,4 +1,5 @@
 using RemSolution.Application.Common.Exceptions;
+using RemSolution.Application.Features.Renting.Booking;
 using RemSolution.Application.Features.Renting.Commands.CreateRentingCommand;
 using RemSolution.Domain.Constants;
 using RemSolution.Domain.Entities;
