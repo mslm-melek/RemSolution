@@ -42,6 +42,24 @@ namespace RemSolution.Application.Features.Agency.Commands.UpdateMyAgencyCommand
 
             RuleFor(v => v.ReservationExpiryHours)
                 .GreaterThan(0);
+
+            // Lead times: zero is meaningful (no warning window / that reminder
+            // off), negative is not. The upper bounds keep a typo from turning
+            // "14 days" into a year of alerts about everything at once.
+            RuleFor(v => v.ExpenseDueLeadDays)
+                .InclusiveBetween(0, 365);
+
+            RuleFor(v => v.ExpenseDueLeadKilometers)
+                .InclusiveBetween(0, 100_000);
+
+            RuleFor(v => v.ReservationUpcomingLeadDays)
+                .InclusiveBetween(0, 365);
+
+            RuleFor(v => v.ClientReminderDaysBeforeStart)
+                .InclusiveBetween(0, 90);
+
+            RuleFor(v => v.ClientReminderDaysBeforeEnd)
+                .InclusiveBetween(0, 90);
         }
     }
 }

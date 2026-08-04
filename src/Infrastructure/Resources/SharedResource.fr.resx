@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <root>
   <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
     <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
@@ -828,5 +828,68 @@
   </data>
   <data name="Error.PasswordChangeRequired.Detail" xml:space="preserve">
     <value>Votre compte utilise encore le mot de passe temporaire qui vous a été envoyé par e-mail. Choisissez un nouveau mot de passe pour continuer.</value>
+  </data>
+  <data name="Notification.carExpenseDueByDate.Subject" xml:space="preserve">
+    <value>{{type}} à prévoir pour {{car}}</value>
+  </data>
+  <data name="Notification.carExpenseDueByDate.Body" xml:space="preserve">
+    <value>{{type}} arrive à échéance pour {{car}} le {{dueDate}}, dans {{days}} jour(s).</value>
+  </data>
+  <data name="Notification.carExpenseOverdueByDate.Subject" xml:space="preserve">
+    <value>{{type}} en retard pour {{car}}</value>
+  </data>
+  <data name="Notification.carExpenseOverdueByDate.Body" xml:space="preserve">
+    <value>{{type}} était à échéance pour {{car}} le {{dueDate}}, il y a {{days}} jour(s).</value>
+  </data>
+  <data name="Notification.carExpenseDueByDistance.Subject" xml:space="preserve">
+    <value>{{type}} à prévoir pour {{car}}</value>
+  </data>
+  <data name="Notification.carExpenseDueByDistance.Body" xml:space="preserve">
+    <value>{{type}} arrive à échéance pour {{car}} à {{dueKm}} km. Le compteur affiche {{mileage}} km — encore {{km}} km.</value>
+  </data>
+  <data name="Notification.carExpenseOverdueByDistance.Subject" xml:space="preserve">
+    <value>{{type}} en retard pour {{car}}</value>
+  </data>
+  <data name="Notification.carExpenseOverdueByDistance.Body" xml:space="preserve">
+    <value>{{type}} était à échéance pour {{car}} à {{dueKm}} km. Le compteur affiche {{mileage}} km — soit {{km}} km de dépassement.</value>
+  </data>
+  <data name="Notification.rentingOverdue.Subject" xml:space="preserve">
+    <value>{{car}} n'est pas rentrée</value>
+  </data>
+  <data name="Notification.rentingOverdue.Body" xml:space="preserve">
+    <value>{{car}} devait être rendue le {{endDate}} et ne l'a pas été — {{days}} jour(s) de retard. Locataire : {{client}}.</value>
+  </data>
+  <data name="Notification.reservationUpcoming.Subject" xml:space="preserve">
+    <value>Départ à préparer : {{car}}</value>
+  </data>
+  <data name="Notification.reservationUpcoming.Body" xml:space="preserve">
+    <value>{{client}} prend {{car}} le {{startDate}}, dans {{days}} jour(s).</value>
+  </data>
+  <data name="Notification.clientRentingStartingSoon.Subject" xml:space="preserve">
+    <value>Votre location commence le {{startDate}}</value>
+  </data>
+  <data name="Notification.clientRentingStartingSoon.Body" xml:space="preserve">
+    <value>Nous vous rappelons que votre location de {{car}} commence le {{startDate}}, dans {{days}} jour(s).
+Merci de vous présenter avec votre permis de conduire et votre pièce d'identité lors de la prise du véhicule.</value>
+  </data>
+  <data name="Notification.clientRentingEndingSoon.Subject" xml:space="preserve">
+    <value>Votre location se termine le {{endDate}}</value>
+  </data>
+  <data name="Notification.clientRentingEndingSoon.Body" xml:space="preserve">
+    <value>Nous vous rappelons que votre location de {{car}} se termine le {{endDate}}, dans {{days}} jour(s).
+Merci de restituer le véhicule à temps afin d'éviter des frais supplémentaires.</value>
+  </data>
+  <data name="Notification.clientReservationStartingSoon.Subject" xml:space="preserve">
+    <value>Votre réservation commence le {{startDate}}</value>
+  </data>
+  <data name="Notification.clientReservationStartingSoon.Body" xml:space="preserve">
+    <value>Nous vous rappelons que votre réservation de {{car}} commence le {{startDate}}, dans {{days}} jour(s).</value>
+  </data>
+  <data name="Notification.clientRentingLateNotice.Subject" xml:space="preserve">
+    <value>Retard de restitution : {{car}}</value>
+  </data>
+  <data name="Notification.clientRentingLateNotice.Body" xml:space="preserve">
+    <value>D'après nos informations, {{car}} devait être restituée le {{endDate}}, il y a {{days}} jour(s), et ne l'a pas été.
+Merci de restituer le véhicule ou de nous contacter dans les plus brefs délais.</value>
   </data>
 </root>

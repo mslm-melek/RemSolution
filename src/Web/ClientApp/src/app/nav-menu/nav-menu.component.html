@@ -39,6 +39,24 @@
         </ng-container>
       </ng-container>
 
+      <!-- The bell links to the unread view, so the screen it opens shows exactly
+           what the badge was counting. -->
+      <a mat-icon-button class="nav-bell"
+         *ngIf="canNotifications"
+         [routerLink]="['/notifications']"
+         [queryParams]="{ unread: unreadCount ? 'true' : null }"
+         [routerLinkActive]="['link-active']"
+         (click)="collapse()"
+         [matTooltip]="t('notifications.title')"
+         [attr.aria-label]="unreadCount
+            ? t('notifications.unreadAria', { count: unreadCount })
+            : t('notifications.title')">
+        <mat-icon [matBadge]="unreadCount > 99 ? '99+' : unreadCount"
+                  [matBadgeHidden]="!unreadCount"
+                  matBadgeColor="warn"
+                  matBadgeSize="small">notifications</mat-icon>
+      </a>
+
       <!-- Account menu: the signed-in person's own things, plus the reference
            catalogs (administration, not day-to-day work) in a submenu. -->
       <button mat-button [matMenuTriggerFor]="userMenu" class="nav-user">

@@ -118,6 +118,14 @@ try
         // has real storage (not the NSwag build host or tests).
         RecurringJob.AddOrUpdate<ReservationExpiryJob>(
             "reservation-expiry", job => job.RunAsync(), Cron.Hourly());
+
+        // Look for things worth telling people about — due maintenance and
+        // papers, late hires, upcoming pickups, client reminders. Hourly rather
+        // than daily so a hire that goes late in the morning is not sat on until
+        // tomorrow; every alert is deduplicated by time bucket, so the extra
+        // passes cost a few queries and send nothing twice.
+        RecurringJob.AddOrUpdate<NotificationSweepJob>(
+            "notification-sweep", job => job.RunAsync(), Cron.Hourly());
     }
 
     app.MapRazorPages();

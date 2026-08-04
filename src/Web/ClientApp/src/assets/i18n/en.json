@@ -751,7 +751,8 @@
     "Dashboard": "Dashboard",
     "Chat": "Chat",
     "OnlineReservations": "Online reservations",
-    "OnlinePayment": "Online payment"
+    "OnlinePayment": "Online payment",
+    "Notifications": "Notifications"
   },
   "documentTemplate": {
     "title": "Document layouts",
@@ -844,7 +845,9 @@
     "amountRequired": "The amount must be greater than zero.",
     "paidNow": "Already settled",
     "paidNowHint": "Leave at 0 if the expense has not been paid yet.",
-    "alreadySettled": "Already settled: {{amount}} {{currency}} — use the “Record a settlement” action on the payments & credits screen to change it."
+    "alreadySettled": "Already settled: {{amount}} {{currency}} — use the “Record a settlement” action on the payments & credits screen to change it.",
+    "mileage": "Odometer (km)",
+    "mileageHint": "The reading when the work was done — this is what schedules the next one."
   },
   "credit": {
     "title": "Payments & credits",
@@ -1052,7 +1055,27 @@
     "tabs": {
       "details": "Details",
       "branches": "Branches",
-      "team": "Team"
+      "team": "Team",
+      "notifications": "Notifications"
+    },
+    "notifications": {
+      "intro": "What the agency is warned about, and how far ahead.",
+      "fleet": "Fleet and bookings",
+      "clients": "Reminders to clients",
+      "expenseDueLeadDays": "Warn this many days ahead",
+      "expenseDueLeadDaysHint": "For expense types that recur by month (insurance, inspection…).",
+      "expenseDueLeadKm": "Warn this many km ahead",
+      "expenseDueLeadKmHint": "For expense types that recur by distance (servicing…).",
+      "reservationLeadDays": "Warn about pickups this many days ahead",
+      "reservationLeadDaysHint": "Confirmed reservations starting soon.",
+      "notifyStaffByEmail": "Also email these alerts to staff",
+      "notifyStaffByEmailHint": "They always appear in the app; this adds email.",
+      "notifyClientsByEmail": "Email clients about their bookings",
+      "notifyClientsByEmailHint": "Automatic reminders before a rental starts and before it ends.",
+      "beforeStart": "Days before the start",
+      "beforeEnd": "Days before the end",
+      "zeroIsOff": "0 turns this reminder off.",
+      "lateNoticeNote": "Overdue-return notices are never automatic — you send those from the client screens."
     }
   },
   "branch": {
@@ -1085,5 +1108,45 @@
     "clearPin": "Remove pin",
     "coordinates": "Pin: {{ latitude }}, {{ longitude }}",
     "noPin": "No pin placed."
+  },
+  "lateNotice": {
+    "action": "Remind about the late return",
+    "confirm": "Email {{name}} to tell them their car is overdue?",
+    "sent": "The client has been emailed.",
+    "noEmail": "This client has no email address on file.",
+    "alreadySent": "This client has already been emailed today.",
+    "disabled": "Emailing clients is switched off for this agency.",
+    "failed": "The email could not be sent. Try again in a moment.",
+    "nothingToSend": "This client has nothing overdue."
+  },
+  "notifications": {
+    "title": "Notifications",
+    "markAllRead": "Mark all as read",
+    "markRead": "Mark as read",
+    "onlyUnread": "Unread only",
+    "kind": "Type",
+    "empty": "Nothing to report.",
+    "emptyUnread": "Nothing unread.",
+    "unreadAria": "Notifications, {{count}} unread",
+    "kinds": {
+      "1": "Maintenance and papers",
+      "2": "Late returns",
+      "3": "Upcoming pickups",
+      "4": "Client reminders",
+      "5": "Client reminders",
+      "6": "Late-return notices"
+    },
+    "message": {
+      "carExpenseDueByDate": "{{type}} is due for {{car}} on {{dueDate}} — in {{days}} day(s).",
+      "carExpenseOverdueByDate": "{{type}} was due for {{car}} on {{dueDate}} — {{days}} day(s) ago.",
+      "carExpenseDueByDistance": "{{type}} is due for {{car}} at {{dueKm}} km — {{km}} km to go ({{mileage}} km now).",
+      "carExpenseOverdueByDistance": "{{type}} was due for {{car}} at {{dueKm}} km — {{km}} km past due ({{mileage}} km now).",
+      "rentingOverdue": "{{car}} was due back on {{endDate}} and has not been returned — {{days}} day(s) late. Renter: {{client}}.",
+      "reservationUpcoming": "{{client}} picks up {{car}} on {{startDate}} — in {{days}} day(s).",
+      "clientRentingStartingSoon": "Reminder sent to the client: their rental of {{car}} starts on {{startDate}}.",
+      "clientRentingEndingSoon": "Reminder sent to the client: their rental of {{car}} ends on {{endDate}}.",
+      "clientReservationStartingSoon": "Reminder sent to the client: their booking of {{car}} starts on {{startDate}}.",
+      "clientRentingLateNotice": "Overdue notice sent to the client about {{car}}, due back on {{endDate}}."
+    }
   }
 }

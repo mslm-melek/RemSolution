@@ -43,6 +43,7 @@ import { CreditComponent } from './credit/credit.component';
 import { DashboardComponent } from './dashboard/dashboard.component';
 import { PlatformDashboardComponent } from './platform-dashboard/platform-dashboard.component';
 import { ChatComponent } from './chat/chat.component';
+import { NotificationComponent } from './notification/notification.component';
 import { DocumentTemplateComponent } from './document-template/document-template.component';
 import { DocumentTemplateFormComponent } from './document-template/document-template-form.component';
 import { ProfileComponent } from './profile/profile.component';
@@ -80,6 +81,8 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatStepperModule } from '@angular/material/stepper';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatMenuModule } from '@angular/material/menu';
+// The unread count on the navigation bell is the only badge so far.
+import { MatBadgeModule } from '@angular/material/badge';
 // Recording money from a list row is the app's only modal flow so far (see
 // PaymentDialogComponent); everything else edits on its own page.
 import { MatDialogModule } from '@angular/material/dialog';
@@ -129,6 +132,7 @@ registerLocaleData(localeAr);
     DashboardComponent,
     PlatformDashboardComponent,
     ChatComponent,
+    NotificationComponent,
     DocumentTemplateComponent,
     DocumentTemplateFormComponent,
     ProfileComponent,
@@ -165,6 +169,7 @@ registerLocaleData(localeAr);
     MatTooltipModule,
     MatTabsModule,
     MatCheckboxModule,
+    MatBadgeModule,
     MatRadioModule,
     MatProgressBarModule,
     MatStepperModule,
@@ -207,6 +212,9 @@ registerLocaleData(localeAr);
       { path: 'credit', component: CreditComponent },
       { path: 'dashboard', component: DashboardComponent },
       { path: 'chat', component: ChatComponent },
+      // No route guard: the screen reads the caller's own inbox, and an agency
+      // without the feature never gets the bell that leads here.
+      { path: 'notifications', component: NotificationComponent },
       { path: 'document-template', component: DocumentTemplateComponent },
       { path: 'document-template/new', component: DocumentTemplateFormComponent },
       { path: 'document-template/:id', component: DocumentTemplateFormComponent },

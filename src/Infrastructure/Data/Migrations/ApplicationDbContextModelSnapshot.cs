@@ -335,6 +335,12 @@ namespace RemSolution.Infrastructure.Data.Migrations
                     b.Property<int>("CancellationWindowHours")
                         .HasColumnType("int");
 
+                    b.Property<int>("ClientReminderDaysBeforeEnd")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ClientReminderDaysBeforeStart")
+                        .HasColumnType("int");
+
                     b.Property<string>("CreatedBy")
                         .HasColumnType("nvarchar(max)");
 
@@ -347,7 +353,22 @@ namespace RemSolution.Infrastructure.Data.Migrations
                         .IsUnicode(false)
                         .HasColumnType("varchar(3)");
 
+                    b.Property<int>("ExpenseDueLeadDays")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ExpenseDueLeadKilometers")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("NotifyClientsByEmail")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("NotifyStaffByEmail")
+                        .HasColumnType("bit");
+
                     b.Property<int>("ReservationExpiryHours")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ReservationUpcomingLeadDays")
                         .HasColumnType("int");
 
                     b.Property<string>("UpdatedBy")
@@ -1175,6 +1196,9 @@ namespace RemSolution.Infrastructure.Data.Migrations
                     b.Property<int?>("FactureFileId")
                         .HasColumnType("int");
 
+                    b.Property<int?>("Mileage")
+                        .HasColumnType("int");
+
                     b.Property<string>("UpdatedBy")
                         .HasColumnType("nvarchar(max)");
 
@@ -1426,6 +1450,95 @@ namespace RemSolution.Infrastructure.Data.Migrations
                     b.HasIndex("BrandId");
 
                     b.ToTable("ModelCars");
+                });
+
+            modelBuilder.Entity("RemSolution.Domain.Entities.Notification", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AgencyId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ArgsJson")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<int?>("ClientId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTimeOffset?>("CreatedOn")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("DedupKey")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<DateTime?>("EmailSentAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Kind")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Link")
+                        .HasMaxLength(400)
+                        .HasColumnType("nvarchar(400)");
+
+                    b.Property<string>("MessageKey")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime?>("ReadAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("RecipientEmail")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("RecipientUserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("SentByUserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int?>("SubjectId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("SubjectType")
+                        .HasColumnType("int");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTimeOffset?>("UpdatedOn")
+                        .HasColumnType("datetimeoffset");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ClientId");
+
+                    b.HasIndex("AgencyId", "DedupKey")
+                        .IsUnique();
+
+                    b.HasIndex("AgencyId", "RecipientUserId", "CreatedAt");
+
+                    b.HasIndex("AgencyId", "RecipientUserId", "ReadAt")
+                        .HasFilter("[ReadAt] IS NULL");
+
+                    b.ToTable("Notifications", (string)null);
                 });
 
             modelBuilder.Entity("RemSolution.Domain.Entities.Payment", b =>
@@ -2657,6 +2770,24 @@ namespace RemSolution.Infrastructure.Data.Migrations
                         .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("Brand");
+                });
+
+            modelBuilder.Entity("RemSolution.Domain.Entities.Notification", b =>
+                {
+                    b.HasOne("RemSolution.Domain.Entities.Agency", "Agency")
+                        .WithMany()
+                        .HasForeignKey("AgencyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("RemSolution.Domain.Entities.Client", "Client")
+                        .WithMany()
+                        .HasForeignKey("ClientId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Agency");
+
+                    b.Navigation("Client");
                 });
 
             modelBuilder.Entity("RemSolution.Domain.Entities.Payment", b =>

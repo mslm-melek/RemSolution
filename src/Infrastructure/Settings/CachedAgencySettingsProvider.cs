@@ -32,7 +32,10 @@ public sealed class CachedAgencySettingsProvider : IAgencySettingsProvider
         var snapshot = await _context.AgencySettings
             .Where(s => s.AgencyId == agencyId)
             .Select(s => new AgencySettingsSnapshot(
-                s.CurrencyCode, s.CancellationWindowHours, s.ReservationExpiryHours))
+                s.CurrencyCode, s.CancellationWindowHours, s.ReservationExpiryHours,
+                s.ExpenseDueLeadDays, s.ExpenseDueLeadKilometers, s.ReservationUpcomingLeadDays,
+                s.NotifyStaffByEmail, s.NotifyClientsByEmail,
+                s.ClientReminderDaysBeforeStart, s.ClientReminderDaysBeforeEnd))
             .FirstOrDefaultAsync(cancellationToken);
 
         if (snapshot is null)

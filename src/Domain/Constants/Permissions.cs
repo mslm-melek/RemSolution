@@ -67,6 +67,12 @@ public abstract class Permissions
     // review threads without speaking for the agency.
     public const string ChatSend = "Chat.Send";
 
+    // Writing to a client by hand — the "you are late" notice sent from the
+    // client screens. Reading one's OWN notifications needs no permission: an
+    // inbox is not a module, and a user who can be told something can read it.
+    // This grant is only about speaking to a customer in the agency's name.
+    public const string NotificationSend = "Notification.Send";
+
     /// <summary>Every known permission — drives policy registration.</summary>
     public static readonly string[] All =
     {
@@ -83,6 +89,7 @@ public abstract class Permissions
         CreditRead,
         DashboardView,
         ChatView, ChatSend,
+        NotificationSend,
     };
 
 }

@@ -9,6 +9,15 @@
     </a>
   </div>
 
+  <!-- What the last late notice did. An outcome, not an error: "no email on file"
+       and "already sent today" both belong here. -->
+  <div *ngIf="noticeMessage" class="info-banner">
+    <mat-icon>outgoing_mail</mat-icon> {{ noticeMessage }}
+    <button mat-icon-button (click)="noticeMessage = ''" [attr.aria-label]="t('common.clear')">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
   <!-- Search -->
   <div class="search-row">
     <mat-form-field appearance="outline" class="search-input">
@@ -132,6 +141,13 @@
            [matTooltip]="t('client.rentTo')" [attr.aria-label]="t('client.rentTo')">
           <mat-icon>vpn_key</mat-icon>
         </a>
+        <!-- Only where there is something to write about: a client with every car
+             back has nothing to be reminded of (see ClientDto.OverdueRentingCount). -->
+        <button *ngIf="canRemind && isLate(client)" mat-icon-button color="warn"
+                (click)="remindLate(client)"
+                [matTooltip]="t('lateNotice.action')" [attr.aria-label]="t('lateNotice.action')">
+          <mat-icon>outgoing_mail</mat-icon>
+        </button>
         <a mat-icon-button [routerLink]="['/client', client.id, 'edit']"
            [matTooltip]="t('common.edit')" [attr.aria-label]="t('common.edit')">
           <mat-icon>edit</mat-icon>

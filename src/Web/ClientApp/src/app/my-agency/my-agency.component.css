@@ -48,6 +48,21 @@ app-map-picker {
   color: var(--muted);
 }
 
+/* Explanatory text on the notifications tab. The hint sits under a checkbox
+   rather than inside a form field, so it is indented to line up with the label
+   instead of with the box. */
+.settings-note {
+  margin: 0;
+  color: var(--ink-2);
+}
+
+.settings-hint {
+  margin: 0 0 var(--gap-2);
+  padding-inline-start: 34px;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
 /* The team screen is a page in its own right (it still owns the /team route's
    old job), so inside a tab its card chrome is one border too many. Only the
    chrome is dropped — the shared `main .page .header-row` and table rules still

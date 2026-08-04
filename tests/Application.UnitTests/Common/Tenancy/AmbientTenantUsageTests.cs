@@ -19,6 +19,10 @@ public class AmbientTenantUsageTests
     {
         Normalize("Infrastructure/Imaging/CarImageProcessingJob.cs"),
         Normalize("Infrastructure/Jobs/ReservationExpiryJob.cs"),
+        // Same shape as the expiry sweep: it has to look at every agency's fleet
+        // and bookings, and does it one tenant at a time under a push rather than
+        // by bypassing the query filter.
+        Normalize("Infrastructure/Jobs/NotificationSweepJob.cs"),
         // The demo seeder writes each sample agency's data in turn, so it acts
         // as every tenant by design.
         Normalize("Infrastructure/Data/DemoDataSeeder.cs"),

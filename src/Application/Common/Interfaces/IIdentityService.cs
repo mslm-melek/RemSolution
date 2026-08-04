@@ -63,6 +63,14 @@ public interface IIdentityService
     Task<Result> SetPreferredLanguageAsync(string userId, string language, CancellationToken cancellationToken);
 
     /// <summary>
+    /// The language a user has chosen, or null if they never did (or no such
+    /// user). Read when composing a message for somebody who is not the caller —
+    /// a client reminder is written in the customer's language, not the language
+    /// of the staff member who triggered it.
+    /// </summary>
+    Task<string?> GetPreferredLanguageAsync(string userId, CancellationToken cancellationToken);
+
+    /// <summary>
     /// Stores the home-screen tiles the user pinned, in their chosen order (keys
     /// from <see cref="Domain.Constants.HomeWidgets"/>). An empty list is stored
     /// as a deliberate "no tiles" rather than as "never chosen".

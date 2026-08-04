@@ -214,6 +214,15 @@ public class IdentityService : IIdentityService
         return (await _userManager.UpdateAsync(user)).ToApplicationResult();
     }
 
+    public async Task<string?> GetPreferredLanguageAsync(string userId, CancellationToken cancellationToken)
+    {
+        // A missing user is null, not an error: the caller is composing a message
+        // and a language it cannot resolve simply falls back to the default.
+        var user = await _userManager.FindByIdAsync(userId);
+
+        return user?.PreferredLanguage;
+    }
+
     public async Task<Result> SetHomeWidgetsAsync(
         string userId, IReadOnlyCollection<string> widgets, CancellationToken cancellationToken)
     {

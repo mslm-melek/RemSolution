@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
 import { filter } from 'rxjs/operators';
 import { AuthService } from '../shared/auth.service';
+import { NotificationBadgeService } from '../shared/notification-badge.service';
 import { ImpersonationService, ImpersonatedAgency } from '../shared/impersonation.service';
 import { LanguageService } from '../shared/language.service';
 import { AppLanguage } from '../shared/language';
@@ -51,6 +52,12 @@ export class NavMenuComponent implements OnInit {
   // they hang off the user menu instead of taking a slot in the bar.
   configLinks: NavLink[] = [];
 
+  // The bell. Shown on the agency's own feature alone — reading one's own inbox
+  // needs no permission (see Permissions.NotificationSend) — and never to a
+  // customer, who has no staff alerts. The count is polled by the badge service.
+  canNotifications = false;
+  unreadCount = 0;
+
   // Group dropdowns cannot use routerLinkActive (the trigger is a button, not a
   // link), so the active group is derived from the current URL.
   private currentUrl = '/';
@@ -61,6 +68,7 @@ export class NavMenuComponent implements OnInit {
     private auth: AuthService,
     private impersonation: ImpersonationService,
     private language: LanguageService,
+    private badge: NotificationBadgeService,
     private router: Router
   ) {
     this.languages = this.language.available;
@@ -83,6 +91,8 @@ export class NavMenuComponent implements OnInit {
   }
 
   ngOnInit() {
+    this.badge.unreadCount$.subscribe(count => this.unreadCount = count);
+
     this.currentUrl = this.router.url;
     this.router.events
       .pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd))
@@ -111,6 +121,10 @@ export class NavMenuComponent implements OnInit {
       // since one screen manages both kinds.
       const canDocumentTemplates =
         can('Contracts', 'Contract.Read') || can('Factures', 'Facture.Read');
+
+      // The bell, on the feature alone — the inbox carries no read permission.
+      this.canNotifications =
+        !this.isCustomer && (user.features?.includes('Notifications') ?? false);
 
       this.navEntries = this.buildEntries(can);
       this.configLinks = this.buildConfigLinks(can, canDocumentTemplates);

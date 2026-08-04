@@ -56,6 +56,17 @@ namespace RemSolution.Application.Features.Client.DTOs
         /// <summary>Hires not yet finished (upcoming or ongoing) — what is still running.</summary>
         public int OpenRentingCount { get; init; }
 
+        /// <summary>
+        /// Hires still out past their agreed end date. This is what the "remind
+        /// this client they are late" action is offered on, so the list only shows
+        /// it where there is something to write about.
+        /// <para>
+        /// Only the renter's own seat counts, not hires they were second driver
+        /// on: the letter goes to whoever signed the contract.
+        /// </para>
+        /// </summary>
+        public int OverdueRentingCount { get; init; }
+
         public class Mapping : IRegister
         {
             public void Register(TypeAdapterConfig config)
@@ -84,6 +95,16 @@ namespace RemSolution.Application.Features.Client.DTOs
                                       ? 0
                                       : src.SecondRentings.Count(r => r.RentingState == RentingState.NotYet
                                                                      || r.RentingState == RentingState.InProgress)))
+                      // DateTime.UtcNow rather than an injected TimeProvider: a
+                      // Mapster projection has nothing injected into it, and EF
+                      // translates this to GETUTCDATE() so the comparison happens
+                      // in SQL alongside the rest of the count.
+                      .Map(dest => dest.OverdueRentingCount,
+                           src => src.Rentings == null
+                                      ? 0
+                                      : src.Rentings.Count(r => r.RentingState == RentingState.InProgress
+                                                                && r.EndDate != null
+                                                                && r.EndDate < DateTime.UtcNow))
                       .Map(dest => dest.HasPortalAccount, src => src.MarketplaceUserId != null)
                       // Document URLs now live on StoredFile records; surface the
                       // plain URL so the API contract is unchanged for readers.

@@ -48,6 +48,10 @@ export class ExpenseFormComponent implements OnInit {
       // Only offered when booking a new expense; an existing one is settled
       // through the finance screen's settle action.
       paidAmount: [0, Validators.min(0)],
+      // The odometer when the work was done. Prefilled from the car on selection
+      // below: it is what a distance-based recurrence counts from, and it is only
+      // right on the day, so it cannot be reconstructed later.
+      mileage: [null, Validators.min(0)],
       description: ['', Validators.maxLength(1000)]
     });
   }
@@ -99,10 +103,27 @@ export class ExpenseFormComponent implements OnInit {
         ? new Date(dto.expenseDate).toISOString().substring(0, 10)
         : this.today(),
       amount: dto.expenseAmount?.amount ?? null,
+      mileage: dto.mileage ?? null,
       description: dto.description ?? ''
     });
 
     this.form.get('paidAmount')!.disable();
+  }
+
+  /**
+   * Offers the car's last known reading as the starting point, the way the
+   * booking wizard prefills a pickup reading. Only on a new expense and only into
+   * an empty box: on an edit the stored figure is the record of what the odometer
+   * said that day, and overwriting it with today's would be rewriting history.
+   */
+  onCarSelected() {
+    if (this.isEdit || this.form.value.mileage !== null) return;
+
+    const car = this.cars.find(candidate => candidate.id === this.form.value.carId);
+
+    if (car?.mileage != null) {
+      this.form.patchValue({ mileage: car.mileage });
+    }
   }
 
   onFactureSelected(input: HTMLInputElement) {
@@ -147,6 +168,7 @@ export class ExpenseFormComponent implements OnInit {
         expenseTypeId: v.expenseTypeId,
         expenseDate,
         amount: v.amount,
+        mileage: v.mileage ?? undefined,
         description: v.description || undefined
       });
       this.client.updateExpense(this.expenseId!, command).subscribe({
@@ -160,6 +182,7 @@ export class ExpenseFormComponent implements OnInit {
         expenseDate,
         amount: v.amount,
         paidAmount: v.paidAmount || 0,
+        mileage: v.mileage ?? undefined,
         description: v.description || undefined
       });
       this.client.createExpense(command).subscribe({

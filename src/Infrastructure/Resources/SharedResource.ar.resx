@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <root>
   <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
     <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
@@ -828,5 +828,68 @@
   </data>
   <data name="Error.PasswordChangeRequired.Detail" xml:space="preserve">
     <value>لا يزال حسابك يستخدم كلمة المرور المؤقتة التي أُرسلت إليك بالبريد الإلكتروني. اختر كلمة مرور جديدة للمتابعة.</value>
+  </data>
+  <data name="Notification.carExpenseDueByDate.Subject" xml:space="preserve">
+    <value>{{type}} مستحقة للسيارة {{car}}</value>
+  </data>
+  <data name="Notification.carExpenseDueByDate.Body" xml:space="preserve">
+    <value>{{type}} تستحق للسيارة {{car}} في {{dueDate}}، أي بعد {{days}} يوم.</value>
+  </data>
+  <data name="Notification.carExpenseOverdueByDate.Subject" xml:space="preserve">
+    <value>{{type}} متأخرة للسيارة {{car}}</value>
+  </data>
+  <data name="Notification.carExpenseOverdueByDate.Body" xml:space="preserve">
+    <value>{{type}} كانت تستحق للسيارة {{car}} في {{dueDate}}، أي منذ {{days}} يوم.</value>
+  </data>
+  <data name="Notification.carExpenseDueByDistance.Subject" xml:space="preserve">
+    <value>{{type}} مستحقة للسيارة {{car}}</value>
+  </data>
+  <data name="Notification.carExpenseDueByDistance.Body" xml:space="preserve">
+    <value>{{type}} تستحق للسيارة {{car}} عند {{dueKm}} كم. عدّاد المسافة يشير إلى {{mileage}} كم — بقي {{km}} كم.</value>
+  </data>
+  <data name="Notification.carExpenseOverdueByDistance.Subject" xml:space="preserve">
+    <value>{{type}} متأخرة للسيارة {{car}}</value>
+  </data>
+  <data name="Notification.carExpenseOverdueByDistance.Body" xml:space="preserve">
+    <value>{{type}} كانت تستحق للسيارة {{car}} عند {{dueKm}} كم. عدّاد المسافة يشير إلى {{mileage}} كم — بتجاوز {{km}} كم.</value>
+  </data>
+  <data name="Notification.rentingOverdue.Subject" xml:space="preserve">
+    <value>السيارة {{car}} لم تُرجَع</value>
+  </data>
+  <data name="Notification.rentingOverdue.Body" xml:space="preserve">
+    <value>كان من المفترض إرجاع {{car}} في {{endDate}} ولم تُرجَع — بتأخير {{days}} يوم. المستأجر: {{client}}.</value>
+  </data>
+  <data name="Notification.reservationUpcoming.Subject" xml:space="preserve">
+    <value>تسليم قريب: {{car}}</value>
+  </data>
+  <data name="Notification.reservationUpcoming.Body" xml:space="preserve">
+    <value>{{client}} سيتسلّم {{car}} في {{startDate}}، أي بعد {{days}} يوم.</value>
+  </data>
+  <data name="Notification.clientRentingStartingSoon.Subject" xml:space="preserve">
+    <value>تبدأ فترة الإيجار في {{startDate}}</value>
+  </data>
+  <data name="Notification.clientRentingStartingSoon.Body" xml:space="preserve">
+    <value>نذكّركم بأن إيجار {{car}} يبدأ في {{startDate}}، أي بعد {{days}} يوم.
+يُرجى إحضار رخصة السياقة وبطاقة الهوية عند تسلّم السيارة.</value>
+  </data>
+  <data name="Notification.clientRentingEndingSoon.Subject" xml:space="preserve">
+    <value>تنتهي فترة الإيجار في {{endDate}}</value>
+  </data>
+  <data name="Notification.clientRentingEndingSoon.Body" xml:space="preserve">
+    <value>نذكّركم بأن إيجار {{car}} ينتهي في {{endDate}}، أي بعد {{days}} يوم.
+يُرجى إرجاع السيارة في الوقت المحدد لتجنّب أي مصاريف إضافية.</value>
+  </data>
+  <data name="Notification.clientReservationStartingSoon.Subject" xml:space="preserve">
+    <value>يبدأ حجزكم في {{startDate}}</value>
+  </data>
+  <data name="Notification.clientReservationStartingSoon.Body" xml:space="preserve">
+    <value>نذكّركم بأن حجز {{car}} يبدأ في {{startDate}}، أي بعد {{days}} يوم.</value>
+  </data>
+  <data name="Notification.clientRentingLateNotice.Subject" xml:space="preserve">
+    <value>تأخّر في إرجاع السيارة: {{car}}</value>
+  </data>
+  <data name="Notification.clientRentingLateNotice.Body" xml:space="preserve">
+    <value>تُشير سجلاتنا إلى أن {{car}} كان من المفترض إرجاعها في {{endDate}}، أي منذ {{days}} يوم، ولم تُرجَع.
+يُرجى إرجاع السيارة أو الاتصال بنا في أقرب وقت ممكن.</value>
   </data>
 </root>

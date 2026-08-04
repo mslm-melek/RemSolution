@@ -29,6 +29,9 @@ public static class FeatureCatalog
             [FeatureFlags.Credits] = new[] { Permissions.CreditRead },
             [FeatureFlags.Dashboard] = new[] { Permissions.DashboardView },
             [FeatureFlags.Chat] = new[] { Permissions.ChatView, Permissions.ChatSend },
+            // Only the manual client notice is a grant; the inbox itself is
+            // gated by the feature alone (see Permissions.NotificationSend).
+            [FeatureFlags.Notifications] = new[] { Permissions.NotificationSend },
             [FeatureFlags.OnlineReservations] = Array.Empty<string>(),
             [FeatureFlags.OnlinePayment] = Array.Empty<string>(),
         };

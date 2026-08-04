@@ -24,6 +24,9 @@ public abstract class FeatureFlags
     public const string Credits = nameof(Credits);
     public const string Dashboard = nameof(Dashboard);
     public const string Chat = nameof(Chat);
+    // Alerts the agency about its own fleet and bookings (due maintenance and
+    // papers, late hires, upcoming holds) and the reminders it mails to clients.
+    public const string Notifications = nameof(Notifications);
     public const string OnlineReservations = nameof(OnlineReservations);
     public const string OnlinePayment = nameof(OnlinePayment);
 
@@ -31,7 +34,7 @@ public abstract class FeatureFlags
     public static readonly string[] All =
     {
         Cars, Clients, Branches, Rentings, Reservations, Expenses, ExtraServices,
-        Payments, Contracts, Factures, Credits, Dashboard, Chat,
+        Payments, Contracts, Factures, Credits, Dashboard, Chat, Notifications,
         OnlineReservations, OnlinePayment,
     };
 }

@@ -1,0 +1,69 @@
+<div class="page notification-card" *transloco="let t">
+  <div class="header-row">
+    <h2 class="title">{{ t('notifications.title') }}</h2>
+    <button mat-stroked-button (click)="markAllRead()" [disabled]="loading || !totalCount">
+      <mat-icon>done_all</mat-icon> {{ t('notifications.markAllRead') }}
+    </button>
+  </div>
+
+  <div *ngIf="errorMessage" class="error-banner">
+    <mat-icon>error_outline</mat-icon> {{ errorMessage }}
+  </div>
+
+  <div class="filter-row">
+    <mat-checkbox [(ngModel)]="onlyUnread" (change)="onFilter()">
+      {{ t('notifications.onlyUnread') }}
+    </mat-checkbox>
+
+    <mat-form-field appearance="outline">
+      <mat-label>{{ t('notifications.kind') }}</mat-label>
+      <mat-select [(ngModel)]="kind" (selectionChange)="onFilter()">
+        <mat-option [value]="null">{{ t('common.all') }}</mat-option>
+        <mat-option *ngFor="let option of kinds" [value]="option">
+          {{ t('notifications.kinds.' + option) }}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+  </div>
+
+  <!-- A list, not a table: a notification is one sentence, and every row has the
+       same three parts. -->
+  <ul class="notification-list">
+    <li *ngFor="let notification of notifications"
+        class="notification-row"
+        [ngClass]="look(notification).severity"
+        [class.unread]="!notification.isRead">
+      <mat-icon class="row-icon">{{ look(notification).icon }}</mat-icon>
+
+      <div class="row-body">
+        <!-- The whole body is the click target when there is somewhere to go, so
+             the sentence itself opens the booking or the car. -->
+        <button type="button" class="row-text" *ngIf="notification.link" (click)="open(notification)">
+          {{ text(notification) }}
+        </button>
+        <span class="row-text plain" *ngIf="!notification.link">{{ text(notification) }}</span>
+
+        <span class="row-meta">{{ notification.createdAt | date:'short' }}</span>
+      </div>
+
+      <button mat-icon-button class="row-read"
+              *ngIf="!notification.isRead"
+              (click)="markOneRead(notification)"
+              [matTooltip]="t('notifications.markRead')"
+              [attr.aria-label]="t('notifications.markRead')">
+        <mat-icon>done</mat-icon>
+      </button>
+    </li>
+
+    <li class="empty-row" *ngIf="!loading && !notifications.length">
+      {{ onlyUnread ? t('notifications.emptyUnread') : t('notifications.empty') }}
+    </li>
+  </ul>
+
+  <mat-paginator [length]="totalCount"
+                 [pageSize]="pageSize"
+                 [pageIndex]="pageIndex"
+                 [pageSizeOptions]="[20, 50, 100]"
+                 (page)="onPage($event)">
+  </mat-paginator>
+</div>

@@ -4678,6 +4678,153 @@
         }
       }
     },
+    "/api/Notifications": {
+      "get": {
+        "tags": [
+          "Notifications"
+        ],
+        "operationId": "GetMine",
+        "parameters": [
+          {
+            "name": "PageNumber",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "PageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 2
+          },
+          {
+            "name": "OnlyUnread",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            },
+            "x-position": 3
+          },
+          {
+            "name": "Kind",
+            "in": "query",
+            "schema": {
+              "nullable": true,
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/NotificationKind"
+                }
+              ]
+            },
+            "x-position": 4
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedListOfNotificationDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Notifications/unread-count": {
+      "get": {
+        "tags": [
+          "Notifications"
+        ],
+        "operationId": "GetUnreadCount",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Notifications/read": {
+      "post": {
+        "tags": [
+          "Notifications"
+        ],
+        "operationId": "MarkNotificationsRead",
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MarkNotificationsReadCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Notifications/client-late-notice": {
+      "post": {
+        "tags": [
+          "Notifications"
+        ],
+        "operationId": "SendClientLateNotice",
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SendClientLateNoticeCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LateNoticeResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/Payments": {
       "get": {
         "tags": [
@@ -6496,6 +6643,32 @@
           "reservationExpiryHours": {
             "type": "integer",
             "format": "int32"
+          },
+          "expenseDueLeadDays": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "expenseDueLeadKilometers": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "reservationUpcomingLeadDays": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "notifyStaffByEmail": {
+            "type": "boolean"
+          },
+          "notifyClientsByEmail": {
+            "type": "boolean"
+          },
+          "clientReminderDaysBeforeStart": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "clientReminderDaysBeforeEnd": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },
@@ -6542,6 +6715,32 @@
             "format": "int32"
           },
           "reservationExpiryHours": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "expenseDueLeadDays": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "expenseDueLeadKilometers": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "reservationUpcomingLeadDays": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "notifyStaffByEmail": {
+            "type": "boolean"
+          },
+          "notifyClientsByEmail": {
+            "type": "boolean"
+          },
+          "clientReminderDaysBeforeStart": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "clientReminderDaysBeforeEnd": {
             "type": "integer",
             "format": "int32"
           }
@@ -7816,6 +8015,10 @@
           "openRentingCount": {
             "type": "integer",
             "format": "int32"
+          },
+          "overdueRentingCount": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },
@@ -9029,6 +9232,11 @@
               }
             ]
           },
+          "mileage": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
           "description": {
             "type": "string",
             "nullable": true
@@ -9067,6 +9275,11 @@
           "paidAmount": {
             "type": "number",
             "format": "decimal"
+          },
+          "mileage": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
           },
           "description": {
             "type": "string",
@@ -9111,6 +9324,11 @@
           "amount": {
             "type": "number",
             "format": "decimal"
+          },
+          "mileage": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
           },
           "description": {
             "type": "string",
@@ -10123,6 +10341,181 @@
             "type": "string"
           },
           "brandId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          }
+        }
+      },
+      "PaginatedListOfNotificationDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NotificationDto"
+            }
+          },
+          "pageNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "hasPreviousPage": {
+            "type": "boolean"
+          },
+          "hasNextPage": {
+            "type": "boolean"
+          }
+        }
+      },
+      "NotificationDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/NotificationKind"
+          },
+          "messageKey": {
+            "type": "string"
+          },
+          "args": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "subjectType": {
+            "$ref": "#/components/schemas/NotificationSubject"
+          },
+          "subjectId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "link": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "readAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "isRead": {
+            "type": "boolean"
+          }
+        }
+      },
+      "NotificationKind": {
+        "type": "integer",
+        "description": "",
+        "x-enumNames": [
+          "CarExpenseDue",
+          "RentingOverdue",
+          "ReservationUpcoming",
+          "RentingStartingSoon",
+          "RentingEndingSoon",
+          "RentingLateNotice"
+        ],
+        "enum": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ]
+      },
+      "NotificationSubject": {
+        "type": "integer",
+        "description": "",
+        "x-enumNames": [
+          "Car",
+          "Renting",
+          "Reservation",
+          "Client"
+        ],
+        "enum": [
+          1,
+          2,
+          3,
+          4
+        ]
+      },
+      "MarkNotificationsReadCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "ids": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        }
+      },
+      "LateNoticeResult": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "outcome": {
+            "$ref": "#/components/schemas/ClientNotificationOutcome"
+          },
+          "rentingId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          }
+        }
+      },
+      "ClientNotificationOutcome": {
+        "type": "integer",
+        "description": "",
+        "x-enumNames": [
+          "Sent",
+          "NoEmail",
+          "AlreadySent",
+          "Disabled",
+          "Failed",
+          "NothingToSend"
+        ],
+        "enum": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "SendClientLateNoticeCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "clientId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "rentingId": {
             "type": "integer",
             "format": "int32",
             "nullable": true

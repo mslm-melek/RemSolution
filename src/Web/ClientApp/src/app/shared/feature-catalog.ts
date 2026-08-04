@@ -25,6 +25,7 @@ export const FEATURES: FeatureMeta[] = [
   'Credits',
   'Dashboard',
   'Chat',
+  'Notifications',
   'OnlineReservations',
   'OnlinePayment'
 ].map(key => ({ key, labelKey: `features.${key}` }));
@@ -44,6 +45,8 @@ export const PERMISSIONS_BY_FEATURE: Record<string, string[]> = {
   Credits: ['Credit.Read'],
   Dashboard: ['Dashboard.View'],
   Chat: ['Chat.View', 'Chat.Send'],
+  // Reading one's own inbox needs no grant; only writing to a customer does.
+  Notifications: ['Notification.Send'],
   OnlineReservations: [],
   OnlinePayment: []
 };

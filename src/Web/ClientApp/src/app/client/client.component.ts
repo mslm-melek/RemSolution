@@ -7,6 +7,7 @@ import {
   FilterChip, applyListFilters, boolParam, dateParam, rangeText, withoutParams
 } from '../shared/list-filters';
 import { AuthService } from '../shared/auth.service';
+import { LateNoticeService } from '../shared/late-notice.service';
 import { TranslocoService } from '@jsverse/transloco';
 
 @Component({
@@ -30,6 +31,13 @@ export class ClientComponent implements OnInit {
   canSeeCredit = false;
   canSeeRentings = false;
   canRent = false;
+  // Writing to a customer in the agency's name is its own grant, so the action is
+  // offered only to someone who holds it.
+  canRemind = false;
+
+  // What the last late notice did, shown as a banner. Held here rather than in an
+  // alert() because "already sent today" is information, not an interruption.
+  noticeMessage = '';
 
   totalCount = 0;
   pageNumber = 1;
@@ -51,6 +59,7 @@ export class ClientComponent implements OnInit {
   constructor(
     private client: ClientsClient,
     private creditsClient: CreditsClient,
+    private lateNotice: LateNoticeService,
     private auth: AuthService,
     private route: ActivatedRoute,
     private router: Router) { }
@@ -63,6 +72,7 @@ export class ClientComponent implements OnInit {
       this.canSeeCredit = AuthService.canAccessModule(user, 'Credits', 'Credit.Read');
       this.canSeeRentings = AuthService.canAccessModule(user, 'Rentings', 'Renting.Read');
       this.canRent = AuthService.canAccessModule(user, 'Rentings', 'Renting.Create');
+      this.canRemind = AuthService.canAccessModule(user, 'Notifications', 'Notification.Send');
 
       if (this.canSeeCredit) {
         this.displayedColumns = [
@@ -176,6 +186,23 @@ export class ClientComponent implements OnInit {
     this.sortDirection = sort.direction || 'asc';
     this.pageNumber = 1;
     this.load();
+  }
+
+  /** Whether this client has a car out past its return date. */
+  isLate(client: ClientDto): boolean {
+    return (client.overdueRentingCount ?? 0) > 0;
+  }
+
+  // No renting id: the command writes about the client's most overdue hire, which
+  // from a list row is the only sensible choice (see SendClientLateNoticeCommand).
+  remindLate(client: ClientDto) {
+    if (!client.id) return;
+
+    const name = `${client.firstName} ${client.lastName}`.trim();
+
+    this.lateNotice.confirmAndSend(name, client.id).subscribe(message => {
+      if (message) this.noticeMessage = message;
+    });
   }
 
   deleteClient(client: ClientDto) {

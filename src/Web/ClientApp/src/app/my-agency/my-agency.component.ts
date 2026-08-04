@@ -52,6 +52,10 @@ export class MyAgencyComponent implements OnInit {
   // when it is on — the API would refuse the calls behind it otherwise.
   canBranches = false;
 
+  // Same for notifications. Feature only: these are the agency's settings, which
+  // an administrator holds by role.
+  canNotifications = false;
+
   private rowVersion?: string;
 
   constructor(
@@ -67,7 +71,18 @@ export class MyAgencyComponent implements OnInit {
       address: ['', Validators.maxLength(500)],
       countryId: [null, Validators.required],
       cancellationWindowHours: [24, [Validators.required, Validators.min(0)]],
-      reservationExpiryHours: [48, [Validators.required, Validators.min(1)]]
+      reservationExpiryHours: [48, [Validators.required, Validators.min(1)]],
+      // Notification settings. In the same form as the rest, because they are
+      // saved by the same command — one Save button for the agency's settings.
+      // Bounds mirror UpdateMyAgencyCommandValidator so the field says what the
+      // API would refuse.
+      expenseDueLeadDays: [14, [Validators.required, Validators.min(0), Validators.max(365)]],
+      expenseDueLeadKilometers: [1000, [Validators.required, Validators.min(0), Validators.max(100000)]],
+      reservationUpcomingLeadDays: [3, [Validators.required, Validators.min(0), Validators.max(365)]],
+      notifyStaffByEmail: [true],
+      notifyClientsByEmail: [false],
+      clientReminderDaysBeforeStart: [2, [Validators.required, Validators.min(0), Validators.max(90)]],
+      clientReminderDaysBeforeEnd: [1, [Validators.required, Validators.min(0), Validators.max(90)]]
     });
   }
 
@@ -79,6 +94,7 @@ export class MyAgencyComponent implements OnInit {
 
     this.auth.currentUser$.subscribe(user => {
       this.canBranches = AuthService.canAccessModule(user, 'Branches', 'Branch.Read');
+      this.canNotifications = user.features?.includes('Notifications') ?? false;
 
       if (this.canBranches) this.loadBranches();
     });
@@ -101,7 +117,16 @@ export class MyAgencyComponent implements OnInit {
       address: dto.address ?? '',
       countryId: dto.countryId ?? null,
       cancellationWindowHours: dto.cancellationWindowHours ?? 24,
-      reservationExpiryHours: dto.reservationExpiryHours ?? 48
+      reservationExpiryHours: dto.reservationExpiryHours ?? 48,
+      // ?? rather than ||: zero is a real choice here ("do not warn me" / "that
+      // reminder off"), so it must not fall back to the default.
+      expenseDueLeadDays: dto.expenseDueLeadDays ?? 14,
+      expenseDueLeadKilometers: dto.expenseDueLeadKilometers ?? 1000,
+      reservationUpcomingLeadDays: dto.reservationUpcomingLeadDays ?? 3,
+      notifyStaffByEmail: dto.notifyStaffByEmail ?? true,
+      notifyClientsByEmail: dto.notifyClientsByEmail ?? false,
+      clientReminderDaysBeforeStart: dto.clientReminderDaysBeforeStart ?? 2,
+      clientReminderDaysBeforeEnd: dto.clientReminderDaysBeforeEnd ?? 1
     });
 
     this.currency = dto.currency ?? '';
@@ -156,7 +181,14 @@ export class MyAgencyComponent implements OnInit {
       longitude: this.longitude ?? undefined,
       countryId: v.countryId,
       cancellationWindowHours: v.cancellationWindowHours,
-      reservationExpiryHours: v.reservationExpiryHours
+      reservationExpiryHours: v.reservationExpiryHours,
+      expenseDueLeadDays: v.expenseDueLeadDays,
+      expenseDueLeadKilometers: v.expenseDueLeadKilometers,
+      reservationUpcomingLeadDays: v.reservationUpcomingLeadDays,
+      notifyStaffByEmail: v.notifyStaffByEmail,
+      notifyClientsByEmail: v.notifyClientsByEmail,
+      clientReminderDaysBeforeStart: v.clientReminderDaysBeforeStart,
+      clientReminderDaysBeforeEnd: v.clientReminderDaysBeforeEnd
     });
 
     this.client.updateMyAgency(command).subscribe({

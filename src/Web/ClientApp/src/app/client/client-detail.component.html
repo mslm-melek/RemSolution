@@ -20,6 +20,10 @@
       <button *ngIf="canPay" mat-button (click)="pay()">
         <mat-icon>payments</mat-icon> {{ t('payment.pay') }}
       </button>
+      <!-- Only where there is something to write about (see ClientDto.OverdueRentingCount). -->
+      <button *ngIf="canRemind && isLate" mat-button color="warn" (click)="remindLate()">
+        <mat-icon>outgoing_mail</mat-icon> {{ t('lateNotice.action') }}
+      </button>
       <a mat-button [routerLink]="['/client', clientId, 'edit']">
         <mat-icon>edit</mat-icon> {{ t('common.edit') }}
       </a>
@@ -30,6 +34,13 @@
   </div>
 
   <div *ngIf="errorMessage" class="error-banner">{{ errorMessage }}</div>
+
+  <div *ngIf="noticeMessage" class="info-banner">
+    <mat-icon>outgoing_mail</mat-icon> {{ noticeMessage }}
+    <button mat-icon-button (click)="noticeMessage = ''" [attr.aria-label]="t('common.clear')">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
 
   <!-- The figures the counter is asked for: how much business this client has
        done, and where they stand. -->

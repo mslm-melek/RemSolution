@@ -1,0 +1,109 @@
+/* Surface, header, banner and filter row come from styles.scss; what is local is
+   the row itself, which is a list item rather than a table cell. */
+.notification-card {
+  max-width: 900px;
+}
+
+.notification-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.notification-row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--gap-3);
+  padding: var(--gap-3) var(--gap-4);
+  border-bottom: 1px solid var(--line);
+}
+
+.notification-row:last-of-type {
+  border-bottom: none;
+}
+
+/* Unread is a tinted stripe rather than bold text: the message stays as legible
+   after it is read as before, which matters on a screen people re-read. */
+.notification-row.unread {
+  background: var(--surface-2);
+  border-inline-start: 3px solid var(--line-strong);
+}
+
+.notification-row.unread.danger {
+  border-inline-start-color: var(--danger);
+}
+
+.notification-row.unread.warn {
+  border-inline-start-color: var(--warn);
+}
+
+.notification-row.unread.info {
+  border-inline-start-color: var(--info);
+}
+
+/* Read rows keep the indent so the list does not step in and out as it is read. */
+.notification-row:not(.unread) {
+  border-inline-start: 3px solid transparent;
+}
+
+.row-icon {
+  flex: 0 0 auto;
+  margin-top: 2px;
+}
+
+.notification-row.danger .row-icon {
+  color: var(--danger);
+}
+
+.notification-row.warn .row-icon {
+  color: var(--warn);
+}
+
+.notification-row.info .row-icon {
+  color: var(--info);
+}
+
+.row-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-1);
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* A button so the sentence is keyboard-reachable and announced as actionable,
+   stripped back to reading as text. */
+.row-text {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: var(--ink);
+  text-align: start;
+  cursor: pointer;
+}
+
+.row-text:hover,
+.row-text:focus-visible {
+  color: var(--brand-700);
+  text-decoration: underline;
+}
+
+.row-text.plain {
+  cursor: default;
+}
+
+.row-meta {
+  color: var(--muted);
+  font-size: 0.8125rem;
+}
+
+.row-read {
+  flex: 0 0 auto;
+}
+
+.empty-row {
+  padding: var(--gap-4);
+  color: var(--muted);
+  text-align: center;
+}

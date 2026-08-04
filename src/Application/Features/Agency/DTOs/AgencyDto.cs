@@ -19,6 +19,14 @@ namespace RemSolution.Application.Features.Agency.DTOs
         public string Currency { get; init; } = string.Empty;
         public int CancellationWindowHours { get; init; }
         public int ReservationExpiryHours { get; init; }
+        // Notification settings, from the same row (see AgencySettings).
+        public int ExpenseDueLeadDays { get; init; }
+        public int ExpenseDueLeadKilometers { get; init; }
+        public int ReservationUpcomingLeadDays { get; init; }
+        public bool NotifyStaffByEmail { get; init; }
+        public bool NotifyClientsByEmail { get; init; }
+        public int ClientReminderDaysBeforeStart { get; init; }
+        public int ClientReminderDaysBeforeEnd { get; init; }
 
         public class Mapping : IRegister
         {
@@ -31,7 +39,14 @@ namespace RemSolution.Application.Features.Agency.DTOs
                     .Map(d => d.Longitude, s => s.Location != null ? (double?)s.Location.X : null)
                     .Map(d => d.Currency, s => s.Settings != null ? s.Settings.CurrencyCode : string.Empty)
                     .Map(d => d.CancellationWindowHours, s => s.Settings != null ? s.Settings.CancellationWindowHours : 0)
-                    .Map(d => d.ReservationExpiryHours, s => s.Settings != null ? s.Settings.ReservationExpiryHours : 0);
+                    .Map(d => d.ReservationExpiryHours, s => s.Settings != null ? s.Settings.ReservationExpiryHours : 0)
+                    .Map(d => d.ExpenseDueLeadDays, s => s.Settings != null ? s.Settings.ExpenseDueLeadDays : 0)
+                    .Map(d => d.ExpenseDueLeadKilometers, s => s.Settings != null ? s.Settings.ExpenseDueLeadKilometers : 0)
+                    .Map(d => d.ReservationUpcomingLeadDays, s => s.Settings != null ? s.Settings.ReservationUpcomingLeadDays : 0)
+                    .Map(d => d.NotifyStaffByEmail, s => s.Settings != null && s.Settings.NotifyStaffByEmail)
+                    .Map(d => d.NotifyClientsByEmail, s => s.Settings != null && s.Settings.NotifyClientsByEmail)
+                    .Map(d => d.ClientReminderDaysBeforeStart, s => s.Settings != null ? s.Settings.ClientReminderDaysBeforeStart : 0)
+                    .Map(d => d.ClientReminderDaysBeforeEnd, s => s.Settings != null ? s.Settings.ClientReminderDaysBeforeEnd : 0);
             }
         }
     }

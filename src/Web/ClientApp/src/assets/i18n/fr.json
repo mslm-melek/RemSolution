@@ -751,7 +751,8 @@
     "Dashboard": "Tableau de bord",
     "Chat": "Messagerie",
     "OnlineReservations": "Réservations en ligne",
-    "OnlinePayment": "Paiement en ligne"
+    "OnlinePayment": "Paiement en ligne",
+    "Notifications": "Notifications"
   },
   "documentTemplate": {
     "title": "Modèles de documents",
@@ -844,7 +845,9 @@
     "amountRequired": "Le montant doit être supérieur à zéro.",
     "paidNow": "Déjà réglé",
     "paidNowHint": "Laissez à 0 si la dépense n’est pas encore payée.",
-    "alreadySettled": "Déjà réglé : {{amount}} {{currency}} — utilisez l’action « Enregistrer un règlement » de l’écran Paiements & crédits pour le modifier."
+    "alreadySettled": "Déjà réglé : {{amount}} {{currency}} — utilisez l’action « Enregistrer un règlement » de l’écran Paiements & crédits pour le modifier.",
+    "mileage": "Compteur (km)",
+    "mileageHint": "Le relevé au moment de l'intervention — c'est lui qui planifie la suivante."
   },
   "credit": {
     "title": "Paiements & crédits",
@@ -1052,7 +1055,27 @@
     "tabs": {
       "details": "Détails",
       "branches": "Succursales",
-      "team": "Équipe"
+      "team": "Équipe",
+      "notifications": "Notifications"
+    },
+    "notifications": {
+      "intro": "Ce dont l'agence est prévenue, et combien de temps à l'avance.",
+      "fleet": "Flotte et réservations",
+      "clients": "Rappels aux clients",
+      "expenseDueLeadDays": "Prévenir X jours à l'avance",
+      "expenseDueLeadDaysHint": "Pour les types de dépense qui reviennent au mois (assurance, visite technique…).",
+      "expenseDueLeadKm": "Prévenir X km à l'avance",
+      "expenseDueLeadKmHint": "Pour les types de dépense qui reviennent au kilométrage (entretien…).",
+      "reservationLeadDays": "Prévenir des départs X jours à l'avance",
+      "reservationLeadDaysHint": "Réservations confirmées qui commencent bientôt.",
+      "notifyStaffByEmail": "Envoyer aussi ces alertes par e-mail au personnel",
+      "notifyStaffByEmailHint": "Elles apparaissent toujours dans l'application ; ceci ajoute l'e-mail.",
+      "notifyClientsByEmail": "Envoyer des e-mails aux clients sur leurs locations",
+      "notifyClientsByEmailHint": "Rappels automatiques avant le début et avant la fin d'une location.",
+      "beforeStart": "Jours avant le début",
+      "beforeEnd": "Jours avant la fin",
+      "zeroIsOff": "0 désactive ce rappel.",
+      "lateNoticeNote": "Les avis de retard ne sont jamais automatiques : vous les envoyez depuis les écrans clients."
     }
   },
   "branch": {
@@ -1085,5 +1108,45 @@
     "clearPin": "Retirer le repère",
     "coordinates": "Repère : {{ latitude }}, {{ longitude }}",
     "noPin": "Aucun repère placé."
+  },
+  "lateNotice": {
+    "action": "Signaler le retard au client",
+    "confirm": "Envoyer un e-mail à {{name}} pour signaler que le véhicule est en retard ?",
+    "sent": "L'e-mail a été envoyé au client.",
+    "noEmail": "Ce client n'a pas d'adresse e-mail enregistrée.",
+    "alreadySent": "Ce client a déjà reçu un e-mail aujourd'hui.",
+    "disabled": "L'envoi d'e-mails aux clients est désactivé pour cette agence.",
+    "failed": "L'e-mail n'a pas pu être envoyé. Réessayez dans un instant.",
+    "nothingToSend": "Ce client n'a aucun retard."
+  },
+  "notifications": {
+    "title": "Notifications",
+    "markAllRead": "Tout marquer comme lu",
+    "markRead": "Marquer comme lu",
+    "onlyUnread": "Non lues uniquement",
+    "kind": "Type",
+    "empty": "Rien à signaler.",
+    "emptyUnread": "Aucune notification non lue.",
+    "unreadAria": "Notifications, {{count}} non lues",
+    "kinds": {
+      "1": "Entretien et papiers",
+      "2": "Retards de restitution",
+      "3": "Départs à venir",
+      "4": "Rappels aux clients",
+      "5": "Rappels aux clients",
+      "6": "Avis de retard"
+    },
+    "message": {
+      "carExpenseDueByDate": "{{type}} arrive à échéance pour {{car}} le {{dueDate}} — dans {{days}} jour(s).",
+      "carExpenseOverdueByDate": "{{type}} était à échéance pour {{car}} le {{dueDate}} — il y a {{days}} jour(s).",
+      "carExpenseDueByDistance": "{{type}} arrive à échéance pour {{car}} à {{dueKm}} km — encore {{km}} km ({{mileage}} km actuellement).",
+      "carExpenseOverdueByDistance": "{{type}} était à échéance pour {{car}} à {{dueKm}} km — {{km}} km de dépassement ({{mileage}} km actuellement).",
+      "rentingOverdue": "{{car}} devait être rendue le {{endDate}} et ne l'a pas été — {{days}} jour(s) de retard. Locataire : {{client}}.",
+      "reservationUpcoming": "{{client}} prend {{car}} le {{startDate}} — dans {{days}} jour(s).",
+      "clientRentingStartingSoon": "Rappel envoyé au client : sa location de {{car}} commence le {{startDate}}.",
+      "clientRentingEndingSoon": "Rappel envoyé au client : sa location de {{car}} se termine le {{endDate}}.",
+      "clientReservationStartingSoon": "Rappel envoyé au client : sa réservation de {{car}} commence le {{startDate}}.",
+      "clientRentingLateNotice": "Avis de retard envoyé au client pour {{car}}, à rendre le {{endDate}}."
+    }
   }
 }

@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <root>
   <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
     <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
@@ -828,5 +828,68 @@
   </data>
   <data name="Error.PasswordChangeRequired.Detail" xml:space="preserve">
     <value>Your account is still using the temporary password that was emailed to you. Choose a new password to continue.</value>
+  </data>
+  <data name="Notification.carExpenseDueByDate.Subject" xml:space="preserve">
+    <value>{{type}} due for {{car}}</value>
+  </data>
+  <data name="Notification.carExpenseDueByDate.Body" xml:space="preserve">
+    <value>{{type}} is due for {{car}} on {{dueDate}}, in {{days}} day(s).</value>
+  </data>
+  <data name="Notification.carExpenseOverdueByDate.Subject" xml:space="preserve">
+    <value>{{type}} overdue for {{car}}</value>
+  </data>
+  <data name="Notification.carExpenseOverdueByDate.Body" xml:space="preserve">
+    <value>{{type}} was due for {{car}} on {{dueDate}}, {{days}} day(s) ago.</value>
+  </data>
+  <data name="Notification.carExpenseDueByDistance.Subject" xml:space="preserve">
+    <value>{{type}} due for {{car}}</value>
+  </data>
+  <data name="Notification.carExpenseDueByDistance.Body" xml:space="preserve">
+    <value>{{type}} is due for {{car}} at {{dueKm}} km. The odometer reads {{mileage}} km — {{km}} km to go.</value>
+  </data>
+  <data name="Notification.carExpenseOverdueByDistance.Subject" xml:space="preserve">
+    <value>{{type}} overdue for {{car}}</value>
+  </data>
+  <data name="Notification.carExpenseOverdueByDistance.Body" xml:space="preserve">
+    <value>{{type}} was due for {{car}} at {{dueKm}} km. The odometer reads {{mileage}} km — {{km}} km past due.</value>
+  </data>
+  <data name="Notification.rentingOverdue.Subject" xml:space="preserve">
+    <value>{{car}} has not come back</value>
+  </data>
+  <data name="Notification.rentingOverdue.Body" xml:space="preserve">
+    <value>{{car}} was due back on {{endDate}} and has not been returned — {{days}} day(s) late. Renter: {{client}}.</value>
+  </data>
+  <data name="Notification.reservationUpcoming.Subject" xml:space="preserve">
+    <value>Pickup coming up: {{car}}</value>
+  </data>
+  <data name="Notification.reservationUpcoming.Body" xml:space="preserve">
+    <value>{{client}} picks up {{car}} on {{startDate}}, in {{days}} day(s).</value>
+  </data>
+  <data name="Notification.clientRentingStartingSoon.Subject" xml:space="preserve">
+    <value>Your rental starts on {{startDate}}</value>
+  </data>
+  <data name="Notification.clientRentingStartingSoon.Body" xml:space="preserve">
+    <value>A reminder that your rental of {{car}} starts on {{startDate}}, in {{days}} day(s).
+Please bring your driving licence and your identity document when you collect the vehicle.</value>
+  </data>
+  <data name="Notification.clientRentingEndingSoon.Subject" xml:space="preserve">
+    <value>Your rental ends on {{endDate}}</value>
+  </data>
+  <data name="Notification.clientRentingEndingSoon.Body" xml:space="preserve">
+    <value>A reminder that your rental of {{car}} ends on {{endDate}}, in {{days}} day(s).
+Please return the vehicle on time to avoid additional charges.</value>
+  </data>
+  <data name="Notification.clientReservationStartingSoon.Subject" xml:space="preserve">
+    <value>Your booking starts on {{startDate}}</value>
+  </data>
+  <data name="Notification.clientReservationStartingSoon.Body" xml:space="preserve">
+    <value>A reminder that your booking of {{car}} starts on {{startDate}}, in {{days}} day(s).</value>
+  </data>
+  <data name="Notification.clientRentingLateNotice.Subject" xml:space="preserve">
+    <value>Overdue return: {{car}}</value>
+  </data>
+  <data name="Notification.clientRentingLateNotice.Body" xml:space="preserve">
+    <value>Our records show that {{car}} was due back on {{endDate}}, {{days}} day(s) ago, and has not been returned.
+Please return the vehicle or contact us as soon as possible.</value>
   </data>
 </root>

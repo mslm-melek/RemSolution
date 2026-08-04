@@ -11,7 +11,7 @@
   <form [formGroup]="form" (ngSubmit)="save()" class="form-grid">
     <mat-form-field appearance="outline">
       <mat-label>{{ t('expense.car') }}</mat-label>
-      <mat-select formControlName="carId">
+      <mat-select formControlName="carId" (selectionChange)="onCarSelected()">
         <mat-option *ngFor="let car of cars" [value]="car.id">{{ carLabel(car) }}</mat-option>
       </mat-select>
       <mat-error *ngIf="form.get('carId')?.hasError('required')">{{ t('expense.carRequired') }}</mat-error>
@@ -42,6 +42,15 @@
       <mat-label>{{ t('expense.paidNow') }}</mat-label>
       <input matInput type="number" min="0" step="0.01" formControlName="paidAmount" />
       <mat-hint>{{ t('expense.paidNowHint') }}</mat-hint>
+    </mat-form-field>
+
+    <!-- The odometer when the work was done. Not required — a parking fine has no
+         useful reading — but it is what schedules the next service, so the hint
+         says so rather than leaving it looking optional for no reason. -->
+    <mat-form-field appearance="outline" subscriptSizing="dynamic">
+      <mat-label>{{ t('expense.mileage') }}</mat-label>
+      <input matInput type="number" min="0" step="1" formControlName="mileage" />
+      <mat-hint>{{ t('expense.mileageHint') }}</mat-hint>
     </mat-form-field>
 
     <!-- On edit the settled total is shown but not editable: it only moves

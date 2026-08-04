@@ -29,6 +29,14 @@ namespace RemSolution.Application.Features.Expense.Commands.CreateExpenseCommand
         public decimal Amount { get; init; }
         // Already settled at booking time; defaults to nothing paid.
         public decimal PaidAmount { get; init; }
+        /// <summary>
+        /// The car's odometer when the cost was incurred. Defaults to the car's
+        /// current reading when omitted, and moves that reading forward when it is
+        /// higher — a garage visit is a real sighting of the odometer. This is
+        /// what a distance-based recurrence ("service every 10 000 km") counts
+        /// from, so an expense recorded without one cannot schedule the next.
+        /// </summary>
+        public int? Mileage { get; init; }
         public string? Description { get; init; }
     }
 
@@ -52,8 +60,9 @@ namespace RemSolution.Application.Features.Expense.Commands.CreateExpenseCommand
         public async Task<int> Handle(CreateExpenseCommand request, CancellationToken cancellationToken)
         {
             // Tenant-filtered: a car belonging to another agency reads as absent.
+            // Tracked, not AsNoTracking: a reading taken at the garage moves the
+            // car's odometer (below), the same way a hire's does.
             var car = await _context.Cars
-                .AsNoTracking()
                 .FirstOrDefaultAsync(c => c.Id == request.CarId, cancellationToken);
 
             Guard.Against.NotFound(request.CarId, car);
@@ -88,6 +97,12 @@ namespace RemSolution.Application.Features.Expense.Commands.CreateExpenseCommand
             var agencyId = _tenant.AgencyId ?? car.AgencyId;
             var currency = (await _settings.GetAsync(agencyId, cancellationToken)).CurrencyCode;
 
+            // Nobody re-reads the dial to book a parking fine, so an omitted
+            // reading falls back to what the agency last saw. That keeps the
+            // distance baseline usable without asking for a figure the person
+            // entering the cost may not have.
+            var mileage = request.Mileage ?? car.Mileage;
+
             var entity = new ExpenseEntity
             {
                 CarId = request.CarId,
@@ -95,8 +110,13 @@ namespace RemSolution.Application.Features.Expense.Commands.CreateExpenseCommand
                 ExpenseDate = request.ExpenseDate ?? _dateTime.GetUtcNow().UtcDateTime,
                 ExpenseAmount = Money.Of(request.Amount, currency),
                 PaidAmount = Money.Of(request.PaidAmount, currency),
+                Mileage = mileage,
                 Description = request.Description,
             };
+
+            // Only ever forward, and only for a reading actually supplied: see
+            // Car.RecordOdometer.
+            car.RecordOdometer(request.Mileage);
 
             _context.Expenses.Add(entity);
             await _context.SaveChangesAsync(cancellationToken);
@@ -116,6 +136,7 @@ namespace RemSolution.Application.Features.Expense.Commands.CreateExpenseCommand
             RuleFor(v => v.ExpenseTypeId).GreaterThan(0);
             RuleFor(v => v.Amount).GreaterThan(0);
             RuleFor(v => v.PaidAmount).GreaterThanOrEqualTo(0);
+            RuleFor(v => v.Mileage).GreaterThanOrEqualTo(0).When(v => v.Mileage.HasValue);
             RuleFor(v => v.Description).MaximumLength(1000);
         }
     }

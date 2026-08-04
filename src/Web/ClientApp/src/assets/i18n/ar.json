@@ -751,7 +751,8 @@
     "Dashboard": "لوحة القيادة",
     "Chat": "المحادثة",
     "OnlineReservations": "الحجز عبر الإنترنت",
-    "OnlinePayment": "الدفع عبر الإنترنت"
+    "OnlinePayment": "الدفع عبر الإنترنت",
+    "Notifications": "الإشعارات"
   },
   "documentTemplate": {
     "title": "نماذج الوثائق",
@@ -844,7 +845,9 @@
     "amountRequired": "يجب أن يكون المبلغ أكبر من الصفر.",
     "paidNow": "المسدّد حاليا",
     "paidNowHint": "اتركه على 0 إذا لم يتم دفع المصروف بعد.",
-    "alreadySettled": "المسدّد: {{amount}} {{currency}} — استخدم إجراء «تسجيل تسديد» في شاشة المدفوعات والأرصدة لتغييره."
+    "alreadySettled": "المسدّد: {{amount}} {{currency}} — استخدم إجراء «تسجيل تسديد» في شاشة المدفوعات والأرصدة لتغييره.",
+    "mileage": "عدّاد المسافة (كم)",
+    "mileageHint": "القراءة عند إجراء العمل — وهي ما يحدّد موعد المرة القادمة."
   },
   "credit": {
     "title": "المدفوعات والأرصدة",
@@ -1052,7 +1055,27 @@
     "tabs": {
       "details": "التفاصيل",
       "branches": "الفروع",
-      "team": "الفريق"
+      "team": "الفريق",
+      "notifications": "الإشعارات"
+    },
+    "notifications": {
+      "intro": "ما تُنبَّه إليه الوكالة، وقبل أي مدة.",
+      "fleet": "الأسطول والحجوزات",
+      "clients": "تذكيرات الحرفاء",
+      "expenseDueLeadDays": "التنبيه قبل عدد الأيام",
+      "expenseDueLeadDaysHint": "لأنواع المصاريف التي تتكرّر بالأشهر (التأمين، الفحص الفني…).",
+      "expenseDueLeadKm": "التنبيه قبل عدد الكيلومترات",
+      "expenseDueLeadKmHint": "لأنواع المصاريف التي تتكرّر بالمسافة (الصيانة…).",
+      "reservationLeadDays": "التنبيه بالتسليمات قبل عدد الأيام",
+      "reservationLeadDaysHint": "الحجوزات المؤكّدة التي تبدأ قريباً.",
+      "notifyStaffByEmail": "إرسال هذه التنبيهات أيضاً بالبريد إلى الموظفين",
+      "notifyStaffByEmailHint": "تظهر دائماً في التطبيق؛ هذا يضيف البريد الإلكتروني.",
+      "notifyClientsByEmail": "إرسال بريد إلى الحرفاء بشأن حجوزاتهم",
+      "notifyClientsByEmailHint": "تذكيرات آلية قبل بداية الإيجار وقبل نهايته.",
+      "beforeStart": "الأيام قبل البداية",
+      "beforeEnd": "الأيام قبل النهاية",
+      "zeroIsOff": "0 يعطّل هذا التذكير.",
+      "lateNoticeNote": "إشعارات التأخير ليست آلية أبداً: تُرسلونها من صفحات الحرفاء."
     }
   },
   "branch": {
@@ -1085,5 +1108,45 @@
     "clearPin": "إزالة العلامة",
     "coordinates": "العلامة: {{ latitude }}، {{ longitude }}",
     "noPin": "لم توضع أي علامة."
+  },
+  "lateNotice": {
+    "action": "تنبيه الحريف بالتأخير",
+    "confirm": "إرسال بريد إلى {{name}} لإعلامه بأن السيارة متأخرة؟",
+    "sent": "تم إرسال البريد إلى الحريف.",
+    "noEmail": "لا يوجد عنوان بريد مسجّل لهذا الحريف.",
+    "alreadySent": "تم إرسال بريد إلى هذا الحريف اليوم بالفعل.",
+    "disabled": "إرسال البريد إلى الحرفاء معطّل في هذه الوكالة.",
+    "failed": "لم يتم إرسال البريد. أعِد المحاولة بعد قليل.",
+    "nothingToSend": "لا يوجد أي تأخير لهذا الحريف."
+  },
+  "notifications": {
+    "title": "الإشعارات",
+    "markAllRead": "تحديد الكل كمقروء",
+    "markRead": "تحديد كمقروء",
+    "onlyUnread": "غير المقروءة فقط",
+    "kind": "النوع",
+    "empty": "لا شيء للإبلاغ عنه.",
+    "emptyUnread": "لا توجد إشعارات غير مقروءة.",
+    "unreadAria": "الإشعارات، {{count}} غير مقروءة",
+    "kinds": {
+      "1": "الصيانة والوثائق",
+      "2": "تأخّر الإرجاع",
+      "3": "التسليمات القادمة",
+      "4": "تذكيرات الحرفاء",
+      "5": "تذكيرات الحرفاء",
+      "6": "إشعارات التأخير"
+    },
+    "message": {
+      "carExpenseDueByDate": "{{type}} تستحق للسيارة {{car}} في {{dueDate}} — بعد {{days}} يوم.",
+      "carExpenseOverdueByDate": "{{type}} كانت تستحق للسيارة {{car}} في {{dueDate}} — منذ {{days}} يوم.",
+      "carExpenseDueByDistance": "{{type}} تستحق للسيارة {{car}} عند {{dueKm}} كم — بقي {{km}} كم ({{mileage}} كم حالياً).",
+      "carExpenseOverdueByDistance": "{{type}} كانت تستحق للسيارة {{car}} عند {{dueKm}} كم — بتجاوز {{km}} كم ({{mileage}} كم حالياً).",
+      "rentingOverdue": "كان من المفترض إرجاع {{car}} في {{endDate}} ولم تُرجَع — بتأخير {{days}} يوم. المستأجر: {{client}}.",
+      "reservationUpcoming": "{{client}} سيتسلّم {{car}} في {{startDate}} — بعد {{days}} يوم.",
+      "clientRentingStartingSoon": "تم إرسال تذكير إلى الحريف: إيجاره للسيارة {{car}} يبدأ في {{startDate}}.",
+      "clientRentingEndingSoon": "تم إرسال تذكير إلى الحريف: إيجاره للسيارة {{car}} ينتهي في {{endDate}}.",
+      "clientReservationStartingSoon": "تم إرسال تذكير إلى الحريف: حجزه للسيارة {{car}} يبدأ في {{startDate}}.",
+      "clientRentingLateNotice": "تم إرسال إشعار تأخير إلى الحريف بشأن {{car}}، المقرّر إرجاعها في {{endDate}}."
+    }
   }
 }

@@ -14,6 +14,7 @@ using RemSolution.Infrastructure.Email;
 using RemSolution.Infrastructure.Identity;
 using RemSolution.Infrastructure.Jobs;
 using RemSolution.Infrastructure.Localization;
+using RemSolution.Infrastructure.Notifications;
 using RemSolution.Application.Common.Settings;
 using RemSolution.Infrastructure.Imaging;
 using RemSolution.Infrastructure.Pricing;
@@ -236,6 +237,14 @@ public static class DependencyInjection
 
         // Recurring reservation-expiry sweep (registered as a job below).
         builder.Services.AddScoped<ReservationExpiryJob>();
+
+        // Notifications. The renderer is scoped because it localizes through the
+        // request's ILocalizer; the recipient resolver reads the Identity store;
+        // the sweep is the recurring job registered in Program.
+        builder.Services.AddScoped<NotificationTextRenderer>();
+        builder.Services.AddScoped<INotificationRecipients, NotificationRecipientResolver>();
+        builder.Services.AddScoped<INotificationService, NotificationService>();
+        builder.Services.AddScoped<NotificationSweepJob>();
 
         // Car-image thumbnail/medium pipeline. The resizer is a stateless
         // singleton; the actual work runs as a Hangfire job (below).

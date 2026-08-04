@@ -7163,6 +7163,243 @@ export class ModelCarsClient implements IModelCarsClient {
     }
 }
 
+export interface INotificationsClient {
+    getMine(pageNumber: number | undefined, pageSize: number | undefined, onlyUnread: boolean | undefined, kind: NotificationKind | null | undefined): Observable<PaginatedListOfNotificationDto>;
+    getUnreadCount(): Observable<number>;
+    markNotificationsRead(command: MarkNotificationsReadCommand): Observable<number>;
+    sendClientLateNotice(command: SendClientLateNoticeCommand): Observable<LateNoticeResult>;
+}
+
+@Injectable({
+    providedIn: 'root'
+})
+export class NotificationsClient implements INotificationsClient {
+    private http: HttpClient;
+    private baseUrl: string;
+    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
+
+    constructor(@Inject(HttpClient) http: HttpClient, @Optional() @Inject(API_BASE_URL) baseUrl?: string) {
+        this.http = http;
+        this.baseUrl = baseUrl ?? "";
+    }
+
+    getMine(pageNumber: number | undefined, pageSize: number | undefined, onlyUnread: boolean | undefined, kind: NotificationKind | null | undefined): Observable<PaginatedListOfNotificationDto> {
+        let url_ = this.baseUrl + "/api/Notifications?";
+        if (pageNumber === null)
+            throw new Error("The parameter 'pageNumber' cannot be null.");
+        else if (pageNumber !== undefined)
+            url_ += "PageNumber=" + encodeURIComponent("" + pageNumber) + "&";
+        if (pageSize === null)
+            throw new Error("The parameter 'pageSize' cannot be null.");
+        else if (pageSize !== undefined)
+            url_ += "PageSize=" + encodeURIComponent("" + pageSize) + "&";
+        if (onlyUnread === null)
+            throw new Error("The parameter 'onlyUnread' cannot be null.");
+        else if (onlyUnread !== undefined)
+            url_ += "OnlyUnread=" + encodeURIComponent("" + onlyUnread) + "&";
+        if (kind !== undefined && kind !== null)
+            url_ += "Kind=" + encodeURIComponent("" + kind) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetMine(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetMine(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<PaginatedListOfNotificationDto>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<PaginatedListOfNotificationDto>;
+        }));
+    }
+
+    protected processGetMine(response: HttpResponseBase): Observable<PaginatedListOfNotificationDto> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = PaginatedListOfNotificationDto.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getUnreadCount(): Observable<number> {
+        let url_ = this.baseUrl + "/api/Notifications/unread-count";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetUnreadCount(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetUnreadCount(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<number>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<number>;
+        }));
+    }
+
+    protected processGetUnreadCount(response: HttpResponseBase): Observable<number> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+                result200 = resultData200 !== undefined ? resultData200 : <any>null;
+    
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    markNotificationsRead(command: MarkNotificationsReadCommand): Observable<number> {
+        let url_ = this.baseUrl + "/api/Notifications/read";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(command);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processMarkNotificationsRead(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processMarkNotificationsRead(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<number>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<number>;
+        }));
+    }
+
+    protected processMarkNotificationsRead(response: HttpResponseBase): Observable<number> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+                result200 = resultData200 !== undefined ? resultData200 : <any>null;
+    
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    sendClientLateNotice(command: SendClientLateNoticeCommand): Observable<LateNoticeResult> {
+        let url_ = this.baseUrl + "/api/Notifications/client-late-notice";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(command);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processSendClientLateNotice(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processSendClientLateNotice(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<LateNoticeResult>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<LateNoticeResult>;
+        }));
+    }
+
+    protected processSendClientLateNotice(response: HttpResponseBase): Observable<LateNoticeResult> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = LateNoticeResult.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+}
+
 export interface IPaymentsClient {
     getPayments(pageNumber: number | undefined, pageSize: number | undefined, rentingId: number | null | undefined, clientId: number | null | undefined, reservationId: number | null | undefined): Observable<PaginatedListOfPaymentDto>;
     createPayment(command: CreatePaymentCommand): Observable<number>;
@@ -9901,6 +10138,13 @@ export class AgencyDto implements IAgencyDto {
     currency?: string;
     cancellationWindowHours?: number;
     reservationExpiryHours?: number;
+    expenseDueLeadDays?: number;
+    expenseDueLeadKilometers?: number;
+    reservationUpcomingLeadDays?: number;
+    notifyStaffByEmail?: boolean;
+    notifyClientsByEmail?: boolean;
+    clientReminderDaysBeforeStart?: number;
+    clientReminderDaysBeforeEnd?: number;
 
     constructor(data?: IAgencyDto) {
         if (data) {
@@ -9926,6 +10170,13 @@ export class AgencyDto implements IAgencyDto {
             this.currency = _data["currency"];
             this.cancellationWindowHours = _data["cancellationWindowHours"];
             this.reservationExpiryHours = _data["reservationExpiryHours"];
+            this.expenseDueLeadDays = _data["expenseDueLeadDays"];
+            this.expenseDueLeadKilometers = _data["expenseDueLeadKilometers"];
+            this.reservationUpcomingLeadDays = _data["reservationUpcomingLeadDays"];
+            this.notifyStaffByEmail = _data["notifyStaffByEmail"];
+            this.notifyClientsByEmail = _data["notifyClientsByEmail"];
+            this.clientReminderDaysBeforeStart = _data["clientReminderDaysBeforeStart"];
+            this.clientReminderDaysBeforeEnd = _data["clientReminderDaysBeforeEnd"];
         }
     }
 
@@ -9951,6 +10202,13 @@ export class AgencyDto implements IAgencyDto {
         data["currency"] = this.currency;
         data["cancellationWindowHours"] = this.cancellationWindowHours;
         data["reservationExpiryHours"] = this.reservationExpiryHours;
+        data["expenseDueLeadDays"] = this.expenseDueLeadDays;
+        data["expenseDueLeadKilometers"] = this.expenseDueLeadKilometers;
+        data["reservationUpcomingLeadDays"] = this.reservationUpcomingLeadDays;
+        data["notifyStaffByEmail"] = this.notifyStaffByEmail;
+        data["notifyClientsByEmail"] = this.notifyClientsByEmail;
+        data["clientReminderDaysBeforeStart"] = this.clientReminderDaysBeforeStart;
+        data["clientReminderDaysBeforeEnd"] = this.clientReminderDaysBeforeEnd;
         return data;
     }
 }
@@ -9969,6 +10227,13 @@ export interface IAgencyDto {
     currency?: string;
     cancellationWindowHours?: number;
     reservationExpiryHours?: number;
+    expenseDueLeadDays?: number;
+    expenseDueLeadKilometers?: number;
+    reservationUpcomingLeadDays?: number;
+    notifyStaffByEmail?: boolean;
+    notifyClientsByEmail?: boolean;
+    clientReminderDaysBeforeStart?: number;
+    clientReminderDaysBeforeEnd?: number;
 }
 
 export class UpdateMyAgencyCommand implements IUpdateMyAgencyCommand {
@@ -9982,6 +10247,13 @@ export class UpdateMyAgencyCommand implements IUpdateMyAgencyCommand {
     countryId?: number;
     cancellationWindowHours?: number;
     reservationExpiryHours?: number;
+    expenseDueLeadDays?: number;
+    expenseDueLeadKilometers?: number;
+    reservationUpcomingLeadDays?: number;
+    notifyStaffByEmail?: boolean;
+    notifyClientsByEmail?: boolean;
+    clientReminderDaysBeforeStart?: number;
+    clientReminderDaysBeforeEnd?: number;
 
     constructor(data?: IUpdateMyAgencyCommand) {
         if (data) {
@@ -10004,6 +10276,13 @@ export class UpdateMyAgencyCommand implements IUpdateMyAgencyCommand {
             this.countryId = _data["countryId"];
             this.cancellationWindowHours = _data["cancellationWindowHours"];
             this.reservationExpiryHours = _data["reservationExpiryHours"];
+            this.expenseDueLeadDays = _data["expenseDueLeadDays"];
+            this.expenseDueLeadKilometers = _data["expenseDueLeadKilometers"];
+            this.reservationUpcomingLeadDays = _data["reservationUpcomingLeadDays"];
+            this.notifyStaffByEmail = _data["notifyStaffByEmail"];
+            this.notifyClientsByEmail = _data["notifyClientsByEmail"];
+            this.clientReminderDaysBeforeStart = _data["clientReminderDaysBeforeStart"];
+            this.clientReminderDaysBeforeEnd = _data["clientReminderDaysBeforeEnd"];
         }
     }
 
@@ -10026,6 +10305,13 @@ export class UpdateMyAgencyCommand implements IUpdateMyAgencyCommand {
         data["countryId"] = this.countryId;
         data["cancellationWindowHours"] = this.cancellationWindowHours;
         data["reservationExpiryHours"] = this.reservationExpiryHours;
+        data["expenseDueLeadDays"] = this.expenseDueLeadDays;
+        data["expenseDueLeadKilometers"] = this.expenseDueLeadKilometers;
+        data["reservationUpcomingLeadDays"] = this.reservationUpcomingLeadDays;
+        data["notifyStaffByEmail"] = this.notifyStaffByEmail;
+        data["notifyClientsByEmail"] = this.notifyClientsByEmail;
+        data["clientReminderDaysBeforeStart"] = this.clientReminderDaysBeforeStart;
+        data["clientReminderDaysBeforeEnd"] = this.clientReminderDaysBeforeEnd;
         return data;
     }
 }
@@ -10041,6 +10327,13 @@ export interface IUpdateMyAgencyCommand {
     countryId?: number;
     cancellationWindowHours?: number;
     reservationExpiryHours?: number;
+    expenseDueLeadDays?: number;
+    expenseDueLeadKilometers?: number;
+    reservationUpcomingLeadDays?: number;
+    notifyStaffByEmail?: boolean;
+    notifyClientsByEmail?: boolean;
+    clientReminderDaysBeforeStart?: number;
+    clientReminderDaysBeforeEnd?: number;
 }
 
 export class CreateAgencyCommand implements ICreateAgencyCommand {
@@ -12016,6 +12309,7 @@ export class ClientDto implements IClientDto {
     hasPortalAccount?: boolean;
     rentingCount?: number;
     openRentingCount?: number;
+    overdueRentingCount?: number;
 
     constructor(data?: IClientDto) {
         if (data) {
@@ -12060,6 +12354,7 @@ export class ClientDto implements IClientDto {
             this.hasPortalAccount = _data["hasPortalAccount"];
             this.rentingCount = _data["rentingCount"];
             this.openRentingCount = _data["openRentingCount"];
+            this.overdueRentingCount = _data["overdueRentingCount"];
         }
     }
 
@@ -12104,6 +12399,7 @@ export class ClientDto implements IClientDto {
         data["hasPortalAccount"] = this.hasPortalAccount;
         data["rentingCount"] = this.rentingCount;
         data["openRentingCount"] = this.openRentingCount;
+        data["overdueRentingCount"] = this.overdueRentingCount;
         return data;
     }
 }
@@ -12141,6 +12437,7 @@ export interface IClientDto {
     hasPortalAccount?: boolean;
     rentingCount?: number;
     openRentingCount?: number;
+    overdueRentingCount?: number;
 }
 
 export class CreateClientCommand implements ICreateClientCommand {
@@ -13995,6 +14292,7 @@ export class ExpenseDto implements IExpenseDto {
     expenseAmount?: MoneyDto | undefined;
     paidAmount?: MoneyDto | undefined;
     outstanding?: MoneyDto | undefined;
+    mileage?: number | undefined;
     description?: string | undefined;
     factureFileUrl?: string | undefined;
     factureFileName?: string | undefined;
@@ -14021,6 +14319,7 @@ export class ExpenseDto implements IExpenseDto {
             this.expenseAmount = _data["expenseAmount"] ? MoneyDto.fromJS(_data["expenseAmount"]) : <any>undefined;
             this.paidAmount = _data["paidAmount"] ? MoneyDto.fromJS(_data["paidAmount"]) : <any>undefined;
             this.outstanding = _data["outstanding"] ? MoneyDto.fromJS(_data["outstanding"]) : <any>undefined;
+            this.mileage = _data["mileage"];
             this.description = _data["description"];
             this.factureFileUrl = _data["factureFileUrl"];
             this.factureFileName = _data["factureFileName"];
@@ -14047,6 +14346,7 @@ export class ExpenseDto implements IExpenseDto {
         data["expenseAmount"] = this.expenseAmount ? this.expenseAmount.toJSON() : <any>undefined;
         data["paidAmount"] = this.paidAmount ? this.paidAmount.toJSON() : <any>undefined;
         data["outstanding"] = this.outstanding ? this.outstanding.toJSON() : <any>undefined;
+        data["mileage"] = this.mileage;
         data["description"] = this.description;
         data["factureFileUrl"] = this.factureFileUrl;
         data["factureFileName"] = this.factureFileName;
@@ -14066,6 +14366,7 @@ export interface IExpenseDto {
     expenseAmount?: MoneyDto | undefined;
     paidAmount?: MoneyDto | undefined;
     outstanding?: MoneyDto | undefined;
+    mileage?: number | undefined;
     description?: string | undefined;
     factureFileUrl?: string | undefined;
     factureFileName?: string | undefined;
@@ -14077,6 +14378,7 @@ export class CreateExpenseCommand implements ICreateExpenseCommand {
     expenseDate?: Date | undefined;
     amount?: number;
     paidAmount?: number;
+    mileage?: number | undefined;
     description?: string | undefined;
 
     constructor(data?: ICreateExpenseCommand) {
@@ -14095,6 +14397,7 @@ export class CreateExpenseCommand implements ICreateExpenseCommand {
             this.expenseDate = _data["expenseDate"] ? new Date(_data["expenseDate"].toString()) : <any>undefined;
             this.amount = _data["amount"];
             this.paidAmount = _data["paidAmount"];
+            this.mileage = _data["mileage"];
             this.description = _data["description"];
         }
     }
@@ -14113,6 +14416,7 @@ export class CreateExpenseCommand implements ICreateExpenseCommand {
         data["expenseDate"] = this.expenseDate ? this.expenseDate.toISOString() : <any>undefined;
         data["amount"] = this.amount;
         data["paidAmount"] = this.paidAmount;
+        data["mileage"] = this.mileage;
         data["description"] = this.description;
         return data;
     }
@@ -14124,6 +14428,7 @@ export interface ICreateExpenseCommand {
     expenseDate?: Date | undefined;
     amount?: number;
     paidAmount?: number;
+    mileage?: number | undefined;
     description?: string | undefined;
 }
 
@@ -14173,6 +14478,7 @@ export class UpdateExpenseCommand implements IUpdateExpenseCommand {
     expenseTypeId?: number;
     expenseDate?: Date;
     amount?: number;
+    mileage?: number | undefined;
     description?: string | undefined;
 
     constructor(data?: IUpdateExpenseCommand) {
@@ -14191,6 +14497,7 @@ export class UpdateExpenseCommand implements IUpdateExpenseCommand {
             this.expenseTypeId = _data["expenseTypeId"];
             this.expenseDate = _data["expenseDate"] ? new Date(_data["expenseDate"].toString()) : <any>undefined;
             this.amount = _data["amount"];
+            this.mileage = _data["mileage"];
             this.description = _data["description"];
         }
     }
@@ -14209,6 +14516,7 @@ export class UpdateExpenseCommand implements IUpdateExpenseCommand {
         data["expenseTypeId"] = this.expenseTypeId;
         data["expenseDate"] = this.expenseDate ? this.expenseDate.toISOString() : <any>undefined;
         data["amount"] = this.amount;
+        data["mileage"] = this.mileage;
         data["description"] = this.description;
         return data;
     }
@@ -14220,6 +14528,7 @@ export interface IUpdateExpenseCommand {
     expenseTypeId?: number;
     expenseDate?: Date;
     amount?: number;
+    mileage?: number | undefined;
     description?: string | undefined;
 }
 
@@ -15995,6 +16304,303 @@ export interface IUpdateModelCarCommand {
     id?: number;
     name?: string;
     brandId?: number | undefined;
+}
+
+export class PaginatedListOfNotificationDto implements IPaginatedListOfNotificationDto {
+    items?: NotificationDto[];
+    pageNumber?: number;
+    totalPages?: number;
+    totalCount?: number;
+    hasPreviousPage?: boolean;
+    hasNextPage?: boolean;
+
+    constructor(data?: IPaginatedListOfNotificationDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["items"])) {
+                this.items = [] as any;
+                for (let item of _data["items"])
+                    this.items!.push(NotificationDto.fromJS(item));
+            }
+            this.pageNumber = _data["pageNumber"];
+            this.totalPages = _data["totalPages"];
+            this.totalCount = _data["totalCount"];
+            this.hasPreviousPage = _data["hasPreviousPage"];
+            this.hasNextPage = _data["hasNextPage"];
+        }
+    }
+
+    static fromJS(data: any): PaginatedListOfNotificationDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new PaginatedListOfNotificationDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.items)) {
+            data["items"] = [];
+            for (let item of this.items)
+                data["items"].push(item.toJSON());
+        }
+        data["pageNumber"] = this.pageNumber;
+        data["totalPages"] = this.totalPages;
+        data["totalCount"] = this.totalCount;
+        data["hasPreviousPage"] = this.hasPreviousPage;
+        data["hasNextPage"] = this.hasNextPage;
+        return data;
+    }
+}
+
+export interface IPaginatedListOfNotificationDto {
+    items?: NotificationDto[];
+    pageNumber?: number;
+    totalPages?: number;
+    totalCount?: number;
+    hasPreviousPage?: boolean;
+    hasNextPage?: boolean;
+}
+
+export class NotificationDto implements INotificationDto {
+    id?: number;
+    kind?: NotificationKind;
+    messageKey?: string;
+    args?: { [key: string]: string; };
+    subjectType?: NotificationSubject;
+    subjectId?: number | undefined;
+    link?: string | undefined;
+    createdAt?: Date;
+    readAt?: Date | undefined;
+    isRead?: boolean;
+
+    constructor(data?: INotificationDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.kind = _data["kind"];
+            this.messageKey = _data["messageKey"];
+            if (_data["args"]) {
+                this.args = {} as any;
+                for (let key in _data["args"]) {
+                    if (_data["args"].hasOwnProperty(key))
+                        (<any>this.args)![key] = _data["args"][key];
+                }
+            }
+            this.subjectType = _data["subjectType"];
+            this.subjectId = _data["subjectId"];
+            this.link = _data["link"];
+            this.createdAt = _data["createdAt"] ? new Date(_data["createdAt"].toString()) : <any>undefined;
+            this.readAt = _data["readAt"] ? new Date(_data["readAt"].toString()) : <any>undefined;
+            this.isRead = _data["isRead"];
+        }
+    }
+
+    static fromJS(data: any): NotificationDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new NotificationDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["kind"] = this.kind;
+        data["messageKey"] = this.messageKey;
+        if (this.args) {
+            data["args"] = {};
+            for (let key in this.args) {
+                if (this.args.hasOwnProperty(key))
+                    (<any>data["args"])[key] = (<any>this.args)[key];
+            }
+        }
+        data["subjectType"] = this.subjectType;
+        data["subjectId"] = this.subjectId;
+        data["link"] = this.link;
+        data["createdAt"] = this.createdAt ? this.createdAt.toISOString() : <any>undefined;
+        data["readAt"] = this.readAt ? this.readAt.toISOString() : <any>undefined;
+        data["isRead"] = this.isRead;
+        return data;
+    }
+}
+
+export interface INotificationDto {
+    id?: number;
+    kind?: NotificationKind;
+    messageKey?: string;
+    args?: { [key: string]: string; };
+    subjectType?: NotificationSubject;
+    subjectId?: number | undefined;
+    link?: string | undefined;
+    createdAt?: Date;
+    readAt?: Date | undefined;
+    isRead?: boolean;
+}
+
+export enum NotificationKind {
+    CarExpenseDue = 1,
+    RentingOverdue = 2,
+    ReservationUpcoming = 3,
+    RentingStartingSoon = 4,
+    RentingEndingSoon = 5,
+    RentingLateNotice = 6,
+}
+
+export enum NotificationSubject {
+    Car = 1,
+    Renting = 2,
+    Reservation = 3,
+    Client = 4,
+}
+
+export class MarkNotificationsReadCommand implements IMarkNotificationsReadCommand {
+    ids?: number[] | undefined;
+
+    constructor(data?: IMarkNotificationsReadCommand) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["ids"])) {
+                this.ids = [] as any;
+                for (let item of _data["ids"])
+                    this.ids!.push(item);
+            }
+        }
+    }
+
+    static fromJS(data: any): MarkNotificationsReadCommand {
+        data = typeof data === 'object' ? data : {};
+        let result = new MarkNotificationsReadCommand();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.ids)) {
+            data["ids"] = [];
+            for (let item of this.ids)
+                data["ids"].push(item);
+        }
+        return data;
+    }
+}
+
+export interface IMarkNotificationsReadCommand {
+    ids?: number[] | undefined;
+}
+
+export class LateNoticeResult implements ILateNoticeResult {
+    outcome?: ClientNotificationOutcome;
+    rentingId?: number | undefined;
+
+    constructor(data?: ILateNoticeResult) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.outcome = _data["outcome"];
+            this.rentingId = _data["rentingId"];
+        }
+    }
+
+    static fromJS(data: any): LateNoticeResult {
+        data = typeof data === 'object' ? data : {};
+        let result = new LateNoticeResult();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["outcome"] = this.outcome;
+        data["rentingId"] = this.rentingId;
+        return data;
+    }
+}
+
+export interface ILateNoticeResult {
+    outcome?: ClientNotificationOutcome;
+    rentingId?: number | undefined;
+}
+
+export enum ClientNotificationOutcome {
+    Sent = 0,
+    NoEmail = 1,
+    AlreadySent = 2,
+    Disabled = 3,
+    Failed = 4,
+    NothingToSend = 5,
+}
+
+export class SendClientLateNoticeCommand implements ISendClientLateNoticeCommand {
+    clientId?: number;
+    rentingId?: number | undefined;
+
+    constructor(data?: ISendClientLateNoticeCommand) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.clientId = _data["clientId"];
+            this.rentingId = _data["rentingId"];
+        }
+    }
+
+    static fromJS(data: any): SendClientLateNoticeCommand {
+        data = typeof data === 'object' ? data : {};
+        let result = new SendClientLateNoticeCommand();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["clientId"] = this.clientId;
+        data["rentingId"] = this.rentingId;
+        return data;
+    }
+}
+
+export interface ISendClientLateNoticeCommand {
+    clientId?: number;
+    rentingId?: number | undefined;
 }
 
 export class PaginatedListOfPaymentDto implements IPaginatedListOfPaymentDto {

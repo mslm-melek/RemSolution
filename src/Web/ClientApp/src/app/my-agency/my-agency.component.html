@@ -82,6 +82,76 @@
       </div>
     </mat-tab>
 
+    <!-- NOTIFICATIONS -->
+    <!-- Same FormGroup as the details tab, bound to a div rather than a second
+         <form>: these are all AgencySettings and one command saves them, so there
+         is only ever one set of values in flight. -->
+    <mat-tab [label]="t('myAgency.tabs.notifications')" *ngIf="canNotifications">
+      <div class="tab-body" [formGroup]="form">
+        <p class="settings-note">{{ t('myAgency.notifications.intro') }}</p>
+
+        <h3 class="section-title">{{ t('myAgency.notifications.fleet') }}</h3>
+        <div class="field-grid">
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-label>{{ t('myAgency.notifications.expenseDueLeadDays') }}</mat-label>
+            <input matInput type="number" formControlName="expenseDueLeadDays" min="0" max="365" />
+            <mat-hint>{{ t('myAgency.notifications.expenseDueLeadDaysHint') }}</mat-hint>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-label>{{ t('myAgency.notifications.expenseDueLeadKm') }}</mat-label>
+            <input matInput type="number" formControlName="expenseDueLeadKilometers" min="0" max="100000" />
+            <mat-hint>{{ t('myAgency.notifications.expenseDueLeadKmHint') }}</mat-hint>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-label>{{ t('myAgency.notifications.reservationLeadDays') }}</mat-label>
+            <input matInput type="number" formControlName="reservationUpcomingLeadDays" min="0" max="365" />
+            <mat-hint>{{ t('myAgency.notifications.reservationLeadDaysHint') }}</mat-hint>
+          </mat-form-field>
+        </div>
+
+        <mat-checkbox formControlName="notifyStaffByEmail">
+          {{ t('myAgency.notifications.notifyStaffByEmail') }}
+        </mat-checkbox>
+        <p class="settings-hint">{{ t('myAgency.notifications.notifyStaffByEmailHint') }}</p>
+
+        <h3 class="section-title">{{ t('myAgency.notifications.clients') }}</h3>
+
+        <mat-checkbox formControlName="notifyClientsByEmail">
+          {{ t('myAgency.notifications.notifyClientsByEmail') }}
+        </mat-checkbox>
+        <p class="settings-hint">{{ t('myAgency.notifications.notifyClientsByEmailHint') }}</p>
+
+        <!-- Left editable while the master switch is off rather than disabled or
+             hidden: these are the values that will apply the moment it is turned
+             on, so an agency setting up its reminders can fill them in first. -->
+        <div class="field-grid">
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-label>{{ t('myAgency.notifications.beforeStart') }}</mat-label>
+            <input matInput type="number" formControlName="clientReminderDaysBeforeStart"
+                   min="0" max="90" />
+            <mat-hint>{{ t('myAgency.notifications.zeroIsOff') }}</mat-hint>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-label>{{ t('myAgency.notifications.beforeEnd') }}</mat-label>
+            <input matInput type="number" formControlName="clientReminderDaysBeforeEnd"
+                   min="0" max="90" />
+            <mat-hint>{{ t('myAgency.notifications.zeroIsOff') }}</mat-hint>
+          </mat-form-field>
+        </div>
+
+        <p class="settings-hint">{{ t('myAgency.notifications.lateNoticeNote') }}</p>
+
+        <div class="actions-row">
+          <button mat-raised-button color="primary" type="button" (click)="save()" [disabled]="saving">
+            <mat-icon>save</mat-icon> {{ saving ? t('common.saving') : t('common.save') }}
+          </button>
+        </div>
+      </div>
+    </mat-tab>
+
     <!-- BRANCHES -->
     <mat-tab [label]="t('myAgency.tabs.branches')" *ngIf="canBranches">
       <div class="tab-body">

@@ -6,7 +6,19 @@ namespace RemSolution.Application.Common.Settings;
 public sealed record AgencySettingsSnapshot(
     string CurrencyCode,
     int CancellationWindowHours,
-    int ReservationExpiryHours);
+    int ReservationExpiryHours,
+    // How far ahead the agency wants to hear about a recurring car cost coming
+    // due, on each of the two clocks (see ExpenseDueCalculator).
+    int ExpenseDueLeadDays = 14,
+    int ExpenseDueLeadKilometers = 1000,
+    int ReservationUpcomingLeadDays = 3,
+    // Staff alerts are always in-app; this only decides whether they are mailed.
+    bool NotifyStaffByEmail = true,
+    // Master switch for mailing clients, and the two lead times it governs. Zero
+    // days switches that one reminder off without touching the other.
+    bool NotifyClientsByEmail = false,
+    int ClientReminderDaysBeforeStart = 2,
+    int ClientReminderDaysBeforeEnd = 1);
 
 /// <summary>
 /// The single read path for per-agency settings. Settings change rarely and are

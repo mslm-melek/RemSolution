@@ -18,6 +18,9 @@ namespace RemSolution.Application.Features.Expense.DTOs
         public MoneyDto? PaidAmount { get; init; }
         // ExpenseAmount − PaidAmount: what the agency still owes on this expense.
         public MoneyDto? Outstanding { get; init; }
+        // The odometer when the cost was incurred — the baseline a distance-based
+        // recurrence counts from (see Expense.Mileage).
+        public int? Mileage { get; init; }
         public string? Description { get; init; }
         // Supplier invoice attached to the expense, as a plain URL like every
         // other file-carrying DTO (see StoredFile); null when none is attached.

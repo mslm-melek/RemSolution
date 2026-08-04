@@ -26,6 +26,7 @@ public interface IApplicationDbContext
     DbSet<ExpenseType> ExpenseTypes { get; }
     DbSet<Facture> Factures { get; }
     DbSet<ModelCar> ModelCars { get; }
+    DbSet<Notification> Notifications { get; }
     DbSet<Renting> Rentings { get; }
     DbSet<RentingHistory> RentingHistories { get; }
     DbSet<Payment> Payments { get; }

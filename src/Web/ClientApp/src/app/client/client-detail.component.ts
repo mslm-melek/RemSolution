@@ -9,6 +9,7 @@ import {
   CreditsClient
 } from '../web-api-client';
 import { AuthService } from '../shared/auth.service';
+import { LateNoticeService } from '../shared/late-notice.service';
 import { PaymentDialogComponent } from '../shared/payment-dialog.component';
 import { ReturnDialogComponent } from '../shared/return-dialog.component';
 import { TranslocoService } from '@jsverse/transloco';
@@ -60,6 +61,11 @@ export class ClientDetailComponent implements OnInit {
   canReadPayments = false;
   canPay = false;
   canAttachProof = false;
+  // Writing to the customer in the agency's name is its own grant.
+  canRemind = false;
+
+  // What the last late notice did. An outcome, not an error — see LateNoticeService.
+  noticeMessage = '';
 
   private readonly stateLabelKeys: Record<number, string> = {
     [RentingState.NotYet]: 'enums.rentingState.notYet',
@@ -80,6 +86,7 @@ export class ClientDetailComponent implements OnInit {
     private rentingsClient: RentingsClient,
     private paymentsClient: PaymentsClient,
     private creditsClient: CreditsClient,
+    private lateNotice: LateNoticeService,
     private auth: AuthService,
     private route: ActivatedRoute
   ) { }
@@ -102,6 +109,7 @@ export class ClientDetailComponent implements OnInit {
       this.canReadPayments = AuthService.canAccessModule(user, 'Payments', 'Payment.Read');
       this.canPay = AuthService.canAccessModule(user, 'Payments', 'Payment.Create');
       this.canAttachProof = AuthService.canAccessModule(user, 'Payments', 'Payment.Update');
+      this.canRemind = AuthService.canAccessModule(user, 'Notifications', 'Notification.Send');
 
       if (this.canSeeRentings) this.loadRentings();
       this.loadMoney();
@@ -114,6 +122,19 @@ export class ClientDetailComponent implements OnInit {
 
   get hasMoneyPanel(): boolean {
     return this.canSeeCredit || this.canReadPayments;
+  }
+
+  /** Whether this client has a car out past its return date. */
+  get isLate(): boolean {
+    return (this.client?.overdueRentingCount ?? 0) > 0;
+  }
+
+  // No renting id: the command writes about the most overdue hire, which is the
+  // one the client will recognise (see SendClientLateNoticeCommand).
+  remindLate() {
+    this.lateNotice.confirmAndSend(this.name, this.clientId).subscribe(message => {
+      if (message) this.noticeMessage = message;
+    });
   }
 
   // --- History ---------------------------------------------------------------

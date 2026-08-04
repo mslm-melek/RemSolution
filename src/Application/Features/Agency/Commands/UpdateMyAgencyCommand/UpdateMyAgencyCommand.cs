@@ -37,6 +37,17 @@ namespace RemSolution.Application.Features.Agency.Commands.UpdateMyAgencyCommand
         public int CountryId { get; init; }
         public int CancellationWindowHours { get; init; } = 24;
         public int ReservationExpiryHours { get; init; } = 48;
+
+        // Notification settings. Defaults mirror AgencySettings so a client that
+        // omits them lands on the same values a new agency starts with, rather
+        // than on zeros that would silently switch every reminder off.
+        public int ExpenseDueLeadDays { get; init; } = 14;
+        public int ExpenseDueLeadKilometers { get; init; } = 1000;
+        public int ReservationUpcomingLeadDays { get; init; } = 3;
+        public bool NotifyStaffByEmail { get; init; } = true;
+        public bool NotifyClientsByEmail { get; init; }
+        public int ClientReminderDaysBeforeStart { get; init; } = 2;
+        public int ClientReminderDaysBeforeEnd { get; init; } = 1;
     }
 
     public class UpdateMyAgencyCommandHandler : IRequestHandler<UpdateMyAgencyCommand>
@@ -82,6 +93,14 @@ namespace RemSolution.Application.Features.Agency.Commands.UpdateMyAgencyCommand
 
             settings.CancellationWindowHours = request.CancellationWindowHours;
             settings.ReservationExpiryHours = request.ReservationExpiryHours;
+
+            settings.ExpenseDueLeadDays = request.ExpenseDueLeadDays;
+            settings.ExpenseDueLeadKilometers = request.ExpenseDueLeadKilometers;
+            settings.ReservationUpcomingLeadDays = request.ReservationUpcomingLeadDays;
+            settings.NotifyStaffByEmail = request.NotifyStaffByEmail;
+            settings.NotifyClientsByEmail = request.NotifyClientsByEmail;
+            settings.ClientReminderDaysBeforeStart = request.ClientReminderDaysBeforeStart;
+            settings.ClientReminderDaysBeforeEnd = request.ClientReminderDaysBeforeEnd;
 
             await _context.SaveChangesAsync(cancellationToken);
 
