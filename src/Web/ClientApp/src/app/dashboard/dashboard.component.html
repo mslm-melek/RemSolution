@@ -20,14 +20,10 @@
   <!-- Two independent choices: which dates, and how finely to slice them. -->
   <div class="controls-row">
     <div class="picked-range" *ngIf="periodKey === 'custom'">
-      <label>
-        <span class="control-label">{{ t('common.startDate') }}</span>
-        <input type="date" [(ngModel)]="customFrom" [max]="customTo" />
-      </label>
-      <label>
-        <span class="control-label">{{ t('common.endDate') }}</span>
-        <input type="date" [(ngModel)]="customTo" [min]="customFrom" />
-      </label>
+      <app-date-field [label]="t('common.startDate')" [(ngModel)]="customFrom"
+                      [max]="customTo"></app-date-field>
+      <app-date-field [label]="t('common.endDate')" [(ngModel)]="customTo"
+                      [min]="customFrom"></app-date-field>
       <button mat-stroked-button (click)="applyCustomRange()">
         <mat-icon>search</mat-icon> {{ t('common.apply') }}
       </button>

@@ -136,10 +136,7 @@
             <input matInput formControlName="lastName" />
           </mat-form-field>
 
-          <mat-form-field appearance="outline">
-            <mat-label>{{ t('client.birthDate') }}</mat-label>
-            <input matInput type="date" formControlName="birthDate" />
-          </mat-form-field>
+          <app-date-field [label]="t('client.birthDate')" formControlName="birthDate"></app-date-field>
 
           <mat-form-field appearance="outline">
             <mat-label>{{ t('client.birthPlace') }}</mat-label>
@@ -265,13 +262,8 @@
           </mat-error>
         </mat-form-field>
 
-        <mat-form-field appearance="outline">
-          <mat-label>{{ t('client.birthDate') }}</mat-label>
-          <input matInput type="date" formControlName="birthDate" required />
-          <mat-error *ngIf="secondNewClientGroup.get('birthDate')?.hasError('required')">
-            {{ t('client.birthDateRequired') }}
-          </mat-error>
-        </mat-form-field>
+        <app-date-field [label]="t('client.birthDate')" formControlName="birthDate"
+                        required [error]="t('client.birthDateRequired')"></app-date-field>
 
         <mat-form-field appearance="outline">
           <mat-label>{{ t('client.licenceNumber') }}</mat-label>
@@ -363,21 +355,13 @@
               </mat-error>
             </mat-form-field>
 
-            <mat-form-field appearance="outline">
-              <mat-label>{{ t('common.startDate') }}</mat-label>
-              <input matInput type="date" formControlName="startDate" />
-              <mat-error *ngIf="vehicleGroup.get('startDate')?.hasError('required')">
-                {{ t('renting.startDateRequired') }}
-              </mat-error>
-            </mat-form-field>
+            <!-- The hour is part of the deal: the car goes out and comes back at
+                 a time, and a started day is a billed day (see PricingService). -->
+            <app-date-field withTime [label]="t('common.startDate')" formControlName="startDate"
+                            [error]="t('renting.startDateRequired')"></app-date-field>
 
-            <mat-form-field appearance="outline">
-              <mat-label>{{ t('common.endDate') }}</mat-label>
-              <input matInput type="date" formControlName="endDate" />
-              <mat-error *ngIf="vehicleGroup.get('endDate')?.hasError('required')">
-                {{ t('renting.endDateRequired') }}
-              </mat-error>
-            </mat-form-field>
+            <app-date-field withTime [label]="t('common.endDate')" formControlName="endDate"
+                            [error]="t('renting.endDateRequired')"></app-date-field>
 
             <!-- Prefilled from the car's odometer (see offerCarMileage) and still
                  editable: the dashboard is the authority, not the record. -->
@@ -470,13 +454,8 @@
                 </mat-error>
               </mat-form-field>
 
-              <mat-form-field appearance="outline">
-                <mat-label>{{ t('client.birthDate') }}</mat-label>
-                <input matInput type="date" formControlName="birthDate" required />
-                <mat-error *ngIf="clientGroup.get('newClient.birthDate')?.hasError('required')">
-                  {{ t('client.birthDateRequired') }}
-                </mat-error>
-              </mat-form-field>
+              <app-date-field [label]="t('client.birthDate')" formControlName="birthDate"
+                              required [error]="t('client.birthDateRequired')"></app-date-field>
 
               <mat-form-field appearance="outline">
                 <mat-label>{{ t('client.cinNumber') }}</mat-label>
@@ -537,9 +516,9 @@
               <div class="review-item">
                 <dt>{{ t('common.period') }}</dt>
                 <dd>
-                  <span class="num">{{ periodStart | date:'yyyy-MM-dd' }}</span>
+                  <span class="num">{{ periodStart | date:'yyyy-MM-dd HH:mm' }}</span>
                   →
-                  <span class="num">{{ periodEnd | date:'yyyy-MM-dd' }}</span>
+                  <span class="num">{{ periodEnd | date:'yyyy-MM-dd HH:mm' }}</span>
                   <span class="muted" *ngIf="billedDays !== null">
                     ({{ t('renting.daysCount', { count: billedDays }) }})
                   </span>
@@ -688,9 +667,12 @@
                between the dates instead of splitting one of them ("2026-09-" /
                "15"), which is what inline text does here at any font size. -->
           <div class="tile-value small period-value">
-            <span class="num">{{ renting.startDate | date:'yyyy-MM-dd' }}</span>
+            <!-- 'UTC': the booking's dates are wall-clock values stamped UTC, so
+                 the hour to show is the one that was picked, not that hour moved
+                 into the reader's timezone (see form-utils' toDateTimeInput). -->
+            <span class="num">{{ renting.startDate | date:'yyyy-MM-dd HH:mm':'UTC' }}</span>
             <span aria-hidden="true">→</span>
-            <span class="num">{{ renting.endDate | date:'yyyy-MM-dd' }}</span>
+            <span class="num">{{ renting.endDate | date:'yyyy-MM-dd HH:mm':'UTC' }}</span>
           </div>
           <div class="tile-note" *ngIf="billedDays !== null">
             {{ t('renting.daysCount', { count: billedDays }) }}
@@ -739,10 +721,8 @@
       <p class="hint muted">{{ t('renting.changeEndDateHint') }}</p>
 
       <div class="end-date-row">
-        <mat-form-field appearance="outline">
-          <mat-label>{{ t('renting.newEndDate') }}</mat-label>
-          <input matInput type="date" [(ngModel)]="newEndDate" [ngModelOptions]="{ standalone: true }" />
-        </mat-form-field>
+        <app-date-field withTime [label]="t('renting.newEndDate')"
+                        [(ngModel)]="newEndDate" [ngModelOptions]="{ standalone: true }"></app-date-field>
 
         <span class="chip" *ngIf="endDateDeltaDays"
               [ngClass]="endDateDeltaDays! > 0 ? 'info' : 'warn'">
@@ -786,7 +766,7 @@
 
       <div class="form-actions">
         <button mat-raised-button color="primary" (click)="changeEndDate()"
-                [disabled]="changingEndDate || !newEndDate || !endDateDeltaDays">
+                [disabled]="changingEndDate || !newEndDate || !endDateChanged">
           <mat-icon>check</mat-icon> {{ t('common.saveChanges') }}
         </button>
         <button mat-button (click)="closeEndDatePanel()">{{ t('common.cancel') }}</button>
@@ -830,21 +810,11 @@
                 </mat-error>
               </mat-form-field>
 
-              <mat-form-field appearance="outline">
-                <mat-label>{{ t('common.startDate') }}</mat-label>
-                <input matInput type="date" formControlName="startDate" />
-                <mat-error *ngIf="vehicleGroup.get('startDate')?.hasError('required')">
-                  {{ t('renting.startDateRequired') }}
-                </mat-error>
-              </mat-form-field>
+              <app-date-field withTime [label]="t('common.startDate')" formControlName="startDate"
+                              [error]="t('renting.startDateRequired')"></app-date-field>
 
-              <mat-form-field appearance="outline">
-                <mat-label>{{ t('common.endDate') }}</mat-label>
-                <input matInput type="date" formControlName="endDate" />
-                <mat-error *ngIf="vehicleGroup.get('endDate')?.hasError('required')">
-                  {{ t('renting.endDateRequired') }}
-                </mat-error>
-              </mat-form-field>
+              <app-date-field withTime [label]="t('common.endDate')" formControlName="endDate"
+                              [error]="t('renting.endDateRequired')"></app-date-field>
 
               <mat-form-field appearance="outline">
                 <mat-label>{{ t('renting.pickupMileage') }}</mat-label>
@@ -1122,7 +1092,7 @@
             <ng-container matColumnDef="period">
               <th mat-header-cell *matHeaderCellDef>{{ t('common.period') }}</th>
               <td mat-cell *matCellDef="let h" class="num">
-                {{ h.startDate | date:'yyyy-MM-dd' }} → {{ h.endDate | date:'yyyy-MM-dd' }}
+                {{ h.startDate | date:'yyyy-MM-dd HH:mm':'UTC' }} → {{ h.endDate | date:'yyyy-MM-dd HH:mm':'UTC' }}
               </td>
             </ng-container>
             <ng-container matColumnDef="mileage">

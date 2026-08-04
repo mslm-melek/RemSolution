@@ -5,7 +5,7 @@ import {
   ExpensesClient, ExpenseDto, CreateExpenseCommand, UpdateExpenseCommand,
   CarsClient, CarDto, ExpenseTypesClient, ExpenseTypeDto, FileParameter
 } from '../web-api-client';
-import { extractValidationErrors } from '../shared/form-utils';
+import { extractValidationErrors, toDateInput } from '../shared/form-utils';
 import { TranslocoService } from '@jsverse/transloco';
 
 @Component({
@@ -99,9 +99,9 @@ export class ExpenseFormComponent implements OnInit {
     this.form.patchValue({
       carId: dto.carId ?? null,
       expenseTypeId: dto.expenseTypeId ?? null,
-      expenseDate: dto.expenseDate
-        ? new Date(dto.expenseDate).toISOString().substring(0, 10)
-        : this.today(),
+      // Read from the local date parts (toDateInput): going through toISOString()
+      // converts to UTC first and shows the day before for users in UTC+.
+      expenseDate: toDateInput(dto.expenseDate) || this.today(),
       amount: dto.expenseAmount?.amount ?? null,
       mileage: dto.mileage ?? null,
       description: dto.description ?? ''

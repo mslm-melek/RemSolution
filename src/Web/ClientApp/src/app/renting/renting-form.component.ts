@@ -19,7 +19,9 @@ import {
   FacturesClient, FactureDto, GenerateFactureCommand,
   DocumentTemplatesClient, DocumentTemplateDto, DocumentTemplateFieldDto, DocumentTemplateKind
 } from '../web-api-client';
-import { toDateInput, fromDateInput, extractValidationErrors, isConcurrencyConflict } from '../shared/form-utils';
+import {
+  toDateInput, toDateTimeInput, fromDateInput, extractValidationErrors, isConcurrencyConflict
+} from '../shared/form-utils';
 import { AuthService } from '../shared/auth.service';
 import { ReturnDialogComponent } from '../shared/return-dialog.component';
 import { CancelDialogComponent } from '../shared/cancel-dialog.component';
@@ -33,9 +35,10 @@ interface ClientDocumentSlot {
   uploading: boolean;
 }
 
-// Whole days between two yyyy-MM-dd inputs; null while either is unset. A
-// started day is a billed day, matching PricingService — so the wizard can put
-// a day count and a total on screen before the server has answered.
+// Whole days between two date-field values (yyyy-MM-ddTHH:mm here — a period is
+// booked with the hour); null while either is unset. A started day is a billed
+// day, matching PricingService — so the wizard can put a day count and a total
+// on screen before the server has answered.
 function daysBetween(start: string, end: string): number | null {
   if (!start || !end) return null;
 
@@ -481,8 +484,8 @@ export class RentingFormComponent implements OnInit {
 
     const v = this.vehicleGroup.getRawValue();
     return v.carId !== (this.renting.carId ?? null)
-      || v.startDate !== toDateInput(this.renting.startDate)
-      || v.endDate !== toDateInput(this.renting.endDate);
+      || v.startDate !== toDateTimeInput(this.renting.startDate)
+      || v.endDate !== toDateTimeInput(this.renting.endDate);
   }
 
   /** The quote says the car is taken for this period; the save would be a 409. */
@@ -973,8 +976,8 @@ export class RentingFormComponent implements OnInit {
         this.form.patchValue({
           vehicle: {
             carId: dto.carId ?? null,
-            startDate: toDateInput(dto.startDate),
-            endDate: toDateInput(dto.endDate),
+            startDate: toDateTimeInput(dto.startDate),
+            endDate: toDateTimeInput(dto.endDate),
             startMileage: dto.startMileage ?? null,
             endMileage: dto.endMileage ?? null,
             // Reloading discards an unsaved price adjustment along with every
@@ -1130,7 +1133,7 @@ export class RentingFormComponent implements OnInit {
   // --- Change end date -----------------------------------------------------
 
   openEndDatePanel() {
-    this.newEndDate = toDateInput(this.renting?.endDate);
+    this.newEndDate = toDateTimeInput(this.renting?.endDate);
     // Without the permission there is no choice to make: the renting changes and
     // the existing paperwork stays as it is.
     this.reissueContract = this.canGenerateContracts;
@@ -1144,15 +1147,35 @@ export class RentingFormComponent implements OnInit {
     this.endDatePanelOpen = false;
   }
 
-  /** Whole days between the current end date and the one typed; null when unset. */
+  /**
+   * True as soon as the moment picked is not the booked one — including a move of
+   * a few hours, which the day count below rounds away but which the agency may
+   * well want on the record.
+   */
+  get endDateChanged(): boolean {
+    return !!this.endDateDelta;
+  }
+
+  /** Whole days between the current end date and the one picked; null when unset. */
   get endDateDeltaDays(): number | null {
+    const delta = this.endDateDelta;
+    if (delta === null) return null;
+
+    const days = Math.round(delta / 86_400_000);
+    return days === 0 ? null : days;
+  }
+
+  // Milliseconds between the two; null while either is unset.
+  private get endDateDelta(): number | null {
     if (!this.newEndDate || !this.renting?.endDate) return null;
 
-    const current = new Date(toDateInput(this.renting.endDate)).getTime();
+    // Both sides are the same kind of string — the wall clock the field shows —
+    // so the difference is the one on screen rather than a timezone offset.
+    const current = new Date(toDateTimeInput(this.renting.endDate)).getTime();
     const next = new Date(this.newEndDate).getTime();
     if (isNaN(current) || isNaN(next)) return null;
 
-    return Math.round((next - current) / 86_400_000);
+    return next - current;
   }
 
   // Seeds the amended total with the price as it stands, so a negotiated figure

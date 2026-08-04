@@ -26,14 +26,10 @@
         </mat-select>
       </mat-form-field>
 
-      <mat-form-field appearance="outline" class="date">
-        <mat-label>{{ t('marketplace.pickupDate') }}</mat-label>
-        <input matInput type="date" [(ngModel)]="startDate" />
-      </mat-form-field>
-      <mat-form-field appearance="outline" class="date">
-        <mat-label>{{ t('marketplace.returnDate') }}</mat-label>
-        <input matInput type="date" [(ngModel)]="endDate" />
-      </mat-form-field>
+      <app-date-field class="date" [label]="t('marketplace.pickupDate')"
+                      [(ngModel)]="startDate"></app-date-field>
+      <app-date-field class="date" [label]="t('marketplace.returnDate')"
+                      [(ngModel)]="endDate"></app-date-field>
       <button mat-flat-button color="primary" (click)="onSearchClick()">
         <mat-icon>search</mat-icon> {{ t('common.search') }}
       </button>

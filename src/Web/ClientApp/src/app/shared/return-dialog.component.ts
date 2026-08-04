@@ -7,7 +7,7 @@ import {
   RentingsClient, RentingDto, RentingState,
   ChangeRentingStateCommand, ChangeRentingEndDateCommand
 } from '../web-api-client';
-import { extractValidationErrors, fromDateInput, toDateInput } from './form-utils';
+import { extractValidationErrors, fromDateInput, toDateTimeInput } from './form-utils';
 
 export interface ReturnDialogData {
   rentingId: number;
@@ -80,7 +80,7 @@ export class ReturnDialogComponent implements OnInit {
 
   private applyRenting(renting: RentingDto) {
     this.renting = renting;
-    this.scheduledEnd = toDateInput(renting.endDate);
+    this.scheduledEnd = toDateTimeInput(renting.endDate);
   }
 
   // Re-reads the booking after a failed submit. The date field is left as typed,

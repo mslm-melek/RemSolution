@@ -57,11 +57,8 @@
         <mat-error *ngIf="form.get('dailyRate')?.hasError('min')">{{ t('car.dailyRateMin') }}</mat-error>
       </mat-form-field>
 
-      <mat-form-field appearance="outline">
-        <mat-label>{{ t('car.firstCirculationDate') }}</mat-label>
-        <input matInput type="date" formControlName="firstCirculationDate" required />
-        <mat-error *ngIf="form.get('firstCirculationDate')?.hasError('required')">{{ t('car.firstCirculationRequired') }}</mat-error>
-      </mat-form-field>
+      <app-date-field [label]="t('car.firstCirculationDate')" formControlName="firstCirculationDate"
+                      required [error]="t('car.firstCirculationRequired')"></app-date-field>
 
       <mat-form-field appearance="outline">
         <mat-label>{{ t('car.color') }}</mat-label>

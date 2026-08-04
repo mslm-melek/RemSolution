@@ -38,6 +38,7 @@
     "price": "Prix",
     "amount": "Montant",
     "date": "Date",
+    "time": "Heure",
     "method": "Moyen",
     "notes": "Notes",
     "type": "Type",

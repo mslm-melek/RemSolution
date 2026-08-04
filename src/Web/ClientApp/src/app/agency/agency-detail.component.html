@@ -124,14 +124,8 @@
               <mat-option *ngFor="let p of plans" [value]="p.id">{{ p.name }} ({{ p.price }})</mat-option>
             </mat-select>
           </mat-form-field>
-          <mat-form-field appearance="outline">
-            <mat-label>{{ t('common.startDate') }}</mat-label>
-            <input matInput type="date" formControlName="startDate" required />
-          </mat-form-field>
-          <mat-form-field appearance="outline">
-            <mat-label>{{ t('common.endDate') }}</mat-label>
-            <input matInput type="date" formControlName="endDate" required />
-          </mat-form-field>
+          <app-date-field [label]="t('common.startDate')" formControlName="startDate" required></app-date-field>
+          <app-date-field [label]="t('common.endDate')" formControlName="endDate" required></app-date-field>
           <button mat-raised-button color="primary" type="submit">
             <mat-icon>check</mat-icon> {{ t('agency.assign') }}
           </button>

@@ -53,17 +53,11 @@
       <mat-error *ngIf="form.get('clientId')?.hasError('required')">{{ t('reservation.clientRequired') }}</mat-error>
     </mat-form-field>
 
-    <mat-form-field appearance="outline">
-      <mat-label>{{ t('common.startDate') }}</mat-label>
-      <input matInput type="date" formControlName="startDate" />
-      <mat-error *ngIf="form.get('startDate')?.hasError('required')">{{ t('reservation.startDateRequired') }}</mat-error>
-    </mat-form-field>
+    <app-date-field [label]="t('common.startDate')" formControlName="startDate"
+                    [error]="t('reservation.startDateRequired')"></app-date-field>
 
-    <mat-form-field appearance="outline">
-      <mat-label>{{ t('common.endDate') }}</mat-label>
-      <input matInput type="date" formControlName="endDate" />
-      <mat-error *ngIf="form.get('endDate')?.hasError('required')">{{ t('reservation.endDateRequired') }}</mat-error>
-    </mat-form-field>
+    <app-date-field [label]="t('common.endDate')" formControlName="endDate"
+                    [error]="t('reservation.endDateRequired')"></app-date-field>
 
     <mat-form-field appearance="outline">
       <mat-label>{{ t('reservation.deposit') }}</mat-label>

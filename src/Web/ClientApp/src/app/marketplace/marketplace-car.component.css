@@ -158,7 +158,8 @@
   gap: 0.75rem;
 }
 
-.booking .row mat-form-field {
+.booking .row mat-form-field,
+.booking .row app-date-field {
   flex: 1;
 }
 

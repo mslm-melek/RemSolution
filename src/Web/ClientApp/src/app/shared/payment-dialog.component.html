@@ -37,10 +37,7 @@
           </mat-select>
         </mat-form-field>
 
-        <mat-form-field appearance="outline">
-          <mat-label>{{ t('common.date') }}</mat-label>
-          <input matInput type="date" formControlName="date" />
-        </mat-form-field>
+        <app-date-field [label]="t('common.date')" formControlName="date"></app-date-field>
 
         <mat-form-field appearance="outline">
           <mat-label>{{ t('common.notes') }}</mat-label>

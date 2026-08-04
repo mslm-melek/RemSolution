@@ -520,8 +520,8 @@
   flex-wrap: wrap;
 }
 
-.end-date-row .mat-mdc-form-field {
-  flex: 0 1 220px;
+.end-date-row app-date-field {
+  flex: 0 1 250px;
 }
 
 .contract-choice {

@@ -54,14 +54,8 @@
         <div *ngIf="bookingError" class="booking-error">{{ bookingError }}</div>
 
         <div class="row">
-          <mat-form-field appearance="outline">
-            <mat-label>{{ t('marketplace.pickupDate') }}</mat-label>
-            <input matInput type="date" formControlName="startDate" />
-          </mat-form-field>
-          <mat-form-field appearance="outline">
-            <mat-label>{{ t('marketplace.returnDate') }}</mat-label>
-            <input matInput type="date" formControlName="endDate" />
-          </mat-form-field>
+          <app-date-field [label]="t('marketplace.pickupDate')" formControlName="startDate"></app-date-field>
+          <app-date-field [label]="t('marketplace.returnDate')" formControlName="endDate"></app-date-field>
         </div>
 
         <div class="row">
@@ -75,10 +69,8 @@
           </mat-form-field>
         </div>
 
-        <mat-form-field appearance="outline" class="full">
-          <mat-label>{{ t('marketplace.dateOfBirth') }}</mat-label>
-          <input matInput type="date" formControlName="birthDate" />
-        </mat-form-field>
+        <app-date-field class="full" [label]="t('marketplace.dateOfBirth')"
+                        formControlName="birthDate"></app-date-field>
 
         <button mat-flat-button color="primary" type="submit" [disabled]="booking">
           <mat-icon>event_available</mat-icon> {{ t('marketplace.requestBooking') }}

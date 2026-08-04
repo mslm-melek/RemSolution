@@ -62,6 +62,8 @@ import { BranchesEditorComponent } from './shared/branches-editor.component';
 import { PaymentDialogComponent } from './shared/payment-dialog.component';
 import { ReturnDialogComponent } from './shared/return-dialog.component';
 import { CancelDialogComponent } from './shared/cancel-dialog.component';
+import { DateFieldComponent } from './shared/date-field.component';
+import { AppDateAdapter, APP_DATE_FORMATS } from './shared/date-adapter';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -87,6 +89,10 @@ import { MatBadgeModule } from '@angular/material/badge';
 // Recording money from a list row is the app's only modal flow so far (see
 // PaymentDialogComponent); everything else edits on its own page.
 import { MatDialogModule } from '@angular/material/dialog';
+// Every date on every screen goes through DateFieldComponent, which is the only
+// place this module is used from.
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { DateAdapter, MAT_DATE_FORMATS, MAT_DATE_LOCALE } from '@angular/material/core';
 import { TranslocoHttpLoader } from './shared/transloco-loader';
 import { LanguageInterceptor } from './shared/language.interceptor';
 import { guardRoutes } from './shared/must-change-password.guard';
@@ -151,7 +157,8 @@ registerLocaleData(localeAr);
     BranchesEditorComponent,
     PaymentDialogComponent,
     ReturnDialogComponent,
-    CancelDialogComponent
+    CancelDialogComponent,
+    DateFieldComponent
   ],
   bootstrap: [AppComponent],
   imports: [
@@ -178,6 +185,7 @@ registerLocaleData(localeAr);
     MatDividerModule,
     MatMenuModule,
     MatDialogModule,
+    MatDatepickerModule,
     // guardRoutes wraps every route below (bar the profile page) in the
     // temporary-password guard, so a route added later cannot forget it.
     RouterModule.forRoot(guardRoutes([
@@ -276,6 +284,12 @@ registerLocaleData(localeAr);
     // LOCALE_ID is fixed at bootstrap, which is why switching language reloads
     // the page (see LanguageService.use).
     { provide: LOCALE_ID, useFactory: resolveLanguage },
+    // The calendars: month and weekday names in the active language, everything
+    // else spelled out by AppDateAdapter (dd/MM/yyyy, Latin digits, Monday
+    // first) rather than left to Intl.
+    { provide: MAT_DATE_LOCALE, useFactory: resolveLanguage },
+    { provide: DateAdapter, useClass: AppDateAdapter },
+    { provide: MAT_DATE_FORMATS, useValue: APP_DATE_FORMATS },
     // Have the translation file in memory before the first render. Components
     // that translate imperatively (confirm dialogs, error banners) call
     // TranslocoService.translate() synchronously and would otherwise show the

@@ -12,12 +12,46 @@ export function toDateInput(date?: Date): string {
   return `${d.getFullYear()}-${month}-${day}`;
 }
 
+// A date the API GAVE us, read back as the wall clock it stands for.
+//
+// The app's dates are wall-clock values stamped UTC: what is sent is UTC
+// midnight of the day picked (see fromDateInput), and what comes back is that
+// same instant tagged 'Z' (see UtcDateTimeConverter server-side), which the
+// generated client turns into a Date. So the parts to read are the UTC ones —
+// local parts would report the browser's offset as part of the booking, showing
+// 09:00 for a car booked out at 08:00 and saving that shift back again.
+//
+// toDateInput above stays local on purpose: it also formats dates the browser
+// itself made ("today", a calendar cell), where local parts are the point.
+export function toUtcDateInput(date?: Date): string {
+  if (!date) return '';
+  const d = new Date(date);
+  const month = String(d.getUTCMonth() + 1).padStart(2, '0');
+  const day = String(d.getUTCDate()).padStart(2, '0');
+  return `${d.getUTCFullYear()}-${month}-${day}`;
+}
+
+// Same, with the hour — the value a date field bound with `withTime` holds
+// (yyyy-MM-ddTHH:mm), which is how a rental period is booked.
+export function toDateTimeInput(date?: Date): string {
+  if (!date) return '';
+  const d = new Date(date);
+  const hours = String(d.getUTCHours()).padStart(2, '0');
+  const minutes = String(d.getUTCMinutes()).padStart(2, '0');
+  return `${toUtcDateInput(d)}T${hours}:${minutes}`;
+}
+
 // The generated client serializes Dates with toISOString(), so the Date sent
-// must be UTC midnight for the server to store the exact calendar date.
+// must be UTC midnight for the server to store the exact calendar date — and the
+// exact wall-clock hour in UTC when the input carries one (yyyy-MM-ddTHH:mm).
+// Nothing is converted between timezones on the way in or out: what was picked is
+// what is stored, and what is stored is what comes back.
 export function fromDateInput(value: string): Date | undefined {
   if (!value) return undefined;
-  const [year, month, day] = value.split('-').map(Number);
-  return new Date(Date.UTC(year, month - 1, day));
+  const [datePart, timePart] = value.split('T');
+  const [year, month, day] = datePart.split('-').map(Number);
+  const [hours, minutes] = (timePart ?? '').split(':').map(Number);
+  return new Date(Date.UTC(year, month - 1, day, hours || 0, minutes || 0));
 }
 
 // Flattens a server 400 ProblemDetails errors map into one message, handling

@@ -27,10 +27,7 @@
       </mat-error>
     </mat-form-field>
 
-    <mat-form-field appearance="outline">
-      <mat-label>{{ t('common.date') }}</mat-label>
-      <input matInput type="date" formControlName="expenseDate" />
-    </mat-form-field>
+    <app-date-field [label]="t('common.date')" formControlName="expenseDate"></app-date-field>
 
     <mat-form-field appearance="outline">
       <mat-label>{{ t('common.amount') }}</mat-label>

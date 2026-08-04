@@ -1,0 +1,28 @@
+<mat-form-field appearance="outline">
+  <mat-label>{{ label }}</mat-label>
+
+  <!-- Reading and writing a Date is the calendar's business; the value the form
+       holds stays a string (see the component). -->
+  <input matInput [formControl]="dateControl" [matDatepicker]="picker"
+         [min]="minDate" [max]="maxDate" [required]="required"
+         (blur)="onBlur()" />
+
+  <!-- The hour rides in the same field rather than in one of its own: the forms
+       are laid out one control per date, and a second field would take a whole
+       grid cell from every form that asks for a moment. -->
+  <input *ngIf="withTime" #time matTextSuffix class="time-part" type="time"
+         [value]="timePart" [disabled]="dateControl.disabled"
+         [attr.aria-label]="timeLabel" [title]="timeLabel"
+         (input)="onTimeInput(time.value)"
+         (blur)="onTimeBlur(time)"
+         (click)="$event.stopPropagation()" />
+
+  <mat-datepicker-toggle matIconSuffix [for]="picker"
+                         [disabled]="dateControl.disabled"></mat-datepicker-toggle>
+  <mat-datepicker #picker></mat-datepicker>
+
+  <mat-hint *ngIf="hint">{{ hint }}</mat-hint>
+  <!-- Only rendered while the field is in an error state, which is the outer
+       control's invalid + touched (mirrored onto dateControl). -->
+  <mat-error *ngIf="error">{{ error }}</mat-error>
+</mat-form-field>

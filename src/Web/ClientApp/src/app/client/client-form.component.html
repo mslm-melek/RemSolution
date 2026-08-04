@@ -39,11 +39,8 @@
         <mat-error *ngIf="form.get('email')?.hasError('email')">{{ t('client.emailInvalid') }}</mat-error>
       </mat-form-field>
 
-      <mat-form-field appearance="outline">
-        <mat-label>{{ t('client.birthDate') }}</mat-label>
-        <input matInput type="date" formControlName="birthDate" required />
-        <mat-error *ngIf="form.get('birthDate')?.hasError('required')">{{ t('client.birthDateRequired') }}</mat-error>
-      </mat-form-field>
+      <app-date-field [label]="t('client.birthDate')" formControlName="birthDate"
+                      required [error]="t('client.birthDateRequired')"></app-date-field>
 
       <mat-form-field appearance="outline">
         <mat-label>{{ t('client.birthPlace') }}</mat-label>
@@ -67,10 +64,7 @@
         <input matInput formControlName="cin" />
       </mat-form-field>
 
-      <mat-form-field appearance="outline">
-        <mat-label>{{ t('client.issueDate') }}</mat-label>
-        <input matInput type="date" formControlName="cinDeliveranceDate" />
-      </mat-form-field>
+      <app-date-field [label]="t('client.issueDate')" formControlName="cinDeliveranceDate"></app-date-field>
 
       <mat-form-field appearance="outline">
         <mat-label>{{ t('client.issuePlace') }}</mat-label>
@@ -94,10 +88,7 @@
         <input matInput formControlName="passeportNumber" />
       </mat-form-field>
 
-      <mat-form-field appearance="outline">
-        <mat-label>{{ t('client.issueDate') }}</mat-label>
-        <input matInput type="date" formControlName="passeportDeliveranceDate" />
-      </mat-form-field>
+      <app-date-field [label]="t('client.issueDate')" formControlName="passeportDeliveranceDate"></app-date-field>
 
       <mat-form-field appearance="outline">
         <mat-label>{{ t('client.issuePlace') }}</mat-label>
@@ -121,10 +112,7 @@
         <input matInput formControlName="drivingLicenceNumber" />
       </mat-form-field>
 
-      <mat-form-field appearance="outline">
-        <mat-label>{{ t('client.issueDate') }}</mat-label>
-        <input matInput type="date" formControlName="drivingLicenceDeliveranceDate" />
-      </mat-form-field>
+      <app-date-field [label]="t('client.issueDate')" formControlName="drivingLicenceDeliveranceDate"></app-date-field>
 
       <mat-form-field appearance="outline">
         <mat-label>{{ t('client.issuePlace') }}</mat-label>

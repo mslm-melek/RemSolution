@@ -1,0 +1,45 @@
+/* The host stands where the mat-form-field used to, so the layouts around it
+   (form grids, flex filter bars, dialog columns) keep working unchanged. */
+:host {
+  display: block;
+  min-width: 0;
+}
+
+/* The hour, inside the field's own suffix slot: no border of its own, and the
+   same type as the date it belongs to. */
+.time-part {
+  width: 68px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.time-part:focus {
+  outline: 0;
+}
+
+.time-part:disabled {
+  color: var(--muted);
+  cursor: default;
+}
+
+/* Chrome's own clock button: kept — it is the "choose a time" affordance that
+   matches the calendar toggle next to it — but toned down to the field's ink. */
+.time-part::-webkit-calendar-picker-indicator {
+  padding: 0;
+  margin: 0;
+  opacity: 0.55;
+  cursor: pointer;
+}
+
+.time-part::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+}
+
+/* Separates the hour from the date without a divider glyph. */
+:host ::ng-deep .mat-mdc-form-field-text-suffix {
+  padding-inline-start: 6px;
+}

@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { AuthService } from './auth.service';
-import { toDateInput } from './form-utils';
+import { toDateInput, toUtcDateInput } from './form-utils';
 import {
   BookingCalendarEventDto, BookingCalendarEventKind, DashboardClient,
   RentingState, ReservationStatus
@@ -12,11 +12,11 @@ import {
  * home-widgets), and read by the desk to plan the day rather than to edit
  * anything — every entry links to the record it came from and nothing more.
  *
- * Days are the app's calendar days, not instants: the API serves its dates
- * offset-less and the generated client parses them as local midnight, so an
- * entry is filed under the local date parts of what came back — the same reading
- * `toDateInput` takes, which is why a booking shown on the 5th here is the one
- * the booking form calls the 5th.
+ * Days are the app's calendar days, not instants: the API's dates are wall-clock
+ * values stamped UTC, so an entry is filed under the UTC date parts of what came
+ * back (`toUtcDateInput`) while the grid's own cells are built locally — which is
+ * why a booking shown on the 5th here is the one the booking form calls the 5th,
+ * whatever hour of it the car actually goes out.
  */
 
 /** One cell of the grid. */
@@ -190,7 +190,9 @@ export class BookingCalendarComponent implements OnInit {
       // A day outside the grid can only mean the window and the grid disagree,
       // which they do not — but dropping it is better than losing the entry into
       // a cell nobody is looking at.
-      const day = byKey.get(toDateInput(event.on));
+      // Read in UTC (toUtcDateInput): a pickup at 23:30 is on the day it was
+      // booked for, not on the next one the browser's offset would put it in.
+      const day = byKey.get(toUtcDateInput(event.on));
       if (!day) continue;
 
       day.events.push(event);

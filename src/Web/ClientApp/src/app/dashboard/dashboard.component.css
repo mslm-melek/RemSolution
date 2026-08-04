@@ -28,7 +28,7 @@
 
 .picked-range {
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   flex-wrap: wrap;
   gap: var(--gap-3);
   padding: 10px 14px;
@@ -37,25 +37,15 @@
   background: var(--surface-2);
 }
 
-.picked-range label {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
+/* The two ends of the range are outlined date fields like everywhere else, only
+   narrow — and with no room kept underneath for messages this strip never has
+   (the range error is reported beside the button). */
+.picked-range app-date-field {
+  flex: 0 1 170px;
 }
 
-.picked-range input {
-  padding: 6px 10px;
-  border: 1px solid var(--line-strong);
-  border-radius: var(--r-xs);
-  background: var(--surface);
-  font: inherit;
-  font-size: 13px;
-  color: var(--ink);
-}
-
-.picked-range input:focus {
-  outline: 0;
-  border-color: var(--brand-500);
+.picked-range ::ng-deep .mat-mdc-form-field-subscript-wrapper {
+  display: none;
 }
 
 .control-label {

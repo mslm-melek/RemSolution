@@ -38,6 +38,7 @@
     "price": "Price",
     "amount": "Amount",
     "date": "Date",
+    "time": "Time",
     "method": "Method",
     "notes": "Notes",
     "type": "Type",
