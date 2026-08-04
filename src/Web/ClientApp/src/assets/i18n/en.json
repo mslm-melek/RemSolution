@@ -446,6 +446,9 @@
     "carNotBookable": "This car is in maintenance or inactive and cannot be booked.",
     "terminalReadOnly": "This renting is finished or cancelled; it stays on record but can no longer be changed.",
     "paidOf": "{{ paid }} paid · {{ due }} outstanding",
+    "paidWithCredit": "{{ paid }} paid · {{ credit }} to hand back",
+    "cancelledFree": "Cancelled free of charge: nothing is owed.",
+    "cancellationFeeKept": "Cancelled · fee kept: {{ amount }} {{ currency }}",
     "adjustPriceForChange": "Set the new total myself",
     "newTotalPrice": "New total for the whole period"
   },

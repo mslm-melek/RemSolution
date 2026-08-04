@@ -657,16 +657,29 @@
       </div>
 
       <div class="tile-grid">
+        <!-- Both parties open their own record: from a booking the next question is
+             usually about the car's history or the client's, and retyping a name
+             into a list to get there is the wrong way round. -->
         <div class="tile">
           <div class="tile-label">{{ t('renting.car') }}</div>
-          <div class="tile-value small">{{ renting.carModelName }}</div>
+          <div class="tile-value small">
+            <a *ngIf="renting.carId" [routerLink]="['/car', renting.carId]">{{ renting.carModelName }}</a>
+            <span *ngIf="!renting.carId">{{ renting.carModelName }}</span>
+          </div>
           <div class="tile-note num">{{ renting.carMatricule }}</div>
         </div>
         <div class="tile">
           <div class="tile-label">{{ t('renting.client') }}</div>
-          <div class="tile-value small">{{ renting.clientName }}</div>
+          <div class="tile-value small">
+            <a *ngIf="renting.clientId" [routerLink]="['/client', renting.clientId]">{{ renting.clientName }}</a>
+            <span *ngIf="!renting.clientId">{{ renting.clientName }}</span>
+          </div>
           <div class="tile-note" *ngIf="renting.secondClientName">
-            + {{ renting.secondClientName }}
+            +
+            <a *ngIf="renting.secondClientId" [routerLink]="['/client', renting.secondClientId]">
+              {{ renting.secondClientName }}
+            </a>
+            <span *ngIf="!renting.secondClientId">{{ renting.secondClientName }}</span>
           </div>
         </div>
         <div class="tile">
@@ -688,11 +701,31 @@
           <div class="tile-value num" *ngIf="renting.price">
             {{ renting.price.amount | number:'1.2-2' }} {{ renting.price.currency }}
           </div>
+
+          <!-- A cancelled hire no longer charges its price, so the price above
+               would be read as a debt if nothing said otherwise. -->
+          <div class="tile-note" *ngIf="renting.rentingState === RentingState.Cancelled">
+            <ng-container *ngIf="renting.cancellationFee">
+              {{ t('renting.cancellationFeeKept', {
+                   amount: (renting.cancellationFee.amount | number:'1.2-2'),
+                   currency: renting.cancellationFee.currency }) }}
+            </ng-container>
+            <ng-container *ngIf="!renting.cancellationFee">{{ t('renting.cancelledFree') }}</ng-container>
+          </div>
+
           <!-- Only when payments are readable: otherwise the figure would be a
-               half-truth (see the Payments feature gate). -->
+               half-truth (see the Payments feature gate). Overpaid — which is what
+               a cancellation with money already collected leaves behind — is a
+               credit owed back, not a negative amount outstanding. -->
           <div class="tile-note num" *ngIf="canUsePayments">
-            {{ t('renting.paidOf', { paid: (paidAmount | number:'1.2-2'),
-                                     due: (balanceDue | number:'1.2-2') }) }}
+            <ng-container *ngIf="creditDue === 0">
+              {{ t('renting.paidOf', { paid: (paidAmount | number:'1.2-2'),
+                                       due: (balanceDue | number:'1.2-2') }) }}
+            </ng-container>
+            <ng-container *ngIf="creditDue > 0">
+              {{ t('renting.paidWithCredit', { paid: (paidAmount | number:'1.2-2'),
+                                               credit: (creditDue | number:'1.2-2') }) }}
+            </ng-container>
           </div>
         </div>
       </div>

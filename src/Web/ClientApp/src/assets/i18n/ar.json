@@ -446,6 +446,9 @@
     "carNotBookable": "هذه السيارة في الصيانة أو غير نشطة ولا يمكن حجزها.",
     "terminalReadOnly": "هذا الإيجار منتهٍ أو ملغى؛ يبقى في السجل ولا يمكن تعديله.",
     "paidOf": "{{ paid }} مدفوع · {{ due }} متبقٍ",
+    "paidWithCredit": "{{ paid }} مدفوع · {{ credit }} تُرجع إلى الحريف",
+    "cancelledFree": "ملغى دون معلوم: لا شيء مستحق.",
+    "cancellationFeeKept": "ملغى · المعلوم المحتفظ به: {{ amount }} {{ currency }}",
     "adjustPriceForChange": "إدخال الإجمالي الجديد يدويًا",
     "newTotalPrice": "الإجمالي الجديد لكامل المدة"
   },

@@ -1427,10 +1427,30 @@ export class RentingFormComponent implements OnInit {
     return this.payments.reduce((sum, p) => sum + (p.payementAmount?.amount ?? 0), 0);
   }
 
-  /** Rental price plus extras, less what has been paid. */
-  get balanceDue(): number {
+  /**
+   * What this booking charges. A cancelled one charges its cancellation fee
+   * instead of its price — nothing at all when it was called off for free — which
+   * is the same rule the client's balance and the credits screen apply (see
+   * ClientCreditRows). Extras go with it: a hire that did not happen does not
+   * bill the services that were to come with it.
+   */
+  get chargeAmount(): number {
+    if (this.renting?.rentingState === RentingState.Cancelled) {
+      return this.renting?.cancellationFee?.amount ?? 0;
+    }
+
     const extras = this.extraServices.reduce((sum, e) => sum + (e.totalAmount?.amount ?? 0), 0);
-    return (this.renting?.price?.amount ?? 0) + extras - this.paidAmount;
+    return (this.renting?.price?.amount ?? 0) + extras;
+  }
+
+  /** Still owed on this booking; negative means the agency owes it back. */
+  get balanceDue(): number {
+    return this.chargeAmount - this.paidAmount;
+  }
+
+  /** What the client has paid beyond what the booking charges, as a credit. */
+  get creditDue(): number {
+    return Math.max(0, -this.balanceDue);
   }
 
   // Returns a transloco key for the state chip; the raw enum name would show

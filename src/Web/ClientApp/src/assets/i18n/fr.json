@@ -446,6 +446,9 @@
     "carNotBookable": "Ce véhicule est en maintenance ou inactif : il ne peut pas être loué.",
     "terminalReadOnly": "Cette location est terminée ou annulée ; elle reste au dossier mais ne peut plus être modifiée.",
     "paidOf": "{{ paid }} réglés · {{ due }} restants",
+    "paidWithCredit": "{{ paid }} réglés · {{ credit }} à rendre au client",
+    "cancelledFree": "Annulée sans frais : plus rien n'est dû.",
+    "cancellationFeeKept": "Annulée · frais retenus : {{ amount }} {{ currency }}",
     "adjustPriceForChange": "Saisir le nouveau total moi-même",
     "newTotalPrice": "Nouveau total pour toute la période"
   },
