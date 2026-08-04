@@ -590,6 +590,9 @@ namespace RemSolution.Infrastructure.Data.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
+                    b.Property<int?>("Mileage")
+                        .HasColumnType("int");
+
                     b.Property<int?>("ModelId")
                         .HasColumnType("int");
 
@@ -2762,6 +2765,30 @@ namespace RemSolution.Infrastructure.Data.Migrations
                         .HasForeignKey("SecondClientId")
                         .OnDelete(DeleteBehavior.NoAction);
 
+                    b.OwnsOne("RemSolution.Domain.ValueObjects.Money", "CancellationFee", b1 =>
+                        {
+                            b1.Property<int>("RentingId")
+                                .HasColumnType("int");
+
+                            b1.Property<decimal>("Amount")
+                                .HasColumnType("decimal(18,2)")
+                                .HasColumnName("CancellationFee");
+
+                            b1.Property<string>("Currency")
+                                .IsRequired()
+                                .HasMaxLength(3)
+                                .IsUnicode(false)
+                                .HasColumnType("varchar(3)")
+                                .HasColumnName("CancellationFeeCurrency");
+
+                            b1.HasKey("RentingId");
+
+                            b1.ToTable("Rentings");
+
+                            b1.WithOwner()
+                                .HasForeignKey("RentingId");
+                        });
+
                     b.OwnsOne("RemSolution.Domain.ValueObjects.Money", "DepositAmount", b1 =>
                         {
                             b1.Property<int>("RentingId")
@@ -2811,6 +2838,8 @@ namespace RemSolution.Infrastructure.Data.Migrations
                         });
 
                     b.Navigation("Agency");
+
+                    b.Navigation("CancellationFee");
 
                     b.Navigation("Car");
 

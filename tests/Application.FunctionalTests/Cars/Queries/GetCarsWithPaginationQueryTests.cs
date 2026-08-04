@@ -78,6 +78,67 @@ public class GetCarsWithPaginationQueryTests : BaseTestFixture
         available.Items.First().Matricule.Should().Be("IN-1");
     }
 
+    // The cars list shows custody on the row itself — status chip, and a return
+    // action that needs the hire holding the car — so the row carries it.
+    [Test]
+    public async Task ShouldReportCustodyAndHistorySizeOnTheRow()
+    {
+        await RunAsAgencyAdministratorAsync();
+        await AddTestAgencyAsync();
+
+        var client = new Client { FirstName = "Amina", LastName = "Ben Salah" };
+        await AddAsync(client);
+
+        var held = new Car { Matricule = "HELD-1", Status = CarStatus.Active };
+        await AddAsync(held);
+        var idle = new Car { Matricule = "IDLE-1", Status = CarStatus.Active };
+        await AddAsync(idle);
+
+        await AddAsync(new Renting
+        {
+            CarId = held.Id,
+            ClientId = client.Id,
+            StartDate = DateTime.UtcNow.AddDays(-2),
+            EndDate = DateTime.UtcNow.AddDays(3),
+            StartMileage = 42100,
+            RentingState = RentingState.InProgress
+        });
+
+        // Finished: part of the car's history, but it is not holding the car.
+        await AddAsync(new Renting
+        {
+            CarId = held.Id,
+            ClientId = client.Id,
+            StartDate = DateTime.UtcNow.AddDays(-20),
+            EndDate = DateTime.UtcNow.AddDays(-15),
+            RentingState = RentingState.Done
+        });
+
+        // Cancelled: never happened, so it is not history either.
+        await AddAsync(new Renting
+        {
+            CarId = idle.Id,
+            ClientId = client.Id,
+            StartDate = DateTime.UtcNow.AddDays(-10),
+            EndDate = DateTime.UtcNow.AddDays(-8),
+            RentingState = RentingState.Cancelled
+        });
+
+        var result = await SendAsync(new GetCarsWithPaginationQuery());
+
+        var out_ = result.Items.Single(c => c.Matricule == "HELD-1");
+        out_.IsOnRent.Should().BeTrue();
+        out_.RentingCount.Should().Be(2);
+        out_.CurrentRenting.Should().NotBeNull();
+        out_.CurrentRenting!.ClientName.Should().Be("Amina Ben Salah");
+        out_.CurrentRenting.StartMileage.Should().Be(42100);
+
+        var available = result.Items.Single(c => c.Matricule == "IDLE-1");
+        available.IsOnRent.Should().BeFalse();
+        available.CurrentRenting.Should().BeNull();
+        available.RentingCount.Should().Be(0);
+    }
+
     [Test]
     public async Task ShouldFilterByWhenTheCarWasAdded()
     {

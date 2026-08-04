@@ -379,10 +379,15 @@
               </mat-error>
             </mat-form-field>
 
+            <!-- Prefilled from the car's odometer (see offerCarMileage) and still
+                 editable: the dashboard is the authority, not the record. -->
             <mat-form-field appearance="outline">
               <mat-label>{{ t('renting.pickupMileage') }}</mat-label>
               <input matInput type="number" min="0" formControlName="startMileage" />
-              <mat-hint>{{ t('common.optional') }}</mat-hint>
+              <span matTextSuffix>{{ t('common.km') }}</span>
+              <mat-hint>{{ selectedCar?.mileage !== null && selectedCar?.mileage !== undefined
+                ? t('renting.pickupMileageFromCar', { mileage: (selectedCar?.mileage | number:'1.0-0') })
+                : t('common.optional') }}</mat-hint>
             </mat-form-field>
           </div>
 

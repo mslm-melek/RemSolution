@@ -1,0 +1,57 @@
+<ng-container *transloco="let t">
+  <h2 mat-dialog-title>{{ t('renting.returnTitle') }}</h2>
+
+  <mat-dialog-content>
+    <p class="dialog-subtitle" *ngIf="carLabel">{{ carLabel }}</p>
+
+    <p class="dialog-hint" *ngIf="renting">
+      {{ clientName }}
+      <span *ngIf="renting.startDate">
+        · {{ renting.startDate | date:'yyyy-MM-dd' }} → {{ renting.endDate | date:'yyyy-MM-dd' }}
+      </span>
+    </p>
+
+    <p class="hint" *ngIf="loading">{{ t('common.loading') }}</p>
+
+    <div *ngIf="errorMessage" class="error-banner">
+      <mat-icon>error_outline</mat-icon> {{ errorMessage }}
+    </div>
+
+    <form [formGroup]="form" class="dialog-form" (ngSubmit)="submit()" *ngIf="!loading && renting">
+      <!-- The odometer it left on: the floor the server enforces on the reading. -->
+      <p class="dialog-hint" *ngIf="pickupMileage !== undefined">
+        {{ t('renting.pickupMileageWas', { mileage: pickupMileage }) }}
+      </p>
+
+      <mat-form-field appearance="outline">
+        <mat-label>{{ t('renting.returnMileage') }}</mat-label>
+        <input matInput type="number" min="0" step="1" formControlName="mileage" />
+        <span matSuffix>&nbsp;{{ t('common.km') }}</span>
+        <mat-hint>{{ t('common.optional') }}</mat-hint>
+        <mat-error *ngIf="form.get('mileage')?.hasError('belowPickup')">
+          {{ t('renting.returnMileageTooLow', { mileage: pickupMileage }) }}
+        </mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>{{ t('renting.actualReturnDate') }}</mat-label>
+        <input matInput type="date" formControlName="returnDate" />
+      </mat-form-field>
+
+      <!-- An early or late return is a shorter or longer hire, so it is re-priced
+           before the booking is closed. -->
+      <p class="dialog-hint warn" *ngIf="endDateChanged">
+        <mat-icon>info</mat-icon> {{ t('renting.returnDateChangedHint') }}
+      </p>
+    </form>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-button type="button" (click)="cancel()">{{ t('common.cancel') }}</button>
+    <button mat-raised-button color="primary" type="button" (click)="submit()"
+            [disabled]="saving || loading || !renting">
+      <mat-icon>assignment_turned_in</mat-icon>
+      {{ saving ? t('common.saving') : t('renting.returnCar') }}
+    </button>
+  </mat-dialog-actions>
+</ng-container>

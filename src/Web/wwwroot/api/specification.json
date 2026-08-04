@@ -2358,6 +2358,46 @@
         }
       }
     },
+    "/api/Credits/clients/by-ids": {
+      "get": {
+        "tags": [
+          "Credits"
+        ],
+        "operationId": "GetClientCreditsByIds",
+        "parameters": [
+          {
+            "name": "clientIds",
+            "in": "query",
+            "style": "form",
+            "explode": true,
+            "schema": {
+              "type": "array",
+              "nullable": true,
+              "items": {
+                "type": "integer",
+                "format": "int32"
+              }
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ClientCreditDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/Credits/expenses": {
       "get": {
         "tags": [
@@ -5249,29 +5289,6 @@
             "description": ""
           }
         }
-      },
-      "delete": {
-        "tags": [
-          "Rentings"
-        ],
-        "operationId": "CancelRenting",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            },
-            "x-position": 1
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": ""
-          }
-        }
       }
     },
     "/api/Rentings/{id}/history": {
@@ -5373,6 +5390,46 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/ChangeRentingEndDateCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 2
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "400": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/Rentings/{id}/cancel": {
+      "put": {
+        "tags": [
+          "Rentings"
+        ],
+        "operationId": "CancelRenting",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          }
+        ],
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelRentingCommand"
               }
             }
           },
@@ -7161,6 +7218,26 @@
                 "$ref": "#/components/schemas/FuelType"
               }
             ]
+          },
+          "mileage": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "isOnRent": {
+            "type": "boolean"
+          },
+          "rentingCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "currentRenting": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/CarRentingSummaryDto"
+              }
+            ]
           }
         }
       },
@@ -7202,6 +7279,40 @@
           0,
           1
         ]
+      },
+      "CarRentingSummaryDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "clientId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "clientName": {
+            "type": "string",
+            "nullable": true
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "startMileage": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          }
+        }
       },
       "CreateCarCommand": {
         "type": "object",
@@ -7248,6 +7359,11 @@
                 "$ref": "#/components/schemas/FuelType"
               }
             ]
+          },
+          "mileage": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
           }
         }
       },
@@ -7302,6 +7418,11 @@
                 "$ref": "#/components/schemas/FuelType"
               }
             ]
+          },
+          "mileage": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
           }
         }
       },
@@ -7687,6 +7808,14 @@
           },
           "hasPortalAccount": {
             "type": "boolean"
+          },
+          "rentingCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "openRentingCount": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },
@@ -10540,7 +10669,20 @@
             "format": "int32",
             "nullable": true
           },
+          "carMileage": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
           "price": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/MoneyDto"
+              }
+            ]
+          },
+          "cancellationFee": {
             "nullable": true,
             "oneOf": [
               {
@@ -10966,6 +11108,32 @@
             "additionalProperties": {
               "type": "string"
             }
+          }
+        }
+      },
+      "CancelRentingCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "rowVersion": {
+            "type": "string",
+            "format": "byte",
+            "nullable": true
+          },
+          "cancellationFee": {
+            "type": "number",
+            "format": "decimal",
+            "nullable": true
+          },
+          "refundExcess": {
+            "type": "boolean"
+          },
+          "refundMethod": {
+            "$ref": "#/components/schemas/PaymentMethod"
           }
         }
       },

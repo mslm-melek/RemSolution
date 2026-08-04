@@ -31,7 +31,11 @@ public class Rentings : EndpointGroupBase
             .MapPut(UpdateRenting, "{id}", Permissions.RentingUpdate)
             .MapPut(ChangeRentingState, "{id}/state", Permissions.RentingUpdate)
             .MapPut(ChangeRentingEndDate, "{id}/end-date", Permissions.RentingUpdate)
-            .MapDelete(CancelRenting, "{id}", Permissions.RentingDelete);
+            // Cancelling is a transition with decisions attached (the fee kept,
+            // whether the excess is refunded), so it takes a body like the two
+            // above rather than being a bare DELETE. Still Renting.Delete: for a
+            // financial record, cancelling IS deleting (P.11).
+            .MapPut(CancelRenting, "{id}/cancel", Permissions.RentingDelete);
     }
 
     public async Task<Ok<PaginatedList<RentingDto>>> GetRentings(
@@ -104,9 +108,13 @@ public class Rentings : EndpointGroupBase
         return TypedResults.NoContent();
     }
 
-    public async Task<NoContent> CancelRenting(ISender sender, int id)
+    public async Task<Results<NoContent, BadRequest>> CancelRenting(
+        ISender sender, int id, CancelRentingCommand command)
     {
-        await sender.Send(new CancelRentingCommand(id));
+        if (id != command.Id)
+            return TypedResults.BadRequest();
+
+        await sender.Send(command);
         return TypedResults.NoContent();
     }
 }

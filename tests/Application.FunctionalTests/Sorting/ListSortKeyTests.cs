@@ -29,9 +29,10 @@ public class ListSortKeyTests : BaseTestFixture
 {
     // Keys per screen, matching the matColumnDef ids in the templates.
     private static readonly string[] CarKeys =
-        ["matricule", "model", "firstCirculationDate", "color", "power", "fuelType", "status", "dailyRate", "branch"];
+        ["matricule", "model", "firstCirculationDate", "color", "power", "fuelType", "status", "dailyRate",
+         "branch", "rentings"];
 
-    private static readonly string[] ClientKeys = ["name", "birthDate", "cin", "flagged"];
+    private static readonly string[] ClientKeys = ["name", "birthDate", "cin", "flagged", "rentings"];
 
     private static readonly string[] ModelKeys = ["name", "brand"];
 

@@ -69,7 +69,9 @@ export class CarFormComponent implements OnInit, OnDestroy {
       firstCirculationDate: ['', Validators.required],
       color: [''],
       power: [null],
-      fuelType: [null]
+      fuelType: [null],
+      // The car's odometer, which a booking on it takes as its pickup reading.
+      mileage: [null, Validators.min(0)]
     });
   }
 
@@ -116,7 +118,8 @@ export class CarFormComponent implements OnInit, OnDestroy {
       firstCirculationDate: toDateInput(dto.firstCirculationDate),
       color: dto.color ?? '',
       power: dto.power ?? null,
-      fuelType: dto.fuelType ?? null
+      fuelType: dto.fuelType ?? null,
+      mileage: dto.mileage ?? null
     });
     this.currency = dto.dailyRate?.currency;
     this.rowVersion = dto.rowVersion;
@@ -143,7 +146,8 @@ export class CarFormComponent implements OnInit, OnDestroy {
         firstCirculationDate: fromDateInput(v.firstCirculationDate),
         color: v.color || undefined,
         power: v.power ?? undefined,
-        fuelType: v.fuelType ?? undefined
+        fuelType: v.fuelType ?? undefined,
+        mileage: v.mileage ?? undefined
       });
       this.client.updateCar(this.carId!, command).subscribe({
         next: () => this.router.navigate(['/car']),
@@ -159,7 +163,8 @@ export class CarFormComponent implements OnInit, OnDestroy {
         firstCirculationDate: fromDateInput(v.firstCirculationDate),
         color: v.color || undefined,
         power: v.power ?? undefined,
-        fuelType: v.fuelType ?? undefined
+        fuelType: v.fuelType ?? undefined,
+        mileage: v.mileage ?? undefined
       });
       this.client.createCar(command).subscribe({
         next: () => this.router.navigate(['/car']),

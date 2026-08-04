@@ -22,6 +22,15 @@
         // Refundable deposit held for the vehicle, carried over from the
         // reservation on conversion. Distinct from Price (the rental charge).
         public Money? DepositAmount { get; set; }
+        /// <summary>
+        /// What the client still owes on a hire that was cancelled — nothing at
+        /// all, or the part of the price the agency kept for calling it off. It
+        /// REPLACES <see cref="Price"/> as what a cancelled renting charges (see
+        /// the charge rule in ClientCreditRows), which is why cancelling for free
+        /// leaves this null and takes the whole price off the client's balance.
+        /// Only ever set by cancellation; meaningless while the hire is live.
+        /// </summary>
+        public Money? CancellationFee { get; set; }
         public RentingState RentingState { get; set; }
         public string? Notes { get; set; }
         public virtual ICollection<ExtraService>? ExtraServices { get; set; }

@@ -27,6 +27,9 @@ namespace RemSolution.Application.Features.Car.Commands.CreateCarCommand
         // callers plant arbitrary URLs.
         public int? Power { get; init; }
         public FuelType? FuelType { get; init; }
+        // The odometer when the car joined the fleet; a booking on it starts from
+        // here (see Car.Mileage). Omitted means unknown, not zero.
+        public int? Mileage { get; init; }
     }
     public class CreateCarCommandHandler : IRequestHandler<CreateCarCommand, int>
     {
@@ -56,7 +59,8 @@ namespace RemSolution.Application.Features.Car.Commands.CreateCarCommand
                 FirstCirculationDate= request.FirstCirculationDate,
                 Color = request.Color,
                 Power = request.Power,
-                FuelType = request.FuelType
+                FuelType = request.FuelType,
+                Mileage = request.Mileage
             };
 
             // DailyRate is denominated in the agency's currency (the client

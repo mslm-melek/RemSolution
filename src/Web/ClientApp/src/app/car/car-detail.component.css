@@ -1,0 +1,89 @@
+/* Surface and spacing come from the shared .page rule in styles.scss; tiles and
+   tables from the shared .tile-grid / .data-table classes. Same shape as the
+   client and agency detail pages. */
+.detail-card {
+  max-width: 1100px;
+  gap: 16px;
+}
+
+.header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+/* The plate is the car's name, and its availability belongs next to it. */
+.title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.header-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.tab-body {
+  padding: 24px 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.owing {
+  color: var(--danger);
+}
+
+/* Pointers to the screens that own the rest of this car's story. */
+.detail-links {
+  margin: 0;
+  font-size: 13px;
+}
+
+/* Read-only label/value pairs. */
+.facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px 24px;
+  margin: 0;
+}
+
+.fact {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.fact dt {
+  font-size: 11.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--muted);
+}
+
+.fact dd {
+  margin: 0;
+  color: var(--ink);
+}
+
+.car-photo {
+  align-self: flex-start;
+  max-width: 320px;
+}
+
+.car-photo img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+}

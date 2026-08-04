@@ -1,4 +1,5 @@
 import { Component, OnInit, inject } from '@angular/core';
+import { MatDialog } from '@angular/material/dialog';
 import { PageEvent } from '@angular/material/paginator';
 import { Sort, SortDirection } from '@angular/material/sort';
 import { ActivatedRoute, ParamMap, Router } from '@angular/router';
@@ -6,8 +7,14 @@ import {
   CarsClient, CarDto, CarStatus, FuelType, ModelCarsClient, ModelCarDto
 } from '../web-api-client';
 import {
-  FilterChip, applyListFilters, boolParam, dateParam, enumName, enumParam, rangeText, withoutParams
+  FilterChip, applyListFilters, boolParam, dateParam, enumName, enumParam, idParam, rangeText,
+  withoutParams
 } from '../shared/list-filters';
+import {
+  canRentNow, carAvailability, carAvailabilityClass, carAvailabilityLabelKey
+} from '../shared/car-availability';
+import { AuthService } from '../shared/auth.service';
+import { ReturnDialogComponent } from '../shared/return-dialog.component';
 import { TranslocoService } from '@jsverse/transloco';
 
 @Component({
@@ -19,9 +26,19 @@ export class CarComponent implements OnInit {
   // Confirm/prompt dialogs and error banners are plain strings, so they are
   // translated imperatively rather than through the template pipe.
   private readonly transloco = inject(TranslocoService);
+  private readonly dialog = inject(MatDialog);
   cars: CarDto[] = [];
   models: ModelCarDto[] = [];
-  displayedColumns: string[] = ['matricule', 'model', 'firstCirculationDate', 'color', 'power', 'fuelType', 'image', 'actions'];
+  displayedColumns: string[] = [
+    'matricule', 'model', 'status', 'firstCirculationDate', 'color', 'power', 'fuelType',
+    'rentings', 'image', 'actions'
+  ];
+
+  // Hiring out and taking back are the Rentings module's writes, so the row only
+  // offers them to someone who could carry them out (the API enforces the same).
+  canRent = false;
+  canReturn = false;
+  canSeeRentings = false;
 
   totalCount = 0;
   pageNumber = 1;
@@ -35,11 +52,14 @@ export class CarComponent implements OnInit {
   filterModelId: number | null = null;
   filterColor = '';
   filterFuelType: FuelType | null = null;
+  // Custody, not administrative status: true = out with a client right now. The
+  // dashboard's "on rent" tile links in with it, and the strip now has a control
+  // of its own for it (so it is not one of the chips below).
+  filterOnRent: boolean | null = null;
 
   // Filters that arrive by link (from the dashboard's fleet counts) and have no
   // control on the strip; they show as removable chips instead.
   filterStatus: CarStatus | null = null;
-  filterOnRent: boolean | null = null;
   addedFrom: Date | null = null;
   addedTo: Date | null = null;
   chips: FilterChip[] = [];
@@ -58,6 +78,7 @@ export class CarComponent implements OnInit {
   constructor(
     private client: CarsClient,
     private modelCarsClient: ModelCarsClient,
+    private auth: AuthService,
     private route: ActivatedRoute,
     private router: Router) { }
 
@@ -65,6 +86,12 @@ export class CarComponent implements OnInit {
   // whenever they change — including when the menu's plain "Cars" link clears
   // the ones a dashboard tile arrived with.
   ngOnInit() {
+    this.auth.currentUser$.subscribe(user => {
+      this.canSeeRentings = AuthService.canAccessModule(user, 'Rentings', 'Renting.Read');
+      this.canRent = AuthService.canAccessModule(user, 'Rentings', 'Renting.Create');
+      this.canReturn = AuthService.canAccessModule(user, 'Rentings', 'Renting.Update');
+    });
+
     this.modelCarsClient.getAllModelCars().subscribe({
       next: models => this.models = models || [],
       error: err => console.error(err)
@@ -78,8 +105,7 @@ export class CarComponent implements OnInit {
   }
 
   private readFilters(params: ParamMap) {
-    const modelId = Number(params.get('model'));
-    this.filterModelId = Number.isInteger(modelId) && modelId > 0 ? modelId : null;
+    this.filterModelId = idParam(params, 'model');
     this.filterColor = params.get('color') ?? '';
     this.filterFuelType = enumParam(params, 'fuel', FuelType) as FuelType | null;
     this.filterStatus = enumParam(params, 'status', CarStatus) as CarStatus | null;
@@ -94,13 +120,6 @@ export class CarComponent implements OnInit {
         params: ['status'],
         labelKey: 'filters.carStatus',
         labelArgs: { status: this.transloco.translate(CarComponent.statusLabelKeys[this.filterStatus]) }
-      });
-    }
-
-    if (this.filterOnRent !== null) {
-      this.chips.push({
-        params: ['onRent'],
-        labelKey: this.filterOnRent ? 'filters.onRent' : 'filters.notOnRent'
       });
     }
 
@@ -138,10 +157,11 @@ export class CarComponent implements OnInit {
   // Filtering goes through the URL; the subscription above reloads the rows.
   onFilter() {
     applyListFilters(this.router, this.route, {
-      ...withoutParams(this.route.snapshot.queryParamMap, ['model', 'color', 'fuel']),
+      ...withoutParams(this.route.snapshot.queryParamMap, ['model', 'color', 'fuel', 'onRent']),
       model: this.filterModelId,
       color: this.filterColor.trim() || null,
-      fuel: enumName(FuelType, this.filterFuelType)
+      fuel: enumName(FuelType, this.filterFuelType),
+      onRent: this.filterOnRent
     });
   }
 
@@ -175,6 +195,45 @@ export class CarComponent implements OnInit {
   // column re-renders on a language switch.
   fuelTypeLabelKey(value?: FuelType): string {
     return this.fuelTypes.find(f => f.value === value)?.labelKey ?? '';
+  }
+
+  // --- Availability, hiring out and taking back -----------------------------
+  // The status column answers "can I hire this out right now?", which needs both
+  // the administrative status and whether the car is out (see car-availability).
+
+  availabilityLabelKey(car: CarDto): string {
+    return carAvailabilityLabelKey(carAvailability(car));
+  }
+
+  availabilityClass(car: CarDto): string {
+    return carAvailabilityClass(carAvailability(car));
+  }
+
+  canRentOut(car: CarDto): boolean {
+    return this.canRent && canRentNow(car);
+  }
+
+  canTakeBack(car: CarDto): boolean {
+    return this.canReturn && !!car.currentRenting?.id;
+  }
+
+  // The hire holding the car, closed from here (see ReturnDialogComponent). The
+  // list is reloaded rather than patched: the row's status, its history count and
+  // possibly the price have all just changed.
+  returnCar(car: CarDto) {
+    const renting = car.currentRenting;
+    if (!renting?.id) return;
+
+    this.dialog.open(ReturnDialogComponent, {
+      data: {
+        rentingId: renting.id,
+        carLabel: [car.matricule, car.modelName].filter(Boolean).join(' · '),
+        clientName: renting.clientName
+      },
+      autoFocus: 'first-tabbable'
+    }).afterClosed().subscribe(returned => {
+      if (returned) this.load();
+    });
   }
 
   deleteCar(car: CarDto) {

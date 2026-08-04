@@ -7,3 +7,16 @@
   color: var(--ink);
   letter-spacing: 0.02em;
 }
+
+/* The plate opens the car's page. It keeps the column's weight and colour so the
+   table stays quiet, and says it is a link on hover. */
+a.matricule {
+  text-decoration: none;
+  cursor: pointer;
+}
+
+a.matricule:hover,
+a.matricule:focus-visible {
+  color: var(--brand-700);
+  text-decoration: underline;
+}

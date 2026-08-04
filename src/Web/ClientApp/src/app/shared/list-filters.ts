@@ -20,6 +20,15 @@ export function boolParam(params: ParamMap, key: string): boolean | null {
 }
 
 /**
+ * A record id (`?car=12`), or null when absent or not one. Ids are what the "see
+ * this car's / this client's hires" links carry.
+ */
+export function idParam(params: ParamMap, key: string): number | null {
+  const raw = Number(params.get(key));
+  return Number.isInteger(raw) && raw > 0 ? raw : null;
+}
+
+/**
  * A numeric enum member, read from its name ("InProgress" — what the links use,
  * so the URL stays readable) or from its number.
  */

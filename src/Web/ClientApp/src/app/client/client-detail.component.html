@@ -1,0 +1,270 @@
+<div class="page detail-card" *transloco="let t">
+  <div class="header-row">
+    <div>
+      <h2 class="title">
+        {{ name || t('client.title') }}
+        <mat-icon *ngIf="client?.isFlagged" class="flag-icon" [matTooltip]="t('client.flagged')">flag</mat-icon>
+      </h2>
+      <p class="page-subtitle" *ngIf="client">
+        <span *ngIf="client.cin">{{ t('client.cin') }} {{ client.cin }}</span>
+        <span *ngIf="client.email"> · {{ client.email }}</span>
+        <span *ngIf="client.hasPortalAccount"> · {{ t('client.accountActive') }}</span>
+      </p>
+    </div>
+    <div class="header-actions">
+      <!-- The two things this page is opened to do, beside reading it. -->
+      <a *ngIf="canRent" mat-raised-button color="primary"
+         [routerLink]="['/renting/new']" [queryParams]="{ clientId: clientId }">
+        <mat-icon>vpn_key</mat-icon> {{ t('client.rentTo') }}
+      </a>
+      <button *ngIf="canPay" mat-button (click)="pay()">
+        <mat-icon>payments</mat-icon> {{ t('payment.pay') }}
+      </button>
+      <a mat-button [routerLink]="['/client', clientId, 'edit']">
+        <mat-icon>edit</mat-icon> {{ t('common.edit') }}
+      </a>
+      <a mat-button [routerLink]="['/client']">
+        <mat-icon>arrow_back</mat-icon> {{ t('common.backToList') }}
+      </a>
+    </div>
+  </div>
+
+  <div *ngIf="errorMessage" class="error-banner">{{ errorMessage }}</div>
+
+  <!-- The figures the counter is asked for: how much business this client has
+       done, and where they stand. -->
+  <div class="tile-grid">
+    <div class="tile">
+      <div class="tile-label">{{ t('client.rentings') }}</div>
+      <div class="tile-value">{{ client?.rentingCount ?? 0 }}</div>
+      <div class="tile-note" *ngIf="client?.openRentingCount">
+        {{ t('client.openRentings', { count: client?.openRentingCount }) }}
+      </div>
+    </div>
+
+    <ng-container *ngIf="hasMoneyPanel">
+      <div class="tile">
+        <div class="tile-label">{{ t('credit.charged') }}</div>
+        <div class="tile-value">{{ money?.charged | number:'1.2-2' }} {{ money?.currency }}</div>
+      </div>
+      <div class="tile">
+        <div class="tile-label">{{ t('credit.paid') }}</div>
+        <div class="tile-value">{{ money?.paid | number:'1.2-2' }} {{ money?.currency }}</div>
+      </div>
+      <div class="tile">
+        <div class="tile-label">{{ t('credit.outstanding') }}</div>
+        <div class="tile-value"
+             [class.owing]="(money?.outstanding ?? 0) > 0"
+             [class.settled]="(money?.outstanding ?? 0) <= 0">
+          {{ money?.outstanding | number:'1.2-2' }} {{ money?.currency }}
+        </div>
+        <div class="tile-note">
+          {{ (money?.outstanding ?? 0) > 0 ? t('client.owesUs') : t('client.nothingOwed') }}
+        </div>
+      </div>
+    </ng-container>
+  </div>
+
+  <mat-tab-group>
+    <!-- HISTORY -->
+    <mat-tab [label]="t('client.tabs.rentings')" *ngIf="canSeeRentings">
+      <div class="tab-body">
+        <table mat-table [dataSource]="rentings" class="data-table full-width">
+          <ng-container matColumnDef="period">
+            <th mat-header-cell *matHeaderCellDef>{{ t('common.period') }}</th>
+            <td mat-cell *matCellDef="let r" class="num">
+              {{ r.startDate | date:'yyyy-MM-dd' }} → {{ r.endDate | date:'yyyy-MM-dd' }}
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="car">
+            <th mat-header-cell *matHeaderCellDef>{{ t('renting.car') }}</th>
+            <td mat-cell *matCellDef="let r">
+              <span class="cell-stack">
+                <a *ngIf="r.carId" [routerLink]="['/car', r.carId]" class="num">{{ r.carMatricule }}</a>
+                <span class="cell-sub">{{ r.carModelName }}</span>
+              </span>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="state">
+            <th mat-header-cell *matHeaderCellDef>{{ t('common.status') }}</th>
+            <td mat-cell *matCellDef="let r">
+              <span class="chip" [ngClass]="stateClass(r.rentingState)">
+                {{ stateLabelKey(r.rentingState) ? t(stateLabelKey(r.rentingState)) : '' }}
+              </span>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="price">
+            <th mat-header-cell *matHeaderCellDef class="num-cell">{{ t('common.price') }}</th>
+            <td mat-cell *matCellDef="let r" class="num-cell">
+              <span *ngIf="r.price">{{ r.price.amount | number:'1.2-2' }} {{ r.price.currency }}</span>
+            </td>
+          </ng-container>
+
+          <!-- Price − paid on the booking itself, so a debt can be traced to the
+               hire that created it. -->
+          <ng-container matColumnDef="outstanding">
+            <th mat-header-cell *matHeaderCellDef class="num-cell">{{ t('credit.outstanding') }}</th>
+            <td mat-cell *matCellDef="let r" class="num-cell">
+              <span class="chip danger" *ngIf="(r.outstanding?.amount ?? 0) > 0">
+                {{ r.outstanding.amount | number:'1.2-2' }} {{ r.outstanding.currency }}
+              </span>
+              <span class="muted" *ngIf="(r.outstanding?.amount ?? 0) <= 0">—</span>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef class="actions-cell">{{ t('common.actions') }}</th>
+            <td mat-cell *matCellDef="let r" class="actions-cell row-actions">
+              <button *ngIf="canTakeBack(r)" mat-icon-button color="primary" (click)="returnCar(r)"
+                      [matTooltip]="t('renting.returnCar')" [attr.aria-label]="t('renting.returnCar')">
+                <mat-icon>assignment_turned_in</mat-icon>
+              </button>
+              <a mat-icon-button [routerLink]="['/renting', r.id]"
+                 [matTooltip]="t('common.open')" [attr.aria-label]="t('common.open')">
+                <mat-icon>open_in_new</mat-icon>
+              </a>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="rentingColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: rentingColumns"></tr>
+
+          <tr class="mat-row" *matNoDataRow>
+            <td class="mat-cell empty-row" [attr.colspan]="rentingColumns.length">
+              {{ t('client.noRentings') }}
+            </td>
+          </tr>
+        </table>
+
+        <mat-paginator [length]="rentingsTotal"
+                       [pageIndex]="rentingsPage - 1"
+                       [pageSize]="rentingsPageSize"
+                       [pageSizeOptions]="[5, 10, 25, 50]"
+                       (page)="onRentingsPage($event)">
+        </mat-paginator>
+      </div>
+    </mat-tab>
+
+    <!-- MONEY. The entries behind the figures above; the ledger itself needs
+         Payment.Read, which the credit view does not imply. -->
+    <mat-tab [label]="t('payment.balanceTitle')" *ngIf="canReadPayments">
+      <div class="tab-body">
+        <div class="tab-actions" *ngIf="canPay">
+          <button mat-raised-button color="primary" (click)="pay()">
+            <mat-icon>payments</mat-icon> {{ t('payment.pay') }}
+          </button>
+        </div>
+
+        <table mat-table [dataSource]="payments" class="data-table full-width" *ngIf="payments.length">
+          <ng-container matColumnDef="date">
+            <th mat-header-cell *matHeaderCellDef>{{ t('common.date') }}</th>
+            <td mat-cell *matCellDef="let p" class="num">{{ p.payementDate | date:'yyyy-MM-dd' }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="amount">
+            <th mat-header-cell *matHeaderCellDef class="num-cell">{{ t('common.amount') }}</th>
+            <td mat-cell *matCellDef="let p" class="num-cell">
+              <span *ngIf="p.payementAmount">
+                {{ p.payementAmount.amount | number:'1.2-2' }} {{ p.payementAmount.currency }}
+              </span>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="method">
+            <th mat-header-cell *matHeaderCellDef>{{ t('common.method') }}</th>
+            <td mat-cell *matCellDef="let p">
+              {{ methodLabelKey(p.method) ? t(methodLabelKey(p.method)) : '' }}
+            </td>
+          </ng-container>
+
+          <!-- Receipt / slip / invoice kept against the entry. -->
+          <ng-container matColumnDef="proof">
+            <th mat-header-cell *matHeaderCellDef>{{ t('payment.proof') }}</th>
+            <td mat-cell *matCellDef="let p" class="proof-cell">
+              <a *ngIf="p.proofFileUrl" [href]="p.proofFileUrl" target="_blank"
+                 mat-icon-button color="primary"
+                 [matTooltip]="p.proofFileName || t('common.view')" [attr.aria-label]="t('common.view')">
+                <mat-icon>description</mat-icon>
+              </a>
+              <span *ngIf="!p.proofFileUrl && !canAttachProof" class="muted">—</span>
+
+              <button type="button" mat-icon-button *ngIf="canAttachProof" (click)="proofInput.click()"
+                      [disabled]="uploadingProofFor === p.id"
+                      [matTooltip]="p.proofFileUrl ? t('common.replace') : t('payment.attachProof')"
+                      [attr.aria-label]="p.proofFileUrl ? t('common.replace') : t('payment.attachProof')">
+                <mat-icon>{{ uploadingProofFor === p.id ? 'hourglass_top' : 'attach_file' }}</mat-icon>
+              </button>
+              <input #proofInput hidden type="file" accept=".jpg,.jpeg,.png,.webp,.pdf"
+                     (change)="onProofSelected(p, proofInput)" />
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="paymentColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: paymentColumns"></tr>
+        </table>
+
+        <p *ngIf="!payments.length" class="hint">{{ t('renting.noPayments') }}</p>
+
+        <!-- Say when there are older entries than the ones shown, rather than let
+             a capped list read as the whole history. -->
+        <p *ngIf="paymentsTotal > payments.length" class="hint">
+          {{ t('payment.showingLatest', { shown: payments.length, total: paymentsTotal }) }}
+        </p>
+      </div>
+    </mat-tab>
+
+    <!-- IDENTITY. The papers a counter is asked for, read-only; changing them is
+         the form's job. -->
+    <mat-tab [label]="t('client.identity')">
+      <div class="tab-body">
+        <dl class="facts" *ngIf="client">
+          <div class="fact">
+            <dt>{{ t('client.birthDate') }}</dt>
+            <dd>{{ client.birthDate | date:'yyyy-MM-dd' }} {{ client.birthPlace }}</dd>
+          </div>
+          <div class="fact">
+            <dt>{{ t('client.cin') }}</dt>
+            <dd>
+              {{ client.cin || '—' }}
+              <a *ngIf="client.cinImageUrl" [href]="client.cinImageUrl" target="_blank"
+                 mat-icon-button [matTooltip]="t('client.cinImage')">
+                <mat-icon>badge</mat-icon>
+              </a>
+            </dd>
+          </div>
+          <div class="fact">
+            <dt>{{ t('client.drivingLicence') }}</dt>
+            <dd>
+              {{ client.drivingLicenceNumber || '—' }}
+              <a *ngIf="client.drivingLicenceImageUrl" [href]="client.drivingLicenceImageUrl" target="_blank"
+                 mat-icon-button [matTooltip]="t('client.drivingLicenceImage')">
+                <mat-icon>directions_car</mat-icon>
+              </a>
+            </dd>
+          </div>
+          <div class="fact">
+            <dt>{{ t('client.passeport') }}</dt>
+            <dd>
+              {{ client.passeportNumber || '—' }}
+              <a *ngIf="client.passerportImageUrl" [href]="client.passerportImageUrl" target="_blank"
+                 mat-icon-button [matTooltip]="t('client.passeportImage')">
+                <mat-icon>menu_book</mat-icon>
+              </a>
+            </dd>
+          </div>
+          <div class="fact" *ngIf="client.description">
+            <dt>{{ t('common.notes') }}</dt>
+            <dd>{{ client.description }}</dd>
+          </div>
+          <div class="fact" *ngIf="client.isFlagged && client.notes">
+            <dt>{{ t('client.flagged') }}</dt>
+            <dd class="owing">{{ client.notes }}</dd>
+          </div>
+        </dl>
+      </div>
+    </mat-tab>
+  </mat-tab-group>
+</div>

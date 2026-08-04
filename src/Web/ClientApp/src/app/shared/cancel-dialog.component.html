@@ -1,0 +1,90 @@
+<ng-container *transloco="let t">
+  <h2 mat-dialog-title>{{ t('renting.cancelTitle') }}</h2>
+
+  <mat-dialog-content>
+    <p class="dialog-subtitle" *ngIf="carLabel">{{ carLabel }}</p>
+
+    <p class="dialog-hint" *ngIf="renting">
+      {{ clientName }}
+      <span *ngIf="renting.startDate">
+        · {{ renting.startDate | date:'yyyy-MM-dd' }} → {{ renting.endDate | date:'yyyy-MM-dd' }}
+      </span>
+    </p>
+
+    <p class="hint" *ngIf="loading">{{ t('common.loading') }}</p>
+
+    <div *ngIf="errorMessage" class="error-banner">
+      <mat-icon>error_outline</mat-icon> {{ errorMessage }}
+    </div>
+
+    <ng-container *ngIf="!loading && renting">
+      <!-- Where the booking stands before anything is decided. -->
+      <dl class="money-lines">
+        <div>
+          <dt>{{ t('common.price') }}</dt>
+          <dd class="num">{{ price | number:'1.2-2' }} {{ currency }}</dd>
+        </div>
+        <div>
+          <dt>{{ t('credit.paid') }}</dt>
+          <dd class="num">{{ paid | number:'1.2-2' }} {{ currency }}</dd>
+        </div>
+      </dl>
+
+      <form [formGroup]="form" class="dialog-form" (ngSubmit)="submit()">
+        <!-- What the agency keeps. Zero — the default — writes the whole price off
+             and is what "cancelled for free" means. -->
+        <mat-form-field appearance="outline">
+          <mat-label>{{ t('renting.cancellationFee') }}</mat-label>
+          <input matInput type="number" min="0" step="0.01" formControlName="fee" />
+          <span matTextSuffix>{{ currency }}</span>
+          <mat-hint>{{ t('renting.cancellationFeeHint') }}</mat-hint>
+          <mat-error *ngIf="form.get('fee')?.hasError('min')">
+            {{ t('renting.cancellationFeeMin') }}
+          </mat-error>
+          <mat-error *ngIf="form.get('fee')?.hasError('max')">
+            {{ t('renting.cancellationFeeMax', { price: (price | number:'1.2-2') }) }}
+          </mat-error>
+        </mat-form-field>
+
+        <!-- The consequences of that number, spelled out rather than left for the
+             credits screen to reveal later. -->
+        <ul class="outcome">
+          <li *ngIf="writtenOff > 0">
+            {{ t('renting.cancelWrittenOff', { amount: (writtenOff | number:'1.2-2'), currency: currency }) }}
+          </li>
+          <li *ngIf="stillOwed > 0" class="owing">
+            {{ t('renting.cancelStillOwed', { amount: (stillOwed | number:'1.2-2'), currency: currency }) }}
+          </li>
+          <li *ngIf="refundable > 0" class="owing">
+            {{ t('renting.cancelRefundable', { amount: (refundable | number:'1.2-2'), currency: currency }) }}
+          </li>
+          <li *ngIf="stillOwed === 0 && refundable === 0">
+            {{ t('renting.cancelSettled') }}
+          </li>
+        </ul>
+
+        <!-- Only a real question when there is money to hand back. -->
+        <mat-checkbox *ngIf="refundable > 0 && canRefund" formControlName="refundExcess">
+          {{ t('renting.cancelRefundNow', { amount: (refundable | number:'1.2-2'), currency: currency }) }}
+        </mat-checkbox>
+
+        <p class="dialog-hint" *ngIf="refundable > 0 && canRefund && !form.value.refundExcess">
+          {{ t('renting.cancelKeepAsCredit') }}
+        </p>
+
+        <p class="dialog-hint" *ngIf="refundable > 0 && !canRefund">
+          {{ t('renting.cancelRefundNoPermission') }}
+        </p>
+      </form>
+    </ng-container>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-button type="button" (click)="close()">{{ t('common.back') }}</button>
+    <button mat-raised-button color="warn" type="button" (click)="submit()"
+            [disabled]="saving || loading || !renting">
+      <mat-icon>cancel</mat-icon>
+      {{ saving ? t('common.saving') : t('renting.confirmCancelAction') }}
+    </button>
+  </mat-dialog-actions>
+</ng-container>

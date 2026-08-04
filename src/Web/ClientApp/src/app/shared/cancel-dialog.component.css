@@ -1,0 +1,74 @@
+/* Same narrow single-column shape as the return and payment dialogs; tokens come
+   from styles.scss. */
+.dialog-subtitle {
+  margin: 0 0 4px;
+  font-weight: 600;
+  color: var(--ink-2);
+}
+
+.dialog-hint,
+.hint {
+  margin: 0 0 12px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+/* Where the booking stands: label left, figure right, so the two lines read as a
+   statement rather than as fields. */
+.money-lines {
+  margin: 0 0 4px;
+  padding: 8px 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+
+.money-lines > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 2px 0;
+}
+
+.money-lines dt {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.money-lines dd {
+  margin: 0;
+  font-weight: 600;
+}
+
+.dialog-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 340px;
+  padding-top: 12px;
+}
+
+.dialog-form mat-form-field {
+  width: 100%;
+}
+
+/* What confirming will do. Not a warning box: it is the answer to the number the
+   user just typed, and it changes as they type. */
+.outcome {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 13px;
+  color: var(--ink-2);
+}
+
+.outcome li {
+  padding: 1px 0;
+}
+
+.outcome li.owing {
+  font-weight: 600;
+}
+
+.error-banner {
+  margin-bottom: 8px;
+}

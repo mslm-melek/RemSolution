@@ -9,6 +9,12 @@
     </a>
   </div>
 
+  <!-- The row actions write (start, cancel), so a refusal has to be said out
+       loud rather than left in the console. -->
+  <div *ngIf="errorMessage" class="error-banner">
+    <mat-icon>error_outline</mat-icon> {{ errorMessage }}
+  </div>
+
   <div class="filter-row">
     <mat-form-field appearance="outline" class="filter-field">
       <mat-label>{{ t('renting.state') }}</mat-label>
@@ -82,6 +88,16 @@
           <button mat-icon-button color="primary" *ngIf="canPayFor(r)" (click)="pay(r)"
                   [matTooltip]="t('payment.pay')" [attr.aria-label]="t('payment.pay')">
             <mat-icon>payments</mat-icon>
+          </button>
+          <!-- Sends an upcoming hire out: the customer is at the counter. -->
+          <button mat-icon-button color="primary" *ngIf="canStart(r)" (click)="startRenting(r)"
+                  [matTooltip]="t('renting.start')" [attr.aria-label]="t('renting.start')">
+            <mat-icon>play_arrow</mat-icon>
+          </button>
+          <!-- Closes a running hire: the car is back at the counter. -->
+          <button mat-icon-button color="primary" *ngIf="canTakeBack(r)" (click)="returnCar(r)"
+                  [matTooltip]="t('renting.returnCar')" [attr.aria-label]="t('renting.returnCar')">
+            <mat-icon>assignment_turned_in</mat-icon>
           </button>
           <a mat-icon-button color="primary" [routerLink]="['/renting', r.id]"
              [matTooltip]="t('common.open')" [attr.aria-label]="t('common.open')">

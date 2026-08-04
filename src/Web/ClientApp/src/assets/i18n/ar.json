@@ -6,6 +6,7 @@
     "ar": "العربية"
   },
   "common": {
+    "km": "كم",
     "actions": "إجراءات",
     "save": "حفظ",
     "saveChanges": "حفظ التعديلات",
@@ -62,6 +63,8 @@
     "resultCount": "{{ count }} سجلات"
   },
   "filters": {
+    "rentingCar": "السيارة: {{ car }}",
+    "rentingClient": "العميل: {{ client }}",
     "clear": "إزالة هذا الفلتر",
     "rentingStarts": "يبدأ: {{ range }}",
     "rentingEnds": "ينتهي: {{ range }}",
@@ -197,6 +200,28 @@
     "confirmDelete": "هل تريد حذف الطراز «{{ name }}»؟"
   },
   "car": {
+    "custody": "حالة التأجير",
+    "allCustody": "كل السيارات",
+    "inTheYard": "في الحظيرة",
+    "outOnHire": "قيد التأجير",
+    "availability": {
+      "available": "متوفرة",
+      "rented": "قيد التأجير",
+      "maintenance": "في الصيانة",
+      "inactive": "خارج الخدمة"
+    },
+    "dueBack": "العودة في {{ date }}",
+    "rentings": "الإيجارات",
+    "viewRentings": "عرض الإيجارات",
+    "viewExpenses": "عرض مصاريف هذه السيارة",
+    "rentNow": "تأجير",
+    "backToCar": "العودة إلى السيارة",
+    "noRentings": "لا توجد إيجارات لهذه السيارة.",
+    "kmCovered": "{{ km }} كم مقطوعة",
+    "tabs": {
+      "rentings": "الإيجارات",
+      "vehicle": "السيارة"
+    },
     "title": "السيارات",
     "new": "سيارة جديدة",
     "newTitle": "سيارة جديدة",
@@ -218,6 +243,10 @@
     "branch": "الفرع",
     "dailyRate": "السعر اليومي",
     "dailyRateHint": "سعر الكراء لليوم الواحد.",
+    "mileage": "عدد الكيلومترات",
+    "mileageHint": "عدد الكيلومترات الحالي للسيارة. يُقترح كنقطة انطلاق في الكراءات الجديدة.",
+    "mileageMin": "لا يمكن أن يكون عدد الكيلومترات سالبا.",
+    "mileageNote": "يتغير مع كل انطلاق وكل إرجاع.",
     "matriculeLocked": "لا يمكن تغيير رقم التسجيل.",
     "matriculeRequired": "رقم التسجيل مطلوب.",
     "modelRequired": "الطراز مطلوب.",
@@ -237,6 +266,17 @@
     "concurrency": "تم تعديل هذه السيارة من مستخدم آخر منذ فتحها. أعد تحميل الصفحة للحصول على أحدث نسخة، ثم أعد تطبيق تعديلاتك."
   },
   "client": {
+    "rentings": "الإيجارات",
+    "viewRentings": "عرض الإيجارات",
+    "openRentings": "{{ count }} جارية",
+    "rentTo": "تأجير لهذا العميل",
+    "backToClient": "العودة إلى العميل",
+    "noRentings": "لا توجد إيجارات لهذا العميل.",
+    "owesUs": "مبلغ مستحق",
+    "nothingOwed": "لا شيء للتحصيل",
+    "tabs": {
+      "rentings": "الإيجارات"
+    },
     "title": "العملاء",
     "new": "عميل جديد",
     "newTitle": "عميل جديد",
@@ -290,6 +330,25 @@
     "flagged": "عميل موسوم"
   },
   "renting": {
+    "cancelTitle": "إلغاء الكراء",
+    "confirmCancelAction": "تأكيد الإلغاء",
+    "cancellationFee": "معلوم الإلغاء المحتفظ به",
+    "cancellationFeeHint": "ما تحتفظ به الوكالة. 0 يعني إلغاء الكراء دون معلوم.",
+    "cancellationFeeMin": "لا يمكن أن يكون معلوم الإلغاء سالبا.",
+    "cancellationFeeMax": "لا يمكن أن يتجاوز معلوم الإلغاء السعر ({{ price }}).",
+    "cancelWrittenOff": "{{ amount }} {{ currency }} لن تعد مستحقة على الحريف.",
+    "cancelStillOwed": "الباقي على الحريف: {{ amount }} {{ currency }}.",
+    "cancelRefundable": "يُرجع إلى الحريف: {{ amount }} {{ currency }}.",
+    "cancelSettled": "لا شيء يُقبض ولا شيء يُرجع في هذا الكراء.",
+    "cancelRefundNow": "تسجيل إرجاع {{ amount }} {{ currency }} الآن",
+    "cancelKeepAsCredit": "إن لم تُحدَّد الخانة يبقى المبلغ رصيدا لفائدة الحريف (يظهر في الدفوعات والقروض).",
+    "cancelRefundNoPermission": "سيبقى المبلغ رصيدا لفائدة الحريف: تسجيل الإرجاع يتطلب وحدة الدفوعات.",
+    "returnTitle": "إرجاع السيارة",
+    "returnCar": "تسجيل الإرجاع",
+    "returnMileageTooLow": "لا يمكن أن يكون عدّاد الإرجاع أقل من عدّاد الاستلام ({{ mileage }}).",
+    "pickupMileageWas": "العدّاد عند الاستلام: {{ mileage }}",
+    "actualReturnDate": "تاريخ الإرجاع الفعلي",
+    "returnDateChangedHint": "سيُعاد حساب سعر الإيجار على الأيام المستعملة فعلاً.",
     "title": "عمليات الكراء",
     "new": "كراء جديد",
     "detailTitle": "الكراء",
@@ -305,6 +364,7 @@
     "startDateRequired": "تاريخ البداية مطلوب.",
     "endDateRequired": "تاريخ النهاية مطلوب.",
     "pickupMileage": "العداد عند الاستلام",
+    "pickupMileageFromCar": "عداد السيارة يشير إلى {{mileage}} كم. يمكن تغييره.",
     "returnMileage": "العداد عند الإرجاع",
     "createRenting": "إنشاء الكراء",
     "extraServices": "الخدمات الإضافية",
@@ -316,10 +376,8 @@
     "reverse": "عكس العملية",
     "mileage": "العداد",
     "empty": "لا توجد عمليات كراء.",
-    "confirmCancel": "هل تريد إلغاء هذا الكراء؟ سيبقى مسجّلًا كملغى.",
     "confirmReverse": "هل تريد تسجيل عملية عكسية لهذه الدفعة؟",
     "promptPickupMileage": "العداد عند الاستلام (اختياري):",
-    "promptReturnMileage": "العداد عند الإرجاع (اختياري):",
     "concurrency": "تم تعديل هذا الكراء من مستخدم آخر منذ فتحه. أعد تحميل الصفحة للحصول على أحدث نسخة، ثم أعد تطبيق تعديلاتك.",
     "existingClient": "عميل موجود",
     "newClient": "عميل جديد",
@@ -818,6 +876,7 @@
     "attachInvoice": "إرفاق الفاتورة",
     "invoiceAfterSave": "احفظ المصروف أولًا ثم أرفق فاتورته.",
     "balanceTitle": "الرصيد والمدفوعات",
+    "showingLatest": "أحدث {{ shown }} عمليات من أصل {{ total }}.",
     "amountNonZero": "أدخل مبلغًا مختلفًا عن صفر.",
     "settleHint": "يُضاف هذا المبلغ إلى ما تم تسديده. المبلغ السالب يصحّح تسديدًا سُجّل بالخطأ."
   },

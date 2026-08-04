@@ -1,0 +1,212 @@
+<div class="page detail-card" *transloco="let t">
+  <div class="header-row">
+    <div>
+      <h2 class="title">
+        <span class="num">{{ car?.matricule }}</span>
+        <span class="chip" [ngClass]="availabilityClass" *ngIf="car">
+          {{ availabilityLabelKey ? t(availabilityLabelKey) : '' }}
+        </span>
+      </h2>
+      <p class="page-subtitle" *ngIf="car">
+        {{ car.modelName }}
+        <span *ngIf="car.branchName"> · {{ car.branchName }}</span>
+        <span *ngIf="car.dailyRate"> · {{ t('car.dailyRate') }}
+          {{ car.dailyRate.amount | number:'1.2-2' }} {{ car.dailyRate.currency }}</span>
+      </p>
+    </div>
+    <div class="header-actions">
+      <!-- Exactly one of these can apply: the car is here, or it is out. -->
+      <a *ngIf="canRentOut" mat-raised-button color="primary"
+         [routerLink]="['/renting/new']" [queryParams]="{ carId: carId }">
+        <mat-icon>vpn_key</mat-icon> {{ t('car.rentNow') }}
+      </a>
+      <button *ngIf="canTakeBack" mat-raised-button color="primary" (click)="returnCar()">
+        <mat-icon>assignment_turned_in</mat-icon> {{ t('renting.returnCar') }}
+      </button>
+      <a mat-button [routerLink]="['/car', carId, 'edit']">
+        <mat-icon>edit</mat-icon> {{ t('common.edit') }}
+      </a>
+      <a mat-button [routerLink]="['/car']">
+        <mat-icon>arrow_back</mat-icon> {{ t('common.backToList') }}
+      </a>
+    </div>
+  </div>
+
+  <div class="tile-grid">
+    <!-- Who has the car, when it is due back: what the counter is asked when the
+         phone rings about this plate. -->
+    <div class="tile">
+      <div class="tile-label">{{ t('common.status') }}</div>
+      <div class="tile-value">
+        <span class="chip" [ngClass]="availabilityClass" *ngIf="car">
+          {{ availabilityLabelKey ? t(availabilityLabelKey) : '' }}
+        </span>
+      </div>
+      <div class="tile-note" *ngIf="car?.currentRenting as hire">
+        <a *ngIf="hire.clientId" [routerLink]="['/client', hire.clientId]">{{ hire.clientName }}</a>
+        <span *ngIf="hire.endDate"> · {{ t('car.dueBack', { date: (hire.endDate | date:'yyyy-MM-dd') }) }}</span>
+      </div>
+    </div>
+
+    <div class="tile">
+      <div class="tile-label">{{ t('car.rentings') }}</div>
+      <div class="tile-value">{{ car?.rentingCount ?? 0 }}</div>
+      <div class="tile-note" *ngIf="canSeeRentings">
+        <a [routerLink]="['/renting']" [queryParams]="{ car: carId }">{{ t('car.viewRentings') }}</a>
+      </div>
+    </div>
+
+    <div class="tile" *ngIf="car?.dailyRate">
+      <div class="tile-label">{{ t('car.dailyRate') }}</div>
+      <div class="tile-value">
+        {{ car?.dailyRate?.amount | number:'1.2-2' }} {{ car?.dailyRate?.currency }}
+      </div>
+    </div>
+
+    <!-- The odometer a new booking on this car will start from. Only shown once
+         someone has entered one: "0 km" would be a claim, not a blank. -->
+    <div class="tile" *ngIf="car?.mileage !== null && car?.mileage !== undefined">
+      <div class="tile-label">{{ t('car.mileage') }}</div>
+      <div class="tile-value">{{ car?.mileage | number:'1.0-0' }} {{ t('common.km') }}</div>
+      <div class="tile-note">{{ t('car.mileageNote') }}</div>
+    </div>
+  </div>
+
+  <!-- What has been spent on this car lives on the finance screen, which filters
+       by car; no point restating its figures here. -->
+  <p class="detail-links" *ngIf="canSeeExpenses">
+    <a [routerLink]="['/credit']" [queryParams]="{ tab: 'expenses', car: carId }">
+      {{ t('car.viewExpenses') }}
+    </a>
+  </p>
+
+  <mat-tab-group>
+    <!-- HISTORY -->
+    <mat-tab [label]="t('car.tabs.rentings')" *ngIf="canSeeRentings">
+      <div class="tab-body">
+        <table mat-table [dataSource]="rentings" class="data-table full-width">
+          <ng-container matColumnDef="period">
+            <th mat-header-cell *matHeaderCellDef>{{ t('common.period') }}</th>
+            <td mat-cell *matCellDef="let r" class="num">
+              {{ r.startDate | date:'yyyy-MM-dd' }} → {{ r.endDate | date:'yyyy-MM-dd' }}
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="client">
+            <th mat-header-cell *matHeaderCellDef>{{ t('renting.client') }}</th>
+            <td mat-cell *matCellDef="let r">
+              <span class="cell-stack">
+                <a *ngIf="r.clientId" [routerLink]="['/client', r.clientId]">{{ r.clientName }}</a>
+                <span class="cell-sub" *ngIf="r.secondClientName">+ {{ r.secondClientName }}</span>
+              </span>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="state">
+            <th mat-header-cell *matHeaderCellDef>{{ t('common.status') }}</th>
+            <td mat-cell *matCellDef="let r">
+              <span class="chip" [ngClass]="stateClass(r.rentingState)">
+                {{ stateLabelKey(r.rentingState) ? t(stateLabelKey(r.rentingState)) : '' }}
+              </span>
+            </td>
+          </ng-container>
+
+          <!-- The odometer pair, and what it says the hire covered. -->
+          <ng-container matColumnDef="mileage">
+            <th mat-header-cell *matHeaderCellDef class="num-cell">{{ t('renting.mileage') }}</th>
+            <td mat-cell *matCellDef="let r" class="num-cell">
+              <span class="cell-stack">
+                <span *ngIf="r.startMileage !== null && r.startMileage !== undefined">
+                  {{ r.startMileage | number }}<ng-container
+                    *ngIf="r.endMileage !== null && r.endMileage !== undefined">
+                    → {{ r.endMileage | number }}</ng-container>
+                </span>
+                <span class="cell-sub" *ngIf="mileageDone(r) !== null">
+                  {{ t('car.kmCovered', { km: (mileageDone(r) | number) }) }}
+                </span>
+              </span>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="price">
+            <th mat-header-cell *matHeaderCellDef class="num-cell">{{ t('common.price') }}</th>
+            <td mat-cell *matCellDef="let r" class="num-cell">
+              <span class="cell-stack">
+                <span *ngIf="r.price">{{ r.price.amount | number:'1.2-2' }} {{ r.price.currency }}</span>
+                <span class="cell-sub owing" *ngIf="(r.outstanding?.amount ?? 0) > 0">
+                  {{ t('credit.outstanding') }} {{ r.outstanding.amount | number:'1.2-2' }}
+                </span>
+              </span>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef class="actions-cell">{{ t('common.actions') }}</th>
+            <td mat-cell *matCellDef="let r" class="actions-cell row-actions">
+              <button *ngIf="canTakeBackRow(r)" mat-icon-button color="primary" (click)="returnCar(r)"
+                      [matTooltip]="t('renting.returnCar')" [attr.aria-label]="t('renting.returnCar')">
+                <mat-icon>assignment_turned_in</mat-icon>
+              </button>
+              <a mat-icon-button [routerLink]="['/renting', r.id]"
+                 [matTooltip]="t('common.open')" [attr.aria-label]="t('common.open')">
+                <mat-icon>open_in_new</mat-icon>
+              </a>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="rentingColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: rentingColumns"></tr>
+
+          <tr class="mat-row" *matNoDataRow>
+            <td class="mat-cell empty-row" [attr.colspan]="rentingColumns.length">
+              {{ t('car.noRentings') }}
+            </td>
+          </tr>
+        </table>
+
+        <mat-paginator [length]="rentingsTotal"
+                       [pageIndex]="rentingsPage - 1"
+                       [pageSize]="rentingsPageSize"
+                       [pageSizeOptions]="[5, 10, 25, 50]"
+                       (page)="onRentingsPage($event)">
+        </mat-paginator>
+      </div>
+    </mat-tab>
+
+    <!-- THE VEHICLE. Read-only; changing any of it is the form's job. -->
+    <mat-tab [label]="t('car.tabs.vehicle')">
+      <div class="tab-body">
+        <dl class="facts" *ngIf="car">
+          <div class="fact">
+            <dt>{{ t('car.model') }}</dt>
+            <dd>{{ car.modelName }}</dd>
+          </div>
+          <div class="fact">
+            <dt>{{ t('car.firstCirculation') }}</dt>
+            <dd>{{ car.firstCirculationDate | date:'yyyy-MM-dd' }}</dd>
+          </div>
+          <div class="fact" *ngIf="car.color">
+            <dt>{{ t('car.color') }}</dt>
+            <dd>{{ car.color }}</dd>
+          </div>
+          <div class="fact" *ngIf="car.power">
+            <dt>{{ t('car.power') }}</dt>
+            <dd>{{ car.power }}</dd>
+          </div>
+          <div class="fact" *ngIf="fuelLabelKey">
+            <dt>{{ t('car.fuel') }}</dt>
+            <dd>{{ t(fuelLabelKey) }}</dd>
+          </div>
+          <div class="fact" *ngIf="car.branchName">
+            <dt>{{ t('car.branch') }}</dt>
+            <dd>{{ car.branchName }}</dd>
+          </div>
+        </dl>
+
+        <a *ngIf="car?.imageUrl" [href]="car?.imageUrl" target="_blank" class="car-photo">
+          <img [src]="car?.imageUrl" [alt]="car?.matricule ?? ''" />
+        </a>
+      </div>
+    </mat-tab>
+  </mat-tab-group>
+</div>

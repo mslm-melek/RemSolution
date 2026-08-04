@@ -1,4 +1,5 @@
 using RemSolution.Application.Common.Exceptions;
+using RemSolution.Application.Features.Credit.Queries.GetClientCreditsByIdsQuery;
 using RemSolution.Application.Features.Credit.Queries.GetClientCreditsQuery;
 using RemSolution.Application.Features.Credit.Queries.GetCreditsSummaryQuery;
 using RemSolution.Application.Features.Credit.Queries.GetExpenseCreditsQuery;
@@ -254,5 +255,65 @@ public class CreditQueryTests : BaseTestFixture
 
         await FluentActions.Invoking(() => SendAsync(new GetClientCreditsQuery()))
             .Should().ThrowAsync<ForbiddenAccessException>();
+    }
+
+    // The client list asks for the debt of the page it is showing. Settled clients
+    // must come back at zero, or a caller matching rows by id could not tell
+    // "owes nothing" from "not answered".
+    [Test]
+    public async Task ClientCreditsByIdsAnswerForEveryIdAsked()
+    {
+        await RunAsAgencyAdministratorAsync();
+        await AddTestAgencyAsync();
+
+        var owing = await ClientWithRentingAsync("Owing", price: 300m, paid: 100m);
+        var settled = await ClientWithRentingAsync("Settled", price: 200m, paid: 200m);
+
+        var rows = await SendAsync(new GetClientCreditsByIdsQuery(new[] { owing, settled }));
+
+        rows.Should().HaveCount(2);
+        rows.Single(r => r.ClientId == owing).Outstanding!.Amount.Should().Be(200m);
+        rows.Single(r => r.ClientId == settled).Outstanding!.Amount.Should().Be(0m);
+    }
+
+    [Test]
+    public async Task ClientCreditsByIdsAgreeWithTheCreditsList()
+    {
+        await RunAsAgencyAdministratorAsync();
+        await AddTestAgencyAsync();
+
+        var id = await ClientWithRentingAsync("Owing", price: 300m, paid: 100m);
+
+        var listed = (await SendAsync(new GetClientCreditsQuery())).Items.Single();
+        var byId = (await SendAsync(new GetClientCreditsByIdsQuery(new[] { id }))).Single();
+
+        byId.Charged!.Amount.Should().Be(listed.Charged!.Amount);
+        byId.Paid!.Amount.Should().Be(listed.Paid!.Amount);
+        byId.Outstanding!.Amount.Should().Be(listed.Outstanding!.Amount);
+        byId.OpenRentingCount.Should().Be(listed.OpenRentingCount);
+    }
+
+    [Test]
+    public async Task ClientCreditsByIdsAreScopedToTheCurrentAgency()
+    {
+        await RunAsAgencyAdministratorAsync();
+        await AddTestAgencyAsync();
+        var hidden = await ClientWithRentingAsync("Hidden", price: 900m, paid: 0m);
+
+        await AddTestAgencyAsync(); // second tenant
+
+        var rows = await SendAsync(new GetClientCreditsByIdsQuery(new[] { hidden }));
+
+        rows.Should().BeEmpty();
+    }
+
+    [Test]
+    public async Task ClientCreditsByIdsWithoutIdsAsksTheDatabaseNothing()
+    {
+        await RunAsAgencyAdministratorAsync();
+        await AddTestAgencyAsync();
+
+        (await SendAsync(new GetClientCreditsByIdsQuery())).Should().BeEmpty();
+        (await SendAsync(new GetClientCreditsByIdsQuery(Array.Empty<int>()))).Should().BeEmpty();
     }
 }

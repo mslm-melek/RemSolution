@@ -1,7 +1,7 @@
 <div class="page expense-form-card" *transloco="let t">
   <div class="header-row">
     <h2 class="title">{{ isEdit ? t('expense.editTitle') : t('expense.newTitle') }}</h2>
-    <a mat-stroked-button [routerLink]="['/credit']">
+    <a mat-stroked-button [routerLink]="['/credit']" [queryParams]="{ tab: 'expenses' }">
       <mat-icon>arrow_back</mat-icon> {{ t('common.backToList') }}
     </a>
   </div>

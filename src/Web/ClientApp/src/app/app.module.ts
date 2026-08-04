@@ -20,8 +20,10 @@ import { ModelCarComponent } from './model-car/model-car.component';
 import { ModelCarFormComponent } from './model-car/model-car-form.component';
 import { CarComponent } from './car/car.component';
 import { CarFormComponent } from './car/car-form.component';
+import { CarDetailComponent } from './car/car-detail.component';
 import { ClientComponent } from './client/client.component';
 import { ClientFormComponent } from './client/client-form.component';
+import { ClientDetailComponent } from './client/client-detail.component';
 import { AgencyComponent } from './agency/agency.component';
 import { AgencyFormComponent } from './agency/agency-form.component';
 import { AgencyDetailComponent } from './agency/agency-detail.component';
@@ -56,6 +58,8 @@ import { QuickActionsComponent } from './shared/quick-actions.component';
 import { MapPickerComponent } from './shared/map-picker.component';
 import { BranchesEditorComponent } from './shared/branches-editor.component';
 import { PaymentDialogComponent } from './shared/payment-dialog.component';
+import { ReturnDialogComponent } from './shared/return-dialog.component';
+import { CancelDialogComponent } from './shared/cancel-dialog.component';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -99,11 +103,13 @@ registerLocaleData(localeAr);
     HomeComponent,
     CarComponent,
     CarFormComponent,
+    CarDetailComponent,
     ModelCarComponent,
     ModelCarFormComponent,
     BrandComponent,
     ClientComponent,
     ClientFormComponent,
+    ClientDetailComponent,
     AgencyComponent,
     AgencyFormComponent,
     AgencyDetailComponent,
@@ -137,7 +143,9 @@ registerLocaleData(localeAr);
     QuickActionsComponent,
     MapPickerComponent,
     BranchesEditorComponent,
-    PaymentDialogComponent
+    PaymentDialogComponent,
+    ReturnDialogComponent,
+    CancelDialogComponent
   ],
   bootstrap: [AppComponent],
   imports: [
@@ -171,12 +179,17 @@ registerLocaleData(localeAr);
       { path: 'model-car', component: ModelCarComponent },
       { path: 'model-car/new', component: ModelCarFormComponent },
       { path: 'model-car/:id', component: ModelCarFormComponent },
+      // A car and a client each have a page of their own (history, money, the
+      // actions the counter needs) with the form behind /edit — same shape the
+      // agency console uses below.
       { path: 'car', component: CarComponent },
       { path: 'car/new', component: CarFormComponent },
-      { path: 'car/:id', component: CarFormComponent },
+      { path: 'car/:id', component: CarDetailComponent },
+      { path: 'car/:id/edit', component: CarFormComponent },
       { path: 'client', component: ClientComponent },
       { path: 'client/new', component: ClientFormComponent },
-      { path: 'client/:id', component: ClientFormComponent },
+      { path: 'client/:id', component: ClientDetailComponent },
+      { path: 'client/:id/edit', component: ClientFormComponent },
       { path: 'renting', component: RentingComponent },
       { path: 'renting/new', component: RentingFormComponent },
       { path: 'renting/:id', component: RentingFormComponent },

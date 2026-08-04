@@ -40,7 +40,10 @@ public class CreateCarTests : BaseTestFixture
             Color = "Red",
             FirstCirculationDate = DateTime.UtcNow,
             Power = 120,
-            FuelType = FuelType.Gasoline
+            FuelType = FuelType.Gasoline,
+            // The odometer the car joined the fleet with; a booking on it starts
+            // from here (see Car.Mileage).
+            Mileage = 34_500
         };
 
         var carId = await SendAsync(command);
@@ -52,5 +55,6 @@ public class CreateCarTests : BaseTestFixture
         car.ModelId.Should().Be(model.Id);
         car.AgencyId.Should().Be(agencyId);
         car.CreatedBy.Should().Be(userId);
+        car.Mileage.Should().Be(34_500);
     }
 }

@@ -34,24 +34,12 @@ namespace RemSolution.Application.Features.Credit.Queries.GetCreditsSummaryQuery
             var agencyId = _tenant.AgencyId ?? throw new UnauthorizedAccessException();
             var currency = (await _settings.GetAsync(agencyId, cancellationToken)).CurrencyCode;
 
-            // Charged/paid per client, exactly as GetClientCreditsQuery computes
-            // it, so the totals on the screen always reconcile with its rows.
+            // Charged/paid per client from the one shared projection (see
+            // ClientCreditRows), which is what the rows of the credits list are
+            // built from — so these totals cannot disagree with them.
             var clientRows = _context.Clients
                 .AsNoTracking()
-                .Select(c => new
-                {
-                    Charged =
-                        c.Rentings!
-                            .Where(r => r.RentingState != RentingState.Cancelled && r.Price != null)
-                            .Sum(r => r.Price!.Amount)
-                        + c.Reservations!
-                            .Where(r => (r.Status == ReservationStatus.Confirmed || r.Status == ReservationStatus.Paid)
-                                        && r.Price != null)
-                            .Sum(r => r.Price!.Amount),
-                    Paid = c.Payments!
-                        .Where(p => p.PayementAmount != null)
-                        .Sum(p => p.PayementAmount!.Amount),
-                });
+                .ToCreditRows();
 
             var clientsCharged = await clientRows.SumAsync(x => x.Charged, cancellationToken);
             var clientsPaid = await clientRows.SumAsync(x => x.Paid, cancellationToken);

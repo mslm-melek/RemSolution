@@ -1,15 +1,12 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { MatDialog } from '@angular/material/dialog';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
   ClientsClient, CountriesClient, CountryDto, ClientDto,
   CreateClientCommand, UpdateClientCommand, ClientDocumentType, FileParameter,
-  ClientAccountOutcome, PaymentsClient, PaymentDto, ClientBalanceDto, PaymentMethod
+  ClientAccountOutcome
 } from '../web-api-client';
 import { toDateInput, fromDateInput, extractValidationErrors, isConcurrencyConflict } from '../shared/form-utils';
-import { AuthService } from '../shared/auth.service';
-import { PaymentDialogComponent } from '../shared/payment-dialog.component';
 import { TranslocoService } from '@jsverse/transloco';
 
 interface DocumentSlot {
@@ -28,30 +25,14 @@ export class ClientFormComponent implements OnInit {
   // Confirm/prompt dialogs and error banners are plain strings, so they are
   // translated imperatively rather than through the template pipe.
   private readonly transloco = inject(TranslocoService);
-  private readonly dialog = inject(MatDialog);
   form: FormGroup;
   countries: CountryDto[] = [];
   clientId?: number;
   saving = false;
   errorMessage = '';
 
-  // Money panel: the client's position with the agency and the entries behind
-  // it, so a counter payment can be taken from the client's own page.
-  balance?: ClientBalanceDto;
-  payments: PaymentDto[] = [];
-  paymentColumns = ['date', 'amount', 'method', 'proof'];
-  canReadPayments = false;
-  canPay = false;
-  canAttachProof = false;
-  // Payment id whose proof is uploading, so only its own button waits.
-  uploadingProofFor: number | null = null;
-
-  paymentMethods = [
-    { value: PaymentMethod.Cash, labelKey: 'enums.paymentMethod.cash' },
-    { value: PaymentMethod.Card, labelKey: 'enums.paymentMethod.card' },
-    { value: PaymentMethod.Transfer, labelKey: 'enums.paymentMethod.transfer' },
-    { value: PaymentMethod.Cheque, labelKey: 'enums.paymentMethod.cheque' }
-  ];
+  // The client's money (balance, entries, taking a payment) lives on the client's
+  // own page now — see ClientDetailComponent — so this stays a form.
 
   // Customer-portal account state, refreshed from the invite response so the
   // panel is right without re-fetching the whole client.
@@ -75,8 +56,6 @@ export class ClientFormComponent implements OnInit {
     private fb: FormBuilder,
     private client: ClientsClient,
     private countriesClient: CountriesClient,
-    private paymentsClient: PaymentsClient,
-    private auth: AuthService,
     private route: ActivatedRoute,
     private router: Router
   ) {
@@ -123,78 +102,6 @@ export class ClientFormComponent implements OnInit {
         error: err => console.error(err)
       });
     }
-
-    this.auth.currentUser$.subscribe(user => {
-      this.canReadPayments = AuthService.canAccessModule(user, 'Payments', 'Payment.Read');
-      this.canPay = AuthService.canAccessModule(user, 'Payments', 'Payment.Create');
-      this.canAttachProof = AuthService.canAccessModule(user, 'Payments', 'Payment.Update');
-
-      if (this.isEdit && this.canReadPayments) this.loadMoney();
-    });
-  }
-
-  // The client's position and the entries behind it. Read together: the balance
-  // is the figure that matters, the entries are how it got there.
-  private loadMoney() {
-    if (!this.clientId) return;
-
-    this.paymentsClient.getClientBalance(this.clientId).subscribe({
-      next: balance => this.balance = balance,
-      error: err => console.error(err)
-    });
-
-    this.paymentsClient.getPayments(1, 50, null, this.clientId, null).subscribe({
-      next: result => this.payments = result.items || [],
-      error: err => console.error(err)
-    });
-  }
-
-  // Takes money against the client's overall balance rather than one booking —
-  // what a counter payment settling arrears actually is.
-  pay() {
-    if (!this.clientId) return;
-
-    const name = `${this.form.value.firstName ?? ''} ${this.form.value.lastName ?? ''}`.trim();
-
-    this.dialog.open(PaymentDialogComponent, {
-      data: {
-        target: { kind: 'client', id: this.clientId },
-        subtitle: name || undefined,
-        outstanding: this.balance?.balance?.amount,
-        currency: this.balance?.currency
-      },
-      autoFocus: 'first-tabbable'
-    }).afterClosed().subscribe(recorded => {
-      if (recorded) this.loadMoney();
-    });
-  }
-
-  // Attaching the proof to an entry already recorded (the dialog offers it at
-  // the moment of payment; this is for the ones taken before, or by phone).
-  onProofSelected(payment: PaymentDto, input: HTMLInputElement) {
-    const file = input.files?.[0];
-    input.value = ''; // allow re-selecting the same file
-    if (!file || !payment.id) return;
-
-    this.uploadingProofFor = payment.id;
-    this.errorMessage = '';
-    const parameter: FileParameter = { data: file, fileName: file.name };
-
-    this.paymentsClient.uploadPaymentProof(payment.id, parameter).subscribe({
-      next: () => {
-        this.uploadingProofFor = null;
-        this.loadMoney();
-      },
-      error: err => {
-        this.uploadingProofFor = null;
-        this.handleError(err);
-      }
-    });
-  }
-
-  // Returns a transloco key; the template pipes it.
-  methodLabelKey(method?: PaymentMethod): string {
-    return this.paymentMethods.find(m => m.value === method)?.labelKey ?? '';
   }
 
   private populate(dto: ClientDto) {
@@ -247,8 +154,9 @@ export class ClientFormComponent implements OnInit {
     } else {
       const command = new CreateClientCommand(payload);
       this.client.createClient(command).subscribe({
-        // Land on the edit page so documents can be uploaded right away.
-        next: id => this.router.navigate(['/client', id]),
+        // Land back on this form (now in edit mode) so documents can be uploaded
+        // right away — the client's page is a step away once that is done.
+        next: id => this.router.navigate(['/client', id, 'edit']),
         error: err => this.handleError(err)
       });
     }

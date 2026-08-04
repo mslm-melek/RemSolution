@@ -150,7 +150,7 @@ export class ExpenseFormComponent implements OnInit {
         description: v.description || undefined
       });
       this.client.updateExpense(this.expenseId!, command).subscribe({
-        next: () => this.router.navigate(['/credit']),
+        next: () => this.backToExpenses(),
         error: err => this.handleError(err)
       });
     } else {
@@ -163,14 +163,20 @@ export class ExpenseFormComponent implements OnInit {
         description: v.description || undefined
       });
       this.client.createExpense(command).subscribe({
-        next: () => this.router.navigate(['/credit']),
+        next: () => this.backToExpenses(),
         error: err => this.handleError(err)
       });
     }
   }
 
   cancel() {
-    this.router.navigate(['/credit']);
+    this.backToExpenses();
+  }
+
+  // The expense register is the finance screen's payable tab, which has to be
+  // asked for by name — landing on /credit alone opens the receivable side.
+  private backToExpenses() {
+    this.router.navigate(['/credit'], { queryParams: { tab: 'expenses' } });
   }
 
   private handleError(err: any) {

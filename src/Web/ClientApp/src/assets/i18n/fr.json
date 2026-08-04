@@ -6,6 +6,7 @@
     "ar": "العربية"
   },
   "common": {
+    "km": "km",
     "actions": "Actions",
     "save": "Enregistrer",
     "saveChanges": "Enregistrer les modifications",
@@ -62,6 +63,8 @@
     "resultCount": "{{ count }} enregistrements"
   },
   "filters": {
+    "rentingCar": "Véhicule : {{ car }}",
+    "rentingClient": "Client : {{ client }}",
     "clear": "Retirer ce filtre",
     "rentingStarts": "Débute : {{ range }}",
     "rentingEnds": "Se termine : {{ range }}",
@@ -197,6 +200,28 @@
     "confirmDelete": "Supprimer le modèle « {{ name }} » ?"
   },
   "car": {
+    "custody": "Statut de location",
+    "allCustody": "Tous les véhicules",
+    "inTheYard": "Au parc",
+    "outOnHire": "En location",
+    "availability": {
+      "available": "Disponible",
+      "rented": "En location",
+      "maintenance": "En entretien",
+      "inactive": "Hors service"
+    },
+    "dueBack": "retour le {{ date }}",
+    "rentings": "Locations",
+    "viewRentings": "Voir les locations",
+    "viewExpenses": "Voir les dépenses de ce véhicule",
+    "rentNow": "Louer",
+    "backToCar": "Retour au véhicule",
+    "noRentings": "Aucune location pour ce véhicule.",
+    "kmCovered": "{{ km }} km parcourus",
+    "tabs": {
+      "rentings": "Locations",
+      "vehicle": "Véhicule"
+    },
     "title": "Voitures",
     "new": "Nouvelle voiture",
     "newTitle": "Nouvelle voiture",
@@ -218,6 +243,10 @@
     "branch": "Succursale",
     "dailyRate": "Tarif journalier",
     "dailyRateHint": "Prix de location par jour.",
+    "mileage": "Kilométrage",
+    "mileageHint": "Compteur actuel du véhicule. Proposé comme kilométrage de départ des nouvelles locations.",
+    "mileageMin": "Le kilométrage ne peut pas être négatif.",
+    "mileageNote": "Mis à jour par les départs et les retours.",
     "matriculeLocked": "Le matricule ne peut pas être modifié.",
     "matriculeRequired": "Le matricule est obligatoire.",
     "modelRequired": "Le modèle est obligatoire.",
@@ -237,6 +266,17 @@
     "concurrency": "Cette voiture a été modifiée par un autre utilisateur depuis son ouverture. Rechargez la page pour obtenir la dernière version, puis réappliquez vos modifications."
   },
   "client": {
+    "rentings": "Locations",
+    "viewRentings": "Voir les locations",
+    "openRentings": "{{ count }} en cours",
+    "rentTo": "Louer à ce client",
+    "backToClient": "Retour au client",
+    "noRentings": "Aucune location pour ce client.",
+    "owesUs": "Solde dû",
+    "nothingOwed": "Rien à encaisser",
+    "tabs": {
+      "rentings": "Locations"
+    },
     "title": "Clients",
     "new": "Nouveau client",
     "newTitle": "Nouveau client",
@@ -290,6 +330,25 @@
     "flagged": "Client signalé"
   },
   "renting": {
+    "cancelTitle": "Annuler la location",
+    "confirmCancelAction": "Confirmer l'annulation",
+    "cancellationFee": "Frais d'annulation retenus",
+    "cancellationFeeHint": "Ce que l'agence garde. 0 : la location est annulée sans frais.",
+    "cancellationFeeMin": "Les frais d'annulation ne peuvent pas être négatifs.",
+    "cancellationFeeMax": "Les frais d'annulation ne peuvent pas dépasser le prix ({{ price }}).",
+    "cancelWrittenOff": "{{ amount }} {{ currency }} ne seront plus dus par le client.",
+    "cancelStillOwed": "Reste dû par le client : {{ amount }} {{ currency }}.",
+    "cancelRefundable": "À rendre au client : {{ amount }} {{ currency }}.",
+    "cancelSettled": "Plus rien à encaisser ni à rendre sur cette location.",
+    "cancelRefundNow": "Enregistrer le remboursement de {{ amount }} {{ currency }} maintenant",
+    "cancelKeepAsCredit": "Sans cocher, le montant reste en avoir sur le compte du client (visible dans Paiements & crédits).",
+    "cancelRefundNoPermission": "Le montant restera en avoir sur le compte du client : l'enregistrement d'un remboursement demande le module Paiements.",
+    "returnTitle": "Retour du véhicule",
+    "returnCar": "Enregistrer le retour",
+    "returnMileageTooLow": "Le kilométrage au retour ne peut pas être inférieur à celui du départ ({{ mileage }}).",
+    "pickupMileageWas": "Kilométrage au départ : {{ mileage }}",
+    "actualReturnDate": "Date de retour réelle",
+    "returnDateChangedHint": "La location sera recalculée sur les jours réellement pris.",
     "title": "Locations",
     "new": "Nouvelle location",
     "detailTitle": "Location",
@@ -305,6 +364,7 @@
     "startDateRequired": "La date de début est obligatoire.",
     "endDateRequired": "La date de fin est obligatoire.",
     "pickupMileage": "Kilométrage au départ",
+    "pickupMileageFromCar": "Compteur du véhicule : {{mileage}} km. Modifiable.",
     "returnMileage": "Kilométrage au retour",
     "createRenting": "Créer la location",
     "extraServices": "Services additionnels",
@@ -316,10 +376,8 @@
     "reverse": "Contrepasser",
     "mileage": "Kilométrage",
     "empty": "Aucune location trouvée.",
-    "confirmCancel": "Annuler cette location ? Elle restera enregistrée comme annulée.",
     "confirmReverse": "Enregistrer une contrepassation pour ce paiement ?",
     "promptPickupMileage": "Kilométrage au départ (facultatif) :",
-    "promptReturnMileage": "Kilométrage au retour (facultatif) :",
     "concurrency": "Cette location a été modifiée par un autre utilisateur depuis son ouverture. Rechargez la page pour obtenir la dernière version, puis réappliquez vos modifications.",
     "existingClient": "Client existant",
     "newClient": "Nouveau client",
@@ -818,6 +876,7 @@
     "attachInvoice": "Joindre la facture",
     "invoiceAfterSave": "Enregistrez d’abord la dépense, puis joignez sa facture.",
     "balanceTitle": "Solde & paiements",
+    "showingLatest": "Les {{ shown }} entrées les plus récentes sur {{ total }}.",
     "amountNonZero": "Saisissez un montant différent de zéro.",
     "settleHint": "Ce montant s’ajoute à ce qui est déjà réglé. Un montant négatif corrige un règlement saisi par erreur."
   },

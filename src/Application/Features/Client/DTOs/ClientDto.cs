@@ -1,3 +1,5 @@
+using RemSolution.Domain.Enums;
+
 namespace RemSolution.Application.Features.Client.DTOs
 {
     public class ClientDto
@@ -42,12 +44,46 @@ namespace RemSolution.Application.Features.Client.DTOs
         /// </summary>
         public bool HasPortalAccount { get; init; }
 
+        /// <summary>
+        /// Hires this client has been on, cancelled ones excluded — the size of
+        /// their history. Both seats count, renter and second driver, because this
+        /// figure is the label on a link into the rentings list, and that list's
+        /// client filter matches either seat (see GetRentingsWithPaginationQuery):
+        /// a count that disagreed with the rows it opens would just look wrong.
+        /// </summary>
+        public int RentingCount { get; init; }
+
+        /// <summary>Hires not yet finished (upcoming or ongoing) — what is still running.</summary>
+        public int OpenRentingCount { get; init; }
+
         public class Mapping : IRegister
         {
             public void Register(TypeAdapterConfig config)
             {
                 config.NewConfig<Domain.Entities.Client, ClientDto>()
                       .Map(dest => dest.BirthCountryName, src => src.BirthCountry != null ? src.BirthCountry.Name : null)
+                      // Projected in SQL, like the credits screen's per-client sums.
+                      // Money is deliberately NOT here: what a client owes is the
+                      // Credits module's answer and stays behind Credit.Read (see
+                      // GetClientCreditsQuery). The null checks are for the
+                      // in-memory adapter, which a plain entity with no collection
+                      // loaded goes through (see MappingTests).
+                      .Map(dest => dest.RentingCount,
+                           src => (src.Rentings == null
+                                      ? 0
+                                      : src.Rentings.Count(r => r.RentingState != RentingState.Cancelled))
+                                  + (src.SecondRentings == null
+                                      ? 0
+                                      : src.SecondRentings.Count(r => r.RentingState != RentingState.Cancelled)))
+                      .Map(dest => dest.OpenRentingCount,
+                           src => (src.Rentings == null
+                                      ? 0
+                                      : src.Rentings.Count(r => r.RentingState == RentingState.NotYet
+                                                                || r.RentingState == RentingState.InProgress))
+                                  + (src.SecondRentings == null
+                                      ? 0
+                                      : src.SecondRentings.Count(r => r.RentingState == RentingState.NotYet
+                                                                     || r.RentingState == RentingState.InProgress)))
                       .Map(dest => dest.HasPortalAccount, src => src.MarketplaceUserId != null)
                       // Document URLs now live on StoredFile records; surface the
                       // plain URL so the API contract is unchanged for readers.

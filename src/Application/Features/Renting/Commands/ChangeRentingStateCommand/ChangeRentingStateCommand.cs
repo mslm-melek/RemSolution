@@ -100,6 +100,18 @@ namespace RemSolution.Application.Features.Renting.Commands.ChangeRentingStateCo
                     });
             }
 
+            // Pickup and return readings are both measured on the car, so the
+            // car's own odometer follows them (see Car.RecordOdometer). Loaded
+            // only when there is a reading to record, and saved in the same unit
+            // of work as the transition: the two cannot disagree afterwards.
+            if (request.Mileage.HasValue)
+            {
+                var car = await _context.Cars
+                    .FirstOrDefaultAsync(c => c.Id == entity.CarId, cancellationToken);
+
+                car?.RecordOdometer(request.Mileage);
+            }
+
             await _context.SaveChangesAsync(cancellationToken);
         }
 

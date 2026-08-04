@@ -114,46 +114,5 @@
   margin-top: 16px;
 }
 
-/* Money panel: the three figures on one line with the pay button opposite, then
-   the entries behind them. Same bordered-strip treatment as the panels above. */
-.balance-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 16px;
-  padding: 8px 12px;
-  border: 1px solid #eee;
-  border-radius: 8px;
-}
-
-.balance-figures {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 20px;
-}
-
-.balance-item {
-  display: flex;
-  flex-direction: column;
-  font-size: 13px;
-  color: #555;
-}
-
-.balance-item strong {
-  font-size: 15px;
-  color: #222;
-}
-
-.balance-item strong.owing {
-  color: #b71c1c;
-}
-
-.balance-item strong.settled {
-  color: #2e7d32;
-}
-
-.proof-cell {
-  white-space: nowrap;
-  width: 1%;
-}
+/* The money panel moved to the client's own page (see
+   client-detail.component.css) — this stays a form. */

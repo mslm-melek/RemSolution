@@ -190,6 +190,12 @@ namespace RemSolution.Application.Features.Renting.Commands.CreateRentingCommand
 
                 _context.Rentings.Add(entity);
 
+                // A pickup reading typed at the counter is a reading off this car,
+                // so the car's odometer follows it (see Car.RecordOdometer) — the
+                // next booking then offers the mileage this hire started from
+                // rather than a figure from before it.
+                car.RecordOdometer(entity.StartMileage);
+
                 // The documents reference the renting by id and render its data,
                 // so the renting has to exist first. Still the same transaction:
                 // this save is not yet durable.

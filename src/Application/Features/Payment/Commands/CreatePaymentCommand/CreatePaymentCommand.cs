@@ -65,7 +65,13 @@ namespace RemSolution.Application.Features.Payment.Commands.CreatePaymentCommand
 
                 agencyId = renting.AgencyId;
                 clientId = renting.ClientId;
-                price = renting.Price?.Amount;
+                // What this booking charges, which for a cancelled one is its
+                // cancellation fee rather than its price (see ClientCreditRows).
+                // A hire cancelled for free therefore caps at nothing: there is
+                // no longer anything to collect against it.
+                price = renting.RentingState == RentingState.Cancelled
+                    ? renting.CancellationFee?.Amount ?? 0m
+                    : renting.Price?.Amount;
                 currentNet = await _context.Payments
                     .Where(p => p.RentingId == rentingId && p.PayementAmount != null)
                     .SumAsync(p => p.PayementAmount!.Amount, cancellationToken);
@@ -111,7 +117,7 @@ namespace RemSolution.Application.Features.Payment.Commands.CreatePaymentCommand
                 throw new ValidationException(new[]
                 {
                     new ValidationFailure(nameof(request.Amount),
-                        $"This payment would exceed the agreed price. Outstanding balance is {cap - currentNet}.")
+                        $"This payment would exceed what is owed. Outstanding balance is {cap - currentNet}.")
                 });
             }
 

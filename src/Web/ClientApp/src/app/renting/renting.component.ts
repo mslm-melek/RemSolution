@@ -4,13 +4,18 @@ import { Sort, SortDirection } from '@angular/material/sort';
 import { MatDialog } from '@angular/material/dialog';
 import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import {
-  RentingsClient, RentingDto, RentingState, RentingDateBasis
+  RentingsClient, RentingDto, RentingState, RentingDateBasis, CarsClient, ClientsClient,
+  ChangeRentingStateCommand
 } from '../web-api-client';
+import { extractValidationErrors } from '../shared/form-utils';
 import {
-  FilterChip, applyListFilters, boolParam, dateParam, enumName, enumParam, rangeText, withoutParams
+  FilterChip, applyListFilters, boolParam, dateParam, enumName, enumParam, idParam, rangeText,
+  withoutParams
 } from '../shared/list-filters';
 import { AuthService } from '../shared/auth.service';
 import { PaymentDialogComponent } from '../shared/payment-dialog.component';
+import { ReturnDialogComponent } from '../shared/return-dialog.component';
+import { CancelDialogComponent } from '../shared/cancel-dialog.component';
 import { TranslocoService } from '@jsverse/transloco';
 
 @Component({
@@ -25,20 +30,29 @@ export class RentingComponent implements OnInit {
   private readonly dialog = inject(MatDialog);
   rentings: RentingDto[] = [];
   displayedColumns: string[] = ['car', 'client', 'period', 'state', 'price', 'actions'];
-  // Money can be taken straight from a row (see pay).
+  errorMessage = '';
+  // Money can be taken straight from a row (see pay), and a hire can be started
+  // or closed from one (see startRenting / returnCar) — both transitions are the
+  // same permission, Renting.Update.
   canPay = false;
+  canChangeState = false;
 
   totalCount = 0;
   pageNumber = 1;
   pageSize = 10;
 
   // Filters. `state` has a control of its own; the rest arrive by link (from the
-  // dashboard's counts) and show as removable chips.
+  // dashboard's counts, or from a car's / client's history count) and show as
+  // removable chips.
   state: RentingState | null = null;
   dateBasis: RentingDateBasis | null = null;
   fromDate: Date | null = null;
   toDate: Date | null = null;
   excludeCancelled = false;
+  // One car's or one client's history. A client matches either seat, so this is
+  // "hires this person was on", not only the ones they signed for.
+  carId: number | null = null;
+  clientId: number | null = null;
   chips: FilterChip[] = [];
 
   // Sorting is server-side: the column id doubles as the API's SortBy key, and
@@ -56,6 +70,8 @@ export class RentingComponent implements OnInit {
 
   constructor(
     private client: RentingsClient,
+    private carsClient: CarsClient,
+    private clientsClient: ClientsClient,
     private auth: AuthService,
     private route: ActivatedRoute,
     private router: Router) { }
@@ -66,6 +82,7 @@ export class RentingComponent implements OnInit {
   ngOnInit() {
     this.auth.currentUser$.subscribe(user => {
       this.canPay = AuthService.canAccessModule(user, 'Payments', 'Payment.Create');
+      this.canChangeState = AuthService.canAccessModule(user, 'Rentings', 'Renting.Update');
     });
 
     this.route.queryParamMap.subscribe(params => {
@@ -81,8 +98,42 @@ export class RentingComponent implements OnInit {
     this.fromDate = dateParam(params, 'from');
     this.toDate = dateParam(params, 'to');
     this.excludeCancelled = boolParam(params, 'excludeCancelled') === true;
+    this.carId = idParam(params, 'car');
+    this.clientId = idParam(params, 'client');
 
     this.chips = [];
+
+    // Arrived from a car's or a client's history count. The chip names the thing,
+    // not its id, so it has to be looked up — until it answers, the id stands in.
+    if (this.carId !== null) {
+      const chip: FilterChip = {
+        params: ['car'],
+        labelKey: 'filters.rentingCar',
+        labelArgs: { car: `#${this.carId}` }
+      };
+      this.chips.push(chip);
+      this.carsClient.getCarById(this.carId).subscribe({
+        next: car => chip.labelArgs = { car: car.matricule ?? chip.labelArgs!['car'] },
+        // Without Car.Read the id is all this user can be told, which is enough
+        // to see and clear the filter.
+        error: () => { }
+      });
+    }
+
+    if (this.clientId !== null) {
+      const chip: FilterChip = {
+        params: ['client'],
+        labelKey: 'filters.rentingClient',
+        labelArgs: { client: `#${this.clientId}` }
+      };
+      this.chips.push(chip);
+      this.clientsClient.getClientById(this.clientId).subscribe({
+        next: c => chip.labelArgs = {
+          client: [c.firstName, c.lastName].filter(Boolean).join(' ') || chip.labelArgs!['client']
+        },
+        error: () => { }
+      });
+    }
 
     if (this.fromDate || this.toDate) {
       const range = rangeText(params.get('from'), params.get('to'));
@@ -99,7 +150,7 @@ export class RentingComponent implements OnInit {
 
   load() {
     this.client.getRentings(
-      this.pageNumber, this.pageSize, null, null, this.state,
+      this.pageNumber, this.pageSize, this.carId, this.clientId, this.state,
       this.fromDate, this.toDate,
       this.dateBasis ?? undefined, this.excludeCancelled,
       this.sortBy, this.sortDirection === 'desc'
@@ -153,14 +204,13 @@ export class RentingComponent implements OnInit {
     }
   }
 
-  // Only a renting that still owes money is collected on: a cancelled one is
-  // never paid, and a settled one would have any amount refused by the server
-  // anyway (the price is the ceiling). A finished renting settled late still
-  // qualifies — what matters is the balance, not the state.
+  // The balance decides, not the state: a finished renting settled late still
+  // owes what it owes, and a cancelled one owes its cancellation fee until that
+  // is collected (see CancelRentingCommand — a hire cancelled for free reports
+  // nothing outstanding, so it drops out of here on its own). A settled row would
+  // have any amount refused by the server anyway, the charge being the ceiling.
   canPayFor(renting: RentingDto): boolean {
-    return this.canPay
-      && renting.rentingState !== RentingState.Cancelled
-      && (renting.outstanding?.amount ?? 0) > 0;
+    return this.canPay && (renting.outstanding?.amount ?? 0) > 0;
   }
 
   // Takes the money without opening the booking first.
@@ -180,18 +230,86 @@ export class RentingComponent implements OnInit {
     });
   }
 
+  // Bringing the car back in without opening the booking first — the same dialog
+  // the cars list and the car's page use.
+  /** An upcoming hire can go out from the row: the customer is at the counter. */
+  canStart(renting: RentingDto): boolean {
+    return this.canChangeState && renting.rentingState === RentingState.NotYet && !!renting.id;
+  }
+
+  // Same prompt as the booking's own page, offering the same reading: what the
+  // booking recorded, or the car's odometer when it was booked without one. The
+  // agent overtypes it with the dashboard, and that is what moves the car's
+  // figure on (see Car.RecordOdometer).
+  startRenting(renting: RentingDto) {
+    if (!renting.id) return;
+
+    this.errorMessage = '';
+    const offered = renting.startMileage ?? renting.carMileage;
+
+    const value = prompt(
+      this.transloco.translate('renting.promptPickupMileage'),
+      offered === null || offered === undefined ? '' : String(offered));
+
+    if (value === null) return; // cancelled
+
+    this.client.changeRentingState(renting.id, new ChangeRentingStateCommand({
+      id: renting.id,
+      rowVersion: renting.rowVersion,
+      newState: RentingState.InProgress,
+      mileage: value.trim() === '' ? undefined : Number(value)
+    })).subscribe({
+      next: () => this.load(),
+      error: err => this.handleError(err)
+    });
+  }
+
+  canTakeBack(renting: RentingDto): boolean {
+    return this.canChangeState && renting.rentingState === RentingState.InProgress && !!renting.id;
+  }
+
+  returnCar(renting: RentingDto) {
+    if (!renting.id) return;
+
+    this.dialog.open(ReturnDialogComponent, {
+      data: {
+        rentingId: renting.id,
+        carLabel: [renting.carMatricule, renting.carModelName].filter(Boolean).join(' · '),
+        clientName: renting.clientName
+      },
+      autoFocus: 'first-tabbable'
+    }).afterClosed().subscribe(returned => {
+      if (returned) this.load();
+    });
+  }
+
   canCancel(renting: RentingDto): boolean {
     return renting.rentingState === RentingState.NotYet
       || renting.rentingState === RentingState.InProgress;
   }
 
+  // Cancelling decides what happens to the money as well as to the booking, so it
+  // opens the dialog that asks (see CancelDialogComponent) rather than a yes/no box.
   cancelRenting(renting: RentingDto) {
     if (!renting.id) return;
-    if (confirm(this.transloco.translate('renting.confirmCancel'))) {
-      this.client.cancelRenting(renting.id).subscribe({
-        next: () => this.load(),
-        error: err => console.error(err)
-      });
-    }
+
+    this.errorMessage = '';
+
+    this.dialog.open(CancelDialogComponent, {
+      data: {
+        rentingId: renting.id,
+        carLabel: [renting.carMatricule, renting.carModelName].filter(Boolean).join(' · '),
+        clientName: renting.clientName
+      },
+      autoFocus: 'first-tabbable'
+    }).afterClosed().subscribe(cancelled => {
+      if (cancelled) this.load();
+    });
+  }
+
+  private handleError(err: any) {
+    const validationErrors = extractValidationErrors(err);
+    this.errorMessage = validationErrors ?? this.transloco.translate('common.unexpectedError');
+    if (!validationErrors) console.error(err);
   }
 }

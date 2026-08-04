@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Mvc;
 using RemSolution.Application.Common.Models;
 using RemSolution.Domain.Constants;
 using RemSolution.Application.Features.Credit.DTOs;
+using RemSolution.Application.Features.Credit.Queries.GetClientCreditsByIdsQuery;
 using RemSolution.Application.Features.Credit.Queries.GetClientCreditsQuery;
 using RemSolution.Application.Features.Credit.Queries.GetCreditsSummaryQuery;
 using RemSolution.Application.Features.Credit.Queries.GetExpenseCreditsQuery;
@@ -21,6 +23,7 @@ public class Credits : EndpointGroupBase
         group
             .MapGet(GetCreditsSummary, "summary", Permissions.CreditRead)
             .MapGet(GetClientCredits, "clients", Permissions.CreditRead)
+            .MapGet(GetClientCreditsByIds, "clients/by-ids", Permissions.CreditRead)
             .MapGet(GetExpenseCredits, "expenses", Permissions.CreditRead);
     }
 
@@ -34,6 +37,15 @@ public class Credits : EndpointGroupBase
         ISender sender, [AsParameters] GetClientCreditsQuery query)
     {
         var result = await sender.Send(query);
+        return TypedResults.Ok(result);
+    }
+
+    // The debt beside a set of names the caller already has (a page of the client
+    // list), rather than the debt ranking the list above returns.
+    public async Task<Ok<IList<ClientCreditDto>>> GetClientCreditsByIds(
+        ISender sender, [FromQuery(Name = "clientIds")] int[]? clientIds)
+    {
+        var result = await sender.Send(new GetClientCreditsByIdsQuery(clientIds));
         return TypedResults.Ok(result);
     }
 

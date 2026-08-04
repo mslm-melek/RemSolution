@@ -3,6 +3,7 @@ import {
   AbstractControl, FormBuilder, FormControl, FormGroup, ValidationErrors, Validators
 } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
+import { MatDialog } from '@angular/material/dialog';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subject, of } from 'rxjs';
 import { catchError, debounceTime, switchMap } from 'rxjs/operators';
@@ -20,6 +21,8 @@ import {
 } from '../web-api-client';
 import { toDateInput, fromDateInput, extractValidationErrors, isConcurrencyConflict } from '../shared/form-utils';
 import { AuthService } from '../shared/auth.service';
+import { ReturnDialogComponent } from '../shared/return-dialog.component';
+import { CancelDialogComponent } from '../shared/cancel-dialog.component';
 import { TranslocoService } from '@jsverse/transloco';
 
 // One of the selected client's identity papers, as shown in the renting form.
@@ -65,6 +68,7 @@ export class RentingFormComponent implements OnInit {
   // translated imperatively rather than through the template pipe.
   private readonly transloco = inject(TranslocoService);
   private readonly http = inject(HttpClient);
+  private readonly dialog = inject(MatDialog);
 
   // Creating is a wizard (vehicle → client → paperwork), editing is a detail
   // screen: the same three groups, but reachable in any order because the
@@ -293,6 +297,10 @@ export class RentingFormComponent implements OnInit {
     for (const name of ['carId', 'startDate', 'endDate']) {
       this.vehicleGroup.get(name)!.valueChanges.subscribe(() => this.quoteTrigger.next());
     }
+
+    // A different car has a different odometer, so the pickup reading follows the
+    // choice (see offerCarMileage).
+    this.vehicleGroup.get('carId')!.valueChanges.subscribe(() => this.offerCarMileage());
 
     // Debounced because the date inputs fire per keystroke; switchMap so a
     // slow answer for an old period can never overwrite a newer one.
@@ -645,15 +653,58 @@ export class RentingFormComponent implements OnInit {
         // Creating: offering a car the API will refuse is a trap, so the picker
         // only lists the ones that can actually be booked.
         this.loadCars(CarStatus.Active);
+        this.applyPrefill();
       }
     });
   }
 
+  // Opened from a row that already answers part of the wizard: the cars list
+  // knows the car (?carId), the client list knows the renter (?clientId). Only
+  // the choice is made here — the dates, the price and the availability re-check
+  // for the period asked all still happen in the wizard, so nothing is skipped.
+  private applyPrefill() {
+    const params = this.route.snapshot.queryParamMap;
+    const carId = Number(params.get('carId'));
+    const clientId = Number(params.get('clientId'));
+
+    if (Number.isInteger(carId) && carId > 0) {
+      this.vehicleGroup.patchValue({ carId });
+    }
+
+    if (Number.isInteger(clientId) && clientId > 0) {
+      // Explicitly the existing-client branch: a prefilled id would otherwise sit
+      // unused behind the "new client" panel if that were ever the default.
+      this.clientGroup.patchValue({ clientMode: 'existing', clientId });
+    }
+  }
+
   private loadCars(status: CarStatus | null) {
     this.carsClient.getCars(1, 1000, null, null, null, status, null, null, null, null, false).subscribe({
-      next: r => this.cars = r.items || [],
+      next: r => {
+        this.cars = r.items || [];
+        // A car prefilled from the URL (?carId, from the fleet's "rent this car")
+        // was chosen before its record was here to read, so the reading it should
+        // start from is offered now.
+        this.offerCarMileage();
+      },
       error: err => console.error(err)
     });
+  }
+
+  /**
+   * Offers the selected car's odometer as this hire's pickup reading — the
+   * mileage the counter would otherwise copy off the dashboard, already typed in
+   * and still editable. Only for a new booking: whatever was recorded on an
+   * existing renting is what actually happened and is not overwritten. A car
+   * with no reading on file leaves the field as it is rather than blanking it.
+   */
+  private offerCarMileage() {
+    if (this.isEdit) return;
+
+    const mileage = this.selectedCar?.mileage;
+    if (mileage === null || mileage === undefined) return;
+
+    this.vehicleGroup.get('startMileage')!.setValue(mileage);
   }
 
   // Creating a client inline is a create-time convenience; editing an existing
@@ -1234,17 +1285,36 @@ export class RentingFormComponent implements OnInit {
   }
 
   startRenting() {
-    const value = prompt(this.transloco.translate('renting.promptPickupMileage'));
+    // Offered: what the booking already recorded, or the car's odometer if it was
+    // booked without a reading. The agent overtypes it with what the dashboard
+    // actually says, which is also what moves the car's own figure on.
+    const offered = this.renting?.startMileage ?? this.selectedCar?.mileage;
+
+    const value = prompt(
+      this.transloco.translate('renting.promptPickupMileage'),
+      offered === null || offered === undefined ? '' : String(offered));
+
     if (value === null) return; // cancelled
     const mileage = value.trim() === '' ? undefined : Number(value);
     this.changeState(RentingState.InProgress, mileage);
   }
 
+  // The return is the one transition with more than one thing to say — the
+  // odometer, and the day the car actually came back (which re-prices the hire) —
+  // so it gets the dialog every other screen closes a hire through.
   completeRenting() {
-    const value = prompt(this.transloco.translate('renting.promptReturnMileage'));
-    if (value === null) return;
-    const mileage = value.trim() === '' ? undefined : Number(value);
-    this.changeState(RentingState.Done, mileage);
+    if (!this.rentingId) return;
+
+    this.dialog.open(ReturnDialogComponent, {
+      data: {
+        rentingId: this.rentingId,
+        carLabel: [this.renting?.carMatricule, this.renting?.carModelName].filter(Boolean).join(' · '),
+        clientName: this.renting?.clientName
+      },
+      autoFocus: 'first-tabbable'
+    }).afterClosed().subscribe(returned => {
+      if (returned) this.reload();
+    });
   }
 
   private changeState(newState: RentingState, mileage?: number) {
@@ -1262,12 +1332,20 @@ export class RentingFormComponent implements OnInit {
     });
   }
 
+  // The same dialog the list cancels through: what the client still owes and what
+  // goes back to them are decisions, not a yes/no (see CancelDialogComponent).
   cancelRenting() {
     if (!this.rentingId) return;
-    if (!confirm(this.transloco.translate('renting.confirmCancel'))) return;
-    this.client.cancelRenting(this.rentingId).subscribe({
-      next: () => this.reload(),
-      error: err => this.handleError(err)
+
+    this.dialog.open(CancelDialogComponent, {
+      data: {
+        rentingId: this.rentingId,
+        carLabel: [this.renting?.carMatricule, this.renting?.carModelName].filter(Boolean).join(' · '),
+        clientName: this.renting?.clientName
+      },
+      autoFocus: 'first-tabbable'
+    }).afterClosed().subscribe(cancelled => {
+      if (cancelled) this.reload();
     });
   }
 

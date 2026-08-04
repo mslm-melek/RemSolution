@@ -12,6 +12,7 @@ public class RentingConfiguration : IEntityTypeConfiguration<Renting>
 
         builder.OwnsMoney(e => e.Price, "Price", "PriceCurrency");
         builder.OwnsMoney(e => e.DepositAmount, "DepositAmount", "DepositAmountCurrency");
+        builder.OwnsMoney(e => e.CancellationFee, "CancellationFee", "CancellationFeeCurrency");
 
         builder.Property(e => e.Notes).HasMaxLength(1000);
 

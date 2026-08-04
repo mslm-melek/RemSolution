@@ -5,7 +5,6 @@ using RemSolution.Application.Common.Security;
 using RemSolution.Application.Common.Settings;
 using RemSolution.Application.Features.Credit.DTOs;
 using RemSolution.Domain.Constants;
-using RemSolution.Domain.Enums;
 
 namespace RemSolution.Application.Features.Credit.Queries.GetClientCreditsQuery
 {
@@ -61,30 +60,9 @@ namespace RemSolution.Application.Features.Credit.Queries.GetClientCreditsQuery
                     || (c.CIN != null && c.CIN.Contains(term)));
             }
 
-            // Charges mirror GetClientBalanceQuery: every renting that was not
-            // cancelled, plus reservations that are still an obligation (a
-            // converted one has become a renting and would otherwise count twice).
-            var rows = clients.Select(c => new
-            {
-                ClientId = c.Id,
-                c.FirstName,
-                c.LastName,
-                c.CIN,
-                Charged =
-                    c.Rentings!
-                        .Where(r => r.RentingState != RentingState.Cancelled && r.Price != null)
-                        .Sum(r => r.Price!.Amount)
-                    + c.Reservations!
-                        .Where(r => (r.Status == ReservationStatus.Confirmed || r.Status == ReservationStatus.Paid)
-                                    && r.Price != null)
-                        .Sum(r => r.Price!.Amount),
-                Paid = c.Payments!
-                    .Where(p => p.PayementAmount != null)
-                    .Sum(p => p.PayementAmount!.Amount),
-                OpenRentingCount = c.Rentings!
-                    .Count(r => r.RentingState == RentingState.NotYet
-                                || r.RentingState == RentingState.InProgress),
-            });
+            // The receivable arithmetic itself is shared (see ClientCreditRows) so
+            // this list and the per-client lookups cannot disagree.
+            var rows = clients.ToCreditRows();
 
             if (request.OnlyOutstanding)
             {
@@ -104,19 +82,17 @@ namespace RemSolution.Application.Features.Credit.Queries.GetClientCreditsQuery
                 _ => rows.OrderByField(x => x.Charged - x.Paid, descending),
             };
 
-            return await ordered
+            // Priced into Money once the page is in memory: only the sums need to
+            // happen in SQL, and the currency is a constant per agency.
+            var page = await ordered
                 .ThenBy(x => x.ClientId)
-                .Select(x => new ClientCreditDto
-                {
-                    ClientId = x.ClientId,
-                    ClientName = ((x.FirstName ?? string.Empty) + " " + (x.LastName ?? string.Empty)).Trim(),
-                    CIN = x.CIN,
-                    Charged = new MoneyDto(x.Charged, currency),
-                    Paid = new MoneyDto(x.Paid, currency),
-                    Outstanding = new MoneyDto(x.Charged - x.Paid, currency),
-                    OpenRentingCount = x.OpenRentingCount,
-                })
                 .PaginatedListAsync(request.PageNumber, request.PageSize);
+
+            return new PaginatedList<ClientCreditDto>(
+                page.Items.Select(row => row.ToDto(currency)).ToList(),
+                page.TotalCount,
+                page.PageNumber,
+                request.PageSize);
         }
     }
 }

@@ -1,5 +1,6 @@
 using RemSolution.Application.Features.Client.Commands.CreateClientCommand;
 using RemSolution.Application.Features.Client.Queries.GetClientsWithPaginationQuery;
+using RemSolution.Domain.Enums;
 
 namespace RemSolution.Application.FunctionalTests.Clients.Queries;
 
@@ -37,6 +38,59 @@ public class GetClientsWithPaginationQueryTests : BaseTestFixture
 
         result.TotalCount.Should().Be(1);
         result.Items.First().LastName.Should().Be("Smith");
+    }
+
+    // The client list shows how much history each name has, and links to it.
+    [Test]
+    public async Task ShouldCountTheClientsHires()
+    {
+        await RunAsAgencyAdministratorAsync();
+        await AddTestAgencyAsync();
+
+        var client = new Domain.Entities.Client { FirstName = "Repeat", LastName = "Renter" };
+        await AddAsync(client);
+        var passenger = new Domain.Entities.Client { FirstName = "Second", LastName = "Driver" };
+        await AddAsync(passenger);
+        await AddAsync(new Domain.Entities.Client { FirstName = "First", LastName = "Timer" });
+
+        var car = new Domain.Entities.Car { Matricule = "HIST-1", Status = CarStatus.Active };
+        await AddAsync(car);
+
+        await AddAsync(new Domain.Entities.Renting
+        {
+            CarId = car.Id, ClientId = client.Id, SecondClientId = passenger.Id,
+            StartDate = DateTime.UtcNow.AddDays(-20), EndDate = DateTime.UtcNow.AddDays(-18),
+            RentingState = RentingState.Done
+        });
+        await AddAsync(new Domain.Entities.Renting
+        {
+            CarId = car.Id, ClientId = client.Id,
+            StartDate = DateTime.UtcNow.AddDays(-1), EndDate = DateTime.UtcNow.AddDays(2),
+            RentingState = RentingState.InProgress
+        });
+        // Cancelled hires are not history.
+        await AddAsync(new Domain.Entities.Renting
+        {
+            CarId = car.Id, ClientId = client.Id,
+            StartDate = DateTime.UtcNow.AddDays(5), EndDate = DateTime.UtcNow.AddDays(6),
+            RentingState = RentingState.Cancelled
+        });
+
+        var result = await SendAsync(new GetClientsWithPaginationQuery());
+
+        var renter = result.Items.Single(c => c.LastName == "Renter");
+        renter.RentingCount.Should().Be(2);
+        renter.OpenRentingCount.Should().Be(1);
+
+        // Being someone else's second driver is part of a client's history too —
+        // it is what the count's link shows.
+        var passengerRow = result.Items.Single(c => c.LastName == "Driver");
+        passengerRow.RentingCount.Should().Be(1);
+        passengerRow.OpenRentingCount.Should().Be(0);
+
+        var newcomer = result.Items.Single(c => c.LastName == "Timer");
+        newcomer.RentingCount.Should().Be(0);
+        newcomer.OpenRentingCount.Should().Be(0);
     }
 
     // The dashboard's "flagged clients" alert links into this list, so the filter

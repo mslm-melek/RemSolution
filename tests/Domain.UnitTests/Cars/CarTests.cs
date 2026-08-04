@@ -87,6 +87,41 @@ public class CarTests
         car.Rentings.Should().BeNull();
     }
 
+    // The odometer rule the renting write paths lean on: readings taken off the
+    // car move it, and it never runs backwards.
+    [Test]
+    public void RecordOdometer_ShouldOnlyEverMoveForward()
+    {
+        var car = new Car { Matricule = "ODO-1", FirstCirculationDate = DateTime.UtcNow };
+
+        // A car nobody has read yet takes the first reading it is given.
+        car.RecordOdometer(42_000);
+        car.Mileage.Should().Be(42_000);
+
+        car.RecordOdometer(42_850);
+        car.Mileage.Should().Be(42_850);
+
+        // A correction to an older hire, or a return typed before its pickup, is
+        // not evidence the car has driven less.
+        car.RecordOdometer(40_000);
+        car.Mileage.Should().Be(42_850);
+
+        // Nothing recorded means nothing to move it with.
+        car.RecordOdometer(null);
+        car.Mileage.Should().Be(42_850);
+    }
+
+    [Test]
+    public void RecordOdometer_ShouldAcceptZeroOnAnUnreadCar()
+    {
+        // A car delivered new reads zero, which is a reading and not "unknown".
+        var car = new Car { Matricule = "ODO-2", FirstCirculationDate = DateTime.UtcNow };
+
+        car.RecordOdometer(0);
+
+        car.Mileage.Should().Be(0);
+    }
+
     [Test]
     public void ToString_ShouldReturnMatricule()
     {

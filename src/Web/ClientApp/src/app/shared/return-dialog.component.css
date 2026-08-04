@@ -1,0 +1,45 @@
+/* Same narrow single-column shape as the payment dialog: one field per row, so
+   the odometer reading is what the eye lands on. Tokens come from styles.scss. */
+.dialog-subtitle {
+  margin: 0 0 4px;
+  font-weight: 600;
+  color: var(--ink-2);
+}
+
+.dialog-hint,
+.hint {
+  margin: 0 0 12px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+/* The re-pricing notice is a consequence of what was just typed, so it sits
+   inline with the icon rather than as a banner. */
+.dialog-hint.warn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ink-2);
+}
+
+.dialog-hint.warn mat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+}
+
+.dialog-form {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 320px;
+  padding-top: 8px;
+}
+
+.dialog-form mat-form-field {
+  width: 100%;
+}
+
+.error-banner {
+  margin-bottom: 8px;
+}

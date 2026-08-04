@@ -34,7 +34,9 @@
     </div>
   </div>
 
-  <mat-tab-group>
+  <!-- The open tab comes from the URL (see readFilters): a link that filters the
+       payable rows has to arrive on them. -->
+  <mat-tab-group [selectedIndex]="selectedTabIndex" (selectedIndexChange)="onTabChange($event)">
     <!-- Receivable -->
     <mat-tab [label]="t('credit.clientsTab')" *ngIf="canReadCredits">
       <div class="tab-body">

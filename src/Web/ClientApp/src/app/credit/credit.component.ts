@@ -34,6 +34,11 @@ interface PayableRow {
 // appended for whoever holds the expense module (see ngOnInit).
 const PAYABLE_COLUMNS = ['date', 'car', 'type', 'amount', 'paid', 'outstanding'];
 
+// Which side of the screen is open. It is in the URL like the filters are: a
+// link that narrows the payable rows ("this car's expenses") has to land on the
+// tab holding them, or the filter it carried is invisible behind the other tab.
+type CreditTab = 'clients' | 'expenses';
+
 // The agency's money screen: what clients owe coming in, what the agency owes
 // going out, and the actions that settle either side. The payable tab absorbed
 // the standalone expense list — it showed the same rows with the same columns —
@@ -99,6 +104,13 @@ export class CreditComponent implements OnInit {
   // permissions have arrived, so the first load waits for them.
   private permissionsKnown = false;
 
+  // The open tab, from the URL (see readFilters).
+  selectedTab: CreditTab = 'clients';
+  // The payable filters as the URL last had them, so a tab switch — which also
+  // goes through the URL — is not mistaken for a filter change and does not
+  // re-query the rows or throw the user back to page one.
+  private payableFilterKey: string | null = null;
+
   constructor(
     private client: CreditsClient,
     private expensesClient: ExpensesClient,
@@ -116,6 +128,13 @@ export class CreditComponent implements OnInit {
     // tile counting unsettled expenses still opens this tab showing those.
     this.route.queryParamMap.subscribe(params => {
       this.readFilters(params);
+
+      // Switching tabs rewrites the URL too; only a changed filter is worth a
+      // round-trip.
+      const key = `${this.carId}|${this.expenseTypeId}|${this.expenseOnlyOutstanding}`;
+      if (key === this.payableFilterKey) return;
+
+      this.payableFilterKey = key;
       this.expensePage = 1;
       if (this.permissionsKnown) this.loadExpenses();
     });
@@ -162,6 +181,52 @@ export class CreditComponent implements OnInit {
     this.expenseTypeId = Number.isInteger(typeId) && typeId > 0 ? typeId : null;
 
     this.expenseOnlyOutstanding = boolParam(params, 'unpaid') === true;
+
+    // `?tab=` is the explicit answer. Without it, a URL carrying a payable
+    // filter still opens the payable tab: those params only mean anything there,
+    // so a link that has one is asking for it (and links written before the tab
+    // was named keep working).
+    const tab = params.get('tab');
+    this.selectedTab = tab === 'expenses' || tab === 'clients'
+      ? tab
+      : this.carId || this.expenseTypeId || this.expenseOnlyOutstanding ? 'expenses' : 'clients';
+  }
+
+  // Which tabs are on screen, in order — mirroring their *ngIf. The receivable
+  // one is missing for whoever cannot read credits, so neither tab sits at a
+  // fixed index and the mapping has to be computed both ways.
+  private get tabs(): CreditTab[] {
+    const tabs: CreditTab[] = [];
+    if (this.canReadCredits) tabs.push('clients');
+    if (this.canReadExpenses || this.canReadCredits) tabs.push('expenses');
+    return tabs;
+  }
+
+  get selectedTabIndex(): number {
+    const index = this.tabs.indexOf(this.selectedTab);
+    return index < 0 ? 0 : index;
+  }
+
+  // Keeps the open tab in the URL, so a reload, a shared link and the back
+  // button all show the side the user was on. Filters are preserved: the tab is
+  // one of them as far as the URL is concerned.
+  onTabChange(index: number) {
+    // Before the permissions land, the tab list is not final and an index means
+    // nothing; the group emits on its own binding's changes then.
+    if (!this.permissionsKnown) return;
+
+    const tab = this.tabs[index];
+
+    // Only a switch the user made differs from what the URL already says.
+    if (!tab || tab === this.selectedTab) return;
+
+    this.selectedTab = tab;
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { tab },
+      queryParamsHandling: 'merge',
+      replaceUrl: true
+    });
   }
 
   loadSummary() {
@@ -229,8 +294,11 @@ export class CreditComponent implements OnInit {
   }
 
   // Payable filtering goes through the URL; the subscription above reloads it.
+  // The whole query string is replaced, so the open tab has to be restated or
+  // filtering would drop the user back onto the receivable side.
   onExpenseFilter() {
     applyListFilters(this.router, this.route, {
+      tab: 'expenses',
       car: this.carId,
       type: this.expenseTypeId,
       unpaid: this.expenseOnlyOutstanding ? 'true' : null
@@ -238,7 +306,7 @@ export class CreditComponent implements OnInit {
   }
 
   clearExpenseFilters() {
-    applyListFilters(this.router, this.route, {});
+    applyListFilters(this.router, this.route, { tab: 'expenses' });
   }
 
   onExpensePage(event: PageEvent) {

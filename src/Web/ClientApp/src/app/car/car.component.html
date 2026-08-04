@@ -34,6 +34,17 @@
       </mat-select>
     </mat-form-field>
 
+    <!-- Custody: the fleet question asked most often ("what can I hire out
+         today?"). The dashboard's on-rent tile links in with the same param. -->
+    <mat-form-field appearance="outline" class="filter-field">
+      <mat-label>{{ t('car.custody') }}</mat-label>
+      <mat-select [(ngModel)]="filterOnRent" (selectionChange)="onFilter()">
+        <mat-option [value]="null">{{ t('car.allCustody') }}</mat-option>
+        <mat-option [value]="false">{{ t('car.inTheYard') }}</mat-option>
+        <mat-option [value]="true">{{ t('car.outOnHire') }}</mat-option>
+      </mat-select>
+    </mat-form-field>
+
     <span class="spacer"></span>
 
     <button mat-raised-button (click)="onFilter()">
@@ -61,14 +72,38 @@
          [matSortActive]="sortBy" [matSortDirection]="sortDirection"
          (matSortChange)="onSort($event)">
 
+    <!-- The plate opens the car's own page (history, current hire, actions); the
+         row's edit action still goes straight to the form. -->
     <ng-container matColumnDef="matricule">
       <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ t('car.matricule') }}</th>
-      <td mat-cell *matCellDef="let car"><span class="matricule num">{{ car.matricule }}</span></td>
+      <td mat-cell *matCellDef="let car">
+        <a class="matricule num" [routerLink]="['/car', car.id]">{{ car.matricule }}</a>
+      </td>
     </ng-container>
 
     <ng-container matColumnDef="model">
       <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ t('car.model') }}</th>
       <td mat-cell *matCellDef="let car">{{ car.modelName }}</td>
+    </ng-container>
+
+    <!-- Not sortable: the cell answers "can I hire this out now?", which is the
+         administrative status AND custody together, and the server can only order
+         by one of them — a header that sorted by something other than what it
+         shows would just look broken. The custody filter is the tool for this. -->
+    <ng-container matColumnDef="status">
+      <th mat-header-cell *matHeaderCellDef>{{ t('common.status') }}</th>
+      <td mat-cell *matCellDef="let car">
+        <span class="cell-stack">
+          <span>
+            <span class="chip" [ngClass]="availabilityClass(car)">{{ t(availabilityLabelKey(car)) }}</span>
+          </span>
+          <span class="cell-sub" *ngIf="car.currentRenting">
+            {{ car.currentRenting.clientName }}<ng-container *ngIf="car.currentRenting.endDate">
+              · {{ t('car.dueBack', { date: (car.currentRenting.endDate | date:'yyyy-MM-dd') }) }}
+            </ng-container>
+          </span>
+        </span>
+      </td>
     </ng-container>
 
     <ng-container matColumnDef="firstCirculationDate">
@@ -91,6 +126,18 @@
       <td mat-cell *matCellDef="let car">{{ fuelTypeLabelKey(car.fuelType) ? t(fuelTypeLabelKey(car.fuelType)) : '' }}</td>
     </ng-container>
 
+    <!-- How much history the car has, linking to it: the same rentings list,
+         filtered to this car (see the renting list's car filter). -->
+    <ng-container matColumnDef="rentings">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header class="num-cell">{{ t('car.rentings') }}</th>
+      <td mat-cell *matCellDef="let car" class="num-cell">
+        <a *ngIf="canSeeRentings && car.rentingCount"
+           [routerLink]="['/renting']" [queryParams]="{ car: car.id }"
+           [matTooltip]="t('car.viewRentings')">{{ car.rentingCount }}</a>
+        <span *ngIf="!canSeeRentings || !car.rentingCount" class="muted">{{ car.rentingCount }}</span>
+      </td>
+    </ng-container>
+
     <ng-container matColumnDef="image">
       <th mat-header-cell *matHeaderCellDef>{{ t('car.image') }}</th>
       <td mat-cell *matCellDef="let car">
@@ -105,7 +152,18 @@
       <th mat-header-cell *matHeaderCellDef class="actions-cell">{{ t('common.actions') }}</th>
       <td mat-cell *matCellDef="let car" class="actions-cell">
         <span class="row-actions">
-          <a mat-icon-button color="primary" [routerLink]="['/car', car.id]"
+          <!-- Hire it out, or take it back: the two things a fleet list is opened
+               to do. Only one of them can apply to a given row. -->
+          <a *ngIf="canRentOut(car)" mat-icon-button color="primary"
+             [routerLink]="['/renting/new']" [queryParams]="{ carId: car.id }"
+             [matTooltip]="t('car.rentNow')" [attr.aria-label]="t('car.rentNow')">
+            <mat-icon>vpn_key</mat-icon>
+          </a>
+          <button *ngIf="canTakeBack(car)" mat-icon-button color="primary" (click)="returnCar(car)"
+                  [matTooltip]="t('renting.returnCar')" [attr.aria-label]="t('renting.returnCar')">
+            <mat-icon>assignment_turned_in</mat-icon>
+          </button>
+          <a mat-icon-button [routerLink]="['/car', car.id, 'edit']"
              [matTooltip]="t('common.edit')" [attr.aria-label]="t('common.edit')">
             <mat-icon>edit</mat-icon>
           </a>

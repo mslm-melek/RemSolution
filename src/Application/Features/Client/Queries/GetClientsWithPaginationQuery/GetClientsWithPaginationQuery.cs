@@ -4,6 +4,7 @@ using RemSolution.Application.Common.Models;
 using RemSolution.Application.Common.Security;
 using RemSolution.Application.Features.Client.DTOs;
 using RemSolution.Domain.Constants;
+using RemSolution.Domain.Enums;
 
 namespace RemSolution.Application.Features.Client.Queries.GetClientsWithPaginationQuery
 {
@@ -63,6 +64,12 @@ namespace RemSolution.Application.Features.Client.Queries.GetClientsWithPaginati
                 "birthdate" => query.OrderByField(c => c.BirthDate, descending),
                 "cin" => query.OrderByField(c => c.CIN, descending),
                 "flagged" => query.OrderByField(c => c.IsFlagged, descending),
+                // Same figure the row shows: both seats, cancelled ones excluded
+                // (see ClientDto.RentingCount).
+                "rentings" => query.OrderByField(
+                    c => c.Rentings!.Count(r => r.RentingState != RentingState.Cancelled)
+                         + c.SecondRentings!.Count(r => r.RentingState != RentingState.Cancelled),
+                    descending),
                 _ => query.OrderByField(c => c.LastName, descending)
                           .ThenByField(c => c.FirstName, descending),
             };

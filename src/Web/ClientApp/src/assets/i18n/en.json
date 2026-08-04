@@ -6,6 +6,7 @@
     "ar": "العربية"
   },
   "common": {
+    "km": "km",
     "actions": "Actions",
     "save": "Save",
     "saveChanges": "Save changes",
@@ -62,6 +63,8 @@
     "resultCount": "{{ count }} records"
   },
   "filters": {
+    "rentingCar": "Vehicle: {{ car }}",
+    "rentingClient": "Client: {{ client }}",
     "clear": "Remove this filter",
     "rentingStarts": "Starts: {{ range }}",
     "rentingEnds": "Ends: {{ range }}",
@@ -197,6 +200,28 @@
     "confirmDelete": "Delete model \"{{ name }}\"?"
   },
   "car": {
+    "custody": "Hire status",
+    "allCustody": "All vehicles",
+    "inTheYard": "In the yard",
+    "outOnHire": "Out on hire",
+    "availability": {
+      "available": "Available",
+      "rented": "Out on hire",
+      "maintenance": "In maintenance",
+      "inactive": "Out of service"
+    },
+    "dueBack": "back {{ date }}",
+    "rentings": "Rentings",
+    "viewRentings": "View rentings",
+    "viewExpenses": "View this vehicle's expenses",
+    "rentNow": "Rent now",
+    "backToCar": "Back to vehicle",
+    "noRentings": "No rentings for this vehicle yet.",
+    "kmCovered": "{{ km }} km covered",
+    "tabs": {
+      "rentings": "Rentings",
+      "vehicle": "Vehicle"
+    },
     "title": "Cars",
     "new": "New car",
     "newTitle": "New car",
@@ -218,6 +243,10 @@
     "branch": "Branch",
     "dailyRate": "Daily rate",
     "dailyRateHint": "Rental price per day.",
+    "mileage": "Mileage",
+    "mileageHint": "The car's current odometer. Offered as the pickup mileage on new hires.",
+    "mileageMin": "Mileage cannot be negative.",
+    "mileageNote": "Moved by pickups and returns.",
     "matriculeLocked": "Matricule cannot be changed.",
     "matriculeRequired": "Matricule is required.",
     "modelRequired": "Model is required.",
@@ -237,6 +266,17 @@
     "concurrency": "This car was reloaded by another user since you opened it. Reload the page to get the latest version, then re-apply your changes."
   },
   "client": {
+    "rentings": "Rentings",
+    "viewRentings": "View rentings",
+    "openRentings": "{{ count }} open",
+    "rentTo": "Rent to this client",
+    "backToClient": "Back to client",
+    "noRentings": "No rentings for this client yet.",
+    "owesUs": "Owes the agency",
+    "nothingOwed": "Nothing to collect",
+    "tabs": {
+      "rentings": "Rentings"
+    },
     "title": "Clients",
     "new": "New client",
     "newTitle": "New client",
@@ -290,6 +330,25 @@
     "flagged": "Flagged client"
   },
   "renting": {
+    "cancelTitle": "Cancel the renting",
+    "confirmCancelAction": "Confirm the cancellation",
+    "cancellationFee": "Cancellation fee kept",
+    "cancellationFeeHint": "What the agency keeps. 0 cancels the renting free of charge.",
+    "cancellationFeeMin": "The cancellation fee cannot be negative.",
+    "cancellationFeeMax": "The cancellation fee cannot exceed the price ({{ price }}).",
+    "cancelWrittenOff": "{{ amount }} {{ currency }} will no longer be owed by the client.",
+    "cancelStillOwed": "Still owed by the client: {{ amount }} {{ currency }}.",
+    "cancelRefundable": "To hand back to the client: {{ amount }} {{ currency }}.",
+    "cancelSettled": "Nothing left to collect or hand back on this renting.",
+    "cancelRefundNow": "Record the {{ amount }} {{ currency }} refund now",
+    "cancelKeepAsCredit": "Left unchecked, the amount stays as a credit on the client's account (shown under Payments & credits).",
+    "cancelRefundNoPermission": "The amount will stay as a credit on the client's account: recording a refund needs the Payments module.",
+    "returnTitle": "Vehicle return",
+    "returnCar": "Record the return",
+    "returnMileageTooLow": "The return reading cannot be below the pickup reading ({{ mileage }}).",
+    "pickupMileageWas": "Pickup mileage: {{ mileage }}",
+    "actualReturnDate": "Actual return date",
+    "returnDateChangedHint": "The hire will be re-priced for the days actually taken.",
     "title": "Rentings",
     "new": "New renting",
     "detailTitle": "Renting",
@@ -305,6 +364,7 @@
     "startDateRequired": "Start date is required.",
     "endDateRequired": "End date is required.",
     "pickupMileage": "Pickup mileage",
+    "pickupMileageFromCar": "The car's odometer reads {{mileage}} km. Change it if the dashboard says otherwise.",
     "returnMileage": "Return mileage",
     "createRenting": "Create renting",
     "extraServices": "Extra services",
@@ -316,10 +376,8 @@
     "reverse": "Reverse",
     "mileage": "Mileage",
     "empty": "No rentings found.",
-    "confirmCancel": "Cancel this renting? It stays on record as cancelled.",
     "confirmReverse": "Post a reversal for this payment?",
     "promptPickupMileage": "Pickup mileage (optional):",
-    "promptReturnMileage": "Return mileage (optional):",
     "concurrency": "This renting was reloaded by another user since you opened it. Reload the page to get the latest version, then re-apply your changes.",
     "existingClient": "Existing client",
     "newClient": "New client",
@@ -818,6 +876,7 @@
     "attachInvoice": "Attach invoice",
     "invoiceAfterSave": "Save the expense first, then attach its invoice.",
     "balanceTitle": "Balance & payments",
+    "showingLatest": "The {{ shown }} most recent entries of {{ total }}.",
     "amountNonZero": "Enter an amount other than zero.",
     "settleHint": "Added to what is already settled. A negative amount corrects a settlement recorded by mistake."
   },

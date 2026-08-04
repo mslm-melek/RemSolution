@@ -43,6 +43,71 @@ public class ChangeRentingStateTests : BaseTestFixture
         (await CountAsync<RentingHistory>(h => h.RentingId == rentingId)).Should().Be(1);
     }
 
+    // The car's own odometer is what the next booking offers as its pickup
+    // reading, so the readings taken at pickup and return have to reach it.
+    [Test]
+    public async Task ShouldMoveTheCarsOdometerWithThePickupAndTheReturn()
+    {
+        await RunAsAgencyAdministratorAsync();
+        await AddTestAgencyAsync();
+        await AddAsync(new AgencyFeature { Feature = FeatureFlags.Rentings, Enabled = true });
+
+        var car = new Car
+        {
+            Matricule = "ODO-1", Status = CarStatus.Active,
+            DailyRate = Money.Of(40m, "TND"), Mileage = 20_000
+        };
+        await AddAsync(car);
+        var client = new Client { FirstName = "Odo", LastName = "Meter" };
+        await AddAsync(client);
+
+        var rentingId = await SendAsync(new CreateRentingCommand
+        {
+            CarId = car.Id, ClientId = client.Id, StartDate = Start, EndDate = End
+        });
+
+        // The dashboard read a little more than the record did.
+        await SendAsync(new ChangeRentingStateCommand
+        {
+            Id = rentingId, NewState = RentingState.InProgress, Mileage = 20_150
+        });
+
+        (await FindAsync<Car>(car.Id))!.Mileage.Should().Be(20_150);
+
+        await SendAsync(new ChangeRentingStateCommand
+        {
+            Id = rentingId, NewState = RentingState.Done, Mileage = 20_900
+        });
+
+        (await FindAsync<Car>(car.Id))!.Mileage.Should().Be(20_900);
+    }
+
+    // A booking taken with a reading at the counter is a reading off the car.
+    [Test]
+    public async Task ShouldMoveTheCarsOdometerWhenTheBookingCarriesAPickupReading()
+    {
+        await RunAsAgencyAdministratorAsync();
+        await AddTestAgencyAsync();
+        await AddAsync(new AgencyFeature { Feature = FeatureFlags.Rentings, Enabled = true });
+
+        var car = new Car
+        {
+            Matricule = "ODO-2", Status = CarStatus.Active,
+            DailyRate = Money.Of(40m, "TND"), Mileage = 9_000
+        };
+        await AddAsync(car);
+        var client = new Client { FirstName = "Odo", LastName = "Booking" };
+        await AddAsync(client);
+
+        await SendAsync(new CreateRentingCommand
+        {
+            CarId = car.Id, ClientId = client.Id,
+            StartDate = Start, EndDate = End, StartMileage = 9_400
+        });
+
+        (await FindAsync<Car>(car.Id))!.Mileage.Should().Be(9_400);
+    }
+
     [Test]
     public async Task ShouldRejectCompletingAnUpcomingRenting()
     {

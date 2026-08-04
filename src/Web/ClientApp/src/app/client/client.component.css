@@ -1,6 +1,19 @@
 /* Surface, header, search strip, table and empty state come from the shared
    .page / .search-row / .data-table rules in styles.scss. */
 
+/* The name opens the client's page. It keeps the column's weight and colour so
+   the table stays quiet, and says it is a link on hover. */
+a.cell-main {
+  text-decoration: none;
+  cursor: pointer;
+}
+
+a.cell-main:hover,
+a.cell-main:focus-visible {
+  color: var(--brand-700);
+  text-decoration: underline;
+}
+
 /* The address and, when they have one, a mark that it is also a working portal
    login — the two facts belong in one cell. */
 .email-cell {

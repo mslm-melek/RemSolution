@@ -17,6 +17,9 @@ namespace RemSolution.Application.Features.Car.Commands.CreateCarCommand
                 .IsInEnum();
             RuleFor(v => v.DailyRate)
                 .GreaterThan(0).When(v => v.DailyRate.HasValue);
+            // Zero is a real reading (a car delivered new), unlike a negative one.
+            RuleFor(v => v.Mileage)
+                .GreaterThanOrEqualTo(0).When(v => v.Mileage.HasValue);
         }
     }
 }

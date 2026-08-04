@@ -24,6 +24,13 @@ namespace RemSolution.Application.Features.Car.Commands.UpdateCarCommand
         // The photo is owned by UploadCarPhotoCommand; see CreateCarCommand.
         public int? Power { get; init; }
         public FuelType? FuelType { get; init; }
+        /// <summary>
+        /// The car's odometer (see Car.Mileage). Assigned as given, including
+        /// downwards: this is the screen where a wrong reading gets corrected, so
+        /// unlike a reading taken off a hire (Car.RecordOdometer) it is not
+        /// constrained to move forward.
+        /// </summary>
+        public int? Mileage { get; init; }
     }
 
     public class UpdateCarCommandHandler : IRequestHandler<UpdateCarCommand>
@@ -56,6 +63,7 @@ namespace RemSolution.Application.Features.Car.Commands.UpdateCarCommand
             entity.Color = request.Color;
             entity.Power = request.Power;
             entity.FuelType = request.FuelType;
+            entity.Mileage = request.Mileage;
 
             await _context.SaveChangesAsync(cancellationToken);
         }

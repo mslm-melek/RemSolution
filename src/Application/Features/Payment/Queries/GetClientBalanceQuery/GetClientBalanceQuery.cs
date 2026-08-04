@@ -2,9 +2,9 @@ using RemSolution.Application.Common.Interfaces;
 using RemSolution.Application.Common.Models;
 using RemSolution.Application.Common.Security;
 using RemSolution.Application.Common.Settings;
+using RemSolution.Application.Features.Credit.Queries;
 using RemSolution.Application.Features.Payment.DTOs;
 using RemSolution.Domain.Constants;
-using RemSolution.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 
 namespace RemSolution.Application.Features.Payment.Queries.GetClientBalanceQuery
@@ -38,36 +38,24 @@ namespace RemSolution.Application.Features.Payment.Queries.GetClientBalanceQuery
 
             var currency = (await _settings.GetAsync(client.AgencyId, cancellationToken)).CurrencyCode;
 
-            // Rentings the client is on the hook for (anything not cancelled).
-            var rentingCharges = await _context.Rentings
-                .Where(r => r.ClientId == request.ClientId
-                            && r.RentingState != RentingState.Cancelled
-                            && r.Price != null)
-                .SumAsync(r => r.Price!.Amount, cancellationToken);
-
-            // Reservations still representing an obligation (confirmed/paid but not
-            // yet converted — converted ones have become rentings above).
-            var reservationCharges = await _context.Reservations
-                .Where(r => r.ClientId == request.ClientId
-                            && (r.Status == ReservationStatus.Confirmed || r.Status == ReservationStatus.Paid)
-                            && r.Price != null)
-                .SumAsync(r => r.Price!.Amount, cancellationToken);
-
-            // Net paid: refunds and reversals are negative entries.
-            var paid = await _context.Payments
-                .Where(p => p.ClientId == request.ClientId && p.PayementAmount != null)
-                .SumAsync(p => p.PayementAmount!.Amount, cancellationToken);
-
-            var charged = rentingCharges + reservationCharges;
+            // Charged and paid from the one shared projection (see
+            // ClientCreditRows): this screen and the credits list are the same
+            // question asked about one client and about all of them, and a client
+            // whose balance disagreed with their row on the credits list would be
+            // a bug nobody could explain.
+            var row = await _context.Clients
+                .Where(c => c.Id == request.ClientId)
+                .ToCreditRows()
+                .FirstAsync(cancellationToken);
 
             return new ClientBalanceDto
             {
                 ClientId = client.Id,
                 ClientName = $"{client.FirstName} {client.LastName}".Trim(),
                 Currency = currency,
-                TotalCharged = new MoneyDto(charged, currency),
-                TotalPaid = new MoneyDto(paid, currency),
-                Balance = new MoneyDto(charged - paid, currency),
+                TotalCharged = new MoneyDto(row.Charged, currency),
+                TotalPaid = new MoneyDto(row.Paid, currency),
+                Balance = new MoneyDto(row.Charged - row.Paid, currency),
             };
         }
     }

@@ -80,6 +80,8 @@ namespace RemSolution.Application.Features.Car.Queries.GetCarsWithPaginationQuer
                 "status" => query.OrderByField(c => c.Status, descending),
                 "dailyrate" => query.OrderByField(c => c.DailyRate == null ? 0m : c.DailyRate.Amount, descending),
                 "branch" => query.OrderByField(c => c.Branch!.Name, descending),
+                "rentings" => query.OrderByField(
+                    c => c.Rentings!.Count(r => r.RentingState != RentingState.Cancelled), descending),
                 _ => query.OrderByField(c => c.Matricule, descending),
             };
 

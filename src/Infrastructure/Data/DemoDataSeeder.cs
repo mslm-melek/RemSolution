@@ -294,6 +294,7 @@ public class DemoDataSeeder
             Renting(cars[9], clients[8], +9, +14, RentingState.NotYet, secondDriver: clients[9]),
         };
 
+        AlignOdometers(cars, rentings);
         _context.Rentings.AddRange(rentings);
         await _context.SaveChangesAsync(cancellationToken);
 
@@ -604,6 +605,7 @@ public class DemoDataSeeder
             Renting(cars[1], clients[3], +4, +9, RentingState.NotYet),
         };
 
+        AlignOdometers(cars, rentings);
         _context.Rentings.AddRange(rentings);
         await _context.SaveChangesAsync(cancellationToken);
 
@@ -698,6 +700,7 @@ public class DemoDataSeeder
             Renting(cars[3], clients[1], +7, +11, RentingState.NotYet),
         };
 
+        AlignOdometers(cars, rentings);
         _context.Rentings.AddRange(rentings);
         await _context.SaveChangesAsync(cancellationToken);
 
@@ -816,6 +819,7 @@ public class DemoDataSeeder
                 notes: "Livraison au terminal 2, vol AF 1006.", secondDriver: clients[1]),
         };
 
+        AlignOdometers(cars, rentings);
         _context.Rentings.AddRange(rentings);
         await _context.SaveChangesAsync(cancellationToken);
 
@@ -919,6 +923,7 @@ public class DemoDataSeeder
             Renting(cars[2], clients[3], +3, +8, RentingState.NotYet),
         };
 
+        AlignOdometers(cars, rentings);
         _context.Rentings.AddRange(rentings);
         await _context.SaveChangesAsync(cancellationToken);
 
@@ -1267,7 +1272,11 @@ public class DemoDataSeeder
             Color = colour,
             Power = power,
             FuelType = fuel,
-            FirstCirculationDate = new DateTime(firstCirculationYear, 3, 1, 0, 0, 0, DateTimeKind.Utc)
+            FirstCirculationDate = new DateTime(firstCirculationYear, 3, 1, 0, 0, 0, DateTimeKind.Utc),
+            // A plausible odometer, so a demo booking has a pickup reading to
+            // offer (see Car.Mileage): about a rental year's use per year on the
+            // road. A real agency types the figure in when adding the car.
+            Mileage = Math.Max(0, Today.Year - firstCirculationYear) * 18_000 + 2_400
         };
 
     // `place` is where the client and their papers come from. It defaults to Tunis
@@ -1297,6 +1306,35 @@ public class DemoDataSeeder
             IsFlagged = flagged,
             Notes = notes
         };
+
+    /// <summary>
+    /// Puts each car's odometer where its hires left it, so the seeded fleet reads
+    /// the way the app would have written it (see Car.RecordOdometer) rather than
+    /// showing a figure that contradicts the mileages on its own bookings. A
+    /// cancelled hire never went out, so its reading does not count; a car with no
+    /// recorded reading keeps the plausible figure <see cref="Car"/> gave it.
+    /// </summary>
+    private static void AlignOdometers(IEnumerable<Car> cars, IEnumerable<Renting> rentings)
+    {
+        var byCar = rentings
+            .Where(r => r.RentingState != RentingState.Cancelled)
+            .ToList();
+
+        foreach (var car in cars)
+        {
+            var readings = byCar
+                .Where(r => r.CarId == car.Id)
+                .SelectMany(r => new[] { r.StartMileage, r.EndMileage })
+                .Where(m => m.HasValue)
+                .Select(m => m!.Value)
+                .ToList();
+
+            if (readings.Count > 0)
+            {
+                car.Mileage = readings.Max();
+            }
+        }
+    }
 
     private Renting Renting(
         Car car, Client client, int startOffsetDays, int endOffsetDays, RentingState state,

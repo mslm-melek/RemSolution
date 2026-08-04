@@ -1,0 +1,100 @@
+/* Surface and spacing come from the shared .page rule in styles.scss; the tiles
+   and tables come from the shared .tile-grid / .data-table classes. Same shape as
+   the agency detail page, so the two "one record, several panels" screens read
+   alike. */
+.detail-card {
+  max-width: 1100px;
+  gap: 16px;
+}
+
+.header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+/* The bad-client flag is a warning about the person, not decoration. */
+.flag-icon {
+  color: var(--danger);
+}
+
+.header-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.tab-body {
+  padding: 24px 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.tab-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* Owed money is red, a cleared balance green — the same reading the credits
+   screen gives the same figures. */
+.owing {
+  color: var(--danger);
+}
+
+.settled {
+  color: var(--ok);
+}
+
+/* Read-only label/value pairs: the papers a counter is asked for. */
+.facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 12px 24px;
+  margin: 0;
+}
+
+.fact {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.fact dt {
+  font-size: 11.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--muted);
+}
+
+.fact dd {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0;
+  color: var(--ink);
+}
+
+.proof-cell {
+  white-space: nowrap;
+  width: 1%;
+}
+
+.hint {
+  color: var(--muted);
+  font-style: italic;
+}

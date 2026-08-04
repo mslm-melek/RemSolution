@@ -2,10 +2,11 @@ import { Component, OnInit, inject } from '@angular/core';
 import { PageEvent } from '@angular/material/paginator';
 import { Sort, SortDirection } from '@angular/material/sort';
 import { ActivatedRoute, ParamMap, Router } from '@angular/router';
-import { ClientsClient, ClientDto } from '../web-api-client';
+import { ClientsClient, ClientDto, CreditsClient, ClientCreditDto } from '../web-api-client';
 import {
   FilterChip, applyListFilters, boolParam, dateParam, rangeText, withoutParams
 } from '../shared/list-filters';
+import { AuthService } from '../shared/auth.service';
 import { TranslocoService } from '@jsverse/transloco';
 
 @Component({
@@ -18,7 +19,17 @@ export class ClientComponent implements OnInit {
   // translated imperatively rather than through the template pipe.
   private readonly transloco = inject(TranslocoService);
   clients: ClientDto[] = [];
-  displayedColumns: string[] = ['name', 'email', 'birthDate', 'cin', 'documents', 'actions'];
+  // The debt column only exists for someone allowed to see debt, so the table
+  // does not show an empty column to everyone else.
+  displayedColumns: string[] = ['name', 'email', 'birthDate', 'cin', 'rentings', 'documents', 'actions'];
+
+  // What each client on this page owes, by client id. Money is the Credits
+  // module's answer and stays behind its permission, so it is asked for
+  // separately (see GetClientCreditsByIdsQuery) rather than riding on ClientDto.
+  credits: Record<number, ClientCreditDto> = {};
+  canSeeCredit = false;
+  canSeeRentings = false;
+  canRent = false;
 
   totalCount = 0;
   pageNumber = 1;
@@ -39,6 +50,8 @@ export class ClientComponent implements OnInit {
 
   constructor(
     private client: ClientsClient,
+    private creditsClient: CreditsClient,
+    private auth: AuthService,
     private route: ActivatedRoute,
     private router: Router) { }
 
@@ -46,6 +59,21 @@ export class ClientComponent implements OnInit {
   // whenever they change — including when the menu's plain "Clients" link clears
   // the ones a dashboard tile arrived with.
   ngOnInit() {
+    this.auth.currentUser$.subscribe(user => {
+      this.canSeeCredit = AuthService.canAccessModule(user, 'Credits', 'Credit.Read');
+      this.canSeeRentings = AuthService.canAccessModule(user, 'Rentings', 'Renting.Read');
+      this.canRent = AuthService.canAccessModule(user, 'Rentings', 'Renting.Create');
+
+      if (this.canSeeCredit) {
+        this.displayedColumns = [
+          'name', 'email', 'birthDate', 'cin', 'rentings', 'credit', 'documents', 'actions'
+        ];
+        // The permissions arrive from a separate fetch, so a page already on
+        // screen gets its debt column filled in once they do.
+        if (this.clients.length) this.loadCredits();
+      }
+    });
+
     this.route.queryParamMap.subscribe(params => {
       this.readFilters(params);
       this.pageNumber = 1;
@@ -86,9 +114,35 @@ export class ClientComponent implements OnInit {
       next: result => {
         this.clients = result.items || [];
         this.totalCount = result.totalCount || 0;
+        this.credits = {};
+        if (this.canSeeCredit) this.loadCredits();
       },
       error: err => console.error(err)
     });
+  }
+
+  // One call for the whole page rather than one per row.
+  private loadCredits() {
+    const ids = this.clients.map(c => c.id).filter((id): id is number => !!id);
+    if (!ids.length) return;
+
+    this.creditsClient.getClientCreditsByIds(ids).subscribe({
+      next: rows => {
+        const byId: Record<number, ClientCreditDto> = {};
+        for (const row of rows || []) {
+          if (row.clientId) byId[row.clientId] = row;
+        }
+        this.credits = byId;
+      },
+      // A missing debt column is not worth an error banner over the list itself.
+      error: err => console.error(err)
+    });
+  }
+
+  /** What the client owes, or null while unknown / when they owe nothing. */
+  outstanding(client: ClientDto): ClientCreditDto | null {
+    const row = client.id ? this.credits[client.id] : undefined;
+    return row && (row.outstanding?.amount ?? 0) > 0 ? row : null;
   }
 
   // Searching goes through the URL; the subscription above reloads the rows.

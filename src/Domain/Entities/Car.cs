@@ -37,8 +37,31 @@
         public virtual ICollection<CarImage>? Images { get; set; }
         public int? Power { get; set; }
         public FuelType? FuelType { get; set; }
+        /// <summary>
+        /// The odometer as the agency last saw it, in kilometres. Set when the car
+        /// is added and then moved by the hires it goes out on (see
+        /// <see cref="RecordOdometer"/>), which is what makes it the default
+        /// pickup reading on a new booking. Nullable: a car whose mileage nobody
+        /// has entered yet has no reading to offer, which is not the same as zero.
+        /// </summary>
+        public int? Mileage { get; set; }
         public virtual ICollection<Expense>? Expenses { get; set; }
         public virtual ICollection<Renting>? Rentings { get; set; }
+
+        /// <summary>
+        /// Takes a reading measured on this car — a pickup or return mileage — and
+        /// moves the odometer to it. An odometer does not run backwards, so a
+        /// reading below the current one (a correction to an old hire, a return
+        /// entered before its pickup) leaves the car alone rather than rewinding
+        /// the whole fleet's history to it.
+        /// </summary>
+        public void RecordOdometer(int? reading)
+        {
+            if (reading.HasValue && (Mileage is null || reading > Mileage))
+            {
+                Mileage = reading;
+            }
+        }
         public override string ToString()
         {
             var model = Model?.ToString()?? "Unknown Model";

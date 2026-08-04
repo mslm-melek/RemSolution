@@ -167,6 +167,12 @@ namespace RemSolution.Application.Features.Renting.Commands.UpdateRentingCommand
             entity.EndMileage = request.EndMileage;
             entity.Notes = request.Notes;
 
+            // Corrected readings still belong to the car (see Car.RecordOdometer).
+            // Only ever forward: an edit that lowers a mileage is a correction to
+            // this hire, not evidence that the car has driven less.
+            car.RecordOdometer(entity.StartMileage);
+            car.RecordOdometer(entity.EndMileage);
+
             if (request.PriceOverride is decimal agreed)
             {
                 // Same currency rule as the create path: the car's, then the

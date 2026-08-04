@@ -45,8 +45,12 @@
 
     <ng-container matColumnDef="name">
       <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ t('common.name') }}</th>
+      <!-- The name opens the client's own page (history, money); the row's edit
+           action still goes straight to the form. -->
       <td mat-cell *matCellDef="let client">
-        <span class="cell-main">{{ client.lastName }}, {{ client.firstName }}</span>
+        <a class="cell-main" [routerLink]="['/client', client.id]">
+          {{ client.lastName }}, {{ client.firstName }}
+        </a>
         <mat-icon *ngIf="client.isFlagged" class="flag-icon" [matTooltip]="t('client.flagged')">flag</mat-icon>
       </td>
     </ng-container>
@@ -74,6 +78,33 @@
       <td mat-cell *matCellDef="let client" class="num">{{ client.cin }}</td>
     </ng-container>
 
+    <!-- How much history the client has, linking to it: the same rentings list,
+         filtered to this client. -->
+    <ng-container matColumnDef="rentings">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header class="num-cell">{{ t('client.rentings') }}</th>
+      <td mat-cell *matCellDef="let client" class="num-cell">
+        <a *ngIf="canSeeRentings && client.rentingCount"
+           [routerLink]="['/renting']" [queryParams]="{ client: client.id }"
+           [matTooltip]="t('client.viewRentings')">{{ client.rentingCount }}</a>
+        <span *ngIf="!canSeeRentings || !client.rentingCount" class="muted">{{ client.rentingCount }}</span>
+        <span class="muted" *ngIf="client.openRentingCount">
+          ({{ t('client.openRentings', { count: client.openRentingCount }) }})
+        </span>
+      </td>
+    </ng-container>
+
+    <!-- Not sortable: the figure comes from the Credits module for this page's
+         clients, not from the client query the sort applies to. -->
+    <ng-container matColumnDef="credit">
+      <th mat-header-cell *matHeaderCellDef class="num-cell">{{ t('credit.outstanding') }}</th>
+      <td mat-cell *matCellDef="let client" class="num-cell">
+        <span class="chip danger" *ngIf="outstanding(client) as debt">
+          {{ debt.outstanding?.amount | number:'1.2-2' }} {{ debt.outstanding?.currency }}
+        </span>
+        <span class="muted" *ngIf="!outstanding(client)">—</span>
+      </td>
+    </ng-container>
+
     <ng-container matColumnDef="documents">
       <th mat-header-cell *matHeaderCellDef>{{ t('client.documents') }}</th>
       <td mat-cell *matCellDef="let client">
@@ -95,7 +126,14 @@
     <ng-container matColumnDef="actions">
       <th mat-header-cell *matHeaderCellDef class="actions-cell">{{ t('common.actions') }}</th>
       <td mat-cell *matCellDef="let client" class="actions-cell row-actions">
-        <a mat-icon-button color="primary" [routerLink]="['/client', client.id]" [attr.aria-label]="t('common.edit')">
+        <!-- Straight into the booking wizard with this client already chosen. -->
+        <a *ngIf="canRent" mat-icon-button color="primary"
+           [routerLink]="['/renting/new']" [queryParams]="{ clientId: client.id }"
+           [matTooltip]="t('client.rentTo')" [attr.aria-label]="t('client.rentTo')">
+          <mat-icon>vpn_key</mat-icon>
+        </a>
+        <a mat-icon-button [routerLink]="['/client', client.id, 'edit']"
+           [matTooltip]="t('common.edit')" [attr.aria-label]="t('common.edit')">
           <mat-icon>edit</mat-icon>
         </a>
         <button mat-icon-button color="warn" (click)="deleteClient(client)" [attr.aria-label]="t('common.delete')">

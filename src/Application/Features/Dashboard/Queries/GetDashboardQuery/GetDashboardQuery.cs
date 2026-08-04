@@ -2,6 +2,7 @@ using RemSolution.Application.Common.Interfaces;
 using RemSolution.Application.Common.Models;
 using RemSolution.Application.Common.Security;
 using RemSolution.Application.Common.Settings;
+using RemSolution.Application.Features.Credit.Queries;
 using RemSolution.Application.Features.Dashboard.DTOs;
 using RemSolution.Domain.Constants;
 using RemSolution.Domain.Enums;
@@ -122,21 +123,10 @@ namespace RemSolution.Application.Features.Dashboard.Queries.GetDashboardQuery
                 .SumAsync(e => e.ExpenseAmount!.Amount, cancellationToken);
 
             // --- All-time outstanding, both directions ---
+            // Debt comes from the one shared projection (see ClientCreditRows), so
+            // the tile and the credits screen it links to always say the same thing.
             var debtors = _context.Clients
-                .Select(c => new
-                {
-                    Charged =
-                        c.Rentings!
-                            .Where(r => r.RentingState != RentingState.Cancelled && r.Price != null)
-                            .Sum(r => r.Price!.Amount)
-                        + c.Reservations!
-                            .Where(r => (r.Status == ReservationStatus.Confirmed || r.Status == ReservationStatus.Paid)
-                                        && r.Price != null)
-                            .Sum(r => r.Price!.Amount),
-                    Paid = c.Payments!
-                        .Where(p => p.PayementAmount != null)
-                        .Sum(p => p.PayementAmount!.Amount),
-                })
+                .ToCreditRows()
                 .Where(x => x.Charged - x.Paid > 0m);
 
             var clientsOutstanding = await debtors.SumAsync(x => x.Charged - x.Paid, cancellationToken);

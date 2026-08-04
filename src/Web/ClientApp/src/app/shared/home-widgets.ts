@@ -70,7 +70,7 @@ export const HOME_WIDGETS: HomeWidgetMeta[] = [
     // itself is counted with the expense list query (see home's countOf), so a
     // credits-only user would get a tile that could never show its number.
     key: 'Expenses', labelKey: 'home.widgets.expenses', icon: 'payments',
-    link: '/credit', queryParams: { unpaid: 'true' },
+    link: '/credit', queryParams: { tab: 'expenses', unpaid: 'true' },
     gates: gate('Expenses', 'Expense.Read')
   },
   {
