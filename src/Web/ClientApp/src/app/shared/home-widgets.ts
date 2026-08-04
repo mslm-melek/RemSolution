@@ -1,8 +1,9 @@
 import { CurrentUserDto } from '../web-api-client';
 import { AuthService } from './auth.service';
 
-// The shortcut tiles an agency user can pin to their home screen. Each one is a
-// count plus a link into the list it counts.
+// What an agency user can pin to their home screen. Most are shortcut tiles — a
+// count plus a link into the list it counts; a `panel` one is a whole block
+// rendered under the tile row instead (the calendar).
 //
 // `key` MUST match the server's Domain.Constants.HomeWidgets constants: the
 // user's choice is stored by key and the API refuses one it does not know. The
@@ -19,13 +20,21 @@ export interface HomeWidgetMeta {
   /** Transloco key under `home.widgets.*`. Says what the number is, not just which list. */
   labelKey: string;
   icon: string;
-  link: string;
+  /** Where the tile leads. Unused by a `panel` widget, which links nowhere itself. */
+  link?: string;
   /**
    * The filter the tile's figure was counted with (see home.component's
    * `countOf`). A tile that counts a subset opens the list showing that subset
    * and nothing else — the lists read their filters from the query string.
    */
   queryParams?: Record<string, string>;
+  /**
+   * Rendered as a block under the tile row rather than as a count tile in it, so
+   * it carries no figure and no link. Mirrors HomeWidgets.Panels on the server,
+   * which exempts these from MaxPinned for the same reason: they do not compete
+   * for the row's space.
+   */
+  panel?: boolean;
   // Any one satisfied pair makes the tile offerable. Only the paperwork-layout
   // screen needs two: either document module opens it (as in the nav's config menu).
   gates: WidgetGate[];
@@ -42,6 +51,13 @@ const gate = (feature: string, permission: string): WidgetGate[] => [{ feature, 
 // Order matters twice: it is the order the customize panel offers them in, and
 // the order a never-customized home falls back to.
 export const HOME_WIDGETS: HomeWidgetMeta[] = [
+  {
+    // The month of pickups and returns. Gated on the overview permission and not
+    // on the booking modules, exactly as its query is (see GetBookingCalendarQuery):
+    // it crosses rentings and reservations, and half a calendar is worse than none.
+    key: 'Calendar', labelKey: 'home.widgets.calendar', icon: 'calendar_month',
+    panel: true, gates: gate('Dashboard', 'Dashboard.View')
+  },
   {
     key: 'Cars', labelKey: 'home.widgets.cars', icon: 'directions_car',
     link: '/car', gates: gate('Cars', 'Car.Read')
@@ -106,10 +122,16 @@ export const HOME_WIDGETS: HomeWidgetMeta[] = [
 
 // What a user who has never customized their home sees — the day's work, not the
 // reference data. Any of these the user cannot reach is simply left out.
-export const DEFAULT_HOME_WIDGETS = ['Cars', 'Reservations', 'Rentings', 'Clients'];
+export const DEFAULT_HOME_WIDGETS = ['Calendar', 'Cars', 'Reservations', 'Rentings', 'Clients'];
 
 // Mirrors HomeWidgets.MaxPinned on the server, which rejects a longer list.
+// Counts tiles only, like the server's validator: see `panel` above.
 export const MAX_HOME_WIDGETS = 8;
+
+/** How many of these keys count against MAX_HOME_WIDGETS. */
+export function countTiles(keys: string[], available: HomeWidgetMeta[]): number {
+  return keys.filter(key => !available.find(w => w.key === key)?.panel).length;
+}
 
 /**
  * The tiles this user could pin: feature enabled for the agency, read permission

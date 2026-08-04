@@ -56,7 +56,9 @@ namespace RemSolution.Application.Features.Users.Commands.UpdateMyHomeWidgetsCom
             // An empty list is valid — it is how a user says "no tiles, thanks".
             RuleFor(v => v.Widgets)
                 .NotNull()
-                .Must(widgets => widgets.Count <= HomeWidgets.MaxPinned)
+                // Tiles only: the panel widgets render under the row rather than in
+                // it, so they are not what the cap is protecting (see HomeWidgets).
+                .Must(widgets => HomeWidgets.CountTiles(widgets) <= HomeWidgets.MaxPinned)
                 .WithMessage(_ => localizer["Validation.HomeWidgets.TooMany", HomeWidgets.MaxPinned])
                 .Must(widgets => widgets.Distinct().Count() == widgets.Count)
                 .WithMessage(_ => localizer["Validation.HomeWidgets.Duplicate"])

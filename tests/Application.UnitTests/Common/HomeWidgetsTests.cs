@@ -55,6 +55,30 @@ public class HomeWidgetsTests
     public void MoreTilesExistThanOneUserMayPin()
     {
         // The cap only means something while the catalog is longer than it.
-        HomeWidgets.All.Length.Should().BeGreaterThan(HomeWidgets.MaxPinned);
+        HomeWidgets.All.Count(key => !HomeWidgets.IsPanel(key))
+            .Should().BeGreaterThan(HomeWidgets.MaxPinned);
+    }
+
+    [Test]
+    public void PanelsAreKeysFromTheCatalog()
+    {
+        HomeWidgets.Panels.Should().OnlyHaveUniqueItems();
+        HomeWidgets.Panels.Should().OnlyContain(key => HomeWidgets.IsKnown(key));
+    }
+
+    [Test]
+    public void PanelsDoNotCountAgainstTheTileCap()
+    {
+        // The cap bounds the tile row; a panel renders under it and so is exempt
+        // (see HomeWidgets.Panels) — a user with a full row can still add one.
+        var fullRow = HomeWidgets.All.Where(key => !HomeWidgets.IsPanel(key))
+            .Take(HomeWidgets.MaxPinned)
+            .ToList();
+
+        HomeWidgets.CountTiles(fullRow).Should().Be(HomeWidgets.MaxPinned);
+
+        fullRow.Add(HomeWidgets.Calendar);
+
+        HomeWidgets.CountTiles(fullRow).Should().Be(HomeWidgets.MaxPinned);
     }
 }

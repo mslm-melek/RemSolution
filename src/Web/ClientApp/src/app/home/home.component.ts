@@ -6,7 +6,7 @@ import { AuthService } from '../shared/auth.service';
 import { ImpersonationService } from '../shared/impersonation.service';
 import { extractValidationErrors } from '../shared/form-utils';
 import {
-  HomeWidgetMeta, MAX_HOME_WIDGETS, availableHomeWidgets, resolveHomeWidgets
+  HomeWidgetMeta, MAX_HOME_WIDGETS, availableHomeWidgets, countTiles, resolveHomeWidgets
 } from '../shared/home-widgets';
 import {
   BrandsClient, CarsClient, ChatClient, ClientsClient, CreditsClient,
@@ -42,7 +42,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   private autoplay?: Subscription;
   private showcaseRequested = false;
 
-  // --- Agency home: the tiles the user pinned -------------------------------
+  // --- Agency home: the widgets the user pinned -----------------------------
 
   // Everything this user could pin, and what they have pinned, in their order.
   availableWidgets: HomeWidgetMeta[] = [];
@@ -124,10 +124,21 @@ export class HomeComponent implements OnInit, OnDestroy {
     });
   }
 
+  /** The count tiles, in the row. A panel widget is not one of them. */
+  get pinnedTiles(): HomeWidgetMeta[] {
+    return this.pinnedWidgets.filter(w => !w.panel);
+  }
+
+  /** Whether a given panel widget — the calendar — is pinned. */
+  hasPanel(key: string): boolean {
+    return this.pinnedWidgets.some(w => w.panel && w.key === key);
+  }
+
   // Only the tiles on screen are counted, and each is counted once: revisiting
-  // the page after pinning something new fetches the new tile alone.
+  // the page after pinning something new fetches the new tile alone. Panels do
+  // their own loading, so they are not here.
   private loadCounts() {
-    for (const widget of this.pinnedWidgets) {
+    for (const widget of this.pinnedTiles) {
       if (widget.key in this.counts) continue;
 
       // Reserve the slot before the call so a second pass cannot re-request it.
@@ -197,7 +208,11 @@ export class HomeComponent implements OnInit, OnDestroy {
   // --- Customizing ----------------------------------------------------------
 
   startCustomizing() {
-    this.draft = this.pinnedWidgets.map(w => w.key);
+    // Tiles first, panels after: the order buttons only reorder the row, so a
+    // panel sitting between two tiles would make "move up" look broken. Every
+    // path that adds to the draft keeps that arrangement.
+    const pinned = this.pinnedWidgets.map(w => w.key);
+    this.draft = [...pinned.filter(k => !this.isPanel(k)), ...pinned.filter(k => this.isPanel(k))];
     this.saveError = '';
     this.customizing = true;
   }
@@ -219,9 +234,24 @@ export class HomeComponent implements OnInit, OnDestroy {
       return;
     }
 
-    if (this.draft.length >= MAX_HOME_WIDGETS) return;
+    // The cap is on the tile row, so a panel is always addable (see home-widgets).
+    if (this.isPanel(key)) {
+      this.draft = [...this.draft, key];
+      return;
+    }
 
-    this.draft = [...this.draft, key];
+    if (this.isFull) return;
+
+    // A newly checked tile joins the end of the row — which is before the panels,
+    // not after them (see startCustomizing).
+    const firstPanel = this.draft.findIndex(k => this.isPanel(k));
+    this.draft = firstPanel < 0
+      ? [...this.draft, key]
+      : [...this.draft.slice(0, firstPanel), key, ...this.draft.slice(firstPanel)];
+  }
+
+  isPanel(key: string): boolean {
+    return this.availableWidgets.find(w => w.key === key)?.panel === true;
   }
 
   get draftWidgets(): HomeWidgetMeta[] {
@@ -234,8 +264,10 @@ export class HomeComponent implements OnInit, OnDestroy {
     return this.availableWidgets.filter(w => !this.isPinned(w.key));
   }
 
+  // Tiles only, exactly as the server validates it: a full row still has room for
+  // the calendar underneath it.
   get isFull(): boolean {
-    return this.draft.length >= MAX_HOME_WIDGETS;
+    return countTiles(this.draft, this.availableWidgets) >= MAX_HOME_WIDGETS;
   }
 
   // Up/down rather than drag: it works from the keyboard, and it mirrors itself
@@ -247,8 +279,15 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.draft = next;
   }
 
+  /** The last tile of the row: whatever follows it in the draft is a panel. */
+  isLastTile(index: number): boolean {
+    return this.draft.slice(index + 1).every(k => this.isPanel(k));
+  }
+
   moveDown(index: number) {
-    if (index >= this.draft.length - 1) return;
+    // Never past a panel: the panels sit after the row and stay there.
+    if (this.isLastTile(index)) return;
+
     const next = [...this.draft];
     [next[index], next[index + 1]] = [next[index + 1], next[index]];
     this.draft = next;

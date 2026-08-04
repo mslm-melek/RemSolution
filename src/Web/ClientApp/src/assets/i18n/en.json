@@ -128,7 +128,7 @@
     "quickActions": "Quick actions",
     "customize": "Customize",
     "customizeTitle": "Your home shortcuts",
-    "customizeHint": "Pick the lists you want one click away — up to {{ max }}. Only the ones you have access to are offered.",
+    "customizeHint": "Pick the lists you want one click away — up to {{ max }} counters, plus the calendar. Only the ones you have access to are offered.",
     "pinnedWidgets": "On your home screen",
     "pinnedNone": "Nothing pinned yet.",
     "moreWidgets": "More shortcuts",
@@ -148,6 +148,7 @@
     "noActions": "No quick actions on your home screen.",
     "actionsSaveFailed": "Could not save your quick actions.",
     "widgets": {
+      "calendar": "Booking calendar",
       "cars": "Cars",
       "clients": "Clients",
       "rentings": "Ongoing rentings",
@@ -1148,5 +1149,22 @@
       "clientReservationStartingSoon": "Reminder sent to the client: their booking of {{car}} starts on {{startDate}}.",
       "clientRentingLateNotice": "Overdue notice sent to the client about {{car}}, due back on {{endDate}}."
     }
+  },
+  "calendar": {
+    "title": "Calendar",
+    "today": "Today",
+    "previousMonth": "Previous month",
+    "nextMonth": "Next month",
+    "pickupsCount": "{{ count }} pickups",
+    "returnsCount": "{{ count }} returns",
+    "requestsCount": "{{ count }} requests",
+    "pickup": "Pickup",
+    "return": "Return",
+    "request": "Request",
+    "late": "Overdue",
+    "noBookings": "Nothing booked this month.",
+    "dayEmpty": "Nothing on this day.",
+    "truncated": "This month has more bookings than the calendar shows. Open the bookings list to see them all.",
+    "loadFailed": "Could not load the calendar."
   }
 }

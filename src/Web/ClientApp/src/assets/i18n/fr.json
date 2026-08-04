@@ -128,7 +128,7 @@
     "quickActions": "Actions rapides",
     "customize": "Personnaliser",
     "customizeTitle": "Vos raccourcis d'accueil",
-    "customizeHint": "Choisissez les listes à garder à portée de clic — {{ max }} au maximum. Seules celles auxquelles vous avez accès sont proposées.",
+    "customizeHint": "Choisissez les listes à garder à portée de clic — {{ max }} compteurs au maximum, plus le calendrier. Seules celles auxquelles vous avez accès sont proposées.",
     "pinnedWidgets": "Sur votre accueil",
     "pinnedNone": "Aucun raccourci épinglé.",
     "moreWidgets": "Autres raccourcis",
@@ -148,6 +148,7 @@
     "noActions": "Aucune action rapide sur votre accueil.",
     "actionsSaveFailed": "Impossible d'enregistrer vos actions rapides.",
     "widgets": {
+      "calendar": "Calendrier des réservations",
       "cars": "Voitures",
       "clients": "Clients",
       "rentings": "Locations en cours",
@@ -1148,5 +1149,22 @@
       "clientReservationStartingSoon": "Rappel envoyé au client : sa réservation de {{car}} commence le {{startDate}}.",
       "clientRentingLateNotice": "Avis de retard envoyé au client pour {{car}}, à rendre le {{endDate}}."
     }
+  },
+  "calendar": {
+    "title": "Calendrier",
+    "today": "Aujourd'hui",
+    "previousMonth": "Mois précédent",
+    "nextMonth": "Mois suivant",
+    "pickupsCount": "{{ count }} départs",
+    "returnsCount": "{{ count }} retours",
+    "requestsCount": "{{ count }} demandes",
+    "pickup": "Départ",
+    "return": "Retour",
+    "request": "Demande",
+    "late": "En retard",
+    "noBookings": "Aucune réservation ce mois-ci.",
+    "dayEmpty": "Rien ce jour-là.",
+    "truncated": "Ce mois compte plus de réservations que le calendrier n'en affiche. Ouvrez la liste des locations pour toutes les voir.",
+    "loadFailed": "Impossible de charger le calendrier."
   }
 }

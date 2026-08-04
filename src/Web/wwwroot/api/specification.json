@@ -2542,6 +2542,48 @@
         }
       }
     },
+    "/api/Dashboard/calendar": {
+      "get": {
+        "tags": [
+          "Dashboard"
+        ],
+        "operationId": "GetBookingCalendar",
+        "parameters": [
+          {
+            "name": "From",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "nullable": true
+            },
+            "x-position": 1
+          },
+          {
+            "name": "To",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "nullable": true
+            },
+            "x-position": 2
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BookingCalendarDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/DocumentTemplates": {
       "get": {
         "tags": [
@@ -8797,6 +8839,129 @@
           }
         }
       },
+      "BookingCalendarDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "from": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "to": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "isTruncated": {
+            "type": "boolean"
+          },
+          "events": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BookingCalendarEventDto"
+            }
+          }
+        }
+      },
+      "BookingCalendarEventDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "$ref": "#/components/schemas/BookingCalendarEventKind"
+          },
+          "on": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "rentingId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "reservationId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "carId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "carMatricule": {
+            "type": "string",
+            "nullable": true
+          },
+          "carModelName": {
+            "type": "string",
+            "nullable": true
+          },
+          "clientId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "clientName": {
+            "type": "string",
+            "nullable": true
+          },
+          "rentingState": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/RentingState"
+              }
+            ]
+          },
+          "reservationStatus": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ReservationStatus"
+              }
+            ]
+          },
+          "isLate": {
+            "type": "boolean"
+          }
+        }
+      },
+      "BookingCalendarEventKind": {
+        "type": "integer",
+        "description": "",
+        "x-enumNames": [
+          "Pickup",
+          "Return",
+          "ReservationStart"
+        ],
+        "enum": [
+          1,
+          2,
+          3
+        ]
+      },
+      "ReservationStatus": {
+        "type": "integer",
+        "description": "",
+        "x-enumNames": [
+          "PendingConfirmation",
+          "Confirmed",
+          "Cancelled",
+          "Expired",
+          "Rejected",
+          "Paid",
+          "Converted"
+        ],
+        "enum": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ]
+      },
       "DocumentTemplateDto": {
         "type": "object",
         "additionalProperties": false,
@@ -10074,28 +10239,6 @@
             "nullable": true
           }
         }
-      },
-      "ReservationStatus": {
-        "type": "integer",
-        "description": "",
-        "x-enumNames": [
-          "PendingConfirmation",
-          "Confirmed",
-          "Cancelled",
-          "Expired",
-          "Rejected",
-          "Paid",
-          "Converted"
-        ],
-        "enum": [
-          0,
-          1,
-          2,
-          3,
-          4,
-          5,
-          6
-        ]
       },
       "MyRentingDto": {
         "type": "object",

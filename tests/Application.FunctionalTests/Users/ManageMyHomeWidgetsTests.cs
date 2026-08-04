@@ -70,11 +70,31 @@ public class ManageMyHomeWidgetsTests : BaseTestFixture
     {
         await RunAsDefaultUserAsync();
 
+        // Tiles: the cap is on the row, and the panel widgets are exempt from it.
         await FluentActions.Invoking(() =>
             SendAsync(new UpdateMyHomeWidgetsCommand
             {
-                Widgets = HomeWidgets.All.Take(HomeWidgets.MaxPinned + 1).ToArray()
+                Widgets = HomeWidgets.All.Where(key => !HomeWidgets.IsPanel(key))
+                    .Take(HomeWidgets.MaxPinned + 1)
+                    .ToArray()
             }))
             .Should().ThrowAsync<ValidationException>();
+    }
+
+    [Test]
+    public async Task ShouldAcceptAPanelOnTopOfAFullTileRow()
+    {
+        var userId = await RunAsDefaultUserAsync();
+
+        var widgets = HomeWidgets.All.Where(key => !HomeWidgets.IsPanel(key))
+            .Take(HomeWidgets.MaxPinned)
+            .Append(HomeWidgets.Calendar)
+            .ToArray();
+
+        await SendAsync(new UpdateMyHomeWidgetsCommand { Widgets = widgets });
+
+        var stored = (await FindAsync<ApplicationUser>(userId))!.HomeWidgets;
+
+        HomeWidgets.Parse(stored).Should().Equal(widgets);
     }
 }

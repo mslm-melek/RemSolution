@@ -3881,6 +3881,7 @@ export class CreditsClient implements ICreditsClient {
 
 export interface IDashboardClient {
     getDashboard(from: Date | null | undefined, to: Date | null | undefined, periods: number | undefined, granularity: DashboardGranularity | undefined): Observable<DashboardDto>;
+    getBookingCalendar(from: Date | null | undefined, to: Date | null | undefined): Observable<BookingCalendarDto>;
 }
 
 @Injectable({
@@ -3946,6 +3947,58 @@ export class DashboardClient implements IDashboardClient {
             let result200: any = null;
             let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
             result200 = DashboardDto.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getBookingCalendar(from: Date | null | undefined, to: Date | null | undefined): Observable<BookingCalendarDto> {
+        let url_ = this.baseUrl + "/api/Dashboard/calendar?";
+        if (from !== undefined && from !== null)
+            url_ += "From=" + encodeURIComponent(from ? "" + from.toISOString() : "") + "&";
+        if (to !== undefined && to !== null)
+            url_ += "To=" + encodeURIComponent(to ? "" + to.toISOString() : "") + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetBookingCalendar(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetBookingCalendar(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<BookingCalendarDto>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<BookingCalendarDto>;
+        }));
+    }
+
+    protected processGetBookingCalendar(response: HttpResponseBase): Observable<BookingCalendarDto> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = BookingCalendarDto.fromJS(resultData200);
             return _observableOf(result200);
             }));
         } else if (status !== 200 && status !== 204) {
@@ -13546,6 +13599,158 @@ export interface IDashboardPeriodPointDto {
     expenses?: MoneyDto | undefined;
 }
 
+export class BookingCalendarDto implements IBookingCalendarDto {
+    from?: Date;
+    to?: Date;
+    isTruncated?: boolean;
+    events?: BookingCalendarEventDto[];
+
+    constructor(data?: IBookingCalendarDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.from = _data["from"] ? new Date(_data["from"].toString()) : <any>undefined;
+            this.to = _data["to"] ? new Date(_data["to"].toString()) : <any>undefined;
+            this.isTruncated = _data["isTruncated"];
+            if (Array.isArray(_data["events"])) {
+                this.events = [] as any;
+                for (let item of _data["events"])
+                    this.events!.push(BookingCalendarEventDto.fromJS(item));
+            }
+        }
+    }
+
+    static fromJS(data: any): BookingCalendarDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new BookingCalendarDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["from"] = this.from ? this.from.toISOString() : <any>undefined;
+        data["to"] = this.to ? this.to.toISOString() : <any>undefined;
+        data["isTruncated"] = this.isTruncated;
+        if (Array.isArray(this.events)) {
+            data["events"] = [];
+            for (let item of this.events)
+                data["events"].push(item.toJSON());
+        }
+        return data;
+    }
+}
+
+export interface IBookingCalendarDto {
+    from?: Date;
+    to?: Date;
+    isTruncated?: boolean;
+    events?: BookingCalendarEventDto[];
+}
+
+export class BookingCalendarEventDto implements IBookingCalendarEventDto {
+    kind?: BookingCalendarEventKind;
+    on?: Date;
+    rentingId?: number | undefined;
+    reservationId?: number | undefined;
+    carId?: number | undefined;
+    carMatricule?: string | undefined;
+    carModelName?: string | undefined;
+    clientId?: number | undefined;
+    clientName?: string | undefined;
+    rentingState?: RentingState | undefined;
+    reservationStatus?: ReservationStatus | undefined;
+    isLate?: boolean;
+
+    constructor(data?: IBookingCalendarEventDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.kind = _data["kind"];
+            this.on = _data["on"] ? new Date(_data["on"].toString()) : <any>undefined;
+            this.rentingId = _data["rentingId"];
+            this.reservationId = _data["reservationId"];
+            this.carId = _data["carId"];
+            this.carMatricule = _data["carMatricule"];
+            this.carModelName = _data["carModelName"];
+            this.clientId = _data["clientId"];
+            this.clientName = _data["clientName"];
+            this.rentingState = _data["rentingState"];
+            this.reservationStatus = _data["reservationStatus"];
+            this.isLate = _data["isLate"];
+        }
+    }
+
+    static fromJS(data: any): BookingCalendarEventDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new BookingCalendarEventDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["kind"] = this.kind;
+        data["on"] = this.on ? this.on.toISOString() : <any>undefined;
+        data["rentingId"] = this.rentingId;
+        data["reservationId"] = this.reservationId;
+        data["carId"] = this.carId;
+        data["carMatricule"] = this.carMatricule;
+        data["carModelName"] = this.carModelName;
+        data["clientId"] = this.clientId;
+        data["clientName"] = this.clientName;
+        data["rentingState"] = this.rentingState;
+        data["reservationStatus"] = this.reservationStatus;
+        data["isLate"] = this.isLate;
+        return data;
+    }
+}
+
+export interface IBookingCalendarEventDto {
+    kind?: BookingCalendarEventKind;
+    on?: Date;
+    rentingId?: number | undefined;
+    reservationId?: number | undefined;
+    carId?: number | undefined;
+    carMatricule?: string | undefined;
+    carModelName?: string | undefined;
+    clientId?: number | undefined;
+    clientName?: string | undefined;
+    rentingState?: RentingState | undefined;
+    reservationStatus?: ReservationStatus | undefined;
+    isLate?: boolean;
+}
+
+export enum BookingCalendarEventKind {
+    Pickup = 1,
+    Return = 2,
+    ReservationStart = 3,
+}
+
+export enum ReservationStatus {
+    PendingConfirmation = 0,
+    Confirmed = 1,
+    Cancelled = 2,
+    Expired = 3,
+    Rejected = 4,
+    Paid = 5,
+    Converted = 6,
+}
+
 export class DocumentTemplateDto implements IDocumentTemplateDto {
     id?: number;
     agencyId?: number;
@@ -15838,16 +16043,6 @@ export interface IMyReservationDto {
     status?: ReservationStatus;
     expiresAt?: Date | undefined;
     rejectedReason?: string | undefined;
-}
-
-export enum ReservationStatus {
-    PendingConfirmation = 0,
-    Confirmed = 1,
-    Cancelled = 2,
-    Expired = 3,
-    Rejected = 4,
-    Paid = 5,
-    Converted = 6,
 }
 
 export class MyRentingDto implements IMyRentingDto {

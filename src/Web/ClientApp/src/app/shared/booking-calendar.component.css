@@ -1,0 +1,369 @@
+/* The home screen's booking calendar. A card like the panels around it; tokens,
+   .chip and .error-banner come from styles.scss. */
+
+.calendar {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  box-shadow: var(--shadow-1);
+  padding: 18px 20px 20px;
+}
+
+/* --- Head ----------------------------------------------------------------- */
+
+.cal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gap-3);
+  flex-wrap: wrap;
+}
+
+.cal-title {
+  display: flex;
+  align-items: baseline;
+  gap: var(--gap-3);
+  flex-wrap: wrap;
+}
+
+.cal-title h2 {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+.cal-month {
+  font-size: 17px;
+  font-weight: 680;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  /* The month name is what the reader looks for, so it never wraps mid-word. */
+  white-space: nowrap;
+}
+
+.cal-nav {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex: none;
+}
+
+/* The chevrons point at the neighbouring month, so they mirror with the page.
+   :host-context and not a plain `[dir='rtl'] …` descendant selector: dir lives on
+   <html>, and emulated encapsulation would append this component's scoping
+   attribute to that first selector too, which <html> never carries. */
+:host-context([dir='rtl']) .cal-nav mat-icon {
+  transform: scaleX(-1);
+}
+
+/* --- Legend / totals ------------------------------------------------------ */
+
+.cal-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gap-2) var(--gap-4);
+  margin: var(--gap-3) 0 var(--gap-4);
+}
+
+.legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.legend-item mat-icon {
+  font-size: 15px;
+  width: 15px;
+  height: 15px;
+}
+
+/* One tone per kind. The legend colours only its icon — three coloured labels in
+   a row shout — and the day markers below colour the whole pill, so the tone a
+   reader learns here is the one they then find in the grid. */
+.legend-item.pickup mat-icon {
+  color: var(--info);
+}
+
+.legend-item.return mat-icon {
+  color: var(--accent);
+}
+
+.legend-item.request mat-icon {
+  color: var(--warn);
+}
+
+.cal-note {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: var(--gap-3);
+  font-size: 12.5px;
+  color: var(--muted);
+}
+
+.cal-note mat-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+  flex: none;
+}
+
+/* --- Grid ----------------------------------------------------------------- */
+
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 6px;
+  margin-top: var(--gap-3);
+}
+
+.cal-weekday {
+  padding: 0 4px 4px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted-2);
+  text-align: center;
+}
+
+.cal-day {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+  min-height: 74px;
+  padding: 6px;
+  font: inherit;
+  text-align: start;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  transition: border-color 120ms ease, background 120ms ease;
+}
+
+.cal-day:hover {
+  border-color: var(--line-strong);
+  background: var(--surface-3);
+}
+
+/* A day with nothing on it is still clickable — it says so — but it recedes. */
+.cal-day.empty {
+  background: var(--surface);
+}
+
+.cal-day.out-of-month {
+  background: var(--surface);
+  opacity: 0.55;
+}
+
+.cal-day.today {
+  border-color: var(--brand-500);
+}
+
+.cal-day.selected {
+  border-color: var(--brand-600);
+  background: var(--brand-50);
+  box-shadow: inset 0 0 0 1px var(--brand-600);
+}
+
+.day-number {
+  font-size: 12.5px;
+  font-weight: 650;
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.cal-day.today .day-number {
+  color: var(--brand-700);
+  font-weight: 750;
+}
+
+.day-marks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  margin-top: auto;
+}
+
+.mark {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 1px 5px 1px 3px;
+  border-radius: var(--r-pill);
+  font-size: 11px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  background: var(--surface-3);
+}
+
+.mark mat-icon {
+  font-size: 13px;
+  width: 13px;
+  height: 13px;
+}
+
+.mark.pickup {
+  background: var(--info-bg);
+  color: var(--info);
+}
+
+.mark.return {
+  background: var(--accent-bg);
+  color: var(--accent);
+}
+
+.mark.request {
+  background: var(--warn-bg);
+  color: var(--warn);
+}
+
+/* A return that is already overdue outranks its own tone: it is the one thing on
+   this screen somebody has to act on today. The icon inherits it. */
+.mark.return.late {
+  background: var(--danger-bg);
+  color: var(--danger);
+}
+
+.cal-empty {
+  margin: var(--gap-4) 0 0;
+  text-align: center;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+/* --- The chosen day ------------------------------------------------------- */
+
+.day-panel {
+  margin-top: var(--gap-4);
+  padding-top: var(--gap-4);
+  border-top: 1px solid var(--line);
+}
+
+.day-panel h3 {
+  margin: 0 0 var(--gap-2);
+  font-size: 13.5px;
+  font-weight: 650;
+  color: var(--ink);
+}
+
+.day-empty {
+  margin: 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.day-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.day-list li {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-3);
+  padding: 6px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.day-list li:last-child {
+  border-bottom: none;
+}
+
+.entry-icon {
+  flex: none;
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+}
+
+/* The entry icon takes the row's tone, so a late return is red from the left
+   edge. The tone classes are the shared chip tones (see styles.scss). */
+.entry-icon.ok {
+  color: var(--ok);
+}
+
+.entry-icon.warn {
+  color: var(--warn);
+}
+
+.entry-icon.danger {
+  color: var(--danger);
+}
+
+.entry-icon.info {
+  color: var(--info);
+}
+
+.entry-icon.neutral {
+  color: var(--muted);
+}
+
+.entry-time {
+  flex: none;
+  font-size: 12.5px;
+  font-weight: 650;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.entry-what {
+  display: flex;
+  flex-direction: column;
+  /* Takes the slack, and shrinks before the chip and the open button do. */
+  flex: 1;
+  min-width: 0;
+}
+
+.entry-kind {
+  font-size: 12px;
+  font-weight: 650;
+  color: var(--muted);
+}
+
+.entry-who {
+  font-size: 13.5px;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.day-list .chip {
+  flex: none;
+}
+
+@media (max-width: 599px) {
+  .calendar {
+    padding: 16px 12px;
+  }
+
+  .cal-grid {
+    gap: 3px;
+  }
+
+  .cal-day {
+    min-height: 58px;
+    padding: 4px;
+  }
+
+  /* Seven columns on a phone leaves no room for a count beside an icon, so the
+     markers keep the figure and drop the icon — the colour still says which is
+     which, as it does in the legend above. */
+  .mark {
+    padding: 1px 5px;
+  }
+
+  .mark mat-icon {
+    display: none;
+  }
+}

@@ -105,8 +105,8 @@
       </button>
     </div>
 
-    <div class="stat-row" *ngIf="pinnedWidgets.length">
-      <a class="stat-tile" *ngFor="let widget of pinnedWidgets"
+    <div class="stat-row" *ngIf="pinnedTiles.length">
+      <a class="stat-tile" *ngFor="let widget of pinnedTiles"
          [routerLink]="[widget.link]" [queryParams]="widget.queryParams || null">
         <div class="stat-icon">
           <mat-icon>{{ widget.icon }}</mat-icon>
@@ -117,6 +117,10 @@
         </div>
       </a>
     </div>
+
+    <!-- The month's pickups, returns and holds. A panel rather than a tile, so it
+         sits under the row and carries no figure of its own. -->
+    <app-booking-calendar *ngIf="hasPanel('Calendar')"></app-booking-calendar>
 
     <!-- Nothing pinned: either the user cleared their home, or their plan and
          permissions reach none of the lists. The two need different words. -->
@@ -146,12 +150,13 @@
               <span>{{ t(widget.labelKey) }}</span>
             </span>
           </mat-checkbox>
-          <span class="picker-order">
+          <!-- Order is the tile row's order; a panel has nothing to reorder. -->
+          <span class="picker-order" *ngIf="!widget.panel">
             <button type="button" mat-icon-button [disabled]="i === 0" (click)="moveUp(i)"
                     [attr.aria-label]="t('home.moveUp')">
               <mat-icon>arrow_upward</mat-icon>
             </button>
-            <button type="button" mat-icon-button [disabled]="i === draftWidgets.length - 1"
+            <button type="button" mat-icon-button [disabled]="isLastTile(i)"
                     (click)="moveDown(i)" [attr.aria-label]="t('home.moveDown')">
               <mat-icon>arrow_downward</mat-icon>
             </button>
@@ -162,8 +167,11 @@
           <h3>{{ t('home.moreWidgets') }}</h3>
           <p class="picker-full" *ngIf="isFull">{{ t('home.widgetsFull', { max: maxWidgets }) }}</p>
 
+          <!-- A full row still has room for a panel underneath it, so those stay
+               offerable (see home-widgets). -->
           <div class="picker-row" *ngFor="let widget of unpinnedWidgets">
-            <mat-checkbox [checked]="false" [disabled]="isFull" (change)="toggleWidget(widget.key)">
+            <mat-checkbox [checked]="false" [disabled]="isFull && !widget.panel"
+                          (change)="toggleWidget(widget.key)">
               <span class="picker-label">
                 <mat-icon>{{ widget.icon }}</mat-icon>
                 <span>{{ t(widget.labelKey) }}</span>

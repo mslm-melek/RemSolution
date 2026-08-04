@@ -56,6 +56,7 @@ import { MyRentingsComponent } from './marketplace/my-rentings.component';
 import { MyChatsComponent } from './marketplace/my-chats.component';
 import { RatingStarsComponent } from './shared/rating-stars.component';
 import { QuickActionsComponent } from './shared/quick-actions.component';
+import { BookingCalendarComponent } from './shared/booking-calendar.component';
 import { MapPickerComponent } from './shared/map-picker.component';
 import { BranchesEditorComponent } from './shared/branches-editor.component';
 import { PaymentDialogComponent } from './shared/payment-dialog.component';
@@ -145,6 +146,7 @@ registerLocaleData(localeAr);
     MyChatsComponent,
     RatingStarsComponent,
     QuickActionsComponent,
+    BookingCalendarComponent,
     MapPickerComponent,
     BranchesEditorComponent,
     PaymentDialogComponent,
