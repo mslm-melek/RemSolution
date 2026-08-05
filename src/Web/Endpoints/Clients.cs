@@ -4,6 +4,7 @@ using RemSolution.Application.Features.Client.Commands.CreateClientCommand;
 using RemSolution.Application.Features.Client.Commands.DeleteClientCommand;
 using RemSolution.Application.Features.Client.Commands.FlagClientCommand;
 using RemSolution.Application.Features.Client.Commands.InviteClientCommand;
+using RemSolution.Application.Features.Client.Commands.RegenerateClientPortraitCommand;
 using RemSolution.Application.Features.Client.Commands.UpdateClientCommand;
 using RemSolution.Application.Features.Client.DTOs;
 using RemSolution.Application.Features.Client.Commands.UploadClientDocumentCommand;
@@ -35,6 +36,10 @@ public class Clients : EndpointGroupBase
             // Sending the customer-portal invitation is likewise an edit of the
             // client record (it writes the account link): Client.Update.
             .MapPost(InviteClient, "{id}/invite", Permissions.ClientUpdate)
+            // Re-cutting the portrait out of the CIN already on file replaces a
+            // stored file on the client record: Client.Update, like the upload
+            // that normally produces it.
+            .MapPost(RegenerateClientPortrait, "{id}/portrait", Permissions.ClientUpdate)
             .MapDelete(DeleteClient, "{id}", Permissions.ClientDelete);
 
         // The only form-binding endpoint in the API; antiforgery middleware is
@@ -95,6 +100,15 @@ public class Clients : EndpointGroupBase
     public async Task<Ok<ClientInvitationDto>> InviteClient(ISender sender, int id)
     {
         var result = await sender.Send(new InviteClientCommand(id));
+
+        return TypedResults.Ok(result);
+    }
+
+    // Returns the outcome rather than a bare 204: "no face could be found on that
+    // image" is a real answer the agency has to be shown, and it is not an error.
+    public async Task<Ok<ClientPortraitDto>> RegenerateClientPortrait(ISender sender, int id)
+    {
+        var result = await sender.Send(new RegenerateClientPortraitCommand(id));
 
         return TypedResults.Ok(result);
     }

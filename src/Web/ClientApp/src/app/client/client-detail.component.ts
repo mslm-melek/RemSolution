@@ -63,9 +63,16 @@ export class ClientDetailComponent implements OnInit {
   canAttachProof = false;
   // Writing to the customer in the agency's name is its own grant.
   canRemind = false;
+  // Re-cutting the portrait out of the CIN is an edit of the client record, so it
+  // is offered on the same grant as the form itself.
+  canEdit = false;
 
   // What the last late notice did. An outcome, not an error — see LateNoticeService.
   noticeMessage = '';
+
+  // The portrait re-crop in flight, and what it came back with. "No face on that
+  // image" is an outcome worth saying out loud, not a silent no-op.
+  recroppingPortrait = false;
 
   private readonly stateLabelKeys: Record<number, string> = {
     [RentingState.NotYet]: 'enums.rentingState.notYet',
@@ -110,6 +117,7 @@ export class ClientDetailComponent implements OnInit {
       this.canPay = AuthService.canAccessModule(user, 'Payments', 'Payment.Create');
       this.canAttachProof = AuthService.canAccessModule(user, 'Payments', 'Payment.Update');
       this.canRemind = AuthService.canAccessModule(user, 'Notifications', 'Notification.Send');
+      this.canEdit = AuthService.canAccessModule(user, 'Clients', 'Client.Update');
 
       if (this.canSeeRentings) this.loadRentings();
       this.loadMoney();
@@ -127,6 +135,42 @@ export class ClientDetailComponent implements OnInit {
   /** Whether this client has a car out past its return date. */
   get isLate(): boolean {
     return (this.client?.overdueRentingCount ?? 0) > 0;
+  }
+
+  // --- The face ---------------------------------------------------------------
+
+  /**
+   * Re-cuts the portrait out of the CIN already on file. Needed for two things
+   * the upload cannot cover: clients whose CIN predates portraits, and an image
+   * the automatic crop read wrongly — a second attempt after the card has been
+   * re-photographed straighter is often all it takes.
+   */
+  recropPortrait() {
+    if (!this.canEdit || this.recroppingPortrait) return;
+
+    this.recroppingPortrait = true;
+    this.noticeMessage = '';
+
+    this.clients.regenerateClientPortrait(this.clientId).subscribe({
+      next: result => {
+        this.recroppingPortrait = false;
+
+        if (result.portraitUrl) {
+          // Patch the one field rather than reloading: nothing else on the page
+          // changed, and the tabs would lose their place.
+          if (this.client) this.client.cinPortraitUrl = result.portraitUrl;
+          this.noticeMessage = this.transloco.translate('client.portraitUpdated');
+        } else {
+          this.noticeMessage = this.transloco.translate(
+            result.hasCinImage ? 'client.portraitNotFound' : 'client.portraitNeedsCin');
+        }
+      },
+      error: err => {
+        this.recroppingPortrait = false;
+        this.errorMessage = this.transloco.translate('client.portraitFailed');
+        console.error(err);
+      }
+    });
   }
 
   // No renting id: the command writes about the most overdue hire, which is the

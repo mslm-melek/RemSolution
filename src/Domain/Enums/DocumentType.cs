@@ -19,5 +19,10 @@ public enum DocumentType
     // Proof kept against a payment entry: a receipt, a transfer slip, or the
     // supplier invoice behind it. Distinct from ExpenseFacture, which is the
     // invoice attached to the expense record itself.
-    PaymentProof = 7
+    PaymentProof = 7,
+    // The client's head, cut out of their CIN image and squared off — the face
+    // shown beside their name in lists. DERIVED, not received: it is generated
+    // from the CIN file (see IPortraitCropper) and regenerated whenever that
+    // file is replaced, so it is never the only copy of anything.
+    ClientPortrait = 8
 }

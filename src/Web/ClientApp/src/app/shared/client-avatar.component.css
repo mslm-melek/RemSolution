@@ -1,0 +1,22 @@
+/* The circle, the photo inside it and the large variant are the shared .avatar
+   rules in styles.scss — a car thumbnail is the same idea in a different shape,
+   and the two belong together. Only the silhouette lives here. */
+
+:host {
+  display: inline-flex;
+  flex: 0 0 auto;
+  line-height: 0;
+}
+
+/* Fills the circle rather than sitting inside it as a glyph would: the shoulders
+   are drawn out to the bottom edge and the circle clips them, which is how a real
+   head-and-shoulders portrait is framed. A silhouette floating clear of the edge
+   reads as an icon of a person instead of a picture of one. */
+.avatar-default {
+  width: 100%;
+  height: 100%;
+  display: block;
+  /* Not a fixed grey: on a photo-less row the silhouette should recede, and this
+     is the same tone the muted text in the row beside it uses. */
+  fill: var(--muted-2);
+}

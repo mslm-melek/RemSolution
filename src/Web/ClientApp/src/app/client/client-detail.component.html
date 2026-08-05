@@ -1,15 +1,21 @@
 <div class="page detail-card" *transloco="let t">
   <div class="header-row">
-    <div>
-      <h2 class="title">
-        {{ name || t('client.title') }}
-        <mat-icon *ngIf="client?.isFlagged" class="flag-icon" [matTooltip]="t('client.flagged')">flag</mat-icon>
-      </h2>
-      <p class="page-subtitle" *ngIf="client">
-        <span *ngIf="client.cin">{{ t('client.cin') }} {{ client.cin }}</span>
-        <span *ngIf="client.email"> · {{ client.email }}</span>
-        <span *ngIf="client.hasPortalAccount"> · {{ t('client.accountActive') }}</span>
-      </p>
+    <!-- Who this is, in the two forms a counter recognises: their face (cut out
+         of their CIN) and their name. The header keeps its shape either way — a
+         client with no photograph gets the default silhouette. -->
+    <div class="identity-head">
+      <app-client-avatar [client]="client" size="lg"></app-client-avatar>
+      <div>
+        <h2 class="title">
+          {{ name || t('client.title') }}
+          <mat-icon *ngIf="client?.isFlagged" class="flag-icon" [matTooltip]="t('client.flagged')">flag</mat-icon>
+        </h2>
+        <p class="page-subtitle" *ngIf="client">
+          <span *ngIf="client.cin">{{ t('client.cin') }} {{ client.cin }}</span>
+          <span *ngIf="client.email"> · {{ client.email }}</span>
+          <span *ngIf="client.hasPortalAccount"> · {{ t('client.accountActive') }}</span>
+        </p>
+      </div>
     </div>
     <div class="header-actions">
       <!-- The two things this page is opened to do, beside reading it. -->
@@ -243,6 +249,26 @@
               <a *ngIf="client.cinImageUrl" [href]="client.cinImageUrl" target="_blank"
                  mat-icon-button [matTooltip]="t('client.cinImage')">
                 <mat-icon>badge</mat-icon>
+              </a>
+              <!-- The crop is a guess, so it is offered again by hand: this is the
+                   way out when the automatic one missed the face, and the only way
+                   in for a CIN uploaded before portraits existed. -->
+              <button *ngIf="canEdit && client.cinImageUrl" mat-icon-button
+                      (click)="recropPortrait()" [disabled]="recroppingPortrait"
+                      [matTooltip]="t('client.recropPortrait')"
+                      [attr.aria-label]="t('client.recropPortrait')">
+                <mat-icon>face_retouching_natural</mat-icon>
+              </button>
+            </dd>
+          </div>
+
+          <!-- The face itself, at a size worth looking at: the counter is checking
+               it against the person in front of them. -->
+          <div class="fact" *ngIf="client.cinPortraitUrl">
+            <dt>{{ t('client.portrait') }}</dt>
+            <dd>
+              <a [href]="client.cinImageUrl || client.cinPortraitUrl" target="_blank" class="portrait-link">
+                <img [src]="client.cinPortraitUrl" [alt]="t('client.portraitOf', { name: name })" />
               </a>
             </dd>
           </div>

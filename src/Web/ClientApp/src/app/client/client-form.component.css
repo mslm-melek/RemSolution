@@ -59,6 +59,27 @@
   min-width: 110px;
 }
 
+/* What was read off the CIN. Same bordered strip as a document slot — it is
+   another "state + action" row — with room for the picture itself. */
+.portrait-slot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  align-self: flex-start;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.portrait-preview {
+  width: 64px;
+  height: 64px;
+  object-fit: cover;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--line);
+  display: block;
+}
+
 .hint {
   color: var(--muted);
   font-style: italic;

@@ -22,7 +22,9 @@ export class ClientComponent implements OnInit {
   clients: ClientDto[] = [];
   // The debt column only exists for someone allowed to see debt, so the table
   // does not show an empty column to everyone else.
-  displayedColumns: string[] = ['name', 'email', 'birthDate', 'cin', 'rentings', 'documents', 'actions'];
+  displayedColumns: string[] = [
+    'portrait', 'name', 'email', 'birthDate', 'cin', 'rentings', 'documents', 'actions'
+  ];
 
   // What each client on this page owes, by client id. Money is the Credits
   // module's answer and stays behind its permission, so it is asked for

@@ -2687,6 +2687,7 @@ export interface IClientsClient {
     deleteClient(id: number): Observable<void>;
     flagClient(id: number, command: FlagClientCommand): Observable<void>;
     inviteClient(id: number): Observable<ClientInvitationDto>;
+    regenerateClientPortrait(id: number): Observable<ClientPortraitDto>;
     uploadClientDocument(id: number, documentType: ClientDocumentType, file: FileParameter | null | undefined): Observable<string>;
 }
 
@@ -3077,6 +3078,57 @@ export class ClientsClient implements IClientsClient {
             let result200: any = null;
             let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
             result200 = ClientInvitationDto.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    regenerateClientPortrait(id: number): Observable<ClientPortraitDto> {
+        let url_ = this.baseUrl + "/api/Clients/{id}/portrait";
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processRegenerateClientPortrait(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processRegenerateClientPortrait(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<ClientPortraitDto>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<ClientPortraitDto>;
+        }));
+    }
+
+    protected processRegenerateClientPortrait(response: HttpResponseBase): Observable<ClientPortraitDto> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = ClientPortraitDto.fromJS(resultData200);
             return _observableOf(result200);
             }));
         } else if (status !== 200 && status !== 204) {
@@ -11669,6 +11721,8 @@ export class CarDto implements ICarDto {
     firstCirculationDate?: Date;
     color?: string | undefined;
     imageUrl?: string | undefined;
+    thumbnailUrl?: string | undefined;
+    imageCount?: number;
     power?: number | undefined;
     fuelType?: FuelType | undefined;
     mileage?: number | undefined;
@@ -11700,6 +11754,8 @@ export class CarDto implements ICarDto {
             this.firstCirculationDate = _data["firstCirculationDate"] ? new Date(_data["firstCirculationDate"].toString()) : <any>undefined;
             this.color = _data["color"];
             this.imageUrl = _data["imageUrl"];
+            this.thumbnailUrl = _data["thumbnailUrl"];
+            this.imageCount = _data["imageCount"];
             this.power = _data["power"];
             this.fuelType = _data["fuelType"];
             this.mileage = _data["mileage"];
@@ -11731,6 +11787,8 @@ export class CarDto implements ICarDto {
         data["firstCirculationDate"] = this.firstCirculationDate ? this.firstCirculationDate.toISOString() : <any>undefined;
         data["color"] = this.color;
         data["imageUrl"] = this.imageUrl;
+        data["thumbnailUrl"] = this.thumbnailUrl;
+        data["imageCount"] = this.imageCount;
         data["power"] = this.power;
         data["fuelType"] = this.fuelType;
         data["mileage"] = this.mileage;
@@ -11755,6 +11813,8 @@ export interface ICarDto {
     firstCirculationDate?: Date;
     color?: string | undefined;
     imageUrl?: string | undefined;
+    thumbnailUrl?: string | undefined;
+    imageCount?: number;
     power?: number | undefined;
     fuelType?: FuelType | undefined;
     mileage?: number | undefined;
@@ -12439,6 +12499,7 @@ export class ClientDto implements IClientDto {
     cinImageUrl?: string | undefined;
     drivingLicenceImageUrl?: string | undefined;
     passerportImageUrl?: string | undefined;
+    cinPortraitUrl?: string | undefined;
     description?: string | undefined;
     isFlagged?: boolean;
     notes?: string | undefined;
@@ -12484,6 +12545,7 @@ export class ClientDto implements IClientDto {
             this.cinImageUrl = _data["cinImageUrl"];
             this.drivingLicenceImageUrl = _data["drivingLicenceImageUrl"];
             this.passerportImageUrl = _data["passerportImageUrl"];
+            this.cinPortraitUrl = _data["cinPortraitUrl"];
             this.description = _data["description"];
             this.isFlagged = _data["isFlagged"];
             this.notes = _data["notes"];
@@ -12529,6 +12591,7 @@ export class ClientDto implements IClientDto {
         data["cinImageUrl"] = this.cinImageUrl;
         data["drivingLicenceImageUrl"] = this.drivingLicenceImageUrl;
         data["passerportImageUrl"] = this.passerportImageUrl;
+        data["cinPortraitUrl"] = this.cinPortraitUrl;
         data["description"] = this.description;
         data["isFlagged"] = this.isFlagged;
         data["notes"] = this.notes;
@@ -12567,6 +12630,7 @@ export interface IClientDto {
     cinImageUrl?: string | undefined;
     drivingLicenceImageUrl?: string | undefined;
     passerportImageUrl?: string | undefined;
+    cinPortraitUrl?: string | undefined;
     description?: string | undefined;
     isFlagged?: boolean;
     notes?: string | undefined;
@@ -12897,6 +12961,46 @@ export enum ClientAccountOutcome {
     PasswordReset = 4,
     EmailBelongsToStaff = 5,
     AlreadyActive = 6,
+}
+
+export class ClientPortraitDto implements IClientPortraitDto {
+    portraitUrl?: string | undefined;
+    hasCinImage?: boolean;
+
+    constructor(data?: IClientPortraitDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.portraitUrl = _data["portraitUrl"];
+            this.hasCinImage = _data["hasCinImage"];
+        }
+    }
+
+    static fromJS(data: any): ClientPortraitDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new ClientPortraitDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["portraitUrl"] = this.portraitUrl;
+        data["hasCinImage"] = this.hasCinImage;
+        return data;
+    }
+}
+
+export interface IClientPortraitDto {
+    portraitUrl?: string | undefined;
+    hasCinImage?: boolean;
 }
 
 export enum ClientDocumentType {

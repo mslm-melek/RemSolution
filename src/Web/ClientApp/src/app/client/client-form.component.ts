@@ -52,6 +52,11 @@ export class ClientFormComponent implements OnInit {
     { type: ClientDocumentType.Passeport, labelKey: 'client.passeport', uploading: false }
   ];
 
+  // The face cut out of the CIN, derived server-side on upload. Kept here so the
+  // person who uploaded the card can see what was read off it.
+  portraitUrl?: string;
+  recroppingPortrait = false;
+
   constructor(
     private fb: FormBuilder,
     private client: ClientsClient,
@@ -130,6 +135,7 @@ export class ClientFormComponent implements OnInit {
     this.documents[0].url = dto.cinImageUrl;
     this.documents[1].url = dto.drivingLicenceImageUrl;
     this.documents[2].url = dto.passerportImageUrl;
+    this.portraitUrl = dto.cinPortraitUrl;
 
     this.hasPortalAccount = dto.hasPortalAccount === true;
     this.rowVersion = dto.rowVersion;
@@ -245,11 +251,46 @@ export class ClientFormComponent implements OnInit {
       next: url => {
         slot.url = url;
         slot.uploading = false;
+
+        // A new CIN brings a new portrait with it (or clears the old one), and the
+        // upload only answers with the document's own URL. Reading the client back
+        // is what shows which of the two happened.
+        if (slot.type === ClientDocumentType.CIN) this.refreshPortrait();
       },
       error: err => {
         slot.uploading = false;
         this.handleError(err);
       }
+    });
+  }
+
+  /** Re-cuts the portrait out of the CIN on file — see RegenerateClientPortraitCommand. */
+  recropPortrait() {
+    if (!this.clientId || this.recroppingPortrait) return;
+
+    this.recroppingPortrait = true;
+    this.errorMessage = '';
+
+    this.client.regenerateClientPortrait(this.clientId).subscribe({
+      next: result => {
+        this.portraitUrl = result.portraitUrl;
+        this.recroppingPortrait = false;
+      },
+      error: err => {
+        this.recroppingPortrait = false;
+        this.handleError(err);
+      }
+    });
+  }
+
+  // Only the portrait, not the whole form: the user may have typed into the fields
+  // while the upload was in flight, and re-patching the form would discard that.
+  private refreshPortrait() {
+    if (!this.clientId) return;
+
+    this.client.getClientById(this.clientId).subscribe({
+      next: dto => this.portraitUrl = dto.cinPortraitUrl,
+      error: err => console.error(err)
     });
   }
 

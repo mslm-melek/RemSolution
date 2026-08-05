@@ -75,15 +75,91 @@
   color: var(--ink);
 }
 
-.car-photo {
-  align-self: flex-start;
-  max-width: 320px;
+/* ------------------------------------------------------------- photos ----- */
+
+.photos {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
-.car-photo img {
+/* A fixed height, not a fixed aspect ratio: photos of the same car arrive from
+   phones held every which way, and a strip of hero frames that changed height as
+   you clicked through them would make the whole page jump. */
+.photo-hero {
   display: block;
-  width: 100%;
-  height: auto;
+  height: 300px;
   border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  background: var(--surface-3);
+}
+
+.photo-hero img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.photo-strip {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+.photo-thumb {
+  position: relative;
+  flex: 0 0 auto;
+  width: 84px;
+  height: 60px;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  overflow: hidden;
+  background: var(--surface-3);
+  cursor: pointer;
+}
+
+.photo-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* The one currently in the hero frame. A ring rather than a tint: the thumbnail
+   is a photograph, and anything laid over it fights the picture. */
+.photo-thumb.selected {
+  border-color: var(--brand-600);
+  box-shadow: 0 0 0 2px var(--brand-fill);
+}
+
+/* Which one the fleet chose as the car's face — the picture every list row and
+   the marketplace card show. */
+.photo-thumb .primary-mark {
+  position: absolute;
+  top: 1px;
+  inset-inline-start: 1px;
+  font-size: 14px;
+  width: 14px;
+  height: 14px;
+  color: #fbbf24;
+  /* Stars land on light bodywork as often as dark; the shadow keeps it readable
+     on both. */
+  text-shadow: 0 1px 2px rgba(15, 23, 42, 0.6);
+}
+
+/* Nothing to show, and where to go about it. */
+.no-photos {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 12px 14px;
+  border: 1px dashed var(--line-strong);
   border-radius: var(--r);
+  color: var(--muted);
+  font-size: var(--fs-sm);
 }

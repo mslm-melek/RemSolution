@@ -15,6 +15,15 @@
   gap: 16px;
 }
 
+/* Face beside name. Aligned to the top so the portrait sits against the title
+   rather than floating in the middle of title-plus-subtitle. */
+.identity-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  min-width: 0;
+}
+
 .title {
   display: flex;
   align-items: center;
@@ -87,6 +96,24 @@
   gap: 4px;
   margin: 0;
   color: var(--ink);
+}
+
+/* The portrait on the identity tab, big enough to check a face against the person
+   at the counter. Opens the full CIN image behind it. */
+.portrait-link {
+  display: block;
+  width: 120px;
+  height: 120px;
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  overflow: hidden;
+  line-height: 0;
+}
+
+.portrait-link img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .proof-cell {

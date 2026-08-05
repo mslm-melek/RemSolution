@@ -85,6 +85,14 @@ public class ClientConfiguration : IEntityTypeConfiguration<Client>
                .HasForeignKey(c => c.PasseportFileId)
                .OnDelete(DeleteBehavior.Restrict);
 
+        // The face cropped out of the CIN image. Restrict like the documents
+        // above, and for the same reason: the file rows are removed explicitly
+        // once nothing points at them, never cascaded through the client.
+        builder.HasOne(c => c.CINPortraitFile)
+               .WithMany()
+               .HasForeignKey(c => c.CINPortraitFileId)
+               .OnDelete(DeleteBehavior.Restrict);
+
         builder.HasMany(c => c.Rentings)
                .WithOne(r => r.Client)
                .HasForeignKey(r => r.ClientId)

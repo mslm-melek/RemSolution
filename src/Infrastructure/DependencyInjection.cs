@@ -3,6 +3,7 @@ using System.Text;
 using Hangfire;
 using Hangfire.SqlServer;
 using RemSolution.Application.Common.Documents;
+using RemSolution.Application.Common.Imaging;
 using RemSolution.Application.Common.Interfaces;
 using RemSolution.Application.Common.Tenancy;
 using RemSolution.Domain.Constants;
@@ -250,6 +251,14 @@ public static class DependencyInjection
         // singleton; the actual work runs as a Hangfire job (below).
         builder.Services.AddSingleton<IImageProcessor, SkiaImageProcessor>();
         builder.Services.AddScoped<CarImageProcessingJob>();
+
+        // Client portraits cut out of CIN images. The cropper is stateless like
+        // the resizer; the factory is scoped because it writes StoredFile rows
+        // through the request's DbContext. This one runs inline rather than as a
+        // job: it is one small crop of an image already in hand, and the whole
+        // point is that the face is there the moment the document is uploaded.
+        builder.Services.AddSingleton<IPortraitCropper, SkiaPortraitCropper>();
+        builder.Services.AddScoped<ClientPortraitFactory>();
 
         // Generated rental paperwork (contracts, invoices). QuestPDF's licence
         // type is global process state, so it is set once here: Community is the

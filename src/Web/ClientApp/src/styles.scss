@@ -824,6 +824,103 @@ td.empty-row {
   color: var(--muted);
 }
 
+/* A label for a screen reader that would be noise on screen — a column of faces
+   needs a heading in the accessibility tree but not above the pictures. */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ------------------------------------------------- pictures in a row ------ */
+
+/* A client's face, cut out of their CIN on the server. Round, because it is a
+   person; a car's photo below is square, because it is a thing. Both keep a
+   fixed footprint whether or not the picture exists, so the column does not
+   jitter as rows with and without one alternate.
+
+   The default silhouette that fills this when there is no photograph belongs to
+   ClientAvatarComponent — every screen draws a client's face through it. */
+.avatar {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--r-pill);
+  overflow: hidden;
+  /* Drawn whether or not there is a photograph: the ring is what makes a row with
+     no picture still look deliberate rather than broken. */
+  background: var(--surface-3);
+  box-shadow: inset 0 0 0 1px var(--line);
+  line-height: 0;
+}
+
+.avatar img {
+  width: 100%;
+  height: 100%;
+  /* The crop is already square and centred on the head; cover only absorbs the
+     rounding, so nothing of the face is lost. */
+  object-fit: cover;
+  display: block;
+}
+
+.avatar.avatar-lg {
+  width: 72px;
+  height: 72px;
+}
+
+/* A car's photo at row size. Landscape, because a car is: a square crop of a
+   car is mostly bodywork. */
+.thumb-cell {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 44px;
+  border-radius: var(--r-sm);
+  overflow: hidden;
+  background: var(--surface-3);
+  border: 1px solid var(--line);
+  color: var(--muted-2);
+}
+
+.thumb-cell img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.thumb-cell .mat-icon {
+  /* The placeholder glyph, sized to sit inside the frame rather than fill it. */
+  width: 20px;
+  height: 20px;
+  font-size: 20px;
+}
+
+/* "and N more" on the row's one picture. */
+.thumb-cell .thumb-more {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  padding: 0 3px;
+  border-top-left-radius: var(--r-xs);
+  background: rgba(15, 23, 42, 0.72);
+  color: #fff;
+  font-size: var(--fs-micro);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.4;
+}
+
 /* ----------------------------------------------------------- paginator ---- */
 
 .mat-mdc-paginator {

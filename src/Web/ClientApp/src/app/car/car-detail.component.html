@@ -37,6 +37,34 @@
     </div>
   </div>
 
+  <!-- The car itself. First thing on the page, because it is the first thing
+       anyone opening a plate wants to see; the strip appears only where there is
+       more than one picture, so a single-photo car is not given a row of one. -->
+  <div class="photos" *ngIf="hasPhotos">
+    <a class="photo-hero" [href]="heroHref" target="_blank"
+       [matTooltip]="t('car.openFullSize')">
+      <img [src]="heroUrl" [alt]="car?.matricule ?? ''" />
+    </a>
+
+    <div class="photo-strip" *ngIf="images.length > 1">
+      <button type="button" class="photo-thumb" *ngFor="let image of images; let i = index"
+              [class.selected]="i === selectedImageIndex" (click)="selectImage(i)"
+              [attr.aria-label]="t('car.showPhoto', { index: i + 1 })">
+        <img [src]="thumbFor(image)" [alt]="t('car.showPhoto', { index: i + 1 })" loading="lazy" />
+        <mat-icon *ngIf="image.isPrimary" class="primary-mark"
+                  [matTooltip]="t('car.primaryImage')">star</mat-icon>
+      </button>
+    </div>
+  </div>
+
+  <!-- No pictures at all: say so where they would be, and point at the one screen
+       that can fix it, rather than leaving a silent gap. -->
+  <p class="no-photos" *ngIf="car && !hasPhotos">
+    <mat-icon>no_photography</mat-icon>
+    {{ t('car.noImages') }}
+    <a [routerLink]="['/car', carId, 'edit']">{{ t('car.addImages') }}</a>
+  </p>
+
   <div class="tile-grid">
     <!-- Who has the car, when it is due back: what the counter is asked when the
          phone rings about this plate. -->
@@ -208,9 +236,8 @@
           </div>
         </dl>
 
-        <a *ngIf="car?.imageUrl" [href]="car?.imageUrl" target="_blank" class="car-photo">
-          <img [src]="car?.imageUrl" [alt]="car?.matricule ?? ''" />
-        </a>
+        <!-- The car's pictures are at the top of the page now, where they are seen
+             without opening a tab first. -->
       </div>
     </mat-tab>
   </mat-tab-group>

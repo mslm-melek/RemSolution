@@ -52,6 +52,20 @@
          [matSortActive]="sortBy" [matSortDirection]="sortDirection"
          (matSortChange)="onSort($event)">
 
+    <!-- The client's face, cut out of their CIN on upload; a default silhouette
+         where there is no photograph (see ClientAvatarComponent). Unlabelled: a
+         column of faces needs no heading, and the header row is already crowded. -->
+    <ng-container matColumnDef="portrait">
+      <th mat-header-cell *matHeaderCellDef class="portrait-cell">
+        <span class="visually-hidden">{{ t('client.portrait') }}</span>
+      </th>
+      <td mat-cell *matCellDef="let client" class="portrait-cell">
+        <a [routerLink]="['/client', client.id]">
+          <app-client-avatar [client]="client"></app-client-avatar>
+        </a>
+      </td>
+    </ng-container>
+
     <ng-container matColumnDef="name">
       <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ t('common.name') }}</th>
       <!-- The name opens the client's own page (history, money); the row's edit

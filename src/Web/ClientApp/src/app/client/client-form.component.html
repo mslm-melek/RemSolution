@@ -181,6 +181,30 @@
       </div>
     </div>
 
+    <!-- What was read off the CIN: the client's face, cut out of it and squared
+         off (see IPortraitCropper). Shown here rather than only in the lists so
+         whoever uploaded the card can see at once whether the crop found the
+         right thing — and say so if it did not. -->
+    <div class="portrait-slot" *ngIf="isEdit && documents[0].url">
+      <span class="document-label">{{ t('client.portrait') }}</span>
+
+      <img *ngIf="portraitUrl" class="portrait-preview" [src]="portraitUrl"
+           [alt]="t('client.portrait')" />
+      <!-- The default silhouette plus the reason for it: this screen is where the
+           card was uploaded, so it is the one place that should say why no face
+           came off it and what to do about that. -->
+      <ng-container *ngIf="!portraitUrl">
+        <app-client-avatar size="lg"></app-client-avatar>
+        <span class="hint">{{ t('client.portraitNotFound') }}</span>
+      </ng-container>
+
+      <button type="button" mat-stroked-button (click)="recropPortrait()"
+              [disabled]="recroppingPortrait">
+        <mat-icon>face_retouching_natural</mat-icon>
+        {{ recroppingPortrait ? t('common.saving') : t('client.recropPortrait') }}
+      </button>
+    </div>
+
     <!-- Actions -->
     <div class="actions-row">
       <button mat-raised-button color="primary" type="submit" [disabled]="saving">

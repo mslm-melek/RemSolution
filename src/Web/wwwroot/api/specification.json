@@ -1956,6 +1956,38 @@
         }
       }
     },
+    "/api/Clients/{id}/portrait": {
+      "post": {
+        "tags": [
+          "Clients"
+        ],
+        "operationId": "RegenerateClientPortrait",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientPortraitDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/Clients/{id}/documents/{documentType}": {
       "post": {
         "tags": [
@@ -7535,6 +7567,14 @@
             "type": "string",
             "nullable": true
           },
+          "thumbnailUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "imageCount": {
+            "type": "integer",
+            "format": "int32"
+          },
           "power": {
             "type": "integer",
             "format": "int32",
@@ -8120,6 +8160,10 @@
             "type": "string",
             "nullable": true
           },
+          "cinPortraitUrl": {
+            "type": "string",
+            "nullable": true
+          },
           "description": {
             "type": "string",
             "nullable": true
@@ -8391,6 +8435,19 @@
           5,
           6
         ]
+      },
+      "ClientPortraitDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "portraitUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "hasCinImage": {
+            "type": "boolean"
+          }
+        }
       },
       "ClientDocumentType": {
         "type": "integer",

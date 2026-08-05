@@ -1,6 +1,21 @@
 /* Surface, header, search strip, table and empty state come from the shared
    .page / .search-row / .data-table rules in styles.scss. */
 
+/* The face column. Sized to the avatar itself so the names stay flush left
+   whether or not the row has a photograph (see ClientAvatarComponent). */
+main .page .portrait-cell {
+  width: 52px;
+  padding-inline-end: 0;
+}
+
+/* The avatar is a link into the client's page, like their name is. line-height 0
+   so the anchor wraps the circle exactly and adds no baseline gap under it. */
+main .page .portrait-cell a {
+  display: inline-flex;
+  line-height: 0;
+  text-decoration: none;
+}
+
 /* The name opens the client's page. It keeps the column's weight and colour so
    the table stays quiet, and says it is a link on hover. */
 a.cell-main {

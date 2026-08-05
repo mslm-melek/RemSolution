@@ -2,6 +2,13 @@
    .page / .filter-row / .data-table rules in styles.scss. Only what is specific
    to the fleet list lives here. */
 
+/* The photo column, sized to the frame itself (the shared .thumb-cell rules in
+   styles.scss draw it) so the plate beside it stays flush left. */
+main .page .thumb-col {
+  width: 80px;
+  padding-inline-end: 0;
+}
+
 .matricule {
   font-weight: 600;
   color: var(--ink);

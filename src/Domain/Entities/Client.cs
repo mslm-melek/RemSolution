@@ -40,6 +40,16 @@
         public virtual StoredFile? DrivingLicenceFile { get; set; }
         public int? PasseportFileId { get; set; }
         public virtual StoredFile? PasseportFile { get; set; }
+        // The client's face, cut out of the CIN image above and squared off, so a
+        // list row can show who the client is rather than only what their name
+        // is. Purely DERIVED from CINFile: written whenever that file is stored
+        // (see UploadClientDocumentCommand) and re-derivable at any time from it
+        // (see RegenerateClientPortraitCommand), so losing it loses nothing.
+        // Null while there is no CIN image, or when no face could be located on
+        // it (a PDF scan, a photo of the back of the card) — the UI falls back to
+        // the client's initials.
+        public int? CINPortraitFileId { get; set; }
+        public virtual StoredFile? CINPortraitFile { get; set; }
         // The client's email address, and the hinge of the customer-account
         // link below: it is both a contact detail and the login of the
         // portal account provisioned for them (see MarketplaceUserId).

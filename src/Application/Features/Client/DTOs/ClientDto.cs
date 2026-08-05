@@ -30,6 +30,14 @@ namespace RemSolution.Application.Features.Client.DTOs
         public string? CINImageUrl { get; init; }
         public string? DrivingLicenceImageUrl { get; init; }
         public string? PasserportImageUrl { get; init; }
+
+        /// <summary>
+        /// The client's face, cut out of their CIN image (see
+        /// Client.CINPortraitFile) — a square JPEG a list row can show as an
+        /// avatar. Null where there is no CIN image or no face was found on it;
+        /// the UI falls back to the client's initials.
+        /// </summary>
+        public string? CINPortraitUrl { get; init; }
         public string? Description { get; init; }
         // Per-agency bad-client flag and its moderation notes (see Client entity).
         public bool IsFlagged { get; init; }
@@ -110,7 +118,11 @@ namespace RemSolution.Application.Features.Client.DTOs
                       // plain URL so the API contract is unchanged for readers.
                       .Map(dest => dest.CINImageUrl, src => src.CINFile != null ? src.CINFile.Url : null)
                       .Map(dest => dest.DrivingLicenceImageUrl, src => src.DrivingLicenceFile != null ? src.DrivingLicenceFile.Url : null)
-                      .Map(dest => dest.PasserportImageUrl, src => src.PasseportFile != null ? src.PasseportFile.Url : null);
+                      .Map(dest => dest.PasserportImageUrl, src => src.PasseportFile != null ? src.PasseportFile.Url : null)
+                      // Projected like the documents above, so a page of clients
+                      // brings its faces along in the one query.
+                      .Map(dest => dest.CINPortraitUrl,
+                           src => src.CINPortraitFile != null ? src.CINPortraitFile.Url : null);
             }
         }
     }

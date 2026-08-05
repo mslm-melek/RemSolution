@@ -29,9 +29,10 @@ export class CarComponent implements OnInit {
   private readonly dialog = inject(MatDialog);
   cars: CarDto[] = [];
   models: ModelCarDto[] = [];
+  // The photo leads the row: a fleet is recognised by sight before by plate.
   displayedColumns: string[] = [
-    'matricule', 'model', 'status', 'firstCirculationDate', 'color', 'power', 'fuelType',
-    'rentings', 'image', 'actions'
+    'image', 'matricule', 'model', 'status', 'firstCirculationDate', 'color', 'power', 'fuelType',
+    'rentings', 'actions'
   ];
 
   // Hiring out and taking back are the Rentings module's writes, so the row only

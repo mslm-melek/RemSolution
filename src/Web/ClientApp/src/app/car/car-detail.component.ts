@@ -3,7 +3,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { PageEvent } from '@angular/material/paginator';
 import { ActivatedRoute } from '@angular/router';
 import {
-  CarsClient, CarDto, FuelType,
+  CarsClient, CarDto, CarImageDto, FuelType,
   RentingsClient, RentingDto, RentingState
 } from '../web-api-client';
 import {
@@ -25,6 +25,12 @@ export class CarDetailComponent implements OnInit {
 
   carId!: number;
   car?: CarDto;
+
+  // The car's gallery (CarImage), read from its own endpoint: the DTO carries one
+  // picture for a list row, this page shows the lot. Managing them — adding,
+  // reordering, choosing the primary — stays on the form.
+  images: CarImageDto[] = [];
+  selectedImageIndex = 0;
 
   rentings: RentingDto[] = [];
   rentingColumns: string[] = ['period', 'client', 'state', 'mileage', 'price', 'actions'];
@@ -63,6 +69,7 @@ export class CarDetailComponent implements OnInit {
   ngOnInit() {
     this.carId = +this.route.snapshot.paramMap.get('id')!;
     this.loadCar();
+    this.loadImages();
 
     this.auth.currentUser$.subscribe(user => {
       this.canSeeRentings = AuthService.canAccessModule(user, 'Rentings', 'Renting.Read');
@@ -81,6 +88,54 @@ export class CarDetailComponent implements OnInit {
       next: car => this.car = car,
       error: err => console.error(err)
     });
+  }
+
+  // --- Photos -----------------------------------------------------------------
+
+  private loadImages() {
+    this.cars.getCarImages(this.carId).subscribe({
+      next: images => {
+        this.images = images || [];
+        // Open on the primary image — the one the fleet chose as the car's face,
+        // and the one every list row is already showing.
+        const primary = this.images.findIndex(image => image.isPrimary);
+        this.selectedImageIndex = primary >= 0 ? primary : 0;
+      },
+      error: err => console.error(err)
+    });
+  }
+
+  get hasPhotos(): boolean {
+    return this.images.length > 0 || !!this.car?.imageUrl;
+  }
+
+  /**
+   * The big picture. Prefers the medium derivative: it is generated for exactly
+   * this, and the original can be a several-megabyte phone photo. Falls back
+   * through what exists, because the derivatives are produced out of band and for
+   * a few seconds after an upload the original is all there is.
+   */
+  get heroUrl(): string | undefined {
+    const image = this.images[this.selectedImageIndex];
+
+    return image
+      ? image.mediumUrl || image.originalUrl || image.thumbnailUrl
+      : this.car?.imageUrl;
+  }
+
+  /** Full size, for opening in a tab: the untouched upload where there is one. */
+  get heroHref(): string | undefined {
+    const image = this.images[this.selectedImageIndex];
+
+    return (image ? image.originalUrl : undefined) || this.heroUrl;
+  }
+
+  thumbFor(image: CarImageDto): string | undefined {
+    return image.thumbnailUrl || image.mediumUrl || image.originalUrl;
+  }
+
+  selectImage(index: number) {
+    if (index >= 0 && index < this.images.length) this.selectedImageIndex = index;
   }
 
   loadRentings() {
