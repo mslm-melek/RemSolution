@@ -65,7 +65,7 @@
 
 /* An agreed price is the agency's decision, not a calculation — coloured to say so. */
 .price-card.overridden {
-  border-color: rgba(109, 40, 217, 0.25);
+  border-color: var(--line);
   background: var(--accent-bg);
 }
 
@@ -141,7 +141,7 @@
   flex-direction: column;
   gap: var(--gap-2);
   padding-top: var(--gap-2);
-  border-top: 1px solid rgba(20, 35, 61, 0.08);
+  border-top: 1px solid var(--line);
 }
 
 .price-input-row {
@@ -380,7 +380,7 @@
 .option-price {
   margin-inline-start: 8px;
   font-size: 12px;
-  color: var(--brand-700);
+  color: var(--brand-600);
 }
 
 /* Save action, separated from the last field so it does not read as one. */

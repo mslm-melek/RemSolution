@@ -32,7 +32,10 @@
   padding: var(--gap-4);
   text-align: center;
   color: var(--muted);
-  background: rgba(243, 245, 250, 0.85);
+  /* Opaque rather than the 85% it used to be: this covers the map while it
+     loads, and a translucent version of it in dark mode read as a haze over
+     visible tiles rather than as a state. */
+  background: var(--canvas);
   z-index: 1000;
   pointer-events: none;
 }
@@ -66,11 +69,16 @@
   transition: background-color 120ms ease, color 120ms ease, transform 120ms ease;
 }
 
+/* The fill is --brand-500 rather than --brand-600 for the same reason the filled
+   button is (see docs/DESIGN_SYSTEM.md, Dark mode): it carries white text, and
+   --brand-600 lightens in dark mode until white on it fails. The ring then comes
+   from --brand-600, which reads as a darker ring in light and a lighter one in
+   dark — either way a ring. */
 :host ::ng-deep .map-pin:hover,
 :host ::ng-deep .map-pin-wrap.is-highlighted .map-pin {
-  background: var(--brand-600);
-  border-color: var(--brand-700);
-  color: #fff;
+  background: var(--brand-500);
+  border-color: var(--brand-600);
+  color: var(--on-accent);
   transform: translate(-50%, -100%) scale(1.06);
 }
 
@@ -83,14 +91,14 @@
   padding: 0 4px;
   border-radius: var(--r-pill);
   background: var(--brand-50);
-  color: var(--brand-700);
+  color: var(--brand-600);
   font-size: 0.68rem;
 }
 
 :host ::ng-deep .map-pin-wrap.is-highlighted .pin-count,
 :host ::ng-deep .map-pin:hover .pin-count {
-  background: rgba(255, 255, 255, 0.22);
-  color: #fff;
+  background: var(--on-accent-weak);
+  color: var(--on-accent);
 }
 
 /* Leaflet's attribution defaults to a size that fights the app's type scale. */

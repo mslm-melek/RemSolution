@@ -7,7 +7,7 @@
     <p class="dialog-hint" *ngIf="renting">
       {{ clientName }}
       <span *ngIf="renting.startDate">
-        · {{ renting.startDate | date:'yyyy-MM-dd' }} → {{ renting.endDate | date:'yyyy-MM-dd' }}
+        · {{ renting.startDate | date:'yyyy-MM-dd':'UTC' }} → {{ renting.endDate | date:'yyyy-MM-dd':'UTC' }}
       </span>
     </p>
 

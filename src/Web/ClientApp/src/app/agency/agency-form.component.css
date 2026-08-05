@@ -16,15 +16,15 @@
   margin: 0;
   font-size: 24px;
   font-weight: 600;
-  color: #333;
+  color: var(--ink);
 }
 
 .section-title {
   margin: 16px 0 8px;
   font-size: 16px;
   font-weight: 600;
-  color: #555;
-  border-bottom: 1px solid #eee;
+  color: var(--ink-2);
+  border-bottom: 1px solid var(--line);
   padding-bottom: 4px;
 }
 
@@ -39,8 +39,8 @@
 }
 
 .error-banner {
-  background: #fdecea;
-  color: #b71c1c;
+  background: var(--danger-bg);
+  color: var(--danger-ink);
   border-radius: 8px;
   padding: 12px 16px;
 }
@@ -58,7 +58,7 @@ app-branches-editor {
   display: block;
   margin-top: 24px;
   padding-top: 16px;
-  border-top: 1px solid #eee;
+  border-top: 1px solid var(--line);
 }
 
 .branches-note {

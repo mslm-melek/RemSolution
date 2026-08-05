@@ -6,72 +6,250 @@
    the status chips. A list page only has to use the shared class names
    (.page / .page-head / .toolbar / .data-table) and it inherits the whole look.
 
-   Two things to know before editing:
-   - Angular Material's prebuilt azure-blue theme is loaded BEFORE this file
-     (see angular.json), so plain single-class rules here override it.
+   The rules and the intent behind them are in docs/DESIGN_SYSTEM.md. This file
+   is the source of truth for the VALUES; that file for when to use them.
+
+   Three things to know before editing:
+
+   - Angular Material is themed from source in `_material-theme.scss`, which is
+     imported at the top of this file. Light is emitted on :root, dark under
+     :root[data-theme='dark'], so Material's own chrome (mat-select panels,
+     dialogs, the datepicker, tab headers) follows the theme like everything
+     else. Do not add a prebuilt theme back into angular.json.
+
    - Component styles are emulated-encapsulated, which adds an attribute
      selector and therefore one class' worth of specificity. A global rule that
      has to beat a component rule needs two classes plus an element
      (`main .page .title`), which this file uses sparingly.
+
+   - Colours reach dark mode only through a token. A literal hex in a component
+     is a light-mode bug that renders as a bright block on a dark canvas.
    ========================================================================== */
 
+@use 'material-theme' as *;
+
+/* ---------------------------------------------------------------- tokens ---- */
+
 :root {
-  /* Brand — sits alongside Material's azure-blue rather than replacing it. */
-  --brand-50: #eef4ff;
-  --brand-100: #dbe6ff;
-  --brand-200: #bdd0ff;
-  --brand-500: #3b6cf6;
+  color-scheme: light;
+
+  /* Brand — one ramp, blue. 500 is the filled button, 600 is link and accent
+     TEXT (the stop that lightens in dark mode), 50/100/200 are tints, and
+     700/800/900 are the deep stops used for hero fills. Text must come from
+     600, never from 700 and up, or it disappears in dark mode. */
+  --brand-50: #eff6ff;
+  --brand-100: #dbeafe;
+  --brand-200: #bfdbfe;
+  --brand-500: #3b82f6;
   --brand-600: #2563eb;
   --brand-700: #1d4ed8;
-  --brand-800: #1b3fa8;
-  --brand-900: #172b63;
+  --brand-800: #1e40af;
+  --brand-900: #172554;
 
-  /* Neutrals. */
-  --canvas: #f3f5fa;
+  /* Surfaces. --canvas is the page background; nothing sits directly on it
+     without a card or a separator. */
+  --canvas: #f9fafb;
   --surface: #ffffff;
   --surface-2: #f8fafc;
-  --surface-3: #f1f4f9;
-  --line: #e4e9f2;
-  --line-strong: #d3dae8;
-  --ink: #16233d;
-  --ink-2: #33415c;
-  --muted: #6b7688;
-  --muted-2: #8b95a7;
+  --surface-3: #f1f5f9;
+  --line: #e2e8f0;
+  --line-strong: #cbd5e1;
 
-  /* Semantic. */
-  --ok: #10784b;
-  --ok-bg: #e6f6ed;
-  --warn: #a75a09;
-  --warn-bg: #fdf1e0;
-  --danger: #b3261e;
-  --danger-bg: #fdecec;
-  --info: var(--brand-700);
-  --info-bg: var(--brand-50);
-  --accent: #6d28d9;
-  --accent-bg: #f3ecff;
+  /* Text. De-emphasis is a token, never `opacity` — opacity multiplies against
+     whatever is behind it and one "muted" grey becomes four. */
+  --ink: #1e293b;
+  --ink-2: #475569;
+  --muted: #64748b;
+  --muted-2: #94a3b8;
 
-  /* Shape & depth. */
-  --r-xs: 6px;
-  --r-sm: 10px;
-  --r: 14px;
-  --r-lg: 18px;
+  /* Semantic triples. Bare is a border or an icon, -bg is a tint, -ink is text
+     ON that tint. Using --warn as text on --warn-bg is the mistake this triple
+     exists to prevent. */
+  --ok: #059669;
+  --ok-bg: #d1fae5;
+  --ok-ink: #065f46;
+  --warn: #d97706;
+  --warn-bg: #fef3c7;
+  --warn-ink: #854f0b;
+  --danger: #dc2626;
+  --danger-bg: #fee2e2;
+  --danger-ink: #991b1b;
+  /* A filled alert pip — an unread count, a badge over a photo. Like
+     --brand-500 it does NOT change between themes: it carries white text, and
+     the light-red that reads well as dark-mode *ink* fails as a *fill* under
+     white. Only use it where the fill must be loud; a status is a .chip. */
+  --danger-solid: #dc2626;
+  --info: var(--brand-600);
+  --info-bg: var(--brand-100);
+  --info-ink: var(--brand-800);
+
+  /* The barely-there row fills that pair with the accent bar. Not
+     general-purpose backgrounds. */
+  --row-attention: #fffdf7;
+  --row-overdue: #fef7f7;
+
+  /* Typography. Three families, each with one job. */
+  --font-display: 'Poppins', 'Inter', system-ui, sans-serif;
+  --font-body: 'Inter', system-ui, sans-serif;
+  --font-mono: 'Roboto Mono', ui-monospace, 'SFMono-Regular', Consolas, monospace;
+  --fs-page: 26px;
+  --fs-section: 15px;
+  --fs-body: 14px;
+  --fs-sm: 13px;
+  --fs-label: 12px;
+  --fs-micro: 11px;
+  /* Two weights is the whole vocabulary: at these sizes a third reads as
+     shouting rather than emphasis. */
+  --fw-normal: 400;
+  --fw-medium: 500;
+
+  /* Spacing. */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+
+  /* Radii. A single-sided border always gets radius 0 — see .needs-action. */
+  --r-xs: 4px;
+  --r-sm: 6px;
+  --r: 8px;
+  --r-lg: 12px;
   --r-pill: 999px;
-  --shadow-1: 0 1px 2px rgba(20, 35, 61, 0.05), 0 1px 3px rgba(20, 35, 61, 0.06);
-  --shadow-2: 0 2px 6px rgba(20, 35, 61, 0.06), 0 8px 24px -8px rgba(20, 35, 61, 0.14);
-  --shadow-3: 0 12px 32px -12px rgba(20, 35, 61, 0.28);
 
-  /* Rhythm. */
-  --gap-1: 4px;
-  --gap-2: 8px;
-  --gap-3: 12px;
-  --gap-4: 16px;
-  --gap-5: 24px;
-  --gap-6: 32px;
+  /* Controls. */
+  --h-control: 38px;
+  --h-control-sm: 34px;
+  --accent-bar: 4px;
 
-  --font: 'Inter', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  /* Elevation. Cards are drawn with a hairline, not a shadow; these are for
+     things that genuinely float (menus, hovered tiles). */
+  --shadow-1: 0 1px 2px rgba(15, 23, 42, 0.05);
+  --shadow-2: 0 4px 12px rgba(15, 23, 42, 0.08);
+  --shadow-3: 0 12px 28px rgba(15, 23, 42, 0.12);
+
+  /* Overlay ink for hover states that must work on any surface. */
+  --overlay-weak: rgba(15, 23, 42, 0.04);
+  --overlay: rgba(15, 23, 42, 0.08);
+
+  /* Ink and fills that sit ON a brand-coloured surface — the home hero, the
+     marketplace header, a filled button. Those surfaces are deep blue in both
+     themes, so what sits on them is the light-on-dark set either way. Separate
+     from --nav-* because the nav band is charcoal, not brand. */
+  --on-accent: #ffffff;
+  --on-accent-2: rgba(255, 255, 255, 0.82);
+  --on-accent-3: rgba(255, 255, 255, 0.4);
+  --on-accent-weak: rgba(255, 255, 255, 0.16);
+  --on-accent-edge: rgba(255, 255, 255, 0.24);
+
+  /* Gradient laid over a photo so caption text stays legible whatever the
+     image. Black in both themes, because it is darkening an image. */
+  --scrim: rgba(0, 0, 0, 0.72);
+
+  /* A rating star. Gold is not one of the semantic states — it means "quality",
+     not ok/warn/danger — so it gets its own token rather than borrowing --warn. */
+  --star: #f2a413;
+
+  /* Translucent area fills under the dashboard's chart lines. */
+  --ok-fill: rgba(5, 150, 105, 0.12);
+  --warn-fill: rgba(217, 119, 6, 0.1);
+  --brand-fill: rgba(37, 99, 235, 0.1);
+
+  /* The app bar. Deliberately the same charcoal band in both themes: it is
+     chrome, not content, and it separates the app from the canvas without
+     competing with the status colours inside the page. Because it is always
+     dark, its own ink and hover states are always the light-on-dark set. */
+  --nav-1: #141c2e;
+  --nav-2: #121a2b;
+  --nav-3: #0f172a;
+  --nav-ink: #ffffff;
+  --nav-ink-2: rgba(255, 255, 255, 0.82);
+  --nav-hover: rgba(255, 255, 255, 0.08);
+  --nav-active: rgba(255, 255, 255, 0.14);
+  --nav-edge: rgba(255, 255, 255, 0.16);
+
+  /* -- Compatibility aliases -----------------------------------------------
+     The names the component stylesheets were written against, kept so all
+     ~50 of them keep working and inherit dark mode for free. New CSS uses the
+     canonical names above; these get retired a folder at a time. */
+  --font: var(--font-body);
+  --gap-1: var(--sp-1);
+  --gap-2: var(--sp-2);
+  --gap-3: var(--sp-3);
+  --gap-4: var(--sp-4);
+  --gap-5: var(--sp-5);
+  --gap-6: var(--sp-6);
+  --radius: var(--r);
+  --radius-card: var(--r-lg);
+  --accent: var(--info);
+  --accent-bg: var(--info-bg);
+  --accent-ink: var(--info-ink);
+  --success: var(--ok);
 }
 
-/* ---------------------------------------------------------------- base ---- */
+:root[data-theme='dark'] {
+  color-scheme: dark;
+
+  /* The tint stops invert: they exist to be quiet fills, and #eff6ff is not a
+     quiet fill on a dark canvas. The deep stops (700+) stay put — they carry
+     the hero gradients, which read correctly dark on dark. */
+  --brand-50: #1c2740;
+  --brand-100: #1e3a5f;
+  --brand-200: #2a4a72;
+  /* The filled button deliberately does NOT lighten: it has white text, and
+     lightening it drops contrast below AA. Only the text stop lightens. */
+  --brand-500: #3b82f6;
+  --brand-600: #60a5fa;
+
+  --canvas: #1a1f2e;
+  --surface: #2a3042;
+  --surface-2: #232838;
+  --surface-3: #323a4e;
+  --line: #3a4256;
+  --line-strong: #4b5568;
+
+  --ink: #f1f5f9;
+  --ink-2: #cbd5e1;
+  --muted: #94a3b8;
+  --muted-2: #6b7688;
+
+  --ok: #34d399;
+  --ok-bg: #064e3b;
+  --ok-ink: #6ee7b7;
+  --warn: #fbbf24;
+  --warn-bg: #422006;
+  --warn-ink: #fcd34d;
+  --danger: #f87171;
+  --danger-bg: #4c1d1d;
+  --danger-ink: #fca5a5;
+  --info-bg: #1e3a5f;
+  --info-ink: #93c5fd;
+
+  --row-attention: #2f2c26;
+  --row-overdue: #332631;
+
+  /* Shadows go black rather than blue-grey: a tinted shadow on a dark surface
+     reads as a glow. */
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-2: 0 4px 12px rgba(0, 0, 0, 0.45);
+  --shadow-3: 0 12px 28px rgba(0, 0, 0, 0.5);
+
+  --overlay-weak: rgba(255, 255, 255, 0.04);
+  --overlay: rgba(255, 255, 255, 0.09);
+
+  /* The star stays gold but is lifted a little: #f2a413 on #2a3042 is dimmer
+     than it looks on white. */
+  --star: #fbbf24;
+
+  /* The chart fills carry the dark palette's brighter line colours, at a higher
+     alpha — 12% of a dark green over a dark surface is invisible. */
+  --ok-fill: rgba(52, 211, 153, 0.18);
+  --warn-fill: rgba(251, 191, 36, 0.16);
+  --brand-fill: rgba(96, 165, 250, 0.16);
+}
+
+/* ------------------------------------------------------------------ base ---- */
 
 html,
 body {
@@ -80,20 +258,22 @@ body {
 
 body {
   margin: 0;
-  font-family: var(--font);
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
   background: var(--canvas);
   color: var(--ink);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
 
+/* Links take the accent TEXT stop, which is the one that lightens in dark. */
 a {
-  color: var(--brand-700);
+  color: var(--brand-600);
 }
 
 code {
-  color: #b3268c;
-  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
+  color: var(--info-ink);
+  font-family: var(--font-mono);
   font-size: 0.9em;
 }
 
@@ -102,15 +282,9 @@ h2,
 h3,
 h4 {
   color: var(--ink);
-  letter-spacing: -0.011em;
-}
-
-/* Figures line up in columns wherever they appear. */
-.num,
-.money,
-.mat-mdc-cell.num-cell,
-.mat-mdc-footer-cell.num-cell {
-  font-variant-numeric: tabular-nums;
+  font-family: var(--font-display);
+  font-weight: var(--fw-medium);
+  letter-spacing: -0.01em;
 }
 
 ::-webkit-scrollbar {
@@ -128,62 +302,101 @@ h4 {
   background: var(--muted-2);
 }
 
-/* -------------------------------------------------------------- layout ---- */
+/* Keyboard focus stays visible on everything, on both themes. */
+:focus-visible {
+  outline: 2px solid var(--brand-500);
+  outline-offset: 2px;
+}
+
+/* ---------------------------------------------------------------- layout ---- */
 
 .content-container {
   max-width: 1340px;
   margin: 0 auto;
-  padding: 0 24px 48px;
+  padding: 0 var(--sp-6) 48px;
 }
 
-/* A page is one vertical stack. Every screen's wrapper carries `page` next to
-   its own `<entity>-card` class: the shared class brings the surface, the
-   entity class stays for whatever is genuinely specific to that screen. */
+/* A page is one vertical stack ON the canvas: the header and the section titles
+   sit directly on it, and each block of content brings its own surface. The
+   page itself is deliberately NOT a card — a card holding cards holding cards
+   is how a dense list becomes unreadable. */
 .page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+  margin: var(--sp-6) auto 0;
+  max-width: 100%;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  box-shadow: none;
+}
+
+/* The blocks that are content rather than chrome get the surface the page used
+   to provide. Tables, panels, tiles and tab groups draw their own (below). */
+.page > form,
+.page > .field-grid,
+.page > .form-grid,
+.page > .meta-grid,
+.page > .editor,
+.page > .chat-layout,
+.page > .notification-list {
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--r-lg);
-  box-shadow: var(--shadow-1);
-  padding: 24px;
-  margin: 24px auto 0;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  max-width: 100%;
+  padding: var(--sp-5);
 }
 
-/* Page header: title on the start side, primary action on the end side. */
+.page > .notification-list {
+  padding: 0;
+  overflow: hidden;
+}
+
+/* Page header: eyebrow, title, and at most one primary action on the end side. */
 .page-head,
 main .page .header-row,
 main .page .dash-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   flex-wrap: wrap;
-  gap: var(--gap-4);
+  gap: var(--sp-4);
   margin: 0;
+}
+
+/* Uppercase context line above the title: which agency, which branch, what day. */
+.page-eyebrow {
+  margin: 0 0 2px;
+  font-size: var(--fs-label);
+  font-weight: var(--fw-normal);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
 }
 
 main .page .title,
 .page-title {
   margin: 0;
-  font-size: 22px;
-  font-weight: 650;
-  line-height: 1.25;
+  font-family: var(--font-display);
+  font-size: var(--fs-page);
+  font-weight: var(--fw-medium);
+  line-height: 1.2;
   color: var(--ink);
-  letter-spacing: -0.015em;
+  letter-spacing: -0.01em;
 }
 
 .page-subtitle {
-  margin: 2px 0 0;
-  font-size: 13px;
+  margin: 3px 0 0;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-normal);
   color: var(--muted);
 }
 
 .page-actions {
   display: flex;
   align-items: center;
-  gap: var(--gap-2);
+  gap: var(--sp-2);
   flex-wrap: wrap;
 }
 
@@ -193,6 +406,14 @@ main .page .title,
 
 .full-width {
   width: 100%;
+}
+
+/* A generic top-level block: a summary panel, a form section, a chart. */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  padding: var(--sp-4);
 }
 
 /* Section label inside a page — small, quiet, uppercase.
@@ -207,10 +428,93 @@ main .page .title,
 .mat-typography .section-label,
 .section-title,
 .section-label {
-  margin: var(--gap-2) 0 0;
-  font: 700 12px/1.4 var(--font);
+  margin: var(--sp-2) 0 0;
+  font: var(--fw-medium) var(--fs-label) / 1.4 var(--font-body);
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+
+/* -------------------------------------------------------- metric cards ---- */
+
+/* A label and one number, in grids of two to four. Distinct from .card, which
+   has structure inside it. */
+.tile-grid,
+.metric-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--sp-3);
+}
+
+.tile,
+.metric-card {
+  position: relative;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: var(--sp-3) 14px;
+}
+
+a.tile,
+a.metric-card,
+.tile.clickable {
+  text-decoration: none;
+  transition: border-color 140ms ease, box-shadow 140ms ease;
+}
+
+a.tile:hover,
+a.metric-card:hover,
+.tile.clickable:hover {
+  border-color: var(--line-strong);
+  box-shadow: var(--shadow-1);
+}
+
+/* Qualified with .mat-typography for the same reason .section-title is: Material's
+   typography hierarchy emits `.mat-typography p` at [0,1,1], which beats a bare
+   class. A tile written with <p> instead of <div> — both appear in this codebase —
+   otherwise silently loses its font, and for .tile-value that means losing the
+   mono figure, which is the whole point of rule 3. */
+.mat-typography .tile-label,
+.mat-typography .metric-label,
+.tile-label,
+.metric-label {
+  margin: 0 0 var(--sp-1);
+  font-family: var(--font-body);
+  font-size: var(--fs-label);
+  font-weight: var(--fw-normal);
+  line-height: 1.4;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--muted);
+}
+
+.mat-typography .tile-value,
+.mat-typography .metric-value,
+.tile-value,
+.metric-value {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 22px;
+  font-weight: var(--fw-normal);
+  line-height: 1.2;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+/* The unit or currency beside a metric is supporting text, not part of the
+   figure. */
+.tile-value .unit,
+.metric-value .unit {
+  font-family: var(--font-body);
+  font-size: var(--fs-sm);
+  color: var(--muted);
+}
+
+.tile-note,
+.metric-note {
+  margin: var(--sp-1) 0 0;
+  font-size: var(--fs-label);
   color: var(--muted);
 }
 
@@ -226,11 +530,11 @@ main .page .add-row {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: var(--gap-3);
-  padding: 14px 16px;
-  background: var(--surface-2);
+  gap: var(--sp-2);
+  padding: var(--sp-3) 14px;
+  background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: var(--r);
+  border-radius: var(--r-lg);
 }
 
 .toolbar .filter-field,
@@ -241,8 +545,8 @@ main .page .search-row .search-input {
   max-width: 320px;
 }
 
-/* Filter fields sit on a tinted strip; kill the stock bottom margin so the
-   strip stays the height of the inputs. */
+/* Filter fields sit inside the strip; kill the stock bottom margin so the strip
+   stays the height of the inputs. */
 .toolbar .mat-mdc-form-field,
 main .page .filter-row .mat-mdc-form-field,
 main .page .search-row .mat-mdc-form-field,
@@ -270,7 +574,7 @@ main .page .add-row .mat-mdc-form-field-subscript-wrapper {
    the viewport and the table should scroll sideways on its own. */
 .table-wrap {
   border: 1px solid var(--line);
-  border-radius: var(--r);
+  border-radius: var(--r-lg);
   overflow-x: auto;
   overflow-y: hidden;
   background: var(--surface);
@@ -279,25 +583,29 @@ main .page .add-row .mat-mdc-form-field-subscript-wrapper {
 table.mat-mdc-table,
 .mat-mdc-table {
   width: 100%;
-  background: transparent;
-  --mat-table-header-headline-size: 12px;
-  --mat-table-header-headline-weight: 700;
-  --mat-table-row-item-label-text-size: 14px;
+  background: var(--surface);
+  --mat-table-header-headline-size: var(--fs-micro);
+  --mat-table-header-headline-weight: var(--fw-normal);
+  --mat-table-row-item-label-text-size: var(--fs-sm);
 }
 
 table.data-table {
   border: 1px solid var(--line);
-  border-radius: var(--r);
+  border-radius: var(--r-lg);
+  /* The frame is drawn by this element, so a cell background must not paint
+     over its rounded corners. */
+  overflow: hidden;
+  border-spacing: 0;
 }
 
-/* border-collapse leaves cell backgrounds square, so the two header corners
-   are rounded explicitly to match the frame. */
+/* border-collapse leaves cell backgrounds square, so the corners the frame
+   rounds are rounded on the cells too. */
 table.data-table .mat-mdc-header-cell:first-of-type {
-  border-start-start-radius: var(--r);
+  border-start-start-radius: var(--r-lg);
 }
 
 table.data-table .mat-mdc-header-cell:last-of-type {
-  border-start-end-radius: var(--r);
+  border-start-end-radius: var(--r-lg);
 }
 
 /* Inside a scroll wrapper the frame belongs to the wrapper. */
@@ -306,51 +614,111 @@ table.data-table .mat-mdc-header-cell:last-of-type {
   border-radius: 0;
 }
 
+/* -- The list card ------------------------------------------------------------
+   A toolbar directly above a table, and a paginator directly below it, are one
+   card: hairlines separate them, not gaps and three sets of rounded corners.
+   The negative margin cancels the .page stack gap for exactly the joined edge;
+   when an error banner or an empty state comes between, the join simply does
+   not apply and each block stands on its own. */
+.toolbar:has(+ table.data-table),
+main .page .filter-row:has(+ table.data-table),
+main .page .search-row:has(+ table.data-table),
+main .page .inline-add:has(+ table.data-table),
+main .page .add-row:has(+ table.data-table) {
+  border-radius: var(--r-lg) var(--r-lg) 0 0;
+  border-bottom: 0;
+}
+
+.toolbar + table.data-table,
+main .page .filter-row + table.data-table,
+main .page .search-row + table.data-table,
+main .page .inline-add + table.data-table,
+main .page .add-row + table.data-table {
+  margin-top: calc(-1 * var(--sp-5));
+  border-top: 0;
+  border-start-start-radius: 0;
+  border-start-end-radius: 0;
+}
+
+.toolbar + table.data-table .mat-mdc-header-cell:first-of-type,
+main .page .filter-row + table.data-table .mat-mdc-header-cell:first-of-type,
+main .page .search-row + table.data-table .mat-mdc-header-cell:first-of-type,
+main .page .inline-add + table.data-table .mat-mdc-header-cell:first-of-type,
+main .page .add-row + table.data-table .mat-mdc-header-cell:first-of-type,
+.toolbar + table.data-table .mat-mdc-header-cell:last-of-type,
+main .page .filter-row + table.data-table .mat-mdc-header-cell:last-of-type,
+main .page .search-row + table.data-table .mat-mdc-header-cell:last-of-type,
+main .page .inline-add + table.data-table .mat-mdc-header-cell:last-of-type,
+main .page .add-row + table.data-table .mat-mdc-header-cell:last-of-type {
+  border-start-start-radius: 0;
+  border-start-end-radius: 0;
+}
+
+table.data-table:has(+ .mat-mdc-paginator) {
+  border-end-start-radius: 0;
+  border-end-end-radius: 0;
+}
+
+table.data-table + .mat-mdc-paginator {
+  margin-top: calc(-1 * var(--sp-5));
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-top: 0;
+  border-radius: 0 0 var(--r-lg) var(--r-lg);
+}
+
 .mat-mdc-header-row {
-  background: var(--surface-3);
-  height: 44px;
+  background: var(--surface-2);
+  height: 40px;
 }
 
 .mat-mdc-header-cell {
   color: var(--muted);
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
+  font-family: var(--font-body);
+  font-size: var(--fs-micro);
+  font-weight: var(--fw-normal);
+  letter-spacing: 0.05em;
   text-transform: uppercase;
+  /* Stated rather than inherited from Material's own header rule: a plain
+     `<th mat-header-cell>` with no mat-sort-header (the status and actions
+     columns) would otherwise take the browser's centred default. */
+  text-align: start;
   border-bottom: 1px solid var(--line);
   white-space: nowrap;
-  padding: 0 14px;
+  padding: 0 10px;
 }
 
 .mat-mdc-cell {
   color: var(--ink-2);
-  font-size: 14px;
-  border-bottom: 1px solid var(--line);
-  padding: 0 14px;
+  font-size: var(--fs-sm);
+  border-top: 1px solid var(--line);
+  border-bottom: 0;
+  padding: var(--sp-2) 10px;
 }
 
 .mat-mdc-row {
-  height: 52px;
+  height: 48px;
   transition: background-color 120ms ease;
 }
 
-.mat-mdc-row:hover {
-  background: var(--brand-50);
+/* The header already draws the line under itself. */
+.mat-mdc-row:first-of-type .mat-mdc-cell {
+  border-top: 0;
 }
 
-.mat-mdc-row:last-of-type .mat-mdc-cell {
-  border-bottom: none;
+.mat-mdc-row:hover {
+  background: var(--overlay-weak);
 }
 
 /* First/last cell breathing room matches the card padding rhythm. */
 .mat-mdc-header-cell:first-of-type,
 .mat-mdc-cell:first-of-type {
-  padding-inline-start: 18px;
+  padding-inline-start: 14px;
 }
 
 .mat-mdc-header-cell:last-of-type,
 .mat-mdc-cell:last-of-type {
-  padding-inline-end: 18px;
+  padding-inline-end: 14px;
 }
 
 /* Sort headers. */
@@ -370,9 +738,11 @@ table.data-table .mat-mdc-header-cell:last-of-type {
   color: var(--ink);
 }
 
+/* The sorted column says so with the accent TEXT stop on a tint — both of which
+   follow the theme. */
 th.mat-mdc-header-cell[aria-sort='ascending'],
 th.mat-mdc-header-cell[aria-sort='descending'] {
-  color: var(--brand-700);
+  color: var(--brand-600);
   background: var(--brand-50);
 }
 
@@ -416,12 +786,14 @@ th.mat-mdc-header-cell.actions-cell .mat-sort-header-container {
   }
 }
 
+/* An empty list is an invitation, not a report — the copy does that; this just
+   gives it room. */
 .empty-row,
 td.empty-row {
-  padding: 40px 16px;
+  padding: 40px var(--sp-4);
   text-align: center;
   color: var(--muted);
-  font-size: 14px;
+  font-size: var(--fs-sm);
 }
 
 .muted,
@@ -430,12 +802,12 @@ td.empty-row {
 }
 
 .mat-mdc-cell .muted {
-  font-size: 12.5px;
+  font-size: var(--fs-label);
 }
 
 /* The identifying value of a row — the one a reader scans the column for. */
 .cell-main {
-  font-weight: 550;
+  font-weight: var(--fw-medium);
   color: var(--ink);
 }
 
@@ -444,11 +816,11 @@ td.empty-row {
   display: flex;
   flex-direction: column;
   line-height: 1.35;
-  padding: 6px 0;
+  gap: 1px;
 }
 
 .cell-stack .cell-sub {
-  font-size: 12px;
+  font-size: var(--fs-micro);
   color: var(--muted);
 }
 
@@ -458,7 +830,12 @@ td.empty-row {
   background: transparent;
   border-top: 1px solid var(--line);
   color: var(--muted);
-  font-size: 12.5px;
+  font-size: var(--fs-label);
+}
+
+.mat-mdc-paginator .mat-mdc-paginator-range-label {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
 }
 
 .table-wrap + .mat-mdc-paginator {
@@ -468,67 +845,84 @@ td.empty-row {
 
 /* --------------------------------------------------------------- chips ---- */
 
-/* Status pill. Pair .chip with a tone class: .ok .warn .danger .info .accent
-   .neutral — the tone is what the reader actually decodes. */
+/* Status pill. Pair .chip with a tone class — the tone is what the reader
+   actually decodes. The ink always comes from the same family as the fill:
+   contrast against a tint is not the same problem as contrast against a
+   surface, and --ink fails it.
+
+   Chips carry STATE. An agency name, a branch or a document type is a plain
+   label or an outline pill (.pill), not a coloured chip. */
 .chip {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 3px 10px;
+  gap: var(--sp-1);
+  padding: 3px 9px;
   border-radius: var(--r-pill);
-  font-size: 12px;
-  font-weight: 650;
-  line-height: 1.6;
+  font-size: var(--fs-label);
+  font-weight: var(--fw-normal);
+  line-height: 1.5;
   white-space: nowrap;
   background: var(--surface-3);
   color: var(--ink-2);
   border: 1px solid transparent;
 }
 
-.chip::before {
-  content: '';
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: currentColor;
-  opacity: 0.75;
+/* Kept as a no-op: the chips carried a leading dot at one point and several
+   templates still ask for it to be off. */
+.chip.no-dot {
+  /* nothing — chips have no dot */
 }
 
-.chip.no-dot::before {
-  display: none;
-}
-
-.chip.ok {
+.chip.ok,
+.chip.chip-ok,
+.chip.active,
+.chip.good {
   background: var(--ok-bg);
-  color: var(--ok);
+  color: var(--ok-ink);
 }
 
 .chip.warn,
-.chip.pending {
+.chip.chip-warn,
+.chip.pending,
+.chip.upcoming {
   background: var(--warn-bg);
-  color: var(--warn);
+  color: var(--warn-ink);
 }
 
-.chip.danger {
+.chip.danger,
+.chip.chip-danger,
+.chip.cancelled {
   background: var(--danger-bg);
-  color: var(--danger);
+  color: var(--danger-ink);
 }
 
 .chip.info,
+.chip.chip-info,
+.chip.accent,
 .chip.converted {
   background: var(--info-bg);
-  color: var(--info);
-}
-
-.chip.accent {
-  background: var(--accent-bg);
-  color: var(--accent);
+  color: var(--info-ink);
 }
 
 .chip.neutral,
-.chip.ended {
+.chip.ended,
+.chip.done,
+.chip.expired {
   background: var(--surface-3);
   color: var(--muted);
+}
+
+/* Category, not state: an outline pill. */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  padding: 3px 9px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-pill);
+  font-size: var(--fs-label);
+  color: var(--ink-2);
+  white-space: nowrap;
 }
 
 /* Filters that arrived by link: a dashboard count or a home tile opens its list
@@ -539,12 +933,13 @@ td.empty-row {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: var(--gap-2);
+  gap: var(--sp-2);
 }
 
 .filter-chips .chip {
-  background: var(--info-bg);
-  color: var(--info);
+  background: var(--brand-50);
+  color: var(--brand-600);
+  border-color: var(--brand-500);
 }
 
 .filter-chips .chip-clear {
@@ -566,7 +961,7 @@ td.empty-row {
 
 .filter-chips .chip-clear:hover {
   opacity: 1;
-  background: rgba(20, 35, 61, 0.08);
+  background: var(--overlay);
 }
 
 .filter-chips .chip-clear .mat-icon {
@@ -576,70 +971,270 @@ td.empty-row {
   line-height: 14px;
 }
 
+/* ------------------------------------------------------- needs attention ---- */
+
+/* A 4px left border marks a row or panel that is waiting on the user. Nothing
+   else. Amber for a deadline approaching, red for one already missed, blue for
+   information that must be read before acting.
+
+   A row in good standing gets NO bar: the whole point is that scanning the left
+   gutter shows you the work. A bar on every row is decoration and costs the
+   pattern its meaning. */
+.needs-action {
+  border-inline-start: var(--accent-bar) solid var(--warn);
+  /* One bordered edge ⇒ no radius. A rounded corner on a single-sided border is
+     a rendering artefact, not a style. */
+  border-radius: 0;
+  background: var(--row-attention);
+}
+
+.needs-action.is-overdue {
+  border-inline-start-color: var(--danger);
+  background: var(--row-overdue);
+}
+
+.needs-action.is-info {
+  border-inline-start-color: var(--brand-500);
+  background: transparent;
+}
+
+/* On a table row the bar has to go on the first cell: a border on a <tr> is not
+   painted reliably once the cells have their own backgrounds. */
+tr.mat-mdc-row.needs-action {
+  background: var(--row-attention);
+}
+
+tr.mat-mdc-row.needs-action > .mat-mdc-cell:first-of-type {
+  border-inline-start: var(--accent-bar) solid var(--warn);
+  padding-inline-start: 10px;
+}
+
+tr.mat-mdc-row.needs-action.is-overdue {
+  background: var(--row-overdue);
+}
+
+tr.mat-mdc-row.needs-action.is-overdue > .mat-mdc-cell:first-of-type {
+  border-inline-start-color: var(--danger);
+}
+
+tr.mat-mdc-row.needs-action.is-info {
+  background: transparent;
+}
+
+tr.mat-mdc-row.needs-action.is-info > .mat-mdc-cell:first-of-type {
+  border-inline-start-color: var(--brand-500);
+}
+
+/* The row tints above outrank the plain :hover rule, which would otherwise leave
+   flagged rows — the ones most likely to be clicked — with no hover feedback at
+   all. Stated explicitly rather than fought with !important. */
+tr.mat-mdc-row.needs-action:hover {
+  background: color-mix(in srgb, var(--row-attention) 92%, var(--ink));
+}
+
+tr.mat-mdc-row.needs-action.is-overdue:hover {
+  background: color-mix(in srgb, var(--row-overdue) 92%, var(--ink));
+}
+
+tr.mat-mdc-row.needs-action.is-info:hover {
+  background: var(--overlay-weak);
+}
+
 /* ------------------------------------------------------------- banners ---- */
 
+/* A banner that reports something is a tinted block. A banner that BLOCKS the
+   user — confirm this, the car is held until 14:30 — is a .needs-action panel
+   with the actions in it, and it uses .action-banner. */
 .error-banner,
 .info-banner,
 .warn-banner,
 .ok-banner {
   display: flex;
   align-items: center;
-  gap: var(--gap-2);
-  padding: 12px 16px;
-  border-radius: var(--r-sm);
-  font-size: 13.5px;
+  gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-4);
+  border-radius: var(--r);
+  font-size: var(--fs-sm);
   border: 1px solid transparent;
 }
 
 .error-banner {
   background: var(--danger-bg);
-  color: var(--danger);
-  border-color: rgba(179, 38, 30, 0.18);
+  color: var(--danger-ink);
 }
 
 .warn-banner {
   background: var(--warn-bg);
-  color: var(--warn);
-  border-color: rgba(167, 90, 9, 0.18);
+  color: var(--warn-ink);
 }
 
 .ok-banner {
   background: var(--ok-bg);
-  color: var(--ok);
-  border-color: rgba(16, 120, 75, 0.18);
+  color: var(--ok-ink);
 }
 
 .info-banner {
   background: var(--info-bg);
-  color: var(--info);
-  border-color: var(--brand-100);
+  color: var(--info-ink);
+}
+
+/* The blocking banner from the reservation detail: a surface with an accent bar,
+   an icon, the sentence, and the actions on the end side. */
+.action-banner {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: 14px var(--sp-4);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-inline-start: var(--accent-bar) solid var(--warn);
+  border-radius: 0;
+}
+
+.action-banner.is-overdue {
+  border-inline-start-color: var(--danger);
+}
+
+.action-banner.is-info {
+  border-inline-start-color: var(--brand-500);
+}
+
+.action-banner > .mat-icon {
+  flex: none;
+  color: var(--warn);
+}
+
+.action-banner.is-overdue > .mat-icon {
+  color: var(--danger);
+}
+
+.action-banner.is-info > .mat-icon {
+  color: var(--brand-500);
+}
+
+.action-banner-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.action-banner-title {
+  margin: 0;
+  font-size: var(--fs-body);
+  font-weight: var(--fw-medium);
+  color: var(--ink);
+}
+
+.action-banner-note {
+  margin: 2px 0 0;
+  font-size: var(--fs-sm);
+  color: var(--ink-2);
 }
 
 .loading {
   color: var(--muted);
-  font-size: 13.5px;
+  font-size: var(--fs-sm);
+}
+
+/* ------------------------------------------------------------- numbers ---- */
+
+/* Amounts, plate numbers, dates, mileage, reference codes, counts, percentages.
+   Tabular figures are what actually make a column of prices scannable without
+   reading it; the mono family alone does not. .num is for the value, never the
+   label. */
+.num,
+.money {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* Right alignment belongs to a numeric COLUMN, not to every number: a plate
+   inside a two-line cell reads as part of the cell, not as a figure to add up. */
+td.num,
+th.num,
+.num-cell .num,
+.mat-mdc-cell.num-cell,
+.mat-mdc-footer-cell.num-cell {
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+}
+
+/* --------------------------------------------------------- money lines ---- */
+
+/* The amount breakdown: labels left, values right, a rule above the total, and
+   the total one step larger with its currency beside it in muted type. The
+   balance is the only number a person decides on, so it is the only one allowed
+   extra size. */
+.money-lines {
+  display: flex;
+  flex-direction: column;
+}
+
+.money-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--sp-4);
+  padding: 5px 0;
+  font-size: var(--fs-sm);
+}
+
+.money-line > .label {
+  color: var(--ink-2);
+}
+
+.money-line > .value {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.money-line.is-credit > .value {
+  color: var(--ok);
+}
+
+.money-line.is-total {
+  margin-top: var(--sp-2);
+  padding-top: 11px;
+  border-top: 1px solid var(--line);
+}
+
+.money-line.is-total > .label {
+  font-weight: var(--fw-medium);
+  color: var(--ink);
+}
+
+.money-line.is-total > .value {
+  font-size: 19px;
+  color: var(--ink);
+}
+
+.money-line.is-total > .value .currency {
+  font-family: var(--font-body);
+  font-size: var(--fs-sm);
+  color: var(--muted);
 }
 
 /* ------------------------------------------------------------- buttons ---- */
 
+/* One primary button per view: the filled blue button is the action the screen
+   exists for. Everything else is outline. */
 .mat-mdc-raised-button,
 .mat-mdc-unelevated-button,
 .mat-mdc-outlined-button,
 .mat-mdc-button {
-  --mdc-protected-button-container-shape: var(--r-sm);
-  --mdc-filled-button-container-shape: var(--r-sm);
-  --mdc-outlined-button-container-shape: var(--r-sm);
-  --mdc-text-button-container-shape: var(--r-sm);
-  letter-spacing: 0.01em;
-  font-weight: 600;
+  --mdc-protected-button-container-shape: var(--r);
+  --mdc-filled-button-container-shape: var(--r);
+  --mdc-outlined-button-container-shape: var(--r);
+  --mdc-text-button-container-shape: var(--r);
+  font-family: var(--font-body);
+  font-weight: var(--fw-medium);
+  letter-spacing: 0;
 }
 
-.mat-mdc-raised-button:not(:disabled) {
-  box-shadow: var(--shadow-1);
-}
-
+/* The filled button is a flat blue block, not a floating one. */
+.mat-mdc-raised-button:not(:disabled),
 .mat-mdc-raised-button:not(:disabled):hover {
-  box-shadow: var(--shadow-2);
+  box-shadow: none;
 }
 
 /* An icon immediately before a label needs a hair of space. */
@@ -651,10 +1246,18 @@ td.empty-row {
   margin-inline-start: 0;
 }
 
-/* Destructive row action: Material has no "warn" palette, so colour it here
-   (the templates already say color="warn"). */
+/* Destructive actions are outline with red text and a red border, never filled —
+   a filled red button reads as the recommended path. Material has no "warn"
+   palette, so colour it here (the templates already say color="warn"). */
 .mat-mdc-icon-button[color='warn'] {
   color: var(--danger);
+}
+
+.mat-mdc-outlined-button[color='warn'],
+.mat-mdc-button[color='warn'] {
+  color: var(--danger);
+  --mdc-outlined-button-label-text-color: var(--danger);
+  --mdc-outlined-button-outline-color: var(--danger-bg);
 }
 
 /* --------------------------------------------------------------- forms ---- */
@@ -663,7 +1266,7 @@ td.empty-row {
 .form-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: var(--gap-4);
+  gap: var(--sp-4);
 }
 
 .form-grid .span-2 {
@@ -673,7 +1276,7 @@ td.empty-row {
 .form-section {
   display: flex;
   flex-direction: column;
-  gap: var(--gap-3);
+  gap: var(--sp-3);
   padding: 18px;
   border: 1px solid var(--line);
   border-radius: var(--r);
@@ -682,73 +1285,40 @@ td.empty-row {
 
 .form-actions {
   display: flex;
-  gap: var(--gap-2);
+  gap: var(--sp-2);
   flex-wrap: wrap;
-  padding-top: var(--gap-2);
+  padding-top: var(--sp-2);
 }
 
 .mat-mdc-form-field {
   width: 100%;
 }
 
-/* ---------------------------------------------------------------- tiles ---- */
+/* ----------------------------------------------------------------- tabs ---- */
 
-/* KPI / stat grid shared by the home screen and the dashboard. */
-.tile-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-  gap: var(--gap-4);
-}
-
-.tile {
-  position: relative;
+/* A tab group at the top level of a page is the page's content surface. */
+.page > .mat-mdc-tab-group {
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: var(--r);
-  padding: 16px 18px;
-  box-shadow: var(--shadow-1);
-  transition: box-shadow 140ms ease, transform 140ms ease;
+  border-radius: var(--r-lg);
+  overflow: hidden;
 }
 
-a.tile:hover,
-.tile.clickable:hover {
-  box-shadow: var(--shadow-2);
-  transform: translateY(-1px);
+/* The inset goes on the body CONTENT, not the body wrapper: Material sizes the
+   wrapper itself during tab transitions, and padding there gets clipped mid
+   animation. The content element is the documented place for it. */
+.page > .mat-mdc-tab-group .mat-mdc-tab-body-content {
+  padding: var(--sp-5);
 }
-
-.tile-label {
-  font-size: 11.5px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.07em;
-  color: var(--muted);
-}
-
-.tile-value {
-  margin-top: 6px;
-  font-size: 26px;
-  font-weight: 680;
-  line-height: 1.15;
-  color: var(--ink);
-  font-variant-numeric: tabular-nums;
-  letter-spacing: -0.02em;
-}
-
-.tile-note {
-  margin-top: 4px;
-  font-size: 12px;
-  color: var(--muted);
-}
-
-/* ----------------------------------------------------------------- tabs ---- */
 
 .mat-mdc-tab-header {
   border-bottom: 1px solid var(--line);
 }
 
 .mat-mdc-tab .mdc-tab__text-label {
-  font-weight: 600;
-  letter-spacing: 0.01em;
+  font-family: var(--font-body);
+  font-weight: var(--fw-medium);
+  letter-spacing: 0;
 }
 
 /* ------------------------------------------------------------------ rtl ---- */
@@ -784,24 +1354,32 @@ a.tile:hover,
 
 @media (max-width: 767px) {
   .content-container {
-    padding: 0 12px 32px;
+    padding: 0 var(--sp-3) 32px;
   }
 
   .page {
-    padding: 18px 14px;
-    border-radius: var(--r);
+    gap: var(--sp-4);
     margin-top: 14px;
+  }
+
+  .page > form,
+  .page > .field-grid,
+  .page > .form-grid,
+  .page > .meta-grid,
+  .page > .editor,
+  .page > .chat-layout {
+    padding: 14px;
   }
 
   main .page .title,
   .page-title {
-    font-size: 19px;
+    font-size: 21px;
   }
 
   .toolbar,
   main .page .filter-row,
   main .page .search-row {
-    padding: 12px;
+    padding: var(--sp-3);
   }
 
   .toolbar .filter-field,
@@ -811,7 +1389,18 @@ a.tile:hover,
     flex-basis: 100%;
   }
 
-  .tile-value {
-    font-size: 22px;
+  /* The stack gap the join cancels is smaller here. */
+  .toolbar + table.data-table,
+  main .page .filter-row + table.data-table,
+  main .page .search-row + table.data-table,
+  main .page .inline-add + table.data-table,
+  main .page .add-row + table.data-table,
+  table.data-table + .mat-mdc-paginator {
+    margin-top: calc(-1 * var(--sp-4));
+  }
+
+  .tile-value,
+  .metric-value {
+    font-size: 20px;
   }
 }

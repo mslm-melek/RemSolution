@@ -140,6 +140,11 @@
           </ng-container>
           <ng-container matColumnDef="period">
             <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ t('common.period') }}</th>
+            <!-- No :'UTC' here, deliberately: these two are the only start/end dates
+                 in the app that are DateTimeOffset (AgencySubscriptionDto) rather
+                 than a wall-clock DateTime stamped UTC. An offset is already an
+                 unambiguous instant, so the local pipe is the correct reading —
+                 adding 'UTC' would shift a subscription boundary. -->
             <td mat-cell *matCellDef="let s" class="num">{{ s.startDate | date:'yyyy-MM-dd' }} → {{ s.endDate | date:'yyyy-MM-dd' }}</td>
           </ng-container>
           <ng-container matColumnDef="status">

@@ -21,7 +21,7 @@
         <div class="thread-sub">
           {{ thread.carMatricule }}
           <span class="muted" *ngIf="thread.startDate">
-            · {{ thread.startDate | date:'yyyy-MM-dd' }}
+            · {{ thread.startDate | date:'yyyy-MM-dd':'UTC' }}
           </span>
         </div>
         <div class="thread-preview" *ngIf="thread.lastMessagePreview">
@@ -47,7 +47,7 @@
           <div class="muted">
             {{ selected.carMatricule }}
             <span *ngIf="selected.startDate">
-              · {{ selected.startDate | date:'yyyy-MM-dd' }} → {{ selected.endDate | date:'yyyy-MM-dd' }}
+              · {{ selected.startDate | date:'yyyy-MM-dd':'UTC' }} → {{ selected.endDate | date:'yyyy-MM-dd':'UTC' }}
             </span>
           </div>
         </div>

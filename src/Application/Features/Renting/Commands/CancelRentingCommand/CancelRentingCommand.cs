@@ -156,7 +156,9 @@ namespace RemSolution.Application.Features.Renting.Commands.CancelRentingCommand
                         AgencyId = entity.AgencyId,
                         RentingId = entity.Id,
                         ClientId = entity.ClientId,
-                        PayementDate = _dateTime.GetUtcNow().UtcDateTime,
+                        // .Date: PayementDate is a calendar day at UTC midnight,
+                        // never an instant (see CreatePaymentCommand).
+                        PayementDate = _dateTime.GetUtcNow().UtcDateTime.Date,
                         PayementAmount = Money.Of(-refundable, currency).Round(),
                         Method = request.RefundMethod,
                         IsRefund = true,

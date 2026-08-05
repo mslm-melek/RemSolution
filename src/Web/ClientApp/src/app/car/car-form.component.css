@@ -16,7 +16,7 @@
   margin: 0;
   font-size: 24px;
   font-weight: 600;
-  color: #333;
+  color: var(--ink);
 }
 
 .field-grid {
@@ -30,8 +30,8 @@
 }
 
 .error-banner {
-  background: #fdecea;
-  color: #b71c1c;
+  background: var(--danger-bg);
+  color: var(--danger-ink);
   border-radius: 8px;
   padding: 12px 16px;
 }
@@ -51,12 +51,12 @@
 
 .photo-label {
   font-weight: 600;
-  color: #333;
+  color: var(--ink);
 }
 
 .photo-hint {
   margin: 0;
-  color: #777;
+  color: var(--muted);
   font-size: 13px;
 }
 
@@ -68,15 +68,15 @@
 
 .gallery-item {
   position: relative;
-  border: 1px solid #e0e0e0;
+  border: 1px solid var(--line);
   border-radius: 8px;
   overflow: hidden;
-  background: #fafafa;
+  background: var(--surface-2);
 }
 
 .gallery-item.is-primary {
-  border-color: #1976d2;
-  box-shadow: 0 0 0 1px #1976d2;
+  border-color: var(--brand-600);
+  box-shadow: 0 0 0 1px var(--brand-600);
 }
 
 .gallery-item.uploading {
@@ -90,23 +90,38 @@
   object-fit: cover;
 }
 
+/* These sit on a photo, so unlike a .chip they need to stay legible against an
+   unknown image: an opaque tint plus its own ink, not a translucent one. The
+   fill/ink pairs are the semantic triples, which is what makes them work in both
+   themes — the previous version filled the badge with a dark colour and wrote on
+   it in white, which inverted to light-on-light the moment the tokens flipped. */
 .badge {
   position: absolute;
   top: 6px;
   inset-inline-start: 6px;
   padding: 2px 8px;
-  border-radius: 10px;
-  font-size: 11px;
-  font-weight: 600;
-  color: #fff;
+  border-radius: var(--r-pill);
+  font-size: var(--fs-micro);
+  font-weight: var(--fw-medium);
 }
 
-.badge-primary { background: #1976d2; }
-.badge-info { background: #616161; }
-.badge-warn { background: #b71c1c; }
+.badge-primary {
+  background: var(--info-bg);
+  color: var(--info-ink);
+}
+
+.badge-info {
+  background: var(--surface-3);
+  color: var(--ink-2);
+}
+
+.badge-warn {
+  background: var(--warn-bg);
+  color: var(--warn-ink);
+}
 
 .gallery-actions {
   display: flex;
   justify-content: space-between;
-  background: rgba(255, 255, 255, 0.9);
+  background: var(--surface);
 }

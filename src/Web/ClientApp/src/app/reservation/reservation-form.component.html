@@ -8,20 +8,41 @@
 
   <div *ngIf="errorMessage" class="error-banner">{{ errorMessage }}</div>
 
-  <div *ngIf="isEdit && reservation" class="state-row">
+  <!-- A hold awaiting the agency is the one thing on this screen that blocks: the
+       car is held and the clock is running. So it reads as a panel that says what
+       the deadline is and offers the two answers, not as a row of buttons among
+       others — see rule 1 in docs/DESIGN_SYSTEM.md. Confirm is the filled button
+       because it is the action the screen exists for; Convert, the other
+       candidate, only appears once the hold is no longer pending, so the two
+       never compete (rule 2).
+
+       expiresAt is a true instant — the server sets it from GetUtcNow() — so the
+       local date pipe is right here. Contrast startDate/endDate, which are
+       wall-clock values stamped UTC and need :'UTC'. -->
+  <div *ngIf="isEdit && reservation && isPending" class="action-banner">
+    <mat-icon aria-hidden="true">schedule</mat-icon>
+    <div class="action-banner-text">
+      <p class="action-banner-title">
+        {{ reservation.expiresAt
+            ? t('reservation.heldUntil', { time: (reservation.expiresAt | date:'HH:mm') })
+            : t('reservation.awaitingYou') }}
+      </p>
+      <p class="action-banner-note">{{ t('reservation.heldUntilNote') }}</p>
+    </div>
+    <button mat-stroked-button color="warn" (click)="reject()">{{ t('reservation.reject') }}</button>
+    <button mat-stroked-button color="warn" (click)="cancel()">{{ t('common.cancel') }}</button>
+    <button mat-raised-button color="primary" (click)="confirm()">{{ t('reservation.confirm') }}</button>
+  </div>
+
+  <!-- Every other state: what it is, and whatever actions still apply. -->
+  <div *ngIf="isEdit && reservation && !isPending" class="state-row">
     <span class="state-chip">{{ t('common.status') }}:
       <strong>{{ statusLabelKey(reservation.status) ? t(statusLabelKey(reservation.status)) : '' }}</strong>
     </span>
-    <button mat-raised-button color="accent" *ngIf="isPending" (click)="confirm()">
-      <mat-icon>check_circle</mat-icon> {{ t('reservation.confirm') }}
-    </button>
-    <button mat-stroked-button color="warn" *ngIf="isPending" (click)="reject()">
-      <mat-icon>block</mat-icon> {{ t('reservation.reject') }}
-    </button>
     <button mat-raised-button color="primary" *ngIf="isConvertible" (click)="convert()">
       <mat-icon>directions_car</mat-icon> {{ t('reservation.convert') }}
     </button>
-    <button mat-stroked-button color="warn" *ngIf="isPending || isConvertible" (click)="cancel()">
+    <button mat-stroked-button color="warn" *ngIf="isConvertible" (click)="cancel()">
       <mat-icon>cancel</mat-icon> {{ t('common.cancel') }}
     </button>
     <a mat-stroked-button *ngIf="reservation.rentingId" [routerLink]="['/renting', reservation.rentingId]">
@@ -101,7 +122,7 @@
       </thead>
       <tbody>
         <tr *ngFor="let p of payments">
-          <td>{{ p.payementDate | date:'yyyy-MM-dd' }}</td>
+          <td>{{ p.payementDate | date:'yyyy-MM-dd':'UTC' }}</td>
           <td>{{ methodLabelKey(p.method) ? t(methodLabelKey(p.method)) : '' }}</td>
           <td class="num" [class.neg]="(p.payementAmount?.amount || 0) < 0">
             {{ p.payementAmount?.amount | number:'1.2-2' }} {{ p.payementAmount?.currency }}

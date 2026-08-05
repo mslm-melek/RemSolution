@@ -89,7 +89,7 @@
 }
 
 .main .agency:hover {
-  color: var(--brand-700);
+  color: var(--brand-600);
   text-decoration: underline;
 }
 
@@ -126,7 +126,7 @@
 
 .price {
   font-weight: 600;
-  color: var(--brand-700);
+  color: var(--brand-600);
 }
 
 .mine {

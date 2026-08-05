@@ -3,7 +3,7 @@
     <div>
       <h2 class="title">{{ t('dashboard.title') }}</h2>
       <p class="page-subtitle" *ngIf="data">
-        {{ data.periodStart | date:'d MMM y' }} → {{ data.periodEnd | date:'d MMM y' }}
+        {{ data.periodStart | date:'d MMM y':'UTC' }} → {{ data.periodEnd | date:'d MMM y':'UTC' }}
       </p>
     </div>
 

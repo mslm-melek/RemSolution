@@ -137,7 +137,14 @@ namespace RemSolution.Application.Features.Payment.Commands.CreatePaymentCommand
                 RentingId = request.RentingId,
                 ReservationId = request.ReservationId,
                 ClientId = clientId,
-                PayementDate = request.PayementDate ?? _dateTime.GetUtcNow().UtcDateTime,
+                // .Date, so both branches produce the same shape: a wall-clock
+                // calendar day at UTC midnight. A backdated payment already arrives
+                // that way (the client sends Date.UTC of the day picked — see
+                // form-utils' fromDateInput), and leaving the default as a full
+                // instant made this the one date field the SPA could not read back
+                // with a single rule. Nothing reads the time component: every query
+                // over PayementDate is a half-open range or a Year/Month grouping.
+                PayementDate = request.PayementDate ?? _dateTime.GetUtcNow().UtcDateTime.Date,
                 PayementAmount = Money.Of(signed, settings.CurrencyCode),
                 Method = request.Method,
                 IsRefund = request.IsRefund,

@@ -289,19 +289,19 @@ a.kpi:hover {
 .chart .collected .line,
 .chart .collected circle { stroke: var(--ok); }
 .chart .collected circle { fill: var(--ok); }
-.chart .collected .area { fill: rgba(16, 120, 75, 0.12); }
+.chart .collected .area { fill: var(--ok-fill); }
 
 .chart .spent .line,
 .chart .spent circle { stroke: var(--warn); }
 .chart .spent circle { fill: var(--warn); }
-.chart .spent .area { fill: rgba(167, 90, 9, 0.1); }
+.chart .spent .area { fill: var(--warn-fill); }
 
 /* The single-line metrics (cars, clients, rentings) all use the brand colour:
    only one is on screen at a time, so a colour per metric would just be noise. */
 .chart .primary .line,
 .chart .primary circle { stroke: var(--brand-600); }
 .chart .primary circle { fill: var(--brand-600); }
-.chart .primary .area { fill: rgba(37, 99, 235, 0.1); }
+.chart .primary .area { fill: var(--brand-fill); }
 
 .chart-empty {
   margin: var(--gap-2) 0 0;
@@ -469,7 +469,7 @@ a.kpi:hover {
   gap: 2px;
   font-size: 12.5px;
   font-weight: 650;
-  color: var(--brand-700);
+  color: var(--brand-600);
   white-space: nowrap;
 }
 

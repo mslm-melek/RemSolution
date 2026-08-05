@@ -1,0 +1,165 @@
+/* ============================================================================
+   Angular Material, themed from source.
+
+   This replaces the prebuilt `azure-blue.css` that used to be listed in
+   angular.json. A prebuilt theme is a single hard-coded colour pass: it cannot
+   follow `data-theme`, which left every mat-select panel, dialog, datepicker
+   and tab header light on a dark canvas and was the reason the dark-mode switch
+   could not ship. Compiling here emits the light pass on `:root` and a
+   colour-only pass under `:root[data-theme='dark']`, so Material's own chrome
+   changes with everything else. Overlay panels (menus, selects, dialogs) live
+   in `.cdk-overlay-container` under <body>, which inherits from <html>, so they
+   are covered too.
+
+   Two deliberate departures from stock M3:
+
+   - The neutral/structural palette is Material's `azure`, whose tonal ramp is
+     contrast-checked. Only the tokens that actually carry brand colour are
+     re-pointed at our own ramp, below. Hand-authoring a tonal palette to move
+     one hue is how you end up shipping AA failures you cannot see.
+
+   - M3 inverts the filled button in dark mode (light fill, dark ink). We keep
+     it `--brand-500` with white ink in both themes, per rule 2 of
+     docs/DESIGN_SYSTEM.md: it is the one action the screen exists for, and it
+     should not change identity between themes.
+
+   The brand override mixin is emitted under BOTH selectors on purpose.
+   `:root[data-theme='dark']` outranks `:root`, so a single `:root` block would
+   be beaten by the dark colour pass on exactly the tokens it means to pin.
+   ========================================================================== */
+
+@use '@angular/material' as mat;
+
+/* The families are handed to Material rather than fought afterwards:
+   `.mat-typography` sits on <body> and would otherwise beat the `body` rule in
+   styles.scss and drag Roboto back in. Weights match the two the design system
+   allows; `bold-weight` is set to 500 for the same reason. */
+$_typography: (
+  brand-family: ('Poppins', 'Inter', system-ui, sans-serif),
+  plain-family: ('Inter', system-ui, sans-serif),
+  bold-weight: 500,
+  medium-weight: 500,
+  regular-weight: 400,
+);
+
+$_light-theme: mat.define-theme((
+  color: (
+    theme-type: light,
+    primary: mat.$azure-palette,
+    tertiary: mat.$blue-palette,
+  ),
+  typography: $_typography,
+  /* One step denser than stock. The back-office is a table-per-screen product
+     and stock M3 control heights cost about a row and a half per viewport. */
+  density: (scale: -1),
+));
+
+$_dark-theme: mat.define-theme((
+  color: (
+    theme-type: dark,
+    primary: mat.$azure-palette,
+    tertiary: mat.$blue-palette,
+  ),
+  typography: $_typography,
+  density: (scale: -1),
+));
+
+/* Every token here points at a design-system variable, so it needs writing only
+   once: the variables themselves are what change between themes. */
+@mixin _brand-overrides() {
+  /* -- Surfaces. Material's own neutrals are azure-tinted and would sit a shade
+        off every card in the app, most visibly on a dark canvas. */
+  --mat-app-background-color: var(--canvas);
+  --mat-app-text-color: var(--ink);
+  --mat-table-background-color: var(--surface);
+  --mat-menu-container-color: var(--surface);
+  --mat-menu-item-label-text-color: var(--ink);
+  --mat-select-panel-background-color: var(--surface);
+  --mat-select-enabled-trigger-text-color: var(--ink);
+  --mat-select-placeholder-text-color: var(--muted-2);
+  --mat-autocomplete-background-color: var(--surface);
+  --mdc-dialog-container-color: var(--surface);
+  --mdc-dialog-supporting-text-color: var(--ink-2);
+  --mat-datepicker-calendar-container-background-color: var(--surface);
+  --mat-datepicker-calendar-container-text-color: var(--ink);
+  --mat-toolbar-container-background-color: var(--surface);
+  --mat-stepper-container-color: var(--surface);
+
+  /* -- The primary action: same identity in both themes. */
+  --mdc-filled-button-container-color: var(--brand-500);
+  --mdc-filled-button-label-text-color: #ffffff;
+  --mdc-protected-button-container-color: var(--brand-500);
+  --mdc-protected-button-label-text-color: #ffffff;
+
+  /* -- Everything else is outline or text, in the accent TEXT stop. */
+  --mdc-outlined-button-label-text-color: var(--brand-600);
+  --mdc-outlined-button-outline-color: var(--line-strong);
+  --mdc-text-button-label-text-color: var(--brand-600);
+
+  /* -- Inputs. */
+  --mdc-outlined-text-field-caret-color: var(--brand-600);
+  --mdc-outlined-text-field-focus-outline-color: var(--brand-600);
+  --mdc-outlined-text-field-focus-label-text-color: var(--brand-600);
+  --mdc-outlined-text-field-outline-color: var(--line-strong);
+  --mdc-outlined-text-field-label-text-color: var(--muted);
+  --mdc-outlined-text-field-input-text-color: var(--ink);
+  --mdc-filled-text-field-caret-color: var(--brand-600);
+  --mdc-filled-text-field-active-indicator-color: var(--brand-600);
+  --mdc-filled-text-field-container-color: var(--surface-2);
+
+  /* -- Selection controls. */
+  --mdc-checkbox-selected-icon-color: var(--brand-500);
+  --mdc-checkbox-selected-hover-icon-color: var(--brand-600);
+  --mdc-checkbox-selected-focus-icon-color: var(--brand-600);
+  --mdc-checkbox-selected-pressed-icon-color: var(--brand-600);
+  --mdc-checkbox-selected-checkmark-color: #ffffff;
+  --mdc-radio-selected-icon-color: var(--brand-500);
+  --mdc-radio-selected-hover-icon-color: var(--brand-600);
+  --mdc-radio-selected-focus-icon-color: var(--brand-600);
+  --mdc-radio-selected-pressed-icon-color: var(--brand-600);
+  --mdc-switch-selected-handle-color: var(--brand-500);
+  --mdc-switch-selected-track-color: var(--brand-200);
+
+  /* -- Tabs. */
+  --mat-tab-header-active-label-text-color: var(--brand-600);
+  --mat-tab-header-active-focus-label-text-color: var(--brand-600);
+  --mat-tab-header-active-hover-label-text-color: var(--brand-600);
+  --mat-tab-header-active-focus-indicator-color: var(--brand-500);
+  --mat-tab-header-active-hover-indicator-color: var(--brand-500);
+  --mdc-tab-indicator-active-indicator-color: var(--brand-500);
+  --mat-tab-header-inactive-label-text-color: var(--muted);
+  --mat-tab-header-divider-color: var(--line);
+
+  /* -- Datepicker. */
+  --mat-datepicker-calendar-date-selected-state-background-color: var(--brand-500);
+  --mat-datepicker-calendar-date-selected-state-text-color: #ffffff;
+  --mat-datepicker-calendar-date-today-outline-color: var(--brand-600);
+  --mat-datepicker-calendar-date-in-range-state-background-color: var(--brand-50);
+
+  /* -- Progress. */
+  --mdc-circular-progress-active-indicator-color: var(--brand-500);
+  --mdc-linear-progress-active-indicator-color: var(--brand-500);
+  --mdc-linear-progress-track-color: var(--surface-3);
+
+  /* -- Slider. */
+  --mdc-slider-handle-color: var(--brand-500);
+  --mdc-slider-active-track-color: var(--brand-500);
+  --mdc-slider-focus-handle-color: var(--brand-600);
+}
+
+@include mat.core();
+
+:root {
+  @include mat.all-component-themes($_light-theme);
+  @include _brand-overrides();
+}
+
+:root[data-theme='dark'] {
+  @include mat.all-component-colors($_dark-theme);
+  @include _brand-overrides();
+}
+
+/* At root level, not nested: the mixin emits its own `.mat-typography` prefixes,
+   and wrapping it turns `.mat-typography h1` into `.mat-typography .mat-typography
+   h1`, which never matches. */
+@include mat.typography-hierarchy($_light-theme);

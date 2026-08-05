@@ -44,7 +44,10 @@
 .kpi.revenue::before { background: var(--accent); }
 .kpi.fleet::before { background: var(--info); }
 .kpi.people::before { background: var(--warn); }
-.kpi.accounts::before { background: var(--brand-700); }
+/* --brand-500, not --brand-700: this is a 3px stripe on a card, and the deep
+   stops stay dark in dark mode, where a #1d4ed8 stripe on #2a3042 all but
+   disappears. Every other stripe here is already a mid-tone. */
+.kpi.accounts::before { background: var(--brand-500); }
 .kpi.reach::before { background: var(--ok); }
 
 a.kpi:hover {
@@ -75,12 +78,12 @@ a.kpi:hover {
   height: 17px;
 }
 
-.kpi.agencies .kpi-icon { background: var(--brand-50); color: var(--brand-700); }
+.kpi.agencies .kpi-icon { background: var(--brand-50); color: var(--brand-600); }
 .kpi.subs .kpi-icon { background: var(--ok-bg); color: var(--ok); }
 .kpi.revenue .kpi-icon { background: var(--accent-bg); color: var(--accent); }
 .kpi.fleet .kpi-icon { background: var(--info-bg); color: var(--info); }
 .kpi.people .kpi-icon { background: var(--warn-bg); color: var(--warn); }
-.kpi.accounts .kpi-icon { background: var(--brand-50); color: var(--brand-700); }
+.kpi.accounts .kpi-icon { background: var(--brand-50); color: var(--brand-600); }
 .kpi.reach .kpi-icon { background: var(--ok-bg); color: var(--ok); }
 
 .kpi .tile-value {

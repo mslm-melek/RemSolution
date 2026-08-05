@@ -6,6 +6,8 @@ import { NotificationBadgeService } from '../shared/notification-badge.service';
 import { ImpersonationService, ImpersonatedAgency } from '../shared/impersonation.service';
 import { LanguageService } from '../shared/language.service';
 import { AppLanguage } from '../shared/language';
+import { ThemeService } from '../shared/theme.service';
+import { AppTheme } from '../shared/theme';
 
 // One screen reachable from the bar or from a dropdown.
 export interface NavLink {
@@ -68,11 +70,22 @@ export class NavMenuComponent implements OnInit {
     private auth: AuthService,
     private impersonation: ImpersonationService,
     private language: LanguageService,
+    private theme: ThemeService,
     private badge: NotificationBadgeService,
     private router: Router
   ) {
     this.languages = this.language.available;
     this.workspace = this.impersonation.current;
+  }
+
+  get currentTheme(): AppTheme {
+    return this.theme.active;
+  }
+
+  // No reload and no menu: one button straight to the other theme. Every colour
+  // resolves through a custom property, so the switch is a single attribute.
+  toggleTheme() {
+    this.theme.toggle();
   }
 
   exitWorkspace() {

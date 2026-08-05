@@ -5,6 +5,14 @@
     "fr": "Français",
     "ar": "العربية"
   },
+  "theme": {
+    "label": "Theme",
+    "toDark": "Switch to dark mode",
+    "toLight": "Switch to light mode",
+    "light": "Light",
+    "dark": "Dark",
+    "system": "Match system"
+  },
   "common": {
     "km": "km",
     "actions": "Actions",
@@ -518,7 +526,10 @@
     "confirmCancel": "Cancel this reservation?",
     "confirmReverse": "Reverse this payment? An offsetting entry will be posted.",
     "concurrency": "This reservation was reloaded by another user since you opened it. Reload the page to get the latest version, then re-apply your changes.",
-    "staleState": "This reservation changed since the list was loaded — it has been refreshed."
+    "staleState": "This reservation changed since the list was loaded — it has been refreshed.",
+    "heldUntil": "The car is held until {{time}}",
+    "heldUntilNote": "Without an answer the reservation expires and the car becomes available again.",
+    "awaitingYou": "This reservation is waiting on you"
   },
   "marketplace": {
     "findYourCar": "Find your car",

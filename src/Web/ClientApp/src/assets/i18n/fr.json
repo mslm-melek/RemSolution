@@ -5,6 +5,14 @@
     "fr": "Français",
     "ar": "العربية"
   },
+  "theme": {
+    "label": "Thème",
+    "toDark": "Passer en mode sombre",
+    "toLight": "Passer en mode clair",
+    "light": "Clair",
+    "dark": "Sombre",
+    "system": "Comme le système"
+  },
   "common": {
     "km": "km",
     "actions": "Actions",
@@ -518,7 +526,10 @@
     "confirmCancel": "Annuler cette réservation ?",
     "confirmReverse": "Contrepasser ce paiement ? Une écriture inverse sera enregistrée.",
     "concurrency": "Cette réservation a été modifiée par un autre utilisateur depuis son ouverture. Rechargez la page pour obtenir la dernière version, puis réappliquez vos modifications.",
-    "staleState": "Cette réservation a changé depuis le chargement de la liste — elle a été actualisée."
+    "staleState": "Cette réservation a changé depuis le chargement de la liste — elle a été actualisée.",
+    "heldUntil": "La voiture est bloquée jusqu'à {{time}}",
+    "heldUntilNote": "Sans réponse, la réservation expire et le véhicule redevient disponible.",
+    "awaitingYou": "Cette réservation attend votre réponse"
   },
   "marketplace": {
     "findYourCar": "Trouvez votre voiture",

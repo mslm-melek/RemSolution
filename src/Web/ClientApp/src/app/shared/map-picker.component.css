@@ -57,7 +57,7 @@
 .results button:hover,
 .results button:focus-visible {
   background: var(--brand-50);
-  color: var(--brand-700);
+  color: var(--brand-600);
 }
 
 .results mat-icon {
@@ -125,7 +125,7 @@
   border-radius: 50% 50% 50% 0;
   rotate: -45deg;
   background: var(--brand-600);
-  border: 2px solid #fff;
+  border: 2px solid var(--surface);
   box-shadow: var(--shadow-1);
   cursor: grab;
 }

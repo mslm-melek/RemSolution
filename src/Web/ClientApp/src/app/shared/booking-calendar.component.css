@@ -182,7 +182,7 @@
 }
 
 .cal-day.today .day-number {
-  color: var(--brand-700);
+  color: var(--brand-600);
   font-weight: 750;
 }
 

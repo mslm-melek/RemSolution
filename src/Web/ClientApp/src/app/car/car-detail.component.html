@@ -49,7 +49,7 @@
       </div>
       <div class="tile-note" *ngIf="car?.currentRenting as hire">
         <a *ngIf="hire.clientId" [routerLink]="['/client', hire.clientId]">{{ hire.clientName }}</a>
-        <span *ngIf="hire.endDate"> · {{ t('car.dueBack', { date: (hire.endDate | date:'yyyy-MM-dd') }) }}</span>
+        <span *ngIf="hire.endDate"> · {{ t('car.dueBack', { date: (hire.endDate | date:'yyyy-MM-dd':'UTC') }) }}</span>
       </div>
     </div>
 
@@ -93,7 +93,7 @@
           <ng-container matColumnDef="period">
             <th mat-header-cell *matHeaderCellDef>{{ t('common.period') }}</th>
             <td mat-cell *matCellDef="let r" class="num">
-              {{ r.startDate | date:'yyyy-MM-dd' }} → {{ r.endDate | date:'yyyy-MM-dd' }}
+              {{ r.startDate | date:'yyyy-MM-dd':'UTC' }} → {{ r.endDate | date:'yyyy-MM-dd':'UTC' }}
             </td>
           </ng-container>
 
@@ -188,7 +188,7 @@
           </div>
           <div class="fact">
             <dt>{{ t('car.firstCirculation') }}</dt>
-            <dd>{{ car.firstCirculationDate | date:'yyyy-MM-dd' }}</dd>
+            <dd>{{ car.firstCirculationDate | date:'yyyy-MM-dd':'UTC' }}</dd>
           </div>
           <div class="fact" *ngIf="car.color">
             <dt>{{ t('car.color') }}</dt>

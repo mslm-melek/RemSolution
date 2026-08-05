@@ -31,10 +31,10 @@
   height: 60px;
   border-radius: 18px;
   background: linear-gradient(140deg, var(--brand-600), var(--brand-800));
-  color: #fff;
+  color: var(--on-accent);
   font-size: 27px;
   font-weight: 800;
-  box-shadow: 0 8px 20px -8px rgba(29, 78, 216, 0.7);
+  box-shadow: var(--shadow-2);
 }
 
 .hero-card h1 {
@@ -109,7 +109,7 @@
   background-size: cover;
   background-position: center;
   text-decoration: none;
-  color: #fff;
+  color: var(--on-accent);
   opacity: 0;
   /* Cross-fade, not a slide: no direction to get wrong in Arabic. */
   transition: opacity 520ms ease;
@@ -145,7 +145,8 @@
   flex-direction: column;
   gap: 2px;
   padding: 56px 28px 22px;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.72), rgba(0, 0, 0, 0));
+  /* Darkening a photo, not tinting a surface: black in both themes. */
+  background: linear-gradient(to top, var(--scrim), transparent);
 }
 
 .slide.placeholder .slide-caption {
@@ -178,16 +179,16 @@
    need forcing to white — their default greys vanish on a dark image. */
 .slide-rating {
   margin-top: 2px;
-  color: #fff;
+  color: var(--on-accent);
 }
 
 .slide-rating ::ng-deep .track {
-  color: rgba(255, 255, 255, 0.4);
+  color: var(--on-accent-3);
 }
 
 .slide-rating ::ng-deep .score,
 .slide-rating ::ng-deep .count {
-  color: #fff;
+  color: var(--on-accent);
 }
 
 .slide-price {
@@ -207,14 +208,14 @@
   height: 40px;
   border: none;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.92);
+  background: var(--surface);
   color: var(--ink);
   box-shadow: var(--shadow-2);
   cursor: pointer;
 }
 
 .slider-nav:hover {
-  background: #fff;
+  background: var(--surface);
 }
 
 .slider-nav.prev {
@@ -333,7 +334,7 @@
   height: 40px;
   border-radius: 12px;
   background: var(--brand-50);
-  color: var(--brand-700);
+  color: var(--brand-600);
   flex: none;
 }
 
@@ -494,7 +495,7 @@
   font-size: 18px;
   width: 18px;
   height: 18px;
-  color: var(--brand-700);
+  color: var(--brand-600);
 }
 
 .picker-order {

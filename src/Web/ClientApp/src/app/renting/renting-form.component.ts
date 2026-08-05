@@ -509,7 +509,18 @@ export class RentingFormComponent implements OnInit {
     return this.clients.find(c => c.id === clientId);
   }
 
-  /** The period on screen as dates, so the review can format them per locale. */
+  /**
+   * The period on screen as dates, so the review step can format them per locale.
+   *
+   * Built with fromDateInput — the same helper that sends these two values — so
+   * they are wall-clock stamped UTC like every other date in the app and the
+   * template reads them back with `date:'…':'UTC'`. This used to be a bare
+   * `new Date(value)`, which parses "2026-08-12T09:00" as LOCAL and so had to be
+   * rendered without the timezone argument. That printed the right digits, but by
+   * a second convention: the review showed a local-parsed date while the server
+   * was sent a UTC-stamped one, and any later edit near either end of the string
+   * (a seconds field, a trailing Z) would have silently split them apart.
+   */
   get periodStart(): Date | undefined {
     return this.asDate(this.vehicleGroup.get('startDate')?.value);
   }
@@ -519,10 +530,7 @@ export class RentingFormComponent implements OnInit {
   }
 
   private asDate(value: string): Date | undefined {
-    if (!value) return undefined;
-
-    const date = new Date(value);
-    return isNaN(date.getTime()) ? undefined : date;
+    return fromDateInput(value);
   }
 
   carLabel(car?: CarDto): string {

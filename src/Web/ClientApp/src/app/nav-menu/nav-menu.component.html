@@ -96,6 +96,15 @@
       <a mat-stroked-button class="nav-register" href="/Identity/Account/Register">{{ t('nav.register') }}</a>
     </nav>
 
+    <!-- Outside both navs so it stays reachable signed in or out, like the
+         language button. The icon shows what you would GET, not where you are:
+         a moon means "go dark". -->
+    <button mat-icon-button class="nav-theme" (click)="toggleTheme()"
+            [matTooltip]="currentTheme === 'dark' ? t('theme.toLight') : t('theme.toDark')"
+            [attr.aria-label]="currentTheme === 'dark' ? t('theme.toLight') : t('theme.toDark')">
+      <mat-icon>{{ currentTheme === 'dark' ? 'light_mode' : 'dark_mode' }}</mat-icon>
+    </button>
+
     <!-- Outside both navs so it stays reachable signed in or out. Languages are
          listed by endonym, so the labels are the same whatever the active one. -->
     <button mat-button class="nav-language" [matMenuTriggerFor]="languageMenu"

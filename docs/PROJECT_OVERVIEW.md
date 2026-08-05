@@ -84,6 +84,37 @@ The **Web layer is the composition root**: `Program.cs` calls `AddApplicationSer
   API edge deserializes inbound values as UTC) and stamps `Kind = Utc` on read (SQL Server
   `datetime2` keeps no offset). Audit stamps stay `DateTimeOffset` (already unambiguous). Callers
   should use `TimeProvider.GetUtcNow()`; never `DateTime.Now`.
+  - **Two kinds of `DateTime`, and the SPA must render them differently.** A
+    *wall-clock* value is a calendar day or day-and-hour a person picked: a hire's
+    `StartDate`/`EndDate`, `Car.FirstCirculationDate`, `Client.BirthDate`,
+    `Expense.ExpenseDate`, `Payment.PayementDate`. The client sends it as
+    `Date.UTC(...)` of exactly what was picked (`form-utils.fromDateInput`) and the
+    server stores it verbatim, so **nothing is converted between zones** and the
+    calendar day lives in the UTC parts. An *instant* is a moment the system
+    recorded from `GetUtcNow()`: `Reservation.ExpiresAt`, `ChatMessage.SentAt`,
+    `AgencyReview.SubmittedAt`, `Contract`/`Facture.IssuedAt`,
+    `Notification.CreatedAt`.
+  - Therefore, in a template: a wall-clock field is rendered
+    `{{ x | date:'…':'UTC' }}` and an instant is rendered `{{ x | date:'…' }}`
+    (local, which is what "when did this happen" means to the reader). Getting this
+    backwards shifts a booking by the browser's offset — and shows the wrong *day*
+    for any viewer west of UTC. `DateTimeOffset` fields (`AgencySubscription`,
+    `PlatformDashboardDto`) already carry their offset and always render local.
+    Both directions are greppable:
+
+    ```
+    # wall-clock fields missing the UTC argument (only agency-detail may appear)
+    grep -rn "\(startDate\|endDate\|firstCirculationDate\|birthDate\|expenseDate\|payementDate\|periodStart\|periodEnd\) *| *date:'[^']*'" \
+      src/Web/ClientApp/src/app --include=*.html | grep -v ":'UTC'"
+
+    # instants that wrongly got it
+    grep -rn "\(expiresAt\|sentAt\|submittedAt\|reviewedAt\|issuedAt\|createdAt\|generatedAt\) *| *date:'[^']*':'UTC'" \
+      src/Web/ClientApp/src/app --include=*.html
+    ```
+  - `PayementDate` is truncated with `.Date` on every server-side default so it is
+    always a day at UTC midnight, the same shape a backdated one arrives in. It used
+    to be a full instant when the client left it out, which made it the one field no
+    single display rule could read correctly.
 - **Multi-tenancy (agency isolation)**: `ITenantProvider` is resolved per-request from the
   authenticated user's `AgencyId` claim (emitted by `ApplicationUserClaimsPrincipalFactory` from
   `ApplicationUser.AgencyId`). Every `ITenantEntity` gets an EF global query filter

@@ -11,8 +11,11 @@
   gap: 1.25rem;
   padding: 1.5rem 1.75rem;
   border-radius: 14px;
-  color: #fff;
-  background: linear-gradient(135deg, #3f51b5 0%, #5c6bc0 55%, #7986cb 100%);
+  color: var(--on-accent);
+  /* Was an indigo ramp, which was both off-brand and light enough at its far
+     stop that the white text on it was marginal. Same brand gradient as the
+     marketplace headers now. */
+  background: linear-gradient(135deg, var(--brand-900) 0%, var(--brand-800) 45%, var(--brand-700) 100%);
   margin-bottom: 1.25rem;
 }
 
@@ -21,8 +24,8 @@
   width: 68px;
   height: 68px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.18);
-  border: 2px solid rgba(255, 255, 255, 0.5);
+  background: var(--on-accent-weak);
+  border: 2px solid var(--on-accent-edge);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -63,7 +66,7 @@
   gap: 5px;
   padding: 4px 12px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.2);
+  background: var(--on-accent-weak);
   font-size: 0.8rem;
   font-weight: 500;
 }
@@ -83,7 +86,7 @@
 }
 
 .card {
-  background: #fff;
+  background: var(--surface);
   border-radius: 14px;
   padding: 1.25rem 1.5rem 1.5rem;
 }
@@ -94,11 +97,11 @@
   gap: 10px;
   margin-bottom: 1rem;
   padding-bottom: 0.75rem;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  border-bottom: 1px solid var(--line);
 }
 
 .card-head mat-icon {
-  color: #3f51b5;
+  color: var(--brand-600);
 }
 
 .card-head h3 {
@@ -133,29 +136,24 @@
 }
 
 .banner.error {
-  background: #fdecea;
-  color: #b71c1c;
+  background: var(--danger-bg);
+  color: var(--danger-ink);
 }
 
 .banner.success {
-  background: #e7f4e8;
-  color: #1b5e20;
+  background: var(--ok-bg);
+  color: var(--ok-ink);
 }
 
 /* Amber rather than red: being asked to choose a password is an instruction,
    not something the user got wrong. */
 .banner.warning {
-  background: #fff4e5;
-  color: #8a5300;
+  background: var(--warn-bg);
+  color: var(--warn-ink);
 }
 
-/* Dark theme friendliness */
-@media (prefers-color-scheme: dark) {
-  .card {
-    background: #1e1e1e;
-    color: #eee;
-  }
-  .card-head {
-    border-bottom-color: rgba(255, 255, 255, 0.12);
-  }
-}
+/* The hand-rolled dark block that used to live here is gone. It keyed off
+   prefers-color-scheme, so it fired whenever the OS was dark even if the user
+   had explicitly chosen the light theme — and it only ever covered these two
+   rules, leaving the rest of the screen light. The card and its head now take
+   --surface and --line like every other card, which follow the real theme. */

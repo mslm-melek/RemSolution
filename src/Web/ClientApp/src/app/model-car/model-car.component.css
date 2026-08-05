@@ -16,7 +16,7 @@
   margin: 0;
   font-size: 24px;
   font-weight: 600;
-  color: #333;
+  color: var(--ink);
 }
 
 .filter-row {
@@ -43,5 +43,5 @@
 .empty-row {
   padding: 16px;
   text-align: center;
-  color: #777;
+  color: var(--muted);
 }

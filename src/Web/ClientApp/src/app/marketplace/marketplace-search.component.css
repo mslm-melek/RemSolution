@@ -9,7 +9,7 @@
 .hero {
   border-radius: var(--r-lg);
   padding: 30px 30px 24px;
-  color: #fff;
+  color: var(--on-accent);
   background: linear-gradient(100deg, var(--brand-900) 0%, var(--brand-800) 45%, var(--brand-700) 100%);
   box-shadow: var(--shadow-3);
   margin-bottom: var(--gap-5);
@@ -20,7 +20,7 @@
   font-size: 27px;
   font-weight: 680;
   letter-spacing: -0.02em;
-  color: #fff;
+  color: var(--on-accent);
 }
 
 .hero p {
@@ -33,8 +33,8 @@
   align-items: center;
   gap: var(--gap-3);
   flex-wrap: wrap;
-  background: rgba(255, 255, 255, 0.14);
-  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: var(--on-accent-weak);
+  border: 1px solid var(--on-accent-weak);
   border-radius: var(--r);
   padding: 12px;
 }
@@ -49,13 +49,13 @@
 
 /* Make the outlined date fields readable on the coloured hero. */
 .search-bar ::ng-deep .mat-mdc-text-field-wrapper {
-  background: #fff;
+  background: var(--surface);
   border-radius: 8px;
 }
 
 .error {
   margin-top: var(--gap-3);
-  background: rgba(255, 255, 255, 0.94);
+  background: var(--surface);
   color: var(--danger);
   padding: 8px 14px;
   border-radius: var(--r-sm);
@@ -203,7 +203,7 @@
 }
 
 .model:hover {
-  color: var(--brand-700);
+  color: var(--brand-600);
 }
 
 /* fit-content keeps the click target on the name rather than the whole row. */
@@ -220,7 +220,7 @@
 }
 
 .agency:hover {
-  color: var(--brand-700);
+  color: var(--brand-600);
   text-decoration: underline;
 }
 
@@ -263,7 +263,7 @@
   align-items: center;
   gap: 2px;
   font-size: 12.5px;
-  color: var(--brand-700);
+  color: var(--brand-600);
   font-weight: 650;
   text-decoration: none;
 }

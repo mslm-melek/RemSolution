@@ -29,7 +29,7 @@
   inset-inline-start: 0;
   top: 0;
   overflow: hidden;
-  color: #f2a413;
+  color: var(--star);
 }
 
 /* Without this the icons shrink as the overlay narrows instead of being cut. */
@@ -47,7 +47,7 @@
   border: 0;
   padding: 0 2px;
   cursor: pointer;
-  color: #f2a413;
+  color: var(--star);
   line-height: 0;
 }
 

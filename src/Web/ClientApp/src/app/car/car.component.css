@@ -17,6 +17,6 @@ a.matricule {
 
 a.matricule:hover,
 a.matricule:focus-visible {
-  color: var(--brand-700);
+  color: var(--brand-600);
   text-decoration: underline;
 }

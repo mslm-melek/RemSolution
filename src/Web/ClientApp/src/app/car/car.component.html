@@ -99,7 +99,7 @@
           </span>
           <span class="cell-sub" *ngIf="car.currentRenting">
             {{ car.currentRenting.clientName }}<ng-container *ngIf="car.currentRenting.endDate">
-              · {{ t('car.dueBack', { date: (car.currentRenting.endDate | date:'yyyy-MM-dd') }) }}
+              · {{ t('car.dueBack', { date: (car.currentRenting.endDate | date:'yyyy-MM-dd':'UTC') }) }}
             </ng-container>
           </span>
         </span>
@@ -108,7 +108,7 @@
 
     <ng-container matColumnDef="firstCirculationDate">
       <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ t('car.firstCirculation') }}</th>
-      <td mat-cell *matCellDef="let car" class="num">{{ car.firstCirculationDate | date:'yyyy-MM-dd' }}</td>
+      <td mat-cell *matCellDef="let car" class="num">{{ car.firstCirculationDate | date:'yyyy-MM-dd':'UTC' }}</td>
     </ng-container>
 
     <ng-container matColumnDef="color">

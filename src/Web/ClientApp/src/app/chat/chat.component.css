@@ -16,12 +16,12 @@
   margin: 0;
   font-size: 24px;
   font-weight: 600;
-  color: #333;
+  color: var(--ink);
 }
 
 .error-banner {
-  background: #fdecea;
-  color: #b71c1c;
+  background: var(--danger-bg);
+  color: var(--danger-ink);
   padding: 0.75rem 1rem;
   border-radius: 4px;
 }
@@ -34,7 +34,7 @@
 }
 
 .thread-list {
-  border: 1px solid #eee;
+  border: 1px solid var(--line);
   border-radius: 10px;
   overflow-y: auto;
   max-height: 560px;
@@ -42,16 +42,16 @@
 
 .thread {
   padding: 12px 14px;
-  border-bottom: 1px solid #f2f2f2;
+  border-bottom: 1px solid var(--line);
   cursor: pointer;
 }
 
 .thread:hover {
-  background: #fafafa;
+  background: var(--surface-2);
 }
 
 .thread.active {
-  background: #eef4fd;
+  background: var(--brand-50);
 }
 
 .thread-head {
@@ -65,9 +65,12 @@
   font-weight: 600;
 }
 
+/* Unread count. Filled and loud on purpose, so it takes the solid red that
+   holds white text in both themes rather than the -ink stop, which is a light
+   pink in dark mode. */
 .badge {
-  background: #b71c1c;
-  color: #fff;
+  background: var(--danger-solid);
+  color: var(--on-accent);
   border-radius: 10px;
   padding: 0 7px;
   font-size: 12px;
@@ -85,15 +88,15 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: #555;
+  color: var(--ink-2);
 }
 
 .muted {
-  color: #777;
+  color: var(--muted);
 }
 
 .thread-pane {
-  border: 1px solid #eee;
+  border: 1px solid var(--line);
   border-radius: 10px;
   display: flex;
   flex-direction: column;
@@ -111,7 +114,7 @@
   align-items: flex-start;
   gap: 12px;
   padding: 12px 14px;
-  border-bottom: 1px solid #f2f2f2;
+  border-bottom: 1px solid var(--line);
 }
 
 .pane-title {
@@ -152,11 +155,11 @@
   max-width: 70%;
   border-radius: 12px;
   padding: 8px 12px;
-  background: #f1f1f1;
+  background: var(--surface-3);
 }
 
 .message.mine .bubble {
-  background: #dcf0dc;
+  background: var(--ok-bg);
 }
 
 .bubble-body {
@@ -170,14 +173,14 @@
   gap: 8px;
   margin-top: 4px;
   font-size: 11px;
-  color: #777;
+  color: var(--muted);
 }
 
 .read-tick {
   font-size: 14px;
   width: 14px;
   height: 14px;
-  color: #1565c0;
+  color: var(--brand-600);
 }
 
 .composer {
@@ -185,7 +188,7 @@
   align-items: flex-start;
   gap: 12px;
   padding: 12px 14px;
-  border-top: 1px solid #f2f2f2;
+  border-top: 1px solid var(--line);
 }
 
 .composer-input {
@@ -194,14 +197,14 @@
 
 .composer-note {
   padding: 12px 14px;
-  border-top: 1px solid #f2f2f2;
+  border-top: 1px solid var(--line);
   font-size: 13px;
 }
 
 .empty-row {
   padding: 16px;
   text-align: center;
-  color: #777;
+  color: var(--muted);
 }
 
 @media (max-width: 800px) {

@@ -7,11 +7,17 @@
 
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="icon" type="image/x-icon" href="favicon.ico" />
-    <!-- Inter carries the UI text (see --font in styles.scss); Roboto stays for
-         Angular Material's own typography. -->
+    <!-- Three families, each with one job (see docs/DESIGN_SYSTEM.md): Poppins
+         500 for page and section titles, Inter 400/500 for everything else,
+         Roboto Mono 400 for values. Roboto itself is gone — Material now takes
+         its plain and brand families from _material-theme.scss.
+
+         Only these four faces, because three families unrestrained is ~180 kB
+         and a flash of unstyled text on every first visit, which lands on the
+         public marketplace where it costs conversion. -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Poppins:wght@500&family=Roboto+Mono:wght@400&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 </head>
   <body class="mat-typography">

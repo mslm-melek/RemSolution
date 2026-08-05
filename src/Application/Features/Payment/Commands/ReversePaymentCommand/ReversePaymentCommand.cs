@@ -68,7 +68,9 @@ namespace RemSolution.Application.Features.Payment.Commands.ReversePaymentComman
                 RentingId = original.RentingId,
                 ReservationId = original.ReservationId,
                 ClientId = original.ClientId,
-                PayementDate = _dateTime.GetUtcNow().UtcDateTime,
+                // .Date: PayementDate is a calendar day at UTC midnight, never an
+                // instant (see CreatePaymentCommand).
+                PayementDate = _dateTime.GetUtcNow().UtcDateTime.Date,
                 PayementAmount = Money.Of(-original.PayementAmount.Amount, original.PayementAmount.Currency),
                 Method = original.Method,
                 Notes = $"Reversal of payment #{original.Id}",
