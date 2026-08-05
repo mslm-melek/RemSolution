@@ -76,6 +76,27 @@ export function extractValidationErrors(err: any): string | undefined {
     .join(' ');
 }
 
+// What the server said went wrong, for a failure that is not a validation one:
+// a ProblemDetails' `detail`, or its `title` when there is no detail. Handles both
+// the raw HttpClient shape (err.error) and the NSwag-wrapped exception shape
+// (err.response as a JSON string). Returns undefined when the body says nothing —
+// the caller then falls back to its own wording.
+export function extractProblemDetail(err: any): string | undefined {
+  let body = err?.error;
+
+  if (!body && typeof err?.response === 'string') {
+    try {
+      body = JSON.parse(err.response);
+    } catch {
+      return undefined;
+    }
+  }
+
+  const message = body?.detail || body?.title;
+
+  return typeof message === 'string' && message.trim() !== '' ? message : undefined;
+}
+
 // The machine-readable discriminator the API puts on a ProblemDetails (see
 // CustomExceptionHandler). Several failures share one status code — 409 covers
 // plan limits, booking conflicts, concurrency and reservation lifecycle — so a

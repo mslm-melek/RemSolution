@@ -21,6 +21,18 @@
         <mat-option *ngFor="let s of statuses" [value]="s.value">{{ t(s.labelKey) }}</mat-option>
       </mat-select>
     </mat-form-field>
+
+    <!-- Filters this list was opened with (from the home screen's work queues),
+         which have no control of their own. -->
+    <div class="filter-chips" *ngIf="chips.length">
+      <span class="chip no-dot" *ngFor="let chip of chips">
+        {{ t(chip.labelKey, chip.labelArgs) }}
+        <button type="button" class="chip-clear" (click)="clearChip(chip)"
+                [matTooltip]="t('filters.clear')" [attr.aria-label]="t('filters.clear')">
+          <mat-icon>close</mat-icon>
+        </button>
+      </span>
+    </div>
   </div>
 
   <!-- Sorting is server-side (see onSort): clicking a header re-queries the

@@ -299,35 +299,39 @@
 
 .stat-row {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(215px, 1fr));
-  gap: var(--gap-4);
+  /* Wide enough for the longest tile label to sit on two lines rather than be
+     clipped: "Requests to confirm" and "Unpaid expenses" are what a counter is
+     for, and a tile that says "Unpaid expe…" is no shortcut at all. */
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: var(--gap-3);
 }
 
 .stat-tile {
   display: flex;
   align-items: center;
-  gap: var(--gap-4);
+  gap: var(--gap-3);
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--r);
   box-shadow: var(--shadow-1);
-  padding: 18px;
+  padding: 14px 12px 14px 16px;
   text-decoration: none;
   color: inherit;
-  transition: transform 140ms ease, box-shadow 140ms ease;
+  transition: transform 140ms ease, box-shadow 140ms ease, border-color 140ms ease;
 }
 
 .stat-tile:hover {
   transform: translateY(-2px);
   box-shadow: var(--shadow-2);
+  border-color: var(--brand-200);
 }
 
 .stat-icon {
   display: grid;
   place-items: center;
-  width: 44px;
-  height: 44px;
-  border-radius: 13px;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
   background: var(--brand-50);
   color: var(--brand-700);
   flex: none;
@@ -336,20 +340,56 @@
 .stat-body {
   display: flex;
   flex-direction: column;
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .stat-value {
-  font-size: 26px;
+  font-size: 25px;
   font-weight: 680;
   color: var(--ink);
-  line-height: 1.1;
+  line-height: 1.15;
   letter-spacing: -0.02em;
   font-variant-numeric: tabular-nums;
 }
 
+/* Still counting: the dash is dimmed so it reads as "not yet" rather than as a
+   figure of its own. */
+.stat-value.pending {
+  color: var(--muted-2);
+}
+
 .stat-label {
   font-size: 12.5px;
+  line-height: 1.3;
   color: var(--muted);
+}
+
+/* Says the tile is a link without spending a word on it. It only appears on
+   hover, and it follows the text direction. */
+.stat-go {
+  flex: none;
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+  color: var(--muted-2);
+  opacity: 0;
+  transition: opacity 140ms ease, transform 140ms ease;
+}
+
+.stat-tile:hover .stat-go {
+  opacity: 1;
+  transform: translateX(2px);
+}
+
+/* :host-context and not `[dir='rtl'] …`: dir lives on <html>, which never carries
+   this component's scoping attribute. */
+:host-context([dir='rtl']) .stat-go {
+  transform: scaleX(-1);
+}
+
+:host-context([dir='rtl']) .stat-tile:hover .stat-go {
+  transform: scaleX(-1) translateX(2px);
 }
 
 /* --- Nothing pinned ------------------------------------------------------- */

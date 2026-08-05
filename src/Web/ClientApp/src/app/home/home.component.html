@@ -95,8 +95,8 @@
   <div class="dashboard" *ngIf="isAuthenticated && !isCustomer && !isPlatformAdmin">
     <div class="dash-header">
       <div>
-        <h1>{{ t('home.welcomeBack') }}</h1>
-        <p class="dash-subtitle">{{ displayName }}</p>
+        <h1>{{ displayName ? t('home.welcomeBackNamed', { name: displayName }) : t('home.welcomeBack') }}</h1>
+        <p class="dash-subtitle">{{ t('home.deskSubtitle') }}</p>
       </div>
       <button type="button" mat-stroked-button color="primary"
               *ngIf="!customizing && availableWidgets.length"
@@ -112,11 +112,20 @@
           <mat-icon>{{ widget.icon }}</mat-icon>
         </div>
         <div class="stat-body">
-          <span class="stat-value">{{ counts[widget.key] === undefined ? '—' : counts[widget.key] }}</span>
+          <span class="stat-value" [class.pending]="counts[widget.key] === undefined">
+            {{ counts[widget.key] === undefined ? '—' : counts[widget.key] }}
+          </span>
           <span class="stat-label">{{ t(widget.labelKey) }}</span>
         </div>
+        <mat-icon class="stat-go">chevron_right</mat-icon>
       </a>
     </div>
+
+    <!-- The desk's work queues: requests to answer, cars overdue, and today's
+         movements — each row acted on here rather than through its list. Not a
+         pinnable widget: it is what the screen is for, and every queue is gated
+         by the module it reads (see HomeAgendaComponent). -->
+    <app-home-agenda (counts)="onAgendaCounts($event)"></app-home-agenda>
 
     <!-- The month's pickups, returns and holds. A panel rather than a tile, so it
          sits under the row and carries no figure of its own. -->

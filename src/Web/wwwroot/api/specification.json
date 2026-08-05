@@ -5694,13 +5694,41 @@
             "x-position": 5
           },
           {
+            "name": "FromDate",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "nullable": true
+            },
+            "x-position": 6
+          },
+          {
+            "name": "ToDate",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "nullable": true
+            },
+            "x-position": 7
+          },
+          {
+            "name": "ActiveOnly",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            },
+            "x-position": 8
+          },
+          {
             "name": "SortBy",
             "in": "query",
             "schema": {
               "type": "string",
               "nullable": true
             },
-            "x-position": 6
+            "x-position": 9
           },
           {
             "name": "SortDescending",
@@ -5708,7 +5736,7 @@
             "schema": {
               "type": "boolean"
             },
-            "x-position": 7
+            "x-position": 10
           }
         ],
         "responses": {

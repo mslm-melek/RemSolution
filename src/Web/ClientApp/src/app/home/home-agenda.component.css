@@ -1,0 +1,328 @@
+/* The home screen's work queues: three cards of rows the desk can act on without
+   leaving the page. Tokens, .chip and the button styling come from styles.scss. */
+
+.agenda {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-3);
+}
+
+.agenda-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--gap-3);
+  flex-wrap: wrap;
+}
+
+/* Same eyebrow heading the other home sections use. */
+.agenda-head h2 {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+.agenda-day {
+  font-size: 12.5px;
+  color: var(--muted);
+}
+
+.agenda-message {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-2);
+  padding: 10px 14px;
+  border-radius: var(--r-sm);
+  background: var(--info-bg);
+  color: var(--info);
+  font-size: 13px;
+}
+
+.agenda-message mat-icon,
+.agenda-clear mat-icon {
+  flex: none;
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+}
+
+/* Everything done: one line, rather than three empty cards saying so separately. */
+.agenda-clear {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-2);
+  margin: 0;
+  padding: 12px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  background: var(--surface);
+  color: var(--ok);
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+/* --- The cards ------------------------------------------------------------ */
+
+/* Equal heights, deliberately: the cards sit side by side, and one card ending
+   halfway up the row reads as a broken layout rather than as an empty queue. The
+   "see all" footer is what takes up the slack (margin-top: auto below). */
+.queues {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: var(--gap-4);
+}
+
+.queue {
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  box-shadow: var(--shadow-1);
+  padding: 14px 8px 8px 16px;
+}
+
+/* A card with overdue cars on it earns a tinted edge — the one queue that is a
+   problem rather than a task. The inline edge mirrors itself in Arabic. */
+.queue.alert {
+  border-inline-start: 3px solid var(--danger);
+}
+
+.queue-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gap-2);
+  /* The count sits against the card's edge; the rows keep their own padding. */
+  padding-inline-end: 8px;
+  margin-bottom: var(--gap-2);
+}
+
+.queue-title {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gap-2);
+  font-size: 13.5px;
+  font-weight: 650;
+  color: var(--ink);
+}
+
+.queue-icon {
+  flex: none;
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+}
+
+.queue-icon.validate {
+  color: var(--brand-600);
+}
+
+.queue-icon.late {
+  color: var(--danger);
+}
+
+.queue-icon.today {
+  color: var(--accent);
+}
+
+.queue-count {
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+
+.queue-count.danger {
+  color: var(--danger);
+}
+
+.queue-count.zero {
+  color: var(--muted-2);
+  font-weight: 600;
+}
+
+.queue-empty {
+  margin: 0 0 var(--gap-2);
+  padding-inline-end: 8px;
+  color: var(--muted);
+  font-size: 12.5px;
+}
+
+/* --- The rows ------------------------------------------------------------- */
+
+.queue-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.queue-list li {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-2);
+  padding: 6px 0;
+  border-top: 1px solid var(--line);
+}
+
+.queue-list li:first-child {
+  border-top: none;
+}
+
+/* The kind marker on the "today" card, which mixes three sources. */
+.row-kind {
+  flex: none;
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+}
+
+.row-kind.pickup {
+  color: var(--brand-600);
+}
+
+.row-kind.return {
+  color: var(--ok);
+}
+
+.row-kind.request {
+  color: var(--accent);
+}
+
+/* Takes the slack, so the time and the actions stay put and the plate/name is
+   what gets clipped on a narrow card. */
+.row-main {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-width: 0;
+  line-height: 1.35;
+}
+
+.row-what {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 620;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.row-kind-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--muted-2);
+  text-transform: lowercase;
+}
+
+.row-who,
+.row-what {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.row-who {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.row-meta {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.row-when {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* Small enough that three fit next to a row without pushing it around. */
+.row-actions {
+  display: flex;
+  flex: none;
+  align-items: center;
+}
+
+.row-actions .mat-mdc-icon-button {
+  width: 32px;
+  height: 32px;
+  padding: 4px;
+}
+
+.row-actions .mat-mdc-icon-button mat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+}
+
+/* --- Card footers --------------------------------------------------------- */
+
+.queue-all,
+.queue-links {
+  margin-top: auto;
+}
+
+.queue-all {
+  align-self: flex-start;
+  padding-top: var(--gap-1);
+  font-size: 12.5px;
+}
+
+.queue-all mat-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+}
+
+/* The chevron points forward, so it turns around with the page. */
+:host-context([dir='rtl']) .queue-all mat-icon {
+  transform: scaleX(-1);
+}
+
+/* One link per source on the "today" card: no single URL selects all three. */
+.queue-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gap-1);
+  padding-top: var(--gap-1);
+}
+
+.queue-links .mat-mdc-button {
+  font-size: 12.5px;
+}
+
+@media (max-width: 599px) {
+  .queue {
+    padding: 12px 4px 6px 12px;
+  }
+
+  /* Every pixel the meta column and the buttons give up goes to the plate and the
+     client's name, which are what identify the row — a phone row runs out of width
+     long before it runs out of height, so the time stays ABOVE the chip rather
+     than beside it. */
+  .row-actions .mat-mdc-icon-button {
+    width: 30px;
+    height: 30px;
+    padding: 3px;
+  }
+
+  .row-meta {
+    max-width: 45%;
+  }
+
+  /* A wrapped chip is still readable; a clipped registration plate is not. */
+  .row-meta .chip {
+    white-space: normal;
+    text-align: end;
+  }
+}

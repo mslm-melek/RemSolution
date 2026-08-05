@@ -12,6 +12,7 @@ import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi } from '@a
 import { AppComponent } from './app.component';
 import { NavMenuComponent } from './nav-menu/nav-menu.component';
 import { HomeComponent } from './home/home.component';
+import { HomeAgendaComponent } from './home/home-agenda.component';
 import { AuthorizeInterceptor } from 'src/api-authorization/authorize.interceptor';
 import { ImpersonationInterceptor } from './shared/impersonation.interceptor';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
@@ -112,6 +113,7 @@ registerLocaleData(localeAr);
     AppComponent,
     NavMenuComponent,
     HomeComponent,
+    HomeAgendaComponent,
     CarComponent,
     CarFormComponent,
     CarDetailComponent,

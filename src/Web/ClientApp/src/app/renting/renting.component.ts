@@ -3,20 +3,18 @@ import { PageEvent } from '@angular/material/paginator';
 import { Sort, SortDirection } from '@angular/material/sort';
 import { MatDialog } from '@angular/material/dialog';
 import { ActivatedRoute, ParamMap, Router } from '@angular/router';
+import { Observable } from 'rxjs';
 import {
-  RentingsClient, RentingDto, RentingState, RentingDateBasis, CarsClient, ClientsClient,
-  ChangeRentingStateCommand
+  RentingsClient, RentingDto, RentingState, RentingDateBasis, CarsClient, ClientsClient
 } from '../web-api-client';
-import { extractValidationErrors } from '../shared/form-utils';
+import { BookingActionOutcome, BookingActionsService } from '../shared/booking-actions.service';
 import {
   FilterChip, applyListFilters, boolParam, dateParam, enumName, enumParam, idParam, rangeText,
   withoutParams
 } from '../shared/list-filters';
 import { AuthService } from '../shared/auth.service';
 import { PaymentDialogComponent } from '../shared/payment-dialog.component';
-import { ReturnDialogComponent } from '../shared/return-dialog.component';
 import { CancelDialogComponent } from '../shared/cancel-dialog.component';
-import { TranslocoService } from '@jsverse/transloco';
 
 @Component({
   selector: 'app-renting',
@@ -24,9 +22,6 @@ import { TranslocoService } from '@jsverse/transloco';
   styleUrls: ['./renting.component.css']
 })
 export class RentingComponent implements OnInit {
-  // Confirm/prompt dialogs and error banners are plain strings, so they are
-  // translated imperatively rather than through the template pipe.
-  private readonly transloco = inject(TranslocoService);
   private readonly dialog = inject(MatDialog);
   rentings: RentingDto[] = [];
   displayedColumns: string[] = ['car', 'client', 'period', 'state', 'price', 'actions'];
@@ -73,6 +68,7 @@ export class RentingComponent implements OnInit {
     private carsClient: CarsClient,
     private clientsClient: ClientsClient,
     private auth: AuthService,
+    private actions: BookingActionsService,
     private route: ActivatedRoute,
     private router: Router) { }
 
@@ -237,31 +233,12 @@ export class RentingComponent implements OnInit {
     return this.canChangeState && renting.rentingState === RentingState.NotYet && !!renting.id;
   }
 
-  // Same prompt as the booking's own page, offering the same reading: what the
-  // booking recorded, or the car's odometer when it was booked without one. The
-  // agent overtypes it with the dashboard, and that is what moves the car's
-  // figure on (see Car.RecordOdometer).
+  // Handing the car over and taking it back come from BookingActionsService: the
+  // home screen's work queues offer the same two, and they have to prompt, refuse
+  // and report identically wherever they are clicked.
   startRenting(renting: RentingDto) {
-    if (!renting.id) return;
-
     this.errorMessage = '';
-    const offered = renting.startMileage ?? renting.carMileage;
-
-    const value = prompt(
-      this.transloco.translate('renting.promptPickupMileage'),
-      offered === null || offered === undefined ? '' : String(offered));
-
-    if (value === null) return; // cancelled
-
-    this.client.changeRentingState(renting.id, new ChangeRentingStateCommand({
-      id: renting.id,
-      rowVersion: renting.rowVersion,
-      newState: RentingState.InProgress,
-      mileage: value.trim() === '' ? undefined : Number(value)
-    })).subscribe({
-      next: () => this.load(),
-      error: err => this.handleError(err)
-    });
+    this.apply(this.actions.startRenting(renting));
   }
 
   canTakeBack(renting: RentingDto): boolean {
@@ -269,17 +246,13 @@ export class RentingComponent implements OnInit {
   }
 
   returnCar(renting: RentingDto) {
-    if (!renting.id) return;
+    this.apply(this.actions.returnRenting(renting));
+  }
 
-    this.dialog.open(ReturnDialogComponent, {
-      data: {
-        rentingId: renting.id,
-        carLabel: [renting.carMatricule, renting.carModelName].filter(Boolean).join(' · '),
-        clientName: renting.clientName
-      },
-      autoFocus: 'first-tabbable'
-    }).afterClosed().subscribe(returned => {
-      if (returned) this.load();
+  private apply(action: Observable<BookingActionOutcome>) {
+    action.subscribe(outcome => {
+      if (outcome.error) this.errorMessage = outcome.error;
+      if (outcome.changed) this.load();
     });
   }
 
@@ -305,11 +278,5 @@ export class RentingComponent implements OnInit {
     }).afterClosed().subscribe(cancelled => {
       if (cancelled) this.load();
     });
-  }
-
-  private handleError(err: any) {
-    const validationErrors = extractValidationErrors(err);
-    this.errorMessage = validationErrors ?? this.transloco.translate('common.unexpectedError');
-    if (!validationErrors) console.error(err);
   }
 }

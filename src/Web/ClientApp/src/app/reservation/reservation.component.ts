@@ -2,15 +2,19 @@ import { Component, OnInit, inject } from '@angular/core';
 import { PageEvent } from '@angular/material/paginator';
 import { Sort, SortDirection } from '@angular/material/sort';
 import { MatDialog } from '@angular/material/dialog';
-import { ActivatedRoute, Router } from '@angular/router';
-import {
-  ReservationsClient, ReservationDto, ReservationStatus, RejectReservationCommand,
-  ConvertReservationCommand
-} from '../web-api-client';
+import { ActivatedRoute, ParamMap, Router } from '@angular/router';
+import { Observable } from 'rxjs';
+import { ReservationsClient, ReservationDto, ReservationStatus } from '../web-api-client';
 import { TranslocoService } from '@jsverse/transloco';
-import { isInvalidTransition } from '../shared/form-utils';
-import { applyListFilters, enumName, enumParam } from '../shared/list-filters';
+import {
+  extractProblemDetail, extractValidationErrors, isInvalidTransition
+} from '../shared/form-utils';
+import {
+  FilterChip, applyListFilters, boolParam, dateParam, enumName, enumParam, rangeText,
+  withoutParams
+} from '../shared/list-filters';
 import { AuthService } from '../shared/auth.service';
+import { BookingActionOutcome, BookingActionsService } from '../shared/booking-actions.service';
 import { PaymentDialogComponent } from '../shared/payment-dialog.component';
 
 @Component({
@@ -31,8 +35,16 @@ export class ReservationComponent implements OnInit {
   totalCount = 0;
   pageNumber = 1;
   pageSize = 10;
-  status: ReservationStatus | null = null;
   error = '';
+
+  // Filters. `status` has a control of its own; the window and "still in play"
+  // arrive by link — from the home screen's work queues — and show as removable
+  // chips, so the list never quietly shows a subset.
+  status: ReservationStatus | null = null;
+  fromDate: Date | null = null;
+  toDate: Date | null = null;
+  activeOnly = false;
+  chips: FilterChip[] = [];
 
   // Sorting is server-side: the column id doubles as the API's SortBy key, and
   // the starting values mirror the query's own default order (latest first).
@@ -53,26 +65,49 @@ export class ReservationComponent implements OnInit {
   constructor(
     private client: ReservationsClient,
     private auth: AuthService,
+    private actions: BookingActionsService,
     private route: ActivatedRoute,
     private router: Router) { }
 
-  // The status filter lives in the URL (see shared/list-filters): the dashboard's
-  // "requests to review" links here already narrowed to the rows it counted.
+  // The filters live in the URL (see shared/list-filters): the dashboard's
+  // "requests to review" and the home screen's work queues link here already
+  // narrowed to the rows they counted.
   ngOnInit() {
     this.auth.currentUser$.subscribe(user => {
       this.canPay = AuthService.canAccessModule(user, 'Payments', 'Payment.Create');
     });
 
     this.route.queryParamMap.subscribe(params => {
-      this.status = enumParam(params, 'status', ReservationStatus) as ReservationStatus | null;
+      this.readFilters(params);
       this.pageNumber = 1;
       this.load();
     });
   }
 
+  private readFilters(params: ParamMap) {
+    this.status = enumParam(params, 'status', ReservationStatus) as ReservationStatus | null;
+    this.fromDate = dateParam(params, 'from');
+    this.toDate = dateParam(params, 'to');
+    this.activeOnly = boolParam(params, 'active') === true;
+
+    this.chips = [];
+
+    // The window is on the hold's start date, which is the only one it has that a
+    // day is planned by (see GetReservationsWithPaginationQuery).
+    if (this.fromDate || this.toDate) {
+      const range = rangeText(params.get('from'), params.get('to'));
+      this.chips.push({ params: ['from', 'to'], labelKey: 'filters.reservationStarts', labelArgs: { range } });
+    }
+
+    if (this.activeOnly) {
+      this.chips.push({ params: ['active'], labelKey: 'filters.reservationActive' });
+    }
+  }
+
   load() {
     this.client.getReservations(
       this.pageNumber, this.pageSize, null, null, this.status,
+      this.fromDate, this.toDate, this.activeOnly,
       this.sortBy, this.sortDirection === 'desc'
     ).subscribe({
       next: result => {
@@ -83,11 +118,18 @@ export class ReservationComponent implements OnInit {
     });
   }
 
-  // Filtering goes through the URL; the subscription above reloads the rows.
+  // Filtering goes through the URL; the subscription above reloads the rows. The
+  // params that arrived by link are kept — only the control's own is replaced.
   onFilter() {
     applyListFilters(this.router, this.route, {
+      ...withoutParams(this.route.snapshot.queryParamMap, ['status']),
       status: enumName(ReservationStatus, this.status)
     });
+  }
+
+  clearChip(chip: FilterChip) {
+    applyListFilters(
+      this.router, this.route, withoutParams(this.route.snapshot.queryParamMap, chip.params));
   }
 
   onPage(event: PageEvent) {
@@ -167,34 +209,39 @@ export class ReservationComponent implements OnInit {
     });
   }
 
+  // The lifecycle actions come from BookingActionsService: the home screen's work
+  // queues offer the same three, and they have to prompt, refuse and report
+  // identically wherever they are clicked.
   confirm(r: ReservationDto) {
-    if (!r.id) return;
-    this.client.confirmReservation(r.id).subscribe({
-      next: () => this.load(),
-      error: err => this.fail(err)
-    });
+    this.apply(this.actions.confirmReservation(r));
   }
 
   reject(r: ReservationDto) {
-    if (!r.id) return;
-    const reason = prompt(this.transloco.translate('reservation.promptRejectReason'));
-    if (!reason) return;
-    this.client.rejectReservation(r.id, new RejectReservationCommand({ id: r.id, reason })).subscribe({
-      next: () => this.load(),
-      error: err => this.fail(err)
-    });
+    this.apply(this.actions.rejectReservation(r));
   }
 
   convert(r: ReservationDto) {
-    if (!r.id) return;
-    if (!confirm(this.transloco.translate('reservation.confirmConvert'))) return;
-    const cin = prompt(this.transloco.translate('reservation.promptDriverCin')) || undefined;
-    const passeportNumber = cin ? undefined : (prompt(this.transloco.translate('reservation.promptDriverPassport')) || undefined);
-    const command = new ConvertReservationCommand({ id: r.id, cin, passeportNumber });
-    this.client.convertReservation(r.id, command).subscribe({
-      next: rentingId => this.router.navigate(['/renting', rentingId]),
-      error: err => this.fail(err)
+    this.actions.convertReservation(r).subscribe(outcome => {
+      if (outcome.rentingId) {
+        this.router.navigate(['/renting', outcome.rentingId]);
+        return;
+      }
+
+      this.handle(outcome);
     });
+  }
+
+  private apply(action: Observable<BookingActionOutcome>) {
+    action.subscribe(outcome => this.handle(outcome));
+  }
+
+  private handle(outcome: BookingActionOutcome) {
+    if (outcome.error) {
+      this.error = outcome.error;
+      setTimeout(() => this.error = '', 6000);
+    }
+
+    if (outcome.changed) this.load();
   }
 
   cancel(r: ReservationDto) {
@@ -207,6 +254,9 @@ export class ReservationComponent implements OnInit {
     });
   }
 
+  // Cancelling stays here — it is the one lifecycle action the home screen's
+  // queues do not offer — but it reads a failure the same way the shared actions
+  // do (see BookingActionsService).
   private fail(err: any) {
     // The hold moved on while this list was on screen (someone else confirmed or
     // cancelled it). The row is stale, so say what happened and reload rather
@@ -218,25 +268,10 @@ export class ReservationComponent implements OnInit {
       return;
     }
 
-    this.error = err?.response ? this.extract(err.response) : this.transloco.translate('common.actionFailed');
-    console.error(err);
-    setTimeout(() => this.error = '', 6000);
-  }
+    const said = extractValidationErrors(err) ?? extractProblemDetail(err);
+    if (!said) console.error(err);
 
-  private extract(response: string): string {
-    try {
-      const body = JSON.parse(response);
-      if (body?.errors) {
-        const messages: string[] = [];
-        for (const key of Object.keys(body.errors)) {
-          const val = body.errors[key];
-          if (Array.isArray(val)) { messages.push(...val); } else { messages.push(String(val)); }
-        }
-        return messages.join(' ');
-      }
-      return body?.detail || body?.title || 'The action could not be completed.';
-    } catch {
-      return 'The action could not be completed.';
-    }
+    this.error = said ?? this.transloco.translate('common.actionFailed');
+    setTimeout(() => this.error = '', 6000);
   }
 }

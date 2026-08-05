@@ -8491,7 +8491,7 @@ export class RentingsClient implements IRentingsClient {
 }
 
 export interface IReservationsClient {
-    getReservations(pageNumber: number | undefined, pageSize: number | undefined, carId: number | null | undefined, clientId: number | null | undefined, status: ReservationStatus | null | undefined, sortBy: string | null | undefined, sortDescending: boolean | undefined): Observable<PaginatedListOfReservationDto>;
+    getReservations(pageNumber: number | undefined, pageSize: number | undefined, carId: number | null | undefined, clientId: number | null | undefined, status: ReservationStatus | null | undefined, fromDate: Date | null | undefined, toDate: Date | null | undefined, activeOnly: boolean | undefined, sortBy: string | null | undefined, sortDescending: boolean | undefined): Observable<PaginatedListOfReservationDto>;
     createReservation(command: CreateReservationCommand): Observable<number>;
     getReservationById(id: number): Observable<ReservationDto>;
     updateReservation(id: number, command: UpdateReservationCommand): Observable<void>;
@@ -8514,7 +8514,7 @@ export class ReservationsClient implements IReservationsClient {
         this.baseUrl = baseUrl ?? "";
     }
 
-    getReservations(pageNumber: number | undefined, pageSize: number | undefined, carId: number | null | undefined, clientId: number | null | undefined, status: ReservationStatus | null | undefined, sortBy: string | null | undefined, sortDescending: boolean | undefined): Observable<PaginatedListOfReservationDto> {
+    getReservations(pageNumber: number | undefined, pageSize: number | undefined, carId: number | null | undefined, clientId: number | null | undefined, status: ReservationStatus | null | undefined, fromDate: Date | null | undefined, toDate: Date | null | undefined, activeOnly: boolean | undefined, sortBy: string | null | undefined, sortDescending: boolean | undefined): Observable<PaginatedListOfReservationDto> {
         let url_ = this.baseUrl + "/api/Reservations?";
         if (pageNumber === null)
             throw new Error("The parameter 'pageNumber' cannot be null.");
@@ -8530,6 +8530,14 @@ export class ReservationsClient implements IReservationsClient {
             url_ += "ClientId=" + encodeURIComponent("" + clientId) + "&";
         if (status !== undefined && status !== null)
             url_ += "Status=" + encodeURIComponent("" + status) + "&";
+        if (fromDate !== undefined && fromDate !== null)
+            url_ += "FromDate=" + encodeURIComponent(fromDate ? "" + fromDate.toISOString() : "") + "&";
+        if (toDate !== undefined && toDate !== null)
+            url_ += "ToDate=" + encodeURIComponent(toDate ? "" + toDate.toISOString() : "") + "&";
+        if (activeOnly === null)
+            throw new Error("The parameter 'activeOnly' cannot be null.");
+        else if (activeOnly !== undefined)
+            url_ += "ActiveOnly=" + encodeURIComponent("" + activeOnly) + "&";
         if (sortBy !== undefined && sortBy !== null)
             url_ += "SortBy=" + encodeURIComponent("" + sortBy) + "&";
         if (sortDescending === null)

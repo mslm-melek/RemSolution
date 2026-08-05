@@ -8,13 +8,18 @@ import { extractValidationErrors } from '../shared/form-utils';
 import {
   HomeWidgetMeta, MAX_HOME_WIDGETS, availableHomeWidgets, countTiles, resolveHomeWidgets
 } from '../shared/home-widgets';
+import { AgendaCounts } from './home-agenda.component';
 import {
   BrandsClient, CarsClient, ChatClient, ClientsClient, CreditsClient,
   CurrentUserDto, DocumentTemplatesClient, ExpenseTypesClient, ExpensesClient,
   ExtraServiceTypesClient, MarketplaceCarDto, MarketplaceClient, ModelCarsClient,
-  RentingState, RentingsClient, ReservationStatus, ReservationsClient,
+  RentingState, RentingsClient,
   UpdateMyHomeWidgetsCommand, UsersClient
 } from '../web-api-client';
+
+// Tiles whose figure comes from the work queues rather than from a query of their
+// own (see onAgendaCounts): both count the holds awaiting the agency.
+const AGENDA_OWNED_COUNTS = ['Reservations'];
 
 // How long each car stays on screen in the home-page slideshow.
 const SLIDE_INTERVAL_MS = 6_000;
@@ -67,7 +72,6 @@ export class HomeComponent implements OnInit, OnDestroy {
     private carsClient: CarsClient,
     private clientsClient: ClientsClient,
     private rentingsClient: RentingsClient,
-    private reservationsClient: ReservationsClient,
     private expensesClient: ExpensesClient,
     private expenseTypesClient: ExpenseTypesClient,
     private extraServiceTypesClient: ExtraServiceTypesClient,
@@ -134,6 +138,18 @@ export class HomeComponent implements OnInit, OnDestroy {
     return this.pinnedWidgets.some(w => w.panel && w.key === key);
   }
 
+  /**
+   * A figure the work queues below the tiles already fetched. The "Requests to
+   * confirm" tile counts exactly what the first queue counts — the same query with
+   * the same filter — so it takes the number from there instead of asking twice
+   * (see AGENDA_OWNED_COUNTS).
+   */
+  onAgendaCounts(counts: AgendaCounts) {
+    if (counts.pendingReservations !== undefined) {
+      this.counts['Reservations'] = counts.pendingReservations;
+    }
+  }
+
   // Only the tiles on screen are counted, and each is counted once: revisiting
   // the page after pinning something new fetches the new tile alone. Panels do
   // their own loading, so they are not here.
@@ -143,6 +159,11 @@ export class HomeComponent implements OnInit, OnDestroy {
 
       // Reserve the slot before the call so a second pass cannot re-request it.
       this.counts[widget.key] = undefined;
+
+      // Left to the work queues, which are on the same screen and ask the same
+      // question. Should their call fail the tile keeps its "—", exactly as it
+      // would if its own had.
+      if (AGENDA_OWNED_COUNTS.includes(widget.key)) continue;
 
       this.countOf(widget.key).subscribe({
         next: value => this.counts[widget.key] = value,
@@ -174,10 +195,9 @@ export class HomeComponent implements OnInit, OnDestroy {
           .getRentings(
             1, 1, null, null, RentingState.InProgress, null, null, undefined, false, null, false)
           .pipe(map(r => r.totalCount ?? 0));
-      case 'Reservations':
-        return this.reservationsClient
-          .getReservations(1, 1, null, null, ReservationStatus.PendingConfirmation, null, false)
-          .pipe(map(r => r.totalCount ?? 0));
+      // 'Reservations' is not here: the work queues on this same screen count the
+      // holds awaiting the agency, and the tile takes its figure from them (see
+      // onAgendaCounts / AGENDA_OWNED_COUNTS).
       case 'Expenses':
         return this.expensesClient
           .getExpenses(1, 1, null, null, null, null, true, null, false)

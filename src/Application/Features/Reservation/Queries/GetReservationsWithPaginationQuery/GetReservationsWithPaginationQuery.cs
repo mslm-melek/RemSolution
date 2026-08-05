@@ -16,6 +16,17 @@ namespace RemSolution.Application.Features.Reservation.Queries.GetReservationsWi
         int? CarId = null,
         int? ClientId = null,
         ReservationStatus? Status = null,
+        // Half-open [FromDate, ToDate) over the hold's START date, the same
+        // convention the dashboard's period uses. A hold is "for" the day the car
+        // goes out, which is the only one of its two dates the desk plans by — so
+        // there is no DateBasis to choose here, unlike a renting's.
+        DateTime? FromDate = null,
+        DateTime? ToDate = null,
+        // Only holds still in play: awaiting the agency, confirmed, or paid. The
+        // terminal ones (converted, rejected, cancelled, expired) are rows, but
+        // they are not work — so the home screen's "today" queue can ask for the
+        // ones that still need doing without naming a single status.
+        bool ActiveOnly = false,
         // Column the table is sorted by, named after the Angular matColumnDef;
         // anything unrecognised falls back to the latest start date first.
         string? SortBy = null,
@@ -45,6 +56,22 @@ namespace RemSolution.Application.Features.Reservation.Queries.GetReservationsWi
 
             if (request.Status.HasValue)
                 query = query.Where(r => r.Status == request.Status);
+
+            // Both filters may be given at once: "today's holds that are still in
+            // play" is one question, and Status pins it to one of the three.
+            if (request.ActiveOnly)
+                query = query.Where(r => r.Status == ReservationStatus.PendingConfirmation
+                                         || r.Status == ReservationStatus.Confirmed
+                                         || r.Status == ReservationStatus.Paid);
+
+            var from = request.FromDate;
+            var to = request.ToDate;
+
+            if (from.HasValue)
+                query = query.Where(r => r.StartDate >= from);
+
+            if (to.HasValue)
+                query = query.Where(r => r.StartDate < to);
 
             var descending = request.SortDescending;
 

@@ -76,7 +76,9 @@
     "notOnRent": "غير مؤجّرة",
     "added": "أُضيف: {{ range }}",
     "flagged": "معلّمون",
-    "notFlagged": "غير معلّمين"
+    "notFlagged": "غير معلّمين",
+    "reservationStarts": "الانطلاق: {{ range }}",
+    "reservationActive": "الحجوزات النشطة فقط"
   },
   "nav": {
     "brandName": "RemSolution",
@@ -181,6 +183,24 @@
       "expenseTypes": "أنواع المصاريف",
       "extraServiceTypes": "أنواع الخدمات الإضافية",
       "browseMarketplace": "عرض السوق"
+    },
+    "welcomeBackNamed": "أهلًا بعودتك، {{ name }}",
+    "deskSubtitle": "هذا ما يجب إنجازه اليوم.",
+    "agenda": {
+      "title": "ما يجب إنجازه",
+      "toValidate": "طلبات في انتظار المصادقة",
+      "noneToValidate": "لا توجد طلبات في الانتظار.",
+      "expiringToday": "تنتهي اليوم",
+      "overdue": "إرجاعات متأخرة",
+      "noneOverdue": "لا توجد سيارة متأخرة.",
+      "daysLate": "تأخير {{ count }} يوم",
+      "today": "اليوم",
+      "nothingToday": "لا شيء مبرمج اليوم.",
+      "seeAll": "عرض الكل ({{ count }})",
+      "allClear": "لا شيء في الانتظار — لا طلبات، لا تأخير، ولا شيء لهذا اليوم.",
+      "pickupsLink": "الانطلاقات ({{ count }})",
+      "returnsLink": "الإرجاعات ({{ count }})",
+      "requestsLink": "الطلبات ({{ count }})"
     }
   },
   "brand": {

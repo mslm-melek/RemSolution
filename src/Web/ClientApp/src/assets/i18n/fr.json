@@ -76,7 +76,9 @@
     "notOnRent": "Pas en location",
     "added": "Ajouté : {{ range }}",
     "flagged": "Signalés",
-    "notFlagged": "Non signalés"
+    "notFlagged": "Non signalés",
+    "reservationStarts": "Début : {{ range }}",
+    "reservationActive": "Réservations actives seulement"
   },
   "nav": {
     "brandName": "RemSolution",
@@ -181,6 +183,24 @@
       "expenseTypes": "Types de dépenses",
       "extraServiceTypes": "Types de services additionnels",
       "browseMarketplace": "Voir la marketplace"
+    },
+    "welcomeBackNamed": "Bon retour, {{ name }}",
+    "deskSubtitle": "Voici ce qu'il y a à faire aujourd'hui.",
+    "agenda": {
+      "title": "À traiter",
+      "toValidate": "Demandes à valider",
+      "noneToValidate": "Aucune demande en attente.",
+      "expiringToday": "Expire aujourd'hui",
+      "overdue": "Retours en retard",
+      "noneOverdue": "Aucun véhicule en retard.",
+      "daysLate": "{{ count }} jour(s) de retard",
+      "today": "Aujourd'hui",
+      "nothingToday": "Rien de prévu aujourd'hui.",
+      "seeAll": "Voir les {{ count }}",
+      "allClear": "Rien en attente — aucune demande, aucun retard, rien pour aujourd'hui.",
+      "pickupsLink": "Départs ({{ count }})",
+      "returnsLink": "Retours ({{ count }})",
+      "requestsLink": "Demandes ({{ count }})"
     }
   },
   "brand": {

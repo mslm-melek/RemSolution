@@ -101,7 +101,10 @@
         <li *ngFor="let event of selected.events">
           <mat-icon class="entry-icon" [ngClass]="stateClass(event)">{{ icon(event.kind) }}</mat-icon>
 
-          <span class="entry-time">{{ event.on | date:'HH:mm' }}</span>
+          <!-- UTC, like the day the entry was filed under (see the component):
+               a pickup booked for 23:30 must not read as 00:30 of the next day in
+               a positive offset while sitting in the previous day's cell. -->
+          <span class="entry-time">{{ event.on | date:'HH:mm':'UTC' }}</span>
 
           <span class="entry-what">
             <span class="entry-kind">{{ t(labelKey(event.kind)) }}</span>
