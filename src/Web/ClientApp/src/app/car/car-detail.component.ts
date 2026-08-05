@@ -38,6 +38,8 @@ export class CarDetailComponent implements OnInit {
   // A car's money is what has been spent on it: the finance screen's payable tab
   // filters by car, and either module alone can answer it (see CreditComponent).
   canSeeExpenses = false;
+  // How the car has done month by month — the statistics report, filtered to it.
+  canSeeStatistics = false;
 
   private readonly stateLabelKeys: Record<number, string> = {
     [RentingState.NotYet]: 'enums.rentingState.notYet',
@@ -68,6 +70,7 @@ export class CarDetailComponent implements OnInit {
       this.canReturn = AuthService.canAccessModule(user, 'Rentings', 'Renting.Update');
       this.canSeeExpenses = AuthService.canAccessModule(user, 'Expenses', 'Expense.Read')
         || AuthService.canAccessModule(user, 'Credits', 'Credit.Read');
+      this.canSeeStatistics = AuthService.canAccessModule(user, 'Dashboard', 'Dashboard.View');
 
       if (this.canSeeRentings) this.loadRentings();
     });

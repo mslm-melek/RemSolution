@@ -39,6 +39,9 @@ export class CarComponent implements OnInit {
   canRent = false;
   canReturn = false;
   canSeeRentings = false;
+  // The statistics report, filtered to the row's car — the same entitlement as
+  // the dashboard, which is what gates the report itself.
+  canSeeStatistics = false;
 
   totalCount = 0;
   pageNumber = 1;
@@ -90,6 +93,7 @@ export class CarComponent implements OnInit {
       this.canSeeRentings = AuthService.canAccessModule(user, 'Rentings', 'Renting.Read');
       this.canRent = AuthService.canAccessModule(user, 'Rentings', 'Renting.Create');
       this.canReturn = AuthService.canAccessModule(user, 'Rentings', 'Renting.Update');
+      this.canSeeStatistics = AuthService.canAccessModule(user, 'Dashboard', 'Dashboard.View');
     });
 
     this.modelCarsClient.getAllModelCars().subscribe({

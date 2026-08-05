@@ -1,0 +1,113 @@
+/* Surface, header, filter strip, tables and tiles all come from the shared
+   .page / .filter-row / .data-table / .tile-grid rules in styles.scss. What is
+   specific to this screen: the money tone on the result column, and the little
+   revenue bar behind the charged figures. */
+
+.statistics {
+  max-width: 1280px;
+}
+
+.currency {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+  margin-inline-start: 2px;
+}
+
+/* The result reads before the number does: earning is green, losing is red, and
+   a flat zero stays neutral rather than claiming either. The selectors carry
+   `main .page` because the cell colour comes from a Material rule (see the note
+   in styles.scss). */
+main .page .good {
+  color: var(--ok);
+  font-weight: 650;
+}
+
+main .page .bad {
+  color: var(--danger);
+  font-weight: 650;
+}
+
+.tile.net.good {
+  border-inline-start: 4px solid var(--ok);
+}
+
+.tile.net.bad {
+  border-inline-start: 4px solid var(--danger);
+}
+
+/* Revenue per row, against the best row of the same table. The bar sits behind
+   the figure rather than in a column of its own: the comparison is the point, and
+   a separate column would push the money off the first screenful. */
+.bar-cell {
+  position: relative;
+  display: inline-flex;
+  justify-content: flex-end;
+  min-width: 96px;
+  padding: 2px 4px;
+}
+
+.bar {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-end: 0;
+  background: var(--brand-100);
+  border-radius: 3px;
+  /* Decoration only — the figure next to it is the accessible value. */
+  pointer-events: none;
+}
+
+.bar-value {
+  position: relative;
+}
+
+.matricule {
+  font-weight: 600;
+  color: var(--ink);
+  letter-spacing: 0.02em;
+  text-decoration: none;
+}
+
+a.matricule:hover,
+a.matricule:focus-visible {
+  color: var(--brand-700);
+  text-decoration: underline;
+}
+
+.section-note {
+  margin: -4px 0 0;
+  font-size: 12.5px;
+  color: var(--muted);
+}
+
+.hint {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--muted);
+}
+
+.hint .mat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+}
+
+.empty-state {
+  margin: 0;
+  padding: 18px;
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--r);
+  text-align: center;
+  color: var(--muted);
+}
+
+/* The totals line is a summary, not another row of data. */
+main .page .data-table .mat-mdc-footer-cell {
+  font-weight: 700;
+  color: var(--ink);
+  border-top: 1px solid var(--line-strong);
+  background: var(--surface-2);
+}

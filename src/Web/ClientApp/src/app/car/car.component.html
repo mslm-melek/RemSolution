@@ -163,6 +163,12 @@
                   [matTooltip]="t('renting.returnCar')" [attr.aria-label]="t('renting.returnCar')">
             <mat-icon>assignment_turned_in</mat-icon>
           </button>
+          <!-- How the car has done, month by month: the report filtered to it. -->
+          <a *ngIf="canSeeStatistics" mat-icon-button
+             [routerLink]="['/statistics']" [queryParams]="{ car: car.id }"
+             [matTooltip]="t('car.statistics')" [attr.aria-label]="t('car.statistics')">
+            <mat-icon>insights</mat-icon>
+          </a>
           <a mat-icon-button [routerLink]="['/car', car.id, 'edit']"
              [matTooltip]="t('common.edit')" [attr.aria-label]="t('common.edit')">
             <mat-icon>edit</mat-icon>

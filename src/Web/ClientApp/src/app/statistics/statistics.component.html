@@ -1,0 +1,271 @@
+<div class="page statistics" *transloco="let t">
+  <div class="header-row">
+    <div>
+      <h2 class="title">{{ t('statistics.title') }}</h2>
+      <p class="page-subtitle" *ngIf="data">
+        <ng-container *ngIf="data.carLabel">
+          <span class="num">{{ data.carLabel }}</span> ·
+        </ng-container>
+        {{ isMonthly ? t('statistics.subtitleMonths', { year: year }) : t('statistics.subtitleYears') }}
+      </p>
+    </div>
+
+    <div class="header-actions">
+      <!-- Back to the whole fleet: the way out of a per-car report, and the only
+           control that has to be here rather than in the filter row. -->
+      <button *ngIf="carId !== null" mat-stroked-button (click)="selectCar(null)">
+        <mat-icon>clear</mat-icon> {{ t('statistics.allCars') }}
+      </button>
+      <a *ngIf="carId !== null" mat-button [routerLink]="['/car', carId]">
+        <mat-icon>directions_car</mat-icon> {{ t('statistics.openCar') }}
+      </a>
+    </div>
+  </div>
+
+  <div class="filter-row">
+    <mat-button-toggle-group [value]="granularity" (change)="selectGranularity($event.value)"
+                             [attr.aria-label]="t('statistics.groupBy')">
+      <mat-button-toggle *ngFor="let option of granularityOptions" [value]="option.value">
+        {{ t(option.labelKey) }}
+      </mat-button-toggle>
+    </mat-button-toggle-group>
+
+    <!-- Only the monthly table is scoped to a year; the yearly one already shows
+         the trailing years. -->
+    <mat-form-field appearance="outline" class="filter-field" *ngIf="isMonthly">
+      <mat-label>{{ t('statistics.year') }}</mat-label>
+      <mat-select [value]="year" (selectionChange)="selectYear($event.value)">
+        <mat-option *ngFor="let option of years" [value]="option">{{ option }}</mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="filter-field">
+      <mat-label>{{ t('statistics.car') }}</mat-label>
+      <mat-select [value]="carId" (selectionChange)="selectCar($event.value)">
+        <mat-option [value]="null">{{ t('statistics.allCars') }}</mat-option>
+        <mat-option *ngFor="let car of data?.cars" [value]="car.id">
+          {{ car.matricule }}<span *ngIf="car.modelName"> · {{ car.modelName }}</span>
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+  </div>
+
+  <div *ngIf="errorMessage" class="error-banner">
+    <mat-icon>error_outline</mat-icon> {{ t(errorMessage) }}
+  </div>
+  <div *ngIf="loading" class="loading">{{ t('common.loading') }}</div>
+
+  <ng-container *ngIf="data && !loading">
+    <!-- What the whole window came to. -->
+    <div class="tile-grid">
+      <div class="tile">
+        <div class="tile-label">{{ t('statistics.rentings') }}</div>
+        <div class="tile-value">{{ totals.rentings | number:'1.0-0' }}</div>
+        <div class="tile-note">{{ t('statistics.rentingsHint') }}</div>
+      </div>
+
+      <div class="tile">
+        <div class="tile-label">{{ t('statistics.days') }}</div>
+        <div class="tile-value">{{ totals.rentedDays | number:'1.0-0' }}</div>
+        <div class="tile-note">{{ t('statistics.daysHint') }}</div>
+      </div>
+
+      <div class="tile">
+        <div class="tile-label">{{ t('statistics.charged') }}</div>
+        <div class="tile-value">
+          {{ totals.charged?.amount | number:'1.2-2' }}
+          <span class="currency">{{ data.currency }}</span>
+        </div>
+        <div class="tile-note">{{ t('statistics.chargedHint') }}</div>
+      </div>
+
+      <div class="tile">
+        <div class="tile-label">{{ t('statistics.expenses') }}</div>
+        <div class="tile-value">
+          {{ totals.expenses?.amount | number:'1.2-2' }}
+          <span class="currency">{{ data.currency }}</span>
+        </div>
+        <div class="tile-note">{{ t('statistics.expensesHint') }}</div>
+      </div>
+
+      <div class="tile net" [ngClass]="netClass(totals)">
+        <div class="tile-label">{{ t('statistics.net') }}</div>
+        <div class="tile-value">
+          {{ totals.net?.amount | number:'1.2-2' }}
+          <span class="currency">{{ data.currency }}</span>
+        </div>
+        <div class="tile-note">{{ t('statistics.netHint') }}</div>
+      </div>
+    </div>
+
+    <p class="hint" *ngIf="data.truncated">
+      <mat-icon>info_outline</mat-icon> {{ t('statistics.truncated') }}
+    </p>
+
+    <!-- Nothing happened in the window: the tiles have said so, and a table of
+         twelve zero rows underneath would only be noise. -->
+    <p class="empty-state" *ngIf="!hasActivity">{{ t('statistics.noActivity') }}</p>
+
+    <!-- ------------------------------------------------------- by period ---- -->
+    <h3 class="section-title" *ngIf="hasActivity">
+      {{ isMonthly ? t('statistics.byMonthSection') : t('statistics.byYearSection') }}
+    </h3>
+
+    <table mat-table [dataSource]="periods" class="data-table" *ngIf="hasActivity">
+      <ng-container matColumnDef="period">
+        <th mat-header-cell *matHeaderCellDef>{{ t('statistics.period') }}</th>
+        <td mat-cell *matCellDef="let row">
+          <span *ngIf="isMonthly">{{ periodDate(row) | date:'LLLL y' }}</span>
+          <span class="num" *ngIf="!isMonthly">{{ periodYear(row) }}</span>
+        </td>
+        <td mat-footer-cell *matFooterCellDef>{{ t('statistics.total') }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="rentings">
+        <th mat-header-cell *matHeaderCellDef class="num-cell">{{ t('statistics.rentings') }}</th>
+        <td mat-cell *matCellDef="let row" class="num-cell">{{ row.rentings | number:'1.0-0' }}</td>
+        <td mat-footer-cell *matFooterCellDef class="num-cell">
+          {{ totals.rentings | number:'1.0-0' }}
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="days">
+        <th mat-header-cell *matHeaderCellDef class="num-cell">{{ t('statistics.days') }}</th>
+        <td mat-cell *matCellDef="let row" class="num-cell">{{ row.rentedDays | number:'1.0-0' }}</td>
+        <td mat-footer-cell *matFooterCellDef class="num-cell">
+          {{ totals.rentedDays | number:'1.0-0' }}
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="charged">
+        <th mat-header-cell *matHeaderCellDef class="num-cell"
+            [matTooltip]="t('statistics.chargedHint')">{{ t('statistics.charged') }}</th>
+        <td mat-cell *matCellDef="let row" class="num-cell">
+          <span class="bar-cell">
+            <span class="bar" [style.width.%]="revenueShare(row, periodScale)"></span>
+            <span class="bar-value">{{ row.charged?.amount | number:'1.2-2' }}</span>
+          </span>
+        </td>
+        <td mat-footer-cell *matFooterCellDef class="num-cell">
+          {{ totals.charged?.amount | number:'1.2-2' }}
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="collected">
+        <th mat-header-cell *matHeaderCellDef class="num-cell"
+            [matTooltip]="t('statistics.collectedHint')">{{ t('statistics.collected') }}</th>
+        <td mat-cell *matCellDef="let row" class="num-cell">
+          {{ row.collected?.amount | number:'1.2-2' }}
+        </td>
+        <td mat-footer-cell *matFooterCellDef class="num-cell">
+          {{ totals.collected?.amount | number:'1.2-2' }}
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="expenses">
+        <th mat-header-cell *matHeaderCellDef class="num-cell"
+            [matTooltip]="t('statistics.expensesHint')">{{ t('statistics.expenses') }}</th>
+        <td mat-cell *matCellDef="let row" class="num-cell">
+          {{ row.expenses?.amount | number:'1.2-2' }}
+        </td>
+        <td mat-footer-cell *matFooterCellDef class="num-cell">
+          {{ totals.expenses?.amount | number:'1.2-2' }}
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="net">
+        <th mat-header-cell *matHeaderCellDef class="num-cell"
+            [matTooltip]="t('statistics.netHint')">{{ t('statistics.net') }}</th>
+        <td mat-cell *matCellDef="let row" class="num-cell" [ngClass]="netClass(row)">
+          {{ row.net?.amount | number:'1.2-2' }}
+        </td>
+        <td mat-footer-cell *matFooterCellDef class="num-cell" [ngClass]="netClass(totals)">
+          {{ totals.net?.amount | number:'1.2-2' }}
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="periodColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: periodColumns"></tr>
+      <tr mat-footer-row *matFooterRowDef="periodColumns"></tr>
+    </table>
+
+    <!-- ---------------------------------------------------------- by car ---- -->
+    <ng-container *ngIf="showByCar">
+      <h3 class="section-title">{{ t('statistics.byCarSection') }}</h3>
+      <p class="section-note">{{ t('statistics.byCarHint') }}</p>
+
+      <table mat-table [dataSource]="byCar" class="data-table">
+        <ng-container matColumnDef="car">
+          <th mat-header-cell *matHeaderCellDef>{{ t('statistics.car') }}</th>
+          <td mat-cell *matCellDef="let row">
+            <ng-container *ngIf="row.carId; else noCar">
+              <a class="matricule num" [routerLink]="['/car', row.carId]">{{ row.matricule }}</a>
+              <span class="muted" *ngIf="row.modelName"> · {{ row.modelName }}</span>
+            </ng-container>
+            <!-- The residual row: hires and costs that belong to no vehicle in the
+                 fleet today, so the table still adds up to the totals above. -->
+            <ng-template #noCar>
+              <span class="muted">{{ t('statistics.otherCars') }}</span>
+            </ng-template>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="rentings">
+          <th mat-header-cell *matHeaderCellDef class="num-cell">{{ t('statistics.rentings') }}</th>
+          <td mat-cell *matCellDef="let row" class="num-cell">{{ row.rentings | number:'1.0-0' }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="days">
+          <th mat-header-cell *matHeaderCellDef class="num-cell">{{ t('statistics.days') }}</th>
+          <td mat-cell *matCellDef="let row" class="num-cell">{{ row.rentedDays | number:'1.0-0' }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="charged">
+          <th mat-header-cell *matHeaderCellDef class="num-cell">{{ t('statistics.charged') }}</th>
+          <td mat-cell *matCellDef="let row" class="num-cell">
+            <span class="bar-cell">
+              <span class="bar" [style.width.%]="revenueShare(row, carScale)"></span>
+              <span class="bar-value">{{ row.charged?.amount | number:'1.2-2' }}</span>
+            </span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="collected">
+          <th mat-header-cell *matHeaderCellDef class="num-cell">{{ t('statistics.collected') }}</th>
+          <td mat-cell *matCellDef="let row" class="num-cell">
+            {{ row.collected?.amount | number:'1.2-2' }}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="expenses">
+          <th mat-header-cell *matHeaderCellDef class="num-cell">{{ t('statistics.expenses') }}</th>
+          <td mat-cell *matCellDef="let row" class="num-cell">
+            {{ row.expenses?.amount | number:'1.2-2' }}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="net">
+          <th mat-header-cell *matHeaderCellDef class="num-cell">{{ t('statistics.net') }}</th>
+          <td mat-cell *matCellDef="let row" class="num-cell" [ngClass]="netClass(row)">
+            {{ row.net?.amount | number:'1.2-2' }}
+          </td>
+        </ng-container>
+
+        <!-- The car's own report: the same screen, filtered to that one row. -->
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef class="actions-cell">{{ t('common.actions') }}</th>
+          <td mat-cell *matCellDef="let row" class="actions-cell">
+            <button *ngIf="row.carId" mat-icon-button (click)="selectCar(row.carId)"
+                    [matTooltip]="t('statistics.carReport')"
+                    [attr.aria-label]="t('statistics.carReport')">
+              <mat-icon>insights</mat-icon>
+            </button>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="carColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: carColumns"></tr>
+      </table>
+    </ng-container>
+  </ng-container>
+</div>

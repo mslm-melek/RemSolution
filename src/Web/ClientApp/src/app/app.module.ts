@@ -41,6 +41,7 @@ import { ExpenseTypeComponent } from './expense-type/expense-type.component';
 import { ExpenseFormComponent } from './expense/expense-form.component';
 import { CreditComponent } from './credit/credit.component';
 import { DashboardComponent } from './dashboard/dashboard.component';
+import { StatisticsComponent } from './statistics/statistics.component';
 import { PlatformDashboardComponent } from './platform-dashboard/platform-dashboard.component';
 import { ChatComponent } from './chat/chat.component';
 import { NotificationComponent } from './notification/notification.component';
@@ -137,6 +138,7 @@ registerLocaleData(localeAr);
     ExpenseFormComponent,
     CreditComponent,
     DashboardComponent,
+    StatisticsComponent,
     PlatformDashboardComponent,
     ChatComponent,
     NotificationComponent,
@@ -221,6 +223,10 @@ registerLocaleData(localeAr);
       { path: 'expense/:id', component: ExpenseFormComponent },
       { path: 'credit', component: CreditComponent },
       { path: 'dashboard', component: DashboardComponent },
+      // The month-by-month / year-by-year report. Its car filter is a query
+      // param (?car=) rather than a path segment: the fleet view is the screen's
+      // own state, and the cars list and a car's page link in with it set.
+      { path: 'statistics', component: StatisticsComponent },
       { path: 'chat', component: ChatComponent },
       // No route guard: the screen reads the caller's own inbox, and an agency
       // without the feature never gets the bell that leads here.

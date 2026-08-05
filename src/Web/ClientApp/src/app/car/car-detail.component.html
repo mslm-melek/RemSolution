@@ -23,6 +23,11 @@
       <button *ngIf="canTakeBack" mat-raised-button color="primary" (click)="returnCar()">
         <mat-icon>assignment_turned_in</mat-icon> {{ t('renting.returnCar') }}
       </button>
+      <!-- How this car has done, month by month — the report filtered to it. -->
+      <a *ngIf="canSeeStatistics" mat-button
+         [routerLink]="['/statistics']" [queryParams]="{ car: carId }">
+        <mat-icon>insights</mat-icon> {{ t('car.statistics') }}
+      </a>
       <a mat-button [routerLink]="['/car', carId, 'edit']">
         <mat-icon>edit</mat-icon> {{ t('common.edit') }}
       </a>

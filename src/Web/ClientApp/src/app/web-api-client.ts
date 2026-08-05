@@ -8957,6 +8957,82 @@ export class ReservationsClient implements IReservationsClient {
     }
 }
 
+export interface IStatisticsClient {
+    getStatistics(carId: number | null | undefined, granularity: StatisticsGranularity | undefined, from: Date | null | undefined, to: Date | null | undefined): Observable<StatisticsDto>;
+}
+
+@Injectable({
+    providedIn: 'root'
+})
+export class StatisticsClient implements IStatisticsClient {
+    private http: HttpClient;
+    private baseUrl: string;
+    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
+
+    constructor(@Inject(HttpClient) http: HttpClient, @Optional() @Inject(API_BASE_URL) baseUrl?: string) {
+        this.http = http;
+        this.baseUrl = baseUrl ?? "";
+    }
+
+    getStatistics(carId: number | null | undefined, granularity: StatisticsGranularity | undefined, from: Date | null | undefined, to: Date | null | undefined): Observable<StatisticsDto> {
+        let url_ = this.baseUrl + "/api/Statistics?";
+        if (carId !== undefined && carId !== null)
+            url_ += "CarId=" + encodeURIComponent("" + carId) + "&";
+        if (granularity === null)
+            throw new Error("The parameter 'granularity' cannot be null.");
+        else if (granularity !== undefined)
+            url_ += "Granularity=" + encodeURIComponent("" + granularity) + "&";
+        if (from !== undefined && from !== null)
+            url_ += "From=" + encodeURIComponent(from ? "" + from.toISOString() : "") + "&";
+        if (to !== undefined && to !== null)
+            url_ += "To=" + encodeURIComponent(to ? "" + to.toISOString() : "") + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetStatistics(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetStatistics(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<StatisticsDto>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<StatisticsDto>;
+        }));
+    }
+
+    protected processGetStatistics(response: HttpResponseBase): Observable<StatisticsDto> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = StatisticsDto.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+}
+
 export interface ISubscriptionPlansClient {
     getSubscriptionPlans(): Observable<SubscriptionPlanDto[]>;
     createSubscriptionPlan(command: CreateSubscriptionPlanCommand): Observable<number>;
@@ -18633,6 +18709,231 @@ export interface IUpdateReservationCommand {
     endDate?: Date;
     depositAmount?: number | undefined;
     notes?: string | undefined;
+}
+
+export class StatisticsDto implements IStatisticsDto {
+    currency?: string;
+    from?: Date;
+    to?: Date;
+    granularity?: StatisticsGranularity;
+    carId?: number | undefined;
+    carLabel?: string | undefined;
+    truncated?: boolean;
+    totals?: StatisticsRowDto;
+    periods?: StatisticsRowDto[];
+    byCar?: StatisticsRowDto[];
+    cars?: StatisticsCarOptionDto[];
+
+    constructor(data?: IStatisticsDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.currency = _data["currency"];
+            this.from = _data["from"] ? new Date(_data["from"].toString()) : <any>undefined;
+            this.to = _data["to"] ? new Date(_data["to"].toString()) : <any>undefined;
+            this.granularity = _data["granularity"];
+            this.carId = _data["carId"];
+            this.carLabel = _data["carLabel"];
+            this.truncated = _data["truncated"];
+            this.totals = _data["totals"] ? StatisticsRowDto.fromJS(_data["totals"]) : <any>undefined;
+            if (Array.isArray(_data["periods"])) {
+                this.periods = [] as any;
+                for (let item of _data["periods"])
+                    this.periods!.push(StatisticsRowDto.fromJS(item));
+            }
+            if (Array.isArray(_data["byCar"])) {
+                this.byCar = [] as any;
+                for (let item of _data["byCar"])
+                    this.byCar!.push(StatisticsRowDto.fromJS(item));
+            }
+            if (Array.isArray(_data["cars"])) {
+                this.cars = [] as any;
+                for (let item of _data["cars"])
+                    this.cars!.push(StatisticsCarOptionDto.fromJS(item));
+            }
+        }
+    }
+
+    static fromJS(data: any): StatisticsDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new StatisticsDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["currency"] = this.currency;
+        data["from"] = this.from ? this.from.toISOString() : <any>undefined;
+        data["to"] = this.to ? this.to.toISOString() : <any>undefined;
+        data["granularity"] = this.granularity;
+        data["carId"] = this.carId;
+        data["carLabel"] = this.carLabel;
+        data["truncated"] = this.truncated;
+        data["totals"] = this.totals ? this.totals.toJSON() : <any>undefined;
+        if (Array.isArray(this.periods)) {
+            data["periods"] = [];
+            for (let item of this.periods)
+                data["periods"].push(item.toJSON());
+        }
+        if (Array.isArray(this.byCar)) {
+            data["byCar"] = [];
+            for (let item of this.byCar)
+                data["byCar"].push(item.toJSON());
+        }
+        if (Array.isArray(this.cars)) {
+            data["cars"] = [];
+            for (let item of this.cars)
+                data["cars"].push(item.toJSON());
+        }
+        return data;
+    }
+}
+
+export interface IStatisticsDto {
+    currency?: string;
+    from?: Date;
+    to?: Date;
+    granularity?: StatisticsGranularity;
+    carId?: number | undefined;
+    carLabel?: string | undefined;
+    truncated?: boolean;
+    totals?: StatisticsRowDto;
+    periods?: StatisticsRowDto[];
+    byCar?: StatisticsRowDto[];
+    cars?: StatisticsCarOptionDto[];
+}
+
+export enum StatisticsGranularity {
+    Month = 1,
+    Year = 2,
+}
+
+export class StatisticsRowDto implements IStatisticsRowDto {
+    bucketStart?: Date | undefined;
+    bucketEnd?: Date | undefined;
+    carId?: number | undefined;
+    matricule?: string | undefined;
+    modelName?: string | undefined;
+    rentings?: number;
+    rentedDays?: number;
+    charged?: MoneyDto | undefined;
+    collected?: MoneyDto | undefined;
+    expenses?: MoneyDto | undefined;
+    net?: MoneyDto | undefined;
+
+    constructor(data?: IStatisticsRowDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.bucketStart = _data["bucketStart"] ? new Date(_data["bucketStart"].toString()) : <any>undefined;
+            this.bucketEnd = _data["bucketEnd"] ? new Date(_data["bucketEnd"].toString()) : <any>undefined;
+            this.carId = _data["carId"];
+            this.matricule = _data["matricule"];
+            this.modelName = _data["modelName"];
+            this.rentings = _data["rentings"];
+            this.rentedDays = _data["rentedDays"];
+            this.charged = _data["charged"] ? MoneyDto.fromJS(_data["charged"]) : <any>undefined;
+            this.collected = _data["collected"] ? MoneyDto.fromJS(_data["collected"]) : <any>undefined;
+            this.expenses = _data["expenses"] ? MoneyDto.fromJS(_data["expenses"]) : <any>undefined;
+            this.net = _data["net"] ? MoneyDto.fromJS(_data["net"]) : <any>undefined;
+        }
+    }
+
+    static fromJS(data: any): StatisticsRowDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new StatisticsRowDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["bucketStart"] = this.bucketStart ? this.bucketStart.toISOString() : <any>undefined;
+        data["bucketEnd"] = this.bucketEnd ? this.bucketEnd.toISOString() : <any>undefined;
+        data["carId"] = this.carId;
+        data["matricule"] = this.matricule;
+        data["modelName"] = this.modelName;
+        data["rentings"] = this.rentings;
+        data["rentedDays"] = this.rentedDays;
+        data["charged"] = this.charged ? this.charged.toJSON() : <any>undefined;
+        data["collected"] = this.collected ? this.collected.toJSON() : <any>undefined;
+        data["expenses"] = this.expenses ? this.expenses.toJSON() : <any>undefined;
+        data["net"] = this.net ? this.net.toJSON() : <any>undefined;
+        return data;
+    }
+}
+
+export interface IStatisticsRowDto {
+    bucketStart?: Date | undefined;
+    bucketEnd?: Date | undefined;
+    carId?: number | undefined;
+    matricule?: string | undefined;
+    modelName?: string | undefined;
+    rentings?: number;
+    rentedDays?: number;
+    charged?: MoneyDto | undefined;
+    collected?: MoneyDto | undefined;
+    expenses?: MoneyDto | undefined;
+    net?: MoneyDto | undefined;
+}
+
+export class StatisticsCarOptionDto implements IStatisticsCarOptionDto {
+    id?: number;
+    matricule?: string | undefined;
+    modelName?: string | undefined;
+
+    constructor(data?: IStatisticsCarOptionDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.matricule = _data["matricule"];
+            this.modelName = _data["modelName"];
+        }
+    }
+
+    static fromJS(data: any): StatisticsCarOptionDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new StatisticsCarOptionDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["matricule"] = this.matricule;
+        data["modelName"] = this.modelName;
+        return data;
+    }
+}
+
+export interface IStatisticsCarOptionDto {
+    id?: number;
+    matricule?: string | undefined;
+    modelName?: string | undefined;
 }
 
 export class SubscriptionPlanDto implements ISubscriptionPlanDto {

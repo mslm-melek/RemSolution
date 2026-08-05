@@ -159,7 +159,14 @@ export class NavMenuComponent implements OnInit {
 
     // Agency staff: the day's work, grouped by what it is about.
     const entries: (NavEntry | null)[] = [
-      can('Dashboard', 'Dashboard.View') ? { labelKey: 'nav.dashboard', link: '/dashboard' } : null,
+      // The overview and the statistics report are the same entitlement (see
+      // GetStatisticsQuery), so this group either has both screens or neither.
+      this.group('nav.dashboard', [
+        can('Dashboard', 'Dashboard.View')
+          ? { labelKey: 'nav.overview', link: '/dashboard', icon: 'space_dashboard' } : null,
+        can('Dashboard', 'Dashboard.View')
+          ? { labelKey: 'nav.statistics', link: '/statistics', icon: 'insights' } : null
+      ]),
       can('Cars', 'Car.Read') ? { labelKey: 'nav.cars', link: '/car' } : null,
       this.group('nav.bookings', [
         can('Reservations', 'Reservation.Read')
