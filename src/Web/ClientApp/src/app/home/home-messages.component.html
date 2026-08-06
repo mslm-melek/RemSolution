@@ -1,0 +1,27 @@
+<ng-container *transloco="let t">
+  <!-- No chat module, or nothing has ever been said: no strip at all rather than
+       an empty bar pinned to the bottom of the screen. -->
+  <footer class="msg-strip" *ngIf="visible && threads.length">
+    <span class="msg-label">{{ t('home.messages.title') }}</span>
+
+    <div class="msg-circles">
+      <button type="button" class="msg-circle" *ngFor="let thread of threads"
+              [class.read]="!thread.unreadCount"
+              (click)="open(thread)"
+              [matTooltip]="label(thread)" [attr.aria-label]="label(thread)">
+        {{ initials(thread) }}
+        <span class="msg-unread num" *ngIf="thread.unreadCount">{{ thread.unreadCount }}</span>
+      </button>
+    </div>
+
+    <span class="msg-total">
+      {{ unread
+          ? t('home.messages.unread', { count: unread, threads: waiting })
+          : t('home.messages.allCaughtUp') }}
+    </span>
+
+    <a mat-button color="primary" [routerLink]="['/chat']">
+      {{ t('home.messages.openInbox') }} <mat-icon>arrow_forward</mat-icon>
+    </a>
+  </footer>
+</ng-container>

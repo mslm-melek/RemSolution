@@ -1,0 +1,106 @@
+<aside class="rail" [class.open]="open" *transloco="let t">
+  <a class="brand" [routerLink]="['/']" (click)="onNavigate()">
+    <span class="brand-mark">R</span>
+    <span class="brand-name">{{ t('nav.brandName') }}</span>
+  </a>
+
+  <nav class="rail-nav" [attr.aria-label]="t('nav.mainLabel')">
+    <a class="rail-item"
+       [routerLink]="['/']"
+       [routerLinkActive]="['active']"
+       [routerLinkActiveOptions]="{ exact: true }"
+       (click)="onNavigate()">
+      <mat-icon>cottage</mat-icon>
+      <span class="rail-label">{{ t('nav.home') }}</span>
+    </a>
+
+    <ng-container *ngFor="let entry of navEntries">
+      <!-- A single reachable screen: a plain item, no list to expand. -->
+      <a *ngIf="entry.link" class="rail-item"
+         [routerLink]="[entry.link]"
+         [class.active]="isItemActive(entry)"
+         (click)="onNavigate()">
+        <mat-icon>{{ entry.icon }}</mat-icon>
+        <span class="rail-label">{{ t(entry.labelKey) }}</span>
+      </a>
+
+      <!-- A group opens in place rather than behind a dropdown: there is room
+           for it here, and the open one shows where the user is. -->
+      <ng-container *ngIf="entry.links as children">
+        <button type="button" class="rail-item rail-group"
+                [class.active]="isGroupActive(entry)"
+                [attr.aria-expanded]="isOpen(entry)"
+                (click)="toggleGroup(entry)">
+          <mat-icon>{{ entry.icon }}</mat-icon>
+          <span class="rail-label">{{ t(entry.labelKey) }}</span>
+          <mat-icon class="rail-caret" [class.turned]="isOpen(entry)">expand_more</mat-icon>
+        </button>
+
+        <div class="rail-sub" *ngIf="isOpen(entry)">
+          <a *ngFor="let child of children" class="rail-item rail-child"
+             [routerLink]="[child.link]"
+             [routerLinkActive]="['active']"
+             (click)="onNavigate()">
+            <mat-icon>{{ child.icon }}</mat-icon>
+            <span class="rail-label">{{ t(child.labelKey) }}</span>
+          </a>
+        </div>
+      </ng-container>
+    </ng-container>
+  </nav>
+
+  <div class="rail-foot">
+    <!-- Administration, not day-to-day work: one item that opens the catalogs. -->
+    <button type="button" class="rail-item" *ngIf="configLinks.length"
+            [matMenuTriggerFor]="configMenu">
+      <mat-icon>more_horiz</mat-icon>
+      <span class="rail-label">{{ t('nav.config') }}</span>
+    </button>
+    <mat-menu #configMenu="matMenu">
+      <a mat-menu-item *ngFor="let item of configLinks" [routerLink]="[item.link]"
+         (click)="onNavigate()">
+        <mat-icon>{{ item.icon }}</mat-icon> {{ t(item.labelKey) }}
+      </a>
+    </mat-menu>
+
+    <!-- Whose data is on screen. A platform admin inside a workspace gets the
+         way out of it here, next to the name of the agency they are in. -->
+    <div class="rail-agency" *ngIf="agencyName">
+      <span class="rail-agency-mark">{{ agencyInitial }}</span>
+      <span class="rail-agency-text">
+        <span class="rail-agency-name" [title]="agencyName">{{ agencyName }}</span>
+        <span class="rail-agency-role">{{ t(roleLabelKey) }}</span>
+      </span>
+      <button type="button" mat-icon-button class="rail-exit" *ngIf="workspace"
+              (click)="exitWorkspace()"
+              [matTooltip]="t('workspace.exit')" [attr.aria-label]="t('workspace.exit')">
+        <mat-icon>logout</mat-icon>
+      </button>
+    </div>
+
+    <button type="button" class="rail-user" [matMenuTriggerFor]="userMenu">
+      <span class="rail-user-avatar">{{ initials }}</span>
+      <span class="rail-user-text">
+        <span class="rail-user-name">{{ displayName }}</span>
+        <span class="rail-user-role">{{ t(roleLabelKey) }}</span>
+      </span>
+      <mat-icon class="rail-user-caret">expand_more</mat-icon>
+    </button>
+
+    <mat-menu #userMenu="matMenu">
+      <!-- Not offered inside an agency workspace: the platform admin keeps the
+           PlatformAdministrator role there, and this screen answers for the
+           caller's own agency, which they do not have. -->
+      <a mat-menu-item *ngIf="isAgencyAdmin" [routerLink]="['/my-agency']" (click)="onNavigate()">
+        <mat-icon>store</mat-icon> {{ t('nav.myAgency') }}
+      </a>
+      <a mat-menu-item [routerLink]="['/profile']" (click)="onNavigate()">
+        <mat-icon>manage_accounts</mat-icon> {{ t('nav.editProfile') }}
+      </a>
+      <mat-divider></mat-divider>
+      <a mat-menu-item href="/Identity/Account/Logout">
+        <mat-icon>logout</mat-icon> {{ t('nav.logout') }}
+      </a>
+    </mat-menu>
+  </div>
+</aside>

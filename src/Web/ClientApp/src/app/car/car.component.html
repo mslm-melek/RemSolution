@@ -1,4 +1,4 @@
-<div class="page" *transloco="let t">
+<div class="page fleet" *transloco="let t">
   <div class="header-row">
     <div>
       <h2 class="title">{{ t('car.title') }}</h2>
@@ -9,200 +9,446 @@
     </a>
   </div>
 
-  <!-- Filters -->
-  <div class="filter-row">
-    <mat-form-field appearance="outline" class="filter-field">
-      <mat-label>{{ t('car.model') }}</mat-label>
-      <mat-select [(ngModel)]="filterModelId" (selectionChange)="onFilter()">
-        <mat-option [value]="null">{{ t('car.allModels') }}</mat-option>
-        <mat-option *ngFor="let model of models" [value]="model.id">
-          {{ model.brandName }} {{ model.name }}
-        </mat-option>
-      </mat-select>
-    </mat-form-field>
+  <!-- The toolbar spans both columns below: it decides how the fleet is shown,
+       which is a question about the whole screen rather than about the list. -->
+  <div class="fleet-toolbar">
+    <!-- On a narrow screen the rail is a drop-down, and this opens it. -->
+    <button type="button" class="tool-btn filters-toggle" (click)="filtersOpen = !filtersOpen"
+            [attr.aria-expanded]="filtersOpen">
+      <mat-icon>filter_list</mat-icon>
+      <span>{{ t('car.filters') }}</span>
+      <span class="tool-badge num" *ngIf="activeFilterCount">{{ activeFilterCount }}</span>
+    </button>
 
-    <mat-form-field appearance="outline" class="filter-field">
-      <mat-label>{{ t('car.color') }}</mat-label>
-      <input matInput [(ngModel)]="filterColor" (keyup.enter)="onFilter()" [placeholder]="t('car.colorPlaceholder')" />
-    </mat-form-field>
-
-    <mat-form-field appearance="outline" class="filter-field">
-      <mat-label>{{ t('car.fuelType') }}</mat-label>
-      <mat-select [(ngModel)]="filterFuelType" (selectionChange)="onFilter()">
-        <mat-option [value]="null">{{ t('car.allFuelTypes') }}</mat-option>
-        <mat-option *ngFor="let fuel of fuelTypes" [value]="fuel.value">{{ t(fuel.labelKey) }}</mat-option>
-      </mat-select>
-    </mat-form-field>
-
-    <!-- Custody: the fleet question asked most often ("what can I hire out
-         today?"). The dashboard's on-rent tile links in with the same param. -->
-    <mat-form-field appearance="outline" class="filter-field">
-      <mat-label>{{ t('car.custody') }}</mat-label>
-      <mat-select [(ngModel)]="filterOnRent" (selectionChange)="onFilter()">
-        <mat-option [value]="null">{{ t('car.allCustody') }}</mat-option>
-        <mat-option [value]="false">{{ t('car.inTheYard') }}</mat-option>
-        <mat-option [value]="true">{{ t('car.outOnHire') }}</mat-option>
-      </mat-select>
-    </mat-form-field>
+    <!-- The same `?search=` the app bar's box links in with, so arriving from
+         the bar leaves the term visible and editable here. -->
+    <form class="fleet-search" (ngSubmit)="onSearch()">
+      <mat-icon>search</mat-icon>
+      <input type="search" name="q" [(ngModel)]="search"
+             [placeholder]="t('car.searchPlaceholder')"
+             [attr.aria-label]="t('car.searchLabel')" />
+      <button type="button" class="search-clear" *ngIf="search" (click)="clearSearch()"
+              [attr.aria-label]="t('common.clear')">
+        <mat-icon>close</mat-icon>
+      </button>
+    </form>
 
     <span class="spacer"></span>
 
-    <button mat-raised-button (click)="onFilter()">
-      <mat-icon>filter_alt</mat-icon> {{ t('common.apply') }}
+    <!-- The cards have no headers to click, so the order lives here. The
+         table's own headers set the same two fields (see onSort). -->
+    <button type="button" class="tool-btn" [matMenuTriggerFor]="sortMenu"
+            [matTooltip]="t('car.sortBy')">
+      <mat-icon>sort</mat-icon>
+      <span class="tool-btn-text">{{ t(activeSortLabelKey) }}</span>
+      <mat-icon class="tool-dir">{{ sortDirection === 'desc' ? 'arrow_downward' : 'arrow_upward' }}</mat-icon>
     </button>
-    <button mat-button (click)="clearFilters()">{{ t('common.clear') }}</button>
+    <mat-menu #sortMenu="matMenu">
+      <button mat-menu-item type="button" *ngFor="let option of sortOptions"
+              (click)="sortByKey(option.key)">
+        <mat-icon>
+          {{ sortBy === option.key
+               ? (sortDirection === 'desc' ? 'arrow_downward' : 'arrow_upward')
+               : 'sort' }}
+        </mat-icon>
+        {{ t(option.labelKey) }}
+      </button>
+    </mat-menu>
 
-    <!-- Filters this list was opened with (from a dashboard count), which have
-         no control of their own. -->
-    <div class="filter-chips" *ngIf="chips.length">
-      <span class="chip no-dot" *ngFor="let chip of chips">
-        {{ t(chip.labelKey, chip.labelArgs) }}
-        <button type="button" class="chip-clear" (click)="clearChip(chip)"
-                [matTooltip]="t('filters.clear')" [attr.aria-label]="t('filters.clear')">
-          <mat-icon>close</mat-icon>
-        </button>
-      </span>
+    <div class="view-toggle">
+      <button type="button" [class.active]="view === 'grid'" (click)="setView('grid')"
+              [matTooltip]="t('car.gridView')" [attr.aria-label]="t('car.gridView')"
+              [attr.aria-pressed]="view === 'grid'">
+        <mat-icon>grid_view</mat-icon>
+      </button>
+      <button type="button" [class.active]="view === 'list'" (click)="setView('list')"
+              [matTooltip]="t('car.listView')" [attr.aria-label]="t('car.listView')"
+              [attr.aria-pressed]="view === 'list'">
+        <mat-icon>view_list</mat-icon>
+      </button>
     </div>
   </div>
 
-  <!-- Sorting is server-side (see onSort): clicking a header re-queries the
-       whole result set rather than reordering the rows already on screen. -->
-  <table mat-table [dataSource]="cars" class="data-table full-width"
-         matSort matSortDisableClear
-         [matSortActive]="sortBy" [matSortDirection]="sortDirection"
-         (matSortChange)="onSort($event)">
+  <!-- Filters this list was opened with (from a dashboard count), which have no
+       control of their own. -->
+  <div class="filter-chips" *ngIf="chips.length">
+    <span class="chip no-dot" *ngFor="let chip of chips">
+      {{ t(chip.labelKey, chip.labelArgs) }}
+      <button type="button" class="chip-clear" (click)="clearChip(chip)"
+              [matTooltip]="t('filters.clear')" [attr.aria-label]="t('filters.clear')">
+        <mat-icon>close</mat-icon>
+      </button>
+    </span>
+  </div>
 
-    <!-- The car itself. Unlabelled, like the client list's faces: a column of
-         photos needs no heading. The frame is drawn whether or not there is a
-         picture in it, so the plates below stay flush. -->
-    <ng-container matColumnDef="image">
-      <th mat-header-cell *matHeaderCellDef class="thumb-col">
-        <span class="visually-hidden">{{ t('car.image') }}</span>
-      </th>
-      <td mat-cell *matCellDef="let car" class="thumb-col">
-        <a class="thumb-cell" [routerLink]="['/car', car.id]"
-           [matTooltip]="car.thumbnailUrl ? t('car.carImage') : t('car.noImage')">
-          <img *ngIf="car.thumbnailUrl" [src]="car.thumbnailUrl"
-               [alt]="car.matricule || ''" loading="lazy" />
-          <mat-icon *ngIf="!car.thumbnailUrl">directions_car</mat-icon>
-          <!-- There are more behind this one; the car's page shows them all. -->
-          <span class="thumb-more" *ngIf="(car.imageCount ?? 0) > 1">+{{ (car.imageCount ?? 1) - 1 }}</span>
-        </a>
-      </td>
-    </ng-container>
+  <!-- The rail narrows the fleet; the cards (or the table) are the fleet. -->
+  <div class="fleet-body">
 
-    <!-- The plate opens the car's own page (history, current hire, actions); the
-         row's edit action still goes straight to the form. -->
-    <ng-container matColumnDef="matricule">
-      <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ t('car.matricule') }}</th>
-      <td mat-cell *matCellDef="let car">
-        <a class="matricule num" [routerLink]="['/car', car.id]">{{ car.matricule }}</a>
-      </td>
-    </ng-container>
+    <!-- ============================ FILTER RAIL ============================
+         One click in, one click out: clicking the row that is already on clears
+         it, so there is no "all" row to keep in step. The counts say what each
+         row WOULD show from here (see GetCarFacetsQuery), which is why they do
+         not fall to zero the moment something is picked. -->
+    <aside class="filters" [class.open]="filtersOpen">
+      <div class="filters-head">
+        <span class="filters-title">{{ t('car.filters') }}</span>
+        <button type="button" mat-button color="primary" *ngIf="anyFilter" (click)="clearFilters()">
+          {{ t('common.clear') }}
+        </button>
+      </div>
 
-    <ng-container matColumnDef="model">
-      <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ t('car.model') }}</th>
-      <td mat-cell *matCellDef="let car">{{ car.modelName }}</td>
-    </ng-container>
+      <div class="filter-group">
+        <h3 class="filter-title">{{ t('common.status') }}</h3>
+        <button type="button" class="filter-item" *ngFor="let option of statusOptions"
+                [class.active]="filterStatus === option.value"
+                [attr.aria-pressed]="filterStatus === option.value"
+                (click)="toggleStatus(option.value)">
+          <span class="filter-box"><mat-icon>check</mat-icon></span>
+          <span class="filter-label">{{ t(option.labelKey!) }}</span>
+          <span class="filter-count num">{{ option.count }}</span>
+        </button>
+      </div>
 
-    <!-- Not sortable: the cell answers "can I hire this out now?", which is the
-         administrative status AND custody together, and the server can only order
-         by one of them — a header that sorted by something other than what it
-         shows would just look broken. The custody filter is the tool for this. -->
-    <ng-container matColumnDef="status">
-      <th mat-header-cell *matHeaderCellDef>{{ t('common.status') }}</th>
-      <td mat-cell *matCellDef="let car">
-        <span class="cell-stack">
-          <span>
-            <span class="chip" [ngClass]="availabilityClass(car)">{{ t(availabilityLabelKey(car)) }}</span>
-          </span>
-          <span class="cell-sub" *ngIf="car.currentRenting">
-            {{ car.currentRenting.clientName }}<ng-container *ngIf="car.currentRenting.endDate">
-              · {{ t('car.dueBack', { date: (car.currentRenting.endDate | date:'yyyy-MM-dd':'UTC') }) }}
-            </ng-container>
-          </span>
-        </span>
-      </td>
-    </ng-container>
+      <!-- Custody, which is not the administrative status above: where the car
+           actually is right now. -->
+      <div class="filter-group">
+        <h3 class="filter-title">{{ t('car.custody') }}</h3>
+        <button type="button" class="filter-item" *ngFor="let option of custodyOptions"
+                [class.active]="filterOnRent === option.value"
+                [attr.aria-pressed]="filterOnRent === option.value"
+                (click)="toggleCustody(option.value)">
+          <span class="filter-box"><mat-icon>check</mat-icon></span>
+          <span class="filter-label">{{ t(option.labelKey!) }}</span>
+          <span class="filter-count num">{{ option.count }}</span>
+        </button>
+      </div>
 
-    <ng-container matColumnDef="firstCirculationDate">
-      <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ t('car.firstCirculation') }}</th>
-      <td mat-cell *matCellDef="let car" class="num">{{ car.firstCirculationDate | date:'yyyy-MM-dd':'UTC' }}</td>
-    </ng-container>
+      <div class="filter-group" *ngIf="branchOptions.length > 1 || filterBranchId !== null">
+        <h3 class="filter-title">{{ t('car.branch') }}</h3>
+        <button type="button" class="filter-item" *ngFor="let option of branchOptions"
+                [class.active]="filterBranchId === option.value"
+                [attr.aria-pressed]="filterBranchId === option.value"
+                (click)="toggleBranch(option.value)">
+          <span class="filter-box"><mat-icon>check</mat-icon></span>
+          <span class="filter-label">{{ option.label }}</span>
+          <span class="filter-count num">{{ option.count }}</span>
+        </button>
+      </div>
 
-    <ng-container matColumnDef="color">
-      <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ t('car.color') }}</th>
-      <td mat-cell *matCellDef="let car">{{ car.color }}</td>
-    </ng-container>
+      <div class="filter-group" *ngIf="brandOptions.length > 1 || filterBrandId !== null">
+        <h3 class="filter-title">{{ t('modelCar.brand') }}</h3>
+        <button type="button" class="filter-item" *ngFor="let option of brandOptions"
+                [class.active]="filterBrandId === option.value"
+                [attr.aria-pressed]="filterBrandId === option.value"
+                (click)="toggleBrand(option.value)">
+          <span class="filter-box"><mat-icon>check</mat-icon></span>
+          <span class="filter-label">{{ option.label }}</span>
+          <span class="filter-count num">{{ option.count }}</span>
+        </button>
+      </div>
 
-    <ng-container matColumnDef="power">
-      <th mat-header-cell *matHeaderCellDef mat-sort-header class="num-cell">{{ t('car.power') }}</th>
-      <td mat-cell *matCellDef="let car" class="num-cell">{{ car.power }}</td>
-    </ng-container>
+      <div class="filter-group">
+        <h3 class="filter-title">{{ t('car.fuel') }}</h3>
+        <button type="button" class="filter-item" *ngFor="let option of fuelOptions"
+                [class.active]="filterFuelType === option.value"
+                [attr.aria-pressed]="filterFuelType === option.value"
+                (click)="toggleFuel(option.value)">
+          <span class="filter-box"><mat-icon>check</mat-icon></span>
+          <span class="filter-label">{{ t(option.labelKey!) }}</span>
+          <span class="filter-count num">{{ option.count }}</span>
+        </button>
+      </div>
 
-    <ng-container matColumnDef="fuelType">
-      <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ t('car.fuel') }}</th>
-      <td mat-cell *matCellDef="let car">{{ fuelTypeLabelKey(car.fuelType) ? t(fuelTypeLabelKey(car.fuelType)) : '' }}</td>
-    </ng-container>
+      <!-- The two narrow questions, folded away until asked — and unfolded on
+           arrival when one of them is what is filtering the list. -->
+      <div class="filter-group">
+        <button type="button" class="filter-more" (click)="moreOpen = !moreOpen"
+                [attr.aria-expanded]="moreOpen">
+          <span>{{ t('car.moreFilters') }}</span>
+          <mat-icon [class.turned]="moreOpen">expand_more</mat-icon>
+        </button>
 
-    <!-- How much history the car has, linking to it: the same rentings list,
-         filtered to this car (see the renting list's car filter). -->
-    <ng-container matColumnDef="rentings">
-      <th mat-header-cell *matHeaderCellDef mat-sort-header class="num-cell">{{ t('car.rentings') }}</th>
-      <td mat-cell *matCellDef="let car" class="num-cell">
-        <a *ngIf="canSeeRentings && car.rentingCount"
-           [routerLink]="['/renting']" [queryParams]="{ car: car.id }"
-           [matTooltip]="t('car.viewRentings')">{{ car.rentingCount }}</a>
-        <span *ngIf="!canSeeRentings || !car.rentingCount" class="muted">{{ car.rentingCount }}</span>
-      </td>
-    </ng-container>
+        <div class="filter-fields" *ngIf="moreOpen">
+          <mat-form-field appearance="outline" class="filter-field">
+            <mat-label>{{ t('car.model') }}</mat-label>
+            <mat-select [(ngModel)]="filterModelId" (selectionChange)="onFilter()">
+              <mat-option [value]="null">{{ t('car.allModels') }}</mat-option>
+              <mat-option *ngFor="let model of models" [value]="model.id">
+                {{ model.brandName }} {{ model.name }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
 
-    <ng-container matColumnDef="actions">
-      <th mat-header-cell *matHeaderCellDef class="actions-cell">{{ t('common.actions') }}</th>
-      <td mat-cell *matCellDef="let car" class="actions-cell">
-        <span class="row-actions">
-          <!-- Hire it out, or take it back: the two things a fleet list is opened
-               to do. Only one of them can apply to a given row. -->
-          <a *ngIf="canRentOut(car)" mat-icon-button color="primary"
-             [routerLink]="['/renting/new']" [queryParams]="{ carId: car.id }"
-             [matTooltip]="t('car.rentNow')" [attr.aria-label]="t('car.rentNow')">
-            <mat-icon>vpn_key</mat-icon>
+          <mat-form-field appearance="outline" class="filter-field">
+            <mat-label>{{ t('car.color') }}</mat-label>
+            <input matInput [(ngModel)]="filterColor" (keyup.enter)="onFilter()"
+                   [placeholder]="t('car.colorPlaceholder')" />
+            <button *ngIf="filterColor" matSuffix mat-icon-button
+                    [attr.aria-label]="t('common.clear')"
+                    (click)="filterColor = ''; onFilter()">
+              <mat-icon>close</mat-icon>
+            </button>
+          </mat-form-field>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ============================== THE FLEET ============================= -->
+    <div class="fleet-main">
+
+      <!-- ---------------------------- CARDS ---------------------------- -->
+      <div class="car-grid" *ngIf="view === 'grid'">
+        <article class="car-card" *ngFor="let car of cars">
+          <!-- The picture and the name are the way in to the car's own page; the
+               buttons below are the things done without leaving this screen. -->
+          <a class="car-photo" [routerLink]="['/car', car.id]"
+             [attr.aria-label]="car.matricule">
+            <img *ngIf="car.imageUrl" [src]="car.imageUrl" [alt]="car.matricule || ''"
+                 loading="lazy" />
+            <mat-icon *ngIf="!car.imageUrl" class="car-photo-none">directions_car</mat-icon>
+            <span class="chip car-state" [ngClass]="availabilityClass(car)">
+              {{ t(availabilityLabelKey(car)) }}
+            </span>
+            <span class="car-more num" *ngIf="(car.imageCount ?? 0) > 1">
+              +{{ (car.imageCount ?? 1) - 1 }}
+            </span>
           </a>
-          <button *ngIf="canTakeBack(car)" mat-icon-button color="primary" (click)="returnCar(car)"
-                  [matTooltip]="t('renting.returnCar')" [attr.aria-label]="t('renting.returnCar')">
-            <mat-icon>assignment_turned_in</mat-icon>
-          </button>
-          <!-- How the car has done, month by month: the report filtered to it. -->
-          <a *ngIf="canSeeStatistics" mat-icon-button
-             [routerLink]="['/statistics']" [queryParams]="{ car: car.id }"
-             [matTooltip]="t('car.statistics')" [attr.aria-label]="t('car.statistics')">
-            <mat-icon>insights</mat-icon>
-          </a>
-          <a mat-icon-button [routerLink]="['/car', car.id, 'edit']"
-             [matTooltip]="t('common.edit')" [attr.aria-label]="t('common.edit')">
-            <mat-icon>edit</mat-icon>
-          </a>
-          <button mat-icon-button color="warn" (click)="deleteCar(car)"
-                  [matTooltip]="t('common.delete')" [attr.aria-label]="t('common.delete')">
-            <mat-icon>delete</mat-icon>
-          </button>
-        </span>
-      </td>
-    </ng-container>
 
-    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-    <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+          <div class="car-body">
+            <a class="car-name" [routerLink]="['/car', car.id]">
+              <span class="car-brand" *ngIf="brandOf(car)">{{ brandOf(car) }}</span>
+              <span class="car-model">{{ car.modelName }}</span>
+            </a>
+            <span class="car-plate num">{{ car.matricule }}</span>
 
-    <tr class="mat-row" *matNoDataRow>
-      <td class="mat-cell empty-row" [attr.colspan]="displayedColumns.length">{{ t('car.empty') }}</td>
-    </tr>
-  </table>
+            <div class="car-figures">
+              <div class="car-figure">
+                <span class="figure-label">{{ t('car.dailyRate') }}</span>
+                <span class="figure-value money num" *ngIf="car.dailyRate">
+                  {{ car.dailyRate.amount | number:'1.0-2' }}
+                  <span class="figure-unit">{{ car.dailyRate.currency }}</span>
+                </span>
+                <span class="figure-value muted" *ngIf="!car.dailyRate">—</span>
+              </div>
 
-  <!-- Server-side paginator -->
-  <mat-paginator [length]="totalCount"
-                 [pageIndex]="pageNumber - 1"
-                 [pageSize]="pageSize"
-                 [pageSizeOptions]="[5, 10, 25, 50]"
-                 (page)="onPage($event)">
-  </mat-paginator>
+              <div class="car-figure">
+                <span class="figure-label">{{ t('car.mileage') }}</span>
+                <span class="figure-value num" *ngIf="car.mileage != null">
+                  {{ car.mileage | number }}
+                  <span class="figure-unit">{{ t('common.km') }}</span>
+                </span>
+                <span class="figure-value muted" *ngIf="car.mileage == null">—</span>
+              </div>
+            </div>
+
+            <!-- Where it is based, and — while it is out — who has it. -->
+            <div class="car-meta">
+              <span class="car-line" *ngIf="car.branchName">
+                <mat-icon>location_on</mat-icon>
+                <span>{{ car.branchName }}</span>
+              </span>
+              <span class="car-line" *ngIf="car.currentRenting">
+                <mat-icon>person</mat-icon>
+                <span>{{ car.currentRenting.clientName }}<ng-container *ngIf="car.currentRenting.endDate">
+                  · {{ t('car.dueBack', { date: (car.currentRenting.endDate | date:'dd MMM':'UTC') }) }}
+                </ng-container></span>
+              </span>
+            </div>
+
+            <!-- Hire it out, or take it back: the two things a fleet screen is
+                 opened to do. Only one of them can apply to a given car, and
+                 when neither does the card still opens. -->
+            <div class="car-actions">
+              <a *ngIf="canRentOut(car)" mat-raised-button color="primary"
+                 [routerLink]="['/renting/new']" [queryParams]="{ carId: car.id }">
+                <mat-icon>vpn_key</mat-icon> {{ t('car.rentNow') }}
+              </a>
+              <button *ngIf="canTakeBack(car)" type="button" mat-raised-button color="primary"
+                      (click)="returnCar(car)">
+                <mat-icon>assignment_turned_in</mat-icon> {{ t('renting.returnCar') }}
+              </button>
+              <a *ngIf="!canRentOut(car) && !canTakeBack(car)" mat-stroked-button
+                 [routerLink]="['/car', car.id]">{{ t('common.view') }}</a>
+
+              <a mat-stroked-button [routerLink]="['/car', car.id, 'edit']">{{ t('common.edit') }}</a>
+
+              <span class="spacer"></span>
+
+              <button type="button" mat-icon-button [matMenuTriggerFor]="carMenu"
+                      [attr.aria-label]="t('common.actions')">
+                <mat-icon>more_vert</mat-icon>
+              </button>
+              <mat-menu #carMenu="matMenu">
+                <a mat-menu-item [routerLink]="['/car', car.id]">
+                  <mat-icon>open_in_new</mat-icon> {{ t('common.open') }}
+                </a>
+                <a mat-menu-item *ngIf="canSeeRentings && car.rentingCount"
+                   [routerLink]="['/renting']" [queryParams]="{ car: car.id }">
+                  <mat-icon>vpn_key</mat-icon>
+                  {{ t('car.viewRentings') }} <span class="num">({{ car.rentingCount }})</span>
+                </a>
+                <a mat-menu-item *ngIf="canSeeStatistics"
+                   [routerLink]="['/statistics']" [queryParams]="{ car: car.id }">
+                  <mat-icon>insights</mat-icon> {{ t('car.statistics') }}
+                </a>
+                <button mat-menu-item type="button" (click)="deleteCar(car)">
+                  <mat-icon color="warn">delete</mat-icon> {{ t('common.delete') }}
+                </button>
+              </mat-menu>
+            </div>
+          </div>
+        </article>
+
+        <p class="fleet-empty" *ngIf="!cars.length">
+          <mat-icon>directions_car</mat-icon>
+          <span>{{ t('car.empty') }}</span>
+        </p>
+      </div>
+
+      <!-- ---------------------------- TABLE ----------------------------
+           Sorting is server-side (see onSort): clicking a header re-queries the
+           whole result set rather than reordering the rows already on screen. -->
+      <table mat-table [dataSource]="cars" class="data-table full-width" *ngIf="view === 'list'"
+             matSort matSortDisableClear
+             [matSortActive]="sortBy" [matSortDirection]="sortDirection"
+             (matSortChange)="onSort($event)">
+
+        <!-- The car itself. Unlabelled, like the client list's faces: a column of
+             photos needs no heading. The frame is drawn whether or not there is a
+             picture in it, so the plates below stay flush. -->
+        <ng-container matColumnDef="image">
+          <th mat-header-cell *matHeaderCellDef class="thumb-col">
+            <span class="visually-hidden">{{ t('car.image') }}</span>
+          </th>
+          <td mat-cell *matCellDef="let car" class="thumb-col">
+            <a class="thumb-cell" [routerLink]="['/car', car.id]"
+               [matTooltip]="car.thumbnailUrl ? t('car.carImage') : t('car.noImage')">
+              <img *ngIf="car.thumbnailUrl" [src]="car.thumbnailUrl"
+                   [alt]="car.matricule || ''" loading="lazy" />
+              <mat-icon *ngIf="!car.thumbnailUrl">directions_car</mat-icon>
+              <!-- There are more behind this one; the car's page shows them all. -->
+              <span class="thumb-more" *ngIf="(car.imageCount ?? 0) > 1">+{{ (car.imageCount ?? 1) - 1 }}</span>
+            </a>
+          </td>
+        </ng-container>
+
+        <!-- The plate opens the car's own page (history, current hire, actions); the
+             row's edit action still goes straight to the form. -->
+        <ng-container matColumnDef="matricule">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ t('car.matricule') }}</th>
+          <td mat-cell *matCellDef="let car">
+            <a class="matricule num" [routerLink]="['/car', car.id]">{{ car.matricule }}</a>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="model">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ t('car.model') }}</th>
+          <td mat-cell *matCellDef="let car">
+            <span class="cell-stack">
+              <span>{{ car.modelName }}</span>
+              <span class="cell-sub" *ngIf="brandOf(car)">{{ brandOf(car) }}</span>
+            </span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="branch">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ t('car.branch') }}</th>
+          <td mat-cell *matCellDef="let car">
+            <span *ngIf="car.branchName">{{ car.branchName }}</span>
+            <span *ngIf="!car.branchName" class="muted">—</span>
+          </td>
+        </ng-container>
+
+        <!-- Not sortable: the cell answers "can I hire this out now?", which is the
+             administrative status AND custody together, and the server can only order
+             by one of them — a header that sorted by something other than what it
+             shows would just look broken. The custody filter is the tool for this. -->
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef>{{ t('common.status') }}</th>
+          <td mat-cell *matCellDef="let car">
+            <span class="cell-stack">
+              <span>
+                <span class="chip" [ngClass]="availabilityClass(car)">{{ t(availabilityLabelKey(car)) }}</span>
+              </span>
+              <span class="cell-sub" *ngIf="car.currentRenting">
+                {{ car.currentRenting.clientName }}<ng-container *ngIf="car.currentRenting.endDate">
+                  · {{ t('car.dueBack', { date: (car.currentRenting.endDate | date:'yyyy-MM-dd':'UTC') }) }}
+                </ng-container>
+              </span>
+            </span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="dailyRate">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header class="num-cell">{{ t('car.dailyRate') }}</th>
+          <td mat-cell *matCellDef="let car" class="num-cell">
+            <span class="money" *ngIf="car.dailyRate">
+              {{ car.dailyRate.amount | number:'1.2-2' }} {{ car.dailyRate.currency }}
+            </span>
+            <span class="muted" *ngIf="!car.dailyRate">—</span>
+          </td>
+        </ng-container>
+
+        <!-- How much history the car has, linking to it: the same rentings list,
+             filtered to this car (see the renting list's car filter). -->
+        <ng-container matColumnDef="rentings">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header class="num-cell">{{ t('car.rentings') }}</th>
+          <td mat-cell *matCellDef="let car" class="num-cell">
+            <a *ngIf="canSeeRentings && car.rentingCount"
+               [routerLink]="['/renting']" [queryParams]="{ car: car.id }"
+               [matTooltip]="t('car.viewRentings')">{{ car.rentingCount }}</a>
+            <span *ngIf="!canSeeRentings || !car.rentingCount" class="muted">{{ car.rentingCount }}</span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef class="actions-cell">{{ t('common.actions') }}</th>
+          <td mat-cell *matCellDef="let car" class="actions-cell">
+            <span class="row-actions">
+              <!-- Hire it out, or take it back: the two things a fleet list is opened
+                   to do. Only one of them can apply to a given row. -->
+              <a *ngIf="canRentOut(car)" mat-icon-button color="primary"
+                 [routerLink]="['/renting/new']" [queryParams]="{ carId: car.id }"
+                 [matTooltip]="t('car.rentNow')" [attr.aria-label]="t('car.rentNow')">
+                <mat-icon>vpn_key</mat-icon>
+              </a>
+              <button *ngIf="canTakeBack(car)" mat-icon-button color="primary" (click)="returnCar(car)"
+                      [matTooltip]="t('renting.returnCar')" [attr.aria-label]="t('renting.returnCar')">
+                <mat-icon>assignment_turned_in</mat-icon>
+              </button>
+              <!-- How the car has done, month by month: the report filtered to it. -->
+              <a *ngIf="canSeeStatistics" mat-icon-button
+                 [routerLink]="['/statistics']" [queryParams]="{ car: car.id }"
+                 [matTooltip]="t('car.statistics')" [attr.aria-label]="t('car.statistics')">
+                <mat-icon>insights</mat-icon>
+              </a>
+              <a mat-icon-button [routerLink]="['/car', car.id, 'edit']"
+                 [matTooltip]="t('common.edit')" [attr.aria-label]="t('common.edit')">
+                <mat-icon>edit</mat-icon>
+              </a>
+              <button mat-icon-button color="warn" (click)="deleteCar(car)"
+                      [matTooltip]="t('common.delete')" [attr.aria-label]="t('common.delete')">
+                <mat-icon>delete</mat-icon>
+              </button>
+            </span>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+
+        <tr class="mat-row" *matNoDataRow>
+          <td class="mat-cell empty-row" [attr.colspan]="displayedColumns.length">{{ t('car.empty') }}</td>
+        </tr>
+      </table>
+
+      <!-- Server-side paginator -->
+      <mat-paginator [length]="totalCount"
+                     [pageIndex]="pageNumber - 1"
+                     [pageSize]="pageSize"
+                     [pageSizeOptions]="[12, 24, 48, 96]"
+                     (page)="onPage($event)">
+      </mat-paginator>
+    </div>
+  </div>
 </div>

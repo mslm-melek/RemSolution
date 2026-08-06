@@ -1,5 +1,5 @@
+using RemSolution.Application.Common.Features;
 using RemSolution.Application.Common.Interfaces;
-using RemSolution.Application.Common.Security;
 using RemSolution.Application.Features.Dashboard.DTOs;
 using RemSolution.Domain.Constants;
 using RemSolution.Domain.Enums;
@@ -9,20 +9,23 @@ namespace RemSolution.Application.Features.Dashboard.Queries.GetBookingCalendarQ
     // The agency's month at a glance: which cars go out on which day, which are
     // due back, and which holds are waiting to become hires.
     //
-    // Gated exactly like GetDashboardQuery, and for the same reason: this is a
-    // read-only overview that crosses the renting and reservation modules, so one
-    // "may see the overview screens" permission decides it rather than a pair of
-    // per-module checks that would leave a user with half a calendar. Nothing here
-    // is actionable — the links the screen draws lead to the lists and records,
-    // each of which enforces its own permission.
-    [Authorize(Policy = Permissions.DashboardView)]
-    [RequiresFeature(FeatureFlags.Dashboard)]
+    // This is the landing screen's agenda, so every signed-in member of the agency
+    // reaches it, and each HALF is gated on the module it reads rather than the
+    // whole thing on one overview permission. A user who may see hires but not
+    // holds gets the hires: half a calendar is less than a whole one, but it is
+    // considerably more than the empty screen the old gate handed them. Nothing
+    // here is actionable — the links the screen draws lead to the lists and
+    // records, each of which enforces its own permission.
     public record GetBookingCalendarQuery(
         // Half-open [From, To). Defaults to the current calendar month; the screen
         // asks for its whole grid, adjacent-month days included, so the leading and
         // trailing cells are populated too.
         DateTime? From = null,
-        DateTime? To = null
+        DateTime? To = null,
+        // Scopes the window to one branch, exactly as the home screen's figures are
+        // scoped: a booking has no branch of its own and is placed at its car's, so
+        // one whose car has been removed belongs to no branch and drops out.
+        int? BranchId = null
     ) : IRequest<BookingCalendarDto>;
 
     public class GetBookingCalendarQueryHandler
@@ -39,17 +42,30 @@ namespace RemSolution.Application.Features.Dashboard.Queries.GetBookingCalendarQ
         private const int MaxRowsPerSource = 400;
 
         private readonly IApplicationDbContext _context;
+        private readonly ITenantProvider _tenant;
+        private readonly IIdentityService _identity;
+        private readonly IUser _user;
         private readonly TimeProvider _dateTime;
 
-        public GetBookingCalendarQueryHandler(IApplicationDbContext context, TimeProvider dateTime)
+        public GetBookingCalendarQueryHandler(
+            IApplicationDbContext context,
+            ITenantProvider tenant,
+            IIdentityService identity,
+            IUser user,
+            TimeProvider dateTime)
         {
             _context = context;
+            _tenant = tenant;
+            _identity = identity;
+            _user = user;
             _dateTime = dateTime;
         }
 
         public async Task<BookingCalendarDto> Handle(
             GetBookingCalendarQuery request, CancellationToken cancellationToken)
         {
+            var (canRentings, canReservations) = await ModulesAsync(cancellationToken);
+
             var now = _dateTime.GetUtcNow().UtcDateTime;
 
             var from = request.From ?? new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc);
@@ -68,8 +84,16 @@ namespace RemSolution.Application.Features.Dashboard.Queries.GetBookingCalendarQ
             // date contributes its own entry below. Cancelled hires are left out
             // for the same reason the dashboard's period figures leave them out:
             // they are rows, but they are not work.
-            var rentings = await _context.Rentings
-                .AsNoTracking()
+            var rentingsQuery = _context.Rentings.AsNoTracking();
+            var reservationsQuery = _context.Reservations.AsNoTracking();
+
+            if (request.BranchId is int branchId)
+            {
+                rentingsQuery = rentingsQuery.Where(r => r.Car != null && r.Car.BranchId == branchId);
+                reservationsQuery = reservationsQuery.Where(r => r.Car != null && r.Car.BranchId == branchId);
+            }
+
+            var rentings = !canRentings ? new List<BookingRow>() : await rentingsQuery
                 .Where(r => r.RentingState != RentingState.Cancelled
                             && ((r.StartDate >= from && r.StartDate < to)
                                 || (r.EndDate >= from && r.EndDate < to)))
@@ -91,8 +115,7 @@ namespace RemSolution.Application.Features.Dashboard.Queries.GetBookingCalendarQ
             // Only holds that are still live: a converted one is now a hire and
             // already appears above as its pickup, and a rejected, expired or
             // cancelled one is not going to happen.
-            var reservations = await _context.Reservations
-                .AsNoTracking()
+            var reservations = !canReservations ? new List<HoldRow>() : await reservationsQuery
                 .Where(r => (r.Status == ReservationStatus.PendingConfirmation
                              || r.Status == ReservationStatus.Confirmed
                              || r.Status == ReservationStatus.Paid)
@@ -182,6 +205,29 @@ namespace RemSolution.Application.Features.Dashboard.Queries.GetBookingCalendarQ
                     .ThenBy(e => e.CarMatricule)
                     .ToList(),
             };
+        }
+
+        // What this caller may see of the calendar. Same rule the navigation and
+        // every list apply — feature on for the agency AND the read permission held
+        // — asked imperatively because the two halves are gated separately and an
+        // attribute cannot say "and also, only if" (see Entitlements).
+        private async Task<(bool Rentings, bool Reservations)> ModulesAsync(
+            CancellationToken cancellationToken)
+        {
+            var userId = _user.Id ?? throw new UnauthorizedAccessException();
+
+            // No tenant (a platform admin outside a workspace): there is no agency
+            // whose entitlements could apply, mirroring the feature behaviour.
+            var features = _tenant.AgencyId is int agencyId
+                ? await AgencyFeatureResolver.GetEnabledFeaturesAsync(
+                    _context, agencyId, _dateTime.GetUtcNow(), cancellationToken)
+                : FeatureFlags.All.ToHashSet();
+
+            return (
+                features.Contains(FeatureFlags.Rentings)
+                    && await _identity.AuthorizeAsync(userId, Permissions.RentingRead),
+                features.Contains(FeatureFlags.Reservations)
+                    && await _identity.AuthorizeAsync(userId, Permissions.ReservationRead));
         }
 
         // The columns the entries are built from, projected straight out of SQL —

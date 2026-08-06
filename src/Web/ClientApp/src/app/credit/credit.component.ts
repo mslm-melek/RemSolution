@@ -163,7 +163,7 @@ export class CreditComponent implements OnInit {
     });
 
     // Filter pickers: one page big enough to hold an agency's fleet/catalog.
-    this.carsClient.getCars(1, 1000, null, null, null, null, null, null, null, null, false).subscribe({
+    this.carsClient.getCars(1, 1000, null, null, null, null, null, null, null, null, null, null, null, false).subscribe({
       next: result => this.cars = result.items || [],
       error: err => console.error(err)
     });

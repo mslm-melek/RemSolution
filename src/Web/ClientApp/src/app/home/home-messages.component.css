@@ -1,0 +1,104 @@
+/* These stylesheets were written border-box (the app has no global reset).
+   Emulated encapsulation scopes this to this component's own elements, so it
+   changes nothing outside it. */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* The conversation strip. A band across the foot of the landing screen, set on
+   the quiet surface so it reads as a footer rather than as another panel. */
+
+:host {
+  display: block;
+}
+
+.msg-strip {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--surface-2);
+}
+
+.msg-label {
+  font-size: var(--fs-micro);
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.msg-circles {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.msg-circle {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: var(--r-pill);
+  border: 2px solid transparent;
+  background: var(--brand-100);
+  color: var(--brand-800);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s, opacity 0.15s;
+}
+
+:host-context([data-theme='dark']) .msg-circle {
+  color: var(--info-ink);
+}
+
+.msg-circle:hover {
+  border-color: var(--brand-500);
+}
+
+/* Nothing waiting on this one. Dimmed rather than hidden: the person is still
+   worth being able to write to. */
+.msg-circle.read {
+  opacity: 0.5;
+}
+
+.msg-unread {
+  position: absolute;
+  top: -3px;
+  inset-inline-end: -3px;
+  min-width: 18px;
+  height: 18px;
+  display: grid;
+  place-items: center;
+  padding: 0 4px;
+  border-radius: var(--r-pill);
+  border: 2px solid var(--surface-2);
+  background: var(--danger-solid);
+  color: #fff;
+  font-size: 9.5px;
+  font-weight: var(--fw-medium);
+}
+
+.msg-total {
+  margin-inline-start: auto;
+  font-size: var(--fs-micro);
+  color: var(--muted);
+}
+
+/* The inbox link sits next to the count, not pushed to the far edge. */
+.msg-strip .mat-mdc-button {
+  flex: none;
+  text-transform: none;
+}
+
+/* The arrow points along the reading direction. */
+:host-context([dir='rtl']) .msg-strip .mat-icon {
+  transform: scaleX(-1);
+}

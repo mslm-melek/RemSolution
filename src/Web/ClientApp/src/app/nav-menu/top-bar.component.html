@@ -1,0 +1,132 @@
+<header class="bar" *transloco="let t">
+  <div class="bar-row">
+    <!-- The rail is an overlay below the breakpoint; this is what opens it. -->
+    <button type="button" mat-icon-button class="bar-menu" *ngIf="isAuthenticated"
+            (click)="menu.emit()"
+            [matTooltip]="t('nav.toggle')" [attr.aria-label]="t('nav.toggle')">
+      <mat-icon>menu</mat-icon>
+    </button>
+
+    <!-- Signed out there is no rail, so the bar carries the brand itself. -->
+    <a class="bar-brand" *ngIf="!isAuthenticated" [routerLink]="['/']">
+      <span class="bar-brand-mark">R</span>
+      <span>{{ t('nav.brandName') }}</span>
+    </a>
+
+    <!-- Where the desk is standing. Only on the screen whose figures are scoped
+         by it (see BranchScopeService). -->
+    <button type="button" class="branch-picker" *ngIf="showBranchPicker"
+            [matMenuTriggerFor]="branchMenu">
+      <mat-icon class="branch-pin">location_on</mat-icon>
+      <span class="branch-name">{{ branchLabel || t('branch.allBranches') }}</span>
+      <mat-icon class="branch-caret">expand_more</mat-icon>
+    </button>
+    <mat-menu #branchMenu="matMenu">
+      <button mat-menu-item [disabled]="branchId === null" (click)="selectBranch(null)">
+        <mat-icon>{{ branchId === null ? 'check' : 'apartment' }}</mat-icon>
+        {{ t('branch.allBranches') }}
+      </button>
+      <button mat-menu-item *ngFor="let branch of branches"
+              [disabled]="branch.id === branchId" (click)="selectBranch(branch.id!)">
+        <mat-icon>{{ branch.id === branchId ? 'check' : 'location_on' }}</mat-icon>
+        {{ branch.name }}
+      </button>
+    </mat-menu>
+
+    <!-- One box, and a menu that says which list the term goes to. Every list
+         reads `?search=` from the URL, so this navigates rather than querying. -->
+    <form class="search" *ngIf="showSearch" (ngSubmit)="submitSearch()">
+      <button type="button" class="search-scope" [matMenuTriggerFor]="scopeMenu"
+              [matTooltip]="t('search.scope')" [attr.aria-label]="t('search.scope')">
+        <mat-icon>{{ searchTarget?.icon || 'search' }}</mat-icon>
+        <mat-icon class="search-caret">expand_more</mat-icon>
+      </button>
+      <mat-menu #scopeMenu="matMenu">
+        <button mat-menu-item type="button" *ngFor="let target of searchTargets"
+                [disabled]="target.key === searchTarget?.key" (click)="pickTarget(target)">
+          <mat-icon>{{ target.icon }}</mat-icon> {{ t(target.labelKey) }}
+        </button>
+      </mat-menu>
+
+      <input class="search-input" type="search" [(ngModel)]="searchTerm" name="q"
+             [placeholder]="searchTarget ? t('search.placeholderIn', { where: t(searchTarget.labelKey) })
+                                         : t('search.placeholder')"
+             [attr.aria-label]="t('search.label')" />
+
+      <button type="button" mat-icon-button class="search-clear" *ngIf="searchTerm"
+              (click)="clearSearch()" [attr.aria-label]="t('common.clear')">
+        <mat-icon>close</mat-icon>
+      </button>
+      <button type="submit" mat-icon-button class="search-go" [disabled]="!searchTerm.trim()"
+              [attr.aria-label]="t('common.search')">
+        <mat-icon>search</mat-icon>
+      </button>
+    </form>
+
+    <span class="bar-spacer"></span>
+
+    <!-- The bell links to the unread view, so the screen it opens shows exactly
+         what the badge was counting. -->
+    <a mat-icon-button class="bar-bell" *ngIf="canNotifications"
+       [routerLink]="['/notifications']"
+       [queryParams]="{ unread: unreadCount ? 'true' : null }"
+       [matTooltip]="t('notifications.title')"
+       [attr.aria-label]="unreadCount
+          ? t('notifications.unreadAria', { count: unreadCount })
+          : t('notifications.title')">
+      <mat-icon [matBadge]="unreadCount > 99 ? '99+' : unreadCount"
+                [matBadgeHidden]="!unreadCount"
+                matBadgeColor="warn"
+                matBadgeSize="small">notifications</mat-icon>
+    </a>
+
+    <!-- The icon shows what you would GET, not where you are: a moon means
+         "go dark". -->
+    <button type="button" mat-icon-button (click)="toggleTheme()"
+            [matTooltip]="currentTheme === 'dark' ? t('theme.toLight') : t('theme.toDark')"
+            [attr.aria-label]="currentTheme === 'dark' ? t('theme.toLight') : t('theme.toDark')">
+      <mat-icon>{{ currentTheme === 'dark' ? 'light_mode' : 'dark_mode' }}</mat-icon>
+    </button>
+
+    <!-- Languages are listed by endonym, so the labels read the same whatever
+         the active one. -->
+    <button type="button" mat-button class="bar-language" [matMenuTriggerFor]="languageMenu"
+            [attr.aria-label]="t('language.label')">
+      <mat-icon>language</mat-icon>
+      <span class="bar-language-code num">{{ currentLanguage | uppercase }}</span>
+    </button>
+    <mat-menu #languageMenu="matMenu">
+      <button mat-menu-item *ngFor="let language of languages"
+              [disabled]="language === currentLanguage"
+              (click)="setLanguage(language)">
+        <mat-icon>{{ language === currentLanguage ? 'check' : 'translate' }}</mat-icon>
+        {{ t('language.' + language) }}
+      </button>
+    </mat-menu>
+
+    <!-- Signed out: the way in stays in the bar, since there is no rail. -->
+    <ng-container *ngIf="!isAuthenticated">
+      <a mat-button href="/Identity/Account/Login">
+        <mat-icon>login</mat-icon> {{ t('nav.login') }}
+      </a>
+      <a mat-stroked-button class="bar-register" href="/Identity/Account/Register">
+        {{ t('nav.register') }}
+      </a>
+    </ng-container>
+  </div>
+
+  <!-- Whose data is on screen. A mode, not a dismissible message. -->
+  <div class="workspace-bar" *ngIf="workspace">
+    <mat-icon class="workspace-icon">admin_panel_settings</mat-icon>
+    <span class="workspace-text">
+      <strong>{{ t('workspace.actingAs', { agency: workspace.name }) }}</strong>
+      <span class="workspace-hint">{{ t('workspace.hint') }}</span>
+    </span>
+    <a mat-button class="workspace-console" [routerLink]="['/agency', workspace.id]">
+      <mat-icon>tune</mat-icon> {{ t('workspace.console') }}
+    </a>
+    <button type="button" mat-stroked-button class="workspace-exit" (click)="exitWorkspace()">
+      <mat-icon>logout</mat-icon> {{ t('workspace.exit') }}
+    </button>
+  </div>
+</header>

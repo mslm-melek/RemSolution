@@ -56,7 +56,9 @@
     "description": "Description",
     "loading": "Loading…",
     "view": "View",
+    "viewAll": "View all",
     "open": "Open",
+    "close": "Close",
     "upload": "Upload",
     "uploading": "Uploading…",
     "replace": "Replace",
@@ -121,7 +123,8 @@
     "finance": "Finance",
     "clientsList": "All clients",
     "myRentings": "My rentals",
-    "myAgency": "My agency"
+    "myAgency": "My agency",
+    "mainLabel": "Main navigation"
   },
   "home": {
     "welcomeTitle": "Welcome to RemSolution",
@@ -195,7 +198,7 @@
     "welcomeBackNamed": "Welcome back, {{ name }}",
     "deskSubtitle": "Here is what needs doing today.",
     "agenda": {
-      "title": "What needs doing",
+      "title": "Agenda",
       "toValidate": "Requests to validate",
       "noneToValidate": "No requests waiting.",
       "expiringToday": "Expires today",
@@ -208,7 +211,71 @@
       "allClear": "Nothing waiting — no requests, no overdue cars, nothing due today.",
       "pickupsLink": "Pickups ({{ count }})",
       "returnsLink": "Returns ({{ count }})",
-      "requestsLink": "Requests ({{ count }})"
+      "requestsLink": "Requests ({{ count }})",
+      "view": "Agenda view",
+      "day": "Day",
+      "week": "Week",
+      "month": "Month",
+      "goingOut": "Going out",
+      "comingBack": "Coming back",
+      "previous": "Previous",
+      "next": "Next",
+      "todayNamed": "Today · {{ date }}",
+      "backToToday": "Back to today",
+      "toConfirm": "To confirm"
+    },
+    "greeting": {
+      "morning": "Good morning",
+      "morningNamed": "Good morning, {{ name }}",
+      "afternoon": "Good afternoon",
+      "afternoonNamed": "Good afternoon, {{ name }}",
+      "evening": "Good evening",
+      "eveningNamed": "Good evening, {{ name }}"
+    },
+    "fleetFreeOf": "of {{ total }} cars free",
+    "updatedNow": "updated just now",
+    "updatedAgo": "updated {{ minutes }} min ago",
+    "refresh": "refresh",
+    "glance": "Today at a glance",
+    "needsAnswer": "Needs your answer",
+    "nothingWaiting": "Nothing waiting on you.",
+    "shortcuts": "Your shortcuts",
+    "stat": {
+      "bookingsToday": "Bookings today",
+      "stillToConfirm": "{{ count }} still to confirm",
+      "returnsToday": "Returns today",
+      "beforeNoon": "{{ count }} before midday",
+      "late": "Overdue returns",
+      "hoursLate": "{{ hours }} h late",
+      "nothingOverdue": "nothing overdue",
+      "expectedToday": "Expected in today",
+      "outstanding": "{{ amount }} {{ currency }} outstanding"
+    },
+    "todo": {
+      "requests": "Requests to answer",
+      "oldestWaiting": "oldest waiting {{ hours }} h",
+      "payables": "Expenses to settle",
+      "payableCount": "{{ count }} unpaid",
+      "seeAll": "See all {{ count }}"
+    },
+    "due": {
+      "title": "Expenses due",
+      "carCount": "{{ count }} car(s)",
+      "none": "No car is due for anything.",
+      "ruleMonths": "every {{ months }} months",
+      "ruleDistance": "every {{ km }} km",
+      "ruleBoth": "every {{ months }} months or {{ km }} km",
+      "overKm": "{{ km }} km over",
+      "inKm": "in {{ km }} km",
+      "overdueSince": "was due {{ date }}",
+      "dueIn": "due {{ date }}",
+      "record": "Record"
+    },
+    "messages": {
+      "title": "Messages",
+      "unread": "{{ count }} unread in {{ threads }} conversation(s)",
+      "allCaughtUp": "all caught up",
+      "openInbox": "Open the inbox"
     }
   },
   "brand": {
@@ -255,6 +322,25 @@
       "rentings": "Rentings",
       "vehicle": "Vehicle"
     },
+    "overview": {
+      "utilization": "Utilization",
+      "daysOut": "{{ days }} of {{ total }} days out",
+      "revenue": "Revenue",
+      "lastDays": "last {{ days }} days",
+      "rating": "Rating",
+      "reviews": "{{ count }} review(s)",
+      "bookings": "Current & upcoming",
+      "noBookings": "Nothing booked on this car.",
+      "viewAllRentings": "View all {{ count }} rentings",
+      "expenses": "Recent expenses",
+      "noExpenses": "Nothing has been spent on this car yet."
+    },
+    "quickEdit": {
+      "title": "Quick edit",
+      "fullForm": "Edit the full record"
+    },
+    "year": "Year",
+    "editFull": "Edit full record",
     "title": "Cars",
     "new": "New car",
     "newTitle": "New car",
@@ -302,7 +388,14 @@
     "addPhoto": "Add photo",
     "empty": "No cars found.",
     "confirmDelete": "Delete car \"{{ matricule }}\"?",
-    "concurrency": "This car was reloaded by another user since you opened it. Reload the page to get the latest version, then re-apply your changes."
+    "concurrency": "This car was reloaded by another user since you opened it. Reload the page to get the latest version, then re-apply your changes.",
+    "searchLabel": "Search by plate or model",
+    "searchPlaceholder": "e.g. 2290-A-77 or Duster",
+    "filters": "Filters",
+    "moreFilters": "More filters",
+    "sortBy": "Sort by",
+    "gridView": "Cards",
+    "listView": "Table"
   },
   "client": {
     "rentings": "Rentings",
@@ -375,6 +468,27 @@
     "concurrency": "This client was reloaded by another user since you opened it. Reload the page to get the latest version, then re-apply your changes.",
     "flagged": "Flagged client"
   },
+  "booking": {
+    "title": "Bookings",
+    "sortBy": "Sort by",
+    "name": "Name",
+    "vehicleAndPeriod": "Vehicle & period",
+    "pickup": "Pickup",
+    "dropOff": "Return",
+    "openBooking": "Open this booking",
+    "openCar": "Open the car",
+    "openClient": "Open the client file",
+    "openRentingRecord": "Open the renting record",
+    "openReservationRecord": "Open the reservation record",
+    "noClient": "No client",
+    "noPapers": "No identity papers on file.",
+    "outstanding": "Outstanding",
+    "toHandBack": "To hand back",
+    "extrasTotal": "Extras total",
+    "extrasBilledApart": "Extra services are billed apart from the price above.",
+    "dueShort": "{{ amount }} due",
+    "paidShort": "{{ amount }} paid"
+  },
   "renting": {
     "cancelTitle": "Cancel the renting",
     "confirmCancelAction": "Confirm the cancellation",
@@ -390,6 +504,7 @@
     "cancelKeepAsCredit": "Left unchecked, the amount stays as a credit on the client's account (shown under Payments & credits).",
     "cancelRefundNoPermission": "The amount will stay as a credit on the client's account: recording a refund needs the Payments module.",
     "returnTitle": "Vehicle return",
+    "late": "Late",
     "returnCar": "Record the return",
     "returnMileageTooLow": "The return reading cannot be below the pickup reading ({{ mileage }}).",
     "pickupMileageWas": "Pickup mileage: {{ mileage }}",
@@ -496,7 +611,9 @@
     "cancelledFree": "Cancelled free of charge: nothing is owed.",
     "cancellationFeeKept": "Cancelled · fee kept: {{ amount }} {{ currency }}",
     "adjustPriceForChange": "Set the new total myself",
-    "newTotalPrice": "New total for the whole period"
+    "newTotalPrice": "New total for the whole period",
+    "searchLabel": "Search by plate or client",
+    "searchPlaceholder": "e.g. 2290-A-77 or Alaoui"
   },
   "reservation": {
     "title": "Reservations",
@@ -893,6 +1010,7 @@
     "typeRequired": "The expense type is required.",
     "amountRequired": "The amount must be greater than zero.",
     "paidNow": "Already settled",
+    "unpaid": "Unpaid",
     "paidNowHint": "Leave at 0 if the expense has not been paid yet.",
     "alreadySettled": "Already settled: {{amount}} {{currency}} — use the “Record a settlement” action on the payments & credits screen to change it.",
     "mileage": "Odometer (km)",
@@ -1181,7 +1299,8 @@
     "pinMissing": "no pin",
     "confirmDelete": "Delete branch \"{{ name }}\"? Cars based there will be left without a branch.",
     "savedImmediately": "Branch changes are saved immediately.",
-    "savedWithAgency": "These branches will be created with the agency when you save."
+    "savedWithAgency": "These branches will be created with the agency when you save.",
+    "allBranches": "All branches"
   },
   "mapPicker": {
     "searchLabel": "Search for an address",
@@ -1249,5 +1368,20 @@
     "dayEmpty": "Nothing on this day.",
     "truncated": "This month has more bookings than the calendar shows. Open the bookings list to see them all.",
     "loadFailed": "Could not load the calendar."
+  },
+  "roles": {
+    "platformAdmin": "Platform admin",
+    "agencyAdmin": "Agency admin",
+    "agencyStaff": "Agency staff",
+    "customer": "Customer"
+  },
+  "search": {
+    "label": "Search",
+    "scope": "Search in",
+    "placeholder": "Search",
+    "placeholderIn": "Search {{ where }}",
+    "cars": "cars",
+    "clients": "clients",
+    "bookings": "bookings"
   }
 }

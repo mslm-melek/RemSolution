@@ -1,3 +1,12 @@
+/* These stylesheets were written border-box (the app has no global reset).
+   Emulated encapsulation scopes this to this component's own elements, so it
+   changes nothing outside it. */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
 /* The landing screen. Signed out it is a single hero; signed in it is the stat
    strip plus quick actions. Tokens and the shared .tile-* type scale come from
    styles.scss. */
@@ -264,280 +273,642 @@
   }
 }
 
-/* --- Signed-in landing --------------------------------------------------- */
 
-.dashboard {
-  max-width: 1180px;
-  margin: 0 auto;
-  padding: 24px 0 40px;
+/* ==========================================================================
+   The desk's day.
+
+   One vertical stack of blocks on the canvas, each block a heading plus its
+   content — the page itself is not a card, so the cards inside it read as
+   cards. Tokens, .num (tabular figures), .money and .error-banner all come
+   from styles.scss.
+   ========================================================================== */
+
+.today {
   display: flex;
   flex-direction: column;
-  gap: var(--gap-5);
+  gap: var(--sp-6);
+  padding: var(--sp-6) 0 40px;
 }
 
-/* Greeting on one side, the Customize button on the other; it wraps under on a
-   narrow screen rather than squeezing the heading. */
-.dash-header {
+/* --- Greeting ------------------------------------------------------------- */
+
+.greet-row {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: var(--gap-3);
+  align-items: flex-end;
+  gap: var(--sp-4);
   flex-wrap: wrap;
 }
 
-.dash-header h1 {
+.greet h1 {
   margin: 0;
-  font-size: 24px;
-  font-weight: 680;
+  font-size: 23px;
+  font-weight: var(--fw-medium);
   letter-spacing: -0.02em;
 }
 
-.dash-subtitle {
-  margin: 4px 0 0;
+.greet-sub {
+  margin: 2px 0 0;
+  font-size: var(--fs-sm);
   color: var(--muted);
-  font-size: 13.5px;
 }
 
-.stat-row {
-  display: grid;
-  /* Wide enough for the longest tile label to sit on two lines rather than be
-     clipped: "Requests to confirm" and "Unpaid expenses" are what a counter is
-     for, and a tile that says "Unpaid expe…" is no shortcut at all. */
-  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-  gap: var(--gap-3);
+.fleet-chip {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: var(--r-pill);
+  background: var(--info-bg);
+  color: var(--info-ink);
+  font-size: 12.5px;
+  font-weight: var(--fw-medium);
+  text-decoration: none;
 }
 
-.stat-tile {
+.fleet-chip b {
+  font-family: var(--font-mono);
+  font-size: 15px;
+}
+
+/* How old the figures are. Amber past the warning threshold — see the component
+   for why this screen admits its age at all. */
+.stale {
+  margin-inline-start: auto;
   display: flex;
   align-items: center;
-  gap: var(--gap-3);
-  background: var(--surface);
-  border: 1px solid var(--line);
+  gap: 6px;
+  font-size: var(--fs-micro);
+  color: var(--muted);
+}
+
+.stale.warn {
+  color: var(--warn);
+}
+
+.stale .mat-icon {
+  font-size: 15px;
+  width: 15px;
+  height: 15px;
+}
+
+.stale .mat-mdc-button {
+  min-width: 0;
+  padding: 0 8px;
+  text-transform: none;
+}
+
+.today-message {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
   border-radius: var(--r);
-  box-shadow: var(--shadow-1);
-  padding: 14px 12px 14px 16px;
+  background: var(--info-bg);
+  color: var(--info-ink);
+  font-size: var(--fs-sm);
+}
+
+/* --- Blocks --------------------------------------------------------------- */
+
+.block {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.block-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+}
+
+.block-title,
+.block-subtitle {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.block-subtitle {
+  margin-top: var(--sp-3);
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.block-count {
+  font-family: var(--font-mono);
+  font-size: var(--fs-micro);
+  font-weight: var(--fw-normal);
+  color: var(--muted);
+}
+
+/* Said once, where three empty cards would otherwise be. */
+.all-clear {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: var(--sp-5) var(--sp-4);
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--r-lg);
+  color: var(--muted);
+  font-size: var(--fs-sm);
+}
+
+.all-clear .mat-icon {
+  font-size: 22px;
+  width: 22px;
+  height: 22px;
+  opacity: 0.6;
+}
+
+/* --- 1. At a glance -------------------------------------------------------- */
+
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: var(--sp-3);
+}
+
+.stat-card {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  color: var(--ink);
   text-decoration: none;
-  color: inherit;
-  transition: transform 140ms ease, box-shadow 140ms ease, border-color 140ms ease;
+  transition: box-shadow 0.15s, border-color 0.15s;
 }
 
-.stat-tile:hover {
-  transform: translateY(-2px);
+.stat-card:hover {
   box-shadow: var(--shadow-2);
-  border-color: var(--brand-200);
+  border-color: var(--line-strong);
 }
 
-.stat-icon {
+/* Something is overdue. A single-sided accent, so radius 0 on that side. */
+.stat-card.alert {
+  border-inline-start: var(--accent-bar) solid var(--danger);
+  border-start-start-radius: 0;
+  border-end-start-radius: 0;
+}
+
+.stat-ico {
   display: grid;
   place-items: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
-  background: var(--brand-50);
-  color: var(--brand-600);
+  width: 42px;
+  height: 42px;
   flex: none;
+  border-radius: 11px;
+  background: var(--info-bg);
+  color: var(--info-ink);
+}
+
+.stat-card.alert .stat-ico {
+  background: var(--danger-bg);
+  color: var(--danger-ink);
+}
+
+.stat-ico .mat-icon {
+  font-size: 23px;
+  width: 23px;
+  height: 23px;
 }
 
 .stat-body {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.stat-num {
+  font-size: 25px;
+  font-weight: var(--fw-medium);
+  line-height: 1.1;
+}
+
+/* An amount needs the room a count does not. */
+.stat-num.money {
+  font-size: 20px;
+}
+
+.stat-cur {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.stat-lbl {
+  margin-top: 2px;
+  font-size: 12.5px;
+  color: var(--muted);
+}
+
+.stat-sub {
+  margin-top: 3px;
+  font-size: var(--fs-micro);
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* --- 2. Needs your answer -------------------------------------------------- */
+
+.todo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--sp-3);
+  align-items: start;
+}
+
+.todo {
+  display: block;
+  border: 1px solid var(--line);
+  border-inline-start: var(--accent-bar) solid var(--line-strong);
+  border-radius: 0 var(--r) var(--r) 0;
+  background: var(--surface);
+  color: var(--ink);
+  text-decoration: none;
+  overflow: hidden;
+}
+
+.todo.warn {
+  border-inline-start-color: var(--warn);
+}
+
+.todo.danger {
+  border-inline-start-color: var(--danger);
+}
+
+.todo-head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  width: 100%;
+  padding: 13px var(--sp-4);
+  border: 0;
+  background: none;
+  color: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.todo-head:hover {
+  background: var(--surface-2);
+}
+
+.todo-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.todo-t {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+}
+
+.todo-d {
+  margin-top: 1px;
+  font-size: var(--fs-micro);
+  color: var(--muted);
+}
+
+.todo-n {
+  font-size: 16px;
+  font-weight: var(--fw-medium);
+}
+
+.todo-amt {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+}
+
+.todo-caret {
+  flex: none;
+  color: var(--muted);
+  transition: transform 0.18s;
+}
+
+.todo-caret.turned,
+.exp-caret.turned {
+  transform: rotate(180deg);
+}
+
+.todo-body {
+  border-top: 1px solid var(--line);
+  background: var(--surface-2);
+}
+
+.todo-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: 6px var(--sp-3) 6px var(--sp-4);
+  border-bottom: 1px solid var(--line);
+}
+
+.todo-row:last-of-type {
+  border-bottom: 0;
+}
+
+.todo-row-main {
   display: flex;
   flex-direction: column;
   flex: 1 1 auto;
   min-width: 0;
 }
 
-.stat-value {
-  font-size: 25px;
-  font-weight: 680;
-  color: var(--ink);
-  line-height: 1.15;
-  letter-spacing: -0.02em;
-  font-variant-numeric: tabular-nums;
-}
-
-/* Still counting: the dash is dimmed so it reads as "not yet" rather than as a
-   figure of its own. */
-.stat-value.pending {
-  color: var(--muted-2);
-}
-
-.stat-label {
+.todo-row-who {
   font-size: 12.5px;
-  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.todo-row-what {
+  font-size: var(--fs-micro);
   color: var(--muted);
 }
 
-/* Says the tile is a link without spending a word on it. It only appears on
-   hover, and it follows the text direction. */
-.stat-go {
+.todo-all {
+  width: 100%;
+  justify-content: center;
+  text-transform: none;
+}
+
+/* --- Expenses due ---------------------------------------------------------- */
+
+.exp-list {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  background: var(--surface);
+}
+
+.exp-row {
+  border-bottom: 1px solid var(--line);
+}
+
+.exp-row:last-child {
+  border-bottom: 0;
+}
+
+.exp-head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  width: 100%;
+  padding: 12px var(--sp-4);
+  border: 0;
+  border-inline-start: 3px solid transparent;
+  background: var(--surface);
+  color: var(--ink);
+  text-align: start;
+  cursor: pointer;
+}
+
+.exp-head:hover {
+  background: var(--surface-2);
+}
+
+.exp-head.warn {
+  border-inline-start-color: var(--warn);
+}
+
+.exp-head.danger {
+  border-inline-start-color: var(--danger);
+}
+
+.exp-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.exp-name {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+}
+
+.exp-rule {
+  margin-top: 1px;
+  font-size: var(--fs-micro);
+  color: var(--muted);
+}
+
+.exp-n {
+  display: grid;
+  place-items: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: var(--r-sm);
+  background: var(--danger-solid);
+  color: #fff;
+  font-size: var(--fs-micro);
+  font-weight: var(--fw-medium);
+}
+
+.exp-head.warn .exp-n {
+  background: var(--warn);
+}
+
+.exp-caret {
   flex: none;
+  color: var(--muted);
+  transition: transform 0.18s;
+}
+
+.exp-body {
+  background: var(--surface-2);
+  padding: var(--sp-2) 0;
+}
+
+.exp-car {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: 8px var(--sp-4) 8px 46px;
+  font-size: 12.5px;
+}
+
+.exp-car .plate {
+  padding: 2px 7px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-xs);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: var(--fs-micro);
+  text-decoration: none;
+}
+
+.exp-model {
+  color: var(--ink-2);
+}
+
+.exp-over {
+  margin-inline-start: auto;
+  font-size: var(--fs-micro);
+  font-weight: var(--fw-medium);
+  color: var(--danger);
+}
+
+/* Approaching rather than past: a warning, not an alarm. */
+.exp-over.soon {
+  color: var(--warn);
+}
+
+.exp-act {
+  flex: none;
+  height: 28px;
+  padding: 0 10px;
+  font-size: var(--fs-micro);
+  text-transform: none;
+}
+
+/* --- 4. Shortcuts ---------------------------------------------------------- */
+
+.shortcut-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--sp-3);
+}
+
+.shortcut {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  color: var(--ink);
+  text-decoration: none;
+  transition: box-shadow 0.15s, border-color 0.15s;
+}
+
+.shortcut:hover {
+  box-shadow: var(--shadow-2);
+  border-color: var(--line-strong);
+}
+
+.shortcut .mat-icon {
+  color: var(--muted);
   font-size: 20px;
   width: 20px;
   height: 20px;
-  color: var(--muted-2);
-  opacity: 0;
-  transition: opacity 140ms ease, transform 140ms ease;
 }
 
-.stat-tile:hover .stat-go {
-  opacity: 1;
-  transform: translateX(2px);
+.shortcut-value {
+  font-size: 21px;
+  font-weight: var(--fw-medium);
+  line-height: 1.15;
 }
 
-/* :host-context and not `[dir='rtl'] …`: dir lives on <html>, which never carries
-   this component's scoping attribute. */
-:host-context([dir='rtl']) .stat-go {
-  transform: scaleX(-1);
-}
-
-:host-context([dir='rtl']) .stat-tile:hover .stat-go {
-  transform: scaleX(-1) translateX(2px);
-}
-
-/* --- Nothing pinned ------------------------------------------------------- */
-
-.empty-widgets {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--gap-3);
-  background: var(--surface);
-  border: 1px dashed var(--line);
-  border-radius: var(--r);
-  padding: 40px 24px;
-  text-align: center;
-}
-
-.empty-widgets mat-icon {
-  font-size: 40px;
-  width: 40px;
-  height: 40px;
+/* Not counted yet. Dimmed so an em-dash does not read as a real figure. */
+.shortcut-value.pending {
   color: var(--muted-2);
 }
 
-.empty-widgets p {
-  margin: 0;
+.shortcut-label {
+  font-size: var(--fs-label);
   color: var(--muted);
-  font-size: 14px;
 }
 
-/* --- Shortcut picker ------------------------------------------------------ */
+/* --- The picker ------------------------------------------------------------ */
 
 .customize {
-  background: var(--surface);
+  padding: var(--sp-4);
   border: 1px solid var(--line);
-  border-radius: var(--r);
-  box-shadow: var(--shadow-1);
-  padding: 18px 20px 20px;
-}
-
-.customize h2 {
-  margin: 0;
-  font-size: 12px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--muted);
-}
-
-.customize-hint {
-  margin: 6px 0 var(--gap-4);
-  color: var(--muted);
-  font-size: 13px;
-  max-width: 70ch;
+  border-radius: var(--r-lg);
+  background: var(--surface);
 }
 
 .customize h3 {
-  margin: var(--gap-4) 0 var(--gap-2);
-  font-size: 13px;
-  font-weight: 640;
-  color: var(--ink);
+  margin: var(--sp-4) 0 var(--sp-2);
+  font-family: var(--font-body);
+  font-size: var(--fs-label);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
 }
 
-.customize h3:first-child {
+.customize h3:first-of-type {
   margin-top: 0;
 }
 
+.customize-hint,
 .picker-empty,
 .picker-full {
-  margin: 0 0 var(--gap-2);
+  margin: 0 0 var(--sp-2);
+  font-size: var(--fs-label);
   color: var(--muted);
-  font-size: 12.5px;
 }
 
-.widget-picker {
-  display: flex;
-  flex-direction: column;
-}
-
-/* One row per shortcut, hairline-separated: the pinned rows carry order buttons
-   on the trailing edge, so a column layout keeps both sides lined up. */
 .picker-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--gap-3);
-  padding: 2px 0;
-  border-bottom: 1px solid var(--line);
-}
-
-.picker-row:last-child {
-  border-bottom: none;
+  gap: var(--sp-2);
+  min-height: 36px;
 }
 
 .picker-label {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  font-size: 13.5px;
+  gap: var(--sp-2);
 }
 
-.picker-label mat-icon {
+.picker-label .mat-icon {
   font-size: 18px;
   width: 18px;
   height: 18px;
-  color: var(--brand-600);
+  color: var(--muted);
 }
 
 .picker-order {
   display: flex;
   flex: none;
-  gap: 2px;
 }
 
 .customize-actions {
   display: flex;
-  gap: var(--gap-3);
-  align-items: center;
-  margin-top: var(--gap-4);
+  gap: var(--sp-2);
+  margin-top: var(--sp-4);
 }
 
-.customize .error-banner {
-  margin-top: var(--gap-3);
+/* --- Narrow ---------------------------------------------------------------- */
+
+@media (max-width: 767px) {
+  .stale {
+    margin-inline-start: 0;
+  }
+
+  .exp-car {
+    flex-wrap: wrap;
+    padding-inline-start: var(--sp-4);
+  }
+
+  .exp-over {
+    margin-inline-start: 0;
+  }
 }
 
-/* The quick-action strip is its own component (app-quick-actions), which brings
-   its own card styling — the .dashboard grid only has to space it like the panels
-   above it. */
-
-@media (max-width: 599px) {
-  .hero {
-    padding: 28px 4px 20px;
-  }
-
-  .hero-card {
-    padding: 32px 22px;
-  }
-
-  /* A 21:9 band is a letterbox strip on a phone. */
-  .viewport {
-    aspect-ratio: 4 / 3;
-  }
-
-  .slide-caption {
-    padding: 44px 18px 16px;
-  }
-
-  .slide-model {
-    font-size: 18px;
-  }
+/* The arrow points along the reading direction. */
+:host-context([dir='rtl']) .todo-all .mat-icon {
+  transform: scaleX(-1);
 }

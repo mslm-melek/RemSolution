@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RemSolution — Car Details</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600&family=Inter:wght@400;500;600&family=Roboto+Mono:wght@400;500&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#ffffff; --bg-alt:#f8fafc; --line:#e2e8f0; --line-strong:#cbd5e1;
+  --text:#1e293b; --text-dim:#64748b; --text-soft:#475569;
+  --primary:#2563eb; --primary-dark:#1d4ed8; --primary-tint:#eff6ff;
+  --danger:#dc2626; --warn:#d97706; --ok:#059669;
+  --sp1:4px; --sp2:8px; --sp3:12px; --sp4:16px; --sp5:24px; --sp6:32px;
+}
+body.dark{
+  --bg:#0f172a; --bg-alt:#1e293b; --line:#334155; --line-strong:#475569;
+  --text:#e2e8f0; --text-dim:#94a3b8; --text-soft:#cbd5e1;
+  --primary-tint:#1e3a5f;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5}
+.icon{font-family:'Material Symbols Outlined';font-size:20px;line-height:1}
+.mono{font-family:'Roboto Mono',monospace;font-variant-numeric:tabular-nums}
+.container{display:flex;height:100vh;overflow:hidden}
+
+/* sidebar */
+.sidebar{width:216px;flex:none;display:flex;flex-direction:column;background:var(--bg-alt);border-right:1px solid var(--line);padding:var(--sp4) var(--sp3) var(--sp3)}
+.logo{display:flex;align-items:center;gap:9px;padding:0 var(--sp2) var(--sp3);margin-bottom:var(--sp3)}
+.logo-icon{display:grid;place-items:center;width:28px;height:28px;border-radius:8px;background:#0f172a;color:#fff;font-weight:500;font-size:14px}
+body.dark .logo-icon{background:var(--primary)}
+.logo-text{font-family:'Poppins',sans-serif;font-weight:500;font-size:15px}
+.nav{display:flex;flex-direction:column;gap:3px;margin-bottom:var(--sp3)}
+.nav-item{display:flex;align-items:center;gap:11px;height:44px;padding:0 var(--sp3);border-radius:10px;background:none;border:none;color:var(--text-soft);font:500 14.5px 'Inter',sans-serif;cursor:pointer;transition:.15s;text-align:left;width:100%}
+.nav-item:hover:not(.active){background:var(--line);color:var(--text)}
+.nav-item.active{background:var(--primary-tint);color:var(--primary)}
+.nav-footer{margin-top:auto;display:flex;flex-direction:column;gap:3px}
+.agency-logo{display:flex;align-items:center;gap:var(--sp2);padding:var(--sp3) var(--sp2);margin-top:var(--sp2);border-top:1px solid var(--line)}
+.agency-logo-img{width:34px;height:34px;flex:none;border-radius:8px;background:linear-gradient(135deg,var(--primary),var(--primary-dark));display:grid;place-items:center;color:#fff;font-weight:700;font-size:15px}
+.agency-name{font-size:12.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.agency-plan{font-size:10.5px;color:var(--text-dim)}
+.user-card{display:flex;align-items:center;gap:10px;height:46px;padding:0 var(--sp2);border-top:1px solid var(--line);cursor:pointer}
+.user-avatar{display:grid;place-items:center;width:28px;height:28px;flex:none;border-radius:999px;background:#dbeafe;color:#1e40af;font-size:11px;font-weight:600}
+body.dark .user-avatar{background:var(--primary-tint);color:#93c5fd}
+.user-name{font-size:13.5px;font-weight:500}
+.user-role{font-size:10.5px;color:var(--text-dim)}
+
+/* main */
+.main{flex:1;display:flex;flex-direction:column;min-width:0}
+.header{display:flex;align-items:center;justify-content:space-between;padding:var(--sp4) var(--sp5);border-bottom:1px solid var(--line);flex:none;gap:var(--sp5)}
+.header-left{display:flex;align-items:center;gap:var(--sp3)}
+.header-back{color:var(--primary);font:500 13px 'Inter';cursor:pointer;display:flex;gap:5px;align-items:center}
+.header-back:hover{text-decoration:underline}
+.title{font-size:15px;font-weight:600}
+.header-right{display:flex;gap:var(--sp3)}
+.btn-icon{width:36px;height:36px;border-radius:8px;background:none;border:none;color:var(--text-soft);cursor:pointer;display:grid;place-items:center;transition:.15s}
+.btn-icon:hover{background:var(--bg-alt)}
+
+.scroll{flex:1;overflow-y:auto}
+.content{display:grid;grid-template-columns:1fr 1fr;gap:var(--sp6);padding:var(--sp6);max-width:1400px}
+
+/* gallery */
+.gallery{display:flex;flex-direction:column;gap:var(--sp3)}
+.main-image{width:100%;aspect-ratio:16/10;border-radius:12px;background:linear-gradient(135deg,var(--primary),var(--primary-dark));position:relative;overflow:hidden}
+.main-image img{width:100%;height:100%;object-fit:cover}
+.image-label{position:absolute;top:var(--sp3);right:var(--sp3);background:rgba(255,255,255,.95);padding:4px 10px;border-radius:16px;font-size:11px;font-weight:600;color:var(--text)}
+.thumbs{display:flex;gap:var(--sp2)}
+.thumb{width:70px;height:70px;border-radius:8px;background:var(--bg-alt);border:2px solid var(--line);cursor:pointer;overflow:hidden;transition:.15s}
+.thumb:hover{border-color:var(--primary)}
+.thumb.active{border-color:var(--primary);box-shadow:0 0 0 2px var(--primary-tint)}
+.thumb img{width:100%;height:100%;object-fit:cover}
+
+/* info panel */
+.info-panel{display:flex;flex-direction:column;gap:var(--sp5)}
+
+.spec-box{border:1px solid var(--line);border-radius:12px;padding:var(--sp4);background:var(--bg)}
+.spec-row{display:grid;grid-template-columns:1fr 1fr;gap:var(--sp4);margin-bottom:var(--sp3)}
+.spec-row:last-child{margin-bottom:0}
+.spec-item{display:flex;flex-direction:column;gap:3px}
+.spec-label{font-size:11px;font-weight:600;color:var(--text-dim);text-transform:uppercase;letter-spacing:.01em}
+.spec-value{font-size:14px;font-weight:600;color:var(--text)}
+.spec-value.mono{font-family:'Roboto Mono',monospace;font-size:13px}
+.spec-value.primary{color:var(--primary)}
+.status-badge{display:inline-flex;align-items:center;gap:5px;width:fit-content;padding:4px 10px;border-radius:16px;font-size:11.5px;font-weight:600}
+.status-badge.active{background:#ecfdf5;color:var(--ok)}
+.status-badge.maintenance{background:#fef3c7;color:var(--warn)}
+
+.action-row{display:flex;gap:var(--sp2)}
+.btn{flex:1;height:40px;border:none;border-radius:8px;font:500 13px 'Inter';cursor:pointer;display:flex;align-items:center;justify-content:center;gap:var(--sp2);transition:.15s}
+.btn.primary{background:var(--primary);color:#fff}
+.btn.primary:hover{background:var(--primary-dark)}
+.btn.secondary{background:var(--bg-alt);color:var(--text);border:1px solid var(--line-strong)}
+.btn.secondary:hover{background:var(--line)}
+
+/* stats row */
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--sp4)}
+.stat-mini{border:1px solid var(--line);border-radius:10px;padding:var(--sp3) var(--sp4);background:var(--bg);text-align:center}
+.stat-mini.accent{border-left:4px solid var(--primary)}
+.stat-num{font-family:'Roboto Mono',monospace;font-size:18px;font-weight:600;color:var(--text)}
+.stat-lbl{font-size:10px;color:var(--text-dim);margin-top:2px}
+
+/* section */
+.section{border:1px solid var(--line);border-radius:12px;background:var(--bg);overflow:hidden}
+.section-head{padding:var(--sp4);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:var(--sp3);font-weight:600;font-size:13px}
+.section-head .icon{font-size:18px}
+.section-body{padding:var(--sp4);display:flex;flex-direction:column;gap:var(--sp3)}
+
+.renting-item{display:flex;justify-content:space-between;align-items:center;padding:var(--sp3) 0;border-bottom:1px solid var(--line)}
+.renting-item:last-child{border-bottom:none}
+.renting-left{flex:1}
+.renting-name{font-size:13px;font-weight:600;color:var(--text)}
+.renting-sub{font-size:11px;color:var(--text-dim);margin-top:2px}
+.renting-mid{text-align:center;font-size:11px;color:var(--text-dim)}
+.renting-mid-val{font-family:'Roboto Mono',monospace;font-size:12px;color:var(--text);font-weight:500;margin-top:2px}
+.renting-right{text-align:right}
+.renting-amt{font-family:'Roboto Mono',monospace;font-size:13px;font-weight:600;color:var(--text)}
+.renting-badge{font-size:10px;font-weight:600;padding:2px 8px;border-radius:4px;background:var(--primary-tint);color:var(--primary);margin-top:2px}
+.renting-badge.warn{background:#fef3c7;color:var(--warn)}
+
+.maint-item{display:flex;gap:var(--sp3);padding:var(--sp3) 0;border-bottom:1px solid var(--line)}
+.maint-item:last-child{border-bottom:none}
+.maint-ico{width:32px;height:32px;border-radius:8px;background:var(--primary-tint);display:grid;place-items:center;color:var(--primary);font-size:16px;flex:none}
+.maint-txt{flex:1;min-width:0}
+.maint-name{font-size:12px;font-weight:600;color:var(--text)}
+.maint-info{font-size:11px;color:var(--text-dim);margin-top:1px}
+.maint-cost{text-align:right;font-family:'Roboto Mono',monospace;font-size:12px;font-weight:600;color:var(--text)}
+
+.empty{text-align:center;padding:var(--sp4) var(--sp3);color:var(--text-dim);font-size:12px}
+
+/* panel */
+.panel-overlay{display:none;position:fixed;inset:0;background:rgba(15,23,42,.4);z-index:99}
+.panel-overlay.open{display:block}
+.panel{position:fixed;top:0;right:-380px;width:380px;height:100vh;background:var(--bg);border-left:1px solid var(--line);transition:.3s;overflow-y:auto;z-index:100;box-shadow:-4px 12px 32px rgba(15,23,42,.1)}
+.panel.open{right:0}
+.panel-head{padding:var(--sp4) var(--sp5);border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;flex:none}
+.panel-title{font-weight:600;font-size:14px}
+.panel-close{background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:22px}
+.panel-body{padding:var(--sp5)}
+.form-group{margin-bottom:var(--sp4)}
+.form-label{font-size:11px;font-weight:600;text-transform:uppercase;color:var(--text-dim);margin-bottom:var(--sp2)}
+.form-input,.form-select{width:100%;padding:var(--sp3) var(--sp4);border:1px solid var(--line-strong);border-radius:8px;background:var(--bg-alt);color:var(--text);font:400 13px 'Inter';outline:none;transition:.15s}
+.form-input:focus,.form-select:focus{border-color:var(--primary);background:var(--bg)}
+.form-hint{font-size:10px;color:var(--text-dim);margin-top:4px}
+.panel-footer{padding:var(--sp4) var(--sp5);border-top:1px solid var(--line);display:flex;gap:var(--sp2)}
+.panel-footer button{flex:1;height:38px;border:none;border-radius:8px;font:500 12.5px 'Inter';cursor:pointer}
+.panel-footer .primary{background:var(--primary);color:#fff}
+.panel-footer .primary:hover{background:var(--primary-dark)}
+.panel-footer .secondary{background:var(--bg-alt);color:var(--text)}
+.panel-footer .secondary:hover{background:var(--line)}
+
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--line-strong);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--text-dim)}
+</style>
+</head>
+<body>
+<div class="container">
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="logo">
+      <div class="logo-icon">RS</div>
+      <div class="logo-text">RemSolution</div>
+    </div>
+    <div class="nav">
+      <button class="nav-item">
+        <span class="icon">today</span> Today
+      </button>
+      <button class="nav-item active">
+        <span class="icon">directions_car</span> Cars
+      </button>
+      <button class="nav-item">
+        <span class="icon">event_available</span> Bookings
+      </button>
+      <button class="nav-item">
+        <span class="icon">groups</span> Clients
+      </button>
+      <button class="nav-item">
+        <span class="icon">payments</span> Money
+      </button>
+    </div>
+    <div class="nav-footer">
+      <div class="agency-logo">
+        <div class="agency-logo-img">BR</div>
+        <div>
+          <div class="agency-name">Best Rent</div>
+          <div class="agency-plan">Pro · 24 cars</div>
+        </div>
+      </div>
+      <div class="user-card">
+        <div class="user-avatar">AH</div>
+        <div>
+          <div class="user-name">Asma H.</div>
+          <div class="user-role">Agency Admin</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+    <!-- HEADER -->
+    <div class="header">
+      <div class="header-left">
+        <a class="header-back">
+          <span class="icon">arrow_back</span>
+          Cars
+        </a>
+        <div style="width:1px;height:20px;background:var(--line)"></div>
+        <div class="title">Toyota Camry · TN-9801-TY</div>
+      </div>
+      <div class="header-right">
+        <button class="btn-icon">🔔</button>
+        <button class="btn-icon" onclick="toggleTheme()">🌙</button>
+      </div>
+    </div>
+
+    <!-- SCROLL -->
+    <div class="scroll">
+      <div class="content">
+        <!-- LEFT: GALLERY & STATS -->
+        <div>
+          <div class="gallery">
+            <div class="main-image">
+              <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='500'%3E%3Crect fill='%232563eb' width='800' height='500'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.3em' font-size='36' fill='white' font-family='Poppins'%3EToyota Camry%3C/text%3E%3C/svg%3E">
+              <div class="image-label">1 / 4</div>
+            </div>
+            <div class="thumbs">
+              <div class="thumb active"><img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Crect fill='%232563eb' width='200' height='200'/%3E%3C/svg%3E"></div>
+              <div class="thumb"><img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Crect fill='%235b9fff' width='200' height='200'/%3E%3C/svg%3E"></div>
+              <div class="thumb"><img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Crect fill='%238bb5ff' width='200' height='200'/%3E%3C/svg%3E"></div>
+              <div class="thumb"><img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Crect fill='%23c2d5ff' width='200' height='200'/%3E%3C/svg%3E"></div>
+            </div>
+          </div>
+
+          <div class="stats-row" style="margin-top:var(--sp6)">
+            <div class="stat-mini accent">
+              <div class="stat-num">78%</div>
+              <div class="stat-lbl">Utilization</div>
+            </div>
+            <div class="stat-mini">
+              <div class="stat-num">2.9k</div>
+              <div class="stat-lbl">Revenue TND</div>
+            </div>
+            <div class="stat-mini">
+              <div class="stat-num">4.9 ★</div>
+              <div class="stat-lbl">52 reviews</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- RIGHT: INFO & ACTIONS -->
+        <div class="info-panel">
+          <div class="spec-box">
+            <div class="spec-row">
+              <div class="spec-item">
+                <div class="spec-label">Status</div>
+                <div class="status-badge active"><span class="icon" style="font-size:14px">check_circle</span> Active</div>
+              </div>
+              <div class="spec-item">
+                <div class="spec-label">Daily Rate</div>
+                <div class="spec-value primary mono">120 TND</div>
+              </div>
+            </div>
+            <div class="spec-row">
+              <div class="spec-item">
+                <div class="spec-label">Branch</div>
+                <div class="spec-value">Tunis Central</div>
+              </div>
+              <div class="spec-item">
+                <div class="spec-label">Year</div>
+                <div class="spec-value">2023</div>
+              </div>
+            </div>
+            <div class="spec-row">
+              <div class="spec-item">
+                <div class="spec-label">Mileage</div>
+                <div class="spec-value mono">45,230 km</div>
+              </div>
+              <div class="spec-item">
+                <div class="spec-label">Plate</div>
+                <div class="spec-value mono" style="font-size:12px">TN-9801</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="action-row">
+            <button class="btn primary" onclick="openPanel()">
+              <span class="icon">edit</span> Edit
+            </button>
+            <button class="btn secondary">
+              <span class="icon">more_horiz</span>
+            </button>
+          </div>
+
+          <!-- RENTINGS -->
+          <div class="section">
+            <div class="section-head">
+              <span class="icon">schedule</span>
+              Active Rentings
+            </div>
+            <div class="section-body">
+              <div class="renting-item">
+                <div class="renting-left">
+                  <div class="renting-name">Ahmed Ben Salem</div>
+                  <div class="renting-sub">ahmed.ben@example.com</div>
+                </div>
+                <div class="renting-mid">
+                  <div class="renting-mid-val">Aug 9–12</div>
+                </div>
+                <div class="renting-right">
+                  <div class="renting-amt">360 TND</div>
+                  <div class="renting-badge">In Progress</div>
+                </div>
+              </div>
+              <div class="renting-item">
+                <div class="renting-left">
+                  <div class="renting-name">Fatima Khoury</div>
+                  <div class="renting-sub">fatima.kh@example.com</div>
+                </div>
+                <div class="renting-mid">
+                  <div class="renting-mid-val">Aug 13–15</div>
+                </div>
+                <div class="renting-right">
+                  <div class="renting-amt">240 TND</div>
+                  <div class="renting-badge warn">Pending</div>
+                </div>
+              </div>
+              <div style="text-align:center;padding:var(--sp3) 0">
+                <a style="font-size:12px;color:var(--primary);cursor:pointer;font-weight:500">View all 51 rentings →</a>
+              </div>
+            </div>
+          </div>
+
+          <!-- EXPENSES -->
+          <div class="section">
+            <div class="section-head">
+              <span class="icon">receipt</span>
+              Recent Expenses
+            </div>
+            <div class="section-body">
+              <div class="maint-item">
+                <div class="maint-ico">🛢️</div>
+                <div class="maint-txt">
+                  <div class="maint-name">Oil & Filter</div>
+                  <div class="maint-info">Engine maintenance · July 28</div>
+                </div>
+                <div class="maint-cost">95 TND</div>
+              </div>
+              <div class="maint-item">
+                <div class="maint-ico">🔩</div>
+                <div class="maint-txt">
+                  <div class="maint-name">Tire Services</div>
+                  <div class="maint-info">Rotation & balance · July 15</div>
+                </div>
+                <div class="maint-cost">65 TND</div>
+              </div>
+              <div style="text-align:center;padding:var(--sp3) 0">
+                <a style="font-size:12px;color:var(--primary);cursor:pointer;font-weight:500">View all →</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT PANEL -->
+<div class="panel-overlay" id="overlay" onclick="closePanel()"></div>
+<div class="panel" id="panel">
+  <div class="panel-head">
+    <div class="panel-title">Edit Car</div>
+    <button class="panel-close" onclick="closePanel()">✕</button>
+  </div>
+  <div class="panel-body">
+    <div class="form-group">
+      <div class="form-label">Status</div>
+      <select class="form-select">
+        <option>Active</option>
+        <option>Maintenance</option>
+        <option>Inactive</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <div class="form-label">Daily Rate (TND)</div>
+      <input type="number" class="form-input" value="120">
+    </div>
+    <div class="form-group">
+      <div class="form-label">Branch</div>
+      <select class="form-select">
+        <option>Tunis Central</option>
+        <option>Airport</option>
+        <option>Sfax</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <div class="form-label">Current Mileage (km)</div>
+      <input type="number" class="form-input" value="45230">
+      <div class="form-hint">For maintenance tracking</div>
+    </div>
+    <div class="form-group">
+      <div class="form-label">Internal Notes</div>
+      <textarea class="form-input" style="min-height:80px;resize:none" placeholder="Add notes..."></textarea>
+    </div>
+  </div>
+  <div class="panel-footer">
+    <button class="secondary" onclick="closePanel()">Cancel</button>
+    <button class="primary">Save</button>
+  </div>
+</div>
+
+<script>
+function openPanel(){
+  document.getElementById('overlay').classList.add('open');
+  document.getElementById('panel').classList.add('open');
+}
+function closePanel(){
+  document.getElementById('overlay').classList.remove('open');
+  document.getElementById('panel').classList.remove('open');
+}
+function toggleTheme(){
+  document.body.classList.toggle('dark');
+}
+document.querySelectorAll('.thumb').forEach((t,i)=>{
+  t.addEventListener('click',()=>{
+    document.querySelectorAll('.thumb').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    document.querySelector('.image-label').textContent=(i+1)+' / 4';
+  });
+});
+document.getElementById('overlay').addEventListener('click',e=>{
+  if(e.target===document.getElementById('overlay'))closePanel();
+});
+</script>
+</body>
+</html>

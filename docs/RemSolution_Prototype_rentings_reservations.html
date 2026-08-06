@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RemSolution — Rentings & Reservations</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600&family=Inter:wght@400;500;600&family=Roboto+Mono:wght@400;500&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#ffffff; --bg-alt:#f8fafc; --line:#e2e8f0; --line-strong:#cbd5e1;
+  --text:#1e293b; --text-dim:#64748b; --text-soft:#475569;
+  --primary:#2563eb; --primary-dark:#1d4ed8; --primary-tint:#eff6ff;
+  --danger:#dc2626; --warn:#d97706; --ok:#059669;
+  --sp1:4px; --sp2:8px; --sp3:12px; --sp4:16px; --sp5:24px; --sp6:32px;
+}
+body.dark{
+  --bg:#0f172a; --bg-alt:#1e293b; --line:#334155; --line-strong:#475569;
+  --text:#e2e8f0; --text-dim:#94a3b8; --text-soft:#cbd5e1;
+  --primary-tint:#1e3a5f;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:14px}
+.icon{font-family:'Material Symbols Outlined';font-size:20px;line-height:1}
+.mono{font-family:'Roboto Mono',monospace;font-variant-numeric:tabular-nums}
+.container{display:flex;height:100vh;overflow:hidden}
+
+/* sidebar */
+.sidebar{width:216px;flex:none;display:flex;flex-direction:column;background:var(--bg-alt);border-right:1px solid var(--line);padding:var(--sp4) var(--sp3) var(--sp3)}
+.logo{display:flex;align-items:center;gap:9px;padding:0 var(--sp2) var(--sp3);margin-bottom:var(--sp3)}
+.logo-icon{display:grid;place-items:center;width:28px;height:28px;border-radius:8px;background:#0f172a;color:#fff;font-weight:500;font-size:14px}
+body.dark .logo-icon{background:var(--primary)}
+.logo-text{font-family:'Poppins',sans-serif;font-weight:500;font-size:15px}
+.nav{display:flex;flex-direction:column;gap:3px;margin-bottom:var(--sp3)}
+.nav-item{display:flex;align-items:center;gap:11px;height:44px;padding:0 var(--sp3);border-radius:10px;background:none;border:none;color:var(--text-soft);font:500 14.5px 'Inter';cursor:pointer;transition:.15s;text-align:left;width:100%}
+.nav-item:hover:not(.active){background:var(--line);color:var(--text)}
+.nav-item.active{background:var(--primary-tint);color:var(--primary)}
+.nav-footer{margin-top:auto;display:flex;flex-direction:column;gap:3px}
+.agency-logo{display:flex;align-items:center;gap:var(--sp2);padding:var(--sp3) var(--sp2);margin-top:var(--sp2);border-top:1px solid var(--line)}
+.agency-logo-img{width:34px;height:34px;flex:none;border-radius:8px;background:linear-gradient(135deg,var(--primary),var(--primary-dark));display:grid;place-items:center;color:#fff;font-weight:700;font-size:15px}
+.agency-name{font-size:12.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.agency-plan{font-size:10.5px;color:var(--text-dim)}
+.user-card{display:flex;align-items:center;gap:10px;height:46px;padding:0 var(--sp2);border-top:1px solid var(--line);cursor:pointer}
+.user-avatar{display:grid;place-items:center;width:28px;height:28px;flex:none;border-radius:999px;background:#dbeafe;color:#1e40af;font-size:11px;font-weight:600}
+body.dark .user-avatar{background:var(--primary-tint);color:#93c5fd}
+.user-name{font-size:13.5px;font-weight:500}
+.user-role{font-size:10.5px;color:var(--text-dim)}
+
+/* main */
+.main{flex:1;display:flex;flex-direction:column;min-width:0}
+.header{display:flex;align-items:center;justify-content:space-between;padding:var(--sp4) var(--sp5);border-bottom:1px solid var(--line);flex:none;gap:var(--sp5)}
+.header-left{display:flex;align-items:center;gap:var(--sp3)}
+.header-title{font-size:15px;font-weight:600}
+.header-count{font-family:'Roboto Mono',monospace;font-size:12px;color:var(--text-dim);margin-left:var(--sp2)}
+.header-right{display:flex;gap:var(--sp3)}
+.btn-icon{width:36px;height:36px;border-radius:8px;background:none;border:none;color:var(--text-soft);cursor:pointer;display:grid;place-items:center;transition:.15s}
+.btn-icon:hover{background:var(--bg-alt)}
+
+.scroll{flex:1;overflow-y:auto}
+.content{padding:var(--sp6)}
+
+/* tabs */
+.tabs{display:flex;gap:0;border-bottom:1px solid var(--line);margin-bottom:var(--sp5)}
+.tab{padding:var(--sp3) var(--sp4);border-bottom:2px solid transparent;background:none;border:none;color:var(--text-soft);font:500 13.5px 'Inter';cursor:pointer;transition:.15s}
+.tab:hover{color:var(--text)}
+.tab.active{color:var(--primary);border-bottom-color:var(--primary)}
+
+/* list */
+.list-item{display:flex;align-items:center;gap:var(--sp4);padding:var(--sp4);border:1px solid var(--line);border-left:4px solid transparent;border-radius:10px;background:var(--bg);margin-bottom:var(--sp3);cursor:pointer;transition:.15s}
+.list-item:hover{border-color:var(--line-strong);background:var(--bg-alt)}
+.list-item.in-progress{border-left-color:var(--ok)}
+.list-item.pending{border-left-color:var(--warn)}
+.list-item.done{border-left-color:var(--text-dim)}
+
+.item-left{flex:1}
+.item-client{font-weight:600;font-size:13.5px;color:var(--text)}
+.item-sub{font-size:11px;color:var(--text-dim);margin-top:2px}
+.item-mid{text-align:center;min-width:140px}
+.item-date{font-size:11px;color:var(--text-dim)}
+.item-date-val{font-family:'Roboto Mono',monospace;font-size:12px;color:var(--text);font-weight:500;margin-top:2px}
+.item-right{text-align:right;min-width:140px}
+.item-amt{font-family:'Roboto Mono',monospace;font-size:14px;font-weight:600;color:var(--text)}
+.item-status{display:flex;align-items:center;gap:5px;font-size:10.5px;font-weight:600;padding:4px 8px;border-radius:6px;margin-top:3px;width:fit-content;margin-left:auto}
+.item-status.in-progress{background:#ecfdf5;color:var(--ok)}
+.item-status.pending{background:#fef3c7;color:var(--warn)}
+.item-status.done{background:var(--bg-alt);color:var(--text-dim)}
+.item-status.confirmed{background:var(--primary-tint);color:var(--primary)}
+
+/* detail panel */
+.detail-overlay{display:none;position:fixed;inset:0;background:rgba(15,23,42,.4);z-index:99}
+.detail-overlay.open{display:block}
+.detail-panel{position:fixed;top:0;right:-500px;width:500px;height:100vh;background:var(--bg);border-left:1px solid var(--line);transition:.3s;overflow-y:auto;z-index:100;box-shadow:-4px 12px 40px rgba(15,23,42,.15)}
+.detail-panel.open{right:0}
+
+.detail-head{padding:var(--sp5);border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:flex-start;flex:none}
+.detail-title{font-weight:600;font-size:15px}
+.detail-subtitle{font-size:11px;color:var(--text-dim);margin-top:3px}
+.detail-close{background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:24px}
+
+.detail-body{padding:var(--sp5)}
+.section{margin-bottom:var(--sp5)}
+.section-title{font-size:12px;font-weight:600;text-transform:uppercase;color:var(--text-dim);margin-bottom:var(--sp3);letter-spacing:.01em}
+
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:var(--sp4);margin-bottom:var(--sp4)}
+.info-item{display:flex;flex-direction:column;gap:3px}
+.info-label{font-size:10px;font-weight:600;color:var(--text-dim);text-transform:uppercase}
+.info-value{font-size:13px;font-weight:600;color:var(--text)}
+.info-value.mono{font-family:'Roboto Mono',monospace;font-size:12px}
+
+.state-machine{display:flex;gap:2px;margin:var(--sp3) 0}
+.state-dot{width:24px;height:24px;border-radius:999px;background:var(--line);display:grid;place-items:center;color:var(--text-soft);font-size:12px;font-weight:600}
+.state-dot.done{background:#ecfdf5;color:var(--ok)}
+.state-dot.current{background:var(--primary);color:#fff;box-shadow:0 0 0 3px var(--primary-tint)}
+.state-bar{flex:1;height:2px;background:var(--line);margin:11px 0}
+.state-bar.done{background:#ecfdf5}
+
+.doc-item{display:flex;align-items:center;gap:var(--sp3);padding:var(--sp3);border:1px solid var(--line);border-radius:8px;background:var(--bg-alt);margin-bottom:var(--sp2)}
+.doc-icon{width:36px;height:36px;border-radius:6px;background:var(--primary-tint);display:grid;place-items:center;color:var(--primary);font-size:18px;flex:none}
+.doc-text{flex:1;min-width:0}
+.doc-name{font-size:12px;font-weight:600;color:var(--text)}
+.doc-date{font-size:10px;color:var(--text-dim);margin-top:1px}
+
+.extra-item{display:flex;justify-content:space-between;align-items:center;padding:var(--sp3) 0;border-bottom:1px solid var(--line)}
+.extra-item:last-child{border-bottom:none}
+.extra-name{font-size:12px;font-weight:600;color:var(--text)}
+.extra-price{font-family:'Roboto Mono',monospace;font-size:12px;font-weight:600;color:var(--primary)}
+
+.condition-box{background:var(--bg-alt);padding:var(--sp3);border-radius:8px;margin:var(--sp3) 0;font-size:12px;line-height:1.6;color:var(--text-dim)}
+
+.timeline{display:flex;flex-direction:column;gap:var(--sp3)}
+.timeline-item{display:flex;gap:var(--sp3)}
+.timeline-dot{width:12px;height:12px;border-radius:999px;background:var(--primary);margin-top:2px;flex:none}
+.timeline-content{flex:1}
+.timeline-time{font-family:'Roboto Mono',monospace;font-size:10px;color:var(--text-dim)}
+.timeline-text{font-size:12px;color:var(--text);margin-top:2px}
+
+.action-buttons{display:flex;flex-direction:column;gap:var(--sp2);padding:var(--sp5);border-top:1px solid var(--line);flex:none}
+.btn{width:100%;height:40px;border:none;border-radius:8px;font:500 13px 'Inter';cursor:pointer;display:flex;align-items:center;justify-content:center;gap:var(--sp2)}
+.btn.primary{background:var(--primary);color:#fff}
+.btn.primary:hover{background:var(--primary-dark)}
+.btn.secondary{background:var(--bg-alt);color:var(--text);border:1px solid var(--line-strong)}
+.btn.secondary:hover{background:var(--line)}
+
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--line-strong);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--text-dim)}
+</style>
+</head>
+<body>
+<div class="container">
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="logo">
+      <div class="logo-icon">RS</div>
+      <div class="logo-text">RemSolution</div>
+    </div>
+    <div class="nav">
+      <button class="nav-item">
+        <span class="icon">today</span> Today
+      </button>
+      <button class="nav-item">
+        <span class="icon">directions_car</span> Cars
+      </button>
+      <button class="nav-item active">
+        <span class="icon">event_available</span> Bookings
+      </button>
+      <button class="nav-item">
+        <span class="icon">groups</span> Clients
+      </button>
+      <button class="nav-item">
+        <span class="icon">payments</span> Money
+      </button>
+    </div>
+    <div class="nav-footer">
+      <div class="agency-logo">
+        <div class="agency-logo-img">BR</div>
+        <div>
+          <div class="agency-name">Best Rent</div>
+          <div class="agency-plan">Pro · 24 cars</div>
+        </div>
+      </div>
+      <div class="user-card">
+        <div class="user-avatar">AH</div>
+        <div>
+          <div class="user-name">Asma H.</div>
+          <div class="user-role">Agency Admin</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="header">
+      <div class="header-left">
+        <div class="header-title" id="page-title">Rentings</div>
+        <div class="header-count" id="page-count">12 active</div>
+      </div>
+      <div class="header-right">
+        <button class="btn-icon">🔔</button>
+        <button class="btn-icon" onclick="toggleTheme()">🌙</button>
+      </div>
+    </div>
+
+    <div class="scroll">
+      <div class="content">
+        <div class="tabs">
+          <button class="tab active" onclick="switchTab('rentings')">Rentings</button>
+          <button class="tab" onclick="switchTab('reservations')">Reservations</button>
+        </div>
+
+        <!-- RENTINGS LIST -->
+        <div id="rentings-view">
+          <div id="rentings-list"></div>
+        </div>
+
+        <!-- RESERVATIONS LIST -->
+        <div id="reservations-view" style="display:none">
+          <div id="reservations-list"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DETAIL PANEL -->
+<div class="detail-overlay" id="overlay" onclick="closeDetail()"></div>
+<div class="detail-panel" id="panel">
+  <div class="detail-head">
+    <div>
+      <div class="detail-title" id="d-title">Renting #1042</div>
+      <div class="detail-subtitle" id="d-subtitle">Ahmed Ben Salem</div>
+    </div>
+    <button class="detail-close" onclick="closeDetail()">✕</button>
+  </div>
+
+  <div class="detail-body">
+    <!-- CLIENT -->
+    <div class="section">
+      <div class="section-title">Client</div>
+      <div class="info-grid">
+        <div class="info-item">
+          <div class="info-label">Name</div>
+          <div class="info-value" id="d-client">Ahmed Ben Salem</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">Email</div>
+          <div class="info-value" id="d-email" style="font-size:11px">ahmed.ben@example.com</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">Phone</div>
+          <div class="info-value" id="d-phone">+216 95 123 456</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">Documents</div>
+          <div class="info-value">✓ Valid</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VEHICLE & DATES -->
+    <div class="section">
+      <div class="section-title">Vehicle & Dates</div>
+      <div class="info-grid">
+        <div class="info-item">
+          <div class="info-label">Vehicle</div>
+          <div class="info-value" id="d-vehicle">Toyota Camry</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">Plate</div>
+          <div class="info-value mono" id="d-plate">TN-9801</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">Pickup</div>
+          <div class="info-value mono" id="d-pickup">Aug 9, 14:00</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">Return</div>
+          <div class="info-value mono" id="d-return">Aug 12, 14:00</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STATE -->
+    <div class="section" id="state-section">
+      <div class="section-title">Status</div>
+      <div class="state-machine">
+        <div class="state-dot done">✓</div>
+        <div class="state-bar done"></div>
+        <div class="state-dot current">2</div>
+        <div class="state-bar"></div>
+        <div class="state-dot">3</div>
+      </div>
+      <div style="font-size:11px;color:var(--text-dim);margin-top:var(--sp3)">In Progress · Started Aug 9 at 14:32</div>
+    </div>
+
+    <!-- PRICING -->
+    <div class="section">
+      <div class="section-title">Pricing</div>
+      <div style="display:flex;justify-content:space-between;padding:var(--sp3) 0;border-bottom:1px solid var(--line)">
+        <span style="font-size:12px">3 days × 120 TND/day</span>
+        <span class="mono" style="font-weight:600">360 TND</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:var(--sp3) 0;border-bottom:1px solid var(--line)">
+        <span style="font-size:12px">GPS Navigator</span>
+        <span class="mono" style="font-weight:600;color:var(--primary)">+15 TND</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:var(--sp3) 0;font-weight:600;color:var(--primary)">
+        <span>Total</span>
+        <span class="mono">375 TND</span>
+      </div>
+    </div>
+
+    <!-- CONDITION -->
+    <div class="section" id="condition-section">
+      <div class="section-title">Pickup Condition</div>
+      <div class="condition-box">
+        <strong>Exterior:</strong> Minor scratch on rear bumper, noted. <br/>
+        <strong>Interior:</strong> Clean, no issues. <br/>
+        <strong>Odometer:</strong> 45,230 km
+      </div>
+    </div>
+
+    <!-- DOCUMENTS -->
+    <div class="section" id="docs-section">
+      <div class="section-title">Documents</div>
+      <div class="doc-item">
+        <div class="doc-icon">📄</div>
+        <div class="doc-text">
+          <div class="doc-name">Passport</div>
+          <div class="doc-date">Verified Aug 8</div>
+        </div>
+      </div>
+      <div class="doc-item">
+        <div class="doc-icon">🎫</div>
+        <div class="doc-text">
+          <div class="doc-name">Driving Licence</div>
+          <div class="doc-date">Verified Aug 8</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TIMELINE -->
+    <div class="section" id="timeline-section">
+      <div class="section-title">Timeline</div>
+      <div class="timeline">
+        <div class="timeline-item">
+          <div class="timeline-dot"></div>
+          <div class="timeline-content">
+            <div class="timeline-time">Aug 9 · 14:32</div>
+            <div class="timeline-text">Pickup completed</div>
+          </div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-dot"></div>
+          <div class="timeline-content">
+            <div class="timeline-time">Aug 8 · 16:45</div>
+            <div class="timeline-text">Reservation confirmed</div>
+          </div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-dot"></div>
+          <div class="timeline-content">
+            <div class="timeline-time">Aug 6 · 11:20</div>
+            <div class="timeline-text">Booking created via marketplace</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="action-buttons">
+    <button class="btn primary" id="primary-action">Complete Return</button>
+    <button class="btn secondary">View Contract</button>
+  </div>
+</div>
+
+<script>
+const RENTINGS = [
+  {id:1,client:'Ahmed Ben Salem',email:'ahmed.ben@example.com',phone:'+216 95 123 456',vehicle:'Toyota Camry',plate:'TN-9801',pickup:'Aug 9, 14:00',return:'Aug 12, 14:00',amount:375,status:'in-progress',state:'In Progress',stateNum:2,type:'renting',pickupCondition:'Minor scratch on rear bumper noted. Interior clean.',returnCondition:null,docs:[{name:'Passport',date:'Verified Aug 8'},{name:'Driving Licence',date:'Verified Aug 8'}],extras:[{name:'GPS Navigator',price:15}]},
+  {id:2,client:'Fatima Khoury',email:'fatima.kh@example.com',phone:'+216 91 456 789',vehicle:'Renault Megane',plate:'TN-5821',pickup:'Aug 13, 09:00',return:'Aug 15, 09:00',amount:240,status:'pending',state:'Pending Confirmation',stateNum:1,type:'renting',pickupCondition:null,returnCondition:null,docs:[{name:'Passport',date:'Verified Aug 10'},{name:'Driving Licence',date:'Verified Aug 10'}],extras:[]},
+  {id:3,client:'Mohamed Jaouadi',email:'m.jaouadi@example.com',phone:'+216 93 789 012',vehicle:'Peugeot 308',plate:'TN-7194',pickup:'Aug 19, 10:00',return:'Aug 22, 10:00',amount:390,status:'done',state:'Completed',stateNum:3,type:'renting',pickupCondition:'No issues noted.',returnCondition:'Good condition, no damage.',docs:[{name:'Passport',date:'Verified Aug 18'},{name:'Driving Licence',date:'Verified Aug 18'}],extras:[{name:'Second Driver',price:20}]},
+];
+
+const RESERVATIONS = [
+  {id:101,client:'Layla Ben Salim',email:'layla.bs@example.com',phone:'+216 96 234 567',vehicle:'Hyundai i20',plate:'TN-4521',from:'Aug 20',to:'Aug 23',amount:160,status:'pending',state:'Pending Confirmation',stateNum:1,type:'reservation',reason:null},
+  {id:102,client:'Karim Saidani',email:'karim.s@example.com',phone:'+216 92 567 890',vehicle:'Dacia Sandero',plate:'TN-1847',from:'Aug 25',to:'Aug 27',amount:105,status:'confirmed',state:'Confirmed - Payment Pending',stateNum:2,type:'reservation',reason:null},
+  {id:103,client:'Nadia Bouhamed',email:'nadia.b@example.com',phone:'+216 94 890 123',vehicle:'Toyota Yaris',plate:'TN-9233',from:'Aug 16',to:'Aug 17',amount:76,status:'done',state:'Converted to Renting',stateNum:3,type:'reservation',reason:null},
+];
+
+const $ = id => document.getElementById(id);
+const $$ = s => document.querySelectorAll(s);
+
+function renderRentings(){
+  $('rentings-list').innerHTML = RENTINGS.map(r => `
+    <div class="list-item ${r.status}" onclick="openDetail('renting', ${r.id})">
+      <div class="item-left">
+        <div class="item-client">${r.client}</div>
+        <div class="item-sub">${r.vehicle} · ${r.plate}</div>
+      </div>
+      <div class="item-mid">
+        <div class="item-date">Duration</div>
+        <div class="item-date-val">${r.pickup.split(',')[0]} - ${r.return.split(',')[0]}</div>
+      </div>
+      <div class="item-right">
+        <div class="item-amt">${r.amount} TND</div>
+        <div class="item-status ${r.status}"><span class="icon" style="font-size:12px">${r.status==='in-progress'?'check_circle':r.status==='pending'?'pending_actions':'done'}</span> ${r.state}</div>
+      </div>
+    </div>
+  `).join('');
+  $('page-title').textContent = 'Rentings';
+  $('page-count').textContent = RENTINGS.length + ' active';
+}
+
+function renderReservations(){
+  $('reservations-list').innerHTML = RESERVATIONS.map(r => `
+    <div class="list-item ${r.status}" onclick="openDetail('reservation', ${r.id})">
+      <div class="item-left">
+        <div class="item-client">${r.client}</div>
+        <div class="item-sub">${r.vehicle} · ${r.plate}</div>
+      </div>
+      <div class="item-mid">
+        <div class="item-date">Dates</div>
+        <div class="item-date-val">${r.from} - ${r.to}</div>
+      </div>
+      <div class="item-right">
+        <div class="item-amt">${r.amount} TND</div>
+        <div class="item-status ${r.status}"><span class="icon" style="font-size:12px">${r.status==='pending'?'pending_actions':r.status==='confirmed'?'schedule':'done'}</span> ${r.state}</div>
+      </div>
+    </div>
+  `).join('');
+  $('page-title').textContent = 'Reservations';
+  $('page-count').textContent = RESERVATIONS.length + ' pending';
+}
+
+function switchTab(tab){
+  $$('.tab').forEach(t => t.classList.remove('active'));
+  event.target.classList.add('active');
+  $('rentings-view').style.display = tab === 'rentings' ? 'block' : 'none';
+  $('reservations-view').style.display = tab === 'reservations' ? 'block' : 'none';
+  if(tab === 'rentings') renderRentings();
+  else renderReservations();
+}
+
+function openDetail(type, id){
+  const data = type === 'renting' ? RENTINGS.find(r => r.id === id) : RESERVATIONS.find(r => r.id === id);
+  if(!data) return;
+
+  $('d-title').textContent = (type === 'renting' ? 'Renting' : 'Reservation') + ' #' + (1000 + data.id);
+  $('d-subtitle').textContent = data.client;
+  $('d-client').textContent = data.client;
+  $('d-email').textContent = data.email;
+  $('d-phone').textContent = data.phone;
+  $('d-vehicle').textContent = data.vehicle;
+  $('d-plate').textContent = data.plate;
+
+  if(type === 'renting'){
+    $('d-pickup').textContent = data.pickup;
+    $('d-return').textContent = data.return;
+    $('state-section').style.display = 'block';
+    $('condition-section').style.display = 'block';
+    $('docs-section').style.display = 'block';
+    $('timeline-section').style.display = 'block';
+    $('primary-action').textContent = data.status === 'done' ? 'View Invoice' : 'Complete Return';
+  } else {
+    $('d-pickup').textContent = data.from;
+    $('d-return').textContent = data.to;
+    $('state-section').style.display = 'block';
+    $('condition-section').style.display = 'none';
+    $('docs-section').style.display = 'none';
+    $('timeline-section').style.display = 'block';
+    $('primary-action').textContent = data.status === 'pending' ? 'Confirm & Request Payment' : data.status === 'confirmed' ? 'Convert to Renting' : 'View Renting';
+  }
+
+  $('overlay').classList.add('open');
+  $('panel').classList.add('open');
+}
+
+function closeDetail(){
+  $('overlay').classList.remove('open');
+  $('panel').classList.remove('open');
+}
+
+function toggleTheme(){
+  document.body.classList.toggle('dark');
+}
+
+document.getElementById('overlay').addEventListener('click', e => {
+  if(e.target === $('overlay')) closeDetail();
+});
+
+renderRentings();
+</script>
+</body>
+</html>

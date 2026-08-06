@@ -1,0 +1,165 @@
+/* These stylesheets were written border-box (the app has no global reset).
+   Emulated encapsulation scopes this to this component's own elements, so it
+   changes nothing outside it. */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* One conversation in a dialog. The bubbles are the chat screen's, at the size a
+   460px dialog can carry. */
+
+:host {
+  display: flex;
+  flex-direction: column;
+  max-height: 78vh;
+  min-height: 0;
+}
+
+.ct-head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  flex: none;
+  padding: var(--sp-4);
+  border-bottom: 1px solid var(--line);
+}
+
+.ct-avatar {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  flex: none;
+  border-radius: var(--r-pill);
+  background: var(--brand-100);
+  color: var(--brand-800);
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+:host-context([data-theme='dark']) .ct-avatar {
+  color: var(--info-ink);
+}
+
+.ct-who {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.ct-who h3 {
+  margin: 0;
+  font-size: 14.5px;
+  font-weight: 600;
+}
+
+.ct-who p {
+  margin: 0;
+  font-size: var(--fs-micro);
+  color: var(--muted);
+}
+
+.ct-close {
+  flex: none;
+}
+
+.ct-thread {
+  flex: 1 1 auto;
+  min-height: 120px;
+  overflow-y: auto;
+  padding: var(--sp-4);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ct-empty {
+  margin: auto;
+  color: var(--muted);
+  font-size: var(--fs-sm);
+}
+
+.ct-msg {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  max-width: 82%;
+}
+
+.ct-msg.mine {
+  align-self: flex-end;
+  align-items: flex-end;
+}
+
+.ct-bubble {
+  padding: 9px 12px;
+  border-radius: 13px;
+  border-end-start-radius: var(--r-xs);
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  font-size: var(--fs-sm);
+  line-height: 1.45;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.ct-msg.mine .ct-bubble {
+  background: var(--brand-500);
+  border-color: var(--brand-500);
+  color: var(--on-accent);
+  border-end-start-radius: 13px;
+  border-end-end-radius: var(--r-xs);
+}
+
+.ct-when {
+  margin-top: 3px;
+  font-size: 10px;
+  color: var(--muted);
+}
+
+.ct-foot {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex: none;
+  padding: var(--sp-3) var(--sp-4);
+  border-top: 1px solid var(--line);
+  background: var(--surface-2);
+}
+
+.ct-foot input {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: var(--h-control-sm);
+  padding: 0 11px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r);
+  background: var(--surface);
+  color: var(--ink);
+  font: var(--fw-normal) var(--fs-sm) var(--font-body);
+}
+
+.ct-foot input:focus {
+  outline: none;
+  border-color: var(--brand-500);
+}
+
+.ct-closed {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex: none;
+  margin: 0;
+  padding: var(--sp-3) var(--sp-4);
+  border-top: 1px solid var(--line);
+  background: var(--surface-2);
+  color: var(--muted);
+  font-size: var(--fs-label);
+}
+
+.ct-closed .mat-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+}

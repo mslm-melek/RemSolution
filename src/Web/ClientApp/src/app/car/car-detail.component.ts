@@ -1,9 +1,10 @@
 import { Component, OnInit, inject } from '@angular/core';
+import { Directionality } from '@angular/cdk/bidi';
 import { MatDialog } from '@angular/material/dialog';
 import { PageEvent } from '@angular/material/paginator';
 import { ActivatedRoute } from '@angular/router';
 import {
-  CarsClient, CarDto, CarImageDto, FuelType,
+  CarsClient, CarDto, CarImageDto, CarOverviewDto, CarBookingDto, FuelType,
   RentingsClient, RentingDto, RentingState
 } from '../web-api-client';
 import {
@@ -11,10 +12,12 @@ import {
 } from '../shared/car-availability';
 import { AuthService } from '../shared/auth.service';
 import { ReturnDialogComponent } from '../shared/return-dialog.component';
+import { CarQuickEditComponent } from './car-quick-edit.component';
 
-// One car's page: whether it can be hired out right now, who has it if not, and
-// everywhere it has been. The form at /car/:id/edit changes the vehicle's own
-// facts (and its photos); this page is for reading them and acting on them.
+// One car's page: what the vehicle is, how hard it has been working, who has it
+// booked, what it has cost, and everywhere it has been. The form at
+// /car/:id/edit owns the whole record (photos included); this page reads it, acts
+// on it, and corrects the four fields that go stale between hires.
 @Component({
   selector: 'app-car-detail',
   templateUrl: './car-detail.component.html',
@@ -22,9 +25,20 @@ import { ReturnDialogComponent } from '../shared/return-dialog.component';
 })
 export class CarDetailComponent implements OnInit {
   private readonly dialog = inject(MatDialog);
+  // The quick-edit panel is pinned to the edge the page ends on, which is the
+  // other edge in Arabic. A dialog is positioned in absolute terms (the CDK
+  // overlay knows nothing about the page's direction), so the side is chosen here
+  // rather than left to a logical property in the stylesheet.
+  private readonly direction = inject(Directionality);
 
   carId!: number;
   car?: CarDto;
+
+  // The figures and compact lists around the car — utilization, what it billed,
+  // how it was rated, who has it next, what it has cost lately. One call (see
+  // GetCarOverviewQuery): read separately, the tiles and the lists under them
+  // would each describe a different moment.
+  overview?: CarOverviewDto;
 
   // The car's gallery (CarImage), read from its own endpoint: the DTO carries one
   // picture for a list row, this page shows the lot. Managing them — adding,
@@ -41,6 +55,7 @@ export class CarDetailComponent implements OnInit {
   canSeeRentings = false;
   canRent = false;
   canReturn = false;
+  canEdit = false;
   // A car's money is what has been spent on it: the finance screen's payable tab
   // filters by car, and either module alone can answer it (see CreditComponent).
   canSeeExpenses = false;
@@ -69,12 +84,14 @@ export class CarDetailComponent implements OnInit {
   ngOnInit() {
     this.carId = +this.route.snapshot.paramMap.get('id')!;
     this.loadCar();
+    this.loadOverview();
     this.loadImages();
 
     this.auth.currentUser$.subscribe(user => {
       this.canSeeRentings = AuthService.canAccessModule(user, 'Rentings', 'Renting.Read');
       this.canRent = AuthService.canAccessModule(user, 'Rentings', 'Renting.Create');
       this.canReturn = AuthService.canAccessModule(user, 'Rentings', 'Renting.Update');
+      this.canEdit = AuthService.canAccessModule(user, 'Cars', 'Car.Update');
       this.canSeeExpenses = AuthService.canAccessModule(user, 'Expenses', 'Expense.Read')
         || AuthService.canAccessModule(user, 'Credits', 'Credit.Read');
       this.canSeeStatistics = AuthService.canAccessModule(user, 'Dashboard', 'Dashboard.View');
@@ -88,6 +105,32 @@ export class CarDetailComponent implements OnInit {
       next: car => this.car = car,
       error: err => console.error(err)
     });
+  }
+
+  // The overview's own sections are gated server-side, so this is not guarded by
+  // the permission flags above: whatever the caller may not see comes back null
+  // and the template draws nothing for it.
+  private loadOverview() {
+    this.cars.getCarOverview(this.carId).subscribe({
+      next: overview => this.overview = overview,
+      error: err => console.error(err)
+    });
+  }
+
+  // Everything a write on this car (a return, a quick edit) can have moved.
+  private reload() {
+    this.loadCar();
+    this.loadOverview();
+    if (this.canSeeRentings) this.loadRentings();
+  }
+
+  /**
+   * What the car is called: make and model together ("Renault Clio"). A fleet
+   * with a Clio and a 208 in it is not helped by a bare model name, and either
+   * half can be missing on a car whose model was never filled in.
+   */
+  get carName(): string {
+    return [this.car?.brandName, this.car?.modelName].filter(Boolean).join(' ');
   }
 
   // --- Photos -----------------------------------------------------------------
@@ -138,9 +181,33 @@ export class CarDetailComponent implements OnInit {
     if (index >= 0 && index < this.images.length) this.selectedImageIndex = index;
   }
 
+  // --- Overview ----------------------------------------------------------------
+
+  /**
+   * The third tile. A rating is the best thing to put there — it is the only
+   * figure on the page that comes from outside the agency — but reviews arrive
+   * from marketplace customers, so most cars have none. Those show how much work
+   * the car took on instead, which is the same window as the two tiles beside it.
+   */
+  get showRating(): boolean {
+    return (this.overview?.rating?.count ?? 0) > 0;
+  }
+
+  /** Active and upcoming hires, as the compact list shows them. */
+  get bookings(): CarBookingDto[] {
+    return this.overview?.bookings ?? [];
+  }
+
+  bookingStateClass(booking: CarBookingDto): string {
+    if (booking.isLate) return 'danger';
+    return this.stateClass(booking.state);
+  }
+
+  // --- History table -----------------------------------------------------------
+
   loadRentings() {
     this.rentingsClient.getRentings(
-      this.rentingsPage, this.rentingsPageSize, this.carId, null, null,
+      this.rentingsPage, this.rentingsPageSize, null, this.carId, null, null,
       null, null, undefined, false, 'period', true
     ).subscribe({
       next: result => {
@@ -179,26 +246,50 @@ export class CarDetailComponent implements OnInit {
     return this.canReturn && !!this.car?.currentRenting?.id;
   }
 
+  // --- Actions -----------------------------------------------------------------
+
   // Closes a hire on this car (the same dialog the cars list uses), then re-reads
-  // both panels: the car's status and the hire's price have moved. The history
-  // table passes its own row rather than relying on the car's current-hire field,
-  // so the button can never be a silent no-op.
-  returnCar(renting?: RentingDto) {
-    const rentingId = renting?.id ?? this.car?.currentRenting?.id;
+  // the page: the car's status, its figures and the hire's price have all moved.
+  // The history table passes its own row rather than relying on the car's
+  // current-hire field, so the button can never be a silent no-op.
+  returnCar(renting?: RentingDto | CarBookingDto) {
+    const rentingId = this.rentingIdOf(renting) ?? this.car?.currentRenting?.id;
     if (!rentingId) return;
 
     this.dialog.open(ReturnDialogComponent, {
       data: {
         rentingId,
-        carLabel: [this.car?.matricule, this.car?.modelName].filter(Boolean).join(' · '),
+        carLabel: [this.car?.matricule, this.carName].filter(Boolean).join(' · '),
         clientName: renting?.clientName ?? this.car?.currentRenting?.clientName
       },
       autoFocus: 'first-tabbable'
     }).afterClosed().subscribe(returned => {
-      if (returned) {
-        this.loadCar();
-        if (this.canSeeRentings) this.loadRentings();
-      }
+      if (returned) this.reload();
+    });
+  }
+
+  /**
+   * The four fields that go stale between hires — where the car is based, what it
+   * costs, whether it is on the road, what the odometer reads — without leaving
+   * the page for the whole record. Everything else is still the form's.
+   */
+  openQuickEdit() {
+    if (!this.canEdit || !this.car) return;
+
+    this.dialog.open(CarQuickEditComponent, {
+      data: { carId: this.carId },
+      // A slide-over rather than a centred box: the page behind it is the context
+      // for what is being changed, and a dialog over the middle of it hides
+      // exactly the panel the fields are read off.
+      panelClass: 'side-panel',
+      position: this.direction.value === 'rtl' ? { top: '0', left: '0' } : { top: '0', right: '0' },
+      height: '100vh',
+      width: '380px',
+      maxWidth: '100vw',
+      autoFocus: 'first-tabbable'
+    }).afterClosed().subscribe(saved => {
+      // The rate and the odometer feed the figures, not just the spec box.
+      if (saved) this.reload();
     });
   }
 
@@ -226,11 +317,24 @@ export class CarDetailComponent implements OnInit {
     return this.canReturn && renting.rentingState === RentingState.InProgress && !!renting.id;
   }
 
+  /** The return action reaches it from a history row and from a booking row alike. */
+  canTakeBackBooking(booking: CarBookingDto): boolean {
+    return this.canReturn && booking.state === RentingState.InProgress && !!booking.rentingId;
+  }
+
   // Distance covered on a finished hire — the pair of readings is what the
   // odometer columns are for.
   mileageDone(renting: RentingDto): number | null {
     if (renting.startMileage === undefined || renting.startMileage === null) return null;
     if (renting.endMileage === undefined || renting.endMileage === null) return null;
     return renting.endMileage - renting.startMileage;
+  }
+
+  // A booking row names the hire `rentingId`; a history row IS the hire. Both
+  // reach the same return dialog, so the two spellings are resolved here rather
+  // than at each call site.
+  private rentingIdOf(renting?: RentingDto | CarBookingDto): number | undefined {
+    if (!renting) return undefined;
+    return (renting as CarBookingDto).rentingId ?? (renting as RentingDto).id;
   }
 }

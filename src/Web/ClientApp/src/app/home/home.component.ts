@@ -1,31 +1,55 @@
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
 import { Observable, Subscription, of, timer } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { TranslocoService } from '@jsverse/transloco';
 import { AuthService } from '../shared/auth.service';
+import { BranchScopeService } from '../shared/branch-scope.service';
+import { BookingActionOutcome, BookingActionsService } from '../shared/booking-actions.service';
 import { ImpersonationService } from '../shared/impersonation.service';
-import { extractValidationErrors } from '../shared/form-utils';
+import { extractValidationErrors, toUtcDateInput } from '../shared/form-utils';
 import {
   HomeWidgetMeta, MAX_HOME_WIDGETS, availableHomeWidgets, countTiles, resolveHomeWidgets
 } from '../shared/home-widgets';
-import { AgendaCounts } from './home-agenda.component';
+import { HomeAgendaComponent } from './home-agenda.component';
 import {
   BrandsClient, CarsClient, ChatClient, ClientsClient, CreditsClient,
-  CurrentUserDto, DocumentTemplatesClient, ExpenseTypesClient, ExpensesClient,
-  ExtraServiceTypesClient, MarketplaceCarDto, MarketplaceClient, ModelCarsClient,
-  RentingState, RentingsClient,
+  CurrentUserDto, DashboardClient, DocumentTemplatesClient, ExpenseDueBasis,
+  ExpenseTypesClient, ExpensesClient, ExtraServiceTypesClient, MarketplaceCarDto,
+  MarketplaceClient, ModelCarsClient, RentingState, RentingsClient, ReservationDto,
+  TodayDto, TodayExpenseCarDto, TodayExpenseGroupDto, TodayRequestDto,
   UpdateMyHomeWidgetsCommand, UsersClient
 } from '../web-api-client';
-
-// Tiles whose figure comes from the work queues rather than from a query of their
-// own (see onAgendaCounts): both count the holds awaiting the agency.
-const AGENDA_OWNED_COUNTS = ['Reservations'];
 
 // How long each car stays on screen in the home-page slideshow.
 const SLIDE_INTERVAL_MS = 6_000;
 // Slides in the shop window. More than this and nobody reaches the end.
 const SHOWCASE_SIZE = 8;
 
+// How often the "updated N minutes ago" line is redrawn. The figures on this
+// screen go stale the moment a colleague hands a car over, and a page that
+// quietly lies for an hour is worse than one that admits its age.
+const STALE_TICK_MS = 60_000;
+// Past this the line turns amber: long enough that somebody else has probably
+// acted, short enough that a busy morning is not permanently orange.
+const STALE_WARN_MINUTES = 5;
+
+const MS_PER_HOUR = 3_600_000;
+const MS_PER_DAY = 24 * MS_PER_HOUR;
+
+/**
+ * The landing screen.
+ *
+ * Four different screens live here, because "home" means four different things:
+ * a shop window for a visitor, a browse-oriented start for a customer, the
+ * console for the platform administrator, and — the one this file is mostly
+ * about — TODAY for an agency's desk.
+ *
+ * The desk's version answers three questions in order: what does today ask for,
+ * what is waiting on somebody, and what is the fleet doing. All of it comes from
+ * ONE call (see GetTodayQuery), so nothing on the screen disagrees with anything
+ * else on it, and every section the caller's modules do not cover is absent from
+ * the answer rather than rendered empty.
+ */
 @Component({
   selector: 'app-home',
   templateUrl: './home.component.html',
@@ -33,42 +57,69 @@ const SHOWCASE_SIZE = 8;
 })
 export class HomeComponent implements OnInit, OnDestroy {
   private readonly transloco = inject(TranslocoService);
+  private readonly branchScope = inject(BranchScopeService);
+  private readonly actions = inject(BookingActionsService);
+
+  // The agenda reloads itself after an action; so does the rest of the screen.
+  @ViewChild(HomeAgendaComponent) agenda?: HomeAgendaComponent;
 
   isAuthenticated: boolean | null = null;
   isPlatformAdmin = false;
   isCustomer = false;
   displayName: string | null | undefined;
 
-  // Shop-window slideshow, shown to visitors and customers (staff get their
-  // pinned tiles instead). Cars come from the public marketplace, so an anonymous
-  // visitor can see them before signing in.
+  // Shop-window slideshow, shown to visitors and customers (staff get their day
+  // instead). Cars come from the public marketplace, so an anonymous visitor can
+  // see them before signing in.
   showcase: MarketplaceCarDto[] = [];
   slide = 0;
   private autoplay?: Subscription;
   private showcaseRequested = false;
 
-  // --- Agency home: the widgets the user pinned -----------------------------
+  // --- Today ----------------------------------------------------------------
 
-  // Everything this user could pin, and what they have pinned, in their order.
+  today?: TodayDto;
+  todayLoading = false;
+  /** Whole minutes since the figures on screen were read. */
+  staleMinutes = 0;
+
+  branchId: number | null = null;
+
+  /** Which recurring costs are showing their cars, by expense-type id. */
+  private openExpenseGroups = new Set<number>();
+  /** Whether the pending-requests card is showing its rows. */
+  requestsOpen = false;
+
+  /** An action's refusal, shown once above the cards. Clears itself. */
+  message = '';
+
+  private ticker?: Subscription;
+  private branchSubscription?: Subscription;
+  private loadedAt = Date.now();
+
+  // --- Agency home: the shortcuts the user pinned ----------------------------
+
   availableWidgets: HomeWidgetMeta[] = [];
   pinnedWidgets: HomeWidgetMeta[] = [];
   // Counts, by widget key: undefined while loading, so a tile shows "—" rather
   // than a zero it has not confirmed.
   counts: Record<string, number | undefined> = {};
 
-  // Open while the user is choosing their tiles. `draft` is the selection being
-  // edited — the tiles on screen only change once it is saved.
+  // Open while the user is choosing their shortcuts. `draft` is the selection
+  // being edited — the tiles on screen only change once it is saved.
   customizing = false;
   draft: string[] = [];
   saving = false;
   saveError = '';
 
   readonly maxWidgets = MAX_HOME_WIDGETS;
+  readonly ExpenseDueBasis = ExpenseDueBasis;
 
   constructor(
     private auth: AuthService,
     private impersonation: ImpersonationService,
     private usersClient: UsersClient,
+    private dashboardClient: DashboardClient,
     private carsClient: CarsClient,
     private clientsClient: ClientsClient,
     private rentingsClient: RentingsClient,
@@ -87,14 +138,14 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.auth.currentUser$.subscribe(user => {
       this.isAuthenticated = user.isAuthenticated ?? false;
       // A platform admin inside an agency workspace is looking at that agency, so
-      // the tenant-scoped tiles and quick actions are the right ones — the console
-      // dashboard belongs outside the workspace.
+      // the tenant-scoped screen is the right one — the console dashboard belongs
+      // outside the workspace.
       this.isPlatformAdmin = AuthService.isPlatformAdmin(user) && !this.impersonation.current;
       this.isCustomer = AuthService.isCustomer(user);
       this.displayName = user.fullName || user.userName;
 
-      // Customers get a browse-oriented home, not the staff one (and none of the
-      // staff count calls, which they aren't authorized for).
+      // Customers get a browse-oriented home, not the desk's one (and none of the
+      // staff calls, which they aren't authorized for).
       if (!this.isAuthenticated || this.isCustomer) {
         this.loadShowcase();
         return;
@@ -110,14 +161,18 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     this.autoplay?.unsubscribe();
+    this.ticker?.unsubscribe();
+    this.branchSubscription?.unsubscribe();
+    // The picker in the app bar is drawn from what this screen published, so it
+    // goes away with the screen (see BranchScopeService).
+    this.branchScope.clear();
   }
 
-  // --- Pinned tiles ---------------------------------------------------------
+  // --- The desk's day -------------------------------------------------------
 
   private setUpAgencyHome(user: CurrentUserDto) {
     // A platform admin working inside an agency workspace counts as that agency's
-    // administrator, exactly as the navigation's Configuration menu does: the
-    // reference-data screens accept either administrator role.
+    // administrator, exactly as the navigation's Configuration menu does.
     const isAgencyAdmin = user.role === 'AgencyAdministrator' || !!this.impersonation.current;
 
     this.availableWidgets = availableHomeWidgets(user, isAgencyAdmin);
@@ -126,33 +181,196 @@ export class HomeComponent implements OnInit, OnDestroy {
       this.pinnedWidgets = resolveHomeWidgets(stored, this.availableWidgets);
       this.loadCounts();
     });
+
+    // currentUser$ can emit more than once; the day is subscribed to once.
+    if (this.branchSubscription) return;
+
+    // Loads on subscribe, and again whenever the app bar's picker moves.
+    this.branchSubscription = this.branchScope.branchId$.subscribe(branchId => {
+      this.branchId = branchId;
+      this.loadToday();
+    });
+
+    this.ticker = timer(STALE_TICK_MS, STALE_TICK_MS).subscribe(() => {
+      this.staleMinutes = Math.floor((Date.now() - this.loadedAt) / STALE_TICK_MS);
+    });
   }
+
+  /** Everything on the screen again — after an action, or on the user's word. */
+  refresh() {
+    this.loadToday();
+    this.agenda?.reload();
+  }
+
+  private loadToday() {
+    this.todayLoading = true;
+
+    // The browser's calendar day, sent as UTC midnight: the API's dates are
+    // wall-clock values stamped UTC, so this is what makes a car booked out on
+    // the 5th belong to the 5th whatever the offset (see form-utils).
+    const now = new Date();
+    const day = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
+
+    this.dashboardClient.getToday(day, this.branchId).subscribe({
+      next: result => {
+        this.todayLoading = false;
+        this.today = result;
+        this.loadedAt = Date.now();
+        this.staleMinutes = 0;
+        // The app bar's picker is drawn from this — see BranchScopeService.
+        this.branchScope.publish(result.branches);
+        // The pending-requests figure is one of these, so a pinned tile counting
+        // the same thing takes it from here rather than asking again.
+        this.counts['Reservations'] = result.requests?.count;
+      },
+      // A landing page is not the place for a banner about the whole screen: the
+      // sections simply do not appear, and the refresh control is right there.
+      error: err => {
+        this.todayLoading = false;
+        console.error(err);
+      }
+    });
+  }
+
+  get isStale(): boolean {
+    return this.staleMinutes >= STALE_WARN_MINUTES;
+  }
+
+  /** Transloco key under `home.greeting.*`, from the local hour. */
+  get greetingKey(): string {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'home.greeting.morning';
+    if (hour < 18) return 'home.greeting.afternoon';
+    return 'home.greeting.evening';
+  }
+
+  /** The branch named under the greeting, when one is chosen. */
+  get branchName(): string | null {
+    return this.branchScope.nameOf(this.branchId);
+  }
+
+  // --- "Needs your answer" --------------------------------------------------
+
+  /** Whole hours the oldest unanswered request has been waiting. */
+  get requestsWaitingHours(): number | null {
+    const asked = this.today?.requests?.oldestAskedAt;
+    if (!asked) return null;
+
+    return Math.max(Math.floor((Date.now() - asked.getTime()) / MS_PER_HOUR), 0);
+  }
+
+  /** Nothing in either queue — said once rather than as two empty cards. */
+  get nothingToAnswer(): boolean {
+    const today = this.today;
+    if (!today) return false;
+
+    return !today.requests?.count && !today.payables?.count;
+  }
+
+  toggleRequests() {
+    this.requestsOpen = !this.requestsOpen;
+  }
+
+  confirmRequest(request: TodayRequestDto) {
+    this.act(this.actions.confirmReservation(new ReservationDto({ id: request.reservationId })));
+  }
+
+  rejectRequest(request: TodayRequestDto) {
+    this.act(this.actions.rejectReservation(new ReservationDto({ id: request.reservationId })));
+  }
+
+  private act(action: Observable<BookingActionOutcome>) {
+    action.subscribe(outcome => {
+      if (outcome.error) this.show(outcome.error);
+      if (outcome.changed) this.refresh();
+    });
+  }
+
+  private show(text: string) {
+    this.message = text;
+    setTimeout(() => this.message = '', 6000);
+  }
+
+  // --- Expenses due ---------------------------------------------------------
+
+  /** Cars owing something, across every recurring cost. */
+  get expensesDueCount(): number {
+    return (this.today?.expensesDue ?? []).reduce((sum, g) => sum + (g.cars?.length ?? 0), 0);
+  }
+
+  isExpenseGroupOpen(group: TodayExpenseGroupDto): boolean {
+    return this.openExpenseGroups.has(group.expenseTypeId!);
+  }
+
+  toggleExpenseGroup(group: TodayExpenseGroupDto) {
+    const id = group.expenseTypeId!;
+
+    if (this.openExpenseGroups.has(id)) {
+      this.openExpenseGroups.delete(id);
+    } else {
+      this.openExpenseGroups.add(id);
+    }
+  }
+
+  /** "every 10 000 km", "every 12 months", or both — the group's subtitle. */
+  ruleKey(group: TodayExpenseGroupDto): string {
+    if (group.afterMonth && group.afterKilometer) return 'home.due.ruleBoth';
+    return group.afterKilometer ? 'home.due.ruleDistance' : 'home.due.ruleMonths';
+  }
+
+  /**
+   * Transloco key for what one car owes. Four sentences, one per (clock,
+   * standing) pair — the same four the notification messages use, because a
+   * screen and an inbox that word the same fact differently is how people stop
+   * trusting both.
+   */
+  dueKey(car: TodayExpenseCarDto): string {
+    const distance = car.basis === ExpenseDueBasis.Distance;
+
+    if (car.isOverdue) return distance ? 'home.due.overKm' : 'home.due.overdueSince';
+    return distance ? 'home.due.inKm' : 'home.due.dueIn';
+  }
+
+  /** Booking it: the expense form, already pointed at the car and the cost. */
+  recordParams(group: TodayExpenseGroupDto, car: TodayExpenseCarDto) {
+    return { car: car.carId, type: group.expenseTypeId };
+  }
+
+  // --- Where the day's figures lead -----------------------------------------
+  // Every link carries the filter its figure was counted with, so the list opens
+  // showing exactly the rows the card counted (see shared/list-filters).
+
+  private get dayWindow(): { from: string; to: string } {
+    const day = this.today?.day ?? new Date();
+    return { from: toUtcDateInput(day), to: toUtcDateInput(new Date(day.getTime() + MS_PER_DAY)) };
+  }
+
+  get bookingsTodayParams() {
+    return { dateBasis: 'Starts', excludeCancelled: 'true', ...this.dayWindow };
+  }
+
+  get returnsTodayParams() {
+    return { state: 'InProgress', dateBasis: 'Ends', ...this.dayWindow };
+  }
+
+  /** Due back strictly before today — which is what "late" counts. */
+  get lateParams() {
+    return { state: 'InProgress', dateBasis: 'Ends', to: this.dayWindow.from };
+  }
+
+  readonly pendingParams = { status: 'PendingConfirmation' };
+  readonly payableParams = { tab: 'expenses', unpaid: 'true' };
+  readonly freeCarsParams = { status: 'Active', onRent: 'false' };
+
+  // --- Pinned shortcuts ------------------------------------------------------
 
   /** The count tiles, in the row. A panel widget is not one of them. */
   get pinnedTiles(): HomeWidgetMeta[] {
     return this.pinnedWidgets.filter(w => !w.panel);
   }
 
-  /** Whether a given panel widget — the calendar — is pinned. */
-  hasPanel(key: string): boolean {
-    return this.pinnedWidgets.some(w => w.panel && w.key === key);
-  }
-
-  /**
-   * A figure the work queues below the tiles already fetched. The "Requests to
-   * confirm" tile counts exactly what the first queue counts — the same query with
-   * the same filter — so it takes the number from there instead of asking twice
-   * (see AGENDA_OWNED_COUNTS).
-   */
-  onAgendaCounts(counts: AgendaCounts) {
-    if (counts.pendingReservations !== undefined) {
-      this.counts['Reservations'] = counts.pendingReservations;
-    }
-  }
-
   // Only the tiles on screen are counted, and each is counted once: revisiting
-  // the page after pinning something new fetches the new tile alone. Panels do
-  // their own loading, so they are not here.
+  // the page after pinning something new fetches the new tile alone.
   private loadCounts() {
     for (const widget of this.pinnedTiles) {
       if (widget.key in this.counts) continue;
@@ -160,10 +378,9 @@ export class HomeComponent implements OnInit, OnDestroy {
       // Reserve the slot before the call so a second pass cannot re-request it.
       this.counts[widget.key] = undefined;
 
-      // Left to the work queues, which are on the same screen and ask the same
-      // question. Should their call fail the tile keeps its "—", exactly as it
-      // would if its own had.
-      if (AGENDA_OWNED_COUNTS.includes(widget.key)) continue;
+      // Left to the day's own payload, which is on the same screen and asks the
+      // same question (see loadToday).
+      if (widget.key === 'Reservations') continue;
 
       this.countOf(widget.key).subscribe({
         next: value => this.counts[widget.key] = value,
@@ -175,9 +392,9 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   // Each tile counts what its label says. Where a list has an obvious "needs
-  // doing" subset (unconfirmed requests, running rentings, unpaid expenses), the
-  // tile counts that rather than the whole table — a total nobody acts on is
-  // decoration. Page size 1: only totalCount is wanted.
+  // doing" subset (running rentings, unpaid expenses), the tile counts that
+  // rather than the whole table — a total nobody acts on is decoration. Page
+  // size 1: only totalCount is wanted.
   //
   // Whatever is filtered here MUST match the tile's `queryParams` in
   // shared/home-widgets, or clicking the figure opens a list that disagrees
@@ -185,7 +402,8 @@ export class HomeComponent implements OnInit, OnDestroy {
   private countOf(key: string): Observable<number> {
     switch (key) {
       case 'Cars':
-        return this.carsClient.getCars(1, 1, null, null, null, null, null, null, null, null, false)
+        return this.carsClient
+          .getCars(1, 1, null, null, null, null, null, null, null, null, null, null, null, false)
           .pipe(map(r => r.totalCount ?? 0));
       case 'Clients':
         return this.clientsClient.getClients(1, 1, null, null, null, null, null, null, false)
@@ -193,11 +411,11 @@ export class HomeComponent implements OnInit, OnDestroy {
       case 'Rentings':
         return this.rentingsClient
           .getRentings(
-            1, 1, null, null, RentingState.InProgress, null, null, undefined, false, null, false)
+            1, 1, null, null, null, RentingState.InProgress,
+            null, null, undefined, false, null, false)
           .pipe(map(r => r.totalCount ?? 0));
-      // 'Reservations' is not here: the work queues on this same screen count the
-      // holds awaiting the agency, and the tile takes its figure from them (see
-      // onAgendaCounts / AGENDA_OWNED_COUNTS).
+      // 'Reservations' is not here: the day's payload already counted the holds
+      // awaiting the agency, and the tile takes its figure from there.
       case 'Expenses':
         return this.expensesClient
           .getExpenses(1, 1, null, null, null, null, true, null, false)
@@ -228,11 +446,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   // --- Customizing ----------------------------------------------------------
 
   startCustomizing() {
-    // Tiles first, panels after: the order buttons only reorder the row, so a
-    // panel sitting between two tiles would make "move up" look broken. Every
-    // path that adds to the draft keeps that arrangement.
-    const pinned = this.pinnedWidgets.map(w => w.key);
-    this.draft = [...pinned.filter(k => !this.isPanel(k)), ...pinned.filter(k => this.isPanel(k))];
+    this.draft = this.pinnedWidgets.map(w => w.key);
     this.saveError = '';
     this.customizing = true;
   }
@@ -246,7 +460,7 @@ export class HomeComponent implements OnInit, OnDestroy {
     return this.draft.includes(key);
   }
 
-  // The pinned list is what the panel shows in order; everything else is offered
+  // The pinned list is what the row shows in order; everything else is offered
   // below it. Newly checked tiles join the end, where the user can see them.
   toggleWidget(key: string) {
     if (this.isPinned(key)) {
@@ -254,24 +468,9 @@ export class HomeComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // The cap is on the tile row, so a panel is always addable (see home-widgets).
-    if (this.isPanel(key)) {
-      this.draft = [...this.draft, key];
-      return;
-    }
-
     if (this.isFull) return;
 
-    // A newly checked tile joins the end of the row — which is before the panels,
-    // not after them (see startCustomizing).
-    const firstPanel = this.draft.findIndex(k => this.isPanel(k));
-    this.draft = firstPanel < 0
-      ? [...this.draft, key]
-      : [...this.draft.slice(0, firstPanel), key, ...this.draft.slice(firstPanel)];
-  }
-
-  isPanel(key: string): boolean {
-    return this.availableWidgets.find(w => w.key === key)?.panel === true;
+    this.draft = [...this.draft, key];
   }
 
   get draftWidgets(): HomeWidgetMeta[] {
@@ -284,8 +483,6 @@ export class HomeComponent implements OnInit, OnDestroy {
     return this.availableWidgets.filter(w => !this.isPinned(w.key));
   }
 
-  // Tiles only, exactly as the server validates it: a full row still has room for
-  // the calendar underneath it.
   get isFull(): boolean {
     return countTiles(this.draft, this.availableWidgets) >= MAX_HOME_WIDGETS;
   }
@@ -299,15 +496,8 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.draft = next;
   }
 
-  /** The last tile of the row: whatever follows it in the draft is a panel. */
-  isLastTile(index: number): boolean {
-    return this.draft.slice(index + 1).every(k => this.isPanel(k));
-  }
-
   moveDown(index: number) {
-    // Never past a panel: the panels sit after the row and stay there.
-    if (this.isLastTile(index)) return;
-
+    if (index >= this.draft.length - 1) return;
     const next = [...this.draft];
     [next[index], next[index + 1]] = [next[index + 1], next[index]];
     this.draft = next;
@@ -332,7 +522,8 @@ export class HomeComponent implements OnInit, OnDestroy {
       },
       error: err => {
         this.saving = false;
-        this.saveError = extractValidationErrors(err) ?? this.transloco.translate('home.widgetsSaveFailed');
+        this.saveError =
+          extractValidationErrors(err) ?? this.transloco.translate('home.widgetsSaveFailed');
       }
     });
   }
@@ -375,5 +566,4 @@ export class HomeComponent implements OnInit, OnDestroy {
       error: err => console.error(err)
     });
   }
-
 }

@@ -1418,6 +1418,42 @@ th.num,
   letter-spacing: 0;
 }
 
+/* ----------------------------------------------------------- side panel ---- */
+
+/* A dialog opened as a slide-over: full height, flush against the edge the page
+   ends on, square where it meets the window. Used where the page BEHIND the
+   dialog is the context for what is being changed (see the car page's quick
+   edit) — a centred box would cover exactly the panel the fields are read off.
+ *
+ * It lives here rather than in the component because a dialog renders inside the
+ * CDK overlay, outside every component's style scope. The edge itself is chosen
+ * by the caller (MatDialogConfig.position), which is what makes it follow the
+ * reading direction; these rules only strip the box shape Material would give it.
+ */
+.mat-mdc-dialog-panel.side-panel {
+  max-height: 100vh;
+
+  .mat-mdc-dialog-container {
+    border-radius: 0;
+    box-shadow: var(--shadow-3);
+  }
+
+  /* The component draws its own head, body and footer bands, so the surface
+     Material wraps them in must not add its own inset on top. */
+  .mat-mdc-dialog-surface {
+    padding: 0;
+    border-radius: 0;
+    overflow: hidden;
+  }
+}
+
+/* Narrow screens have no room for a page beside it: the panel becomes the page. */
+@media (max-width: 599px) {
+  .mat-mdc-dialog-panel.side-panel {
+    width: 100vw !important;
+  }
+}
+
 /* ------------------------------------------------------------------ rtl ---- */
 
 /* `dir` is set on <html> before bootstrap (see main.ts) so Angular Material

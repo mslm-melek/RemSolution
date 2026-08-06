@@ -1,8 +1,11 @@
 <ng-container *transloco="let t">
 <!-- Nothing this user could ever be offered (no create permission anywhere, no
      module on) ⇒ no card at all, rather than an empty one. -->
-<section class="quick-actions" *ngIf="available.length">
-  <div class="qa-head">
+<!-- The picker always needs a surface to sit on, so `bare` only applies while the
+     strip is resting. -->
+<section class="quick-actions" [class.bare]="variant === 'bare' && !customizing"
+         *ngIf="available.length">
+  <div class="qa-head" *ngIf="variant === 'card'">
     <h2>{{ t('home.quickActions') }}</h2>
     <button type="button" mat-button color="primary"
             *ngIf="!customizing" (click)="startCustomizing()">
@@ -11,9 +14,27 @@
   </div>
 
   <div class="action-buttons" *ngIf="actions.length && !customizing">
-    <a mat-raised-button color="primary" *ngFor="let action of actions" [routerLink]="[action.link]">
-      <mat-icon>{{ action.icon }}</mat-icon> {{ t(action.labelKey) }}
-    </a>
+    <ng-container *ngFor="let action of actions; let first = first">
+      <!-- Bare puts one filled button at the head of the row — what the desk
+           does most — and outlines the rest. As a card they are all filled, as
+           they always were. -->
+      <a *ngIf="first || variant === 'card'" mat-raised-button color="primary"
+         [routerLink]="[action.link]">
+        <mat-icon>{{ action.icon }}</mat-icon> {{ t(action.labelKey) }}
+      </a>
+      <a *ngIf="!first && variant === 'bare'" mat-stroked-button [routerLink]="[action.link]">
+        <mat-icon>{{ action.icon }}</mat-icon> {{ t(action.labelKey) }}
+      </a>
+    </ng-container>
+
+    <!-- Bare has no heading to hang the control off, so it goes at the end of
+         the row where it does not compete with the actions themselves. -->
+    <button type="button" mat-icon-button class="qa-tune" *ngIf="variant === 'bare'"
+            (click)="startCustomizing()"
+            [matTooltip]="t('home.customizeActions')"
+            [attr.aria-label]="t('home.customizeActions')">
+      <mat-icon>tune</mat-icon>
+    </button>
   </div>
 
   <!-- The user cleared the strip: say so, rather than leaving a blank row. -->

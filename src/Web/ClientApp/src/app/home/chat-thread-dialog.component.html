@@ -1,0 +1,48 @@
+<ng-container *transloco="let t">
+  <div class="ct-head">
+    <span class="ct-avatar">{{ initials }}</span>
+    <span class="ct-who">
+      <h3>{{ thread.clientName || t('chat.noClient') }}</h3>
+      <p>{{ context }}</p>
+    </span>
+    <button type="button" mat-icon-button mat-dialog-close class="ct-close"
+            [attr.aria-label]="t('common.cancel')">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <div class="ct-thread" #scroller>
+    <p class="ct-empty" *ngIf="!loading && !messages.length">{{ t('chat.noMessagesYet') }}</p>
+
+    <div class="ct-msg" *ngFor="let message of messages"
+         [class.mine]="message.authorKind !== ChatAuthorKind.Client">
+      <span class="ct-bubble">{{ message.body }}</span>
+      <span class="ct-when">
+        {{ message.sentAt | date:'dd MMM HH:mm':'UTC' }}
+        <span *ngIf="message.senderName"> · {{ message.senderName }}</span>
+      </span>
+    </div>
+  </div>
+
+  <div class="error-banner" *ngIf="errorMessage">
+    <mat-icon>error_outline</mat-icon>
+    <span>{{ errorMessage }}</span>
+  </div>
+
+  <!-- A finished or cancelled hire keeps its history but is read-only, and so is
+       a reader without Chat.Send: say which, rather than showing a box that
+       would be refused. -->
+  <form class="ct-foot" *ngIf="canWrite" (ngSubmit)="send()">
+    <input [(ngModel)]="draft" name="body" [disabled]="sending"
+           [placeholder]="t('chat.yourMessage')" [attr.aria-label]="t('chat.yourMessage')" />
+    <button type="submit" mat-icon-button color="primary" [disabled]="sending || !draft.trim()"
+            [attr.aria-label]="t('chat.send')">
+      <mat-icon>send</mat-icon>
+    </button>
+  </form>
+
+  <p class="ct-closed" *ngIf="!canWrite">
+    <mat-icon>lock</mat-icon>
+    <span>{{ data.canSend ? t('chat.closedNote') : t('chat.readOnlyNote') }}</span>
+  </p>
+</ng-container>

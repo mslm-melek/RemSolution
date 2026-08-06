@@ -1796,12 +1796,14 @@ export class BrandsClient implements IBrandsClient {
 }
 
 export interface ICarsClient {
-    getCars(pageNumber: number | undefined, pageSize: number | undefined, modelId: number | null | undefined, color: string | null | undefined, fuelType: FuelType | null | undefined, status: CarStatus | null | undefined, onRent: boolean | null | undefined, addedFrom: Date | null | undefined, addedTo: Date | null | undefined, sortBy: string | null | undefined, sortDescending: boolean | undefined): Observable<PaginatedListOfCarDto>;
+    getCars(pageNumber: number | undefined, pageSize: number | undefined, search: string | null | undefined, modelId: number | null | undefined, color: string | null | undefined, fuelType: FuelType | null | undefined, status: CarStatus | null | undefined, branchId: number | null | undefined, brandId: number | null | undefined, onRent: boolean | null | undefined, addedFrom: Date | null | undefined, addedTo: Date | null | undefined, sortBy: string | null | undefined, sortDescending: boolean | undefined): Observable<PaginatedListOfCarDto>;
     createCar(command: CreateCarCommand): Observable<number>;
+    getCarFacets(search: string | null | undefined, modelId: number | null | undefined, color: string | null | undefined, fuelType: FuelType | null | undefined, status: CarStatus | null | undefined, branchId: number | null | undefined, brandId: number | null | undefined, onRent: boolean | null | undefined, addedFrom: Date | null | undefined, addedTo: Date | null | undefined): Observable<CarFacetsDto>;
     getCarById(id: number): Observable<CarDto>;
     updateCar(id: number, command: UpdateCarCommand): Observable<void>;
     deleteCar(id: number): Observable<void>;
     uploadCarPhoto(id: number, file: FileParameter | null | undefined): Observable<string>;
+    getCarOverview(id: number): Observable<CarOverviewDto>;
     getCarImages(id: number): Observable<CarImageDto[]>;
     uploadCarImage(id: number, file: FileParameter | null | undefined): Observable<CarImageDto>;
     setPrimaryCarImage(id: number, imageId: number): Observable<void>;
@@ -1822,7 +1824,7 @@ export class CarsClient implements ICarsClient {
         this.baseUrl = baseUrl ?? "";
     }
 
-    getCars(pageNumber: number | undefined, pageSize: number | undefined, modelId: number | null | undefined, color: string | null | undefined, fuelType: FuelType | null | undefined, status: CarStatus | null | undefined, onRent: boolean | null | undefined, addedFrom: Date | null | undefined, addedTo: Date | null | undefined, sortBy: string | null | undefined, sortDescending: boolean | undefined): Observable<PaginatedListOfCarDto> {
+    getCars(pageNumber: number | undefined, pageSize: number | undefined, search: string | null | undefined, modelId: number | null | undefined, color: string | null | undefined, fuelType: FuelType | null | undefined, status: CarStatus | null | undefined, branchId: number | null | undefined, brandId: number | null | undefined, onRent: boolean | null | undefined, addedFrom: Date | null | undefined, addedTo: Date | null | undefined, sortBy: string | null | undefined, sortDescending: boolean | undefined): Observable<PaginatedListOfCarDto> {
         let url_ = this.baseUrl + "/api/Cars?";
         if (pageNumber === null)
             throw new Error("The parameter 'pageNumber' cannot be null.");
@@ -1832,6 +1834,8 @@ export class CarsClient implements ICarsClient {
             throw new Error("The parameter 'pageSize' cannot be null.");
         else if (pageSize !== undefined)
             url_ += "PageSize=" + encodeURIComponent("" + pageSize) + "&";
+        if (search !== undefined && search !== null)
+            url_ += "Search=" + encodeURIComponent("" + search) + "&";
         if (modelId !== undefined && modelId !== null)
             url_ += "ModelId=" + encodeURIComponent("" + modelId) + "&";
         if (color !== undefined && color !== null)
@@ -1840,6 +1844,10 @@ export class CarsClient implements ICarsClient {
             url_ += "FuelType=" + encodeURIComponent("" + fuelType) + "&";
         if (status !== undefined && status !== null)
             url_ += "Status=" + encodeURIComponent("" + status) + "&";
+        if (branchId !== undefined && branchId !== null)
+            url_ += "BranchId=" + encodeURIComponent("" + branchId) + "&";
+        if (brandId !== undefined && brandId !== null)
+            url_ += "BrandId=" + encodeURIComponent("" + brandId) + "&";
         if (onRent !== undefined && onRent !== null)
             url_ += "OnRent=" + encodeURIComponent("" + onRent) + "&";
         if (addedFrom !== undefined && addedFrom !== null)
@@ -1942,6 +1950,74 @@ export class CarsClient implements ICarsClient {
                 result201 = resultData201 !== undefined ? resultData201 : <any>null;
     
             return _observableOf(result201);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getCarFacets(search: string | null | undefined, modelId: number | null | undefined, color: string | null | undefined, fuelType: FuelType | null | undefined, status: CarStatus | null | undefined, branchId: number | null | undefined, brandId: number | null | undefined, onRent: boolean | null | undefined, addedFrom: Date | null | undefined, addedTo: Date | null | undefined): Observable<CarFacetsDto> {
+        let url_ = this.baseUrl + "/api/Cars/facets?";
+        if (search !== undefined && search !== null)
+            url_ += "Search=" + encodeURIComponent("" + search) + "&";
+        if (modelId !== undefined && modelId !== null)
+            url_ += "ModelId=" + encodeURIComponent("" + modelId) + "&";
+        if (color !== undefined && color !== null)
+            url_ += "Color=" + encodeURIComponent("" + color) + "&";
+        if (fuelType !== undefined && fuelType !== null)
+            url_ += "FuelType=" + encodeURIComponent("" + fuelType) + "&";
+        if (status !== undefined && status !== null)
+            url_ += "Status=" + encodeURIComponent("" + status) + "&";
+        if (branchId !== undefined && branchId !== null)
+            url_ += "BranchId=" + encodeURIComponent("" + branchId) + "&";
+        if (brandId !== undefined && brandId !== null)
+            url_ += "BrandId=" + encodeURIComponent("" + brandId) + "&";
+        if (onRent !== undefined && onRent !== null)
+            url_ += "OnRent=" + encodeURIComponent("" + onRent) + "&";
+        if (addedFrom !== undefined && addedFrom !== null)
+            url_ += "AddedFrom=" + encodeURIComponent(addedFrom ? "" + addedFrom.toISOString() : "") + "&";
+        if (addedTo !== undefined && addedTo !== null)
+            url_ += "AddedTo=" + encodeURIComponent(addedTo ? "" + addedTo.toISOString() : "") + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetCarFacets(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetCarFacets(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<CarFacetsDto>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<CarFacetsDto>;
+        }));
+    }
+
+    protected processGetCarFacets(response: HttpResponseBase): Observable<CarFacetsDto> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = CarFacetsDto.fromJS(resultData200);
+            return _observableOf(result200);
             }));
         } else if (status !== 200 && status !== 204) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
@@ -2155,6 +2231,57 @@ export class CarsClient implements ICarsClient {
             let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
                 result200 = resultData200 !== undefined ? resultData200 : <any>null;
     
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getCarOverview(id: number): Observable<CarOverviewDto> {
+        let url_ = this.baseUrl + "/api/Cars/{id}/overview";
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetCarOverview(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetCarOverview(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<CarOverviewDto>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<CarOverviewDto>;
+        }));
+    }
+
+    protected processGetCarOverview(response: HttpResponseBase): Observable<CarOverviewDto> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = CarOverviewDto.fromJS(resultData200);
             return _observableOf(result200);
             }));
         } else if (status !== 200 && status !== 204) {
@@ -3933,7 +4060,8 @@ export class CreditsClient implements ICreditsClient {
 
 export interface IDashboardClient {
     getDashboard(from: Date | null | undefined, to: Date | null | undefined, periods: number | undefined, granularity: DashboardGranularity | undefined): Observable<DashboardDto>;
-    getBookingCalendar(from: Date | null | undefined, to: Date | null | undefined): Observable<BookingCalendarDto>;
+    getToday(day: Date | null | undefined, branchId: number | null | undefined): Observable<TodayDto>;
+    getBookingCalendar(from: Date | null | undefined, to: Date | null | undefined, branchId: number | null | undefined): Observable<BookingCalendarDto>;
 }
 
 @Injectable({
@@ -4009,12 +4137,66 @@ export class DashboardClient implements IDashboardClient {
         return _observableOf(null as any);
     }
 
-    getBookingCalendar(from: Date | null | undefined, to: Date | null | undefined): Observable<BookingCalendarDto> {
+    getToday(day: Date | null | undefined, branchId: number | null | undefined): Observable<TodayDto> {
+        let url_ = this.baseUrl + "/api/Dashboard/today?";
+        if (day !== undefined && day !== null)
+            url_ += "Day=" + encodeURIComponent(day ? "" + day.toISOString() : "") + "&";
+        if (branchId !== undefined && branchId !== null)
+            url_ += "BranchId=" + encodeURIComponent("" + branchId) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetToday(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetToday(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<TodayDto>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<TodayDto>;
+        }));
+    }
+
+    protected processGetToday(response: HttpResponseBase): Observable<TodayDto> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = TodayDto.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getBookingCalendar(from: Date | null | undefined, to: Date | null | undefined, branchId: number | null | undefined): Observable<BookingCalendarDto> {
         let url_ = this.baseUrl + "/api/Dashboard/calendar?";
         if (from !== undefined && from !== null)
             url_ += "From=" + encodeURIComponent(from ? "" + from.toISOString() : "") + "&";
         if (to !== undefined && to !== null)
             url_ += "To=" + encodeURIComponent(to ? "" + to.toISOString() : "") + "&";
+        if (branchId !== undefined && branchId !== null)
+            url_ += "BranchId=" + encodeURIComponent("" + branchId) + "&";
         url_ = url_.replace(/[?&]$/, "");
 
         let options_ : any = {
@@ -7989,7 +8171,7 @@ export class PlatformDashboardClient implements IPlatformDashboardClient {
 }
 
 export interface IRentingsClient {
-    getRentings(pageNumber: number | undefined, pageSize: number | undefined, carId: number | null | undefined, clientId: number | null | undefined, state: RentingState | null | undefined, fromDate: Date | null | undefined, toDate: Date | null | undefined, dateBasis: RentingDateBasis | undefined, excludeCancelled: boolean | undefined, sortBy: string | null | undefined, sortDescending: boolean | undefined): Observable<PaginatedListOfRentingDto>;
+    getRentings(pageNumber: number | undefined, pageSize: number | undefined, search: string | null | undefined, carId: number | null | undefined, clientId: number | null | undefined, state: RentingState | null | undefined, fromDate: Date | null | undefined, toDate: Date | null | undefined, dateBasis: RentingDateBasis | undefined, excludeCancelled: boolean | undefined, sortBy: string | null | undefined, sortDescending: boolean | undefined): Observable<PaginatedListOfRentingDto>;
     createRenting(command: CreateRentingCommand): Observable<number>;
     getRentingQuote(carId: number, startDate: Date, endDate: Date, excludeRentingId: number | null | undefined): Observable<RentingQuoteDto>;
     getRentingById(id: number): Observable<RentingDto>;
@@ -8013,7 +8195,7 @@ export class RentingsClient implements IRentingsClient {
         this.baseUrl = baseUrl ?? "";
     }
 
-    getRentings(pageNumber: number | undefined, pageSize: number | undefined, carId: number | null | undefined, clientId: number | null | undefined, state: RentingState | null | undefined, fromDate: Date | null | undefined, toDate: Date | null | undefined, dateBasis: RentingDateBasis | undefined, excludeCancelled: boolean | undefined, sortBy: string | null | undefined, sortDescending: boolean | undefined): Observable<PaginatedListOfRentingDto> {
+    getRentings(pageNumber: number | undefined, pageSize: number | undefined, search: string | null | undefined, carId: number | null | undefined, clientId: number | null | undefined, state: RentingState | null | undefined, fromDate: Date | null | undefined, toDate: Date | null | undefined, dateBasis: RentingDateBasis | undefined, excludeCancelled: boolean | undefined, sortBy: string | null | undefined, sortDescending: boolean | undefined): Observable<PaginatedListOfRentingDto> {
         let url_ = this.baseUrl + "/api/Rentings?";
         if (pageNumber === null)
             throw new Error("The parameter 'pageNumber' cannot be null.");
@@ -8023,6 +8205,8 @@ export class RentingsClient implements IRentingsClient {
             throw new Error("The parameter 'pageSize' cannot be null.");
         else if (pageSize !== undefined)
             url_ += "PageSize=" + encodeURIComponent("" + pageSize) + "&";
+        if (search !== undefined && search !== null)
+            url_ += "Search=" + encodeURIComponent("" + search) + "&";
         if (carId !== undefined && carId !== null)
             url_ += "CarId=" + encodeURIComponent("" + carId) + "&";
         if (clientId !== undefined && clientId !== null)
@@ -11714,6 +11898,7 @@ export class CarDto implements ICarDto {
     matricule?: string;
     modelId?: number | undefined;
     modelName?: string | undefined;
+    brandName?: string | undefined;
     branchId?: number | undefined;
     branchName?: string | undefined;
     status?: CarStatus;
@@ -11747,6 +11932,7 @@ export class CarDto implements ICarDto {
             this.matricule = _data["matricule"];
             this.modelId = _data["modelId"];
             this.modelName = _data["modelName"];
+            this.brandName = _data["brandName"];
             this.branchId = _data["branchId"];
             this.branchName = _data["branchName"];
             this.status = _data["status"];
@@ -11780,6 +11966,7 @@ export class CarDto implements ICarDto {
         data["matricule"] = this.matricule;
         data["modelId"] = this.modelId;
         data["modelName"] = this.modelName;
+        data["brandName"] = this.brandName;
         data["branchId"] = this.branchId;
         data["branchName"] = this.branchName;
         data["status"] = this.status;
@@ -11806,6 +11993,7 @@ export interface ICarDto {
     matricule?: string;
     modelId?: number | undefined;
     modelName?: string | undefined;
+    brandName?: string | undefined;
     branchId?: number | undefined;
     branchName?: string | undefined;
     status?: CarStatus;
@@ -11928,6 +12116,226 @@ export interface ICarRentingSummaryDto {
     startDate?: Date | undefined;
     endDate?: Date | undefined;
     startMileage?: number | undefined;
+}
+
+export class CarFacetsDto implements ICarFacetsDto {
+    total?: number;
+    fleet?: number;
+    statuses?: CarStatusFacetDto[];
+    onRent?: number;
+    inYard?: number;
+    branches?: CarNamedFacetDto[];
+    brands?: CarNamedFacetDto[];
+    fuelTypes?: CarFuelFacetDto[];
+
+    constructor(data?: ICarFacetsDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.total = _data["total"];
+            this.fleet = _data["fleet"];
+            if (Array.isArray(_data["statuses"])) {
+                this.statuses = [] as any;
+                for (let item of _data["statuses"])
+                    this.statuses!.push(CarStatusFacetDto.fromJS(item));
+            }
+            this.onRent = _data["onRent"];
+            this.inYard = _data["inYard"];
+            if (Array.isArray(_data["branches"])) {
+                this.branches = [] as any;
+                for (let item of _data["branches"])
+                    this.branches!.push(CarNamedFacetDto.fromJS(item));
+            }
+            if (Array.isArray(_data["brands"])) {
+                this.brands = [] as any;
+                for (let item of _data["brands"])
+                    this.brands!.push(CarNamedFacetDto.fromJS(item));
+            }
+            if (Array.isArray(_data["fuelTypes"])) {
+                this.fuelTypes = [] as any;
+                for (let item of _data["fuelTypes"])
+                    this.fuelTypes!.push(CarFuelFacetDto.fromJS(item));
+            }
+        }
+    }
+
+    static fromJS(data: any): CarFacetsDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new CarFacetsDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["total"] = this.total;
+        data["fleet"] = this.fleet;
+        if (Array.isArray(this.statuses)) {
+            data["statuses"] = [];
+            for (let item of this.statuses)
+                data["statuses"].push(item.toJSON());
+        }
+        data["onRent"] = this.onRent;
+        data["inYard"] = this.inYard;
+        if (Array.isArray(this.branches)) {
+            data["branches"] = [];
+            for (let item of this.branches)
+                data["branches"].push(item.toJSON());
+        }
+        if (Array.isArray(this.brands)) {
+            data["brands"] = [];
+            for (let item of this.brands)
+                data["brands"].push(item.toJSON());
+        }
+        if (Array.isArray(this.fuelTypes)) {
+            data["fuelTypes"] = [];
+            for (let item of this.fuelTypes)
+                data["fuelTypes"].push(item.toJSON());
+        }
+        return data;
+    }
+}
+
+export interface ICarFacetsDto {
+    total?: number;
+    fleet?: number;
+    statuses?: CarStatusFacetDto[];
+    onRent?: number;
+    inYard?: number;
+    branches?: CarNamedFacetDto[];
+    brands?: CarNamedFacetDto[];
+    fuelTypes?: CarFuelFacetDto[];
+}
+
+export class CarStatusFacetDto implements ICarStatusFacetDto {
+    status?: CarStatus;
+    count?: number;
+
+    constructor(data?: ICarStatusFacetDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.status = _data["status"];
+            this.count = _data["count"];
+        }
+    }
+
+    static fromJS(data: any): CarStatusFacetDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new CarStatusFacetDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["status"] = this.status;
+        data["count"] = this.count;
+        return data;
+    }
+}
+
+export interface ICarStatusFacetDto {
+    status?: CarStatus;
+    count?: number;
+}
+
+export class CarNamedFacetDto implements ICarNamedFacetDto {
+    id?: number | undefined;
+    name?: string | undefined;
+    count?: number;
+
+    constructor(data?: ICarNamedFacetDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.name = _data["name"];
+            this.count = _data["count"];
+        }
+    }
+
+    static fromJS(data: any): CarNamedFacetDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new CarNamedFacetDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["name"] = this.name;
+        data["count"] = this.count;
+        return data;
+    }
+}
+
+export interface ICarNamedFacetDto {
+    id?: number | undefined;
+    name?: string | undefined;
+    count?: number;
+}
+
+export class CarFuelFacetDto implements ICarFuelFacetDto {
+    fuelType?: FuelType | undefined;
+    count?: number;
+
+    constructor(data?: ICarFuelFacetDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.fuelType = _data["fuelType"];
+            this.count = _data["count"];
+        }
+    }
+
+    static fromJS(data: any): CarFuelFacetDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new CarFuelFacetDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["fuelType"] = this.fuelType;
+        data["count"] = this.count;
+        return data;
+    }
+}
+
+export interface ICarFuelFacetDto {
+    fuelType?: FuelType | undefined;
+    count?: number;
 }
 
 export class CreateCarCommand implements ICreateCarCommand {
@@ -12076,6 +12484,317 @@ export interface IUpdateCarCommand {
     power?: number | undefined;
     fuelType?: FuelType | undefined;
     mileage?: number | undefined;
+}
+
+export class CarOverviewDto implements ICarOverviewDto {
+    carId?: number;
+    currency?: string;
+    from?: Date;
+    to?: Date;
+    usage?: CarUsageDto | undefined;
+    rating?: CarRatingDto;
+    bookings?: CarBookingDto[] | undefined;
+    bookingsTotal?: number | undefined;
+    expenses?: CarExpenseDto[] | undefined;
+    expensesTotal?: MoneyDto | undefined;
+
+    constructor(data?: ICarOverviewDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.carId = _data["carId"];
+            this.currency = _data["currency"];
+            this.from = _data["from"] ? new Date(_data["from"].toString()) : <any>undefined;
+            this.to = _data["to"] ? new Date(_data["to"].toString()) : <any>undefined;
+            this.usage = _data["usage"] ? CarUsageDto.fromJS(_data["usage"]) : <any>undefined;
+            this.rating = _data["rating"] ? CarRatingDto.fromJS(_data["rating"]) : <any>undefined;
+            if (Array.isArray(_data["bookings"])) {
+                this.bookings = [] as any;
+                for (let item of _data["bookings"])
+                    this.bookings!.push(CarBookingDto.fromJS(item));
+            }
+            this.bookingsTotal = _data["bookingsTotal"];
+            if (Array.isArray(_data["expenses"])) {
+                this.expenses = [] as any;
+                for (let item of _data["expenses"])
+                    this.expenses!.push(CarExpenseDto.fromJS(item));
+            }
+            this.expensesTotal = _data["expensesTotal"] ? MoneyDto.fromJS(_data["expensesTotal"]) : <any>undefined;
+        }
+    }
+
+    static fromJS(data: any): CarOverviewDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new CarOverviewDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["carId"] = this.carId;
+        data["currency"] = this.currency;
+        data["from"] = this.from ? this.from.toISOString() : <any>undefined;
+        data["to"] = this.to ? this.to.toISOString() : <any>undefined;
+        data["usage"] = this.usage ? this.usage.toJSON() : <any>undefined;
+        data["rating"] = this.rating ? this.rating.toJSON() : <any>undefined;
+        if (Array.isArray(this.bookings)) {
+            data["bookings"] = [];
+            for (let item of this.bookings)
+                data["bookings"].push(item.toJSON());
+        }
+        data["bookingsTotal"] = this.bookingsTotal;
+        if (Array.isArray(this.expenses)) {
+            data["expenses"] = [];
+            for (let item of this.expenses)
+                data["expenses"].push(item.toJSON());
+        }
+        data["expensesTotal"] = this.expensesTotal ? this.expensesTotal.toJSON() : <any>undefined;
+        return data;
+    }
+}
+
+export interface ICarOverviewDto {
+    carId?: number;
+    currency?: string;
+    from?: Date;
+    to?: Date;
+    usage?: CarUsageDto | undefined;
+    rating?: CarRatingDto;
+    bookings?: CarBookingDto[] | undefined;
+    bookingsTotal?: number | undefined;
+    expenses?: CarExpenseDto[] | undefined;
+    expensesTotal?: MoneyDto | undefined;
+}
+
+export class CarUsageDto implements ICarUsageDto {
+    rentedDays?: number;
+    windowDays?: number;
+    utilizationPercent?: number;
+    charged?: MoneyDto | undefined;
+    rentings?: number;
+
+    constructor(data?: ICarUsageDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.rentedDays = _data["rentedDays"];
+            this.windowDays = _data["windowDays"];
+            this.utilizationPercent = _data["utilizationPercent"];
+            this.charged = _data["charged"] ? MoneyDto.fromJS(_data["charged"]) : <any>undefined;
+            this.rentings = _data["rentings"];
+        }
+    }
+
+    static fromJS(data: any): CarUsageDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new CarUsageDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["rentedDays"] = this.rentedDays;
+        data["windowDays"] = this.windowDays;
+        data["utilizationPercent"] = this.utilizationPercent;
+        data["charged"] = this.charged ? this.charged.toJSON() : <any>undefined;
+        data["rentings"] = this.rentings;
+        return data;
+    }
+}
+
+export interface ICarUsageDto {
+    rentedDays?: number;
+    windowDays?: number;
+    utilizationPercent?: number;
+    charged?: MoneyDto | undefined;
+    rentings?: number;
+}
+
+export class CarRatingDto implements ICarRatingDto {
+    count?: number;
+    average?: number | undefined;
+
+    constructor(data?: ICarRatingDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.count = _data["count"];
+            this.average = _data["average"];
+        }
+    }
+
+    static fromJS(data: any): CarRatingDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new CarRatingDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["count"] = this.count;
+        data["average"] = this.average;
+        return data;
+    }
+}
+
+export interface ICarRatingDto {
+    count?: number;
+    average?: number | undefined;
+}
+
+export class CarBookingDto implements ICarBookingDto {
+    rentingId?: number;
+    clientId?: number | undefined;
+    clientName?: string | undefined;
+    clientEmail?: string | undefined;
+    startDate?: Date | undefined;
+    endDate?: Date | undefined;
+    state?: RentingState;
+    price?: MoneyDto | undefined;
+    isLate?: boolean;
+
+    constructor(data?: ICarBookingDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.rentingId = _data["rentingId"];
+            this.clientId = _data["clientId"];
+            this.clientName = _data["clientName"];
+            this.clientEmail = _data["clientEmail"];
+            this.startDate = _data["startDate"] ? new Date(_data["startDate"].toString()) : <any>undefined;
+            this.endDate = _data["endDate"] ? new Date(_data["endDate"].toString()) : <any>undefined;
+            this.state = _data["state"];
+            this.price = _data["price"] ? MoneyDto.fromJS(_data["price"]) : <any>undefined;
+            this.isLate = _data["isLate"];
+        }
+    }
+
+    static fromJS(data: any): CarBookingDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new CarBookingDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["rentingId"] = this.rentingId;
+        data["clientId"] = this.clientId;
+        data["clientName"] = this.clientName;
+        data["clientEmail"] = this.clientEmail;
+        data["startDate"] = this.startDate ? this.startDate.toISOString() : <any>undefined;
+        data["endDate"] = this.endDate ? this.endDate.toISOString() : <any>undefined;
+        data["state"] = this.state;
+        data["price"] = this.price ? this.price.toJSON() : <any>undefined;
+        data["isLate"] = this.isLate;
+        return data;
+    }
+}
+
+export interface ICarBookingDto {
+    rentingId?: number;
+    clientId?: number | undefined;
+    clientName?: string | undefined;
+    clientEmail?: string | undefined;
+    startDate?: Date | undefined;
+    endDate?: Date | undefined;
+    state?: RentingState;
+    price?: MoneyDto | undefined;
+    isLate?: boolean;
+}
+
+export enum RentingState {
+    Done = 0,
+    InProgress = 1,
+    NotYet = 2,
+    Cancelled = 3,
+}
+
+export class CarExpenseDto implements ICarExpenseDto {
+    id?: number;
+    typeName?: string | undefined;
+    description?: string | undefined;
+    expenseDate?: Date;
+    amount?: MoneyDto | undefined;
+    isUnpaid?: boolean;
+
+    constructor(data?: ICarExpenseDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.typeName = _data["typeName"];
+            this.description = _data["description"];
+            this.expenseDate = _data["expenseDate"] ? new Date(_data["expenseDate"].toString()) : <any>undefined;
+            this.amount = _data["amount"] ? MoneyDto.fromJS(_data["amount"]) : <any>undefined;
+            this.isUnpaid = _data["isUnpaid"];
+        }
+    }
+
+    static fromJS(data: any): CarExpenseDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new CarExpenseDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["typeName"] = this.typeName;
+        data["description"] = this.description;
+        data["expenseDate"] = this.expenseDate ? this.expenseDate.toISOString() : <any>undefined;
+        data["amount"] = this.amount ? this.amount.toJSON() : <any>undefined;
+        data["isUnpaid"] = this.isUnpaid;
+        return data;
+    }
+}
+
+export interface ICarExpenseDto {
+    id?: number;
+    typeName?: string | undefined;
+    description?: string | undefined;
+    expenseDate?: Date;
+    amount?: MoneyDto | undefined;
+    isUnpaid?: boolean;
 }
 
 export class CarImageDto implements ICarImageDto {
@@ -12295,13 +13014,6 @@ export interface IChatThreadDto {
     lastMessageAuthorKind?: ChatAuthorKind | undefined;
     unreadCount?: number;
     isOpen?: boolean;
-}
-
-export enum RentingState {
-    Done = 0,
-    InProgress = 1,
-    NotYet = 2,
-    Cancelled = 3,
 }
 
 export enum ChatAuthorKind {
@@ -13785,6 +14497,619 @@ export interface IDashboardPeriodPointDto {
     rentingsStarted?: number;
     collected?: MoneyDto | undefined;
     expenses?: MoneyDto | undefined;
+}
+
+export class TodayDto implements ITodayDto {
+    currency?: string;
+    day?: Date;
+    branchId?: number | undefined;
+    branches?: TodayBranchDto[];
+    fleet?: TodayFleetDto | undefined;
+    summary?: TodaySummaryDto;
+    money?: TodayMoneyDto | undefined;
+    requests?: TodayRequestsDto | undefined;
+    payables?: TodayPayablesDto | undefined;
+    expensesDue?: TodayExpenseGroupDto[] | undefined;
+
+    constructor(data?: ITodayDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.currency = _data["currency"];
+            this.day = _data["day"] ? new Date(_data["day"].toString()) : <any>undefined;
+            this.branchId = _data["branchId"];
+            if (Array.isArray(_data["branches"])) {
+                this.branches = [] as any;
+                for (let item of _data["branches"])
+                    this.branches!.push(TodayBranchDto.fromJS(item));
+            }
+            this.fleet = _data["fleet"] ? TodayFleetDto.fromJS(_data["fleet"]) : <any>undefined;
+            this.summary = _data["summary"] ? TodaySummaryDto.fromJS(_data["summary"]) : <any>undefined;
+            this.money = _data["money"] ? TodayMoneyDto.fromJS(_data["money"]) : <any>undefined;
+            this.requests = _data["requests"] ? TodayRequestsDto.fromJS(_data["requests"]) : <any>undefined;
+            this.payables = _data["payables"] ? TodayPayablesDto.fromJS(_data["payables"]) : <any>undefined;
+            if (Array.isArray(_data["expensesDue"])) {
+                this.expensesDue = [] as any;
+                for (let item of _data["expensesDue"])
+                    this.expensesDue!.push(TodayExpenseGroupDto.fromJS(item));
+            }
+        }
+    }
+
+    static fromJS(data: any): TodayDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new TodayDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["currency"] = this.currency;
+        data["day"] = this.day ? this.day.toISOString() : <any>undefined;
+        data["branchId"] = this.branchId;
+        if (Array.isArray(this.branches)) {
+            data["branches"] = [];
+            for (let item of this.branches)
+                data["branches"].push(item.toJSON());
+        }
+        data["fleet"] = this.fleet ? this.fleet.toJSON() : <any>undefined;
+        data["summary"] = this.summary ? this.summary.toJSON() : <any>undefined;
+        data["money"] = this.money ? this.money.toJSON() : <any>undefined;
+        data["requests"] = this.requests ? this.requests.toJSON() : <any>undefined;
+        data["payables"] = this.payables ? this.payables.toJSON() : <any>undefined;
+        if (Array.isArray(this.expensesDue)) {
+            data["expensesDue"] = [];
+            for (let item of this.expensesDue)
+                data["expensesDue"].push(item.toJSON());
+        }
+        return data;
+    }
+}
+
+export interface ITodayDto {
+    currency?: string;
+    day?: Date;
+    branchId?: number | undefined;
+    branches?: TodayBranchDto[];
+    fleet?: TodayFleetDto | undefined;
+    summary?: TodaySummaryDto;
+    money?: TodayMoneyDto | undefined;
+    requests?: TodayRequestsDto | undefined;
+    payables?: TodayPayablesDto | undefined;
+    expensesDue?: TodayExpenseGroupDto[] | undefined;
+}
+
+export class TodayBranchDto implements ITodayBranchDto {
+    id?: number;
+    name?: string;
+
+    constructor(data?: ITodayBranchDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.name = _data["name"];
+        }
+    }
+
+    static fromJS(data: any): TodayBranchDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new TodayBranchDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["name"] = this.name;
+        return data;
+    }
+}
+
+export interface ITodayBranchDto {
+    id?: number;
+    name?: string;
+}
+
+export class TodayFleetDto implements ITodayFleetDto {
+    total?: number;
+    free?: number;
+    onRent?: number;
+    outOfService?: number;
+
+    constructor(data?: ITodayFleetDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.total = _data["total"];
+            this.free = _data["free"];
+            this.onRent = _data["onRent"];
+            this.outOfService = _data["outOfService"];
+        }
+    }
+
+    static fromJS(data: any): TodayFleetDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new TodayFleetDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["total"] = this.total;
+        data["free"] = this.free;
+        data["onRent"] = this.onRent;
+        data["outOfService"] = this.outOfService;
+        return data;
+    }
+}
+
+export interface ITodayFleetDto {
+    total?: number;
+    free?: number;
+    onRent?: number;
+    outOfService?: number;
+}
+
+export class TodaySummaryDto implements ITodaySummaryDto {
+    bookingsToday?: number | undefined;
+    unconfirmedToday?: number | undefined;
+    returnsToday?: number | undefined;
+    returnsBeforeNoon?: number | undefined;
+    lateRentings?: number | undefined;
+    worstLate?: TodayLateRentingDto | undefined;
+
+    constructor(data?: ITodaySummaryDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.bookingsToday = _data["bookingsToday"];
+            this.unconfirmedToday = _data["unconfirmedToday"];
+            this.returnsToday = _data["returnsToday"];
+            this.returnsBeforeNoon = _data["returnsBeforeNoon"];
+            this.lateRentings = _data["lateRentings"];
+            this.worstLate = _data["worstLate"] ? TodayLateRentingDto.fromJS(_data["worstLate"]) : <any>undefined;
+        }
+    }
+
+    static fromJS(data: any): TodaySummaryDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new TodaySummaryDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["bookingsToday"] = this.bookingsToday;
+        data["unconfirmedToday"] = this.unconfirmedToday;
+        data["returnsToday"] = this.returnsToday;
+        data["returnsBeforeNoon"] = this.returnsBeforeNoon;
+        data["lateRentings"] = this.lateRentings;
+        data["worstLate"] = this.worstLate ? this.worstLate.toJSON() : <any>undefined;
+        return data;
+    }
+}
+
+export interface ITodaySummaryDto {
+    bookingsToday?: number | undefined;
+    unconfirmedToday?: number | undefined;
+    returnsToday?: number | undefined;
+    returnsBeforeNoon?: number | undefined;
+    lateRentings?: number | undefined;
+    worstLate?: TodayLateRentingDto | undefined;
+}
+
+export class TodayLateRentingDto implements ITodayLateRentingDto {
+    rentingId?: number;
+    clientName?: string | undefined;
+    carLabel?: string | undefined;
+    dueOn?: Date;
+    hoursLate?: number;
+
+    constructor(data?: ITodayLateRentingDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.rentingId = _data["rentingId"];
+            this.clientName = _data["clientName"];
+            this.carLabel = _data["carLabel"];
+            this.dueOn = _data["dueOn"] ? new Date(_data["dueOn"].toString()) : <any>undefined;
+            this.hoursLate = _data["hoursLate"];
+        }
+    }
+
+    static fromJS(data: any): TodayLateRentingDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new TodayLateRentingDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["rentingId"] = this.rentingId;
+        data["clientName"] = this.clientName;
+        data["carLabel"] = this.carLabel;
+        data["dueOn"] = this.dueOn ? this.dueOn.toISOString() : <any>undefined;
+        data["hoursLate"] = this.hoursLate;
+        return data;
+    }
+}
+
+export interface ITodayLateRentingDto {
+    rentingId?: number;
+    clientName?: string | undefined;
+    carLabel?: string | undefined;
+    dueOn?: Date;
+    hoursLate?: number;
+}
+
+export class TodayMoneyDto implements ITodayMoneyDto {
+    expectedToday?: MoneyDto | undefined;
+    outstanding?: MoneyDto | undefined;
+
+    constructor(data?: ITodayMoneyDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.expectedToday = _data["expectedToday"] ? MoneyDto.fromJS(_data["expectedToday"]) : <any>undefined;
+            this.outstanding = _data["outstanding"] ? MoneyDto.fromJS(_data["outstanding"]) : <any>undefined;
+        }
+    }
+
+    static fromJS(data: any): TodayMoneyDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new TodayMoneyDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["expectedToday"] = this.expectedToday ? this.expectedToday.toJSON() : <any>undefined;
+        data["outstanding"] = this.outstanding ? this.outstanding.toJSON() : <any>undefined;
+        return data;
+    }
+}
+
+export interface ITodayMoneyDto {
+    expectedToday?: MoneyDto | undefined;
+    outstanding?: MoneyDto | undefined;
+}
+
+export class TodayRequestsDto implements ITodayRequestsDto {
+    count?: number;
+    oldestAskedAt?: Date | undefined;
+    items?: TodayRequestDto[];
+
+    constructor(data?: ITodayRequestsDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.count = _data["count"];
+            this.oldestAskedAt = _data["oldestAskedAt"] ? new Date(_data["oldestAskedAt"].toString()) : <any>undefined;
+            if (Array.isArray(_data["items"])) {
+                this.items = [] as any;
+                for (let item of _data["items"])
+                    this.items!.push(TodayRequestDto.fromJS(item));
+            }
+        }
+    }
+
+    static fromJS(data: any): TodayRequestsDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new TodayRequestsDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["count"] = this.count;
+        data["oldestAskedAt"] = this.oldestAskedAt ? this.oldestAskedAt.toISOString() : <any>undefined;
+        if (Array.isArray(this.items)) {
+            data["items"] = [];
+            for (let item of this.items)
+                data["items"].push(item.toJSON());
+        }
+        return data;
+    }
+}
+
+export interface ITodayRequestsDto {
+    count?: number;
+    oldestAskedAt?: Date | undefined;
+    items?: TodayRequestDto[];
+}
+
+export class TodayRequestDto implements ITodayRequestDto {
+    reservationId?: number;
+    clientId?: number | undefined;
+    clientName?: string | undefined;
+    carId?: number | undefined;
+    carLabel?: string | undefined;
+    startDate?: Date | undefined;
+    expiresAt?: Date | undefined;
+
+    constructor(data?: ITodayRequestDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.reservationId = _data["reservationId"];
+            this.clientId = _data["clientId"];
+            this.clientName = _data["clientName"];
+            this.carId = _data["carId"];
+            this.carLabel = _data["carLabel"];
+            this.startDate = _data["startDate"] ? new Date(_data["startDate"].toString()) : <any>undefined;
+            this.expiresAt = _data["expiresAt"] ? new Date(_data["expiresAt"].toString()) : <any>undefined;
+        }
+    }
+
+    static fromJS(data: any): TodayRequestDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new TodayRequestDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["reservationId"] = this.reservationId;
+        data["clientId"] = this.clientId;
+        data["clientName"] = this.clientName;
+        data["carId"] = this.carId;
+        data["carLabel"] = this.carLabel;
+        data["startDate"] = this.startDate ? this.startDate.toISOString() : <any>undefined;
+        data["expiresAt"] = this.expiresAt ? this.expiresAt.toISOString() : <any>undefined;
+        return data;
+    }
+}
+
+export interface ITodayRequestDto {
+    reservationId?: number;
+    clientId?: number | undefined;
+    clientName?: string | undefined;
+    carId?: number | undefined;
+    carLabel?: string | undefined;
+    startDate?: Date | undefined;
+    expiresAt?: Date | undefined;
+}
+
+export class TodayPayablesDto implements ITodayPayablesDto {
+    count?: number;
+    outstanding?: MoneyDto | undefined;
+
+    constructor(data?: ITodayPayablesDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.count = _data["count"];
+            this.outstanding = _data["outstanding"] ? MoneyDto.fromJS(_data["outstanding"]) : <any>undefined;
+        }
+    }
+
+    static fromJS(data: any): TodayPayablesDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new TodayPayablesDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["count"] = this.count;
+        data["outstanding"] = this.outstanding ? this.outstanding.toJSON() : <any>undefined;
+        return data;
+    }
+}
+
+export interface ITodayPayablesDto {
+    count?: number;
+    outstanding?: MoneyDto | undefined;
+}
+
+export class TodayExpenseGroupDto implements ITodayExpenseGroupDto {
+    expenseTypeId?: number;
+    name?: string;
+    afterMonth?: number | undefined;
+    afterKilometer?: number | undefined;
+    isOverdue?: boolean;
+    cars?: TodayExpenseCarDto[];
+
+    constructor(data?: ITodayExpenseGroupDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.expenseTypeId = _data["expenseTypeId"];
+            this.name = _data["name"];
+            this.afterMonth = _data["afterMonth"];
+            this.afterKilometer = _data["afterKilometer"];
+            this.isOverdue = _data["isOverdue"];
+            if (Array.isArray(_data["cars"])) {
+                this.cars = [] as any;
+                for (let item of _data["cars"])
+                    this.cars!.push(TodayExpenseCarDto.fromJS(item));
+            }
+        }
+    }
+
+    static fromJS(data: any): TodayExpenseGroupDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new TodayExpenseGroupDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["expenseTypeId"] = this.expenseTypeId;
+        data["name"] = this.name;
+        data["afterMonth"] = this.afterMonth;
+        data["afterKilometer"] = this.afterKilometer;
+        data["isOverdue"] = this.isOverdue;
+        if (Array.isArray(this.cars)) {
+            data["cars"] = [];
+            for (let item of this.cars)
+                data["cars"].push(item.toJSON());
+        }
+        return data;
+    }
+}
+
+export interface ITodayExpenseGroupDto {
+    expenseTypeId?: number;
+    name?: string;
+    afterMonth?: number | undefined;
+    afterKilometer?: number | undefined;
+    isOverdue?: boolean;
+    cars?: TodayExpenseCarDto[];
+}
+
+export class TodayExpenseCarDto implements ITodayExpenseCarDto {
+    carId?: number;
+    matricule?: string | undefined;
+    modelName?: string | undefined;
+    basis?: ExpenseDueBasis;
+    isOverdue?: boolean;
+    dueOn?: Date | undefined;
+    days?: number;
+    dueAtKilometers?: number | undefined;
+    kilometers?: number | undefined;
+
+    constructor(data?: ITodayExpenseCarDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.carId = _data["carId"];
+            this.matricule = _data["matricule"];
+            this.modelName = _data["modelName"];
+            this.basis = _data["basis"];
+            this.isOverdue = _data["isOverdue"];
+            this.dueOn = _data["dueOn"] ? new Date(_data["dueOn"].toString()) : <any>undefined;
+            this.days = _data["days"];
+            this.dueAtKilometers = _data["dueAtKilometers"];
+            this.kilometers = _data["kilometers"];
+        }
+    }
+
+    static fromJS(data: any): TodayExpenseCarDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new TodayExpenseCarDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["carId"] = this.carId;
+        data["matricule"] = this.matricule;
+        data["modelName"] = this.modelName;
+        data["basis"] = this.basis;
+        data["isOverdue"] = this.isOverdue;
+        data["dueOn"] = this.dueOn ? this.dueOn.toISOString() : <any>undefined;
+        data["days"] = this.days;
+        data["dueAtKilometers"] = this.dueAtKilometers;
+        data["kilometers"] = this.kilometers;
+        return data;
+    }
+}
+
+export interface ITodayExpenseCarDto {
+    carId?: number;
+    matricule?: string | undefined;
+    modelName?: string | undefined;
+    basis?: ExpenseDueBasis;
+    isOverdue?: boolean;
+    dueOn?: Date | undefined;
+    days?: number;
+    dueAtKilometers?: number | undefined;
+    kilometers?: number | undefined;
+}
+
+export enum ExpenseDueBasis {
+    Date = 1,
+    Distance = 2,
 }
 
 export class BookingCalendarDto implements IBookingCalendarDto {

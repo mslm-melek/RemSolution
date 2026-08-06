@@ -1,6 +1,620 @@
-/* Layout, filter strip, table and empty state all come from the shared
-   .page / .filter-row / .data-table rules in styles.scss. Only what is specific
-   to the fleet list lives here. */
+/* The fleet screen: a rail that narrows it, a toolbar that decides how it is
+   shown, and the cars themselves as cards or as the shared .data-table.
+
+   Everything here is unique to this screen; the page frame, the table, the chips
+   and the status pills all come from styles.scss. There is no global
+   `box-sizing`, so anything given both a width and padding sets its own. */
+
+/* ------------------------------------------------------------------ layout ---- */
+
+.fleet-body {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-4);
+}
+
+/* The stack gap is the page's own, because the shared rule that joins a table to
+   its paginator cancels exactly that much (see styles.scss). */
+.fleet-main {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+}
+
+/* ------------------------------------------------------------ filter rail ---- */
+
+/* Sticky under the app bar (60px, sticky itself), so a long fleet scrolls past
+   the filters rather than away from them. */
+.filters {
+  box-sizing: border-box;
+  flex: 0 0 224px;
+  width: 224px;
+  position: sticky;
+  top: calc(60px + var(--sp-4));
+  max-height: calc(100vh - 60px - var(--sp-6));
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  padding: var(--sp-3);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+}
+
+.filters-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  min-height: 32px;
+}
+
+.filters-title {
+  font-size: var(--fs-label);
+  font-weight: var(--fw-medium);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.filter-group + .filter-group {
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--line);
+}
+
+/* Qualified past `.mat-typography h3`, which would otherwise make these group
+   headings a display-font heading. */
+.mat-typography .filter-title,
+.filter-title {
+  margin: 0 0 var(--sp-1);
+  padding-inline: var(--sp-2);
+  font: var(--fw-medium) var(--fs-label) / 1.4 var(--font-body);
+  letter-spacing: 0.02em;
+  color: var(--ink);
+}
+
+/* One filter option: a box that fills when it is on, what it is, and how many
+   cars it would show. */
+.filter-item {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 34px;
+  padding: var(--sp-1) var(--sp-2);
+  border: 0;
+  border-radius: var(--r);
+  background: none;
+  color: var(--ink-2);
+  font: var(--fw-medium) var(--fs-sm) / 1.3 var(--font-body);
+  text-align: start;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.filter-item:hover {
+  background: var(--overlay-weak);
+  color: var(--ink);
+}
+
+.filter-item.active {
+  background: var(--brand-50);
+  color: var(--brand-600);
+}
+
+.filter-box {
+  display: grid;
+  place-items: center;
+  flex: none;
+  box-sizing: border-box;
+  width: 17px;
+  height: 17px;
+  border: 1.5px solid var(--line-strong);
+  border-radius: var(--r-xs);
+  color: transparent;
+}
+
+.filter-item.active .filter-box {
+  background: var(--brand-600);
+  border-color: var(--brand-600);
+  color: var(--on-accent);
+}
+
+.filter-box .mat-icon {
+  width: 13px;
+  height: 13px;
+  font-size: 13px;
+  line-height: 13px;
+}
+
+.filter-label {
+  flex: 1 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.filter-count {
+  flex: none;
+  font-size: var(--fs-micro);
+  font-weight: var(--fw-normal);
+  color: var(--muted);
+}
+
+.filter-item.active .filter-count {
+  color: var(--brand-600);
+}
+
+/* The fold over model and colour — the two narrow questions. */
+.filter-more {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 34px;
+  padding: var(--sp-1) var(--sp-2);
+  border: 0;
+  border-radius: var(--r);
+  background: none;
+  color: var(--muted);
+  font: var(--fw-medium) var(--fs-label) / 1.4 var(--font-body);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+}
+
+.filter-more:hover {
+  background: var(--overlay-weak);
+  color: var(--ink);
+}
+
+.filter-more .mat-icon {
+  transition: transform 0.15s;
+}
+
+.filter-more .mat-icon.turned {
+  transform: rotate(180deg);
+}
+
+.filter-fields {
+  display: flex;
+  flex-direction: column;
+  padding-top: var(--sp-2);
+}
+
+.filter-fields .filter-field {
+  width: 100%;
+}
+
+/* --------------------------------------------------------------- toolbar ---- */
+
+.fleet-toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  box-sizing: border-box;
+  padding: var(--sp-2) var(--sp-3);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+}
+
+/* Sort, view and (on a phone) the filters: chrome buttons, not page actions. */
+.tool-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  box-sizing: border-box;
+  height: var(--h-control-sm);
+  padding: 0 var(--sp-3);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r);
+  background: var(--surface);
+  color: var(--ink-2);
+  font: var(--fw-medium) var(--fs-sm) / 1 var(--font-body);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.tool-btn:hover {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+
+.tool-btn .mat-icon {
+  width: 18px;
+  height: 18px;
+  font-size: 18px;
+}
+
+.tool-btn .tool-dir {
+  color: var(--muted);
+}
+
+.tool-badge {
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  border-radius: var(--r-pill);
+  background: var(--brand-600);
+  color: var(--on-accent);
+  font-size: var(--fs-micro);
+}
+
+/* The rail is a column on a desk, so its button is only for narrow screens. */
+.filters-toggle {
+  display: none;
+}
+
+/* The list's own search: the same `?search=` the app bar links in with. Drawn by
+   hand rather than as a mat-form-field, because a 56px form field in a 50px
+   toolbar is the wrong shape. */
+.fleet-search {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  box-sizing: border-box;
+  flex: 1 1 260px;
+  max-width: 360px;
+  height: var(--h-control-sm);
+  padding: 0 var(--sp-3);
+  background: var(--surface-2);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r);
+  color: var(--muted);
+}
+
+.fleet-search:focus-within {
+  border-color: var(--brand-500);
+  color: var(--ink);
+}
+
+.fleet-search > .mat-icon {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  font-size: 18px;
+}
+
+.fleet-search input {
+  flex: 1 1 auto;
+  min-width: 0;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  font: var(--fw-normal) var(--fs-sm) / 1 var(--font-body);
+  outline: none;
+}
+
+.fleet-search input::placeholder {
+  color: var(--muted);
+}
+
+.search-clear {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.search-clear:hover {
+  background: var(--overlay);
+  color: var(--ink);
+}
+
+.search-clear .mat-icon {
+  width: 16px;
+  height: 16px;
+  font-size: 16px;
+}
+
+.view-toggle {
+  display: inline-flex;
+  gap: 2px;
+  box-sizing: border-box;
+  padding: 2px;
+  background: var(--surface-2);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r);
+}
+
+.view-toggle button {
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  width: 34px;
+  height: 28px;
+  border: 0;
+  border-radius: var(--r-sm);
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.view-toggle button:hover {
+  color: var(--ink);
+}
+
+.view-toggle button.active {
+  background: var(--surface);
+  color: var(--brand-600);
+  box-shadow: var(--shadow-1);
+}
+
+.view-toggle .mat-icon {
+  width: 18px;
+  height: 18px;
+  font-size: 18px;
+}
+
+/* ------------------------------------------------------------------ cards ---- */
+
+.car-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(258px, 1fr));
+  gap: var(--sp-4);
+}
+
+.car-card {
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.car-card:hover {
+  border-color: var(--line-strong);
+  box-shadow: var(--shadow-2);
+}
+
+/* Landscape, because a car is: a square crop is mostly bodywork.
+
+   `flex: none` and the absolutely-positioned picture below are what hold the
+   frame to 156px. A flex item's automatic minimum size is its CONTENT, and a
+   percentage height inside a grid whose track is sized by that same content is
+   cyclic — so an in-flow `height: 100%` photo fell back to its intrinsic height,
+   the frame grew to match the original upload, and everything under it (the
+   car's name, its figures, its buttons) was pushed off the card. */
+.car-photo {
+  position: relative;
+  display: grid;
+  place-items: center;
+  flex: none;
+  height: 156px;
+  overflow: hidden;
+  background: var(--surface-3);
+  color: var(--muted-2);
+  text-decoration: none;
+}
+
+/* Out of the flow, so the picture is cropped INTO the frame rather than being
+   what decides how tall the frame is. The placeholder icon stays a grid item and
+   is still centred by `place-items`. */
+.car-photo img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.car-photo-none {
+  width: 40px;
+  height: 40px;
+  font-size: 40px;
+}
+
+/* The one thing read before the picture registers: can this go out today? */
+.car-photo .car-state {
+  position: absolute;
+  top: var(--sp-2);
+  inset-inline-end: var(--sp-2);
+  box-shadow: var(--shadow-1);
+}
+
+.car-more {
+  position: absolute;
+  inset-inline-end: var(--sp-2);
+  bottom: var(--sp-2);
+  padding: 1px 5px;
+  border-radius: var(--r-xs);
+  background: rgba(15, 23, 42, 0.72);
+  color: #fff;
+  font-size: var(--fs-micro);
+}
+
+.car-body {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+}
+
+.car-name {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.car-name:hover .car-model {
+  color: var(--brand-600);
+  text-decoration: underline;
+}
+
+.car-brand {
+  font-size: var(--fs-label);
+  color: var(--muted);
+}
+
+.car-model {
+  font-size: 15px;
+  font-weight: var(--fw-medium);
+  line-height: 1.25;
+}
+
+.car-plate {
+  align-self: flex-start;
+  padding: 2px 6px;
+  border-radius: var(--r-xs);
+  background: var(--surface-3);
+  color: var(--ink-2);
+  font-size: var(--fs-micro);
+  font-weight: var(--fw-medium);
+  letter-spacing: 0.02em;
+}
+
+.car-figures {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-2);
+  margin-top: auto;
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--line);
+}
+
+.car-figure {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.figure-label {
+  font-size: var(--fs-micro);
+  color: var(--muted);
+}
+
+.figure-value {
+  font-size: var(--fs-body);
+  font-weight: var(--fw-medium);
+  color: var(--ink);
+}
+
+.figure-value.money {
+  color: var(--brand-600);
+}
+
+/* Nothing recorded. The shared .muted only covers table cells. */
+.figure-value.muted {
+  color: var(--muted-2);
+  font-weight: var(--fw-normal);
+}
+
+.figure-unit {
+  font-size: var(--fs-micro);
+  font-weight: var(--fw-normal);
+  color: var(--muted);
+}
+
+.car-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.car-line {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+  min-width: 0;
+  font-size: var(--fs-label);
+  color: var(--ink-2);
+}
+
+.car-line .mat-icon {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.car-line > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.car-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--line);
+}
+
+/* The card's buttons are one line, so they are the small end of the scale. */
+.car-actions .mat-mdc-button-base {
+  min-width: 0;
+}
+
+.car-actions .mat-mdc-raised-button,
+.car-actions .mat-mdc-outlined-button {
+  height: var(--h-control-sm);
+  padding: 0 var(--sp-3);
+  font-size: var(--fs-sm);
+}
+
+/* In cards view the paginator has no table to hang off, so it stands as its own
+   quiet strip instead of a hairline across the canvas. */
+.car-grid + .mat-mdc-paginator {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+}
+
+/* Nothing matched: said once, in the middle of the grid rather than in a cell. */
+.fleet-empty {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 48px var(--sp-4);
+  background: var(--surface);
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--r-lg);
+  color: var(--muted);
+}
+
+.fleet-empty .mat-icon {
+  width: 32px;
+  height: 32px;
+  font-size: 32px;
+  color: var(--muted-2);
+}
+
+/* ------------------------------------------------------------------ table ---- */
 
 /* The photo column, sized to the frame itself (the shared .thumb-cell rules in
    styles.scss draw it) so the plate beside it stays flush left. */
@@ -26,4 +640,67 @@ a.matricule:hover,
 a.matricule:focus-visible {
   color: var(--brand-600);
   text-decoration: underline;
+}
+
+/* The table brings its own surface and the toolbar sits directly above it, so the
+   gap between them is closed the way the shared filter strip closes it. */
+main .page table.data-table {
+  margin-top: 0;
+}
+
+/* -------------------------------------------------------------------- rtl ---- */
+
+/* `[dir]` is set on <html>, so a component rule only sees it through the host. */
+:host-context([dir='rtl']) .filter-more .mat-icon.turned {
+  transform: rotate(-180deg);
+}
+
+/* ----------------------------------------------------------------- narrow ---- */
+
+/* Below the rail's own breakpoint the filters become a drop-down above the list:
+   a 224px column beside a one-card grid is not a layout. */
+@media (max-width: 1023px) {
+  .fleet-body {
+    flex-direction: column;
+  }
+
+  .filters {
+    position: static;
+    width: 100%;
+    flex: none;
+    max-height: none;
+  }
+
+  /* Folded away until asked for — the toolbar's button is directly above it. */
+  .filters:not(.open) {
+    display: none;
+  }
+
+  .fleet-main {
+    width: 100%;
+  }
+
+  .filters-toggle {
+    display: inline-flex;
+  }
+}
+
+@media (max-width: 767px) {
+  .fleet-toolbar {
+    flex-wrap: wrap;
+  }
+
+  .fleet-search {
+    flex-basis: 100%;
+    max-width: none;
+    order: 3;
+  }
+
+  .tool-btn-text {
+    display: none;
+  }
+
+  .car-grid {
+    grid-template-columns: 1fr;
+  }
 }

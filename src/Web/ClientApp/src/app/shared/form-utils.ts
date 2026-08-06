@@ -54,6 +54,20 @@ export function fromDateInput(value: string): Date | undefined {
   return new Date(Date.UTC(year, month - 1, day, hours || 0, minutes || 0));
 }
 
+// Now, on the same clock the stored dates are on: the browser's local wall
+// clock read as UTC.
+//
+// This is what a stored DateTime has to be compared against to answer "has this
+// happened yet". Date.now() is the wrong side of the comparison — a return due
+// at 18:00 is stored as 18:00Z, and in UTC+1 the browser reaches that instant an
+// hour before the clock on the wall says 18:00, so a plain Date.now() call
+// reports the car late while the customer still has an hour.
+export function wallClockNow(): number {
+  const now = new Date();
+  return Date.UTC(
+    now.getFullYear(), now.getMonth(), now.getDate(), now.getHours(), now.getMinutes());
+}
+
 // Flattens a server 400 ProblemDetails errors map into one message, handling
 // both the raw HttpClient shape (err.error.errors) and the NSwag-wrapped
 // exception shape (err.response as a JSON string). Returns undefined when the

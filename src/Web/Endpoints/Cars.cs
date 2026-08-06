@@ -11,7 +11,9 @@ using RemSolution.Application.Features.Car.Commands.UploadCarImageCommand;
 using RemSolution.Application.Features.Car.Commands.UploadCarPhotoCommand;
 using RemSolution.Application.Features.Car.DTOs;
 using RemSolution.Application.Features.Car.Queries.GetCarByIdQuery;
+using RemSolution.Application.Features.Car.Queries.GetCarFacetsQuery;
 using RemSolution.Application.Features.Car.Queries.GetCarImagesQuery;
+using RemSolution.Application.Features.Car.Queries.GetCarOverviewQuery;
 using RemSolution.Application.Features.Car.Queries.GetCarsWithPaginationQuery;
 
 namespace RemSolution.Web.Endpoints;
@@ -28,6 +30,8 @@ public class Cars : EndpointGroupBase
 
         group
             .MapGet(GetCars, policy: Permissions.CarRead)
+            // Literal segment, so it never collides with "{id}" below.
+            .MapGet(GetCarFacets, "facets", Permissions.CarRead)
             .MapGet(GetCarById, "{id}", Permissions.CarRead)
             .MapPost(CreateCar, policy: Permissions.CarCreate)
             .MapPut(UpdateCar, "{id}", Permissions.CarUpdate)
@@ -40,6 +44,13 @@ public class Cars : EndpointGroupBase
             .WithName(nameof(UploadCarPhoto))
             .RequireAuthorization(Permissions.CarUpdate)
             .DisableAntiforgery();
+
+        // The figures and lists the car's page shows around the car itself. A
+        // second call rather than fields on the car: CarDto is also a list row,
+        // and none of this survives being computed fifty times a page.
+        group.MapGet("{id}/overview", GetCarOverview)
+            .WithName(nameof(GetCarOverview))
+            .RequireAuthorization(Permissions.CarRead);
 
         // Gallery images (multi-image, with generated thumbnail/medium).
         group.MapGet("{id}/images", GetCarImages)
@@ -70,6 +81,15 @@ public class Cars : EndpointGroupBase
         return TypedResults.Ok(result);
     }
 
+    // The counts beside the list's filters. A second call rather than a section on
+    // the paginated payload: the rows change with every page turn, the counts do
+    // not (see GetCarFacetsQuery).
+    public async Task<Ok<CarFacetsDto>> GetCarFacets(ISender sender, [AsParameters] GetCarFacetsQuery query)
+    {
+        var result = await sender.Send(query);
+        return TypedResults.Ok(result);
+    }
+
     public async Task<Results<Ok<CarDto>, NotFound>> GetCarById(ISender sender, int id)
     {
         var result = await sender.Send(new GetCarByIdQuery(id));
@@ -77,6 +97,12 @@ public class Cars : EndpointGroupBase
         if (result is null)
             return TypedResults.NotFound();
 
+        return TypedResults.Ok(result);
+    }
+
+    public async Task<Ok<CarOverviewDto>> GetCarOverview(ISender sender, int id)
+    {
+        var result = await sender.Send(new GetCarOverviewQuery(id));
         return TypedResults.Ok(result);
     }
 

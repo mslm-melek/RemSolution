@@ -1,18 +1,21 @@
 import { BrowserModule } from '@angular/platform-browser';
-import { APP_ID, APP_INITIALIZER, LOCALE_ID, NgModule } from '@angular/core';
+import { APP_ID, APP_INITIALIZER, LOCALE_ID, NgModule, inject } from '@angular/core';
 import { registerLocaleData } from '@angular/common';
 import localeFr from '@angular/common/locales/fr';
 import localeAr from '@angular/common/locales/ar';
 import { provideTransloco, TranslocoModule, TranslocoService } from '@jsverse/transloco';
 import { firstValueFrom } from 'rxjs';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { RouterModule } from '@angular/router';
+import { RedirectFunction, Router, RouterModule } from '@angular/router';
 import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 
 import { AppComponent } from './app.component';
-import { NavMenuComponent } from './nav-menu/nav-menu.component';
+import { SideNavComponent } from './nav-menu/side-nav.component';
+import { TopBarComponent } from './nav-menu/top-bar.component';
 import { HomeComponent } from './home/home.component';
 import { HomeAgendaComponent } from './home/home-agenda.component';
+import { HomeMessagesComponent } from './home/home-messages.component';
+import { ChatThreadDialogComponent } from './home/chat-thread-dialog.component';
 import { AuthorizeInterceptor } from 'src/api-authorization/authorize.interceptor';
 import { ImpersonationInterceptor } from './shared/impersonation.interceptor';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
@@ -22,6 +25,7 @@ import { ModelCarFormComponent } from './model-car/model-car-form.component';
 import { CarComponent } from './car/car.component';
 import { CarFormComponent } from './car/car-form.component';
 import { CarDetailComponent } from './car/car-detail.component';
+import { CarQuickEditComponent } from './car/car-quick-edit.component';
 import { ClientComponent } from './client/client.component';
 import { ClientFormComponent } from './client/client-form.component';
 import { ClientDetailComponent } from './client/client-detail.component';
@@ -33,9 +37,9 @@ import { SubscriptionPlanComponent } from './subscription-plan/subscription-plan
 import { SubscriptionPlanFormComponent } from './subscription-plan/subscription-plan-form.component';
 import { TeamComponent } from './team/team.component';
 import { MyAgencyComponent } from './my-agency/my-agency.component';
-import { RentingComponent } from './renting/renting.component';
+import { BookingComponent } from './booking/booking.component';
+import { BookingDetailComponent } from './booking/booking-detail.component';
 import { RentingFormComponent } from './renting/renting-form.component';
-import { ReservationComponent } from './reservation/reservation.component';
 import { ReservationFormComponent } from './reservation/reservation-form.component';
 import { ExtraServiceTypeComponent } from './extra-service-type/extra-service-type.component';
 import { ExpenseTypeComponent } from './expense-type/expense-type.component';
@@ -59,7 +63,7 @@ import { MyChatsComponent } from './marketplace/my-chats.component';
 import { RatingStarsComponent } from './shared/rating-stars.component';
 import { ClientAvatarComponent } from './shared/client-avatar.component';
 import { QuickActionsComponent } from './shared/quick-actions.component';
-import { BookingCalendarComponent } from './shared/booking-calendar.component';
+
 import { MapPickerComponent } from './shared/map-picker.component';
 import { BranchesEditorComponent } from './shared/branches-editor.component';
 import { PaymentDialogComponent } from './shared/payment-dialog.component';
@@ -76,7 +80,6 @@ import { MatSortModule } from '@angular/material/sort';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatTabsModule } from '@angular/material/tabs';
@@ -109,15 +112,35 @@ import { environment } from 'src/environments/environment';
 registerLocaleData(localeFr);
 registerLocaleData(localeAr);
 
+/**
+ * Forwards one of the two old booking lists to the tab of the merged screen it
+ * became, keeping every filter it was linked with.
+ *
+ * A function rather than a plain `redirectTo` string for two reasons: the
+ * rentings tab is the default and must NOT carry a `?tab=` (a bare /booking is
+ * the canonical URL), and the reservations tab has to have one ADDED to a query
+ * string that already exists. A string redirect can only preserve what it was
+ * given. It runs in an injection context, so the router is available here.
+ */
+function toBookings(tab: 'reservations' | null): RedirectFunction {
+  return route => inject(Router).createUrlTree(['/booking'], {
+    queryParams: tab === null ? route.queryParams : { ...route.queryParams, tab }
+  });
+}
+
 @NgModule({
   declarations: [
     AppComponent,
-    NavMenuComponent,
+    SideNavComponent,
+    TopBarComponent,
     HomeComponent,
     HomeAgendaComponent,
+    HomeMessagesComponent,
+    ChatThreadDialogComponent,
     CarComponent,
     CarFormComponent,
     CarDetailComponent,
+    CarQuickEditComponent,
     ModelCarComponent,
     ModelCarFormComponent,
     BrandComponent,
@@ -132,9 +155,9 @@ registerLocaleData(localeAr);
     SubscriptionPlanFormComponent,
     TeamComponent,
     MyAgencyComponent,
-    RentingComponent,
+    BookingComponent,
+    BookingDetailComponent,
     RentingFormComponent,
-    ReservationComponent,
     ReservationFormComponent,
     ExtraServiceTypeComponent,
     ExpenseTypeComponent,
@@ -158,7 +181,7 @@ registerLocaleData(localeAr);
     RatingStarsComponent,
     ClientAvatarComponent,
     QuickActionsComponent,
-    BookingCalendarComponent,
+
     MapPickerComponent,
     BranchesEditorComponent,
     PaymentDialogComponent,
@@ -179,7 +202,6 @@ registerLocaleData(localeAr);
     MatIconModule,
     MatFormFieldModule,
     MatInputModule,
-    MatToolbarModule,
     MatSelectModule,
     MatTooltipModule,
     MatTabsModule,
@@ -211,12 +233,20 @@ registerLocaleData(localeAr);
       { path: 'client/new', component: ClientFormComponent },
       { path: 'client/:id', component: ClientDetailComponent },
       { path: 'client/:id/edit', component: ClientFormComponent },
-      { path: 'renting', component: RentingComponent },
+      // Hires and holds are one screen (see BookingComponent) with the half in
+      // the URL, because a hold becomes a hire and the counter reads them as one
+      // list. The two old list routes only redirect now: every dashboard count,
+      // home tile and car/client history link points at them with the filter that
+      // produced its figure, and those filters have to survive the hop — which is
+      // why this is a function redirect rather than a plain string. The forms
+      // behind /:id are untouched, and the panel links to them.
+      { path: 'renting', redirectTo: toBookings(null), pathMatch: 'full' },
       { path: 'renting/new', component: RentingFormComponent },
       { path: 'renting/:id', component: RentingFormComponent },
-      { path: 'reservation', component: ReservationComponent },
+      { path: 'reservation', redirectTo: toBookings('reservations'), pathMatch: 'full' },
       { path: 'reservation/new', component: ReservationFormComponent },
       { path: 'reservation/:id', component: ReservationFormComponent },
+      { path: 'booking', component: BookingComponent },
       { path: 'extra-service-type', component: ExtraServiceTypeComponent },
       { path: 'expense-type', component: ExpenseTypeComponent },
       // Expenses are managed from the finance screen's payable tab now — the

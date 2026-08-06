@@ -1,0 +1,78 @@
+<ng-container *transloco="let t">
+  <div class="quick-head">
+    <div>
+      <h2 class="quick-title">{{ t('car.quickEdit.title') }}</h2>
+      <p class="quick-subtitle" *ngIf="car">
+        {{ carName }} <span class="num">{{ car.matricule }}</span>
+      </p>
+    </div>
+    <button mat-icon-button type="button" (click)="cancel()"
+            [matTooltip]="t('common.close')" [attr.aria-label]="t('common.close')">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <div class="quick-body">
+    <p class="hint" *ngIf="loading">{{ t('common.loading') }}</p>
+
+    <div *ngIf="errorMessage" class="error-banner">
+      <mat-icon>error_outline</mat-icon> {{ errorMessage }}
+    </div>
+
+    <form [formGroup]="form" class="quick-form" (ngSubmit)="save()" *ngIf="!loading && car">
+      <mat-form-field appearance="outline">
+        <mat-label>{{ t('common.status') }}</mat-label>
+        <mat-select formControlName="status">
+          <mat-option *ngFor="let status of statuses" [value]="status.value">
+            {{ t(status.labelKey) }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>{{ t('car.dailyRate') }}</mat-label>
+        <input matInput type="number" min="0" step="0.01" formControlName="dailyRate" />
+        <span matSuffix *ngIf="currency">&nbsp;{{ currency }}</span>
+        <mat-error *ngIf="form.get('dailyRate')?.hasError('min')">
+          {{ t('car.dailyRateMin') }}
+        </mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>{{ t('car.branch') }}</mat-label>
+        <mat-select formControlName="branchId">
+          <mat-option [value]="null">{{ t('common.none') }}</mat-option>
+          <mat-option *ngFor="let branch of branches" [value]="branch.id">
+            {{ branch.name }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>{{ t('car.mileage') }}</mat-label>
+        <input matInput type="number" min="0" step="1" formControlName="mileage" />
+        <span matSuffix>&nbsp;{{ t('common.km') }}</span>
+        <mat-hint>{{ t('car.mileageHint') }}</mat-hint>
+        <mat-error *ngIf="form.get('mileage')?.hasError('min')">
+          {{ t('car.mileageMin') }}
+        </mat-error>
+      </mat-form-field>
+
+      <!-- The rest of the record — the model, the plate, the photos — is a
+           correction rather than a fact about today, and stays on the form. -->
+      <p class="quick-more">
+        <a [routerLink]="['/car', data.carId, 'edit']" (click)="cancel()">
+          {{ t('car.quickEdit.fullForm') }} →
+        </a>
+      </p>
+    </form>
+  </div>
+
+  <div class="quick-foot">
+    <button mat-button type="button" (click)="cancel()">{{ t('common.cancel') }}</button>
+    <button mat-raised-button color="primary" type="button" (click)="save()"
+            [disabled]="saving || loading || !car">
+      {{ saving ? t('common.saving') : t('common.save') }}
+    </button>
+  </div>
+</ng-container>

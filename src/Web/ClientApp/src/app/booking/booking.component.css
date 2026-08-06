@@ -1,0 +1,352 @@
+/* The bookings screen: two tabs over one list of cards, and a toolbar that
+   decides the order they come in.
+
+   The page frame, the toolbar strip (`.filter-row`), the chips, the status pills
+   and the "waiting on you" bar all come from styles.scss; only what is unique to
+   this screen is here. There is no global `box-sizing`, so anything given both a
+   width and padding sets its own. */
+
+/* ------------------------------------------------------------------ tabs ---- */
+
+/* Underlined tabs rather than mat-tab-group: the two halves are separate
+   queries, not two panels of content to keep alive side by side, and the tab is
+   in the URL so the browser's back button steps between them. */
+.booking-tabs {
+  display: flex;
+  gap: var(--sp-1);
+  border-bottom: 1px solid var(--line);
+}
+
+.booking-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  box-sizing: border-box;
+  padding: var(--sp-3) var(--sp-4);
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: none;
+  color: var(--muted);
+  font: var(--fw-medium) var(--fs-body) / 1 var(--font-body);
+  cursor: pointer;
+}
+
+.booking-tab:hover {
+  color: var(--ink);
+}
+
+.booking-tab.active {
+  color: var(--brand-600);
+  border-bottom-color: var(--brand-600);
+}
+
+.booking-tab .mat-icon {
+  width: 18px;
+  height: 18px;
+  font-size: 18px;
+}
+
+/* --------------------------------------------------------------- toolbar ---- */
+
+.booking-toolbar {
+  box-sizing: border-box;
+}
+
+/* Sort: chrome, not a page action. */
+.tool-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  box-sizing: border-box;
+  height: var(--h-control-sm);
+  padding: 0 var(--sp-3);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r);
+  background: var(--surface);
+  color: var(--ink-2);
+  font: var(--fw-medium) var(--fs-sm) / 1 var(--font-body);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.tool-btn:hover {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+
+.tool-btn .mat-icon {
+  width: 18px;
+  height: 18px;
+  font-size: 18px;
+}
+
+.tool-btn .tool-dir {
+  color: var(--muted);
+}
+
+/* Drawn by hand rather than as a mat-form-field, because a 56px form field in a
+   50px toolbar is the wrong shape. */
+.booking-search {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  box-sizing: border-box;
+  flex: 1 1 240px;
+  max-width: 340px;
+  height: var(--h-control-sm);
+  padding: 0 var(--sp-3);
+  background: var(--surface-2);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r);
+  color: var(--muted);
+}
+
+.booking-search:focus-within {
+  border-color: var(--brand-500);
+  color: var(--ink);
+}
+
+.booking-search > .mat-icon {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  font-size: 18px;
+}
+
+.booking-search input {
+  flex: 1 1 auto;
+  min-width: 0;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  font: var(--fw-normal) var(--fs-sm) / 1 var(--font-body);
+  outline: none;
+}
+
+.booking-search input::placeholder {
+  color: var(--muted);
+}
+
+.search-clear {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.search-clear:hover {
+  background: var(--overlay);
+  color: var(--ink);
+}
+
+.search-clear .mat-icon {
+  width: 16px;
+  height: 16px;
+  font-size: 16px;
+}
+
+/* ----------------------------------------------------------------- cards ---- */
+
+.booking-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.booking-card {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  box-sizing: border-box;
+  padding-inline-end: var(--sp-2);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+}
+
+.booking-card:hover {
+  border-color: var(--line-strong);
+  background: var(--surface-2);
+}
+
+/* The "waiting on you" bar, restated.
+ *
+ * styles.scss already defines `.needs-action`, but it cannot win here: that is a
+ * single class, while `.booking-card` above comes from a COMPONENT stylesheet,
+ * which Angular rewrites with an extra `[_ngcontent-…]` attribute — so the plain
+ * `border` shorthand outranks the shared rule and the bar silently never paints.
+ * Same specificity as the card and its hover, declared after both.
+ *
+ * The tokens are the shared ones, so this stays one pattern rather than a second
+ * look: amber for a deadline that is coming, red for one already missed. */
+.booking-card.needs-action {
+  border-inline-start: var(--accent-bar) solid var(--warn);
+  /* One heavy edge ⇒ no radius on that side. A rounded corner on a single-sided
+     border is a rendering artefact, not a style. */
+  border-start-start-radius: 0;
+  border-end-start-radius: 0;
+  background: var(--row-attention);
+}
+
+.booking-card.needs-action.is-overdue {
+  border-inline-start-color: var(--danger);
+  background: var(--row-overdue);
+}
+
+/* Hover repaints border-color on all four sides, so the bar has to be re-stated
+   above it or it goes grey under the pointer. */
+.booking-card.needs-action:hover {
+  border-inline-start-color: var(--warn);
+}
+
+.booking-card.needs-action.is-overdue:hover {
+  border-inline-start-color: var(--danger);
+}
+
+/* The card body is one button: the whole row opens the booking, and the icon
+   buttons beside it are the exceptions. A <button> rather than an <a> because
+   the target is a panel, not a page — there is no URL to middle-click. */
+.booking-open {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  flex: 1 1 auto;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: var(--sp-4);
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.booking-open:focus-visible {
+  outline: 2px solid var(--brand-500);
+  outline-offset: -2px;
+  border-radius: var(--r-lg);
+}
+
+/* Who and what: the pair that identifies the booking, so it takes the room the
+   other three do not need. */
+.booking-who {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.booking-client {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.booking-car {
+  font-size: var(--fs-micro);
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.booking-when {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 0 0 auto;
+  text-align: center;
+  min-width: 130px;
+}
+
+.booking-when-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+}
+
+.booking-when-value {
+  font-size: var(--fs-label);
+  font-weight: var(--fw-medium);
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+.booking-money {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 0 0 auto;
+  text-align: end;
+  min-width: 110px;
+}
+
+.booking-amount {
+  font-size: var(--fs-body);
+  font-weight: var(--fw-medium);
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+.booking-note {
+  font-size: var(--fs-micro);
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.booking-state {
+  flex: 0 0 auto;
+  min-width: 96px;
+  text-align: end;
+}
+
+.booking-actions {
+  display: flex;
+  align-items: center;
+  flex: none;
+}
+
+/* An empty list is an invitation, not a report; the shared rule gives it room. */
+.booking-list .empty-row {
+  margin: 0;
+}
+
+/* On a narrow screen the four blocks stack: the period and the money keep their
+   own lines rather than being squeezed into a column that fits neither. */
+@media (max-width: 767px) {
+  .booking-open {
+    flex-wrap: wrap;
+    gap: var(--sp-2) var(--sp-4);
+  }
+
+  .booking-who {
+    flex: 1 1 100%;
+  }
+
+  .booking-when,
+  .booking-money,
+  .booking-state {
+    flex: 0 0 auto;
+    min-width: 0;
+    text-align: start;
+  }
+
+  .booking-when {
+    flex-direction: row;
+    align-items: baseline;
+    gap: var(--sp-2);
+  }
+}

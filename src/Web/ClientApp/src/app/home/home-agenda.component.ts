@@ -1,291 +1,342 @@
-import { Component, EventEmitter, OnInit, Output, inject } from '@angular/core';
+import { Component, Input, OnChanges, OnInit, SimpleChanges, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { Observable } from 'rxjs';
 import { AuthService } from '../shared/auth.service';
 import { BookingActionOutcome, BookingActionsService } from '../shared/booking-actions.service';
 import { LateNoticeService } from '../shared/late-notice.service';
-import { toUtcDateInput } from '../shared/form-utils';
+
 import {
-  RentingDateBasis, RentingDto, RentingState, RentingsClient,
-  ReservationDto, ReservationStatus, ReservationsClient
+  BookingCalendarEventDto, BookingCalendarEventKind, DashboardClient,
+  RentingDto, RentingsClient, ReservationDto, ReservationStatus
 } from '../web-api-client';
+import { wallClockNow } from '../shared/form-utils';
 
 /**
- * The desk's work queue on the home screen: the holds waiting for someone to say
- * yes, the cars that should already be back, and what today asks for. Three
- * questions the agency opens the app to answer, each answered with the rows
- * themselves and the button that deals with them — so approving a request or
- * taking a car back never needs the list screen at all.
+ * The agenda on the landing screen: what leaves, what comes back, and which holds
+ * start — by day, by week or by month.
  *
- * Each queue is its own query, gated by the module it reads, so a user who may
- * see hires but not holds gets the two renting queues and no third. The actions
- * come from BookingActionsService — the same ones the bookings lists put on their
- * rows, prompts and failure wording included.
+ * One source for all three views (GET /api/Dashboard/calendar), because they are
+ * three readings of the same question and fetching them separately would let the
+ * month disagree with the day inside it. The window is what changes: a day, the
+ * seven days of its week, or the whole month grid.
  *
- * Dates: the API's are wall-clock values stamped UTC (see form-utils), so "today"
- * is the browser's calendar day sent as UTC midnight — exactly what the booking
- * calendar does, and what makes a car booked out on the 5th belong to the 5th
- * whatever the offset.
+ * The day view is where the desk works, so its rows carry the action itself —
+ * handing the car over, taking it back, saying yes to a hold — through
+ * BookingActionsService, the same actions the bookings lists put on their rows.
+ * The week and month views are for looking ahead, so they navigate instead.
+ *
+ * Dates: the API's are wall-clock values stamped UTC (see form-utils), so a day
+ * is a calendar day read with the UTC parts and sent as UTC midnight — which is
+ * what makes a car booked out on the 5th belong to the 5th whatever the offset.
  */
 
-/** What a queue's figure is, for the home screen's own tiles to reuse. */
-export interface AgendaCounts {
-  /** Holds awaiting the agency: the "Requests to confirm" tile's number. */
-  pendingReservations?: number;
+export type AgendaView = 'day' | 'week' | 'month';
+
+/** One day's column in the week grid, or one cell of the month grid. */
+export interface AgendaDay {
+  /** UTC midnight of the day. */
+  on: Date;
+  /** Outside the month being drawn — a leading or trailing grid cell. */
+  padding: boolean;
+  isToday: boolean;
+  events: BookingCalendarEventDto[];
+  out: number;
+  back: number;
 }
 
-/** One thing today asks for. Rentings and holds land in one list, by time. */
-export interface TodayRow {
-  kind: 'pickup' | 'return' | 'request';
-  /** The moment it is due — a pickup's start, a return's end, a hold's start. */
-  when?: Date;
-  /** Exactly one of the two is set, following `kind`. */
-  renting?: RentingDto;
-  reservation?: ReservationDto;
-}
-
-// Rows per queue. A queue is a peek at the top of a list, not the list: what does
-// not fit is reached through the "see all" link, which carries the same filter.
-const QUEUE_ROWS = 4;
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
 @Component({
   selector: 'app-home-agenda',
   templateUrl: './home-agenda.component.html',
   styleUrls: ['./home-agenda.component.css']
 })
-export class HomeAgendaComponent implements OnInit {
+export class HomeAgendaComponent implements OnInit, OnChanges {
   private readonly auth = inject(AuthService);
-  private readonly reservationsClient = inject(ReservationsClient);
+  private readonly dashboard = inject(DashboardClient);
   private readonly rentingsClient = inject(RentingsClient);
   private readonly actions = inject(BookingActionsService);
   private readonly lateNotice = inject(LateNoticeService);
   private readonly router = inject(Router);
 
-  /**
-   * The figures this component already asked the server for. The home screen's
-   * "Requests to confirm" tile counts exactly what the first queue counts, so it
-   * takes the number from here rather than repeating the query.
-   */
-  @Output() counts = new EventEmitter<AgendaCounts>();
+  /** The branch the whole screen is scoped to, or null for the whole agency. */
+  @Input() branchId: number | null = null;
 
-  // --- The three queues -----------------------------------------------------
+  view: AgendaView = 'day';
+  /** Days, weeks or months from today, following `view`. */
+  offset = 0;
 
-  /** Holds awaiting the agency, soonest pickup first. */
-  pending: ReservationDto[] = [];
-  pendingTotal = 0;
-
-  /** Hires still out that were due back before today, longest overdue first. */
-  overdue: RentingDto[] = [];
-  overdueTotal = 0;
-
-  /** Today's pickups, returns and holds in one list, by the hour they are due. */
-  today: TodayRow[] = [];
-  todayPickups = 0;
-  todayReturns = 0;
-  todayRequests = 0;
-
-  loading = 0;
-  /** Shown once, above the queues: an action's refusal, or a late notice's outcome. */
+  loading = false;
+  /** An action's refusal, or what a late notice actually did. Clears itself. */
   message = '';
 
-  // What this user may see and do. A queue whose module is off or unreadable is
-  // not rendered at all; an action the user lacks the write permission for is
-  // left off its row, which still links to the record.
-  canReadReservations = false;
-  canReadRentings = false;
+  /** The window on screen, and what fell inside it. */
+  events: BookingCalendarEventDto[] = [];
+  days: AgendaDay[] = [];
+  from = startOfToday();
+  to = addDays(startOfToday(), 1);
+  truncated = false;
+
+  // What this user may do. What they may SEE is decided by the server, which
+  // omits the half of the calendar their modules do not cover.
   canActOnReservations = false;
   canActOnRentings = false;
   canRemind = false;
 
-  readonly ReservationStatus = ReservationStatus;
-
-  // The window every "today" query and link is built from: [today, tomorrow).
-  // `today0` is public because the heading names the day — read with the UTC
-  // parts (`date:'…':'UTC'`), since that is where its calendar day lives.
   readonly today0 = startOfToday();
-  private readonly tomorrow0 = addDays(this.today0, 1);
+  readonly Kind = BookingCalendarEventKind;
+  readonly ReservationStatus = ReservationStatus;
 
   ngOnInit() {
     this.auth.currentUser$.subscribe(user => {
-      this.canReadReservations =
-        AuthService.canAccessModule(user, 'Reservations', 'Reservation.Read');
       this.canActOnReservations =
         AuthService.canAccessModule(user, 'Reservations', 'Reservation.Update');
-      this.canReadRentings = AuthService.canAccessModule(user, 'Rentings', 'Renting.Read');
       this.canActOnRentings = AuthService.canAccessModule(user, 'Rentings', 'Renting.Update');
       this.canRemind = AuthService.canAccessModule(user, 'Notifications', 'Notification.Send');
-
-      this.load();
     });
+
+    this.load();
   }
 
-  /** Whether there is any queue to draw at all (see the permissions above). */
-  get isVisible(): boolean {
-    return this.canReadReservations || this.canReadRentings;
+  ngOnChanges(changes: SimpleChanges) {
+    // The branch picker moved: the agenda is scoped by it like everything else on
+    // the screen. Skipped on the first pass, which ngOnInit already loads.
+    if (changes['branchId'] && !changes['branchId'].firstChange) this.load();
   }
 
-  /** Nothing anywhere — said once, rather than as three empty cards. */
-  get isAllClear(): boolean {
-    return !this.loading && !this.pendingTotal && !this.overdueTotal && !this.today.length;
+  // --- The window -----------------------------------------------------------
+
+  setView(view: AgendaView) {
+    if (view === this.view) return;
+
+    // Back to today rather than "the same offset in the new unit": three months
+    // ahead is not where somebody switching from day to month meant to land.
+    this.view = view;
+    this.offset = 0;
+    this.load();
+  }
+
+  shift(step: number) {
+    this.offset += step;
+    this.load();
+  }
+
+  today() {
+    if (this.offset === 0) return;
+    this.offset = 0;
+    this.load();
+  }
+
+  /** A month cell opens that day, which is where the actions are. */
+  openDay(day: AgendaDay) {
+    this.view = 'day';
+    this.offset = Math.round((day.on.getTime() - this.today0.getTime()) / MS_PER_DAY);
+    this.load();
+  }
+
+  get isToday(): boolean {
+    return this.view === 'day' && this.offset === 0;
   }
 
   // --- Loading --------------------------------------------------------------
 
-  private load() {
-    if (this.canReadReservations) {
-      this.loadPending();
-      this.loadTodayRequests();
-    }
-
-    if (this.canReadRentings) {
-      this.loadOverdue();
-      this.loadTodayRentings(RentingState.NotYet, RentingDateBasis.Starts, 'pickup');
-      this.loadTodayRentings(RentingState.InProgress, RentingDateBasis.Ends, 'return');
-    }
-  }
-
-  /** Every queue again, after an action moved something. */
   reload() {
-    this.pending = [];
-    this.overdue = [];
-    this.today = [];
-    this.pendingTotal = 0;
-    this.overdueTotal = 0;
-    this.todayPickups = 0;
-    this.todayReturns = 0;
-    this.todayRequests = 0;
     this.load();
   }
 
-  private loadPending() {
-    // Soonest pickup first: the request for tomorrow is the one that has to be
-    // answered today, whatever order the requests arrived in.
-    this.track(
-      this.reservationsClient.getReservations(
-        1, QUEUE_ROWS, null, null, ReservationStatus.PendingConfirmation,
-        null, null, false, 'period', false),
-      result => {
-        this.pending = result.items ?? [];
-        this.pendingTotal = result.totalCount ?? 0;
-        this.counts.emit({ pendingReservations: this.pendingTotal });
-      });
-  }
+  private load() {
+    const [from, to] = this.window();
+    this.from = from;
+    this.to = to;
+    this.loading = true;
 
-  private loadOverdue() {
-    // Due back strictly before today. A hire due later today is not late yet — it
-    // is in the "today" queue, which is where the desk should read it from.
-    this.track(
-      this.rentingsClient.getRentings(
-        1, QUEUE_ROWS, null, null, RentingState.InProgress,
-        null, this.today0, RentingDateBasis.Ends, false, 'enddate', false),
-      result => {
-        this.overdue = result.items ?? [];
-        this.overdueTotal = result.totalCount ?? 0;
-      });
-  }
-
-  private loadTodayRentings(
-    state: RentingState, basis: RentingDateBasis, kind: 'pickup' | 'return') {
-    this.track(
-      this.rentingsClient.getRentings(
-        1, QUEUE_ROWS, null, null, state,
-        this.today0, this.tomorrow0, basis, false,
-        basis === RentingDateBasis.Ends ? 'enddate' : 'period', false),
-      result => {
-        const total = result.totalCount ?? 0;
-        if (kind === 'pickup') { this.todayPickups = total; } else { this.todayReturns = total; }
-
-        this.addToday((result.items ?? []).map(renting => ({
-          kind,
-          when: kind === 'pickup' ? renting.startDate : renting.endDate,
-          renting
-        })));
-      });
-  }
-
-  private loadTodayRequests() {
-    // Holds starting today that are still in play — a rejected or already
-    // converted one is a row, not a job (see the query's ActiveOnly).
-    this.track(
-      this.reservationsClient.getReservations(
-        1, QUEUE_ROWS, null, null, null,
-        this.today0, this.tomorrow0, true, 'period', false),
-      result => {
-        this.todayRequests = result.totalCount ?? 0;
-
-        this.addToday((result.items ?? []).map(reservation => ({
-          kind: 'request' as const,
-          when: reservation.startDate,
-          reservation
-        })));
-      });
-  }
-
-  // Three queries fill one list, so it is re-sorted as each answers — and kept to
-  // the same depth as a single-source queue, or a busy morning of pickups would
-  // push the day's returns off the card.
-  private addToday(rows: TodayRow[]) {
-    this.today = [...this.today, ...rows]
-      .sort((a, b) => (a.when?.getTime() ?? 0) - (b.when?.getTime() ?? 0))
-      .slice(0, QUEUE_ROWS * 2);
-  }
-
-  // A count rather than a flag: the queues load in parallel, and the bar stays up
-  // until the last of them has answered. A failed query leaves its queue empty and
-  // says nothing — the landing page is not the place for a banner about one card
-  // (the lists themselves report their own failures).
-  private track<T>(request: Observable<T>, apply: (value: T) => void) {
-    this.loading++;
-
-    request.subscribe({
-      next: value => {
-        this.loading--;
-        apply(value);
+    this.dashboard.getBookingCalendar(from, to, this.branchId).subscribe({
+      next: result => {
+        this.loading = false;
+        this.events = result.events ?? [];
+        this.truncated = result.isTruncated === true;
+        this.days = this.buildDays(from, to);
       },
+      // The landing page is not the place for a banner about one panel; the lists
+      // it links to report their own failures.
       error: err => {
-        this.loading--;
+        this.loading = false;
+        this.events = [];
+        this.days = this.buildDays(from, to);
         console.error(err);
       }
     });
   }
 
+  /** Half-open [from, to) for the current view and offset. */
+  private window(): [Date, Date] {
+    if (this.view === 'day') {
+      const day = addDays(this.today0, this.offset);
+      return [day, addDays(day, 1)];
+    }
+
+    if (this.view === 'week') {
+      const monday = addDays(startOfWeek(this.today0), this.offset * 7);
+      return [monday, addDays(monday, 7)];
+    }
+
+    // The whole month GRID, adjacent-month days included, so the leading and
+    // trailing cells are populated rather than blank.
+    const first = startOfMonth(this.today0, this.offset);
+    const gridStart = startOfWeek(first);
+    const next = startOfMonth(this.today0, this.offset + 1);
+    const gridEnd = addDays(startOfWeek(addDays(next, -1)), 7);
+
+    return [gridStart, gridEnd];
+  }
+
+  /**
+   * The month being drawn. Named by the heading, and what decides which grid
+   * cells are the previous or next month's padding — the window itself starts on
+   * a Monday that is often in the month before.
+   */
+  get monthShown(): Date {
+    return startOfMonth(this.today0, this.offset);
+  }
+
+  private buildDays(from: Date, to: Date): AgendaDay[] {
+    if (this.view === 'day') return [];
+
+    const month = this.monthShown;
+    const days: AgendaDay[] = [];
+
+    for (let on = from; on < to; on = addDays(on, 1)) {
+      const events = this.eventsOn(on);
+
+      days.push({
+        on,
+        padding: this.view === 'month' && on.getUTCMonth() !== month.getUTCMonth(),
+        isToday: on.getTime() === this.today0.getTime(),
+        events,
+        out: events.filter(e => this.isOut(e)).length,
+        back: events.filter(e => e.kind === BookingCalendarEventKind.Return).length,
+      });
+    }
+
+    return days;
+  }
+
+  /** The day's entries, in the order they fall due. */
+  eventsOn(day: Date): BookingCalendarEventDto[] {
+    return this.events.filter(e => e.on && sameUtcDay(e.on, day));
+  }
+
+  /** The day view's rows: the whole window, which is one day. */
+  get rows(): BookingCalendarEventDto[] {
+    return this.events;
+  }
+
+  // --- Reading an entry -----------------------------------------------------
+
+  /** A car leaving: a hire's pickup, or a hold that starts. */
+  isOut(event: BookingCalendarEventDto): boolean {
+    return event.kind !== BookingCalendarEventKind.Return;
+  }
+
+  /** The car, however much of it the entry knows. */
+  carLabel(event: BookingCalendarEventDto): string {
+    return event.carMatricule || event.carModelName || '';
+  }
+
+  kindLabelKey(event: BookingCalendarEventDto): string {
+    switch (event.kind) {
+      case BookingCalendarEventKind.Pickup: return 'calendar.pickup';
+      case BookingCalendarEventKind.Return: return 'calendar.return';
+      default: return 'calendar.request';
+    }
+  }
+
+  /** The first name alone — a week column is 100px wide. */
+  shortName(event: BookingCalendarEventDto): string {
+    return (event.clientName ?? '').trim().split(/\s+/)[0] ?? '';
+  }
+
+  /**
+   * Its hour has gone by, so it stops competing with what is still to do.
+   * Compared against the wall clock rebuilt as a UTC instant, not against
+   * Date.now(): the API's times are wall-clock values stamped UTC, and comparing
+   * the two directly is wrong by the browser's offset — a whole morning of rows
+   * would grey out at once in Casablanca in summer.
+   */
+  isPast(event: BookingCalendarEventDto): boolean {
+    return !event.isLate && !!event.on && event.on.getTime() < wallClockNow();
+  }
+
+  /** Whether this row still has something the desk does to it. */
+  canAct(event: BookingCalendarEventDto): boolean {
+    if (event.rentingId) return this.canActOnRentings;
+    return this.canActOnReservations;
+  }
+
   // --- Acting ---------------------------------------------------------------
 
-  confirm(reservation: ReservationDto) {
-    this.apply(this.actions.confirmReservation(reservation));
-  }
+  /**
+   * Hands the car over. The hire is re-read first: the odometer the prompt offers
+   * and the row version it writes with are not on a calendar entry, and acting on
+   * a figure the panel has been holding since page load is how a stale reading
+   * gets recorded as a real one.
+   */
+  start(event: BookingCalendarEventDto) {
+    if (!event.rentingId) return;
 
-  reject(reservation: ReservationDto) {
-    this.apply(this.actions.rejectReservation(reservation));
-  }
-
-  convert(reservation: ReservationDto) {
-    this.actions.convertReservation(reservation).subscribe(outcome => {
-      // Straight into the hire it became: converting is the start of handing the
-      // car over, and the renting page is where the rest of it happens.
-      if (outcome.rentingId) {
-        this.router.navigate(['/renting', outcome.rentingId]);
-        return;
+    this.rentingsClient.getRentingById(event.rentingId).subscribe({
+      next: renting => this.apply(this.actions.startRenting(renting)),
+      error: err => {
+        console.error(err);
+        this.reload();
       }
-
-      this.handle(outcome);
     });
   }
 
-  start(renting: RentingDto) {
-    this.apply(this.actions.startRenting(renting));
+  /** Takes the car back. The dialog re-reads the hire itself, so the id is enough. */
+  takeBack(event: BookingCalendarEventDto) {
+    if (!event.rentingId) return;
+
+    this.apply(this.actions.returnRenting(new RentingDto({
+      id: event.rentingId,
+      carMatricule: event.carMatricule,
+      carModelName: event.carModelName,
+      clientName: event.clientName,
+    })));
   }
 
-  takeBack(renting: RentingDto) {
-    this.apply(this.actions.returnRenting(renting));
+  confirm(event: BookingCalendarEventDto) {
+    if (!event.reservationId) return;
+    this.apply(this.actions.confirmReservation(new ReservationDto({ id: event.reservationId })));
+  }
+
+  reject(event: BookingCalendarEventDto) {
+    if (!event.reservationId) return;
+    this.apply(this.actions.rejectReservation(new ReservationDto({ id: event.reservationId })));
+  }
+
+  convert(event: BookingCalendarEventDto) {
+    if (!event.reservationId) return;
+
+    this.actions.convertReservation(new ReservationDto({ id: event.reservationId }))
+      .subscribe(outcome => {
+        // Straight into the hire it became: converting is the start of handing the
+        // car over, and the renting page is where the rest of it happens.
+        if (outcome.rentingId) {
+          this.router.navigate(['/renting', outcome.rentingId]);
+          return;
+        }
+
+        this.handle(outcome);
+      });
   }
 
   /** Tells the client their car is overdue. Asks first — this writes to a customer. */
-  remind(renting: RentingDto) {
-    if (!renting.clientId) return;
+  remind(event: BookingCalendarEventDto) {
+    if (!event.clientId || !event.rentingId) return;
 
     this.lateNotice
-      .confirmAndSend(renting.clientName ?? '', renting.clientId, renting.id)
+      .confirmAndSend(event.clientName ?? '', event.clientId, event.rentingId)
       .subscribe(message => {
         if (message) this.show(message);
       });
@@ -305,107 +356,18 @@ export class HomeAgendaComponent implements OnInit {
     setTimeout(() => this.message = '', 6000);
   }
 
-  // --- Presentation ---------------------------------------------------------
+  // --- Where an entry leads -------------------------------------------------
 
-  /** The car, however much of it the row knows — the calendar's reading. */
-  carLabel(row: RentingDto | ReservationDto): string {
-    return row.carMatricule || row.carModelName || '';
-  }
-
-  /** Whole days between the hire's return date and today, at least one. */
-  daysOverdue(renting: RentingDto): number {
-    if (!renting.endDate) return 0;
-
-    const due = Date.UTC(
-      renting.endDate.getUTCFullYear(), renting.endDate.getUTCMonth(), renting.endDate.getUTCDate());
-    const days = Math.floor((this.today0.getTime() - due) / MS_PER_DAY);
-
-    return Math.max(days, 1);
-  }
-
-  /** A pending hold that lapses today, which the desk should answer first. */
-  isExpiringToday(reservation: ReservationDto): boolean {
-    return !!reservation.expiresAt && reservation.expiresAt < this.tomorrow0;
-  }
-
-  /** What a hold's own status is called — the reservation list's wording, reused. */
-  statusLabelKey(status?: ReservationStatus): string {
-    return status === undefined ? '' : RESERVATION_STATUS_KEYS[status] ?? '';
-  }
-
-  /** Chip tone, matching the bookings lists: awaiting the agency reads as a warning. */
-  statusClass(status?: ReservationStatus): string {
-    return status === ReservationStatus.PendingConfirmation ? 'warn' : 'info';
-  }
-
-  icon(kind: TodayRow['kind']): string {
-    switch (kind) {
-      case 'pickup': return 'logout';
-      case 'return': return 'login';
-      default: return 'event_available';
-    }
-  }
-
-  /** The calendar's words for the three kinds, reused rather than re-invented. */
-  kindLabelKey(kind: TodayRow['kind']): string {
-    switch (kind) {
-      case 'pickup': return 'calendar.pickup';
-      case 'return': return 'calendar.return';
-      default: return 'calendar.request';
-    }
-  }
-
-  // --- Where each queue's "see all" goes ------------------------------------
-  // Every link carries the filter its figure was counted with, so the list opens
-  // showing exactly the rows the card showed (see shared/list-filters).
-
-  readonly rentingLink = ['/renting'];
-  readonly reservationLink = ['/reservation'];
-
-  readonly pendingParams = { status: 'PendingConfirmation' };
-
-  get overdueParams() {
-    return { state: 'InProgress', dateBasis: 'Ends', to: toUtcDateInput(this.today0) };
-  }
-
-  get todayPickupParams() {
-    return { state: 'NotYet', dateBasis: 'Starts', ...this.todayWindow };
-  }
-
-  get todayReturnParams() {
-    return { state: 'InProgress', dateBasis: 'Ends', ...this.todayWindow };
-  }
-
-  get todayRequestParams() {
-    return { active: 'true', ...this.todayWindow };
-  }
-
-  private get todayWindow(): { from: string; to: string } {
-    // The dates as the lists read them (`yyyy-MM-dd`, parsed back to the UTC
-    // midnights these queries were sent with — hence the UTC parts, not the local
-    // ones, which are a day out in a negative offset).
-    return { from: toUtcDateInput(this.today0), to: toUtcDateInput(this.tomorrow0) };
+  link(event: BookingCalendarEventDto): unknown[] {
+    return event.rentingId ? ['/renting', event.rentingId] : ['/reservation', event.reservationId];
   }
 }
 
-// The enum → transloco key map the reservation list uses, so a hold is called the
-// same thing here as it is there.
-const RESERVATION_STATUS_KEYS: Record<ReservationStatus, string> = {
-  [ReservationStatus.PendingConfirmation]: 'enums.reservationStatus.pendingConfirmation',
-  [ReservationStatus.Confirmed]: 'enums.reservationStatus.confirmed',
-  [ReservationStatus.Paid]: 'enums.reservationStatus.paid',
-  [ReservationStatus.Converted]: 'enums.reservationStatus.converted',
-  [ReservationStatus.Rejected]: 'enums.reservationStatus.rejected',
-  [ReservationStatus.Cancelled]: 'enums.reservationStatus.cancelled',
-  [ReservationStatus.Expired]: 'enums.reservationStatus.expired'
-};
-
-const MS_PER_DAY = 24 * 60 * 60 * 1000;
+// --- The calendar arithmetic, all in UTC parts -------------------------------
 
 /**
  * The browser's calendar day as UTC midnight — the instant the API reads a date
- * as (see form-utils' fromDateInput) and the one the lists' `?from=`/`?to=`
- * params parse back to.
+ * as (see form-utils' fromDateInput).
  */
 function startOfToday(): Date {
   const now = new Date();
@@ -414,4 +376,19 @@ function startOfToday(): Date {
 
 function addDays(date: Date, days: number): Date {
   return new Date(date.getTime() + days * MS_PER_DAY);
+}
+
+/** Monday of the week a day falls in. */
+function startOfWeek(date: Date): Date {
+  return addDays(date, -((date.getUTCDay() + 6) % 7));
+}
+
+function startOfMonth(anchor: Date, monthsAhead: number): Date {
+  return new Date(Date.UTC(anchor.getUTCFullYear(), anchor.getUTCMonth() + monthsAhead, 1));
+}
+
+function sameUtcDay(a: Date, b: Date): boolean {
+  return a.getUTCFullYear() === b.getUTCFullYear()
+      && a.getUTCMonth() === b.getUTCMonth()
+      && a.getUTCDate() === b.getUTCDate();
 }

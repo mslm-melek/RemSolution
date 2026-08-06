@@ -56,7 +56,9 @@
     "description": "Description",
     "loading": "Chargement…",
     "view": "Voir",
+    "viewAll": "Voir tout",
     "open": "Ouvrir",
+    "close": "Fermer",
     "upload": "Téléverser",
     "uploading": "Téléversement…",
     "replace": "Remplacer",
@@ -121,7 +123,8 @@
     "finance": "Finances",
     "clientsList": "Tous les clients",
     "myRentings": "Mes locations",
-    "myAgency": "Mon agence"
+    "myAgency": "Mon agence",
+    "mainLabel": "Navigation principale"
   },
   "home": {
     "welcomeTitle": "Bienvenue sur RemSolution",
@@ -195,7 +198,7 @@
     "welcomeBackNamed": "Bon retour, {{ name }}",
     "deskSubtitle": "Voici ce qu'il y a à faire aujourd'hui.",
     "agenda": {
-      "title": "À traiter",
+      "title": "Agenda",
       "toValidate": "Demandes à valider",
       "noneToValidate": "Aucune demande en attente.",
       "expiringToday": "Expire aujourd'hui",
@@ -208,7 +211,71 @@
       "allClear": "Rien en attente — aucune demande, aucun retard, rien pour aujourd'hui.",
       "pickupsLink": "Départs ({{ count }})",
       "returnsLink": "Retours ({{ count }})",
-      "requestsLink": "Demandes ({{ count }})"
+      "requestsLink": "Demandes ({{ count }})",
+      "view": "Vue de l’agenda",
+      "day": "Jour",
+      "week": "Semaine",
+      "month": "Mois",
+      "goingOut": "Départs",
+      "comingBack": "Retours",
+      "previous": "Précédent",
+      "next": "Suivant",
+      "todayNamed": "Aujourd’hui · {{ date }}",
+      "backToToday": "Revenir à aujourd’hui",
+      "toConfirm": "À confirmer"
+    },
+    "greeting": {
+      "morning": "Bonjour",
+      "morningNamed": "Bonjour {{ name }}",
+      "afternoon": "Bon après-midi",
+      "afternoonNamed": "Bon après-midi {{ name }}",
+      "evening": "Bonsoir",
+      "eveningNamed": "Bonsoir {{ name }}"
+    },
+    "fleetFreeOf": "voitures libres sur {{ total }}",
+    "updatedNow": "mis à jour à l’instant",
+    "updatedAgo": "mis à jour il y a {{ minutes }} min",
+    "refresh": "actualiser",
+    "glance": "La journée en un coup d’œil",
+    "needsAnswer": "En attente de votre réponse",
+    "nothingWaiting": "Rien ne vous attend.",
+    "shortcuts": "Vos raccourcis",
+    "stat": {
+      "bookingsToday": "Départs aujourd’hui",
+      "stillToConfirm": "{{ count }} à confirmer",
+      "returnsToday": "Retours aujourd’hui",
+      "beforeNoon": "{{ count }} avant midi",
+      "late": "Retours en retard",
+      "hoursLate": "{{ hours }} h de retard",
+      "nothingOverdue": "aucun retard",
+      "expectedToday": "Encaissements attendus",
+      "outstanding": "{{ amount }} {{ currency }} d’impayés"
+    },
+    "todo": {
+      "requests": "Demandes à traiter",
+      "oldestWaiting": "la plus ancienne attend {{ hours }} h",
+      "payables": "Dépenses à régler",
+      "payableCount": "{{ count }} impayée(s)",
+      "seeAll": "Voir les {{ count }}"
+    },
+    "due": {
+      "title": "Dépenses à prévoir",
+      "carCount": "{{ count }} voiture(s)",
+      "none": "Aucune voiture n’a d’échéance.",
+      "ruleMonths": "tous les {{ months }} mois",
+      "ruleDistance": "tous les {{ km }} km",
+      "ruleBoth": "tous les {{ months }} mois ou {{ km }} km",
+      "overKm": "{{ km }} km de dépassement",
+      "inKm": "dans {{ km }} km",
+      "overdueSince": "échue le {{ date }}",
+      "dueIn": "échéance le {{ date }}",
+      "record": "Enregistrer"
+    },
+    "messages": {
+      "title": "Messages",
+      "unread": "{{ count }} non lu(s) dans {{ threads }} conversation(s)",
+      "allCaughtUp": "tout est lu",
+      "openInbox": "Ouvrir la messagerie"
     }
   },
   "brand": {
@@ -255,6 +322,25 @@
       "rentings": "Locations",
       "vehicle": "Véhicule"
     },
+    "overview": {
+      "utilization": "Taux d'utilisation",
+      "daysOut": "{{ days }} jours loués sur {{ total }}",
+      "revenue": "Recettes",
+      "lastDays": "{{ days }} derniers jours",
+      "rating": "Note",
+      "reviews": "{{ count }} avis",
+      "bookings": "En cours et à venir",
+      "noBookings": "Aucune réservation sur cette voiture.",
+      "viewAllRentings": "Voir les {{ count }} locations",
+      "expenses": "Dépenses récentes",
+      "noExpenses": "Aucune dépense sur cette voiture pour le moment."
+    },
+    "quickEdit": {
+      "title": "Modification rapide",
+      "fullForm": "Modifier la fiche complète"
+    },
+    "year": "Année",
+    "editFull": "Modifier la fiche complète",
     "title": "Voitures",
     "new": "Nouvelle voiture",
     "newTitle": "Nouvelle voiture",
@@ -302,7 +388,14 @@
     "addPhoto": "Ajouter une photo",
     "empty": "Aucune voiture trouvée.",
     "confirmDelete": "Supprimer la voiture « {{ matricule }} » ?",
-    "concurrency": "Cette voiture a été modifiée par un autre utilisateur depuis son ouverture. Rechargez la page pour obtenir la dernière version, puis réappliquez vos modifications."
+    "concurrency": "Cette voiture a été modifiée par un autre utilisateur depuis son ouverture. Rechargez la page pour obtenir la dernière version, puis réappliquez vos modifications.",
+    "searchLabel": "Rechercher par plaque ou modèle",
+    "searchPlaceholder": "ex. 2290-A-77 ou Duster",
+    "filters": "Filtres",
+    "moreFilters": "Plus de filtres",
+    "sortBy": "Trier par",
+    "gridView": "Cartes",
+    "listView": "Tableau"
   },
   "client": {
     "rentings": "Locations",
@@ -375,6 +468,27 @@
     "concurrency": "Ce client a été modifié par un autre utilisateur depuis son ouverture. Rechargez la page pour obtenir la dernière version, puis réappliquez vos modifications.",
     "flagged": "Client signalé"
   },
+  "booking": {
+    "title": "Réservations & locations",
+    "sortBy": "Trier par",
+    "name": "Nom",
+    "vehicleAndPeriod": "Véhicule et période",
+    "pickup": "Départ",
+    "dropOff": "Retour",
+    "openBooking": "Ouvrir cette réservation",
+    "openCar": "Ouvrir le véhicule",
+    "openClient": "Ouvrir la fiche client",
+    "openRentingRecord": "Ouvrir la fiche de location",
+    "openReservationRecord": "Ouvrir la fiche de réservation",
+    "noClient": "Sans client",
+    "noPapers": "Aucune pièce d'identité au dossier.",
+    "outstanding": "Reste à payer",
+    "toHandBack": "À rendre",
+    "extrasTotal": "Total des extras",
+    "extrasBilledApart": "Les services supplémentaires sont facturés en dehors du prix ci-dessus.",
+    "dueShort": "{{ amount }} dû",
+    "paidShort": "{{ amount }} payé"
+  },
   "renting": {
     "cancelTitle": "Annuler la location",
     "confirmCancelAction": "Confirmer l'annulation",
@@ -390,6 +504,7 @@
     "cancelKeepAsCredit": "Sans cocher, le montant reste en avoir sur le compte du client (visible dans Paiements & crédits).",
     "cancelRefundNoPermission": "Le montant restera en avoir sur le compte du client : l'enregistrement d'un remboursement demande le module Paiements.",
     "returnTitle": "Retour du véhicule",
+    "late": "En retard",
     "returnCar": "Enregistrer le retour",
     "returnMileageTooLow": "Le kilométrage au retour ne peut pas être inférieur à celui du départ ({{ mileage }}).",
     "pickupMileageWas": "Kilométrage au départ : {{ mileage }}",
@@ -496,7 +611,9 @@
     "cancelledFree": "Annulée sans frais : plus rien n'est dû.",
     "cancellationFeeKept": "Annulée · frais retenus : {{ amount }} {{ currency }}",
     "adjustPriceForChange": "Saisir le nouveau total moi-même",
-    "newTotalPrice": "Nouveau total pour toute la période"
+    "newTotalPrice": "Nouveau total pour toute la période",
+    "searchLabel": "Rechercher par plaque ou client",
+    "searchPlaceholder": "ex. 2290-A-77 ou Alaoui"
   },
   "reservation": {
     "title": "Réservations",
@@ -893,6 +1010,7 @@
     "typeRequired": "Le type de dépense est obligatoire.",
     "amountRequired": "Le montant doit être supérieur à zéro.",
     "paidNow": "Déjà réglé",
+    "unpaid": "Non réglée",
     "paidNowHint": "Laissez à 0 si la dépense n’est pas encore payée.",
     "alreadySettled": "Déjà réglé : {{amount}} {{currency}} — utilisez l’action « Enregistrer un règlement » de l’écran Paiements & crédits pour le modifier.",
     "mileage": "Compteur (km)",
@@ -1181,7 +1299,8 @@
     "pinMissing": "sans repère",
     "confirmDelete": "Supprimer la succursale « {{ name }} » ? Les voitures qui y sont rattachées seront sans succursale.",
     "savedImmediately": "Les modifications des succursales sont enregistrées immédiatement.",
-    "savedWithAgency": "Ces succursales seront créées avec l'agence lors de l'enregistrement."
+    "savedWithAgency": "Ces succursales seront créées avec l'agence lors de l'enregistrement.",
+    "allBranches": "Toutes les succursales"
   },
   "mapPicker": {
     "searchLabel": "Rechercher une adresse",
@@ -1249,5 +1368,20 @@
     "dayEmpty": "Rien ce jour-là.",
     "truncated": "Ce mois compte plus de réservations que le calendrier n'en affiche. Ouvrez la liste des locations pour toutes les voir.",
     "loadFailed": "Impossible de charger le calendrier."
+  },
+  "roles": {
+    "platformAdmin": "Admin plateforme",
+    "agencyAdmin": "Admin agence",
+    "agencyStaff": "Personnel agence",
+    "customer": "Client"
+  },
+  "search": {
+    "label": "Rechercher",
+    "scope": "Rechercher dans",
+    "placeholder": "Rechercher",
+    "placeholderIn": "Rechercher {{ where }}",
+    "cars": "les voitures",
+    "clients": "les clients",
+    "bookings": "les locations"
   }
 }

@@ -1,0 +1,199 @@
+<div class="page bookings" *transloco="let t">
+  <div class="header-row">
+    <div>
+      <h2 class="title">{{ t('booking.title') }}</h2>
+      <p class="page-subtitle">{{ t('common.resultCount', { count: totalCount }) }}</p>
+    </div>
+    <a mat-raised-button color="primary" [routerLink]="[newLink]">
+      <mat-icon>add</mat-icon>
+      {{ t(isRentings ? 'renting.new' : 'reservation.new') }}
+    </a>
+  </div>
+
+  <!-- The row actions write (confirm, start, cancel), so a refusal has to be
+       said out loud rather than left in the console. -->
+  <div class="error-banner" *ngIf="errorMessage">
+    <mat-icon>error_outline</mat-icon> {{ errorMessage }}
+  </div>
+
+  <!-- ================================= TABS =================================
+       Hires and holds are the same booking at two points of its life, so they
+       are two views of one screen rather than two screens. A user who can only
+       reach one of them gets no tabs at all. -->
+  <div class="booking-tabs" role="tablist" *ngIf="showTabs">
+    <button type="button" role="tab" class="booking-tab" [class.active]="isRentings"
+            [attr.aria-selected]="isRentings" (click)="switchTab('rentings')">
+      <mat-icon>vpn_key</mat-icon> {{ t('nav.rentings') }}
+    </button>
+    <button type="button" role="tab" class="booking-tab" [class.active]="!isRentings"
+            [attr.aria-selected]="!isRentings" (click)="switchTab('reservations')">
+      <mat-icon>event_available</mat-icon> {{ t('nav.reservations') }}
+    </button>
+  </div>
+
+  <!-- ================================ TOOLBAR ================================ -->
+  <div class="filter-row booking-toolbar">
+    <!-- The same `?search=` the app bar's box links in with, so arriving from the
+         bar leaves the term visible and editable here. Holds are not searchable:
+         GetReservationsWithPaginationQuery takes no term, so offering a box that
+         did nothing would be worse than not offering one. -->
+    <form class="booking-search" *ngIf="isRentings" (ngSubmit)="onSearch()">
+      <mat-icon>search</mat-icon>
+      <input type="search" name="q" [(ngModel)]="search"
+             [placeholder]="t('renting.searchPlaceholder')"
+             [attr.aria-label]="t('renting.searchLabel')" />
+      <button type="button" class="search-clear" *ngIf="search" (click)="clearSearch()"
+              [attr.aria-label]="t('common.clear')">
+        <mat-icon>close</mat-icon>
+      </button>
+    </form>
+
+    <mat-form-field appearance="outline" class="filter-field">
+      <mat-label>{{ t(isRentings ? 'renting.state' : 'common.status') }}</mat-label>
+      <mat-select *ngIf="isRentings" [(ngModel)]="state" (selectionChange)="onFilter()">
+        <mat-option [value]="null">{{ t('common.all') }}</mat-option>
+        <mat-option *ngFor="let s of states" [value]="s.value">{{ t(s.labelKey) }}</mat-option>
+      </mat-select>
+      <mat-select *ngIf="!isRentings" [(ngModel)]="status" (selectionChange)="onFilter()">
+        <mat-option [value]="null">{{ t('common.all') }}</mat-option>
+        <mat-option *ngFor="let s of statuses" [value]="s.value">{{ t(s.labelKey) }}</mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <span class="spacer"></span>
+
+    <!-- The cards have no headers to click, so the order lives here. It is still
+         the server's order (see SortingExtensions), not a reshuffle of the page
+         already on screen. -->
+    <button type="button" class="tool-btn" [matMenuTriggerFor]="sortMenu"
+            [matTooltip]="t('booking.sortBy')">
+      <mat-icon>sort</mat-icon>
+      <span class="tool-btn-text">{{ t(activeSortLabelKey) }}</span>
+      <mat-icon class="tool-dir">{{ sortDirection === 'desc' ? 'arrow_downward' : 'arrow_upward' }}</mat-icon>
+    </button>
+    <mat-menu #sortMenu="matMenu">
+      <button mat-menu-item type="button" *ngFor="let option of sortOptions"
+              (click)="sortByKey(option.key)">
+        <mat-icon>
+          {{ sortBy === option.key
+               ? (sortDirection === 'desc' ? 'arrow_downward' : 'arrow_upward')
+               : 'sort' }}
+        </mat-icon>
+        {{ t(option.labelKey) }}
+      </button>
+    </mat-menu>
+  </div>
+
+  <!-- Filters this list was opened with (from a dashboard count, or from a car's
+       or a client's history), which have no control of their own. -->
+  <div class="filter-chips" *ngIf="chips.length">
+    <span class="chip no-dot" *ngFor="let chip of chips">
+      {{ t(chip.labelKey, chip.labelArgs) }}
+      <button type="button" class="chip-clear" (click)="clearChip(chip)"
+              [matTooltip]="t('filters.clear')" [attr.aria-label]="t('filters.clear')">
+        <mat-icon>close</mat-icon>
+      </button>
+    </span>
+  </div>
+
+  <!-- ================================= CARDS =================================
+       The bar in the leading gutter means "this booking is waiting on you", and
+       nothing else (see rule 1 in docs/DESIGN_SYSTEM.md) — a hold nobody has
+       answered, or a hire the car is late back from. The state itself is the
+       chip on the right, which is coloured; painting the gutter by state as
+       well would cost the bar its meaning. -->
+  <div class="booking-list">
+    <article class="booking-card" *ngFor="let row of rows"
+             [class.needs-action]="row.needsAction" [class.is-overdue]="row.overdue">
+      <!-- The card body is the way in: clicking anywhere that is not a button
+           opens the booking beside the list. -->
+      <button type="button" class="booking-open" (click)="open(row)"
+              [attr.aria-label]="t('booking.openBooking')">
+        <span class="booking-who">
+          <span class="booking-client">{{ row.clientName || t('booking.noClient') }}</span>
+          <span class="booking-car">
+            {{ row.carModelName }}
+            <span class="num" *ngIf="row.carMatricule"> · {{ row.carMatricule }}</span>
+          </span>
+        </span>
+
+        <span class="booking-when">
+          <span class="booking-when-label">{{ t('common.period') }}</span>
+          <!-- Wall-clock stamped UTC on the wire: read back in UTC parts, or a
+               negative offset shows the day before. -->
+          <span class="booking-when-value num">
+            {{ row.startDate | date:'dd MMM':'UTC' }} → {{ row.endDate | date:'dd MMM':'UTC' }}
+          </span>
+        </span>
+
+        <span class="booking-money">
+          <span class="booking-amount num money" *ngIf="row.amount">
+            {{ row.amount.amount | number:'1.2-2' }} {{ row.amount.currency }}
+          </span>
+          <ng-container *ngIf="row.noteAmount !== undefined">
+            <span class="booking-note num" *ngIf="row.kind === 'renting'">
+              {{ t('booking.dueShort', {
+                   amount: (row.noteAmount | number:'1.2-2') + ' ' + (row.noteCurrency || '') }) }}
+            </span>
+            <span class="booking-note num" *ngIf="row.kind === 'reservation'">
+              {{ t('booking.paidShort', {
+                   amount: (row.noteAmount | number:'1.2-2') + ' / ' + (row.noteOf | number:'1.2-2') }) }}
+            </span>
+          </ng-container>
+        </span>
+
+        <span class="booking-state">
+          <span class="chip" [ngClass]="row.tone" [matTooltip]="row.hint || ''">
+            {{ row.statusLabelKey ? t(row.statusLabelKey) : '' }}
+          </span>
+        </span>
+      </button>
+
+      <!-- The handful of moves worth making without opening the booking. The
+           rest are in the panel. -->
+      <div class="booking-actions">
+        <button mat-icon-button color="primary" *ngIf="canPayFor(row)" (click)="pay(row)"
+                [matTooltip]="t('payment.pay')" [attr.aria-label]="t('payment.pay')">
+          <mat-icon>payments</mat-icon>
+        </button>
+        <!-- Sends an upcoming hire out: the customer is at the counter. -->
+        <button mat-icon-button color="primary" *ngIf="canStart(row)" (click)="startRenting(row)"
+                [matTooltip]="t('renting.start')" [attr.aria-label]="t('renting.start')">
+          <mat-icon>play_arrow</mat-icon>
+        </button>
+        <!-- Closes a running hire: the car is back at the counter. -->
+        <button mat-icon-button color="primary" *ngIf="canTakeBack(row)" (click)="returnCar(row)"
+                [matTooltip]="t('renting.returnCar')" [attr.aria-label]="t('renting.returnCar')">
+          <mat-icon>assignment_turned_in</mat-icon>
+        </button>
+        <button mat-icon-button color="accent" *ngIf="isPending(row)" (click)="confirm(row)"
+                [matTooltip]="t('reservation.confirm')" [attr.aria-label]="t('reservation.confirm')">
+          <mat-icon>check_circle</mat-icon>
+        </button>
+        <button mat-icon-button color="warn" *ngIf="isPending(row)" (click)="reject(row)"
+                [matTooltip]="t('reservation.rejectWithReason')" [attr.aria-label]="t('reservation.reject')">
+          <mat-icon>block</mat-icon>
+        </button>
+        <button mat-icon-button color="primary" *ngIf="isConvertible(row)" (click)="convert(row)"
+                [matTooltip]="t('reservation.convert')" [attr.aria-label]="t('reservation.convert')">
+          <mat-icon>directions_car</mat-icon>
+        </button>
+        <button mat-icon-button color="warn" *ngIf="canCancel(row)" (click)="cancel(row)"
+                [matTooltip]="t('common.cancel')" [attr.aria-label]="t('common.cancel')">
+          <mat-icon>cancel</mat-icon>
+        </button>
+      </div>
+    </article>
+
+    <p class="empty-row" *ngIf="!rows.length">
+      {{ t(isRentings ? 'renting.empty' : 'reservation.empty') }}
+    </p>
+  </div>
+
+  <mat-paginator [length]="totalCount"
+                 [pageIndex]="pageNumber - 1"
+                 [pageSize]="pageSize"
+                 [pageSizeOptions]="[5, 10, 25, 50]"
+                 (page)="onPage($event)">
+  </mat-paginator>
+</div>

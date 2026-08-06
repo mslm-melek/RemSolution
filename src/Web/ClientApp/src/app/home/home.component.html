@@ -91,64 +91,271 @@
        it is rendered here rather than behind a separate route. -->
   <app-platform-dashboard *ngIf="isPlatformAdmin"></app-platform-dashboard>
 
-  <!-- Signed in agency staff / admin: their pinned tiles and quick actions. -->
-  <div class="dashboard" *ngIf="isAuthenticated && !isCustomer && !isPlatformAdmin">
-    <div class="dash-header">
-      <div>
-        <h1>{{ displayName ? t('home.welcomeBackNamed', { name: displayName }) : t('home.welcomeBack') }}</h1>
-        <p class="dash-subtitle">{{ t('home.deskSubtitle') }}</p>
+  <!-- ===================== THE DESK'S DAY ===================== -->
+  <div class="today" *ngIf="isAuthenticated && !isCustomer && !isPlatformAdmin">
+
+    <!-- Who, when, where — and how old the figures below are. -->
+    <div class="greet-row">
+      <div class="greet">
+        <h1>
+          {{ displayName ? t(greetingKey + 'Named', { name: displayName }) : t(greetingKey) }}
+        </h1>
+        <p class="greet-sub">
+          {{ (today?.day || null) | date:'fullDate':'UTC' }}<span *ngIf="branchName"> · {{ branchName }}</span>
+        </p>
       </div>
-      <button type="button" mat-stroked-button color="primary"
-              *ngIf="!customizing && availableWidgets.length"
-              (click)="startCustomizing()">
-        <mat-icon>tune</mat-icon> {{ t('home.customize') }}
-      </button>
+
+      <!-- The one number the counter is asked for all day. -->
+      <a class="fleet-chip" *ngIf="today?.fleet as fleet"
+         [routerLink]="['/car']" [queryParams]="freeCarsParams">
+        <b class="num">{{ fleet.free }}</b>
+        <span>{{ t('home.fleetFreeOf', { total: fleet.total }) }}</span>
+      </a>
+
+      <!-- This screen goes stale the moment a colleague hands a car over. -->
+      <div class="stale" [class.warn]="isStale">
+        <mat-icon>schedule</mat-icon>
+        <span>{{ staleMinutes ? t('home.updatedAgo', { minutes: staleMinutes }) : t('home.updatedNow') }}</span>
+        <button type="button" mat-button color="primary" [disabled]="todayLoading" (click)="refresh()">
+          {{ t('home.refresh') }}
+        </button>
+      </div>
     </div>
 
-    <div class="stat-row" *ngIf="pinnedTiles.length">
-      <a class="stat-tile" *ngFor="let widget of pinnedTiles"
-         [routerLink]="[widget.link]" [queryParams]="widget.queryParams || null">
-        <div class="stat-icon">
-          <mat-icon>{{ widget.icon }}</mat-icon>
+    <mat-progress-bar mode="indeterminate" *ngIf="todayLoading && !today"></mat-progress-bar>
+
+    <!-- An action's refusal. One line, and it clears itself. -->
+    <div class="today-message" *ngIf="message">
+      <mat-icon>info_outline</mat-icon>
+      <span>{{ message }}</span>
+    </div>
+
+    <!-- The things this desk starts. Bare buttons rather than a card: they are
+         the first thing reached for, not a panel to read. -->
+    <app-quick-actions scope="agency" variant="bare"></app-quick-actions>
+
+    <!-- ---------------------- 1. AT A GLANCE ---------------------- -->
+    <section class="block" *ngIf="today as day">
+      <h2 class="block-title">{{ t('home.glance') }}</h2>
+
+      <div class="stat-grid">
+        <!-- Bookings starting today, and how many still need answering. -->
+        <a class="stat-card" *ngIf="day.summary?.bookingsToday != null"
+           [routerLink]="['/renting']" [queryParams]="bookingsTodayParams">
+          <span class="stat-ico"><mat-icon>event_available</mat-icon></span>
+          <span class="stat-body">
+            <span class="stat-num num">{{ day.summary!.bookingsToday }}</span>
+            <span class="stat-lbl">{{ t('home.stat.bookingsToday') }}</span>
+            <span class="stat-sub" *ngIf="day.summary!.unconfirmedToday">
+              {{ t('home.stat.stillToConfirm', { count: day.summary!.unconfirmedToday }) }}
+            </span>
+          </span>
+        </a>
+
+        <a class="stat-card" *ngIf="day.summary?.returnsToday != null"
+           [routerLink]="['/renting']" [queryParams]="returnsTodayParams">
+          <span class="stat-ico"><mat-icon>keyboard_return</mat-icon></span>
+          <span class="stat-body">
+            <span class="stat-num num">{{ day.summary!.returnsToday }}</span>
+            <span class="stat-lbl">{{ t('home.stat.returnsToday') }}</span>
+            <span class="stat-sub" *ngIf="day.summary!.returnsBeforeNoon">
+              {{ t('home.stat.beforeNoon', { count: day.summary!.returnsBeforeNoon }) }}
+            </span>
+          </span>
+        </a>
+
+        <a class="stat-card" *ngIf="day.summary?.lateRentings != null"
+           [class.alert]="day.summary!.lateRentings"
+           [routerLink]="['/renting']" [queryParams]="lateParams">
+          <span class="stat-ico"><mat-icon>running_with_errors</mat-icon></span>
+          <span class="stat-body">
+            <span class="stat-num num">{{ day.summary!.lateRentings }}</span>
+            <span class="stat-lbl">{{ t('home.stat.late') }}</span>
+            <span class="stat-sub" *ngIf="day.summary!.worstLate as worst">
+              {{ worst.clientName }} · {{ t('home.stat.hoursLate', { hours: worst.hoursLate }) }}
+            </span>
+            <span class="stat-sub" *ngIf="!day.summary!.lateRentings">
+              {{ t('home.stat.nothingOverdue') }}
+            </span>
+          </span>
+        </a>
+
+        <a class="stat-card" *ngIf="day.money as money"
+           [routerLink]="['/credit']">
+          <span class="stat-ico"><mat-icon>payments</mat-icon></span>
+          <span class="stat-body">
+            <span class="stat-num money num">
+              {{ money.expectedToday?.amount | number:'1.0-0' }}
+              <span class="stat-cur">{{ day.currency }}</span>
+            </span>
+            <span class="stat-lbl">{{ t('home.stat.expectedToday') }}</span>
+            <span class="stat-sub">
+              {{ t('home.stat.outstanding', {
+                    amount: (money.outstanding?.amount | number:'1.0-0'), currency: day.currency }) }}
+            </span>
+          </span>
+        </a>
+      </div>
+    </section>
+
+    <!-- ------------------- 2. NEEDS YOUR ANSWER ------------------- -->
+    <section class="block" *ngIf="today as day">
+      <h2 class="block-title">{{ t('home.needsAnswer') }}</h2>
+
+      <p class="all-clear" *ngIf="nothingToAnswer && !expensesDueCount">
+        <mat-icon>task_alt</mat-icon>
+        <span>{{ t('home.nothingWaiting') }}</span>
+      </p>
+
+      <div class="todo-grid" *ngIf="!nothingToAnswer">
+        <!-- Holds waiting for a yes or a no. Expands in place: answering one is
+             the point of the card, and the reservation screen is a detour. -->
+        <div class="todo warn" *ngIf="day.requests?.count">
+          <button type="button" class="todo-head" (click)="toggleRequests()"
+                  [attr.aria-expanded]="requestsOpen">
+            <span class="todo-text">
+              <span class="todo-t">{{ t('home.todo.requests') }}</span>
+              <span class="todo-d" *ngIf="requestsWaitingHours !== null">
+                {{ t('home.todo.oldestWaiting', { hours: requestsWaitingHours }) }}
+              </span>
+            </span>
+            <span class="todo-n num">{{ day.requests!.count }}</span>
+            <mat-icon class="todo-caret" [class.turned]="requestsOpen">expand_more</mat-icon>
+          </button>
+
+          <div class="todo-body" *ngIf="requestsOpen">
+            <div class="todo-row" *ngFor="let request of day.requests!.items">
+              <span class="todo-row-main">
+                <span class="todo-row-who">{{ request.clientName }}</span>
+                <span class="todo-row-what">
+                  <span class="num" *ngIf="request.carLabel">{{ request.carLabel }}</span>
+                  <span> · {{ request.startDate | date:'dd MMM HH:mm':'UTC' }}</span>
+                </span>
+              </span>
+              <button type="button" mat-icon-button color="primary" (click)="confirmRequest(request)"
+                      [matTooltip]="t('reservation.confirm')" [attr.aria-label]="t('reservation.confirm')">
+                <mat-icon>check_circle</mat-icon>
+              </button>
+              <button type="button" mat-icon-button color="warn" (click)="rejectRequest(request)"
+                      [matTooltip]="t('reservation.rejectWithReason')"
+                      [attr.aria-label]="t('reservation.reject')">
+                <mat-icon>block</mat-icon>
+              </button>
+              <a mat-icon-button [routerLink]="['/reservation', request.reservationId]"
+                 [matTooltip]="t('common.open')" [attr.aria-label]="t('common.open')">
+                <mat-icon>open_in_new</mat-icon>
+              </a>
+            </div>
+
+            <a class="todo-all" mat-button color="primary"
+               [routerLink]="['/reservation']" [queryParams]="pendingParams">
+              {{ t('home.todo.seeAll', { count: day.requests!.count }) }}
+              <mat-icon>arrow_forward</mat-icon>
+            </a>
+          </div>
         </div>
-        <div class="stat-body">
-          <span class="stat-value" [class.pending]="counts[widget.key] === undefined">
+
+        <!-- What the agency owes on costs it has already booked. -->
+        <a class="todo danger" *ngIf="day.payables?.count"
+           [routerLink]="['/credit']" [queryParams]="payableParams">
+          <span class="todo-head">
+            <span class="todo-text">
+              <span class="todo-t">{{ t('home.todo.payables') }}</span>
+              <span class="todo-d">{{ t('home.todo.payableCount', { count: day.payables!.count }) }}</span>
+            </span>
+            <span class="todo-amt money num">
+              {{ day.payables!.outstanding?.amount | number:'1.0-0' }} {{ day.currency }}
+            </span>
+          </span>
+        </a>
+      </div>
+
+      <!-- Maintenance and papers coming due, by the cost they are. Absent when
+           the agency has no expense module, and silent when nothing is due — the
+           "nothing waiting" line above already covers that. -->
+      <ng-container *ngIf="day.expensesDue?.length">
+        <h3 class="block-subtitle">
+          {{ t('home.due.title') }}
+          <span class="block-count">
+            {{ t('home.due.carCount', { count: expensesDueCount }) }}
+          </span>
+        </h3>
+
+        <div class="exp-list">
+          <div class="exp-row" *ngFor="let group of day.expensesDue">
+            <button type="button" class="exp-head"
+                    [class.danger]="group.isOverdue" [class.warn]="!group.isOverdue"
+                    (click)="toggleExpenseGroup(group)"
+                    [attr.aria-expanded]="isExpenseGroupOpen(group)">
+              <span class="exp-text">
+                <span class="exp-name">{{ group.name }}</span>
+                <span class="exp-rule">
+                  {{ t(ruleKey(group), { months: group.afterMonth, km: group.afterKilometer }) }}
+                </span>
+              </span>
+              <span class="exp-n num">{{ group.cars?.length }}</span>
+              <mat-icon class="exp-caret" [class.turned]="isExpenseGroupOpen(group)">expand_more</mat-icon>
+            </button>
+
+            <div class="exp-body" *ngIf="isExpenseGroupOpen(group)">
+              <div class="exp-car" *ngFor="let car of group.cars">
+                <a class="plate num" [routerLink]="['/car', car.carId]">{{ car.matricule }}</a>
+                <span class="exp-model">{{ car.modelName }}</span>
+                <span class="exp-over" [class.soon]="!car.isOverdue">
+                  {{ t(dueKey(car), {
+                       days: car.days, km: car.kilometers,
+                       date: (car.dueOn | date:'dd MMM':'UTC') }) }}
+                </span>
+                <a mat-stroked-button class="exp-act"
+                   [routerLink]="['/expense/new']" [queryParams]="recordParams(group, car)">
+                  {{ t('home.due.record') }}
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </ng-container>
+    </section>
+
+    <!-- ------------------------- 3. AGENDA ------------------------ -->
+    <section class="block">
+      <h2 class="block-title">{{ t('home.agenda.title') }}</h2>
+      <app-home-agenda [branchId]="branchId"></app-home-agenda>
+    </section>
+
+    <!-- --------------------- 4. YOUR SHORTCUTS -------------------- -->
+    <section class="block" *ngIf="pinnedTiles.length || customizing || availableWidgets.length">
+      <div class="block-head">
+        <h2 class="block-title">{{ t('home.shortcuts') }}</h2>
+        <button type="button" mat-button color="primary"
+                *ngIf="!customizing && availableWidgets.length" (click)="startCustomizing()">
+          <mat-icon>tune</mat-icon> {{ t('home.customize') }}
+        </button>
+      </div>
+
+      <div class="shortcut-row" *ngIf="pinnedTiles.length && !customizing">
+        <a class="shortcut" *ngFor="let widget of pinnedTiles"
+           [routerLink]="[widget.link]" [queryParams]="widget.queryParams || null">
+          <mat-icon>{{ widget.icon }}</mat-icon>
+          <span class="shortcut-value num" [class.pending]="counts[widget.key] === undefined">
             {{ counts[widget.key] === undefined ? '—' : counts[widget.key] }}
           </span>
-          <span class="stat-label">{{ t(widget.labelKey) }}</span>
-        </div>
-        <mat-icon class="stat-go">chevron_right</mat-icon>
-      </a>
-    </div>
+          <span class="shortcut-label">{{ t(widget.labelKey) }}</span>
+        </a>
+      </div>
 
-    <!-- The desk's work queues: requests to answer, cars overdue, and today's
-         movements — each row acted on here rather than through its list. Not a
-         pinnable widget: it is what the screen is for, and every queue is gated
-         by the module it reads (see HomeAgendaComponent). -->
-    <app-home-agenda (counts)="onAgendaCounts($event)"></app-home-agenda>
+      <!-- Nothing pinned: either the user cleared their shortcuts, or their plan
+           and permissions reach none of the lists. Two different sentences. -->
+      <p class="all-clear" *ngIf="!pinnedTiles.length && !customizing">
+        <mat-icon>dashboard_customize</mat-icon>
+        <span *ngIf="availableWidgets.length">{{ t('home.noWidgets') }}</span>
+        <span *ngIf="!availableWidgets.length">{{ t('home.noWidgetsAvailable') }}</span>
+      </p>
 
-    <!-- The month's pickups, returns and holds. A panel rather than a tile, so it
-         sits under the row and carries no figure of its own. -->
-    <app-booking-calendar *ngIf="hasPanel('Calendar')"></app-booking-calendar>
+      <!-- Picker. Editing a draft, so the row above only moves on save. -->
+      <div class="customize" *ngIf="customizing">
+        <p class="customize-hint">{{ t('home.customizeHint', { max: maxWidgets }) }}</p>
 
-    <!-- Nothing pinned: either the user cleared their home, or their plan and
-         permissions reach none of the lists. The two need different words. -->
-    <div class="empty-widgets" *ngIf="!pinnedWidgets.length && !customizing">
-      <mat-icon>dashboard_customize</mat-icon>
-      <p *ngIf="availableWidgets.length">{{ t('home.noWidgets') }}</p>
-      <p *ngIf="!availableWidgets.length">{{ t('home.noWidgetsAvailable') }}</p>
-      <button type="button" mat-raised-button color="primary"
-              *ngIf="availableWidgets.length" (click)="startCustomizing()">
-        <mat-icon>tune</mat-icon> {{ t('home.chooseWidgets') }}
-      </button>
-    </div>
-
-    <!-- Picker. Editing a draft, so the tiles above only move on save. -->
-    <section class="customize" *ngIf="customizing">
-      <h2>{{ t('home.customizeTitle') }}</h2>
-      <p class="customize-hint">{{ t('home.customizeHint', { max: maxWidgets }) }}</p>
-
-      <div class="widget-picker">
         <h3>{{ t('home.pinnedWidgets') }}</h3>
         <p class="picker-empty" *ngIf="!draft.length">{{ t('home.pinnedNone') }}</p>
 
@@ -159,13 +366,12 @@
               <span>{{ t(widget.labelKey) }}</span>
             </span>
           </mat-checkbox>
-          <!-- Order is the tile row's order; a panel has nothing to reorder. -->
-          <span class="picker-order" *ngIf="!widget.panel">
+          <span class="picker-order">
             <button type="button" mat-icon-button [disabled]="i === 0" (click)="moveUp(i)"
                     [attr.aria-label]="t('home.moveUp')">
               <mat-icon>arrow_upward</mat-icon>
             </button>
-            <button type="button" mat-icon-button [disabled]="isLastTile(i)"
+            <button type="button" mat-icon-button [disabled]="i === draftWidgets.length - 1"
                     (click)="moveDown(i)" [attr.aria-label]="t('home.moveDown')">
               <mat-icon>arrow_downward</mat-icon>
             </button>
@@ -176,11 +382,8 @@
           <h3>{{ t('home.moreWidgets') }}</h3>
           <p class="picker-full" *ngIf="isFull">{{ t('home.widgetsFull', { max: maxWidgets }) }}</p>
 
-          <!-- A full row still has room for a panel underneath it, so those stay
-               offerable (see home-widgets). -->
           <div class="picker-row" *ngFor="let widget of unpinnedWidgets">
-            <mat-checkbox [checked]="false" [disabled]="isFull && !widget.panel"
-                          (change)="toggleWidget(widget.key)">
+            <mat-checkbox [checked]="false" [disabled]="isFull" (change)="toggleWidget(widget.key)">
               <span class="picker-label">
                 <mat-icon>{{ widget.icon }}</mat-icon>
                 <span>{{ t(widget.labelKey) }}</span>
@@ -188,23 +391,25 @@
             </mat-checkbox>
           </div>
         </ng-container>
-      </div>
 
-      <div class="error-banner" *ngIf="saveError">
-        <mat-icon>error_outline</mat-icon>
-        <span>{{ saveError }}</span>
-      </div>
+        <div class="error-banner" *ngIf="saveError">
+          <mat-icon>error_outline</mat-icon>
+          <span>{{ saveError }}</span>
+        </div>
 
-      <div class="customize-actions">
-        <button type="button" mat-raised-button color="primary" [disabled]="saving" (click)="saveWidgets()">
-          {{ saving ? t('common.saving') : t('common.save') }}
-        </button>
-        <button type="button" mat-button [disabled]="saving" (click)="cancelCustomizing()">
-          {{ t('common.cancel') }}
-        </button>
+        <div class="customize-actions">
+          <button type="button" mat-raised-button color="primary" [disabled]="saving"
+                  (click)="saveWidgets()">
+            {{ saving ? t('common.saving') : t('common.save') }}
+          </button>
+          <button type="button" mat-button [disabled]="saving" (click)="cancelCustomizing()">
+            {{ t('common.cancel') }}
+          </button>
+        </div>
       </div>
     </section>
 
-    <app-quick-actions scope="agency"></app-quick-actions>
+    <!-- ------------------------ 5. MESSAGES ----------------------- -->
+    <app-home-messages></app-home-messages>
   </div>
 </ng-container>

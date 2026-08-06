@@ -1,0 +1,283 @@
+/* These stylesheets were written border-box (the app has no global reset).
+   Emulated encapsulation scopes this to this component's own elements, so it
+   changes nothing outside it. */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* The app bar. A hairline across the top of the content column, not a coloured
+   band: the rail already separates the app from the page, and a second heavy
+   surface would box the canvas in on two sides. */
+:host {
+  display: block;
+  position: sticky;
+  top: 0;
+  z-index: 25;
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+}
+
+.bar-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  min-height: 60px;
+  padding: var(--sp-2) var(--sp-6);
+}
+
+.bar-spacer {
+  flex: 1 1 auto;
+}
+
+.bar-menu {
+  display: none;
+}
+
+.bar-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  color: var(--ink);
+  text-decoration: none;
+  font-family: var(--font-display);
+  font-weight: var(--fw-medium);
+  font-size: 16px;
+}
+
+.bar-brand-mark {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--r);
+  background: var(--nav-3);
+  color: var(--on-accent);
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.bar-register {
+  border-radius: var(--r-pill);
+}
+
+/* -------------------------------------------------------- branch picker ---- */
+
+.branch-picker {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex: none;
+  height: var(--h-control);
+  padding: 0 var(--sp-3);
+  border: 1px solid var(--line-strong);
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--ink);
+  font: var(--fw-medium) var(--fs-sm) var(--font-body);
+  cursor: pointer;
+
+  &:hover {
+    background: var(--surface-2);
+  }
+}
+
+.branch-name {
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.branch-pin {
+  font-size: 18px !important;
+  width: 18px !important;
+  height: 18px !important;
+}
+
+.branch-caret {
+  font-size: 18px !important;
+  width: 18px !important;
+  height: 18px !important;
+  color: var(--muted);
+}
+
+/* --------------------------------------------------------------- search ---- */
+
+.search {
+  display: flex;
+  align-items: center;
+  flex: 1 1 auto;
+  max-width: 420px;
+  height: var(--h-control);
+  padding-inline: 4px;
+  background: var(--surface-2);
+  border: 1px solid var(--line-strong);
+  border-radius: 9px;
+
+  &:focus-within {
+    border-color: var(--brand-500);
+  }
+}
+
+.search-scope {
+  display: flex;
+  align-items: center;
+  flex: none;
+  height: 30px;
+  padding: 0 4px 0 6px;
+  border: 0;
+  border-radius: var(--r-sm);
+  background: none;
+  color: var(--ink-2);
+  cursor: pointer;
+
+  &:hover {
+    background: var(--overlay-weak);
+  }
+
+  .mat-icon {
+    font-size: 19px;
+    width: 19px;
+    height: 19px;
+  }
+
+  .search-caret {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    color: var(--muted);
+  }
+}
+
+.search-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 100%;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  font: var(--fw-normal) 13.5px var(--font-body);
+  padding-inline: var(--sp-2);
+
+  &::placeholder {
+    color: var(--muted);
+  }
+
+  &:focus {
+    outline: none;
+  }
+
+  /* The browser's own clear affordance duplicates ours. */
+  &::-webkit-search-cancel-button {
+    display: none;
+  }
+}
+
+.search-clear,
+.search-go {
+  flex: none;
+  width: 30px !important;
+  height: 30px !important;
+  padding: 0 !important;
+
+  .mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
+}
+
+/* ------------------------------------------------------------- switches ---- */
+
+.bar-language {
+  text-transform: none;
+  min-width: 0;
+  padding: 0 10px;
+  border-radius: var(--r-pill);
+}
+
+.bar-language-code {
+  margin-inline-start: 4px;
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+}
+
+/* --------------------------------------------------- agency workspace bar --- */
+
+/* Sits directly under the bar, so it reads as part of the chrome rather than as
+   a dismissible page notice — it is a mode, not a message. */
+.workspace-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+  padding: var(--sp-2) var(--sp-6);
+  background: var(--info-bg);
+  color: var(--info-ink);
+  border-top: 1px solid var(--line);
+  font-size: var(--fs-sm);
+}
+
+.workspace-icon {
+  flex: none;
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+}
+
+.workspace-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.35;
+}
+
+.workspace-hint {
+  color: var(--ink-2);
+  font-size: var(--fs-label);
+}
+
+.workspace-console,
+.workspace-exit {
+  margin-inline-start: auto;
+  flex: none;
+  text-transform: none;
+}
+
+/* Only the first of the two pushes; the second sits next to it. */
+.workspace-console ~ .workspace-exit {
+  margin-inline-start: 0;
+}
+
+/* --------------------------------------------------------------- narrow ---- */
+
+@media (max-width: 1023px) {
+  .bar-menu {
+    display: inline-flex;
+  }
+}
+
+@media (max-width: 767px) {
+  .bar-row {
+    padding-inline: var(--sp-3);
+    gap: var(--sp-2);
+  }
+
+  /* The two widest controls: below this the bar has room for one of them, and
+     the branch is the one the home screen cannot be read without. */
+  .search {
+    display: none;
+  }
+
+  .workspace-bar {
+    padding-inline: var(--sp-3);
+  }
+
+  .workspace-console,
+  .workspace-exit {
+    margin-inline-start: 0;
+  }
+}

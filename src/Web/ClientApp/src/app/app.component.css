@@ -1,0 +1,51 @@
+/* The shell's own geometry. Everything inside it is styled by the design system
+   (styles.scss) or by the component that draws it; this file only decides where
+   the rail, the bar and the content column sit. */
+
+.app-shell {
+  display: flex;
+  align-items: flex-start;
+  min-height: 100vh;
+}
+
+/* The column beside the rail. `min-width: 0` so a wide table inside it scrolls
+   in its own container instead of stretching the whole shell. */
+.app-frame {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.app-content {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* Inside the shell the rail sets the left edge, so the content column brings its
+   own padding rather than the centred `.content-container` margins. */
+.with-rail .app-content {
+  padding: 0 var(--sp-6) 48px;
+}
+
+/* Dims the canvas while the rail is an overlay. Below the rail's own z-index and
+   above everything on the page. */
+.rail-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 28;
+  background: rgba(15, 23, 42, 0.45);
+}
+
+@media (min-width: 1024px) {
+  .rail-scrim {
+    display: none;
+  }
+}
+
+@media (max-width: 767px) {
+  .with-rail .app-content {
+    padding-inline: var(--sp-3);
+  }
+}

@@ -1,6 +1,0 @@
-/* Surface, header, filter strip, table and status chips all come from
-   styles.scss; only the money column needs its own emphasis here. */
-.price {
-  font-weight: 600;
-  color: var(--ink);
-}

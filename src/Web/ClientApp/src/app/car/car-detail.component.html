@@ -1,118 +1,299 @@
-<div class="page detail-card" *transloco="let t">
+<div class="page car-detail" *transloco="let t">
+  <!-- The way back, then what this page is about: the plate is the car's name and
+       its availability belongs beside it. -->
   <div class="header-row">
-    <div>
+    <div class="header-left">
+      <a class="back-link" [routerLink]="['/car']">
+        <mat-icon>arrow_back</mat-icon>
+        <span>{{ t('car.title') }}</span>
+      </a>
+      <span class="header-sep" aria-hidden="true"></span>
       <h2 class="title">
+        <!-- The car is named by make and model together: a fleet with a Clio and
+             a 208 in it is not helped by a bare model name. -->
+        <span *ngIf="carName">{{ carName }}</span>
         <span class="num">{{ car?.matricule }}</span>
         <span class="chip" [ngClass]="availabilityClass" *ngIf="car">
           {{ availabilityLabelKey ? t(availabilityLabelKey) : '' }}
         </span>
       </h2>
-      <p class="page-subtitle" *ngIf="car">
-        {{ car.modelName }}
-        <span *ngIf="car.branchName"> · {{ car.branchName }}</span>
-        <span *ngIf="car.dailyRate"> · {{ t('car.dailyRate') }}
-          {{ car.dailyRate.amount | number:'1.2-2' }} {{ car.dailyRate.currency }}</span>
+    </div>
+  </div>
+
+  <!-- ================================ THE CAR ================================
+       Left: what it looks like and how it has been doing. Right: what it is and
+       what can be done with it. Two columns because those are two different
+       questions, and neither should push the other below the fold. -->
+  <div class="detail-grid">
+
+    <!-- ------------------------------ MEDIA ------------------------------ -->
+    <div class="detail-media">
+      <div class="gallery" *ngIf="hasPhotos">
+        <a class="photo-hero" [href]="heroHref" target="_blank"
+           [matTooltip]="t('car.openFullSize')">
+          <img [src]="heroUrl" [alt]="car?.matricule ?? ''" />
+          <span class="photo-count num" *ngIf="images.length > 1">
+            {{ selectedImageIndex + 1 }} / {{ images.length }}
+          </span>
+        </a>
+
+        <div class="photo-strip" *ngIf="images.length > 1">
+          <button type="button" class="photo-thumb" *ngFor="let image of images; let i = index"
+                  [class.selected]="i === selectedImageIndex" (click)="selectImage(i)"
+                  [attr.aria-label]="t('car.showPhoto', { index: i + 1 })">
+            <img [src]="thumbFor(image)" [alt]="t('car.showPhoto', { index: i + 1 })" loading="lazy" />
+            <mat-icon *ngIf="image.isPrimary" class="primary-mark"
+                      [matTooltip]="t('car.primaryImage')">star</mat-icon>
+          </button>
+        </div>
+      </div>
+
+      <!-- No pictures at all: say so where they would be, and point at the one
+           screen that can fix it, rather than leaving a silent gap. -->
+      <p class="no-photos" *ngIf="car && !hasPhotos">
+        <mat-icon>no_photography</mat-icon>
+        {{ t('car.noImages') }}
+        <a [routerLink]="['/car', carId, 'edit']">{{ t('car.addImages') }}</a>
       </p>
+
+      <!-- How the car has been doing lately. The window is the server's (see
+           GetCarOverviewQuery) and every tile names it, so none of the three can
+           be read as an all-time figure. -->
+      <div class="stat-row" *ngIf="overview?.usage as usage">
+        <div class="stat accent">
+          <div class="stat-value num">{{ usage.utilizationPercent }}%</div>
+          <div class="stat-label">{{ t('car.overview.utilization') }}</div>
+          <div class="stat-note">
+            {{ t('car.overview.daysOut', { days: usage.rentedDays, total: usage.windowDays }) }}
+          </div>
+        </div>
+
+        <div class="stat">
+          <div class="stat-value num" *ngIf="usage.charged">
+            {{ usage.charged.amount | number:'1.0-0' }}
+            <span class="stat-unit">{{ usage.charged.currency }}</span>
+          </div>
+          <div class="stat-label">{{ t('car.overview.revenue') }}</div>
+          <div class="stat-note">{{ t('car.overview.lastDays', { days: usage.windowDays }) }}</div>
+        </div>
+
+        <!-- A rating where customers have left one; otherwise how much work the
+             car took on over the same window, which every car has an answer to. -->
+        <div class="stat" *ngIf="showRating">
+          <div class="stat-value num">
+            {{ overview?.rating?.average | number:'1.1-1' }}
+            <span class="stat-star" aria-hidden="true">★</span>
+          </div>
+          <div class="stat-label">{{ t('car.overview.rating') }}</div>
+          <div class="stat-note">
+            {{ t('car.overview.reviews', { count: overview?.rating?.count }) }}
+          </div>
+        </div>
+
+        <div class="stat" *ngIf="!showRating">
+          <div class="stat-value num">{{ usage.rentings }}</div>
+          <div class="stat-label">{{ t('car.rentings') }}</div>
+          <div class="stat-note">{{ t('car.overview.lastDays', { days: usage.windowDays }) }}</div>
+        </div>
+      </div>
     </div>
-    <div class="header-actions">
-      <!-- Exactly one of these can apply: the car is here, or it is out. -->
-      <a *ngIf="canRentOut" mat-raised-button color="primary"
-         [routerLink]="['/renting/new']" [queryParams]="{ carId: carId }">
-        <mat-icon>vpn_key</mat-icon> {{ t('car.rentNow') }}
-      </a>
-      <button *ngIf="canTakeBack" mat-raised-button color="primary" (click)="returnCar()">
-        <mat-icon>assignment_turned_in</mat-icon> {{ t('renting.returnCar') }}
-      </button>
-      <!-- How this car has done, month by month — the report filtered to it. -->
-      <a *ngIf="canSeeStatistics" mat-button
-         [routerLink]="['/statistics']" [queryParams]="{ car: carId }">
-        <mat-icon>insights</mat-icon> {{ t('car.statistics') }}
-      </a>
-      <a mat-button [routerLink]="['/car', carId, 'edit']">
-        <mat-icon>edit</mat-icon> {{ t('common.edit') }}
-      </a>
-      <a mat-button [routerLink]="['/car']">
-        <mat-icon>arrow_back</mat-icon> {{ t('common.backToList') }}
-      </a>
+
+    <!-- ------------------------------- INFO ------------------------------- -->
+    <div class="detail-info">
+
+      <!-- What the car is, in the order the counter is asked for it. -->
+      <div class="spec-box" *ngIf="car">
+        <div class="spec">
+          <div class="spec-label">{{ t('common.status') }}</div>
+          <div class="spec-value">
+            <span class="chip" [ngClass]="availabilityClass">
+              {{ availabilityLabelKey ? t(availabilityLabelKey) : '' }}
+            </span>
+          </div>
+        </div>
+
+        <div class="spec">
+          <div class="spec-label">{{ t('car.dailyRate') }}</div>
+          <div class="spec-value num accent" *ngIf="car.dailyRate">
+            {{ car.dailyRate.amount | number:'1.0-2' }} {{ car.dailyRate.currency }}
+          </div>
+          <div class="spec-value muted" *ngIf="!car.dailyRate">—</div>
+        </div>
+
+        <div class="spec">
+          <div class="spec-label">{{ t('car.branch') }}</div>
+          <div class="spec-value" *ngIf="car.branchName">{{ car.branchName }}</div>
+          <div class="spec-value muted" *ngIf="!car.branchName">—</div>
+        </div>
+
+        <div class="spec">
+          <div class="spec-label">{{ t('car.year') }}</div>
+          <div class="spec-value num">{{ car.firstCirculationDate | date:'yyyy':'UTC' }}</div>
+        </div>
+
+        <!-- The odometer a new booking on this car will start from. Only shown
+             once someone has entered one: "0 km" would be a claim, not a blank. -->
+        <div class="spec">
+          <div class="spec-label">{{ t('car.mileage') }}</div>
+          <div class="spec-value num" *ngIf="car.mileage != null">
+            {{ car.mileage | number }} {{ t('common.km') }}
+          </div>
+          <div class="spec-value muted" *ngIf="car.mileage == null">—</div>
+        </div>
+
+        <div class="spec">
+          <div class="spec-label">{{ t('car.matricule') }}</div>
+          <div class="spec-value num">{{ car.matricule }}</div>
+        </div>
+      </div>
+
+      <!-- Hire it out or take it back — the two things this page is opened to do,
+           and only one of them can apply. Everything else lives behind the menu,
+           which keeps the row the same width whatever the car is doing. -->
+      <div class="action-row" *ngIf="car">
+        <a *ngIf="canRentOut" mat-raised-button color="primary" class="action-main"
+           [routerLink]="['/renting/new']" [queryParams]="{ carId: carId }">
+          <mat-icon>vpn_key</mat-icon> {{ t('car.rentNow') }}
+        </a>
+        <button *ngIf="canTakeBack" type="button" mat-raised-button color="primary"
+                class="action-main" (click)="returnCar()">
+          <mat-icon>assignment_turned_in</mat-icon> {{ t('renting.returnCar') }}
+        </button>
+
+        <button *ngIf="canEdit" type="button" mat-stroked-button class="action-main"
+                (click)="openQuickEdit()">
+          <mat-icon>edit</mat-icon> {{ t('common.edit') }}
+        </button>
+
+        <button type="button" mat-icon-button [matMenuTriggerFor]="carMenu"
+                [matTooltip]="t('common.actions')" [attr.aria-label]="t('common.actions')">
+          <mat-icon>more_horiz</mat-icon>
+        </button>
+        <mat-menu #carMenu="matMenu">
+          <a mat-menu-item [routerLink]="['/car', carId, 'edit']">
+            <mat-icon>tune</mat-icon> {{ t('car.editFull') }}
+          </a>
+          <a mat-menu-item *ngIf="canSeeRentings"
+             [routerLink]="['/renting']" [queryParams]="{ car: carId }">
+            <mat-icon>vpn_key</mat-icon> {{ t('car.viewRentings') }}
+          </a>
+          <a mat-menu-item *ngIf="canSeeExpenses"
+             [routerLink]="['/credit']" [queryParams]="{ tab: 'expenses', car: carId }">
+            <mat-icon>receipt_long</mat-icon> {{ t('car.viewExpenses') }}
+          </a>
+          <a mat-menu-item *ngIf="canSeeStatistics"
+             [routerLink]="['/statistics']" [queryParams]="{ car: carId }">
+            <mat-icon>insights</mat-icon> {{ t('car.statistics') }}
+          </a>
+        </mat-menu>
+      </div>
+
+      <!-- --------------------------- BOOKINGS ---------------------------
+           The hire running now and the queue behind it: what the desk is asked
+           when the phone rings about this plate. Absent entirely — not empty —
+           when the caller cannot reach the bookings module. -->
+      <section class="panel" *ngIf="overview?.bookings">
+        <header class="panel-head">
+          <mat-icon>schedule</mat-icon>
+          <span class="panel-title">{{ t('car.overview.bookings') }}</span>
+        </header>
+
+        <div class="panel-body">
+          <div class="booking" *ngFor="let booking of bookings">
+            <div class="booking-who">
+              <a class="booking-name" *ngIf="booking.clientId"
+                 [routerLink]="['/client', booking.clientId]">{{ booking.clientName }}</a>
+              <span class="booking-name" *ngIf="!booking.clientId">{{ booking.clientName }}</span>
+              <span class="booking-sub" *ngIf="booking.clientEmail">{{ booking.clientEmail }}</span>
+            </div>
+
+            <div class="booking-when num">
+              {{ booking.startDate | date:'dd MMM':'UTC' }}
+              <ng-container *ngIf="booking.endDate">
+                – {{ booking.endDate | date:'dd MMM':'UTC' }}
+              </ng-container>
+            </div>
+
+            <div class="booking-money">
+              <span class="booking-amount num" *ngIf="booking.price">
+                {{ booking.price.amount | number:'1.0-0' }} {{ booking.price.currency }}
+              </span>
+              <span class="chip" [ngClass]="bookingStateClass(booking)">
+                {{ booking.isLate
+                     ? t('renting.late')
+                     : (stateLabelKey(booking.state) ? t(stateLabelKey(booking.state)) : '') }}
+              </span>
+            </div>
+
+            <div class="booking-actions">
+              <button *ngIf="canTakeBackBooking(booking)" type="button" mat-icon-button color="primary"
+                      (click)="returnCar(booking)"
+                      [matTooltip]="t('renting.returnCar')" [attr.aria-label]="t('renting.returnCar')">
+                <mat-icon>assignment_turned_in</mat-icon>
+              </button>
+              <a mat-icon-button [routerLink]="['/renting', booking.rentingId]"
+                 [matTooltip]="t('common.open')" [attr.aria-label]="t('common.open')">
+                <mat-icon>open_in_new</mat-icon>
+              </a>
+            </div>
+          </div>
+
+          <p class="panel-empty" *ngIf="!bookings.length">{{ t('car.overview.noBookings') }}</p>
+        </div>
+
+        <footer class="panel-foot" *ngIf="overview?.bookingsTotal">
+          <a [routerLink]="['/renting']" [queryParams]="{ car: carId }">
+            {{ t('car.overview.viewAllRentings', { count: overview?.bookingsTotal }) }} →
+          </a>
+        </footer>
+      </section>
+
+      <!-- --------------------------- EXPENSES --------------------------- -->
+      <section class="panel" *ngIf="overview?.expenses">
+        <header class="panel-head">
+          <mat-icon>receipt_long</mat-icon>
+          <span class="panel-title">{{ t('car.overview.expenses') }}</span>
+          <span class="panel-figure num" *ngIf="overview?.expensesTotal">
+            {{ overview?.expensesTotal?.amount | number:'1.0-0' }}
+            {{ overview?.expensesTotal?.currency }}
+          </span>
+        </header>
+
+        <div class="panel-body">
+          <div class="expense" *ngFor="let expense of overview?.expenses">
+            <span class="expense-ico"><mat-icon>build</mat-icon></span>
+            <div class="expense-what">
+              <div class="expense-name">{{ expense.typeName }}</div>
+              <div class="expense-sub">
+                <span *ngIf="expense.description">{{ expense.description }} · </span>
+                {{ expense.expenseDate | date:'dd MMM yyyy':'UTC' }}
+              </div>
+            </div>
+            <div class="expense-money">
+              <span class="expense-amount num" *ngIf="expense.amount">
+                {{ expense.amount.amount | number:'1.0-2' }} {{ expense.amount.currency }}
+              </span>
+              <span class="chip warn" *ngIf="expense.isUnpaid">{{ t('expense.unpaid') }}</span>
+            </div>
+          </div>
+
+          <p class="panel-empty" *ngIf="!overview?.expenses?.length">
+            {{ t('car.overview.noExpenses') }}
+          </p>
+        </div>
+
+        <footer class="panel-foot" *ngIf="canSeeExpenses">
+          <a [routerLink]="['/credit']" [queryParams]="{ tab: 'expenses', car: carId }">
+            {{ t('common.viewAll') }} →
+          </a>
+        </footer>
+      </section>
     </div>
   </div>
 
-  <!-- The car itself. First thing on the page, because it is the first thing
-       anyone opening a plate wants to see; the strip appears only where there is
-       more than one picture, so a single-photo car is not given a row of one. -->
-  <div class="photos" *ngIf="hasPhotos">
-    <a class="photo-hero" [href]="heroHref" target="_blank"
-       [matTooltip]="t('car.openFullSize')">
-      <img [src]="heroUrl" [alt]="car?.matricule ?? ''" />
-    </a>
-
-    <div class="photo-strip" *ngIf="images.length > 1">
-      <button type="button" class="photo-thumb" *ngFor="let image of images; let i = index"
-              [class.selected]="i === selectedImageIndex" (click)="selectImage(i)"
-              [attr.aria-label]="t('car.showPhoto', { index: i + 1 })">
-        <img [src]="thumbFor(image)" [alt]="t('car.showPhoto', { index: i + 1 })" loading="lazy" />
-        <mat-icon *ngIf="image.isPrimary" class="primary-mark"
-                  [matTooltip]="t('car.primaryImage')">star</mat-icon>
-      </button>
-    </div>
-  </div>
-
-  <!-- No pictures at all: say so where they would be, and point at the one screen
-       that can fix it, rather than leaving a silent gap. -->
-  <p class="no-photos" *ngIf="car && !hasPhotos">
-    <mat-icon>no_photography</mat-icon>
-    {{ t('car.noImages') }}
-    <a [routerLink]="['/car', carId, 'edit']">{{ t('car.addImages') }}</a>
-  </p>
-
-  <div class="tile-grid">
-    <!-- Who has the car, when it is due back: what the counter is asked when the
-         phone rings about this plate. -->
-    <div class="tile">
-      <div class="tile-label">{{ t('common.status') }}</div>
-      <div class="tile-value">
-        <span class="chip" [ngClass]="availabilityClass" *ngIf="car">
-          {{ availabilityLabelKey ? t(availabilityLabelKey) : '' }}
-        </span>
-      </div>
-      <div class="tile-note" *ngIf="car?.currentRenting as hire">
-        <a *ngIf="hire.clientId" [routerLink]="['/client', hire.clientId]">{{ hire.clientName }}</a>
-        <span *ngIf="hire.endDate"> · {{ t('car.dueBack', { date: (hire.endDate | date:'yyyy-MM-dd':'UTC') }) }}</span>
-      </div>
-    </div>
-
-    <div class="tile">
-      <div class="tile-label">{{ t('car.rentings') }}</div>
-      <div class="tile-value">{{ car?.rentingCount ?? 0 }}</div>
-      <div class="tile-note" *ngIf="canSeeRentings">
-        <a [routerLink]="['/renting']" [queryParams]="{ car: carId }">{{ t('car.viewRentings') }}</a>
-      </div>
-    </div>
-
-    <div class="tile" *ngIf="car?.dailyRate">
-      <div class="tile-label">{{ t('car.dailyRate') }}</div>
-      <div class="tile-value">
-        {{ car?.dailyRate?.amount | number:'1.2-2' }} {{ car?.dailyRate?.currency }}
-      </div>
-    </div>
-
-    <!-- The odometer a new booking on this car will start from. Only shown once
-         someone has entered one: "0 km" would be a claim, not a blank. -->
-    <div class="tile" *ngIf="car?.mileage !== null && car?.mileage !== undefined">
-      <div class="tile-label">{{ t('car.mileage') }}</div>
-      <div class="tile-value">{{ car?.mileage | number:'1.0-0' }} {{ t('common.km') }}</div>
-      <div class="tile-note">{{ t('car.mileageNote') }}</div>
-    </div>
-  </div>
-
-  <!-- What has been spent on this car lives on the finance screen, which filters
-       by car; no point restating its figures here. -->
-  <p class="detail-links" *ngIf="canSeeExpenses">
-    <a [routerLink]="['/credit']" [queryParams]="{ tab: 'expenses', car: carId }">
-      {{ t('car.viewExpenses') }}
-    </a>
-  </p>
-
+  <!-- ============================== THE RECORD ==============================
+       Everywhere the car has been, and what it is made of. Below the fold on
+       purpose: this is the part read when the summary above raised a question. -->
   <mat-tab-group>
     <!-- HISTORY -->
     <mat-tab [label]="t('car.tabs.rentings')" *ngIf="canSeeRentings">
@@ -210,6 +391,10 @@
     <mat-tab [label]="t('car.tabs.vehicle')">
       <div class="tab-body">
         <dl class="facts" *ngIf="car">
+          <div class="fact" *ngIf="car.brandName">
+            <dt>{{ t('modelCar.brand') }}</dt>
+            <dd>{{ car.brandName }}</dd>
+          </div>
           <div class="fact">
             <dt>{{ t('car.model') }}</dt>
             <dd>{{ car.modelName }}</dd>

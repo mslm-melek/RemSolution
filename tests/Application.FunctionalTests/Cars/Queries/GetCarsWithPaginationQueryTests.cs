@@ -139,6 +139,55 @@ public class GetCarsWithPaginationQueryTests : BaseTestFixture
         available.RentingCount.Should().Be(0);
     }
 
+    // The list's filter rail narrows by where a car is based and who made it, so
+    // both have to select the cars the rail's counts promised.
+    [Test]
+    public async Task ShouldFilterByBranch()
+    {
+        await RunAsAgencyAdministratorAsync();
+        await AddTestAgencyAsync();
+
+        var country = new Country { Name = "Carland" };
+        await AddAsync(country);
+        var airport = new Branch { Name = "Airport", CountryId = country.Id };
+        await AddAsync(airport);
+
+        await AddAsync(new Car { Matricule = "BR-1", Status = CarStatus.Active, BranchId = airport.Id });
+        // No branch: a real state, and one the branch filter must exclude.
+        await AddAsync(new Car { Matricule = "BR-NONE", Status = CarStatus.Active });
+
+        var result = await SendAsync(new GetCarsWithPaginationQuery { BranchId = airport.Id });
+
+        result.TotalCount.Should().Be(1);
+        result.Items.First().Matricule.Should().Be("BR-1");
+        result.Items.First().BranchName.Should().Be("Airport");
+    }
+
+    [Test]
+    public async Task ShouldFilterByBrandThroughTheModel()
+    {
+        await RunAsAgencyAdministratorAsync();
+        await AddTestAgencyAsync();
+
+        var dacia = new Brand { Name = "Dacia" };
+        var toyota = new Brand { Name = "Toyota" };
+        await AddAsync(dacia);
+        await AddAsync(toyota);
+
+        var duster = new ModelCar { Name = "Duster", BrandId = dacia.Id };
+        var yaris = new ModelCar { Name = "Yaris", BrandId = toyota.Id };
+        await AddAsync(duster);
+        await AddAsync(yaris);
+
+        await AddAsync(new Car { Matricule = "BRAND-D", Status = CarStatus.Active, ModelId = duster.Id });
+        await AddAsync(new Car { Matricule = "BRAND-T", Status = CarStatus.Active, ModelId = yaris.Id });
+
+        var result = await SendAsync(new GetCarsWithPaginationQuery { BrandId = dacia.Id });
+
+        result.TotalCount.Should().Be(1);
+        result.Items.First().Matricule.Should().Be("BRAND-D");
+    }
+
     [Test]
     public async Task ShouldFilterByWhenTheCarWasAdded()
     {

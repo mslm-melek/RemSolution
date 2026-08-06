@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RemSolution — Cars</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500&family=Inter:wght@400;500;600&family=Roboto+Mono:wght@400;500&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#ffffff; --bg-alt:#f8fafc; --line:#e2e8f0; --line-strong:#cbd5e1;
+  --text:#1e293b; --text-dim:#64748b; --text-soft:#475569;
+  --primary:#2563eb; --primary-dark:#1d4ed8; --primary-tint:#eff6ff;
+  --danger:#dc2626; --warn:#d97706; --ok:#059669;
+  --sp1:4px; --sp2:8px; --sp3:12px; --sp4:16px; --sp5:24px; --sp6:32px;
+}
+body.dark{
+  --bg:#0f172a; --bg-alt:#1e293b; --line:#334155; --line-strong:#475569;
+  --text:#e2e8f0; --text-dim:#94a3b8; --text-soft:#cbd5e1;
+  --primary-tint:#1e3a5f;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:14px}
+.icon{font-family:'Material Symbols Outlined';font-size:20px;line-height:1}
+.mono{font-family:'Roboto Mono',monospace;font-variant-numeric:tabular-nums}
+.container{display:flex;height:100vh;overflow:hidden}
+
+/* ---------- sidebar ---------- */
+.sidebar{width:216px;flex:none;display:flex;flex-direction:column;background:var(--bg-alt);border-right:1px solid var(--line);padding:var(--sp4) var(--sp3) var(--sp3)}
+.logo{display:flex;align-items:center;gap:9px;padding:0 var(--sp2) var(--sp3)}
+.logo-icon{display:grid;place-items:center;width:28px;height:28px;border-radius:8px;background:#0f172a;color:#fff;font-weight:500;font-size:14px}
+body.dark .logo-icon{background:var(--primary)}
+.logo-text{font-family:'Poppins',sans-serif;font-weight:500;font-size:15px}
+.nav{display:flex;flex-direction:column;gap:3px}
+.nav-item{display:flex;align-items:center;gap:11px;height:44px;padding:0 var(--sp3);border-radius:10px;background:none;border:none;color:var(--text-soft);font:500 14.5px 'Inter',sans-serif;cursor:pointer;transition:.15s;text-align:left;width:100%}
+.nav-item:hover:not(.active){background:var(--line);color:var(--text)}
+.nav-item.active{background:var(--primary-tint);color:var(--primary)}
+.nav-footer{margin-top:auto;display:flex;flex-direction:column;gap:3px}
+.agency-logo{display:flex;align-items:center;gap:var(--sp2);padding:var(--sp3) var(--sp2);margin-top:var(--sp2);border-top:1px solid var(--line)}
+.agency-logo-img{width:34px;height:34px;flex:none;border-radius:8px;background:linear-gradient(135deg,var(--primary),var(--primary-dark));display:grid;place-items:center;color:#fff;font-weight:700;font-size:15px}
+.agency-name{font-size:12.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.agency-plan{font-size:10.5px;color:var(--text-dim)}
+.user-card{display:flex;align-items:center;gap:10px;height:46px;padding:0 var(--sp2);border-top:1px solid var(--line);cursor:pointer}
+.user-avatar{display:grid;place-items:center;width:28px;height:28px;flex:none;border-radius:999px;background:#dbeafe;color:#1e40af;font-size:11px;font-weight:600}
+body.dark .user-avatar{background:var(--primary-tint);color:#93c5fd}
+.user-name{font-size:13.5px;font-weight:500}
+.user-role{font-size:10.5px;color:var(--text-dim)}
+.user-expand{margin-left:auto;color:var(--text-dim);font-size:18px}
+
+/* ---------- header ---------- */
+.main{flex:1;min-width:0;display:flex;flex-direction:column}
+.header{display:flex;align-items:center;gap:var(--sp3);padding:var(--sp3) var(--sp5);border-bottom:1px solid var(--line);flex:none}
+.branch-picker{display:flex;align-items:center;gap:var(--sp2);height:38px;padding:0 var(--sp3);border:1px solid var(--line-strong);border-radius:9px;background:var(--bg);color:var(--text);font:500 13px 'Inter',sans-serif;cursor:pointer}
+.branch-picker:hover{background:var(--bg-alt)}
+.search-box{display:flex;align-items:center;gap:9px;flex:1 1 auto;max-width:380px;height:38px;padding:0 var(--sp3);background:var(--bg-alt);border:1px solid var(--line-strong);border-radius:9px;color:var(--text-dim);font:400 13.5px 'Inter',sans-serif;cursor:text}
+.search-box.focus{border-color:var(--primary);color:var(--text)}
+.search-box input{flex:1;background:none;border:none;color:var(--text);font:400 13.5px 'Inter',sans-serif;outline:none}
+.search-box input::placeholder{color:var(--text-dim)}
+.spacer{flex:1}
+.hbtn{position:relative;display:grid;place-items:center;width:38px;height:38px;border-radius:9px;background:none;border:none;color:var(--text-soft);cursor:pointer}
+.hbtn:hover{background:var(--bg-alt)}
+.view-toggle{display:flex;gap:4px;background:var(--bg-alt);border-radius:9px;padding:4px;border:1px solid var(--line-strong)}
+.view-btn{width:38px;height:30px;display:grid;place-items:center;border:none;background:none;color:var(--text-soft);cursor:pointer;border-radius:6px;transition:.15s}
+.view-btn.active{background:var(--bg);color:var(--primary);border:1px solid var(--line-strong)}
+
+/* ---------- filters sidebar ---------- */
+.filters-sidebar{width:220px;flex:none;background:var(--bg-alt);border-right:1px solid var(--line);padding:var(--sp4) var(--sp3);overflow-y:auto;display:flex;flex-direction:column;gap:var(--sp4)}
+.filter-group{display:flex;flex-direction:column;gap:var(--sp3)}
+.filter-title{font-size:12px;font-weight:600;letter-spacing:.01em;color:var(--text);text-transform:uppercase}
+.filter-item{display:flex;align-items:center;gap:var(--sp2);height:36px;padding:0 var(--sp3);border-radius:8px;cursor:pointer;background:none;border:none;color:var(--text-soft);font:500 13.5px 'Inter',sans-serif;transition:.15s}
+.filter-item:hover{background:var(--line);color:var(--text)}
+.filter-item.active{background:var(--primary-tint);color:var(--primary)}
+.filter-check{display:grid;place-items:center;width:18px;height:18px;border:1.5px solid var(--line-strong);border-radius:4px;flex:none}
+.filter-item.active .filter-check{background:var(--primary);border-color:var(--primary);color:#fff;font-size:13px}
+.filter-count{margin-left:auto;font-family:'Roboto Mono',monospace;font-size:11px;color:var(--text-dim);font-weight:400}
+
+/* ---------- content ---------- */
+.content-wrapper{flex:1;min-width:0;display:flex;flex-direction:column;overflow:hidden}
+.header-toolbar{display:flex;align-items:center;gap:var(--sp3);padding:var(--sp4) var(--sp5);border-bottom:1px solid var(--line);justify-content:space-between}
+.toolbar-left{display:flex;align-items:center;gap:var(--sp3)}
+.toolbar-title{font-size:13px;font-weight:600;color:var(--text-dim)}.count{font-family:'Roboto Mono',monospace;font-size:12px;font-weight:500;color:var(--text);margin-left:var(--sp2)}
+.toolbar-right{display:flex;align-items:center;gap:var(--sp2)}
+.sort-btn{display:flex;align-items:center;gap:var(--sp2);height:36px;padding:0 var(--sp3);border:1px solid var(--line-strong);border-radius:9px;background:var(--bg);color:var(--text-soft);font:500 13px 'Inter',sans-serif;cursor:pointer}
+.sort-btn:hover{background:var(--bg-alt)}
+.add-btn{display:flex;align-items:center;gap:var(--sp2);height:36px;padding:0 18px;border-radius:9px;border:none;background:var(--primary);color:#fff;font:500 13.5px 'Inter',sans-serif;cursor:pointer}
+.add-btn:hover{background:var(--primary-dark)}
+
+.scroll{flex:1;overflow-y:auto;padding:var(--sp5)}
+.cars-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:var(--sp4)}
+.cars-list{display:flex;flex-direction:column;gap:var(--sp3)}
+
+/* car card */
+.car-card{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:12px;background:var(--bg);overflow:hidden;transition:.2s;cursor:pointer}
+.car-card:hover{border-color:var(--line-strong);box-shadow:0 8px 20px rgba(15,23,42,.08)}
+.car-image{width:100%;height:180px;background:linear-gradient(135deg,var(--bg-alt),var(--line));position:relative;display:grid;place-items:center;color:var(--text-dim)}
+.car-image img{width:100%;height:100%;object-fit:cover}
+.car-status{position:absolute;top:var(--sp3);right:var(--sp3);display:flex;align-items:center;gap:6px;padding:5px 10px;border-radius:20px;background:rgba(255,255,255,.9);font-size:11.5px;font-weight:600}
+.car-status.active{background:#ecfdf5;color:var(--ok)}
+.car-status.maintenance{background:#fef3c7;color:var(--warn)}
+.car-status.inactive{background:#fee2e2;color:var(--danger)}
+.car-body{display:flex;flex-direction:column;padding:var(--sp4);gap:var(--sp3);flex:1}
+.car-header{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--sp2)}
+.car-name{flex:1}
+.car-brand{font-size:12.5px;color:var(--text-dim);margin-bottom:2px}
+.car-model{font-size:14.5px;font-weight:600}
+.car-plate{font-family:'Roboto Mono',monospace;font-size:11px;color:var(--text-dim);margin-top:3px;padding:3px 6px;background:var(--bg-alt);border-radius:4px;width:fit-content}
+.car-rating{display:flex;align-items:center;gap:4px;font-size:13px}
+.car-rating .stars{color:#fbbf24;font-size:11px}
+.car-info{display:grid;grid-template-columns:1fr 1fr;gap:var(--sp3);border-top:1px solid var(--line);padding-top:var(--sp3);font-size:12.5px}
+.info-item{display:flex;flex-direction:column;gap:2px}
+.info-label{color:var(--text-dim);font-size:11px;font-weight:500}
+.info-value{font-family:'Roboto Mono',monospace;font-size:13px;font-weight:500;color:var(--text)}
+.info-value.amount{color:var(--primary);font-size:15px}
+.car-location{display:flex;align-items:center;gap:6px;color:var(--text-soft);font-size:11.5px;margin-top:2px}
+.car-actions{display:flex;gap:var(--sp2);padding:var(--sp4) var(--sp4) 0;border-top:1px solid var(--line);margin-top:var(--sp3)}
+.action-btn{flex:1;height:36px;display:grid;place-items:center;border:1px solid var(--line-strong);background:var(--bg);border-radius:8px;color:var(--text);font:500 13px 'Inter',sans-serif;cursor:pointer;transition:.15s}
+.action-btn:hover{background:var(--bg-alt)}
+.action-btn.primary{background:var(--primary-tint);border-color:var(--primary);color:var(--primary)}
+.action-btn.primary:hover{background:var(--primary);color:#fff}
+
+/* car list row */
+.car-row{display:grid;grid-template-columns:60px 1fr 120px 100px 100px 100px 80px;gap:var(--sp3);align-items:center;padding:var(--sp3) var(--sp4);border:1px solid var(--line);border-radius:10px;background:var(--bg);transition:.15s;cursor:pointer}
+.car-row:hover{border-color:var(--line-strong);background:var(--bg-alt)}
+.car-row.actionable{border-left-width:4px;border-left-color:var(--primary)}
+.row-thumb{width:60px;height:60px;border-radius:8px;background:var(--bg-alt);display:grid;place-items:center;color:var(--text-dim);overflow:hidden}
+.row-thumb img{width:100%;height:100%;object-fit:cover}
+.row-identity{display:flex;flex-direction:column;gap:2px}
+.row-model{font-weight:600;font-size:13.5px}
+.row-brand{font-size:11.5px;color:var(--text-dim)}
+.row-plate{font-family:'Roboto Mono',monospace;font-size:11px;color:var(--text-soft)}
+.row-branch{font-size:12.5px;color:var(--text)}
+.row-branch-sub{font-size:10.5px;color:var(--text-dim);margin-top:1px}
+.row-status{display:flex;align-items:center;gap:5px;padding:3px 8px;border-radius:6px;font-size:11.5px;font-weight:600;width:fit-content;white-space:nowrap}
+.row-status.active{background:#ecfdf5;color:var(--ok)}
+.row-status.maintenance{background:#fef3c7;color:var(--warn)}
+.row-status.inactive{background:#fee2e2;color:var(--danger)}
+.row-rate{font-family:'Roboto Mono',monospace;font-size:14px;font-weight:600;color:var(--primary)}
+.row-avail{text-align:center}
+.avail-num{font-family:'Roboto Mono',monospace;font-size:13px;font-weight:600;color:var(--text)}
+.avail-label{font-size:10px;color:var(--text-dim);margin-top:1px}
+.row-action{display:flex;gap:5px}
+.row-action button{width:32px;height:32px;display:grid;place-items:center;border:1px solid var(--line-strong);background:var(--bg);border-radius:6px;color:var(--text-soft);cursor:pointer;font-size:16px}
+.row-action button:hover{background:var(--bg-alt)}
+
+/* empty state */
+.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:var(--sp3);padding:var(--sp6) var(--sp5);color:var(--text-dim)}
+.empty-icon{font-size:48px;opacity:.3}
+.empty-text{font-size:14px}
+
+/* ================= chrome ================= */
+.hbadge{position:absolute;top:4px;right:4px;min-width:15px;height:15px;display:grid;place-items:center;padding:0 3px;border-radius:999px;background:var(--danger);color:#fff;font-family:'Roboto Mono',monospace;font-size:9.5px}
+.lang-btn{display:flex;align-items:center;gap:5px;height:38px;padding:0 10px;border-radius:9px;background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:13px}
+.lang-btn:hover{background:var(--bg-alt)}
+
+/* scrollbar */
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--line-strong);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--text-dim)}
+</style>
+</head>
+<body>
+<div class="container">
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="logo">
+      <div class="logo-icon">RS</div>
+      <div class="logo-text">RemSolution</div>
+    </div>
+    <div class="nav">
+      <button class="nav-item" data-screen="today">
+        <span class="icon">today</span> Today
+      </button>
+      <button class="nav-item active" data-screen="cars">
+        <span class="icon">directions_car</span> Cars
+      </button>
+      <button class="nav-item" data-screen="bookings">
+        <span class="icon">event_available</span> Bookings
+      </button>
+      <button class="nav-item" data-screen="clients">
+        <span class="icon">groups</span> Clients
+      </button>
+      <button class="nav-item" data-screen="money">
+        <span class="icon">payments</span> Money
+      </button>
+    </div>
+    <div class="nav-footer">
+      <div class="agency-logo">
+        <div class="agency-logo-img">BR</div>
+        <div>
+          <div class="agency-name">Best Rent</div>
+          <div class="agency-plan">Pro · 24 cars</div>
+        </div>
+      </div>
+      <div class="user-card">
+        <div class="user-avatar">AH</div>
+        <div>
+          <div class="user-name">Asma H.</div>
+          <div class="user-role">Agency Admin</div>
+        </div>
+        <div class="user-expand">⋮</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+    <!-- HEADER -->
+    <div class="header">
+      <button class="branch-picker">
+        <span class="icon">location_on</span>
+        Tunis Central
+      </button>
+      <div class="search-box" id="search-box">
+        <span class="icon">search</span>
+        <input type="text" id="search-input" placeholder="Search by plate, model, brand…">
+      </div>
+      <div class="spacer"></div>
+      <div class="view-toggle">
+        <button class="view-btn active" id="grid-view" title="Grid view">
+          <span class="icon">apps</span>
+        </button>
+        <button class="view-btn" id="list-view" title="List view">
+          <span class="icon">list</span>
+        </button>
+      </div>
+      <button class="hbtn">
+        <span class="icon">notifications</span>
+        <div class="hbadge">3</div>
+      </button>
+      <button class="hbtn" onclick="toggleTheme();" id="theme-btn">
+        <span class="icon">dark_mode</span>
+      </button>
+    </div>
+
+    <!-- CONTENT -->
+    <div class="content-wrapper">
+      <!-- TOOLBAR -->
+      <div class="header-toolbar">
+        <div class="toolbar-left">
+          <div class="toolbar-title">All Vehicles <span class="count" id="cars-count">24</span></div>
+        </div>
+        <div class="toolbar-right">
+          <button class="sort-btn">
+            <span class="icon">sort</span>
+            <span>Sort</span>
+          </button>
+          <button class="add-btn">
+            <span class="icon">add</span>
+            <span>New Car</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- MAIN CONTENT -->
+      <div style="display:flex;flex:1;overflow:hidden;min-width:0">
+        <!-- FILTERS -->
+        <div class="filters-sidebar" id="filters-sidebar">
+          <div class="filter-group">
+            <div class="filter-title">Status</div>
+            <button class="filter-item active" data-filter="status" data-value="active">
+              <div class="filter-check">✓</div>
+              <span>Active</span>
+              <span class="filter-count">18</span>
+            </button>
+            <button class="filter-item" data-filter="status" data-value="maintenance">
+              <div class="filter-check"></div>
+              <span>Maintenance</span>
+              <span class="filter-count">4</span>
+            </button>
+            <button class="filter-item" data-filter="status" data-value="inactive">
+              <div class="filter-check"></div>
+              <span>Inactive</span>
+              <span class="filter-count">2</span>
+            </button>
+          </div>
+
+          <div class="filter-group">
+            <div class="filter-title">Branch</div>
+            <button class="filter-item active" data-filter="branch" data-value="tunis">
+              <div class="filter-check">✓</div>
+              <span>Tunis Central</span>
+              <span class="filter-count">12</span>
+            </button>
+            <button class="filter-item" data-filter="branch" data-value="airport">
+              <div class="filter-check"></div>
+              <span>Airport</span>
+              <span class="filter-count">8</span>
+            </button>
+            <button class="filter-item" data-filter="branch" data-value="sfax">
+              <div class="filter-check"></div>
+              <span>Sfax</span>
+              <span class="filter-count">4</span>
+            </button>
+          </div>
+
+          <div class="filter-group">
+            <div class="filter-title">Brand</div>
+            <button class="filter-item" data-filter="brand" data-value="toyota">
+              <div class="filter-check"></div>
+              <span>Toyota</span>
+              <span class="filter-count">6</span>
+            </button>
+            <button class="filter-item" data-filter="brand" data-value="renault">
+              <div class="filter-check"></div>
+              <span>Renault</span>
+              <span class="filter-count">5</span>
+            </button>
+            <button class="filter-item" data-filter="brand" data-value="peugeot">
+              <div class="filter-check"></div>
+              <span>Peugeot</span>
+              <span class="filter-count">7</span>
+            </button>
+            <button class="filter-item" data-filter="brand" data-value="hyundai">
+              <div class="filter-check"></div>
+              <span>Hyundai</span>
+              <span class="filter-count">4</span>
+            </button>
+            <button class="filter-item" data-filter="brand" data-value="dacia">
+              <div class="filter-check"></div>
+              <span>Dacia</span>
+              <span class="filter-count">2</span>
+            </button>
+          </div>
+
+          <div class="filter-group">
+            <div class="filter-title">Daily Rate</div>
+            <button class="filter-item" data-filter="rate" data-value="budget">
+              <div class="filter-check"></div>
+              <span>Under 50 TND</span>
+              <span class="filter-count">5</span>
+            </button>
+            <button class="filter-item" data-filter="rate" data-value="mid">
+              <div class="filter-check"></div>
+              <span>50–100 TND</span>
+              <span class="filter-count">14</span>
+            </button>
+            <button class="filter-item" data-filter="rate" data-value="premium">
+              <div class="filter-check"></div>
+              <span>100+ TND</span>
+              <span class="filter-count">5</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- SCROLL CONTAINER -->
+        <div class="scroll" id="scroll-container">
+          <div id="cars-grid" class="cars-grid"></div>
+          <div id="cars-list" class="cars-list" style="display:none"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* Data */
+const CARS = [
+  {id:1,brand:'Toyota',model:'Corolla',plate:'TN3642RL',status:'active',dailyRate:45,location:'Tunis Central',lat:36.8,lng:10.18,image:'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="300"%3E%3Crect fill="%232563eb" width="400" height="300"/%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" dy=".3em" font-size="24" fill="white" font-family="sans-serif"%3EToyota Corolla%3C/text%3E%3C/svg%3E',rating:4.8,reviews:32,available:3},
+  {id:2,brand:'Renault',model:'Megane',plate:'TN5821RM',status:'active',dailyRate:55,location:'Tunis Central',lat:36.8,lng:10.18,image:'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="300"%3E%3Crect fill="%23f59e0b" width="400" height="300"/%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" dy=".3em" font-size="24" fill="white" font-family="sans-serif"%3ERenault Megane%3C/text%3E%3C/svg%3E',rating:4.5,reviews:28,available:2},
+  {id:3,brand:'Peugeot',model:'308',plate:'TN7194PG',status:'maintenance',dailyRate:65,location:'Tunis Central',lat:36.8,lng:10.18,image:'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="300"%3E%3Crect fill="%23d97706" width="400" height="300"/%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" dy=".3em" font-size="24" fill="white" font-family="sans-serif"%3EPeugeot 308%3C/text%3E%3C/svg%3E',rating:4.6,reviews:15,available:0},
+  {id:4,brand:'Hyundai',model:'i20',plate:'TN4521HN',status:'active',dailyRate:40,location:'Airport',lat:36.84,lng:10.23,image:'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="300"%3E%3Crect fill="%2359748e" width="400" height="300"/%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" dy=".3em" font-size="24" fill="white" font-family="sans-serif"%3EHyundai i20%3C/text%3E%3C/svg%3E',rating:4.3,reviews:22,available:1},
+  {id:5,brand:'Toyota',model:'Yaris',plate:'TN9233TY',status:'active',dailyRate:38,location:'Airport',lat:36.84,lng:10.23,image:'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="300"%3E%3Crect fill="%232563eb" width="400" height="300"/%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" dy=".3em" font-size="24" fill="white" font-family="sans-serif"%3EToyota Yaris%3C/text%3E%3C/svg%3E',rating:4.7,reviews:41,available:5},
+  {id:6,brand:'Peugeot',model:'2008',plate:'TN6384PG',status:'inactive',dailyRate:70,location:'Sfax',lat:34.74,lng:10.76,image:'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="300"%3E%3Crect fill="%23858585" width="400" height="300"/%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" dy=".3em" font-size="24" fill="white" font-family="sans-serif"%3EPeugeot 2008%3C/text%3E%3C/svg%3E',rating:4.4,reviews:18,available:0},
+  {id:7,brand:'Dacia',model:'Sandero',plate:'TN1847DC',status:'active',dailyRate:35,location:'Tunis Central',lat:36.8,lng:10.18,image:'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="300"%3E%3Crect fill="%23d97706" width="400" height="300"/%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" dy=".3em" font-size="24" fill="white" font-family="sans-serif"%3EDacia Sandero%3C/text%3E%3C/svg%3E',rating:4.1,reviews:12,available:2},
+  {id:8,brand:'Renault',model:'Clio',plate:'TN5503RM',status:'active',dailyRate:48,location:'Tunis Central',lat:36.8,lng:10.18,image:'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="300"%3E%3Crect fill="%23f59e0b" width="400" height="300"/%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" dy=".3em" font-size="24" fill="white" font-family="sans-serif"%3ERenault Clio%3C/text%3E%3C/svg%3E',rating:4.6,reviews:35,available:4},
+  {id:9,brand:'Toyota',model:'Camry',plate:'TN9801TY',status:'active',dailyRate:120,location:'Airport',lat:36.84,lng:10.23,image:'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="300"%3E%3Crect fill="%232563eb" width="400" height="300"/%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" dy=".3em" font-size="24" fill="white" font-family="sans-serif"%3EToyota Camry%3C/text%3E%3C/svg%3E',rating:4.9,reviews:52,available:1},
+  {id:10,brand:'Hyundai',model:'i30',plate:'TN2847HN',status:'maintenance',dailyRate:60,location:'Tunis Central',lat:36.8,lng:10.18,image:'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="300"%3E%3Crect fill="%2359748e" width="400" height="300"/%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" dy=".3em" font-size="24" fill="white" font-family="sans-serif"%3EHyundai i30%3C/text%3E%3C/svg%3E',rating:4.5,reviews:29,available:0},
+];
+
+let viewMode = 'grid';
+const activeFilters = {status:['active'],branch:['tunis']};
+
+const $ = id => document.getElementById(id);
+const $$ = s => document.querySelectorAll(s);
+
+function renderGrid(){
+  const filtered = CARS.filter(c => 
+    activeFilters.status.includes(c.status.toLowerCase()) &&
+    activeFilters.branch.includes(c.location === 'Tunis Central' ? 'tunis' : c.location === 'Airport' ? 'airport' : 'sfax')
+  );
+  
+  const html = filtered.map(c => `
+    <div class="car-card">
+      <div class="car-image">
+        <img src="${c.image}" alt="${c.model}">
+        <div class="car-status ${c.status}">${c.status}</div>
+      </div>
+      <div class="car-body">
+        <div class="car-header">
+          <div class="car-name">
+            <div class="car-brand">${c.brand}</div>
+            <div class="car-model">${c.model}</div>
+            <div class="car-plate">${c.plate}</div>
+          </div>
+          <div class="car-rating">
+            <span class="stars">★</span>
+            <span>${c.rating}</span>
+          </div>
+        </div>
+        <div class="car-info">
+          <div class="info-item">
+            <div class="info-label">Daily Rate</div>
+            <div class="info-value amount">${c.dailyRate} TND</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">Available Today</div>
+            <div class="info-value">${c.available}</div>
+          </div>
+        </div>
+        <div class="car-location">
+          <span class="icon" style="font-size:14px">location_on</span>
+          ${c.location}
+        </div>
+        <div class="car-actions">
+          <button class="action-btn primary">View</button>
+          <button class="action-btn">Edit</button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+  
+  $('cars-grid').innerHTML = html;
+  $('cars-count').textContent = filtered.length;
+}
+
+function renderList(){
+  const filtered = CARS.filter(c => 
+    activeFilters.status.includes(c.status.toLowerCase()) &&
+    activeFilters.branch.includes(c.location === 'Tunis Central' ? 'tunis' : c.location === 'Airport' ? 'airport' : 'sfax')
+  );
+  
+  const html = filtered.map(c => `
+    <div class="car-row actionable">
+      <div class="row-thumb">
+        <img src="${c.image}" alt="${c.model}">
+      </div>
+      <div class="row-identity">
+        <div class="row-model">${c.brand} ${c.model}</div>
+        <div class="row-brand">${c.reviews} reviews · ${c.rating}★</div>
+        <div class="row-plate">${c.plate}</div>
+      </div>
+      <div class="row-branch">
+        <div>${c.location}</div>
+      </div>
+      <div class="row-status ${c.status}"><span class="icon" style="font-size:14px">${c.status==='active'?'check_circle':c.status==='maintenance'?'build':'block'}</span> ${c.status}</div>
+      <div class="row-rate">${c.dailyRate} TND</div>
+      <div class="row-avail">
+        <div class="avail-num">${c.available}</div>
+        <div class="avail-label">available</div>
+      </div>
+      <div class="row-action">
+        <button title="View">
+          <span class="icon">open_in_new</span>
+        </button>
+        <button title="Edit">
+          <span class="icon">edit</span>
+        </button>
+      </div>
+    </div>
+  `).join('');
+  
+  $('cars-list').innerHTML = html || '<div class="empty-state"><div class="empty-icon">🚗</div><div class="empty-text">No vehicles match your filters.</div></div>';
+  $('cars-count').textContent = filtered.length;
+}
+
+function render(){
+  if(viewMode==='grid'){
+    $('cars-grid').style.display='grid';
+    $('cars-list').style.display='none';
+    renderGrid();
+  } else {
+    $('cars-grid').style.display='none';
+    $('cars-list').style.display='flex';
+    renderList();
+  }
+}
+
+/* View toggle */
+$('grid-view').addEventListener('click',()=>{
+  viewMode='grid';
+  $('grid-view').classList.add('active');
+  $('list-view').classList.remove('active');
+  render();
+});
+$('list-view').addEventListener('click',()=>{
+  viewMode='list';
+  $('list-view').classList.add('active');
+  $('grid-view').classList.remove('active');
+  render();
+});
+
+/* Filters */
+$$('.filter-item').forEach(btn => {
+  btn.addEventListener('click',(e)=>{
+    const filter = btn.dataset.filter, value = btn.dataset.value;
+    if(!activeFilters[filter]) activeFilters[filter]=[];
+    
+    if(btn.classList.contains('active')){
+      btn.classList.remove('active');
+      btn.querySelector('.filter-check').textContent='';
+      activeFilters[filter] = activeFilters[filter].filter(v=>v!==value);
+    } else {
+      btn.classList.add('active');
+      btn.querySelector('.filter-check').textContent='✓';
+      if(!activeFilters[filter].includes(value)) activeFilters[filter].push(value);
+    }
+    render();
+  });
+});
+
+/* Search */
+$('search-input').addEventListener('input',(e)=>{
+  const q = e.target.value.toLowerCase();
+  const filtered = CARS.filter(c =>
+    c.plate.toLowerCase().includes(q) ||
+    c.model.toLowerCase().includes(q) ||
+    c.brand.toLowerCase().includes(q)
+  );
+  
+  if(viewMode==='grid'){
+    $('cars-grid').innerHTML = filtered.length ? filtered.map(c => `
+      <div class="car-card">
+        <div class="car-image">
+          <img src="${c.image}" alt="${c.model}">
+          <div class="car-status ${c.status}">${c.status}</div>
+        </div>
+        <div class="car-body">
+          <div class="car-header">
+            <div class="car-name">
+              <div class="car-brand">${c.brand}</div>
+              <div class="car-model">${c.model}</div>
+              <div class="car-plate">${c.plate}</div>
+            </div>
+            <div class="car-rating"><span class="stars">★</span><span>${c.rating}</span></div>
+          </div>
+          <div class="car-info">
+            <div class="info-item"><div class="info-label">Daily Rate</div><div class="info-value amount">${c.dailyRate} TND</div></div>
+            <div class="info-item"><div class="info-label">Available</div><div class="info-value">${c.available}</div></div>
+          </div>
+          <div class="car-location"><span class="icon" style="font-size:14px">location_on</span> ${c.location}</div>
+          <div class="car-actions"><button class="action-btn primary">View</button><button class="action-btn">Edit</button></div>
+        </div>
+      </div>
+    `).join('') : '<div class="empty-state"><div class="empty-icon">🔍</div><div class="empty-text">No results for "' + q + '"</div></div>';
+  } else {
+    $('cars-list').innerHTML = filtered.length ? filtered.map(c => `
+      <div class="car-row actionable">
+        <div class="row-thumb"><img src="${c.image}" alt="${c.model}"></div>
+        <div class="row-identity">
+          <div class="row-model">${c.brand} ${c.model}</div>
+          <div class="row-brand">${c.reviews} reviews · ${c.rating}★</div>
+          <div class="row-plate">${c.plate}</div>
+        </div>
+        <div class="row-branch"><div>${c.location}</div></div>
+        <div class="row-status ${c.status}"><span class="icon" style="font-size:14px">${c.status==='active'?'check_circle':c.status==='maintenance'?'build':'block'}</span> ${c.status}</div>
+        <div class="row-rate">${c.dailyRate} TND</div>
+        <div class="row-avail"><div class="avail-num">${c.available}</div><div class="avail-label">available</div></div>
+        <div class="row-action"><button title="View"><span class="icon">open_in_new</span></button><button title="Edit"><span class="icon">edit</span></button></div>
+      </div>
+    `).join('') : '<div class="empty-state"><div class="empty-icon">🔍</div><div class="empty-text">No results.</div></div>';
+  }
+  $('cars-count').textContent = filtered.length;
+});
+
+/* Theme toggle */
+function toggleTheme(){
+  document.body.classList.toggle('dark');
+  $('theme-btn').querySelector('.icon').textContent = document.body.classList.contains('dark') ? 'light_mode' : 'dark_mode';
+}
+
+render();
+</script>
+</body>
+</html>

@@ -1,110 +1,163 @@
-/* Surface and spacing come from the shared .page rule in styles.scss; tiles and
-   tables from the shared .tile-grid / .data-table classes. Same shape as the
-   client and agency detail pages. */
-.detail-card {
-  max-width: 1100px;
-  gap: 16px;
+/* One car's page. The frame (.page), the status pills (.chip), the table and the
+   tabs all come from styles.scss; everything here is the two-column summary that
+   sits above them.
+
+   There is no global `box-sizing`, so anything given both a width and padding
+   sets its own. Direction-sensitive rules use :host-context([dir='rtl']) — a
+   plain [dir='rtl'] selector never matches from inside a component. */
+
+.car-detail {
+  max-width: 1240px;
+  gap: var(--sp-5);
 }
 
-.header-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  flex-wrap: wrap;
-  gap: 16px;
+/* ------------------------------------------------------------------ header ---- */
+
+/* Qualified past the shared `main .page .header-row`, which tops its contents
+   out and spaces them for a title with a subtitle under it. This header is one
+   line — a way back, the plate, its status — so it centres instead. */
+main .page.car-detail .header-row {
+  align-items: center;
+  gap: var(--sp-3);
 }
 
-/* The plate is the car's name, and its availability belongs next to it. */
-.title {
+.header-left {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin: 0;
-  font-size: 24px;
-  font-weight: 600;
-  color: var(--ink);
+  gap: var(--sp-3);
+  min-width: 0;
 }
 
-.header-actions {
+/* Back to the fleet. A link and not a button: it goes somewhere, and the page's
+   actions are all in the panel on the right where the record is. */
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  flex: none;
+  color: var(--brand-600);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  text-decoration: none;
+}
+
+.back-link:hover {
+  text-decoration: underline;
+}
+
+.back-link mat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+}
+
+/* The arrow points the way out, which is the other way round in Arabic. */
+:host-context([dir='rtl']) .back-link mat-icon {
+  transform: scaleX(-1);
+}
+
+.header-sep {
+  flex: none;
+  width: 1px;
+  height: 20px;
+  background: var(--line);
+}
+
+/* Type comes from the shared `main .page .title` rule; only the arrangement is
+   this page's — the plate, the model and the availability read as one line. */
+.mat-typography .car-detail .title,
+.car-detail .title {
   display: flex;
-  gap: 8px;
+  align-items: center;
   flex-wrap: wrap;
+  gap: var(--sp-2);
 }
 
-.tab-body {
-  padding: 24px 4px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+/* The chip is a label on the title, not part of it, so it keeps body type. */
+.car-detail .title .chip {
+  font-size: var(--fs-label);
 }
 
-.owing {
-  color: var(--danger);
-}
+/* ------------------------------------------------------------------ layout ---- */
 
-/* Pointers to the screens that own the rest of this car's story. */
-.detail-links {
-  margin: 0;
-  font-size: 13px;
-}
-
-/* Read-only label/value pairs. */
-.facts {
+/* Two equal columns: the photograph is as much of the answer as the figures
+   beside it, so neither gets to be the narrow one. */
+.detail-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 12px 24px;
-  margin: 0;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-6);
+  align-items: start;
 }
 
-.fact {
+.detail-media,
+.detail-info {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--sp-5);
+  min-width: 0;
 }
 
-.fact dt {
-  font-size: 11.5px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.07em;
-  color: var(--muted);
+/* One column below the point where two of them would each be too narrow to read
+   a booking row in. */
+@media (max-width: 1024px) {
+  .detail-grid {
+    grid-template-columns: 1fr;
+    gap: var(--sp-5);
+  }
 }
 
-.fact dd {
-  margin: 0;
-  color: var(--ink);
-}
+/* ----------------------------------------------------------------- gallery ---- */
 
-/* ------------------------------------------------------------- photos ----- */
-
-.photos {
+.gallery {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--sp-2);
 }
 
-/* A fixed height, not a fixed aspect ratio: photos of the same car arrive from
-   phones held every which way, and a strip of hero frames that changed height as
-   you clicked through them would make the whole page jump. */
+/* A fixed ratio rather than a fixed height: the frame is now half the page wide
+   and a 300px letterbox at that width shows a strip of bodywork. Photos of the
+   same car arrive from phones held every which way, so the frame stays put and
+   the picture is cropped into it — a strip whose height changed as you clicked
+   through it would make the whole page jump. */
 .photo-hero {
+  position: relative;
   display: block;
-  height: 300px;
+  flex: none;
+  aspect-ratio: 16 / 10;
   border: 1px solid var(--line);
   border-radius: var(--r-lg);
   overflow: hidden;
   background: var(--surface-3);
 }
 
+/* Out of the flow, like the fleet card's: the frame's ratio decides how tall it
+   is, never the intrinsic size of whatever was uploaded into it. */
 .photo-hero img {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
 }
 
+/* Which of them is on screen. Laid over the picture, so it carries its own
+   surface rather than borrowing the page's. */
+.photo-count {
+  position: absolute;
+  top: var(--sp-3);
+  inset-inline-end: var(--sp-3);
+  padding: 3px 9px;
+  border-radius: var(--r-pill);
+  background: rgba(255, 255, 255, 0.94);
+  color: var(--ink);
+  font-size: var(--fs-micro);
+  font-weight: var(--fw-medium);
+}
+
 .photo-strip {
   display: flex;
-  gap: 8px;
+  gap: var(--sp-2);
   overflow-x: auto;
   padding-bottom: 2px;
 }
@@ -112,6 +165,7 @@
 .photo-thumb {
   position: relative;
   flex: 0 0 auto;
+  box-sizing: border-box;
   width: 84px;
   height: 60px;
   padding: 0;
@@ -145,7 +199,7 @@
   font-size: 14px;
   width: 14px;
   height: 14px;
-  color: #fbbf24;
+  color: var(--star);
   /* Stars land on light bodywork as often as dark; the shadow keeps it readable
      on both. */
   text-shadow: 0 1px 2px rgba(15, 23, 42, 0.6);
@@ -155,11 +209,373 @@
 .no-photos {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--sp-2);
   margin: 0;
-  padding: 12px 14px;
+  padding: var(--sp-3) 14px;
   border: 1px dashed var(--line-strong);
   border-radius: var(--r);
   color: var(--muted);
   font-size: var(--fs-sm);
+}
+
+/* ------------------------------------------------------------------- stats ---- */
+
+.stat-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--sp-3);
+}
+
+.stat {
+  box-sizing: border-box;
+  padding: var(--sp-3) var(--sp-3);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  text-align: center;
+}
+
+/* Utilization is the one figure that describes the car rather than the money
+   around it, so it is the one the eye lands on. */
+.stat.accent {
+  border-inline-start: var(--accent-bar) solid var(--brand-600);
+}
+
+.stat-value {
+  font-size: 19px;
+  font-weight: var(--fw-medium);
+  line-height: 1.2;
+  color: var(--ink);
+}
+
+.stat-unit {
+  font-size: var(--fs-label);
+  color: var(--muted);
+}
+
+.stat-star {
+  color: var(--star);
+}
+
+.stat-label {
+  margin-top: 2px;
+  font-size: var(--fs-micro);
+  font-weight: var(--fw-medium);
+  color: var(--ink-2);
+}
+
+/* What window the figure covers. Every tile says so: without it "2 900" is an
+   all-time claim, which is not what any of these are. */
+.stat-note {
+  margin-top: 1px;
+  font-size: 10.5px;
+  color: var(--muted);
+}
+
+/* ------------------------------------------------------------------- specs ---- */
+
+.spec-box {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-4);
+  box-sizing: border-box;
+  padding: var(--sp-4);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+}
+
+.spec {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.spec-label {
+  font-size: var(--fs-micro);
+  font-weight: var(--fw-medium);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+}
+
+.spec-value {
+  font-size: var(--fs-body);
+  font-weight: var(--fw-medium);
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.spec-value.accent {
+  color: var(--brand-600);
+}
+
+.spec-value.muted {
+  color: var(--muted);
+  font-weight: var(--fw-normal);
+}
+
+/* ----------------------------------------------------------------- actions ---- */
+
+.action-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+/* The one or two things worth a full-width button; the rest is behind the menu
+   at the end of the row. */
+.action-main {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+/* ------------------------------------------------------------------ panels ---- */
+
+/* A bordered card with a titled head, a list, and a way to the screen that owns
+   the rest of the list. Distinct from the shared .card, which has no head. */
+.panel {
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.panel-head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-4);
+  border-bottom: 1px solid var(--line);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  color: var(--ink);
+}
+
+.panel-head mat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+  color: var(--muted);
+}
+
+.panel-title {
+  min-width: 0;
+}
+
+/* The section's one number, pushed to the far end of its head. */
+.panel-figure {
+  margin-inline-start: auto;
+  font-size: var(--fs-sm);
+  color: var(--ink-2);
+}
+
+.panel-body {
+  display: flex;
+  flex-direction: column;
+  padding: 0 var(--sp-4);
+}
+
+.panel-body > * + * {
+  border-top: 1px solid var(--line);
+}
+
+.panel-empty {
+  margin: 0;
+  padding: var(--sp-4) 0;
+  color: var(--muted);
+  font-size: var(--fs-sm);
+  text-align: center;
+}
+
+.panel-foot {
+  padding: var(--sp-3) var(--sp-4);
+  border-top: 1px solid var(--line);
+  text-align: center;
+  font-size: var(--fs-sm);
+}
+
+.panel-foot a {
+  color: var(--brand-600);
+  font-weight: var(--fw-medium);
+  text-decoration: none;
+}
+
+.panel-foot a:hover {
+  text-decoration: underline;
+}
+
+/* ---------------------------------------------------------------- bookings ---- */
+
+.booking {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-3) 0;
+}
+
+.booking-who {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.booking-name {
+  display: block;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  color: var(--ink);
+  text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+a.booking-name:hover {
+  color: var(--brand-600);
+  text-decoration: underline;
+}
+
+.booking-sub {
+  display: block;
+  font-size: var(--fs-micro);
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.booking-when {
+  flex: none;
+  font-size: var(--fs-label);
+  color: var(--ink-2);
+  white-space: nowrap;
+}
+
+.booking-money {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+:host-context([dir='rtl']) .booking-money {
+  align-items: flex-start;
+}
+
+.booking-amount {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+.booking-actions {
+  flex: none;
+  display: flex;
+  align-items: center;
+}
+
+/* ---------------------------------------------------------------- expenses ---- */
+
+.expense {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-3) 0;
+}
+
+.expense-ico {
+  display: grid;
+  place-items: center;
+  flex: none;
+  box-sizing: border-box;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--r);
+  background: var(--brand-50);
+  color: var(--brand-600);
+}
+
+.expense-ico mat-icon {
+  font-size: 17px;
+  width: 17px;
+  height: 17px;
+}
+
+.expense-what {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.expense-name {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.expense-sub {
+  font-size: var(--fs-micro);
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.expense-money {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.expense-amount {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+/* ------------------------------------------------------------------- record --- */
+
+.tab-body {
+  padding: var(--sp-6) var(--sp-1);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.owing {
+  color: var(--danger);
+}
+
+/* Read-only label/value pairs. */
+.facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--sp-3) var(--sp-6);
+  margin: 0;
+}
+
+.fact {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.fact dt {
+  font-size: 11.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--muted);
+}
+
+.fact dd {
+  margin: 0;
+  color: var(--ink);
 }

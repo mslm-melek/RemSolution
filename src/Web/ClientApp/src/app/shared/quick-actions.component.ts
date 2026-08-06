@@ -30,6 +30,14 @@ export class QuickActionsComponent implements OnInit {
 
   @Input() scope: 'platform' | 'agency' = 'agency';
 
+  /**
+   * How the strip sits on the page. `card` is a panel among panels — the console
+   * dashboard, where it is one block of several. `bare` is the row of buttons at
+   * the top of the agency's home: the first thing reached for, so it gets no
+   * heading and no surface of its own to read past.
+   */
+  @Input() variant: 'card' | 'bare' = 'card';
+
   // Everything this user could keep, and what they keep, in their order.
   available: HomeActionMeta[] = [];
   actions: HomeActionMeta[] = [];

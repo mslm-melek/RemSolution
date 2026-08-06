@@ -23,6 +23,11 @@ namespace RemSolution.Application.Features.Renting.Queries.GetRentingsWithPagina
     public record GetRentingsWithPaginationQuery(
         int PageNumber = 1,
         int PageSize = 10,
+        // Free text over the car's plate and the hirer's name — the two things
+        // somebody at the counter can read off a key fob or a licence. Same
+        // parameter as the car and client lists, so the app bar's one box hands
+        // the same term to whichever list the user picked.
+        string? Search = null,
         int? CarId = null,
         int? ClientId = null,
         RentingState? State = null,
@@ -54,6 +59,12 @@ namespace RemSolution.Application.Features.Renting.Queries.GetRentingsWithPagina
             GetRentingsWithPaginationQuery request, CancellationToken cancellationToken)
         {
             var query = _context.Rentings.AsNoTracking().AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(request.Search))
+                query = query.Where(r =>
+                    (r.Car != null && r.Car.Matricule != null && r.Car.Matricule.Contains(request.Search)) ||
+                    (r.Client != null && r.Client.FirstName != null && r.Client.FirstName.Contains(request.Search)) ||
+                    (r.Client != null && r.Client.LastName != null && r.Client.LastName.Contains(request.Search)));
 
             if (request.CarId.HasValue)
                 query = query.Where(r => r.CarId == request.CarId);

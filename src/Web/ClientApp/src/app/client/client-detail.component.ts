@@ -188,7 +188,7 @@ export class ClientDetailComponent implements OnInit {
   // is the honest answer to "what has this person hired?".
   loadRentings() {
     this.rentingsClient.getRentings(
-      this.rentingsPage, this.rentingsPageSize, null, this.clientId, null,
+      this.rentingsPage, this.rentingsPageSize, null, null, this.clientId, null,
       null, null, undefined, false, 'period', true
     ).subscribe({
       next: result => {

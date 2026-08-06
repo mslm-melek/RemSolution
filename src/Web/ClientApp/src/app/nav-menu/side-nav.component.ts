@@ -1,127 +1,105 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
 import { filter } from 'rxjs/operators';
 import { AuthService } from '../shared/auth.service';
-import { NotificationBadgeService } from '../shared/notification-badge.service';
 import { ImpersonationService, ImpersonatedAgency } from '../shared/impersonation.service';
-import { LanguageService } from '../shared/language.service';
-import { AppLanguage } from '../shared/language';
-import { ThemeService } from '../shared/theme.service';
-import { AppTheme } from '../shared/theme';
 
-// One screen reachable from the bar or from a dropdown.
+// One screen reachable from the rail, or from a group under it.
 export interface NavLink {
   labelKey: string;
   link: string;
   icon: string;
 }
 
-// A slot in the top bar. `link` set ⇒ it is a direct link; `links` set ⇒ it is a
-// dropdown. Never both (see NavMenuComponent.group).
+// A slot in the rail. `link` set ⇒ it is a direct item; `links` set ⇒ it opens a
+// sublist underneath. Never both (see SideNavComponent.group).
 export interface NavEntry {
   labelKey: string;
+  icon: string;
   link?: string;
   links?: NavLink[];
+  /**
+   * Extra paths this entry owns, beyond the one it navigates to. The bookings
+   * screen is at /booking but the forms behind it are still at /renting/:id and
+   * /reservation/:id, and the rail has to keep saying where the user is while one
+   * of those is open.
+   */
+  alsoAt?: string[];
 }
 
+/**
+ * The app's navigation rail: the modules this user can reach, then who they are
+ * signed in as.
+ *
+ * A rail rather than a bar because the list is long and grows — five module
+ * groups, a configuration menu and an account menu do not fit across the top of
+ * a screen that also has to carry a branch picker and a search box. Vertically
+ * there is room for every entry to be a labelled, iconned target, and a group
+ * opens in place instead of behind a dropdown.
+ *
+ * What is IN it is unchanged and still data-driven: the role and the agency's
+ * features decide, so an entry is never drawn for a screen that would 403.
+ */
 @Component({
-  selector: 'app-nav-menu',
-  templateUrl: './nav-menu.component.html',
-  styleUrls: ['./nav-menu.component.scss']
+  selector: 'app-side-nav',
+  templateUrl: './side-nav.component.html',
+  styleUrls: ['./side-nav.component.scss']
 })
-export class NavMenuComponent implements OnInit {
-  isExpanded = false;
-  isAuthenticated = false;
+export class SideNavComponent implements OnInit {
+  /** Open as an overlay on a narrow screen; always open on a wide one. */
+  @Input() open = false;
+  /** A navigation happened — the shell closes the overlay. */
+  @Output() navigated = new EventEmitter<void>();
+
   displayName: string | null | undefined;
-  // Platform admin (app owner) sees the agency-grouped console; agency users
-  // see the module groups below.
+  agencyName: string | null | undefined;
+  role: string | null | undefined;
+
   isPlatformAdmin = false;
-  // Agency administrator can manage their own agency's staff (Team screen).
   isAgencyAdmin = false;
-  // Self-registered marketplace customer: browse/book, not the staff nav.
   isCustomer = false;
-  // Set while a platform admin has an agency's workspace open: the bar becomes
-  // that agency's module nav and the banner below the toolbar says whose data is
-  // on screen. Read from the client-side session rather than the role, since the
-  // role stays PlatformAdministrator throughout.
+
+  // Set while a platform admin has an agency's workspace open: the rail becomes
+  // that agency's module nav. Read from the client-side session rather than the
+  // role, since the role stays PlatformAdministrator throughout.
   workspace: ImpersonatedAgency | null = null;
 
-  // The bar is built from the user's role and entitlements rather than spelled
-  // out in the template: the grouping rules (below) then live in one place.
   navEntries: NavEntry[] = [];
 
   // Reference/catalog screens. These are administration, not day-to-day work, so
-  // they hang off the user menu instead of taking a slot in the bar.
+  // they sit in a menu at the foot of the rail instead of taking a slot in it.
   configLinks: NavLink[] = [];
 
-  // The bell. Shown on the agency's own feature alone — reading one's own inbox
-  // needs no permission (see Permissions.NotificationSend) — and never to a
-  // customer, who has no staff alerts. The count is polled by the badge service.
-  canNotifications = false;
-  unreadCount = 0;
-
-  // Group dropdowns cannot use routerLinkActive (the trigger is a button, not a
-  // link), so the active group is derived from the current URL.
+  // A group has no routerLinkActive of its own (its header is a button), so the
+  // open one is derived from the URL — and a group whose screen is open starts
+  // open, rather than hiding the item the user is looking at.
   private currentUrl = '/';
-
-  readonly languages: AppLanguage[];
+  private toggled = new Set<string>();
 
   constructor(
     private auth: AuthService,
     private impersonation: ImpersonationService,
-    private language: LanguageService,
-    private theme: ThemeService,
-    private badge: NotificationBadgeService,
     private router: Router
   ) {
-    this.languages = this.language.available;
     this.workspace = this.impersonation.current;
   }
 
-  get currentTheme(): AppTheme {
-    return this.theme.active;
-  }
-
-  // No reload and no menu: one button straight to the other theme. Every colour
-  // resolves through a custom property, so the switch is a single attribute.
-  toggleTheme() {
-    this.theme.toggle();
-  }
-
-  exitWorkspace() {
-    this.collapse();
-    this.impersonation.exit();
-  }
-
-  get currentLanguage(): AppLanguage {
-    return this.language.current;
-  }
-
-  // Persists the choice and reloads — see LanguageService.use for why.
-  setLanguage(language: AppLanguage) {
-    this.collapse();
-    this.language.use(language);
-  }
-
   ngOnInit() {
-    this.badge.unreadCount$.subscribe(count => this.unreadCount = count);
-
     this.currentUrl = this.router.url;
     this.router.events
       .pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd))
       .subscribe(event => this.currentUrl = event.urlAfterRedirects);
 
     this.auth.currentUser$.subscribe(user => {
-      this.isAuthenticated = user.isAuthenticated ?? false;
       this.displayName = user.fullName || user.userName;
+      this.agencyName = user.agencyName;
+      this.role = user.role;
       this.isPlatformAdmin = AuthService.isPlatformAdmin(user);
       this.isAgencyAdmin = user.role === 'AgencyAdministrator';
       this.isCustomer = AuthService.isCustomer(user);
 
       // The banner renders from the stored session so it is up before this call
-      // resolves, but the server is the authority once it does: it confirms the
-      // request really was impersonated, and its agency name is current where a
-      // stored one goes stale after a rename.
+      // resolves, but the server is the authority once it does.
       if (this.workspace && user.isImpersonating && user.agencyName) {
         this.workspace = { ...this.workspace, name: user.agencyName };
       }
@@ -135,13 +113,30 @@ export class NavMenuComponent implements OnInit {
       const canDocumentTemplates =
         can('Contracts', 'Contract.Read') || can('Factures', 'Facture.Read');
 
-      // The bell, on the feature alone — the inbox carries no read permission.
-      this.canNotifications =
-        !this.isCustomer && (user.features?.includes('Notifications') ?? false);
-
       this.navEntries = this.buildEntries(can);
       this.configLinks = this.buildConfigLinks(can, canDocumentTemplates);
     });
+  }
+
+  /** The initials on the account tile — two letters, however the name is spelled. */
+  get initials(): string {
+    const parts = (this.displayName ?? '').trim().split(/\s+/).filter(Boolean);
+    if (!parts.length) return '?';
+    return (parts[0][0] + (parts[1]?.[0] ?? '')).toUpperCase();
+  }
+
+  get agencyInitial(): string {
+    return (this.agencyName ?? '').trim().charAt(0).toUpperCase() || 'A';
+  }
+
+  /** Transloco key for the signed-in person's role, under `roles.*`. */
+  get roleLabelKey(): string {
+    switch (this.role) {
+      case 'PlatformAdministrator': return 'roles.platformAdmin';
+      case 'AgencyAdministrator': return 'roles.agencyAdmin';
+      case 'Customer': return 'roles.customer';
+      default: return 'roles.agencyStaff';
+    }
   }
 
   private buildEntries(can: (feature: string, permission: string) => boolean): NavEntry[] {
@@ -151,22 +146,22 @@ export class NavMenuComponent implements OnInit {
     // feature-driven rules below produce exactly the screens that will work.
     if (this.isPlatformAdmin && !this.workspace) {
       // No dashboard entry: the console dashboard IS the platform admin's home,
-      // so the Home link above already leads there.
+      // so the Home item at the top of the rail already leads there.
       return [
-        { labelKey: 'nav.agencies', link: '/agency' },
-        { labelKey: 'nav.subscriptionPlans', link: '/subscription-plan' }
+        { labelKey: 'nav.agencies', icon: 'business', link: '/agency' },
+        { labelKey: 'nav.subscriptionPlans', icon: 'workspace_premium', link: '/subscription-plan' }
       ];
     }
 
     if (this.isCustomer) {
       return [
-        { labelKey: 'nav.browseCars', link: '/browse' },
-        { labelKey: 'nav.myReservations', link: '/my-reservations' },
+        { labelKey: 'nav.browseCars', icon: 'travel_explore', link: '/browse' },
+        { labelKey: 'nav.myReservations', icon: 'event_available', link: '/my-reservations' },
         // Past and current rentals — and where a finished one gets rated.
-        { labelKey: 'nav.myRentings', link: '/my-rentings' },
+        { labelKey: 'nav.myRentings', icon: 'vpn_key', link: '/my-rentings' },
         // Not feature-gated: the customer's own threads. An agency without the
         // Chat feature simply never opens one, so the list stays empty.
-        { labelKey: 'nav.myChats', link: '/my-chats' }
+        { labelKey: 'nav.myChats', icon: 'forum', link: '/my-chats' }
       ];
     }
 
@@ -174,20 +169,24 @@ export class NavMenuComponent implements OnInit {
     const entries: (NavEntry | null)[] = [
       // The overview and the statistics report are the same entitlement (see
       // GetStatisticsQuery), so this group either has both screens or neither.
-      this.group('nav.dashboard', [
+      this.group('nav.dashboard', 'insights', [
         can('Dashboard', 'Dashboard.View')
           ? { labelKey: 'nav.overview', link: '/dashboard', icon: 'space_dashboard' } : null,
         can('Dashboard', 'Dashboard.View')
           ? { labelKey: 'nav.statistics', link: '/statistics', icon: 'insights' } : null
       ]),
-      can('Cars', 'Car.Read') ? { labelKey: 'nav.cars', link: '/car' } : null,
-      this.group('nav.bookings', [
-        can('Reservations', 'Reservation.Read')
-          ? { labelKey: 'nav.reservations', link: '/reservation', icon: 'event_available' } : null,
-        can('Rentings', 'Renting.Read')
-          ? { labelKey: 'nav.rentings', link: '/renting', icon: 'vpn_key' } : null
-      ]),
-      this.group('nav.clients', [
+      can('Cars', 'Car.Read')
+        ? { labelKey: 'nav.cars', icon: 'directions_car', link: '/car' } : null,
+      // One screen for both: hires and holds are the same booking at two points
+      // of its life, and the merged list tabs between them (see BookingComponent).
+      // Either entitlement opens it, and the screen shows only the tab the user
+      // can actually read, so the rail does not have to say which.
+      can('Rentings', 'Renting.Read') || can('Reservations', 'Reservation.Read')
+        ? {
+          labelKey: 'nav.bookings', icon: 'event_available', link: '/booking',
+          alsoAt: ['/renting', '/reservation']
+        } : null,
+      this.group('nav.clients', 'group', [
         can('Clients', 'Client.Read')
           ? { labelKey: 'nav.clientsList', link: '/client', icon: 'group' } : null,
         can('Chat', 'Chat.View')
@@ -196,7 +195,7 @@ export class NavMenuComponent implements OnInit {
       // One finance screen: the credits page carries both directions of money and
       // absorbed the expense list. Either entitlement opens it, and the label
       // says which half the user will actually find there.
-      this.group('nav.finance', [
+      this.group('nav.finance', 'request_quote', [
         can('Credits', 'Credit.Read')
           ? { labelKey: 'nav.credits', link: '/credit', icon: 'request_quote' }
           : can('Expenses', 'Expense.Read')
@@ -208,14 +207,16 @@ export class NavMenuComponent implements OnInit {
   }
 
   // A group with nothing in it disappears; a group with a single reachable
-  // screen becomes a plain link, so nobody opens a menu to pick the only item.
-  private group(labelKey: string, links: (NavLink | null)[]): NavEntry | null {
+  // screen becomes a plain item, so nobody expands a list to pick the only entry.
+  private group(labelKey: string, icon: string, links: (NavLink | null)[]): NavEntry | null {
     const reachable = links.filter((link): link is NavLink => link !== null);
 
     if (!reachable.length) return null;
-    if (reachable.length === 1) return { labelKey: reachable[0].labelKey, link: reachable[0].link };
+    if (reachable.length === 1) {
+      return { labelKey: reachable[0].labelKey, icon: reachable[0].icon, link: reachable[0].link };
+    }
 
-    return { labelKey, links: reachable };
+    return { labelKey, icon, links: reachable };
   }
 
   private buildConfigLinks(
@@ -255,17 +256,47 @@ export class NavMenuComponent implements OnInit {
     return links.filter((link): link is NavLink => link !== null);
   }
 
-  // Highlights a dropdown while one of its screens is open.
+  /** Whether a group's sublist is showing. Open by default while it holds the
+   *  current screen, so the rail never hides where the user already is. */
+  isOpen(entry: NavEntry): boolean {
+    const active = this.isGroupActive(entry);
+    return this.toggled.has(entry.labelKey) ? !active : active;
+  }
+
+  toggleGroup(entry: NavEntry) {
+    if (this.toggled.has(entry.labelKey)) {
+      this.toggled.delete(entry.labelKey);
+    } else {
+      this.toggled.add(entry.labelKey);
+    }
+  }
+
   isGroupActive(entry: NavEntry): boolean {
-    return (entry.links ?? []).some(child =>
-      this.currentUrl === child.link || this.currentUrl.startsWith(child.link + '/'));
+    return (entry.links ?? []).some(child => this.isAt(child.link));
   }
 
-  collapse() {
-    this.isExpanded = false;
+  /**
+   * Whether a plain item is the screen on show. Worked out here rather than left
+   * to routerLinkActive, because an entry can own more than the one path it
+   * navigates to (see {@link NavEntry.alsoAt}).
+   */
+  isItemActive(entry: NavEntry): boolean {
+    return [entry.link, ...(entry.alsoAt ?? [])]
+      .some((path): path is string => !!path && this.isAt(path));
   }
 
-  toggle() {
-    this.isExpanded = !this.isExpanded;
+  /** On that path, or on something under it. The query string is not part of the
+   *  answer: a filtered list is still the same screen. */
+  private isAt(path: string): boolean {
+    const url = this.currentUrl.split(/[?#]/)[0];
+    return url === path || url.startsWith(path + '/');
+  }
+
+  exitWorkspace() {
+    this.impersonation.exit();
+  }
+
+  onNavigate() {
+    this.navigated.emit();
   }
 }

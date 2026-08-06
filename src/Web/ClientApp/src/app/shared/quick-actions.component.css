@@ -118,3 +118,21 @@
   align-items: center;
   margin-top: var(--gap-4);
 }
+
+/* Bare: the row of buttons at the top of the agency's home. No surface and no
+   heading — see the component's `variant`. The picker still needs its card, so
+   only the resting state loses the panel. */
+.quick-actions.bare {
+  padding: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
+}
+
+.quick-actions.bare .action-buttons {
+  align-items: center;
+}
+
+.qa-tune {
+  color: var(--muted);
+}

@@ -61,8 +61,13 @@ export class ExpenseFormComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.carsClient.getCars(1, 1000, null, null, null, null, null, null, null, null, false).subscribe({
-      next: result => this.cars = result.items || [],
+    this.carsClient.getCars(1, 1000, null, null, null, null, null, null, null, null, null, null, null, false).subscribe({
+      next: result => {
+        this.cars = result.items || [];
+        // A car arriving by link (below) was patched in before this answered, so
+        // its odometer could not be offered then. Now it can.
+        this.onCarSelected();
+      },
       error: err => console.error(err)
     });
 
@@ -71,6 +76,16 @@ export class ExpenseFormComponent implements OnInit {
       next: types => this.types = types || [],
       error: err => console.error(err)
     });
+
+    // Booking one of the costs the home screen says is due: it links in with the
+    // car and the cost already chosen, so the agent only types the amount. Read
+    // once from the snapshot — this form is not reused across navigations.
+    const params = this.route.snapshot.queryParamMap;
+    const carId = Number(params.get('car'));
+    const typeId = Number(params.get('type'));
+
+    if (Number.isInteger(carId) && carId > 0) this.form.patchValue({ carId });
+    if (Number.isInteger(typeId) && typeId > 0) this.form.patchValue({ expenseTypeId: typeId });
 
     const idParam = this.route.snapshot.paramMap.get('id');
     if (idParam) {

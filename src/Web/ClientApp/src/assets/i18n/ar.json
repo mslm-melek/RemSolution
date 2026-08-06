@@ -56,7 +56,9 @@
     "description": "الوصف",
     "loading": "جارٍ التحميل…",
     "view": "عرض",
+    "viewAll": "عرض الكل",
     "open": "فتح",
+    "close": "إغلاق",
     "upload": "رفع",
     "uploading": "جارٍ الرفع…",
     "replace": "استبدال",
@@ -121,7 +123,8 @@
     "finance": "المالية",
     "clientsList": "كل العملاء",
     "myRentings": "إيجاراتي",
-    "myAgency": "وكالتي"
+    "myAgency": "وكالتي",
+    "mainLabel": "التنقل الرئيسي"
   },
   "home": {
     "welcomeTitle": "مرحبًا بك في RemSolution",
@@ -195,7 +198,7 @@
     "welcomeBackNamed": "أهلًا بعودتك، {{ name }}",
     "deskSubtitle": "هذا ما يجب إنجازه اليوم.",
     "agenda": {
-      "title": "ما يجب إنجازه",
+      "title": "الأجندة",
       "toValidate": "طلبات في انتظار المصادقة",
       "noneToValidate": "لا توجد طلبات في الانتظار.",
       "expiringToday": "تنتهي اليوم",
@@ -208,7 +211,71 @@
       "allClear": "لا شيء في الانتظار — لا طلبات، لا تأخير، ولا شيء لهذا اليوم.",
       "pickupsLink": "الانطلاقات ({{ count }})",
       "returnsLink": "الإرجاعات ({{ count }})",
-      "requestsLink": "الطلبات ({{ count }})"
+      "requestsLink": "الطلبات ({{ count }})",
+      "view": "عرض الأجندة",
+      "day": "يوم",
+      "week": "أسبوع",
+      "month": "شهر",
+      "goingOut": "انطلاق",
+      "comingBack": "إرجاع",
+      "previous": "السابق",
+      "next": "التالي",
+      "todayNamed": "اليوم · {{ date }}",
+      "backToToday": "العودة إلى اليوم",
+      "toConfirm": "للتأكيد"
+    },
+    "greeting": {
+      "morning": "صباح الخير",
+      "morningNamed": "صباح الخير، {{ name }}",
+      "afternoon": "طاب يومك",
+      "afternoonNamed": "طاب يومك، {{ name }}",
+      "evening": "مساء الخير",
+      "eveningNamed": "مساء الخير، {{ name }}"
+    },
+    "fleetFreeOf": "سيارة متاحة من أصل {{ total }}",
+    "updatedNow": "تم التحديث الآن",
+    "updatedAgo": "تم التحديث قبل {{ minutes }} دقيقة",
+    "refresh": "تحديث",
+    "glance": "اليوم في لمحة",
+    "needsAnswer": "بانتظار ردّك",
+    "nothingWaiting": "لا شيء في انتظارك.",
+    "shortcuts": "اختصاراتك",
+    "stat": {
+      "bookingsToday": "انطلاقات اليوم",
+      "stillToConfirm": "{{ count }} بانتظار التأكيد",
+      "returnsToday": "إرجاعات اليوم",
+      "beforeNoon": "{{ count }} قبل الظهر",
+      "late": "إرجاعات متأخرة",
+      "hoursLate": "تأخر {{ hours }} ساعة",
+      "nothingOverdue": "لا تأخير",
+      "expectedToday": "المتوقع تحصيله اليوم",
+      "outstanding": "{{ amount }} {{ currency }} غير مدفوعة"
+    },
+    "todo": {
+      "requests": "طلبات بانتظار الرد",
+      "oldestWaiting": "أقدمها ينتظر {{ hours }} ساعة",
+      "payables": "مصاريف للتسوية",
+      "payableCount": "{{ count }} غير مدفوعة",
+      "seeAll": "عرض الكل ({{ count }})"
+    },
+    "due": {
+      "title": "مصاريف مستحقة",
+      "carCount": "{{ count }} سيارة",
+      "none": "لا توجد سيارة مستحقة.",
+      "ruleMonths": "كل {{ months }} شهر",
+      "ruleDistance": "كل {{ km }} كم",
+      "ruleBoth": "كل {{ months }} شهر أو {{ km }} كم",
+      "overKm": "تجاوز {{ km }} كم",
+      "inKm": "بعد {{ km }} كم",
+      "overdueSince": "استحقت في {{ date }}",
+      "dueIn": "تستحق في {{ date }}",
+      "record": "تسجيل"
+    },
+    "messages": {
+      "title": "الرسائل",
+      "unread": "{{ count }} غير مقروءة في {{ threads }} محادثة",
+      "allCaughtUp": "لا جديد",
+      "openInbox": "فتح صندوق الرسائل"
     }
   },
   "brand": {
@@ -255,6 +322,25 @@
       "rentings": "الإيجارات",
       "vehicle": "السيارة"
     },
+    "overview": {
+      "utilization": "نسبة التشغيل",
+      "daysOut": "{{ days }} يوم مؤجَّر من {{ total }}",
+      "revenue": "الإيرادات",
+      "lastDays": "آخر {{ days }} يوم",
+      "rating": "التقييم",
+      "reviews": "{{ count }} تقييم",
+      "bookings": "الحالية والقادمة",
+      "noBookings": "لا حجز على هذه السيارة.",
+      "viewAllRentings": "عرض كل الإيجارات ({{ count }})",
+      "expenses": "المصاريف الأخيرة",
+      "noExpenses": "لا مصاريف على هذه السيارة حتى الآن."
+    },
+    "quickEdit": {
+      "title": "تعديل سريع",
+      "fullForm": "تعديل البطاقة الكاملة"
+    },
+    "year": "السنة",
+    "editFull": "تعديل البطاقة الكاملة",
     "title": "السيارات",
     "new": "سيارة جديدة",
     "newTitle": "سيارة جديدة",
@@ -302,7 +388,14 @@
     "addPhoto": "إضافة صورة",
     "empty": "لا توجد سيارات.",
     "confirmDelete": "هل تريد حذف السيارة «{{ matricule }}»؟",
-    "concurrency": "تم تعديل هذه السيارة من مستخدم آخر منذ فتحها. أعد تحميل الصفحة للحصول على أحدث نسخة، ثم أعد تطبيق تعديلاتك."
+    "concurrency": "تم تعديل هذه السيارة من مستخدم آخر منذ فتحها. أعد تحميل الصفحة للحصول على أحدث نسخة، ثم أعد تطبيق تعديلاتك.",
+    "searchLabel": "البحث برقم اللوحة أو الطراز",
+    "searchPlaceholder": "مثال: 2290-A-77",
+    "filters": "التصفية",
+    "moreFilters": "مزيد من عوامل التصفية",
+    "sortBy": "الترتيب حسب",
+    "gridView": "بطاقات",
+    "listView": "جدول"
   },
   "client": {
     "rentings": "الإيجارات",
@@ -375,6 +468,27 @@
     "concurrency": "تم تعديل هذا العميل من مستخدم آخر منذ فتحه. أعد تحميل الصفحة للحصول على أحدث نسخة، ثم أعد تطبيق تعديلاتك.",
     "flagged": "عميل موسوم"
   },
+  "booking": {
+    "title": "الحجوزات والكراء",
+    "sortBy": "ترتيب حسب",
+    "name": "الاسم",
+    "vehicleAndPeriod": "السيارة والمدة",
+    "pickup": "الاستلام",
+    "dropOff": "الإرجاع",
+    "openBooking": "فتح هذا الحجز",
+    "openCar": "فتح السيارة",
+    "openClient": "فتح ملف العميل",
+    "openRentingRecord": "فتح ملف الإيجار",
+    "openReservationRecord": "فتح ملف الحجز",
+    "noClient": "بدون عميل",
+    "noPapers": "لا توجد وثائق هوية في الملف.",
+    "outstanding": "المتبقي",
+    "toHandBack": "للإرجاع",
+    "extrasTotal": "مجموع الخدمات الإضافية",
+    "extrasBilledApart": "تُحتسب الخدمات الإضافية خارج السعر أعلاه.",
+    "dueShort": "{{ amount }} مستحق",
+    "paidShort": "{{ amount }} مدفوع"
+  },
   "renting": {
     "cancelTitle": "إلغاء الكراء",
     "confirmCancelAction": "تأكيد الإلغاء",
@@ -390,6 +504,7 @@
     "cancelKeepAsCredit": "إن لم تُحدَّد الخانة يبقى المبلغ رصيدا لفائدة الحريف (يظهر في الدفوعات والقروض).",
     "cancelRefundNoPermission": "سيبقى المبلغ رصيدا لفائدة الحريف: تسجيل الإرجاع يتطلب وحدة الدفوعات.",
     "returnTitle": "إرجاع السيارة",
+    "late": "متأخّرة",
     "returnCar": "تسجيل الإرجاع",
     "returnMileageTooLow": "لا يمكن أن يكون عدّاد الإرجاع أقل من عدّاد الاستلام ({{ mileage }}).",
     "pickupMileageWas": "العدّاد عند الاستلام: {{ mileage }}",
@@ -496,7 +611,9 @@
     "cancelledFree": "ملغى دون معلوم: لا شيء مستحق.",
     "cancellationFeeKept": "ملغى · المعلوم المحتفظ به: {{ amount }} {{ currency }}",
     "adjustPriceForChange": "إدخال الإجمالي الجديد يدويًا",
-    "newTotalPrice": "الإجمالي الجديد لكامل المدة"
+    "newTotalPrice": "الإجمالي الجديد لكامل المدة",
+    "searchLabel": "البحث برقم اللوحة أو اسم الزبون",
+    "searchPlaceholder": "مثال: 2290-A-77"
   },
   "reservation": {
     "title": "الحجوزات",
@@ -893,6 +1010,7 @@
     "typeRequired": "نوع المصروف مطلوب.",
     "amountRequired": "يجب أن يكون المبلغ أكبر من الصفر.",
     "paidNow": "المسدّد حاليا",
+    "unpaid": "غير مسدّدة",
     "paidNowHint": "اتركه على 0 إذا لم يتم دفع المصروف بعد.",
     "alreadySettled": "المسدّد: {{amount}} {{currency}} — استخدم إجراء «تسجيل تسديد» في شاشة المدفوعات والأرصدة لتغييره.",
     "mileage": "عدّاد المسافة (كم)",
@@ -1181,7 +1299,8 @@
     "pinMissing": "بدون علامة",
     "confirmDelete": "حذف الفرع «{{ name }}»؟ السيارات المرتبطة به ستبقى بدون فرع.",
     "savedImmediately": "تُحفظ تغييرات الفروع فورًا.",
-    "savedWithAgency": "ستُنشأ هذه الفروع مع الوكالة عند الحفظ."
+    "savedWithAgency": "ستُنشأ هذه الفروع مع الوكالة عند الحفظ.",
+    "allBranches": "كل الفروع"
   },
   "mapPicker": {
     "searchLabel": "ابحث عن عنوان",
@@ -1249,5 +1368,20 @@
     "dayEmpty": "لا شيء في هذا اليوم.",
     "truncated": "يحتوي هذا الشهر على حجوزات أكثر مما يعرضه التقويم. افتح قائمة عمليات الكراء لعرضها كلها.",
     "loadFailed": "تعذّر تحميل التقويم."
+  },
+  "roles": {
+    "platformAdmin": "مسؤول المنصة",
+    "agencyAdmin": "مسؤول الوكالة",
+    "agencyStaff": "موظف الوكالة",
+    "customer": "زبون"
+  },
+  "search": {
+    "label": "بحث",
+    "scope": "البحث في",
+    "placeholder": "بحث",
+    "placeholderIn": "البحث في {{ where }}",
+    "cars": "السيارات",
+    "clients": "الزبائن",
+    "bookings": "الحجوزات"
   }
 }

@@ -1,0 +1,236 @@
+<ng-container *transloco="let t">
+  <div class="detail-head">
+    <div class="detail-heading">
+      <h2 class="detail-title">
+        {{ t(isRenting ? 'renting.detailTitle' : 'reservation.detailTitle') }}
+        <span class="num">{{ title }}</span>
+      </h2>
+      <p class="detail-subtitle">{{ clientName || t('booking.noClient') }}</p>
+    </div>
+    <button mat-icon-button type="button" (click)="close()"
+            [matTooltip]="t('common.close')" [attr.aria-label]="t('common.close')">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <div class="detail-body">
+    <p class="hint" *ngIf="loading">{{ t('common.loading') }}</p>
+
+    <div class="error-banner" *ngIf="errorMessage">
+      <mat-icon>error_outline</mat-icon> {{ errorMessage }}
+    </div>
+
+    <ng-container *ngIf="!loading && (renting || reservation)">
+
+      <!-- ============================== LIFECYCLE ==============================
+           Where the booking is on the path it is meant to walk. A booking that
+           left that path has no position on it, so the strip gives way to what
+           ended it and why. -->
+      <section class="section">
+        <h3 class="section-title">{{ t('common.status') }}</h3>
+
+        <div class="steps" *ngIf="!isTerminal">
+          <ng-container *ngFor="let step of steps; let i = index; let first = first">
+            <span class="step-bar" [class.done]="step.done || step.current" *ngIf="!first"></span>
+            <span class="step" [class.done]="step.done" [class.current]="step.current"
+                  [matTooltip]="t(step.labelKey)">
+              <mat-icon *ngIf="step.done">check</mat-icon>
+              <span class="num" *ngIf="!step.done">{{ i + 1 }}</span>
+            </span>
+          </ng-container>
+        </div>
+
+        <p class="status-line" *ngIf="!isTerminal">
+          <span class="chip" [ngClass]="isRenting ? 'info' : 'pending'">{{ t(statusLabelKey) }}</span>
+        </p>
+
+        <div class="terminal" *ngIf="isTerminal">
+          <span class="chip danger">{{ t(terminalLabelKey) }}</span>
+          <p class="terminal-reason" *ngIf="terminalReason">{{ terminalReason }}</p>
+          <p class="terminal-reason" *ngIf="isRenting && renting?.cancellationFee">
+            {{ t('renting.cancellationFeeKept', {
+                 amount: (renting!.cancellationFee!.amount | number:'1.2-2'),
+                 currency: renting!.cancellationFee!.currency }) }}
+          </p>
+        </div>
+
+        <!-- A hold nobody answers expires and the car comes free again, so the
+             deadline is part of its status rather than a date beside it. -->
+        <p class="status-note" *ngIf="isPending && reservation?.expiresAt">
+          <mat-icon>schedule</mat-icon>
+          {{ t('reservation.heldUntil', { time: (reservation!.expiresAt | date:'yyyy-MM-dd HH:mm') }) }}
+        </p>
+      </section>
+
+      <!-- ================================ CLIENT ================================ -->
+      <section class="section">
+        <h3 class="section-title">{{ t('renting.client') }}</h3>
+
+        <div class="facts">
+          <div class="fact">
+            <span class="fact-label">{{ t('booking.name') }}</span>
+            <span class="fact-value">{{ clientName || '—' }}</span>
+          </div>
+          <div class="fact" *ngIf="client?.email">
+            <span class="fact-label">{{ t('client.email') }}</span>
+            <span class="fact-value fact-email">{{ client!.email }}</span>
+          </div>
+          <div class="fact" *ngIf="renting?.secondClientName">
+            <span class="fact-label">{{ t('renting.secondDriver') }}</span>
+            <span class="fact-value">{{ renting!.secondClientName }}</span>
+          </div>
+          <div class="fact" *ngIf="client">
+            <span class="fact-label">{{ t('renting.clientPapers') }}</span>
+            <span class="fact-value papers" *ngIf="papers.length">
+              <span class="paper" *ngFor="let paper of papers">
+                <mat-icon>check</mat-icon>{{ t(paper) }}
+              </span>
+            </span>
+            <span class="fact-value muted" *ngIf="!papers.length">{{ t('booking.noPapers') }}</span>
+          </div>
+        </div>
+
+        <p class="section-link" *ngIf="clientId">
+          <a [routerLink]="['/client', clientId]" (click)="close()">{{ t('booking.openClient') }} →</a>
+        </p>
+      </section>
+
+      <!-- ========================== VEHICLE & PERIOD ========================== -->
+      <section class="section">
+        <h3 class="section-title">{{ t('booking.vehicleAndPeriod') }}</h3>
+
+        <div class="facts">
+          <div class="fact">
+            <span class="fact-label">{{ t('renting.car') }}</span>
+            <span class="fact-value">{{ carModelName || '—' }}</span>
+          </div>
+          <div class="fact">
+            <span class="fact-label">{{ t('car.matricule') }}</span>
+            <span class="fact-value num">{{ carMatricule || '—' }}</span>
+          </div>
+          <!-- Wall-clock stamped UTC on the wire: read back in UTC parts, or a
+               negative offset shows the day before (see the date-field notes). -->
+          <div class="fact">
+            <span class="fact-label">{{ t('booking.pickup') }}</span>
+            <span class="fact-value num">{{ startDate | date:'yyyy-MM-dd HH:mm':'UTC' }}</span>
+          </div>
+          <div class="fact">
+            <span class="fact-label">{{ t('booking.dropOff') }}</span>
+            <span class="fact-value num">{{ endDate | date:'yyyy-MM-dd HH:mm':'UTC' }}</span>
+          </div>
+          <div class="fact" *ngIf="renting?.startMileage != null">
+            <span class="fact-label">{{ t('renting.pickupMileage') }}</span>
+            <span class="fact-value num">{{ renting!.startMileage | number }} {{ t('common.km') }}</span>
+          </div>
+          <div class="fact" *ngIf="renting?.endMileage != null">
+            <span class="fact-label">{{ t('renting.returnMileage') }}</span>
+            <span class="fact-value num">{{ renting!.endMileage | number }} {{ t('common.km') }}</span>
+          </div>
+        </div>
+
+        <p class="section-link" *ngIf="carId">
+          <a [routerLink]="['/car', carId]" (click)="close()">{{ t('booking.openCar') }} →</a>
+        </p>
+      </section>
+
+      <!-- ================================= MONEY ================================= -->
+      <section class="section" *ngIf="price">
+        <h3 class="section-title">{{ t('renting.priceSection') }}</h3>
+
+        <div class="money-row">
+          <span>{{ t('renting.agreedPrice') }}</span>
+          <span class="num money">{{ price!.amount | number:'1.2-2' }} {{ price!.currency }}</span>
+        </div>
+        <div class="money-row" *ngIf="reservation?.depositAmount">
+          <span>{{ t('reservation.deposit') }}</span>
+          <span class="num money">
+            {{ reservation!.depositAmount!.amount | number:'1.2-2' }} {{ reservation!.depositAmount!.currency }}
+          </span>
+        </div>
+        <div class="money-row" *ngIf="paid">
+          <span>{{ t('reservation.paid') }}</span>
+          <span class="num money">{{ paid!.amount | number:'1.2-2' }} {{ paid!.currency }}</span>
+        </div>
+        <div class="money-row total" *ngIf="outstanding">
+          <span>{{ overpaid ? t('booking.toHandBack') : t('booking.outstanding') }}</span>
+          <span class="num money" [class.owing]="(outstanding!.amount || 0) > 0">
+            {{ (overpaid ? -outstanding!.amount! : outstanding!.amount) | number:'1.2-2' }}
+            {{ outstanding!.currency }}
+          </span>
+        </div>
+      </section>
+
+      <!-- Billed apart from the hire's price — the outstanding figure above does
+           not include them (see RentingDto.Outstanding) — so they are their own
+           section rather than a line in that total. -->
+      <section class="section" *ngIf="extras.length">
+        <h3 class="section-title">{{ t('renting.extraServices') }}</h3>
+
+        <div class="money-row" *ngFor="let extra of extras">
+          <span>{{ extra.extraServicesTypeName }}</span>
+          <span class="num money">
+            {{ extra.totalAmount?.amount | number:'1.2-2' }} {{ extra.totalAmount?.currency }}
+          </span>
+        </div>
+        <div class="money-row total">
+          <span>{{ t('booking.extrasTotal') }}</span>
+          <span class="num money">{{ extrasTotal | number:'1.2-2' }} {{ extrasCurrency }}</span>
+        </div>
+        <p class="section-note">{{ t('booking.extrasBilledApart') }}</p>
+      </section>
+
+      <!-- ================================= NOTES ================================= -->
+      <section class="section" *ngIf="notes">
+        <h3 class="section-title">{{ t('common.notes') }}</h3>
+        <p class="notes">{{ notes }}</p>
+      </section>
+
+      <p class="section-link">
+        <a [routerLink]="[isRenting ? '/renting' : '/reservation', data.id]" (click)="close()">
+          {{ t(isRenting ? 'booking.openRentingRecord' : 'booking.openReservationRecord') }} →
+        </a>
+      </p>
+    </ng-container>
+  </div>
+
+  <!-- The moves this booking can make from here. Each re-reads the record and
+       marks the list behind the panel stale; converting closes on the new hire. -->
+  <div class="detail-foot" *ngIf="!loading && (renting || reservation)">
+    <ng-container *ngIf="isRenting">
+      <button mat-raised-button color="primary" type="button" *ngIf="canStart" (click)="start()">
+        <mat-icon>play_arrow</mat-icon> {{ t('renting.start') }}
+      </button>
+      <button mat-raised-button color="primary" type="button" *ngIf="canTakeBack" (click)="takeBack()">
+        <mat-icon>assignment_turned_in</mat-icon> {{ t('renting.returnCar') }}
+      </button>
+      <button mat-stroked-button type="button" *ngIf="canPayNow" (click)="pay()">
+        <mat-icon>payments</mat-icon> {{ t('payment.pay') }}
+      </button>
+      <button mat-button color="warn" type="button" *ngIf="canCancelRenting" (click)="cancelRenting()">
+        {{ t('common.cancel') }}
+      </button>
+    </ng-container>
+
+    <ng-container *ngIf="!isRenting">
+      <button mat-raised-button color="primary" type="button" *ngIf="isPending" (click)="confirm()">
+        <mat-icon>check_circle</mat-icon> {{ t('reservation.confirm') }}
+      </button>
+      <button mat-raised-button color="primary" type="button" *ngIf="isConvertible" (click)="convert()">
+        <mat-icon>directions_car</mat-icon> {{ t('reservation.convert') }}
+      </button>
+      <button mat-stroked-button type="button" *ngIf="canPayNow" (click)="pay()">
+        <mat-icon>payments</mat-icon> {{ t('payment.pay') }}
+      </button>
+      <button mat-stroked-button color="warn" type="button" *ngIf="isPending" (click)="reject()">
+        <mat-icon>block</mat-icon> {{ t('reservation.reject') }}
+      </button>
+      <a mat-stroked-button *ngIf="reservation?.rentingId"
+         [routerLink]="['/renting', reservation!.rentingId]" (click)="close()">
+        <mat-icon>open_in_new</mat-icon> {{ t('reservation.goToRenting') }}
+      </a>
+      <button mat-button color="warn" type="button" *ngIf="isActiveHold" (click)="cancelReservation()">
+        {{ t('common.cancel') }}
+      </button>
+    </ng-container>
+  </div>
+</ng-container>

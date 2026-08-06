@@ -1,0 +1,298 @@
+/* The booking slide-over's insides. The panel itself — full height, pinned to
+   the edge the page ends on — is positioned by the `.side-panel` rule in
+   styles.scss, because a dialog renders in the CDK overlay and nothing in a
+   component's stylesheet can reach it.
+
+   Three bands, like the car's quick edit: a head that names the booking, a
+   scrolling middle, and a footer that stays put, so a short viewport never hides
+   the action that closes the hire.
+
+   There is no global `box-sizing`, so anything given both a width and padding
+   sets its own. */
+:host {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--surface);
+}
+
+/* ------------------------------------------------------------------ head ---- */
+
+.detail-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  flex: none;
+  /* Logical, not physical: the close button sits on the end edge, and in Arabic
+     that is the other one. */
+  padding-block: var(--sp-4) var(--sp-3);
+  padding-inline: var(--sp-5) var(--sp-4);
+  border-bottom: 1px solid var(--line);
+}
+
+.detail-heading {
+  min-width: 0;
+}
+
+/* Qualified past `.mat-typography h2`, which would make this a display heading
+   the size of a page title. */
+.mat-typography .detail-title,
+.detail-title {
+  margin: 0;
+  font: var(--fw-medium) var(--fs-section) / 1.3 var(--font-body);
+  color: var(--ink);
+}
+
+.detail-subtitle {
+  margin: 2px 0 0;
+  font-size: var(--fs-label);
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+/* ------------------------------------------------------------------ body ---- */
+
+.detail-body {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding: var(--sp-5);
+}
+
+.section + .section,
+.detail-body > .section-link {
+  margin-top: var(--sp-6);
+}
+
+.section-title {
+  margin: 0 0 var(--sp-3);
+  font-size: var(--fs-label);
+  font-weight: var(--fw-medium);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+
+.section-link {
+  margin: var(--sp-3) 0 0;
+  font-size: var(--fs-sm);
+}
+
+.section-note {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-micro);
+  color: var(--muted);
+}
+
+/* ------------------------------------------------------------- lifecycle ---- */
+
+/* The happy path as dots: what is behind the booking is ticked, where it stands
+   is filled, what is ahead is an outline. The bar between two dots is coloured
+   as far as the booking has walked. */
+.steps {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-bottom: var(--sp-3);
+}
+
+.step {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--r-pill);
+  background: var(--surface-3);
+  color: var(--muted);
+  font-size: var(--fs-micro);
+  font-weight: var(--fw-medium);
+}
+
+.step mat-icon {
+  font-size: 15px;
+  width: 15px;
+  height: 15px;
+  line-height: 15px;
+}
+
+.step.done {
+  background: var(--ok-bg);
+  color: var(--ok-ink);
+}
+
+.step.current {
+  background: var(--brand-600);
+  color: #fff;
+  box-shadow: 0 0 0 3px var(--brand-100);
+}
+
+.step-bar {
+  flex: 1 1 auto;
+  height: 2px;
+  background: var(--line);
+}
+
+.step-bar.done {
+  background: var(--ok-bg);
+}
+
+.status-line {
+  margin: 0;
+}
+
+.terminal .chip {
+  margin-bottom: var(--sp-2);
+}
+
+.terminal-reason {
+  margin: 0;
+  font-size: var(--fs-sm);
+  color: var(--ink-2);
+}
+
+.status-note {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+  margin: var(--sp-3) 0 0;
+  font-size: var(--fs-sm);
+  color: var(--warn-ink);
+}
+
+.status-note mat-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+}
+
+/* ----------------------------------------------------------------- facts ---- */
+
+/* Two columns of label-over-value, so the panel reads down the page rather than
+   across it. One column when the panel is the whole screen and there is no room
+   for a value to sit beside another. */
+.facts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-4) var(--sp-3);
+}
+
+.fact {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.fact-label {
+  font-size: 10px;
+  font-weight: var(--fw-medium);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+}
+
+.fact-value {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.fact-email {
+  font-size: var(--fs-micro);
+  font-weight: var(--fw-normal);
+}
+
+.fact-value.muted {
+  font-weight: var(--fw-normal);
+  color: var(--muted);
+}
+
+/* The papers actually on file. A tick each, because what the counter is checking
+   is presence, not the number itself. */
+.papers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1) var(--sp-2);
+}
+
+.paper {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-size: var(--fs-micro);
+  font-weight: var(--fw-normal);
+  color: var(--ok-ink);
+}
+
+.paper mat-icon {
+  font-size: 14px;
+  width: 14px;
+  height: 14px;
+}
+
+/* ----------------------------------------------------------------- money ---- */
+
+.money-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding: var(--sp-2) 0;
+  border-bottom: 1px solid var(--line);
+  font-size: var(--fs-sm);
+  color: var(--ink-2);
+}
+
+.money-row:last-of-type {
+  border-bottom: none;
+}
+
+.money-row .money {
+  font-weight: var(--fw-medium);
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+.money-row.total {
+  font-weight: var(--fw-medium);
+  color: var(--ink);
+}
+
+/* Still owed reads as a debt; anything else — settled, or a credit to hand back
+   — is just a figure. */
+.money-row .money.owing {
+  color: var(--danger);
+}
+
+.notes {
+  margin: 0;
+  padding: var(--sp-3);
+  border-radius: var(--r);
+  background: var(--surface-2);
+  font-size: var(--fs-sm);
+  line-height: 1.6;
+  color: var(--ink-2);
+  white-space: pre-wrap;
+}
+
+/* ------------------------------------------------------------------ foot ---- */
+
+/* The buttons wrap rather than shrink: a hold that can be confirmed, paid,
+   rejected and cancelled has four of them, and a squashed row of verbs is
+   harder to read than two lines of them. */
+.detail-foot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  flex: none;
+  padding: var(--sp-4) var(--sp-5);
+  border-top: 1px solid var(--line);
+}
+
+@media (max-width: 599px) {
+  .facts {
+    grid-template-columns: 1fr;
+  }
+}

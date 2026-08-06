@@ -1,6 +1,17 @@
-<body>
-  <app-nav-menu></app-nav-menu>
-  <main class="content-container">
-    <router-outlet></router-outlet>
-  </main>
-</body>
+<div class="app-shell" [class.with-rail]="signedIn">
+  <app-side-nav *ngIf="signedIn" [open]="menuOpen" (navigated)="menuOpen = false"></app-side-nav>
+
+  <!-- Closes the rail when it is an overlay and the user taps beside it. -->
+  <div class="rail-scrim" *ngIf="signedIn && menuOpen" (click)="menuOpen = false"></div>
+
+  <div class="app-frame">
+    <app-top-bar *ngIf="signedIn !== null" (menu)="menuOpen = !menuOpen"></app-top-bar>
+
+    <!-- Signed out the page centres itself on the canvas as it always did; inside
+         the shell the rail already sets the left edge, so the column runs full
+         width and only caps how wide the reading measure gets. -->
+    <main class="app-content" [class.content-container]="signedIn === false">
+      <router-outlet></router-outlet>
+    </main>
+  </div>
+</div>

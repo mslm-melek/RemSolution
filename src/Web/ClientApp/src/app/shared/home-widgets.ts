@@ -50,14 +50,12 @@ const gate = (feature: string, permission: string): WidgetGate[] => [{ feature, 
 
 // Order matters twice: it is the order the customize panel offers them in, and
 // the order a never-customized home falls back to.
+// 'Calendar' is deliberately absent: the month of pickups and returns is no
+// longer something to pin, it is the landing screen's agenda — permanently on it,
+// with a day and a week view the panel never had (see HomeAgendaComponent). A
+// stored 'Calendar' therefore resolves to nothing, which is exactly what
+// resolveHomeWidgets does with any key the user can no longer reach.
 export const HOME_WIDGETS: HomeWidgetMeta[] = [
-  {
-    // The month of pickups and returns. Gated on the overview permission and not
-    // on the booking modules, exactly as its query is (see GetBookingCalendarQuery):
-    // it crosses rentings and reservations, and half a calendar is worse than none.
-    key: 'Calendar', labelKey: 'home.widgets.calendar', icon: 'calendar_month',
-    panel: true, gates: gate('Dashboard', 'Dashboard.View')
-  },
   {
     key: 'Cars', labelKey: 'home.widgets.cars', icon: 'directions_car',
     link: '/car', gates: gate('Cars', 'Car.Read')
@@ -122,7 +120,7 @@ export const HOME_WIDGETS: HomeWidgetMeta[] = [
 
 // What a user who has never customized their home sees — the day's work, not the
 // reference data. Any of these the user cannot reach is simply left out.
-export const DEFAULT_HOME_WIDGETS = ['Calendar', 'Cars', 'Reservations', 'Rentings', 'Clients'];
+export const DEFAULT_HOME_WIDGETS = ['Cars', 'Rentings', 'Clients', 'Credits'];
 
 // Mirrors HomeWidgets.MaxPinned on the server, which rejects a longer list.
 // Counts tiles only, like the server's validator: see `panel` above.

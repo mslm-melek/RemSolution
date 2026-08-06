@@ -1,328 +1,475 @@
-/* The home screen's work queues: three cards of rows the desk can act on without
-   leaving the page. Tokens, .chip and the button styling come from styles.scss. */
+/* These stylesheets were written border-box (the app has no global reset).
+   Emulated encapsulation scopes this to this component's own elements, so it
+   changes nothing outside it. */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* The agenda: one control bar, then whichever of the three views is showing.
+   Tokens and the .num tabular-figures class come from styles.scss. */
+
+:host {
+  display: block;
+}
 
 .agenda {
   display: flex;
   flex-direction: column;
-  gap: var(--gap-3);
+  gap: var(--sp-3);
 }
 
-.agenda-head {
+/* ------------------------------------------------------------ controls ---- */
+
+.agenda-bar {
   display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--gap-3);
+  align-items: center;
+  gap: var(--sp-3);
   flex-wrap: wrap;
 }
 
-/* Same eyebrow heading the other home sections use. */
-.agenda-head h2 {
-  margin: 0;
-  font-size: 12px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
+.seg {
+  display: flex;
+  border: 1px solid var(--line-strong);
+  border-radius: 9px;
+  overflow: hidden;
+}
+
+.seg button {
+  height: var(--h-control-sm);
+  padding: 0 16px;
+  border: 0;
+  border-inline-end: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+  font: var(--fw-medium) 12.5px var(--font-body);
+  cursor: pointer;
+}
+
+.seg button:last-child {
+  border-inline-end: 0;
+}
+
+.seg button:hover:not(.active) {
+  background: var(--surface-2);
+}
+
+.seg button.active {
+  background: var(--brand-500);
+  color: var(--on-accent);
+}
+
+.legend {
+  display: flex;
+  gap: var(--sp-3);
+  align-items: center;
+  font-size: var(--fs-micro);
   color: var(--muted);
 }
 
-.agenda-day {
-  font-size: 12.5px;
-  color: var(--muted);
+.legend .dot {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 3px;
+  margin-inline-end: 5px;
+}
+
+.legend .dot.out {
+  background: var(--info-ink);
+}
+
+.legend .dot.back {
+  background: var(--ok-ink);
+}
+
+.agenda-nav {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+  margin-inline-start: auto;
+}
+
+.agenda-range {
+  min-width: 190px;
+  text-align: center;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+}
+
+/* --------------------------------------------------------- flat notices ---- */
+
+.agenda-message,
+.agenda-truncated,
+.agenda-empty {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: 0;
+  font-size: var(--fs-sm);
+  color: var(--ink-2);
 }
 
 .agenda-message {
-  display: flex;
-  align-items: center;
-  gap: var(--gap-2);
-  padding: 10px 14px;
-  border-radius: var(--r-sm);
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--r);
   background: var(--info-bg);
-  color: var(--info);
-  font-size: 13px;
+  color: var(--info-ink);
 }
 
-.agenda-message mat-icon,
-.agenda-clear mat-icon {
-  flex: none;
-  font-size: 18px;
-  width: 18px;
-  height: 18px;
+.agenda-truncated {
+  color: var(--muted);
+  font-size: var(--fs-label);
 }
 
-/* Everything done: one line, rather than three empty cards saying so separately. */
-.agenda-clear {
-  display: flex;
-  align-items: center;
-  gap: var(--gap-2);
-  margin: 0;
-  padding: 12px 16px;
-  border: 1px solid var(--line);
-  border-radius: var(--r);
-  background: var(--surface);
-  color: var(--ok);
-  font-size: 13.5px;
-  font-weight: 600;
-}
-
-/* --- The cards ------------------------------------------------------------ */
-
-/* Equal heights, deliberately: the cards sit side by side, and one card ending
-   halfway up the row reads as a broken layout rather than as an empty queue. The
-   "see all" footer is what takes up the slack (margin-top: auto below). */
-.queues {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: var(--gap-4);
-}
-
-.queue {
-  display: flex;
+.agenda-empty {
+  justify-content: center;
   flex-direction: column;
-  background: var(--surface);
+  gap: var(--sp-2);
+  padding: var(--sp-6) var(--sp-4);
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--r-lg);
+  color: var(--muted);
+}
+
+.agenda-empty .mat-icon {
+  font-size: 30px;
+  width: 30px;
+  height: 30px;
+  opacity: 0.5;
+}
+
+/* ------------------------------------------------------------ day view ---- */
+
+.timeline {
   border: 1px solid var(--line);
-  border-radius: var(--r);
-  box-shadow: var(--shadow-1);
-  padding: 14px 8px 8px 16px;
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  background: var(--surface);
 }
 
-/* A card with overdue cars on it earns a tinted edge — the one queue that is a
-   problem rather than a task. The inline edge mirrors itself in Arabic. */
-.queue.alert {
-  border-inline-start: 3px solid var(--danger);
-}
-
-.queue-head {
+.tl-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: var(--gap-2);
-  /* The count sits against the card's edge; the rows keep their own padding. */
-  padding-inline-end: 8px;
-  margin-bottom: var(--gap-2);
+  gap: var(--sp-3);
+  padding: 11px var(--sp-4);
+  border-bottom: 1px solid var(--line);
 }
 
-.queue-title {
+.tl-row:last-child {
+  border-bottom: 0;
+}
+
+/* Its hour has gone by. De-emphasised, but still fully readable and still
+   actionable — a return recorded late is recorded from this row. */
+.tl-row.past .tl-time,
+.tl-row.past .tl-info {
+  color: var(--muted);
+}
+
+.tl-row.late {
+  background: var(--row-overdue);
+}
+
+.tl-time {
+  min-width: 44px;
+  font-size: 12.5px;
+  font-weight: var(--fw-medium);
+}
+
+.tag {
   display: inline-flex;
   align-items: center;
-  gap: var(--gap-2);
-  font-size: 13.5px;
-  font-weight: 650;
-  color: var(--ink);
+  justify-content: center;
+  min-width: 72px;
+  padding: 2px 8px;
+  border-radius: var(--r-sm);
+  font-size: var(--fs-micro);
+  font-weight: var(--fw-medium);
+  white-space: nowrap;
 }
 
-.queue-icon {
-  flex: none;
-  font-size: 20px;
-  width: 20px;
-  height: 20px;
+.tag.out {
+  background: var(--info-bg);
+  color: var(--info-ink);
 }
 
-.queue-icon.validate {
-  color: var(--brand-600);
+.tag.back {
+  background: var(--ok-bg);
+  color: var(--ok-ink);
 }
 
-.queue-icon.late {
-  color: var(--danger);
-}
-
-.queue-icon.today {
-  color: var(--accent);
-}
-
-.queue-count {
-  font-size: 20px;
-  font-weight: 700;
-  line-height: 1;
-  letter-spacing: -0.02em;
-  font-variant-numeric: tabular-nums;
-  color: var(--ink);
-}
-
-.queue-count.danger {
-  color: var(--danger);
-}
-
-.queue-count.zero {
-  color: var(--muted-2);
-  font-weight: 600;
-}
-
-.queue-empty {
-  margin: 0 0 var(--gap-2);
-  padding-inline-end: 8px;
-  color: var(--muted);
-  font-size: 12.5px;
-}
-
-/* --- The rows ------------------------------------------------------------- */
-
-.queue-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-.queue-list li {
-  display: flex;
-  align-items: center;
-  gap: var(--gap-2);
-  padding: 6px 0;
-  border-top: 1px solid var(--line);
-}
-
-.queue-list li:first-child {
-  border-top: none;
-}
-
-/* The kind marker on the "today" card, which mixes three sources. */
-.row-kind {
-  flex: none;
-  font-size: 18px;
-  width: 18px;
-  height: 18px;
-}
-
-.row-kind.pickup {
-  color: var(--brand-600);
-}
-
-.row-kind.return {
-  color: var(--ok);
-}
-
-.row-kind.request {
-  color: var(--accent);
-}
-
-/* Takes the slack, so the time and the actions stay put and the plate/name is
-   what gets clipped on a narrow card. */
-.row-main {
+.tl-info {
   display: flex;
   flex-direction: column;
   flex: 1 1 auto;
   min-width: 0;
-  line-height: 1.35;
+  gap: 1px;
 }
 
-.row-what {
-  display: flex;
-  align-items: baseline;
-  gap: 6px;
-  font-size: 13px;
-  font-weight: 620;
-  color: var(--ink);
-  font-variant-numeric: tabular-nums;
-}
-
-.row-kind-label {
-  font-size: 11px;
-  font-weight: 500;
-  color: var(--muted-2);
-  text-transform: lowercase;
-}
-
-.row-who,
-.row-what {
+.tl-main {
+  font-size: var(--fs-sm);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.row-who {
-  font-size: 12px;
-  color: var(--muted);
-}
-
-.row-meta {
+.tl-sub {
   display: flex;
-  flex: none;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 2px;
-}
-
-.row-when {
-  font-size: 12px;
-  color: var(--muted);
-}
-
-/* Small enough that three fit next to a row without pushing it around. */
-.row-actions {
-  display: flex;
-  flex: none;
   align-items: center;
+  gap: var(--sp-2);
+  font-size: var(--fs-micro);
+  color: var(--muted);
 }
 
-.row-actions .mat-mdc-icon-button {
-  width: 32px;
-  height: 32px;
-  padding: 4px;
+.tl-flag {
+  color: var(--danger);
+  font-weight: var(--fw-medium);
 }
 
-.row-actions .mat-mdc-icon-button mat-icon {
-  font-size: 18px;
-  width: 18px;
-  height: 18px;
+.tl-flag.warn {
+  color: var(--warn);
 }
 
-/* --- Card footers --------------------------------------------------------- */
-
-.queue-all,
-.queue-links {
-  margin-top: auto;
-}
-
-.queue-all {
-  align-self: flex-start;
-  padding-top: var(--gap-1);
-  font-size: 12.5px;
-}
-
-.queue-all mat-icon {
-  font-size: 16px;
-  width: 16px;
-  height: 16px;
-}
-
-/* The chevron points forward, so it turns around with the page. */
-:host-context([dir='rtl']) .queue-all mat-icon {
-  transform: scaleX(-1);
-}
-
-/* One link per source on the "today" card: no single URL selects all three. */
-.queue-links {
+.tl-actions {
   display: flex;
-  flex-wrap: wrap;
-  gap: var(--gap-1);
-  padding-top: var(--gap-1);
+  align-items: center;
+  gap: var(--sp-1);
+  flex: none;
 }
 
-.queue-links .mat-mdc-button {
+.tl-actions .mat-mdc-outlined-button {
+  height: 30px;
+  padding: 0 12px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+/* ----------------------------------------------------------- week view ---- */
+
+.week-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  background: var(--surface);
+}
+
+.wk-col {
+  border-inline-end: 1px solid var(--line);
+  min-height: 190px;
+}
+
+.wk-col:last-child {
+  border-inline-end: 0;
+}
+
+.wk-head {
+  padding: 8px;
+  text-align: center;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface-2);
+}
+
+.wk-col.today .wk-head {
+  background: var(--info-bg);
+}
+
+.wk-col.today .wk-day {
+  color: var(--info-ink);
+}
+
+.wk-dow {
+  font-size: 10.5px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.wk-day {
+  font-size: 15px;
+  font-weight: var(--fw-medium);
+  margin-top: 2px;
+}
+
+.wk-events {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px;
+}
+
+.wk-ev {
+  display: block;
+  width: 100%;
+  padding: 4px 6px;
+  border: 0;
+  /* A single-sided accent always gets radius 0 on that side — see the design
+     system's .needs-action. */
+  border-inline-start: 3px solid;
+  border-radius: 0 var(--r-xs) var(--r-xs) 0;
+  font-size: 10.5px;
+  line-height: 1.35;
+  text-align: start;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.wk-ev.out {
+  background: var(--info-bg);
+  color: var(--info-ink);
+  border-inline-start-color: var(--info-ink);
+}
+
+.wk-ev.back {
+  background: var(--ok-bg);
+  color: var(--ok-ink);
+  border-inline-start-color: var(--ok-ink);
+}
+
+.wk-plate {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---------------------------------------------------------- month view ---- */
+
+.month-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  background: var(--surface);
+}
+
+.mo-dow {
+  padding: 7px;
+  text-align: center;
+  font-size: 10.5px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--line);
+  border-inline-end: 1px solid var(--line);
+}
+
+.mo-dow:nth-child(7) {
+  border-inline-end: 0;
+}
+
+.mo-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: flex-start;
+  min-height: 76px;
+  padding: 6px;
+  border: 0;
+  border-inline-end: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
+  cursor: pointer;
+  text-align: start;
+}
+
+.mo-cell:nth-child(7n) {
+  border-inline-end: 0;
+}
+
+.mo-cell:hover {
+  background: var(--surface-2);
+}
+
+.mo-cell.padding {
+  background: var(--surface-2);
+  color: var(--muted-2);
+}
+
+.mo-cell.today {
+  background: var(--info-bg);
+}
+
+.mo-num {
   font-size: 12.5px;
+  color: var(--muted);
 }
 
-@media (max-width: 599px) {
-  .queue {
-    padding: 12px 4px 6px 12px;
+.mo-cell.today .mo-num {
+  color: var(--info-ink);
+  font-weight: 600;
+}
+
+.mo-pills {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.mo-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 1px 5px;
+  border-radius: var(--r-xs);
+  font-size: 10px;
+  font-weight: var(--fw-medium);
+}
+
+.mo-pill.out {
+  background: var(--info-bg);
+  color: var(--info-ink);
+}
+
+.mo-pill.back {
+  background: var(--ok-bg);
+  color: var(--ok-ink);
+}
+
+/* --------------------------------------------------------------- narrow ---- */
+
+@media (max-width: 900px) {
+  .agenda-nav {
+    margin-inline-start: 0;
   }
 
-  /* Every pixel the meta column and the buttons give up goes to the plate and the
-     client's name, which are what identify the row — a phone row runs out of width
-     long before it runs out of height, so the time stays ABOVE the chip rather
-     than beside it. */
-  .row-actions .mat-mdc-icon-button {
-    width: 30px;
-    height: 30px;
-    padding: 3px;
+  .agenda-range {
+    min-width: 0;
   }
 
-  .row-meta {
-    max-width: 45%;
+  /* Seven columns of anything are unreadable at this width; both grids scroll
+     sideways in their own container rather than squeezing the page. */
+  .week-grid,
+  .month-grid {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
   }
 
-  /* A wrapped chip is still readable; a clipped registration plate is not. */
-  .row-meta .chip {
+  .week-grid > .wk-col,
+  .month-grid > .mo-dow,
+  .month-grid > .mo-cell {
+    display: inline-flex;
+    flex-direction: column;
+    vertical-align: top;
     white-space: normal;
-    text-align: end;
+    min-width: 116px;
   }
+
+  .tl-actions .mat-mdc-outlined-button {
+    padding: 0 8px;
+  }
+}
+
+/* The chevrons point at the neighbouring window, so they mirror with the page.
+   :host-context, not a plain descendant selector: `dir` lives on <html>, and
+   emulated encapsulation appends this component's scoping attribute to EVERY
+   compound, so a plain `[dir='rtl'] …` never matches the root element. */
+:host-context([dir='rtl']) .agenda-nav .mat-icon {
+  transform: scaleX(-1);
 }

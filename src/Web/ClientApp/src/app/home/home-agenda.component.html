@@ -1,228 +1,181 @@
-<ng-container *transloco="let t">
-<!-- No booking module this user can read ⇒ no work queues at all. -->
-<section class="agenda" *ngIf="isVisible">
-  <header class="agenda-head">
-    <h2>{{ t('home.agenda.title') }}</h2>
-    <span class="agenda-day">{{ today0 | date:'fullDate':'UTC' }}</span>
-  </header>
+<section class="agenda" *transloco="let t">
+  <div class="agenda-bar">
+    <div class="seg" role="group" [attr.aria-label]="t('home.agenda.view')">
+      <button type="button" [class.active]="view === 'day'" (click)="setView('day')">
+        {{ t('home.agenda.day') }}
+      </button>
+      <button type="button" [class.active]="view === 'week'" (click)="setView('week')">
+        {{ t('home.agenda.week') }}
+      </button>
+      <button type="button" [class.active]="view === 'month'" (click)="setView('month')">
+        {{ t('home.agenda.month') }}
+      </button>
+    </div>
+
+    <div class="legend">
+      <span><i class="dot out"></i>{{ t('home.agenda.goingOut') }}</span>
+      <span><i class="dot back"></i>{{ t('home.agenda.comingBack') }}</span>
+    </div>
+
+    <div class="agenda-nav">
+      <button type="button" mat-icon-button (click)="shift(-1)"
+              [attr.aria-label]="t('home.agenda.previous')">
+        <mat-icon>chevron_left</mat-icon>
+      </button>
+
+      <!-- The window on screen. A day is named, a week and a month are a range —
+           all read with the UTC parts, which is where their calendar day lives. -->
+      <span class="agenda-range">
+        <ng-container *ngIf="view === 'day'">
+          {{ isToday ? t('home.agenda.todayNamed', { date: (from | date:'d MMMM':'UTC') })
+                     : (from | date:'fullDate':'UTC') }}
+        </ng-container>
+        <ng-container *ngIf="view === 'week'">
+          {{ from | date:'d MMM':'UTC' }} – {{ to | date:'d MMM y':'UTC' }}
+        </ng-container>
+        <ng-container *ngIf="view === 'month'">
+          {{ monthShown | date:'MMMM y':'UTC' }}
+        </ng-container>
+      </span>
+
+      <button type="button" mat-icon-button (click)="shift(1)"
+              [attr.aria-label]="t('home.agenda.next')">
+        <mat-icon>chevron_right</mat-icon>
+      </button>
+
+      <button type="button" mat-button color="primary" *ngIf="offset !== 0" (click)="today()">
+        {{ t('home.agenda.backToToday') }}
+      </button>
+    </div>
+  </div>
 
   <mat-progress-bar mode="indeterminate" *ngIf="loading"></mat-progress-bar>
 
-  <!-- An action's refusal, or what a late notice actually did (see LateNoticeService):
-       one line above the cards, and it clears itself. -->
+  <!-- An action's refusal, or what a late notice actually did. Clears itself. -->
   <div class="agenda-message" *ngIf="message">
     <mat-icon>info_outline</mat-icon>
     <span>{{ message }}</span>
   </div>
 
-  <p class="agenda-clear" *ngIf="isAllClear">
-    <mat-icon>task_alt</mat-icon>
-    <span>{{ t('home.agenda.allClear') }}</span>
-  </p>
+  <!-- ============================ DAY ============================ -->
+  <ng-container *ngIf="view === 'day'">
+    <p class="agenda-empty" *ngIf="!rows.length && !loading">
+      <mat-icon>event_busy</mat-icon>
+      <span>{{ t('calendar.dayEmpty') }}</span>
+    </p>
 
-  <!-- The cards give way to the one line above once every queue is empty: three
-       cards each saying "nothing" is three times the space for less. -->
-  <div class="queues" *ngIf="!isAllClear">
-    <!-- 1. Holds waiting for a yes or a no. Confirmed here, without opening the
-            reservation: that is the whole point of the queue. -->
-    <article class="queue" *ngIf="canReadReservations">
-      <header class="queue-head">
-        <span class="queue-title">
-          <mat-icon class="queue-icon validate">how_to_reg</mat-icon>
-          <span>{{ t('home.agenda.toValidate') }}</span>
+    <div class="timeline" *ngIf="rows.length">
+      <div class="tl-row" *ngFor="let e of rows"
+           [class.past]="isPast(e)" [class.late]="e.isLate">
+        <span class="tl-time num">{{ e.on | date:'HH:mm':'UTC' }}</span>
+
+        <span class="tag" [class.out]="isOut(e)" [class.back]="!isOut(e)">
+          {{ t(kindLabelKey(e)) }}
         </span>
-        <span class="queue-count" [class.zero]="!pendingTotal">{{ pendingTotal }}</span>
-      </header>
 
-      <p class="queue-empty" *ngIf="!pending.length">{{ t('home.agenda.noneToValidate') }}</p>
-
-      <ul class="queue-list" *ngIf="pending.length">
-        <li *ngFor="let r of pending">
-          <span class="row-main">
-            <span class="row-what">{{ carLabel(r) }}</span>
-            <span class="row-who">{{ r.clientName }}</span>
+        <span class="tl-info">
+          <span class="tl-main">{{ e.clientName }}<span *ngIf="carLabel(e)"> · {{ carLabel(e) }}</span></span>
+          <span class="tl-sub">
+            <span class="num" *ngIf="e.carMatricule">{{ e.carMatricule }}</span>
+            <span class="tl-flag" *ngIf="e.isLate">{{ t('calendar.late') }}</span>
+            <span class="tl-flag warn"
+                  *ngIf="e.reservationStatus === ReservationStatus.PendingConfirmation">
+              {{ t('home.agenda.toConfirm') }}
+            </span>
           </span>
+        </span>
 
-          <span class="row-meta">
-            <span class="row-when num">{{ r.startDate | date:'dd MMM HH:mm':'UTC' }}</span>
-            <span class="chip warn" *ngIf="isExpiringToday(r)">{{ t('home.agenda.expiringToday') }}</span>
-          </span>
+        <span class="tl-actions">
+          <!-- A car going out today: hand it over from here. -->
+          <button type="button" mat-stroked-button
+                  *ngIf="e.kind === Kind.Pickup && canActOnRentings"
+                  (click)="start(e)">
+            {{ t('renting.start') }}
+          </button>
+          <!-- A car due back: take it in from here. -->
+          <button type="button" mat-stroked-button
+                  *ngIf="e.kind === Kind.Return && canActOnRentings"
+                  (click)="takeBack(e)">
+            {{ t('renting.returnCar') }}
+          </button>
+          <!-- Overdue and the client can be written to. -->
+          <button type="button" mat-icon-button
+                  *ngIf="e.isLate && canRemind && e.clientId"
+                  (click)="remind(e)"
+                  [matTooltip]="t('lateNotice.action')" [attr.aria-label]="t('lateNotice.action')">
+            <mat-icon>mail</mat-icon>
+          </button>
 
-          <span class="row-actions">
-            <button type="button" mat-icon-button color="primary" *ngIf="canActOnReservations"
-                    (click)="confirm(r)" [matTooltip]="t('reservation.confirm')"
-                    [attr.aria-label]="t('reservation.confirm')">
-              <mat-icon>check_circle</mat-icon>
+          <!-- A hold starting: say yes to it, or turn it into the hire. -->
+          <ng-container *ngIf="e.reservationId && canActOnReservations">
+            <button type="button" mat-stroked-button
+                    *ngIf="e.reservationStatus === ReservationStatus.PendingConfirmation"
+                    (click)="confirm(e)">
+              {{ t('reservation.confirm') }}
             </button>
-            <button type="button" mat-icon-button color="warn" *ngIf="canActOnReservations"
-                    (click)="reject(r)" [matTooltip]="t('reservation.rejectWithReason')"
+            <button type="button" mat-icon-button
+                    *ngIf="e.reservationStatus === ReservationStatus.PendingConfirmation"
+                    (click)="reject(e)"
+                    [matTooltip]="t('reservation.rejectWithReason')"
                     [attr.aria-label]="t('reservation.reject')">
               <mat-icon>block</mat-icon>
             </button>
-            <a mat-icon-button [routerLink]="['/reservation', r.id]"
-               [matTooltip]="t('reservation.openManage')" [attr.aria-label]="t('common.open')">
-              <mat-icon>open_in_new</mat-icon>
-            </a>
-          </span>
-        </li>
-      </ul>
+            <button type="button" mat-stroked-button
+                    *ngIf="e.reservationStatus !== ReservationStatus.PendingConfirmation"
+                    (click)="convert(e)">
+              {{ t('reservation.convert') }}
+            </button>
+          </ng-container>
 
-      <!-- The link carries the filter the figure was counted with, so the list
-           opens on exactly these rows (see shared/list-filters). -->
-      <a class="queue-all" mat-button color="primary" *ngIf="pendingTotal"
-         [routerLink]="reservationLink" [queryParams]="pendingParams">
-        {{ t('home.agenda.seeAll', { count: pendingTotal }) }}
-        <mat-icon>arrow_forward</mat-icon>
-      </a>
-    </article>
-
-    <!-- 2. Cars that should already be back. -->
-    <article class="queue" [class.alert]="overdueTotal" *ngIf="canReadRentings">
-      <header class="queue-head">
-        <span class="queue-title">
-          <mat-icon class="queue-icon late">running_with_errors</mat-icon>
-          <span>{{ t('home.agenda.overdue') }}</span>
+          <a mat-icon-button [routerLink]="link(e)"
+             [matTooltip]="t('common.open')" [attr.aria-label]="t('common.open')">
+            <mat-icon>open_in_new</mat-icon>
+          </a>
         </span>
-        <span class="queue-count" [class.danger]="overdueTotal" [class.zero]="!overdueTotal">
-          {{ overdueTotal }}
-        </span>
-      </header>
-
-      <p class="queue-empty" *ngIf="!overdue.length">{{ t('home.agenda.noneOverdue') }}</p>
-
-      <ul class="queue-list" *ngIf="overdue.length">
-        <li *ngFor="let r of overdue">
-          <span class="row-main">
-            <span class="row-what">{{ carLabel(r) }}</span>
-            <span class="row-who">{{ r.clientName }}</span>
-          </span>
-
-          <span class="row-meta">
-            <span class="row-when num">{{ r.endDate | date:'dd MMM':'UTC' }}</span>
-            <span class="chip danger">{{ t('home.agenda.daysLate', { count: daysOverdue(r) }) }}</span>
-          </span>
-
-          <span class="row-actions">
-            <button type="button" mat-icon-button color="primary" *ngIf="canActOnRentings"
-                    (click)="takeBack(r)" [matTooltip]="t('renting.returnCar')"
-                    [attr.aria-label]="t('renting.returnCar')">
-              <mat-icon>login</mat-icon>
-            </button>
-            <button type="button" mat-icon-button *ngIf="canRemind && r.clientId"
-                    (click)="remind(r)" [matTooltip]="t('lateNotice.action')"
-                    [attr.aria-label]="t('lateNotice.action')">
-              <mat-icon>mail</mat-icon>
-            </button>
-            <a mat-icon-button [routerLink]="['/renting', r.id]"
-               [matTooltip]="t('common.open')" [attr.aria-label]="t('common.open')">
-              <mat-icon>open_in_new</mat-icon>
-            </a>
-          </span>
-        </li>
-      </ul>
-
-      <a class="queue-all" mat-button color="primary" *ngIf="overdueTotal"
-         [routerLink]="rentingLink" [queryParams]="overdueParams">
-        {{ t('home.agenda.seeAll', { count: overdueTotal }) }}
-        <mat-icon>arrow_forward</mat-icon>
-      </a>
-    </article>
-
-    <!-- 3. What today asks for: cars out, cars back, holds starting. One list,
-            by the hour they are due, each row acted on in its own way. -->
-    <article class="queue">
-      <header class="queue-head">
-        <span class="queue-title">
-          <mat-icon class="queue-icon today">today</mat-icon>
-          <span>{{ t('home.agenda.today') }}</span>
-        </span>
-        <span class="queue-count" [class.zero]="!(todayPickups + todayReturns + todayRequests)">
-          {{ todayPickups + todayReturns + todayRequests }}
-        </span>
-      </header>
-
-      <p class="queue-empty" *ngIf="!today.length">{{ t('home.agenda.nothingToday') }}</p>
-
-      <ul class="queue-list" *ngIf="today.length">
-        <li *ngFor="let row of today">
-          <mat-icon class="row-kind" [ngClass]="row.kind">{{ icon(row.kind) }}</mat-icon>
-
-          <span class="row-main">
-            <span class="row-what">
-              {{ carLabel(row.renting || row.reservation!) }}
-              <span class="row-kind-label">{{ t(kindLabelKey(row.kind)) }}</span>
-            </span>
-            <span class="row-who">{{ (row.renting || row.reservation!).clientName }}</span>
-          </span>
-
-          <span class="row-meta">
-            <span class="row-when num">{{ row.when | date:'HH:mm':'UTC' }}</span>
-            <span class="chip" *ngIf="row.reservation" [ngClass]="statusClass(row.reservation.status)">
-              {{ t(statusLabelKey(row.reservation.status)) }}
-            </span>
-          </span>
-
-          <span class="row-actions">
-            <!-- A car going out today: hand it over from here. -->
-            <button type="button" mat-icon-button color="primary"
-                    *ngIf="row.kind === 'pickup' && canActOnRentings"
-                    (click)="start(row.renting!)" [matTooltip]="t('renting.start')"
-                    [attr.aria-label]="t('renting.start')">
-              <mat-icon>logout</mat-icon>
-            </button>
-            <!-- A car due back today: take it in from here. -->
-            <button type="button" mat-icon-button color="primary"
-                    *ngIf="row.kind === 'return' && canActOnRentings"
-                    (click)="takeBack(row.renting!)" [matTooltip]="t('renting.returnCar')"
-                    [attr.aria-label]="t('renting.returnCar')">
-              <mat-icon>login</mat-icon>
-            </button>
-            <!-- A hold starting today: say yes to it, or turn it into the hire. -->
-            <button type="button" mat-icon-button color="primary"
-                    *ngIf="row.reservation && canActOnReservations
-                           && row.reservation.status === ReservationStatus.PendingConfirmation"
-                    (click)="confirm(row.reservation)" [matTooltip]="t('reservation.confirm')"
-                    [attr.aria-label]="t('reservation.confirm')">
-              <mat-icon>check_circle</mat-icon>
-            </button>
-            <button type="button" mat-icon-button color="primary"
-                    *ngIf="row.reservation && canActOnReservations
-                           && row.reservation.status !== ReservationStatus.PendingConfirmation"
-                    (click)="convert(row.reservation)" [matTooltip]="t('reservation.convert')"
-                    [attr.aria-label]="t('reservation.convert')">
-              <mat-icon>directions_car</mat-icon>
-            </button>
-
-            <a mat-icon-button *ngIf="row.renting" [routerLink]="['/renting', row.renting.id]"
-               [matTooltip]="t('common.open')" [attr.aria-label]="t('common.open')">
-              <mat-icon>open_in_new</mat-icon>
-            </a>
-            <a mat-icon-button *ngIf="row.reservation"
-               [routerLink]="['/reservation', row.reservation.id]"
-               [matTooltip]="t('common.open')" [attr.aria-label]="t('common.open')">
-              <mat-icon>open_in_new</mat-icon>
-            </a>
-          </span>
-        </li>
-      </ul>
-
-      <!-- One link per source, each with its own filter: the day mixes three
-           lists, and no single URL selects all three. -->
-      <div class="queue-links" *ngIf="todayPickups || todayReturns || todayRequests">
-        <a mat-button color="primary" *ngIf="todayPickups"
-           [routerLink]="rentingLink" [queryParams]="todayPickupParams">
-          {{ t('home.agenda.pickupsLink', { count: todayPickups }) }}
-        </a>
-        <a mat-button color="primary" *ngIf="todayReturns"
-           [routerLink]="rentingLink" [queryParams]="todayReturnParams">
-          {{ t('home.agenda.returnsLink', { count: todayReturns }) }}
-        </a>
-        <a mat-button color="primary" *ngIf="todayRequests"
-           [routerLink]="reservationLink" [queryParams]="todayRequestParams">
-          {{ t('home.agenda.requestsLink', { count: todayRequests }) }}
-        </a>
       </div>
-    </article>
+    </div>
+  </ng-container>
+
+  <!-- ============================ WEEK =========================== -->
+  <div class="week-grid" *ngIf="view === 'week'">
+    <div class="wk-col" *ngFor="let day of days" [class.today]="day.isToday">
+      <div class="wk-head">
+        <div class="wk-dow">{{ day.on | date:'EEE':'UTC' }}</div>
+        <div class="wk-day num">{{ day.on | date:'d':'UTC' }}</div>
+      </div>
+      <div class="wk-events">
+        <button type="button" class="wk-ev" *ngFor="let e of day.events"
+                [class.out]="isOut(e)" [class.back]="!isOut(e)"
+                [title]="(e.clientName || '') + ' · ' + carLabel(e)"
+                [routerLink]="link(e)">
+          <b class="num">{{ e.on | date:'HH:mm':'UTC' }}</b> {{ shortName(e) }}
+          <span class="wk-plate num">{{ carLabel(e) }}</span>
+        </button>
+      </div>
+    </div>
   </div>
+
+  <!-- =========================== MONTH =========================== -->
+  <div class="month-grid" *ngIf="view === 'month'">
+    <div class="mo-dow" *ngFor="let day of days.slice(0, 7)">
+      {{ day.on | date:'EEE':'UTC' }}
+    </div>
+
+    <button type="button" class="mo-cell" *ngFor="let day of days"
+            [class.padding]="day.padding" [class.today]="day.isToday"
+            (click)="openDay(day)">
+      <span class="mo-num num">{{ day.on | date:'d':'UTC' }}</span>
+      <span class="mo-pills">
+        <span class="mo-pill out" *ngIf="day.out">↑<span class="num">{{ day.out }}</span></span>
+        <span class="mo-pill back" *ngIf="day.back">↓<span class="num">{{ day.back }}</span></span>
+      </span>
+    </button>
+  </div>
+
+  <!-- The window held more than the panel will draw: say so rather than letting
+       the grid quietly under-report the month. -->
+  <p class="agenda-truncated" *ngIf="truncated">
+    <mat-icon>info_outline</mat-icon>
+    <span>{{ t('calendar.truncated') }}</span>
+  </p>
 </section>
-</ng-container>

@@ -12,6 +12,14 @@ namespace RemSolution.Application.Features.Car.DTOs
         public string Matricule { get; init; } = string.Empty;
         public int? ModelId { get; init; }
         public string? ModelName { get; init; }
+
+        /// <summary>
+        /// The make the model belongs to ("Renault"). A car is named by both — a
+        /// fleet with a Clio and a 208 in it is not helped by a column of bare
+        /// model names — and it travels on the DTO so the screens do not each have
+        /// to hold the whole model catalogue open to look one up.
+        /// </summary>
+        public string? BrandName { get; init; }
         public int? BranchId { get; init; }
         public string? BranchName { get; init; }
         public CarStatus Status { get; init; }
@@ -78,6 +86,10 @@ namespace RemSolution.Application.Features.Car.DTOs
             {
                 config.NewConfig<Domain.Entities.Car, CarDto>()
                       .Map(dest => dest.ModelName, src => src.Model != null ? src.Model.Name : string.Empty)
+                      // A model may have no brand recorded, so this stays null
+                      // rather than reading as an empty make.
+                      .Map(dest => dest.BrandName,
+                           src => src.Model != null && src.Model.Brand != null ? src.Model.Brand.Name : null)
                       .Map(dest => dest.BranchName, src => src.Branch != null ? src.Branch.Name : null)
                       // The car's picture. Ordering by IsPrimary first and
                       // SortOrder second means "the primary image, or the first

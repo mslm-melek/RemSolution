@@ -13,10 +13,19 @@ namespace RemSolution.Application.Features.Car.Queries.GetCarsWithPaginationQuer
     public record GetCarsWithPaginationQuery(
         int PageNumber = 1,
         int PageSize = 10,
+        // Free text over the plate and the model name — what somebody at the
+        // counter has in front of them. Matches the client list's Search, so the
+        // app bar's one box can hand the same term to either list.
+        string? Search = null,
         int? ModelId = null,
         string? Color = null,
         FuelType? FuelType = null,
         CarStatus? Status = null,
+        // Where the car is based, and who made it — the two ways a fleet is
+        // narrowed down before anything else (see the list's filter rail). The
+        // brand reads through the model, which is what carries it.
+        int? BranchId = null,
+        int? BrandId = null,
         // Cars with a hire running right now (or, false, everything else) — the
         // fleet figure the dashboard calls "on rent".
         bool? OnRent = null,
@@ -41,30 +50,14 @@ namespace RemSolution.Application.Features.Car.Queries.GetCarsWithPaginationQuer
 
         public async Task<PaginatedList<CarDto>> Handle(GetCarsWithPaginationQuery request, CancellationToken cancellationToken)
         {
-            var query = _context.Cars.AsNoTracking().AsQueryable();
-
-            if (request.ModelId.HasValue)
-                query = query.Where(c => c.ModelId == request.ModelId);
-
-            if (!string.IsNullOrWhiteSpace(request.Color))
-                query = query.Where(c => c.Color == request.Color);
-
-            if (request.FuelType.HasValue)
-                query = query.Where(c => c.FuelType == request.FuelType);
-
-            if (request.Status.HasValue)
-                query = query.Where(c => c.Status == request.Status);
-
-            if (request.OnRent.HasValue)
-                query = request.OnRent.Value
-                    ? query.Where(c => c.Rentings!.Any(r => r.RentingState == RentingState.InProgress))
-                    : query.Where(c => !c.Rentings!.Any(r => r.RentingState == RentingState.InProgress));
-
-            if (request.AddedFrom.HasValue)
-                query = query.Where(c => c.CreatedOn >= request.AddedFrom);
-
-            if (request.AddedTo.HasValue)
-                query = query.Where(c => c.CreatedOn < request.AddedTo);
+            // The same filters the counts beside the list are taken through, so a
+            // rail reading "Maintenance 4" opens four rows (see CarQueryFilters).
+            var query = _context.Cars
+                .AsNoTracking()
+                .ApplyCarFilters(
+                    request.Search, request.ModelId, request.Color, request.FuelType, request.Status,
+                    request.OnRent, request.BranchId, request.BrandId,
+                    request.AddedFrom, request.AddedTo);
 
             var descending = request.SortDescending;
 
