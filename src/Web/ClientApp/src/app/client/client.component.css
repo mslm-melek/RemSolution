@@ -1,55 +1,357 @@
-/* Surface, header, search strip, table and empty state come from the shared
-   .page / .search-row / .data-table rules in styles.scss. */
+/* The client book: one card per client, and a toolbar that says which of them
+   are shown and in what order.
 
-/* The face column. Sized to the avatar itself so the names stay flush left
-   whether or not the row has a photograph (see ClientAvatarComponent). */
-main .page .portrait-cell {
-  width: 52px;
-  padding-inline-end: 0;
+   The page frame, the toolbar strip (`.filter-row`), the chips, the status pills
+   and the "needs you" bar all come from styles.scss; only what is unique to this
+   screen is here. There is no global `box-sizing`, so anything given both a width
+   and padding sets its own. */
+
+/* --------------------------------------------------------------- toolbar ---- */
+
+.client-toolbar {
+  box-sizing: border-box;
 }
 
-/* The avatar is a link into the client's page, like their name is. line-height 0
-   so the anchor wraps the circle exactly and adds no baseline gap under it. */
-main .page .portrait-cell a {
-  display: inline-flex;
-  line-height: 0;
-  text-decoration: none;
+/* Drawn by hand rather than as a mat-form-field, because a 56px form field in a
+   50px toolbar is the wrong shape. Same box as the bookings screen's. */
+.client-search {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  box-sizing: border-box;
+  flex: 1 1 240px;
+  max-width: 340px;
+  height: var(--h-control-sm);
+  padding: 0 var(--sp-3);
+  background: var(--surface-2);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r);
+  color: var(--muted);
 }
 
-/* The name opens the client's page. It keeps the column's weight and colour so
-   the table stays quiet, and says it is a link on hover. */
-a.cell-main {
-  text-decoration: none;
+.client-search:focus-within {
+  border-color: var(--brand-500);
+  color: var(--ink);
+}
+
+.client-search > .mat-icon {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  font-size: 18px;
+}
+
+.client-search input {
+  flex: 1 1 auto;
+  min-width: 0;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  font: var(--fw-normal) var(--fs-sm) / 1 var(--font-body);
+  outline: none;
+}
+
+.client-search input::placeholder {
+  color: var(--muted);
+}
+
+.search-clear {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: none;
+  color: var(--muted);
   cursor: pointer;
 }
 
-a.cell-main:hover,
-a.cell-main:focus-visible {
-  color: var(--brand-600);
-  text-decoration: underline;
+.search-clear:hover {
+  background: var(--overlay);
+  color: var(--ink);
 }
 
-/* The address and, when they have one, a mark that it is also a working portal
-   login — the two facts belong in one cell. */
-.email-cell {
+.search-clear .mat-icon {
+  width: 16px;
+  height: 16px;
+  font-size: 16px;
+}
+
+/* The standing strip. Outline buttons, not coloured chips: these are a choice
+   the user makes, and rule 5 keeps tinted fills for state that is being
+   reported. The pressed one takes the brand tint so the strip says which slice
+   of the book is on screen. */
+.standing-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1);
+}
+
+.standing-pill {
+  box-sizing: border-box;
+  height: var(--h-control-sm);
+  padding: 0 var(--sp-3);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  color: var(--ink-2);
+  font: var(--fw-normal) var(--fs-label) / 1 var(--font-body);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.standing-pill:hover {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+
+.standing-pill.active {
+  background: var(--brand-50);
+  border-color: var(--brand-600);
+  color: var(--brand-600);
+  font-weight: var(--fw-medium);
+}
+
+/* Sort: chrome, not a page action. */
+.tool-btn {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--sp-2);
+  box-sizing: border-box;
+  height: var(--h-control-sm);
+  padding: 0 var(--sp-3);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r);
+  background: var(--surface);
+  color: var(--ink-2);
+  font: var(--fw-medium) var(--fs-sm) / 1 var(--font-body);
+  white-space: nowrap;
+  cursor: pointer;
 }
 
+.tool-btn:hover {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+
+.tool-btn .mat-icon {
+  width: 18px;
+  height: 18px;
+  font-size: 18px;
+}
+
+.tool-btn .tool-dir {
+  color: var(--muted);
+}
+
+/* ----------------------------------------------------------------- cards ---- */
+
+.client-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.client-card {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  box-sizing: border-box;
+  padding-inline-end: var(--sp-2);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+}
+
+.client-card:hover {
+  border-color: var(--line-strong);
+  background: var(--surface-2);
+}
+
+/* The "needs you" bar, restated.
+ *
+ * styles.scss already defines `.needs-action`, but it cannot win here: that is a
+ * single class, while `.client-card` above comes from a COMPONENT stylesheet,
+ * which Angular rewrites with an extra `[_ngcontent-…]` attribute — so the plain
+ * `border` shorthand outranks the shared rule and the bar silently never paints.
+ * Same specificity as the card and its hover, declared after both. */
+.client-card.needs-action {
+  border-inline-start: var(--accent-bar) solid var(--warn);
+  /* One heavy edge ⇒ no radius on that side. */
+  border-start-start-radius: 0;
+  border-end-start-radius: 0;
+  background: var(--row-attention);
+}
+
+.client-card.needs-action.is-overdue {
+  border-inline-start-color: var(--danger);
+  background: var(--row-overdue);
+}
+
+/* Hover repaints border-color on all four sides, so the bar has to be re-stated
+   above it or it goes grey under the pointer. */
+.client-card.needs-action:hover {
+  border-inline-start-color: var(--warn);
+}
+
+.client-card.needs-action.is-overdue:hover {
+  border-inline-start-color: var(--danger);
+}
+
+/* The card body is one button: the whole row opens the client, and the icon
+   buttons beside it are the exceptions. A <button> rather than an <a> because
+   the target is a panel, not a page — there is no URL to middle-click. The full
+   record still has one, and the panel links to it. */
+.client-open {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  flex: 1 1 auto;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: var(--sp-4);
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.client-open:focus-visible {
+  outline: 2px solid var(--brand-500);
+  outline-offset: -2px;
+  border-radius: var(--r-lg);
+}
+
+/* Who they are: the name and the two things a client is looked up by. Takes the
+   room the three blocks beside it do not need. */
+.client-who {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.client-name {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.client-sub {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: var(--fs-micro);
+  color: var(--muted);
+  min-width: 0;
+}
+
+.client-email {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* A working portal login, beside the address it signs in with. */
 .account-icon {
-  font-size: 17px;
-  width: 17px;
-  height: 17px;
-  color: var(--success, var(--ok-ink));
+  flex: none;
+  width: 14px;
+  height: 14px;
+  font-size: 14px;
+  color: var(--ok);
 }
 
-/* A flagged client is a risk signal; it rides next to the name. */
-.flag-icon {
-  font-size: 17px;
-  width: 17px;
-  height: 17px;
-  vertical-align: text-bottom;
-  margin-inline-start: 6px;
-  color: var(--danger);
+.client-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 0 0 auto;
+  text-align: center;
+  min-width: 92px;
+}
+
+.client-stat-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+}
+
+.client-stat-value {
+  font-size: var(--fs-body);
+  font-weight: var(--fw-medium);
+  color: var(--ink);
+}
+
+.client-stat-note {
+  font-size: var(--fs-micro);
+  color: var(--muted);
+}
+
+.client-money {
+  flex: 0 0 auto;
+  min-width: 96px;
+  text-align: end;
+}
+
+.client-standing {
+  flex: 0 0 auto;
+  min-width: 124px;
+  text-align: end;
+}
+
+/* The mark on the standing chip: at label size, so the word stays the thing
+   being read. */
+.client-standing .chip .mat-icon {
+  width: 14px;
+  height: 14px;
+  font-size: 14px;
+}
+
+.client-actions {
+  display: flex;
+  align-items: center;
+  flex: none;
+}
+
+/* An empty book is an invitation, not a report; the shared rule gives it room. */
+.client-list .empty-row {
+  margin: 0;
+}
+
+/* On a narrow screen the blocks stack: the name keeps its own line and the
+   figures sit under it rather than being squeezed into columns that fit none of
+   them. */
+@media (max-width: 767px) {
+  .client-open {
+    flex-wrap: wrap;
+    gap: var(--sp-2) var(--sp-4);
+  }
+
+  .client-who {
+    flex: 1 1 100%;
+  }
+
+  .client-stat,
+  .client-money,
+  .client-standing {
+    flex: 0 0 auto;
+    min-width: 0;
+    text-align: start;
+  }
+
+  .client-stat {
+    flex-direction: row;
+    align-items: baseline;
+    gap: var(--sp-2);
+  }
 }

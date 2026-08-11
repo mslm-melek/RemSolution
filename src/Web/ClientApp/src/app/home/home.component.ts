@@ -406,7 +406,7 @@ export class HomeComponent implements OnInit, OnDestroy {
           .getCars(1, 1, null, null, null, null, null, null, null, null, null, null, null, false)
           .pipe(map(r => r.totalCount ?? 0));
       case 'Clients':
-        return this.clientsClient.getClients(1, 1, null, null, null, null, null, null, false)
+        return this.clientsClient.getClients(1, 1, null, null, null, null, null, null, null, false)
           .pipe(map(r => r.totalCount ?? 0));
       case 'Rentings':
         return this.rentingsClient

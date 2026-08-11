@@ -1,0 +1,206 @@
+<ng-container *transloco="let t">
+  <div class="detail-head">
+    <div class="detail-heading">
+      <app-client-avatar [client]="client"></app-client-avatar>
+      <div class="detail-names">
+        <h2 class="detail-title">{{ name || t('client.title') }}</h2>
+        <p class="detail-subtitle">
+          {{ t('client.clientNumber', { id: data.id }) }}
+          <span *ngIf="client?.hasPortalAccount"> · {{ t('client.account') }}</span>
+        </p>
+      </div>
+    </div>
+    <button mat-icon-button type="button" (click)="close()"
+            [matTooltip]="t('common.close')" [attr.aria-label]="t('common.close')">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <div class="detail-body">
+    <p class="hint" *ngIf="loading">{{ t('common.loading') }}</p>
+
+    <div class="error-banner" *ngIf="errorMessage">
+      <mat-icon>error_outline</mat-icon> {{ errorMessage }}
+    </div>
+
+    <ng-container *ngIf="!loading && client">
+
+      <!-- =============================== STANDING ===============================
+           The one thing the book is scanned for, said in full: where this client
+           stands, and — when the agency has flagged them — why. -->
+      <section class="section">
+        <div class="standing-line">
+          <span class="chip" [ngClass]="standingClass">{{ t(standingLabelKey) }}</span>
+          <span class="chip danger" *ngIf="isLate">{{ t('client.overdueCar') }}</span>
+        </div>
+
+        <!-- Rule 1's bar in red: a deadline already missed, and something to read
+             before handing over another car. -->
+        <div class="action-banner is-overdue" *ngIf="client.isFlagged">
+          <mat-icon>flag</mat-icon>
+          <div class="action-banner-text">
+            <div class="action-banner-title">{{ t('client.flagged') }}</div>
+            <div class="action-banner-note">
+              {{ client.notes || t('client.flagNoReason') }}
+            </div>
+          </div>
+        </div>
+
+        <!-- The reason box, open only while a flag is being raised. -->
+        <div class="flag-form" *ngIf="flagging">
+          <label class="flag-label" for="flag-reason">{{ t('client.flagReason') }}</label>
+          <textarea id="flag-reason" rows="3" [(ngModel)]="flagReason"
+                    [placeholder]="t('client.flagReasonPlaceholder')"></textarea>
+          <div class="flag-form-actions">
+            <button mat-raised-button color="warn" type="button"
+                    [disabled]="saving" (click)="raiseFlag()">
+              {{ t('client.flagAction') }}
+            </button>
+            <button mat-button type="button" [disabled]="saving" (click)="cancelFlagging()">
+              {{ t('common.cancel') }}
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- =============================== CONTACT =============================== -->
+      <section class="section">
+        <h3 class="section-title">{{ t('client.contact') }}</h3>
+
+        <div class="facts">
+          <div class="fact">
+            <span class="fact-label">{{ t('client.cin') }}</span>
+            <span class="fact-value num">{{ client.cin || '—' }}</span>
+          </div>
+          <div class="fact">
+            <span class="fact-label">{{ t('client.birthDate') }}</span>
+            <!-- Wall-clock stamped UTC on the wire: read back in UTC parts, or a
+                 negative offset shows the day before. -->
+            <span class="fact-value num">{{ (client.birthDate | date:'yyyy-MM-dd':'UTC') || '—' }}</span>
+          </div>
+          <div class="fact fact-wide">
+            <span class="fact-label">{{ t('client.email') }}</span>
+            <span class="fact-value fact-email">{{ client.email || '—' }}</span>
+          </div>
+        </div>
+
+        <p class="section-note" *ngIf="client.email && !client.hasPortalAccount">
+          {{ t('client.accountNone') }}
+        </p>
+      </section>
+
+      <!-- =============================== PAPERS ===============================
+           What has to be produced if the car is stopped. Presence is the whole
+           question here; the numbers and the images themselves are on the
+           client's own page and in the form. -->
+      <section class="section">
+        <h3 class="section-title">{{ t('client.documents') }}</h3>
+
+        <div class="paper" *ngFor="let paper of papers">
+          <span class="paper-icon"><mat-icon>{{ paper.icon }}</mat-icon></span>
+          <span class="paper-text">
+            <span class="paper-name">{{ t(paper.labelKey) }}</span>
+            <span class="paper-ref num" *ngIf="paper.reference">{{ paper.reference }}</span>
+          </span>
+          <a *ngIf="paper.url" [href]="paper.url" target="_blank" class="paper-state is-on-file">
+            <mat-icon>check_circle</mat-icon> {{ t('client.paperOnFile') }}
+          </a>
+          <span *ngIf="!paper.url" class="paper-state"
+                [class.is-missing]="paper.required" [class.is-optional]="!paper.required">
+            <mat-icon>{{ paper.required ? 'pending_actions' : 'remove' }}</mat-icon>
+            {{ t(paper.required ? 'client.paperMissing' : 'client.paperNotNeeded') }}
+          </span>
+        </div>
+
+        <p class="section-link" *ngIf="canEdit">
+          <a [routerLink]="['/client', data.id, 'edit']" (click)="close()">
+            {{ t('client.uploadDocuments') }} →
+          </a>
+        </p>
+      </section>
+
+      <!-- ============================ HISTORY & MONEY ============================ -->
+      <section class="section">
+        <h3 class="section-title">{{ t('client.tabs.rentings') }}</h3>
+
+        <div class="facts">
+          <div class="fact">
+            <span class="fact-label">{{ t('client.rentings') }}</span>
+            <span class="fact-value num">{{ client.rentingCount ?? 0 }}</span>
+          </div>
+          <div class="fact">
+            <span class="fact-label">{{ t('client.openNow') }}</span>
+            <span class="fact-value num">{{ client.openRentingCount ?? 0 }}</span>
+          </div>
+          <div class="fact fact-wide" *ngIf="credit">
+            <span class="fact-label">{{ t('credit.outstanding') }}</span>
+            <span class="fact-value num money" [class.owing]="owes">
+              {{ credit.outstanding?.amount | number:'1.2-2' }} {{ credit.outstanding?.currency }}
+            </span>
+          </div>
+        </div>
+
+        <!-- The last few hires, newest first: this client's activity in one line
+             each. The whole history is on their page. -->
+        <div class="activity" *ngIf="recent.length">
+          <div class="activity-item" *ngFor="let renting of recent">
+            <span class="activity-dot" [ngClass]="renting.rentingState === RentingState.InProgress ? 'live' : ''"></span>
+            <div class="activity-text">
+              <div class="activity-when num">
+                {{ renting.startDate | date:'dd MMM yyyy':'UTC' }} → {{ renting.endDate | date:'dd MMM yyyy':'UTC' }}
+              </div>
+              <div class="activity-what">
+                {{ renting.carModelName }}
+                <span class="num" *ngIf="renting.carMatricule"> · {{ renting.carMatricule }}</span>
+                <span class="activity-state">{{ t(stateLabelKey(renting.rentingState)) }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <p class="section-note" *ngIf="canSeeRentings && !recent.length">{{ t('client.noRentings') }}</p>
+
+        <p class="section-link">
+          <a [routerLink]="['/client', data.id]" (click)="close()">
+            {{ t('client.openFile') }} →
+          </a>
+        </p>
+      </section>
+
+      <!-- ================================ NOTES ================================
+           What the agency wrote about this client for itself. The moderation note
+           behind a flag is shown with the flag above, not repeated here. -->
+      <section class="section" *ngIf="client.description">
+        <h3 class="section-title">{{ t('common.notes') }}</h3>
+        <p class="notes">{{ client.description }}</p>
+      </section>
+    </ng-container>
+  </div>
+
+  <!-- The moves worth making from the book. Hiring to them is what the screen
+       exists for, so it is the one filled button (rule 2). -->
+  <div class="detail-foot" *ngIf="!loading && client">
+    <a mat-raised-button color="primary" *ngIf="canRent"
+       [routerLink]="['/renting/new']" [queryParams]="{ clientId: data.id }" (click)="close()">
+      <mat-icon>vpn_key</mat-icon> {{ t('client.rentTo') }}
+    </a>
+    <a mat-stroked-button *ngIf="canEdit" [routerLink]="['/client', data.id, 'edit']" (click)="close()">
+      <mat-icon>edit</mat-icon> {{ t('common.edit') }}
+    </a>
+    <button mat-stroked-button type="button" *ngIf="canRemind && isLate" (click)="remindLate()">
+      <mat-icon>outgoing_mail</mat-icon> {{ t('lateNotice.action') }}
+    </button>
+    <button mat-button color="warn" type="button" *ngIf="canEdit && !client.isFlagged && !flagging"
+            (click)="startFlagging()">
+      <mat-icon>flag</mat-icon> {{ t('client.flagAction') }}
+    </button>
+    <button mat-button type="button" *ngIf="canEdit && client.isFlagged"
+            [disabled]="saving" (click)="clearFlag()">
+      <mat-icon>flag</mat-icon> {{ t('client.unflagAction') }}
+    </button>
+    <button mat-button color="warn" type="button" *ngIf="canDelete"
+            [disabled]="saving" (click)="deleteClient()">
+      {{ t('common.delete') }}
+    </button>
+  </div>
+</ng-container>

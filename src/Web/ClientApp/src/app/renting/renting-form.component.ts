@@ -616,7 +616,7 @@ export class RentingFormComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.clientsClient.getClients(1, 1000, null, null, null, null, null, null, false).subscribe({
+    this.clientsClient.getClients(1, 1000, null, null, null, null, null, null, null, false).subscribe({
       next: r => this.clients = r.items || [],
       error: err => console.error(err)
     });
@@ -968,7 +968,7 @@ export class RentingFormComponent implements OnInit {
   }
 
   private reloadClientList() {
-    this.clientsClient.getClients(1, 1000, null, null, null, null, null, null, false).subscribe({
+    this.clientsClient.getClients(1, 1000, null, null, null, null, null, null, null, false).subscribe({
       next: r => this.clients = r.items || [],
       error: err => console.error(err)
     });

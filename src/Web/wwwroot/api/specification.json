@@ -1895,17 +1895,16 @@
             "x-position": 5
           },
           {
-            "name": "AddedFrom",
+            "name": "DocumentsComplete",
             "in": "query",
             "schema": {
-              "type": "string",
-              "format": "date-time",
+              "type": "boolean",
               "nullable": true
             },
             "x-position": 6
           },
           {
-            "name": "AddedTo",
+            "name": "AddedFrom",
             "in": "query",
             "schema": {
               "type": "string",
@@ -1915,13 +1914,23 @@
             "x-position": 7
           },
           {
+            "name": "AddedTo",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "nullable": true
+            },
+            "x-position": 8
+          },
+          {
             "name": "SortBy",
             "in": "query",
             "schema": {
               "type": "string",
               "nullable": true
             },
-            "x-position": 8
+            "x-position": 9
           },
           {
             "name": "SortDescending",
@@ -1929,7 +1938,7 @@
             "schema": {
               "type": "boolean"
             },
-            "x-position": 9
+            "x-position": 10
           }
         ],
         "responses": {

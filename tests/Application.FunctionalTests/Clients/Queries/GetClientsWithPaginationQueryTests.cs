@@ -1,5 +1,6 @@
 using RemSolution.Application.Features.Client.Commands.CreateClientCommand;
 using RemSolution.Application.Features.Client.Queries.GetClientsWithPaginationQuery;
+using RemSolution.Domain.Entities;
 using RemSolution.Domain.Enums;
 
 namespace RemSolution.Application.FunctionalTests.Clients.Queries;
@@ -113,5 +114,92 @@ public class GetClientsWithPaginationQueryTests : BaseTestFixture
 
         rest.TotalCount.Should().Be(1);
         rest.Items.First().LastName.Should().Be("Customer");
+    }
+
+    // The book's search box is one field over the three things a counter has in
+    // front of them: the name they were told, the address the booking came from,
+    // or the card they are holding — half-read, which is why it matches partially.
+    [Test]
+    public async Task ShouldFindClientsByEmailOrCin()
+    {
+        await RunAsAgencyAdministratorAsync();
+        await AddTestAgencyAsync();
+
+        await AddAsync(new Domain.Entities.Client
+        {
+            FirstName = "Ahmed", LastName = "BenSalem",
+            Email = "ahmed.ben@example.com", CIN = "09876543"
+        });
+        await AddAsync(new Domain.Entities.Client
+        {
+            FirstName = "Fatima", LastName = "Khoury",
+            Email = "fatima.kh@example.com", CIN = "12345678"
+        });
+
+        var byEmail = await SendAsync(new GetClientsWithPaginationQuery { Search = "fatima.kh@" });
+
+        byEmail.TotalCount.Should().Be(1);
+        byEmail.Items.First().LastName.Should().Be("Khoury");
+
+        var byCin = await SendAsync(new GetClientsWithPaginationQuery { Search = "098765" });
+
+        byCin.TotalCount.Should().Be(1);
+        byCin.Items.First().LastName.Should().Be("BenSalem");
+    }
+
+    // The book's "papers missing" filter: what has to be produced if the car is
+    // stopped is the CIN image and the licence, so a passport on its own is not
+    // a complete file (see the client-standing note in the SPA).
+    [Test]
+    public async Task ShouldFilterOnPapersOnFile()
+    {
+        await RunAsAgencyAdministratorAsync();
+        await AddTestAgencyAsync();
+
+        var cinFile = await StoreFileAsync(DocumentType.CIN);
+        var licenceFile = await StoreFileAsync(DocumentType.DrivingLicence);
+        var passeportFile = await StoreFileAsync(DocumentType.Passeport);
+
+        await AddAsync(new Domain.Entities.Client
+        {
+            FirstName = "Papers", LastName = "Complete",
+            CINFileId = cinFile.Id, DrivingLicenceFileId = licenceFile.Id
+        });
+        await AddAsync(new Domain.Entities.Client
+        {
+            FirstName = "Licence", LastName = "Missing",
+            CINFileId = cinFile.Id, PasseportFileId = passeportFile.Id
+        });
+        await AddAsync(new Domain.Entities.Client { FirstName = "Nothing", LastName = "OnFile" });
+
+        var complete = await SendAsync(new GetClientsWithPaginationQuery { DocumentsComplete = true });
+
+        complete.TotalCount.Should().Be(1);
+        complete.Items.First().LastName.Should().Be("Complete");
+
+        var incomplete = await SendAsync(new GetClientsWithPaginationQuery { DocumentsComplete = false });
+
+        incomplete.TotalCount.Should().Be(2);
+        incomplete.Items.Select(c => c.LastName).Should().BeEquivalentTo(new[] { "Missing", "OnFile" });
+    }
+
+    // A stored document, without going through the upload command: this asks what
+    // the query does with the FK, not how the file got there.
+    private static async Task<StoredFile> StoreFileAsync(DocumentType type)
+    {
+        var file = new StoredFile
+        {
+            Path = $"clients/{type}.png",
+            Url = $"/uploads/clients/{type}.png",
+            OriginalFileName = $"{type}.png",
+            MimeType = "image/png",
+            Size = 8,
+            Sha256 = $"{type}-hash",
+            DocumentType = type
+        };
+
+        await AddAsync(file);
+
+        return file;
     }
 }

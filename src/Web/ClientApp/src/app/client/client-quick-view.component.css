@@ -1,0 +1,362 @@
+/* The client slide-over's insides. The panel itself — full height, pinned to the
+   edge the page ends on — is positioned by the `.side-panel` rule in styles.scss,
+   because a dialog renders in the CDK overlay and nothing in a component's
+   stylesheet can reach it.
+
+   Three bands, like the booking panel: a head that names the client, a scrolling
+   middle, and a footer that stays put, so a short viewport never hides the action
+   the panel was opened for.
+
+   There is no global `box-sizing`, so anything given both a width and padding
+   sets its own. */
+:host {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--surface);
+}
+
+/* ------------------------------------------------------------------ head ---- */
+
+.detail-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  flex: none;
+  /* Logical, not physical: the close button sits on the end edge, and in Arabic
+     that is the other one. */
+  padding-block: var(--sp-4) var(--sp-3);
+  padding-inline: var(--sp-5) var(--sp-4);
+  border-bottom: 1px solid var(--line);
+}
+
+/* The face beside the name, as on every other screen (see ClientAvatarComponent). */
+.detail-heading {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  min-width: 0;
+}
+
+.detail-names {
+  min-width: 0;
+}
+
+/* Qualified past `.mat-typography h2`, which would make this a display heading
+   the size of a page title. */
+.mat-typography .detail-title,
+.detail-title {
+  margin: 0;
+  font: var(--fw-medium) var(--fs-section) / 1.3 var(--font-body);
+  color: var(--ink);
+}
+
+.detail-subtitle {
+  margin: 2px 0 0;
+  font-size: var(--fs-label);
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+/* ------------------------------------------------------------------ body ---- */
+
+.detail-body {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding: var(--sp-5);
+}
+
+.section + .section {
+  margin-top: var(--sp-6);
+}
+
+.section-title {
+  margin: 0 0 var(--sp-3);
+  font-size: var(--fs-label);
+  font-weight: var(--fw-medium);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+
+.section-link {
+  margin: var(--sp-3) 0 0;
+  font-size: var(--fs-sm);
+}
+
+.section-note {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-micro);
+  color: var(--muted);
+}
+
+/* -------------------------------------------------------------- standing ---- */
+
+.standing-line {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.standing-line + .action-banner,
+.standing-line + .flag-form,
+.action-banner + .flag-form {
+  margin-top: var(--sp-3);
+}
+
+/* The reason a flag is being raised. A field, not a prompt box: what is typed
+   here is what the next person at the counter reads. */
+.flag-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  box-sizing: border-box;
+  padding: var(--sp-3);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  /* Declared after the shorthand above, or the shorthand would put the corners
+     back: one heavy edge ⇒ no radius on that side. */
+  border-inline-start: var(--accent-bar) solid var(--danger);
+  border-start-start-radius: 0;
+  border-end-start-radius: 0;
+  background: var(--surface-2);
+}
+
+.flag-label {
+  font-size: 10px;
+  font-weight: var(--fw-medium);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+}
+
+.flag-form textarea {
+  box-sizing: border-box;
+  width: 100%;
+  padding: var(--sp-2);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  color: var(--ink);
+  font: var(--fw-normal) var(--fs-sm) / 1.5 var(--font-body);
+  resize: vertical;
+}
+
+.flag-form textarea:focus {
+  border-color: var(--brand-500);
+  outline: none;
+}
+
+.flag-form-actions {
+  display: flex;
+  gap: var(--sp-2);
+}
+
+/* ----------------------------------------------------------------- facts ---- */
+
+/* Two columns of label-over-value, so the panel reads down the page rather than
+   across it. One column when the panel is the whole screen. */
+.facts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-4) var(--sp-3);
+}
+
+.fact {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+/* An address is longer than half a panel, and so is a currency figure with its
+   code beside it. */
+.fact-wide {
+  grid-column: 1 / -1;
+}
+
+.fact-label {
+  font-size: 10px;
+  font-weight: var(--fw-medium);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+}
+
+.fact-value {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.fact-email {
+  font-size: var(--fs-micro);
+  font-weight: var(--fw-normal);
+}
+
+/* Still owed reads as a debt; a settled account is just a figure. */
+.fact-value.money.owing {
+  color: var(--danger);
+}
+
+/* ---------------------------------------------------------------- papers ---- */
+
+/* Rows inside one block, separated by a rule rather than by being cards of their
+   own (rule 4). */
+.paper {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-2) 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.paper:last-of-type {
+  border-bottom: none;
+}
+
+.paper-icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--r-sm);
+  background: var(--surface-3);
+  color: var(--muted);
+}
+
+.paper-icon .mat-icon {
+  width: 18px;
+  height: 18px;
+  font-size: 18px;
+}
+
+.paper-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.paper-name {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  color: var(--ink);
+}
+
+.paper-ref {
+  font-size: var(--fs-micro);
+  color: var(--muted);
+}
+
+/* Presence, not state: plain text with a mark, not a chip (rule 5). On file, it
+   is the link to the image itself. */
+.paper-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  flex: none;
+  font-size: var(--fs-micro);
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.paper-state .mat-icon {
+  width: 15px;
+  height: 15px;
+  font-size: 15px;
+}
+
+.paper-state.is-on-file {
+  color: var(--ok);
+}
+
+.paper-state.is-on-file:hover {
+  text-decoration: underline;
+}
+
+.paper-state.is-missing {
+  color: var(--warn-ink);
+}
+
+/* -------------------------------------------------------------- activity ---- */
+
+.activity {
+  margin-top: var(--sp-4);
+}
+
+.activity-item {
+  display: flex;
+  gap: var(--sp-3);
+  padding: var(--sp-2) 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.activity-item:last-of-type {
+  border-bottom: none;
+}
+
+.activity-dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  margin-top: 6px;
+  border-radius: var(--r-pill);
+  background: var(--line-strong);
+}
+
+/* A hire that is running is the one the counter cares about now. */
+.activity-dot.live {
+  background: var(--brand-600);
+}
+
+.activity-when {
+  font-size: var(--fs-micro);
+  color: var(--muted);
+}
+
+.activity-what {
+  margin-top: 1px;
+  font-size: var(--fs-sm);
+  color: var(--ink);
+}
+
+.activity-state {
+  margin-inline-start: var(--sp-2);
+  font-size: var(--fs-micro);
+  color: var(--muted);
+}
+
+.notes {
+  margin: 0;
+  padding: var(--sp-3);
+  border-radius: var(--r);
+  background: var(--surface-2);
+  font-size: var(--fs-sm);
+  line-height: 1.6;
+  color: var(--ink-2);
+  white-space: pre-wrap;
+}
+
+/* ------------------------------------------------------------------ foot ---- */
+
+/* The buttons wrap rather than shrink: a flagged client with a car out has five
+   of them, and a squashed row of verbs is harder to read than two lines of them. */
+.detail-foot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  flex: none;
+  padding: var(--sp-4) var(--sp-5);
+  border-top: 1px solid var(--line);
+}
+
+@media (max-width: 599px) {
+  .facts {
+    grid-template-columns: 1fr;
+  }
+}

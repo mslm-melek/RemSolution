@@ -1,4 +1,4 @@
-<div class="page" *transloco="let t">
+<div class="page clients" *transloco="let t">
   <div class="header-row">
     <div>
       <h2 class="title">{{ t('client.title') }}</h2>
@@ -18,167 +18,149 @@
     </button>
   </div>
 
-  <!-- Search -->
-  <div class="search-row">
-    <mat-form-field appearance="outline" class="search-input">
-      <mat-label>{{ t('client.searchByName') }}</mat-label>
-      <input matInput [(ngModel)]="search" (keyup.enter)="onSearch()" [placeholder]="t('client.searchPlaceholder')" />
-      <button *ngIf="search" matSuffix mat-icon-button [attr.aria-label]="t('common.clear')" (click)="clearSearch()">
+  <!-- ================================ TOOLBAR ================================
+       One box over name, email and CIN — whichever of the three the counter has
+       in front of them (see GetClientsWithPaginationQuery) — then the standing
+       strip, then the order. -->
+  <div class="filter-row client-toolbar">
+    <form class="client-search" (ngSubmit)="onSearch()">
+      <mat-icon>search</mat-icon>
+      <input type="search" name="q" [(ngModel)]="search"
+             [placeholder]="t('client.searchPlaceholder')"
+             [attr.aria-label]="t('client.searchByName')" />
+      <button type="button" class="search-clear" *ngIf="search" (click)="clearSearch()"
+              [attr.aria-label]="t('common.clear')">
         <mat-icon>close</mat-icon>
       </button>
-    </mat-form-field>
+    </form>
 
-    <button mat-raised-button (click)="onSearch()">
-      <mat-icon>search</mat-icon> {{ t('common.search') }}
-    </button>
-
-    <!-- Filters this list was opened with (from a dashboard count), which have
-         no control of their own. -->
-    <div class="filter-chips" *ngIf="chips.length">
-      <span class="chip no-dot" *ngFor="let chip of chips">
-        {{ t(chip.labelKey, chip.labelArgs) }}
-        <button type="button" class="chip-clear" (click)="clearChip(chip)"
-                [matTooltip]="t('filters.clear')" [attr.aria-label]="t('filters.clear')">
-          <mat-icon>close</mat-icon>
-        </button>
-      </span>
+    <!-- Where each client stands, as the one question the book is filtered by:
+         everyone, papers on file, papers still to collect, flagged. The buttons
+         write the URL like every other filter does (see selectPill). -->
+    <div class="standing-strip" role="group" [attr.aria-label]="t('client.standing.label')">
+      <button type="button" class="standing-pill" [class.active]="pill === 'all'"
+              [attr.aria-pressed]="pill === 'all'" (click)="selectPill('all')">
+        {{ t('common.all') }}
+      </button>
+      <button type="button" class="standing-pill" [class.active]="pill === 'verified'"
+              [attr.aria-pressed]="pill === 'verified'" (click)="selectPill('verified')">
+        {{ t('client.standing.verified') }}
+      </button>
+      <button type="button" class="standing-pill" [class.active]="pill === 'pending'"
+              [attr.aria-pressed]="pill === 'pending'" (click)="selectPill('pending')">
+        {{ t('client.standing.pending') }}
+      </button>
+      <button type="button" class="standing-pill" [class.active]="pill === 'flagged'"
+              [attr.aria-pressed]="pill === 'flagged'" (click)="selectPill('flagged')">
+        {{ t('client.standing.flagged') }}
+      </button>
     </div>
+
+    <span class="spacer"></span>
+
+    <!-- The cards have no headers to click, so the order lives here. It is still
+         the server's order (see SortingExtensions), not a reshuffle of the page
+         already on screen. -->
+    <button type="button" class="tool-btn" [matMenuTriggerFor]="sortMenu"
+            [matTooltip]="t('booking.sortBy')">
+      <mat-icon>sort</mat-icon>
+      <span class="tool-btn-text">{{ t(activeSortLabelKey) }}</span>
+      <mat-icon class="tool-dir">{{ sortDirection === 'desc' ? 'arrow_downward' : 'arrow_upward' }}</mat-icon>
+    </button>
+    <mat-menu #sortMenu="matMenu">
+      <button mat-menu-item type="button" *ngFor="let option of sortOptions"
+              (click)="sortByKey(option.key)">
+        <mat-icon>
+          {{ sortBy === option.key
+               ? (sortDirection === 'desc' ? 'arrow_downward' : 'arrow_upward')
+               : 'sort' }}
+        </mat-icon>
+        {{ t(option.labelKey) }}
+      </button>
+    </mat-menu>
   </div>
 
-  <!-- Sorting is server-side (see onSort): clicking a header re-queries the
-       whole result set rather than reordering the rows already on screen. -->
-  <table mat-table [dataSource]="clients" class="data-table full-width"
-         matSort matSortDisableClear
-         [matSortActive]="sortBy" [matSortDirection]="sortDirection"
-         (matSortChange)="onSort($event)">
+  <!-- Filters this list was opened with that no control above stands for. -->
+  <div class="filter-chips" *ngIf="chips.length">
+    <span class="chip no-dot" *ngFor="let chip of chips">
+      {{ t(chip.labelKey, chip.labelArgs) }}
+      <button type="button" class="chip-clear" (click)="clearChip(chip)"
+              [matTooltip]="t('filters.clear')" [attr.aria-label]="t('filters.clear')">
+        <mat-icon>close</mat-icon>
+      </button>
+    </span>
+  </div>
 
-    <!-- The client's face, cut out of their CIN on upload; a default silhouette
-         where there is no photograph (see ClientAvatarComponent). Unlabelled: a
-         column of faces needs no heading, and the header row is already crowded. -->
-    <ng-container matColumnDef="portrait">
-      <th mat-header-cell *matHeaderCellDef class="portrait-cell">
-        <span class="visually-hidden">{{ t('client.portrait') }}</span>
-      </th>
-      <td mat-cell *matCellDef="let client" class="portrait-cell">
-        <a [routerLink]="['/client', client.id]">
-          <app-client-avatar [client]="client"></app-client-avatar>
-        </a>
-      </td>
-    </ng-container>
+  <!-- ================================= CARDS =================================
+       The bar in the leading gutter means "settle this before you hand over a
+       car" (see rule 1 in docs/DESIGN_SYSTEM.md): amber where a paper is still
+       to be collected, red where the agency has flagged the client. A client in
+       good standing gets no bar, which is what makes the gutter worth scanning.
+       The standing itself is the chip on the right. -->
+  <div class="client-list">
+    <article class="client-card" *ngFor="let row of rows"
+             [class.needs-action]="row.standing !== 'verified'"
+             [class.is-overdue]="row.standing === 'flagged'">
+      <!-- The card body is the way in: clicking anywhere that is not a button
+           opens the client beside the list. -->
+      <button type="button" class="client-open" (click)="open(row)"
+              [attr.aria-label]="t('client.openClient', { name: row.name })">
+        <app-client-avatar [client]="row.client"></app-client-avatar>
 
-    <ng-container matColumnDef="name">
-      <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ t('common.name') }}</th>
-      <!-- The name opens the client's own page (history, money); the row's edit
-           action still goes straight to the form. -->
-      <td mat-cell *matCellDef="let client">
-        <a class="cell-main" [routerLink]="['/client', client.id]">
-          {{ client.lastName }}, {{ client.firstName }}
-        </a>
-        <mat-icon *ngIf="client.isFlagged" class="flag-icon" [matTooltip]="t('client.flagged')">flag</mat-icon>
-      </td>
-    </ng-container>
-
-    <ng-container matColumnDef="birthDate">
-      <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ t('client.birthDate') }}</th>
-      <td mat-cell *matCellDef="let client" class="num">{{ client.birthDate | date:'yyyy-MM-dd':'UTC' }}</td>
-    </ng-container>
-
-    <!-- Not sortable: sorting is an allow-list on the server (SortingExtensions)
-         and email is not on it. -->
-    <ng-container matColumnDef="email">
-      <th mat-header-cell *matHeaderCellDef>{{ t('client.email') }}</th>
-      <td mat-cell *matCellDef="let client">
-        <span class="email-cell" *ngIf="client.email">
-          {{ client.email }}
-          <mat-icon *ngIf="client.hasPortalAccount" class="account-icon"
-                    [matTooltip]="t('client.accountActive')">verified_user</mat-icon>
+        <span class="client-who">
+          <span class="client-name">{{ row.name }}</span>
+          <span class="client-sub">
+            <span class="num" *ngIf="row.client.cin">{{ row.client.cin }}</span>
+            <span *ngIf="row.client.cin && row.client.email"> · </span>
+            <span class="client-email" *ngIf="row.client.email">{{ row.client.email }}</span>
+            <mat-icon *ngIf="row.client.hasPortalAccount" class="account-icon"
+                      [matTooltip]="t('client.accountActive')">verified_user</mat-icon>
+          </span>
         </span>
-      </td>
-    </ng-container>
 
-    <ng-container matColumnDef="cin">
-      <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ t('client.cin') }}</th>
-      <td mat-cell *matCellDef="let client" class="num">{{ client.cin }}</td>
-    </ng-container>
-
-    <!-- How much history the client has, linking to it: the same rentings list,
-         filtered to this client. -->
-    <ng-container matColumnDef="rentings">
-      <th mat-header-cell *matHeaderCellDef mat-sort-header class="num-cell">{{ t('client.rentings') }}</th>
-      <td mat-cell *matCellDef="let client" class="num-cell">
-        <a *ngIf="canSeeRentings && client.rentingCount"
-           [routerLink]="['/renting']" [queryParams]="{ client: client.id }"
-           [matTooltip]="t('client.viewRentings')">{{ client.rentingCount }}</a>
-        <span *ngIf="!canSeeRentings || !client.rentingCount" class="muted">{{ client.rentingCount }}</span>
-        <span class="muted" *ngIf="client.openRentingCount">
-          ({{ t('client.openRentings', { count: client.openRentingCount }) }})
+        <span class="client-stat">
+          <span class="client-stat-label">{{ t('client.rentings') }}</span>
+          <span class="client-stat-value num">{{ row.client.rentingCount ?? 0 }}</span>
+          <span class="client-stat-note" *ngIf="row.client.openRentingCount">
+            {{ t('client.openRentings', { count: row.client.openRentingCount }) }}
+          </span>
         </span>
-      </td>
-    </ng-container>
 
-    <!-- Not sortable: the figure comes from the Credits module for this page's
-         clients, not from the client query the sort applies to. -->
-    <ng-container matColumnDef="credit">
-      <th mat-header-cell *matHeaderCellDef class="num-cell">{{ t('credit.outstanding') }}</th>
-      <td mat-cell *matCellDef="let client" class="num-cell">
-        <span class="chip danger" *ngIf="outstanding(client) as debt">
-          {{ debt.outstanding?.amount | number:'1.2-2' }} {{ debt.outstanding?.currency }}
+        <!-- Only where there is a debt: a column of dashes for everyone who owes
+             nothing says less than an empty space does. -->
+        <span class="client-money">
+          <span class="chip danger" *ngIf="outstanding(row.client) as debt">
+            {{ debt.outstanding?.amount | number:'1.2-2' }} {{ debt.outstanding?.currency }}
+          </span>
         </span>
-        <span class="muted" *ngIf="!outstanding(client)">—</span>
-      </td>
-    </ng-container>
 
-    <ng-container matColumnDef="documents">
-      <th mat-header-cell *matHeaderCellDef>{{ t('client.documents') }}</th>
-      <td mat-cell *matCellDef="let client">
-        <a *ngIf="client.cinImageUrl" [href]="client.cinImageUrl" target="_blank" mat-icon-button
-           [matTooltip]="t('client.cinImage')" [attr.aria-label]="t('client.cinImage')">
-          <mat-icon>badge</mat-icon>
-        </a>
-        <a *ngIf="client.drivingLicenceImageUrl" [href]="client.drivingLicenceImageUrl" target="_blank" mat-icon-button
-           [matTooltip]="t('client.drivingLicenceImage')" [attr.aria-label]="t('client.drivingLicenceImage')">
-          <mat-icon>directions_car</mat-icon>
-        </a>
-        <a *ngIf="client.passerportImageUrl" [href]="client.passerportImageUrl" target="_blank" mat-icon-button
-           [matTooltip]="t('client.passeportImage')" [attr.aria-label]="t('client.passeportImage')">
-          <mat-icon>menu_book</mat-icon>
-        </a>
-      </td>
-    </ng-container>
+        <span class="client-standing">
+          <span class="chip" [ngClass]="row.standingClass">
+            <mat-icon>{{ row.standingIcon }}</mat-icon>
+            {{ t(row.standingLabelKey) }}
+          </span>
+        </span>
+      </button>
 
-    <ng-container matColumnDef="actions">
-      <th mat-header-cell *matHeaderCellDef class="actions-cell">{{ t('common.actions') }}</th>
-      <td mat-cell *matCellDef="let client" class="actions-cell row-actions">
+      <div class="client-actions">
         <!-- Straight into the booking wizard with this client already chosen. -->
         <a *ngIf="canRent" mat-icon-button color="primary"
-           [routerLink]="['/renting/new']" [queryParams]="{ clientId: client.id }"
+           [routerLink]="['/renting/new']" [queryParams]="{ clientId: row.client.id }"
            [matTooltip]="t('client.rentTo')" [attr.aria-label]="t('client.rentTo')">
           <mat-icon>vpn_key</mat-icon>
         </a>
         <!-- Only where there is something to write about: a client with every car
              back has nothing to be reminded of (see ClientDto.OverdueRentingCount). -->
-        <button *ngIf="canRemind && isLate(client)" mat-icon-button color="warn"
-                (click)="remindLate(client)"
+        <button *ngIf="canRemind && row.late" mat-icon-button color="warn"
+                (click)="remindLate(row)"
                 [matTooltip]="t('lateNotice.action')" [attr.aria-label]="t('lateNotice.action')">
           <mat-icon>outgoing_mail</mat-icon>
         </button>
-        <a mat-icon-button [routerLink]="['/client', client.id, 'edit']"
-           [matTooltip]="t('common.edit')" [attr.aria-label]="t('common.edit')">
-          <mat-icon>edit</mat-icon>
-        </a>
-        <button mat-icon-button color="warn" (click)="deleteClient(client)" [attr.aria-label]="t('common.delete')">
-          <mat-icon>delete</mat-icon>
-        </button>
-      </td>
-    </ng-container>
+      </div>
+    </article>
 
-    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-    <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
-
-    <tr class="mat-row" *matNoDataRow>
-      <td class="mat-cell empty-row" [attr.colspan]="displayedColumns.length">{{ t('client.empty') }}</td>
-    </tr>
-  </table>
+    <p class="empty-row" *ngIf="!rows.length">{{ t('client.empty') }}</p>
+  </div>
 
   <!-- Server-side paginator -->
   <mat-paginator [length]="totalCount"

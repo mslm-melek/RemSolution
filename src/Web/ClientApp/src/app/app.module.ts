@@ -29,6 +29,7 @@ import { CarQuickEditComponent } from './car/car-quick-edit.component';
 import { ClientComponent } from './client/client.component';
 import { ClientFormComponent } from './client/client-form.component';
 import { ClientDetailComponent } from './client/client-detail.component';
+import { ClientQuickViewComponent } from './client/client-quick-view.component';
 import { AgencyComponent } from './agency/agency.component';
 import { AgencyFormComponent } from './agency/agency-form.component';
 import { AgencyDetailComponent } from './agency/agency-detail.component';
@@ -147,6 +148,7 @@ function toBookings(tab: 'reservations' | null): RedirectFunction {
     ClientComponent,
     ClientFormComponent,
     ClientDetailComponent,
+    ClientQuickViewComponent,
     AgencyComponent,
     AgencyFormComponent,
     AgencyDetailComponent,

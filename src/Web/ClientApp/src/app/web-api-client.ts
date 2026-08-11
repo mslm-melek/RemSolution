@@ -2807,7 +2807,7 @@ export class ChatClient implements IChatClient {
 }
 
 export interface IClientsClient {
-    getClients(pageNumber: number | undefined, pageSize: number | undefined, search: string | null | undefined, cIN: string | null | undefined, flagged: boolean | null | undefined, addedFrom: Date | null | undefined, addedTo: Date | null | undefined, sortBy: string | null | undefined, sortDescending: boolean | undefined): Observable<PaginatedListOfClientDto>;
+    getClients(pageNumber: number | undefined, pageSize: number | undefined, search: string | null | undefined, cIN: string | null | undefined, flagged: boolean | null | undefined, documentsComplete: boolean | null | undefined, addedFrom: Date | null | undefined, addedTo: Date | null | undefined, sortBy: string | null | undefined, sortDescending: boolean | undefined): Observable<PaginatedListOfClientDto>;
     createClient(command: CreateClientCommand): Observable<number>;
     getClientById(id: number): Observable<ClientDto>;
     updateClient(id: number, command: UpdateClientCommand): Observable<void>;
@@ -2831,7 +2831,7 @@ export class ClientsClient implements IClientsClient {
         this.baseUrl = baseUrl ?? "";
     }
 
-    getClients(pageNumber: number | undefined, pageSize: number | undefined, search: string | null | undefined, cIN: string | null | undefined, flagged: boolean | null | undefined, addedFrom: Date | null | undefined, addedTo: Date | null | undefined, sortBy: string | null | undefined, sortDescending: boolean | undefined): Observable<PaginatedListOfClientDto> {
+    getClients(pageNumber: number | undefined, pageSize: number | undefined, search: string | null | undefined, cIN: string | null | undefined, flagged: boolean | null | undefined, documentsComplete: boolean | null | undefined, addedFrom: Date | null | undefined, addedTo: Date | null | undefined, sortBy: string | null | undefined, sortDescending: boolean | undefined): Observable<PaginatedListOfClientDto> {
         let url_ = this.baseUrl + "/api/Clients?";
         if (pageNumber === null)
             throw new Error("The parameter 'pageNumber' cannot be null.");
@@ -2847,6 +2847,8 @@ export class ClientsClient implements IClientsClient {
             url_ += "CIN=" + encodeURIComponent("" + cIN) + "&";
         if (flagged !== undefined && flagged !== null)
             url_ += "Flagged=" + encodeURIComponent("" + flagged) + "&";
+        if (documentsComplete !== undefined && documentsComplete !== null)
+            url_ += "DocumentsComplete=" + encodeURIComponent("" + documentsComplete) + "&";
         if (addedFrom !== undefined && addedFrom !== null)
             url_ += "AddedFrom=" + encodeURIComponent(addedFrom ? "" + addedFrom.toISOString() : "") + "&";
         if (addedTo !== undefined && addedTo !== null)
