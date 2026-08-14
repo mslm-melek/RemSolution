@@ -1,5 +1,8 @@
 using Hangfire;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Localization;
+using Microsoft.Extensions.Options;
+using RemSolution.Infrastructure.Storage;
 using RemSolution.Domain.Constants;
 using RemSolution.Infrastructure;
 using RemSolution.Infrastructure.Localization;
@@ -56,12 +59,12 @@ try
     FluentValidationLocalization.Configure(
         app.Services.GetRequiredService<IStringLocalizer<SharedResource>>());
 
+    // Migrate on a developer machine, check the deployment's bundle ran anywhere
+    // else. See DatabaseOptions.
+    await app.InitialiseDatabaseAsync();
+
     // Configure the HTTP request pipeline.
-    if (app.Environment.IsDevelopment())
-    {
-        await app.InitialiseDatabaseAsync();
-    }
-    else
+    if (!app.Environment.IsDevelopment())
     {
         // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
         app.UseHsts();
@@ -70,6 +73,23 @@ try
     app.UseHealthChecks("/health");
     app.UseHttpsRedirection();
     app.UseStaticFiles();
+
+    // Uploaded files, from wherever FileStorage:RootPath points — on a deployment
+    // that is a persistent path outside wwwroot, which a zip deploy would replace.
+    // With the default it harmlessly maps the same files twice.
+    var fileStorage = app.Services.GetRequiredService<IOptions<FileStorageOptions>>().Value;
+
+    var uploadsRoot = Path.IsPathRooted(fileStorage.RootPath)
+        ? Path.GetFullPath(fileStorage.RootPath)
+        : Path.GetFullPath(Path.Combine(app.Environment.ContentRootPath, fileStorage.RootPath));
+
+    Directory.CreateDirectory(uploadsRoot);
+
+    app.UseStaticFiles(new StaticFileOptions
+    {
+        FileProvider = new PhysicalFileProvider(uploadsRoot),
+        RequestPath = fileStorage.PublicBasePath.TrimEnd('/'),
+    });
 
     // Authentication must run before the request-context middleware so the
     // identity claims (UserId, AgencyId) are available to enrich the logs.

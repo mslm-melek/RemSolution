@@ -5,7 +5,7 @@ import { PageEvent } from '@angular/material/paginator';
 import { ActivatedRoute } from '@angular/router';
 import {
   CarsClient, CarDto, CarImageDto, CarOverviewDto, CarBookingDto, FuelType,
-  RentingsClient, RentingDto, RentingState
+  CarExpenseScheduleDto, RentingsClient, RentingDto, RentingState
 } from '../web-api-client';
 import {
   CarAvailability, canRentNow, carAvailability, carAvailabilityClass, carAvailabilityLabelKey
@@ -14,10 +14,14 @@ import { AuthService } from '../shared/auth.service';
 import { ReturnDialogComponent } from '../shared/return-dialog.component';
 import { CarQuickEditComponent } from './car-quick-edit.component';
 
-// One car's page: what the vehicle is, how hard it has been working, who has it
-// booked, what it has cost, and everywhere it has been. The form at
-// /car/:id/edit owns the whole record (photos included); this page reads it, acts
-// on it, and corrects the four fields that go stale between hires.
+/** One servicing line: the resolved schedule plus the distance left on it. */
+interface CarScheduleRow {
+  schedule: CarExpenseScheduleDto;
+  kilometersLeft?: number;
+}
+
+// One car's page: what it is, how it is working, who has it booked and what it
+// has cost. The form at /car/:id/edit owns the record; this page reads and acts.
 @Component({
   selector: 'app-car-detail',
   templateUrl: './car-detail.component.html',
@@ -25,26 +29,28 @@ import { CarQuickEditComponent } from './car-quick-edit.component';
 })
 export class CarDetailComponent implements OnInit {
   private readonly dialog = inject(MatDialog);
-  // The quick-edit panel is pinned to the edge the page ends on, which is the
-  // other edge in Arabic. A dialog is positioned in absolute terms (the CDK
-  // overlay knows nothing about the page's direction), so the side is chosen here
-  // rather than left to a logical property in the stylesheet.
+  // The CDK overlay positions in absolute terms, so the panel's side is chosen
+  // here rather than by a logical property in the stylesheet.
   private readonly direction = inject(Directionality);
 
   carId!: number;
   car?: CarDto;
 
-  // The figures and compact lists around the car — utilization, what it billed,
-  // how it was rated, who has it next, what it has cost lately. One call (see
-  // GetCarOverviewQuery): read separately, the tiles and the lists under them
-  // would each describe a different moment.
+  // The tiles and compact lists around the car, in one call (GetCarOverviewQuery)
+  // so they all describe the same moment.
   overview?: CarOverviewDto;
 
-  // The car's gallery (CarImage), read from its own endpoint: the DTO carries one
-  // picture for a list row, this page shows the lot. Managing them — adding,
-  // reordering, choosing the primary — stays on the form.
+  // The car's gallery (CarImage), from its own endpoint; the form manages it.
   images: CarImageDto[] = [];
   selectedImageIndex = 0;
+
+  // When each recurring cost falls due on this car, resolved server-side with the
+  // rule the notification sweep uses.
+  private schedules: CarExpenseScheduleDto[] = [];
+
+  // Built rather than derived in a getter: the template reads it twice, and a
+  // getter would rebuild the panel on every change-detection pass.
+  scheduleRows: CarScheduleRow[] = [];
 
   rentings: RentingDto[] = [];
   rentingColumns: string[] = ['period', 'client', 'state', 'mileage', 'price', 'actions'];
@@ -56,10 +62,9 @@ export class CarDetailComponent implements OnInit {
   canRent = false;
   canReturn = false;
   canEdit = false;
-  // A car's money is what has been spent on it: the finance screen's payable tab
-  // filters by car, and either module alone can answer it (see CreditComponent).
+  // Either finance module can answer what the car has cost (see CreditComponent).
   canSeeExpenses = false;
-  // How the car has done month by month — the statistics report, filtered to it.
+  // The statistics report, filtered to this car.
   canSeeStatistics = false;
 
   private readonly stateLabelKeys: Record<number, string> = {
@@ -86,6 +91,7 @@ export class CarDetailComponent implements OnInit {
     this.loadCar();
     this.loadOverview();
     this.loadImages();
+    this.loadSchedules();
 
     this.auth.currentUser$.subscribe(user => {
       this.canSeeRentings = AuthService.canAccessModule(user, 'Rentings', 'Renting.Read');
@@ -102,14 +108,16 @@ export class CarDetailComponent implements OnInit {
 
   private loadCar() {
     this.cars.getCarById(this.carId).subscribe({
-      next: car => this.car = car,
+      next: car => {
+        this.car = car;
+        // The odometer feeds the distance schedules, and the calls land in either order.
+        this.buildScheduleRows();
+      },
       error: err => console.error(err)
     });
   }
 
-  // The overview's own sections are gated server-side, so this is not guarded by
-  // the permission flags above: whatever the caller may not see comes back null
-  // and the template draws nothing for it.
+  // Gated server-side per section: what the caller may not see comes back null.
   private loadOverview() {
     this.cars.getCarOverview(this.carId).subscribe({
       next: overview => this.overview = overview,
@@ -117,18 +125,46 @@ export class CarDetailComponent implements OnInit {
     });
   }
 
+  // Not guarded by canSeeExpenses: the query carries its own permission, so a
+  // caller who may not read costs gets a 403 and no panel.
+  private loadSchedules() {
+    this.cars.getCarExpenseSchedules(this.carId).subscribe({
+      next: rows => {
+        this.schedules = rows || [];
+        this.buildScheduleRows();
+      },
+      error: () => {
+        this.schedules = [];
+        this.buildScheduleRows();
+      }
+    });
+  }
+
+  /** Only types with a next due date or reading; the rest have nothing to show. */
+  private buildScheduleRows() {
+    const mileage = this.car?.mileage;
+
+    this.scheduleRows = this.schedules
+      .filter(s => s.nextDueOn || s.nextDueAtKilometers)
+      .map(s => ({
+        schedule: s,
+        // "1 200 km to go" reads better than "due at 128 000"; needs the odometer.
+        kilometersLeft: s.nextDueAtKilometers != null && mileage != null
+          ? s.nextDueAtKilometers - mileage
+          : undefined
+      }));
+  }
+
   // Everything a write on this car (a return, a quick edit) can have moved.
   private reload() {
     this.loadCar();
     this.loadOverview();
+    // A return moves the odometer, and with it the distance schedules.
+    this.loadSchedules();
     if (this.canSeeRentings) this.loadRentings();
   }
 
-  /**
-   * What the car is called: make and model together ("Renault Clio"). A fleet
-   * with a Clio and a 208 in it is not helped by a bare model name, and either
-   * half can be missing on a car whose model was never filled in.
-   */
+  /** Make and model together ("Renault Clio"); either half can be missing. */
   get carName(): string {
     return [this.car?.brandName, this.car?.modelName].filter(Boolean).join(' ');
   }
@@ -139,8 +175,7 @@ export class CarDetailComponent implements OnInit {
     this.cars.getCarImages(this.carId).subscribe({
       next: images => {
         this.images = images || [];
-        // Open on the primary image — the one the fleet chose as the car's face,
-        // and the one every list row is already showing.
+        // Open on the primary image, the one every list row shows.
         const primary = this.images.findIndex(image => image.isPrimary);
         this.selectedImageIndex = primary >= 0 ? primary : 0;
       },
@@ -153,10 +188,8 @@ export class CarDetailComponent implements OnInit {
   }
 
   /**
-   * The big picture. Prefers the medium derivative: it is generated for exactly
-   * this, and the original can be a several-megabyte phone photo. Falls back
-   * through what exists, because the derivatives are produced out of band and for
-   * a few seconds after an upload the original is all there is.
+   * The big picture. Prefers the medium derivative (the original can be a huge
+   * phone photo) and falls back, since derivatives are produced out of band.
    */
   get heroUrl(): string | undefined {
     const image = this.images[this.selectedImageIndex];
@@ -183,12 +216,7 @@ export class CarDetailComponent implements OnInit {
 
   // --- Overview ----------------------------------------------------------------
 
-  /**
-   * The third tile. A rating is the best thing to put there — it is the only
-   * figure on the page that comes from outside the agency — but reviews arrive
-   * from marketplace customers, so most cars have none. Those show how much work
-   * the car took on instead, which is the same window as the two tiles beside it.
-   */
+  /** The third tile shows the rating when there is one, and workload otherwise. */
   get showRating(): boolean {
     return (this.overview?.rating?.count ?? 0) > 0;
   }
@@ -248,10 +276,8 @@ export class CarDetailComponent implements OnInit {
 
   // --- Actions -----------------------------------------------------------------
 
-  // Closes a hire on this car (the same dialog the cars list uses), then re-reads
-  // the page: the car's status, its figures and the hire's price have all moved.
-  // The history table passes its own row rather than relying on the car's
-  // current-hire field, so the button can never be a silent no-op.
+  // Closes a hire on this car (the dialog the cars list uses), then re-reads the
+  // page. The caller passes its own row, so the button is never a silent no-op.
   returnCar(renting?: RentingDto | CarBookingDto) {
     const rentingId = this.rentingIdOf(renting) ?? this.car?.currentRenting?.id;
     if (!rentingId) return;
@@ -268,19 +294,13 @@ export class CarDetailComponent implements OnInit {
     });
   }
 
-  /**
-   * The four fields that go stale between hires — where the car is based, what it
-   * costs, whether it is on the road, what the odometer reads — without leaving
-   * the page for the whole record. Everything else is still the form's.
-   */
+  /** The four fields that go stale between hires: branch, rate, status, odometer. */
   openQuickEdit() {
     if (!this.canEdit || !this.car) return;
 
     this.dialog.open(CarQuickEditComponent, {
       data: { carId: this.carId },
-      // A slide-over rather than a centred box: the page behind it is the context
-      // for what is being changed, and a dialog over the middle of it hides
-      // exactly the panel the fields are read off.
+      // A slide-over, so the page behind stays readable as context.
       panelClass: 'side-panel',
       position: this.direction.value === 'rtl' ? { top: '0', left: '0' } : { top: '0', right: '0' },
       height: '100vh',
@@ -322,17 +342,14 @@ export class CarDetailComponent implements OnInit {
     return this.canReturn && booking.state === RentingState.InProgress && !!booking.rentingId;
   }
 
-  // Distance covered on a finished hire — the pair of readings is what the
-  // odometer columns are for.
+  // Distance covered on a finished hire, from the pair of readings.
   mileageDone(renting: RentingDto): number | null {
     if (renting.startMileage === undefined || renting.startMileage === null) return null;
     if (renting.endMileage === undefined || renting.endMileage === null) return null;
     return renting.endMileage - renting.startMileage;
   }
 
-  // A booking row names the hire `rentingId`; a history row IS the hire. Both
-  // reach the same return dialog, so the two spellings are resolved here rather
-  // than at each call site.
+  // A booking row names the hire `rentingId`; a history row IS the hire.
   private rentingIdOf(renting?: RentingDto | CarBookingDto): number | undefined {
     if (!renting) return undefined;
     return (renting as CarBookingDto).rentingId ?? (renting as RentingDto).id;

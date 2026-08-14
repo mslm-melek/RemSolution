@@ -351,6 +351,80 @@ public class NotificationTests : BaseTestFixture
         notification.Args["km"].Should().Be("400");
     }
 
+    [Test]
+    public async Task ACarsOwnIntervalIsUsedInsteadOfTheTypes()
+    {
+        // Fleet rule 10 000 km, this van 8 000: serviced at 80 000, now at 88 200,
+        // so overdue on its own rule but not on the fleet's.
+        var userId = await RunAsAgencyStaffAsync(Permissions.ExpenseRead);
+        var agencyId = await AddTestAgencyAsync();
+        await JoinAgencyAsync(userId, agencyId);
+
+        var carId = await CarAsync("NT-SCHED", mileage: 88_200);
+
+        var type = new ExpenseType
+        {
+            Name = "Vidange", IsActive = true, WithNotif = true, AfterKilometer = 10_000
+        };
+        await AddAsync(type);
+
+        await AddAsync(new CarExpenseSchedule
+        {
+            CarId = carId,
+            ExpenseTypeId = type.Id,
+            AfterKilometer = 8_000
+        });
+
+        await AddAsync(new Expense
+        {
+            CarId = carId,
+            ExpenseTypeId = type.Id,
+            ExpenseDate = DateTime.UtcNow.AddMonths(-2),
+            Mileage = 80_000,
+            ExpenseAmount = Money.Of(120m, "TND")
+        });
+
+        await RunSweepAsync();
+
+        var notification = (await SendAsync(new GetMyNotificationsQuery())).Items.Single();
+
+        notification.MessageKey.Should().Be(NotificationMessages.CarExpenseOverdueByDistance);
+        notification.Args["dueKm"].Should().Be("88000");
+        notification.Args["km"].Should().Be("200");
+    }
+
+    [Test]
+    public async Task ACarsDeclaredBaselineStartsTheScheduleBeforeAnyExpenseExists()
+    {
+        // A service declared on the car, with no expense booked for it.
+        var userId = await RunAsAgencyStaffAsync(Permissions.ExpenseRead);
+        var agencyId = await AddTestAgencyAsync();
+        await JoinAgencyAsync(userId, agencyId);
+
+        var carId = await CarAsync("NT-DECLARED", mileage: 89_500);
+
+        var type = new ExpenseType
+        {
+            Name = "Vidange", IsActive = true, WithNotif = true, AfterKilometer = 10_000
+        };
+        await AddAsync(type);
+
+        await AddAsync(new CarExpenseSchedule
+        {
+            CarId = carId,
+            ExpenseTypeId = type.Id,
+            LastDoneMileage = 80_000
+        });
+
+        await RunSweepAsync();
+
+        // Due at 90 000, 500 km away, inside the agency's 1 000 km window.
+        var notification = (await SendAsync(new GetMyNotificationsQuery())).Items.Single();
+
+        notification.MessageKey.Should().Be(NotificationMessages.CarExpenseDueByDistance);
+        notification.Args["dueKm"].Should().Be("90000");
+    }
+
     // ---------------------------------------------------------------------
     // Upcoming pickups
     // ---------------------------------------------------------------------

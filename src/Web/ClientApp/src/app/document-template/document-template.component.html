@@ -1,121 +1,160 @@
-<div class="page template-card" *transloco="let t">
+<div class="page templates" *transloco="let t">
   <div class="header-row">
-    <h2 class="title">{{ t('documentTemplate.title') }}</h2>
-    <div class="header-actions">
-      <button mat-raised-button color="primary" (click)="newTemplate(DocumentTemplateKind.Contract)">
-        <mat-icon>add</mat-icon> {{ t('documentTemplate.newContract') }}
-      </button>
-      <button mat-raised-button color="primary" (click)="newTemplate(DocumentTemplateKind.Facture)">
-        <mat-icon>add</mat-icon> {{ t('documentTemplate.newFacture') }}
-      </button>
+    <div>
+      <h2 class="title">{{ t('documentTemplate.title') }}</h2>
+      <p class="page-subtitle">{{ t('documentTemplate.countLabel', { count: shown.length }) }}</p>
     </div>
+
+    <!-- The kind is asked here, because it is fixed once the template exists. -->
+    <button mat-raised-button color="primary" [matMenuTriggerFor]="newMenu">
+      <mat-icon>add</mat-icon> {{ t('documentTemplate.newTemplate') }}
+    </button>
+    <mat-menu #newMenu="matMenu">
+      <button mat-menu-item type="button" (click)="newTemplate(DocumentTemplateKind.Contract)">
+        <mat-icon>description</mat-icon> {{ t('documentTemplate.newContract') }}
+      </button>
+      <button mat-menu-item type="button" (click)="newTemplate(DocumentTemplateKind.Facture)">
+        <mat-icon>receipt_long</mat-icon> {{ t('documentTemplate.newFacture') }}
+      </button>
+    </mat-menu>
   </div>
 
-  <p class="muted hint">{{ t('documentTemplate.intro') }}</p>
+  <div *ngIf="errorMessage" class="error-banner">
+    <mat-icon>error_outline</mat-icon> {{ errorMessage }}
+  </div>
 
-  <div *ngIf="errorMessage" class="error-banner">{{ errorMessage }}</div>
+  <!-- ================================= TABS ==================================
+       Contracts and invoices are two views of one shelf, with counts. -->
+  <div class="template-tabs" role="tablist">
+    <button type="button" role="tab" class="template-tab" *ngFor="let item of tabs"
+            [class.active]="tab === item.key" [attr.aria-selected]="tab === item.key"
+            (click)="selectTab(item.key)">
+      {{ t(item.labelKey) }}
+      <span class="tab-count num">{{ countFor(item.key) }}</span>
+    </button>
 
-  <!-- Start from one of the shipped examples, or bring your own file in. -->
-  <section class="panel">
-    <h3>{{ t('documentTemplate.startFrom') }}</h3>
+    <span class="spacer"></span>
 
-    <div class="starters">
-      <div class="starter" *ngFor="let example of examples">
-        <div class="starter-name">
-          <mat-icon>description</mat-icon>
-          <span>{{ example.name }}</span>
-          <span class="chip neutral">{{ t(kindLabelKey(example.kind)) }}</span>
-        </div>
-        <button mat-stroked-button (click)="cloneExample(example)">
-          <mat-icon>content_copy</mat-icon> {{ t('documentTemplate.useAsStart') }}
+    <button type="button" class="tool-btn" (click)="toggleInactive()"
+            [attr.aria-pressed]="showInactive">
+      <mat-icon>{{ showInactive ? 'visibility_off' : 'inventory_2' }}</mat-icon>
+      <span>{{ showInactive ? t('documentTemplate.hideRetired') : t('documentTemplate.showRetired') }}</span>
+    </button>
+  </div>
+
+  <!-- ================================= CARDS =================================
+       One card per template: what it is, its language, its bindings, its status. -->
+  <div class="template-grid" *ngIf="shown.length">
+    <article class="template-card" *ngFor="let template of shown" [class.retired]="!template.isActive">
+      <a class="template-open" [routerLink]="['/document-template', template.id]"
+         [attr.aria-label]="t('documentTemplate.openTemplate', { name: template.name })">
+        <span class="card-top">
+          <span class="card-name">{{ template.name }}</span>
+          <span class="pill">{{ t(kindLabelKey(template.kind)) }}</span>
+        </span>
+
+        <span class="card-meta">
+          <span class="meta-item">
+            <span class="meta-label">{{ t('language.label') }}</span>
+            <span class="meta-value">{{ t('language.' + template.language) }}</span>
+          </span>
+          <span class="meta-item">
+            <span class="meta-label">{{ t('documentTemplate.blocksCount') }}</span>
+            <span class="meta-value num">{{ template.blocks?.length || 0 }}</span>
+          </span>
+          <span class="meta-item">
+            <span class="meta-label">{{ t('documentTemplate.fieldsUsed') }}</span>
+            <span class="meta-value num">{{ template.fields?.length || 0 }}</span>
+          </span>
+        </span>
+
+        <span class="card-status">
+          <span class="chip" [ngClass]="statusFor(template).tone">
+            <mat-icon>{{ statusFor(template).icon }}</mat-icon>
+            {{ t(statusFor(template).labelKey) }}
+          </span>
+        </span>
+      </a>
+
+      <div class="card-actions">
+        <a class="card-action" [routerLink]="['/document-template', template.id]">
+          <mat-icon>edit</mat-icon> {{ t('common.edit') }}
+        </a>
+        <button type="button" class="card-action" (click)="duplicate(template)">
+          <mat-icon>content_copy</mat-icon> {{ t('documentTemplate.duplicate') }}
+        </button>
+        <button type="button" class="card-action icon-only"
+                *ngIf="template.isActive && !template.isDefault" (click)="setDefault(template)"
+                [matTooltip]="t('documentTemplate.makeDefault')"
+                [attr.aria-label]="t('documentTemplate.makeDefault')">
+          <mat-icon>star_outline</mat-icon>
+        </button>
+        <button type="button" class="card-action icon-only" *ngIf="template.isActive"
+                (click)="setActive(template, false)"
+                [matTooltip]="t('documentTemplate.retire')"
+                [attr.aria-label]="t('documentTemplate.retire')">
+          <mat-icon>archive</mat-icon>
+        </button>
+        <button type="button" class="card-action icon-only" *ngIf="!template.isActive"
+                (click)="setActive(template, true)"
+                [matTooltip]="t('common.reactivate')" [attr.aria-label]="t('common.reactivate')">
+          <mat-icon>unarchive</mat-icon>
         </button>
       </div>
-    </div>
+    </article>
+  </div>
 
-    <mat-divider></mat-divider>
+  <!-- With no template of its own the agency still prints, on the shipped example. -->
+  <div class="empty-state" *ngIf="!shown.length && !loading">
+    <mat-icon>description</mat-icon>
+    <p>{{ t('documentTemplate.emptyOwn') }}</p>
+    <button mat-stroked-button color="primary" [matMenuTriggerFor]="newMenu">
+      <mat-icon>add</mat-icon> {{ t('documentTemplate.newTemplate') }}
+    </button>
+  </div>
 
-    <div class="starters">
-      <div class="starter">
-        <div class="starter-name">
-          <mat-icon>upload_file</mat-icon>
-          <span>{{ t('documentTemplate.importOwn') }}</span>
-        </div>
-        <button mat-stroked-button [disabled]="importing" (click)="contractFile.click()">
-          {{ importing ? t('common.uploading') : t('documentTemplate.importContract') }}
-        </button>
-        <input #contractFile type="file" accept=".docx,.html,.htm,.txt,.md" hidden
-               (change)="onImportSelected(DocumentTemplateKind.Contract, contractFile)" />
+  <!-- ================================ STARTERS ===============================
+       Start from a shipped example, or from the file the agency prints today. -->
+  <section class="starters">
+    <h3 class="section-title">{{ t('documentTemplate.startFrom') }}</h3>
+    <p class="muted hint">{{ t('documentTemplate.intro') }}</p>
 
-        <button mat-stroked-button [disabled]="importing" (click)="factureFile.click()">
-          {{ importing ? t('common.uploading') : t('documentTemplate.importFacture') }}
-        </button>
-        <input #factureFile type="file" accept=".docx,.html,.htm,.txt,.md" hidden
-               (change)="onImportSelected(DocumentTemplateKind.Facture, factureFile)" />
-      </div>
+    <div class="starter-grid">
+      <button type="button" class="starter-card" *ngFor="let example of examples"
+              (click)="cloneExample(example)">
+        <mat-icon>auto_stories</mat-icon>
+        <span class="starter-text">
+          <span class="starter-name">{{ example.name }}</span>
+          <span class="starter-note">{{ t('documentTemplate.useAsStart') }}</span>
+        </span>
+        <span class="pill">{{ t(kindLabelKey(example.kind)) }}</span>
+      </button>
+
+      <button type="button" class="starter-card dashed" [disabled]="importing"
+              (click)="contractFile.click()">
+        <mat-icon>upload_file</mat-icon>
+        <span class="starter-text">
+          <span class="starter-name">{{ importing ? t('common.uploading') : t('documentTemplate.importContract') }}</span>
+          <span class="starter-note">{{ t('documentTemplate.importOwn') }}</span>
+        </span>
+        <span class="pill">{{ t('documentTemplate.kindContract') }}</span>
+      </button>
+      <input #contractFile type="file" accept=".docx,.html,.htm,.txt,.md" hidden
+             (change)="onImportSelected(DocumentTemplateKind.Contract, contractFile)" />
+
+      <button type="button" class="starter-card dashed" [disabled]="importing"
+              (click)="factureFile.click()">
+        <mat-icon>upload_file</mat-icon>
+        <span class="starter-text">
+          <span class="starter-name">{{ importing ? t('common.uploading') : t('documentTemplate.importFacture') }}</span>
+          <span class="starter-note">{{ t('documentTemplate.importOwn') }}</span>
+        </span>
+        <span class="pill">{{ t('documentTemplate.kindFacture') }}</span>
+      </button>
+      <input #factureFile type="file" accept=".docx,.html,.htm,.txt,.md" hidden
+             (change)="onImportSelected(DocumentTemplateKind.Facture, factureFile)" />
     </div>
 
     <p class="muted hint">{{ t('documentTemplate.importHint') }}</p>
-  </section>
-
-  <mat-divider></mat-divider>
-
-  <section class="panel">
-    <div class="panel-header">
-      <h3>{{ t('documentTemplate.yours') }}</h3>
-      <button mat-button (click)="toggleInactive()">
-        {{ showInactive ? t('documentTemplate.hideRetired') : t('documentTemplate.showRetired') }}
-      </button>
-    </div>
-
-    <!-- The API returns every template, so the sort runs on the client. -->
-    <table mat-table [dataSource]="dataSource" class="data-table full-width" matSort matSortDisableClear
-           *ngIf="templates.length">
-      <ng-container matColumnDef="name">
-        <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ t('common.name') }}</th>
-        <td mat-cell *matCellDef="let row">
-          <a [routerLink]="['/document-template', row.id]">{{ row.name }}</a>
-        </td>
-      </ng-container>
-
-      <ng-container matColumnDef="kind">
-        <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ t('common.type') }}</th>
-        <td mat-cell *matCellDef="let row">{{ t(kindLabelKey(row.kind)) }}</td>
-      </ng-container>
-
-      <ng-container matColumnDef="language">
-        <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ t('language.label') }}</th>
-        <td mat-cell *matCellDef="let row">{{ t('language.' + row.language) }}</td>
-      </ng-container>
-
-      <ng-container matColumnDef="status">
-        <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ t('common.status') }}</th>
-        <td mat-cell *matCellDef="let row">
-          <span class="chip ok" *ngIf="row.isDefault">{{ t('documentTemplate.default') }}</span>
-          <span class="chip neutral" *ngIf="!row.isActive">{{ t('documentTemplate.retired') }}</span>
-        </td>
-      </ng-container>
-
-      <ng-container matColumnDef="actions">
-        <th mat-header-cell *matHeaderCellDef class="actions-cell"></th>
-        <td mat-cell *matCellDef="let row" class="actions-cell">
-          <button mat-button *ngIf="!row.isDefault && row.isActive" (click)="setDefault(row)">
-            {{ t('documentTemplate.makeDefault') }}
-          </button>
-          <button mat-icon-button *ngIf="row.isActive" (click)="setActive(row, false)"
-                  [matTooltip]="t('documentTemplate.retire')" [attr.aria-label]="t('documentTemplate.retire')">
-            <mat-icon>archive</mat-icon>
-          </button>
-          <button mat-icon-button *ngIf="!row.isActive" (click)="setActive(row, true)"
-                  [matTooltip]="t('common.reactivate')" [attr.aria-label]="t('common.reactivate')">
-            <mat-icon>unarchive</mat-icon>
-          </button>
-        </td>
-      </ng-container>
-
-      <tr mat-header-row *matHeaderRowDef="columns"></tr>
-      <tr mat-row *matRowDef="let row; columns: columns"></tr>
-    </table>
-
-    <p *ngIf="!templates.length && !loading" class="muted">{{ t('documentTemplate.emptyOwn') }}</p>
   </section>
 </div>

@@ -21,13 +21,15 @@ public class AgencyBranchTests : BaseTestFixture
         var country = new Country { Name = $"Agencyland for {name}" };
         await AddAsync(country);
 
-        var agencyId = await SendAsync(new CreateAgencyCommand
+        var created = await SendAsync(new CreateAgencyCommand
         {
             Name = name,
-            CountryId = country.Id
+            CountryId = country.Id,
+            // Each agency needs its own admin address: a login cannot be shared.
+            AdminEmail = $"admin@{name.Replace(" ", "-").ToLowerInvariant()}.test"
         });
 
-        return (agencyId, country.Id);
+        return (created.Id, country.Id);
     }
 
     [Test]

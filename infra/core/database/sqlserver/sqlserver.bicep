@@ -50,10 +50,57 @@ resource sqlServerAuditingSettings 'Microsoft.Sql/servers/auditingSettings@2023-
   }
 }
 
+@description('Days of point-in-time restore kept for the database: the window in which a bad migration or delete can still be undone.')
+@minValue(1)
+@maxValue(35)
+param pointInTimeRetentionDays int = 35
+
+@description('Weekly full backups kept for long-term retention, ISO-8601 duration. Empty disables long-term retention.')
+param weeklyBackupRetention string = 'P12W'
+
+@description('Monthly full backups kept for long-term retention, ISO-8601 duration.')
+param monthlyBackupRetention string = 'P12M'
+
+@description('Yearly full backup kept for long-term retention, ISO-8601 duration.')
+param yearlyBackupRetention string = 'P5Y'
+
+@description('Which weekly backup is promoted to the yearly one (week of year).')
+param weekOfYearForYearlyBackup int = 1
+
+@description('Service objective for the database. Explicit because the Basic tier caps point-in-time restore at 7 days. S0 is a starting point; size it to the real workload.')
+param databaseSkuName string = 'S0'
+
 resource sqlDatabase 'Microsoft.Sql/servers/databases@2023-08-01-preview' = {
   parent: sqlServer
   name: databaseName
   location: location
+  sku: {
+    name: databaseSkuName
+  }
+}
+
+// Azure SQL backs up by default, but only keeps 7 days and nothing beyond it.
+// Both retentions are set explicitly: point-in-time for accidents noticed the
+// same week, long-term for the ones noticed late.
+resource sqlDatabaseShortTermBackup 'Microsoft.Sql/servers/databases/backupShortTermRetentionPolicies@2023-08-01-preview' = {
+  parent: sqlDatabase
+  name: 'default'
+  properties: {
+    retentionDays: pointInTimeRetentionDays
+    // Twice a day rather than every 24h, to narrow the worst-case restore time.
+    diffBackupIntervalInHours: 12
+  }
+}
+
+resource sqlDatabaseLongTermBackup 'Microsoft.Sql/servers/databases/backupLongTermRetentionPolicies@2023-08-01-preview' = {
+  parent: sqlDatabase
+  name: 'default'
+  properties: {
+    weeklyRetention: weeklyBackupRetention
+    monthlyRetention: monthlyBackupRetention
+    yearlyRetention: yearlyBackupRetention
+    weekOfYear: weekOfYearForYearlyBackup
+  }
 }
 
 resource sqlDatabaseDiagnosticSettings 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = if (!(empty(logAnalyticsWorkspaceId))) {

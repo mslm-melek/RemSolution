@@ -87,7 +87,7 @@ export interface IAgenciesClient {
     getMyAgency(): Observable<AgencyDto>;
     updateMyAgency(command: UpdateMyAgencyCommand): Observable<void>;
     getAgencies(): Observable<AgencyDto[]>;
-    createAgency(command: CreateAgencyCommand): Observable<number>;
+    createAgency(command: CreateAgencyCommand): Observable<AgencyCreatedDto>;
     getAgencyById(id: number): Observable<AgencyDto>;
     updateAgency(id: number, command: UpdateAgencyCommand): Observable<void>;
     deleteAgency(id: number): Observable<void>;
@@ -263,7 +263,7 @@ export class AgenciesClient implements IAgenciesClient {
         return _observableOf(null as any);
     }
 
-    createAgency(command: CreateAgencyCommand): Observable<number> {
+    createAgency(command: CreateAgencyCommand): Observable<AgencyCreatedDto> {
         let url_ = this.baseUrl + "/api/Agencies";
         url_ = url_.replace(/[?&]$/, "");
 
@@ -286,14 +286,14 @@ export class AgenciesClient implements IAgenciesClient {
                 try {
                     return this.processCreateAgency(response_ as any);
                 } catch (e) {
-                    return _observableThrow(e) as any as Observable<number>;
+                    return _observableThrow(e) as any as Observable<AgencyCreatedDto>;
                 }
             } else
-                return _observableThrow(response_) as any as Observable<number>;
+                return _observableThrow(response_) as any as Observable<AgencyCreatedDto>;
         }));
     }
 
-    protected processCreateAgency(response: HttpResponseBase): Observable<number> {
+    protected processCreateAgency(response: HttpResponseBase): Observable<AgencyCreatedDto> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -304,8 +304,7 @@ export class AgenciesClient implements IAgenciesClient {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
             let result201: any = null;
             let resultData201 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
-                result201 = resultData201 !== undefined ? resultData201 : <any>null;
-    
+            result201 = AgencyCreatedDto.fromJS(resultData201);
             return _observableOf(result201);
             }));
         } else if (status !== 200 && status !== 204) {
@@ -1804,6 +1803,7 @@ export interface ICarsClient {
     deleteCar(id: number): Observable<void>;
     uploadCarPhoto(id: number, file: FileParameter | null | undefined): Observable<string>;
     getCarOverview(id: number): Observable<CarOverviewDto>;
+    getCarExpenseSchedules(carId: number | null | undefined): Observable<CarExpenseScheduleDto[]>;
     getCarImages(id: number): Observable<CarImageDto[]>;
     uploadCarImage(id: number, file: FileParameter | null | undefined): Observable<CarImageDto>;
     setPrimaryCarImage(id: number, imageId: number): Observable<void>;
@@ -2282,6 +2282,63 @@ export class CarsClient implements ICarsClient {
             let result200: any = null;
             let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
             result200 = CarOverviewDto.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getCarExpenseSchedules(carId: number | null | undefined): Observable<CarExpenseScheduleDto[]> {
+        let url_ = this.baseUrl + "/api/Cars/expense-schedules?";
+        if (carId !== undefined && carId !== null)
+            url_ += "carId=" + encodeURIComponent("" + carId) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetCarExpenseSchedules(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetCarExpenseSchedules(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<CarExpenseScheduleDto[]>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<CarExpenseScheduleDto[]>;
+        }));
+    }
+
+    protected processGetCarExpenseSchedules(response: HttpResponseBase): Observable<CarExpenseScheduleDto[]> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            if (Array.isArray(resultData200)) {
+                result200 = [] as any;
+                for (let item of resultData200)
+                    result200!.push(CarExpenseScheduleDto.fromJS(item));
+            }
+            else {
+                result200 = <any>null;
+            }
             return _observableOf(result200);
             }));
         } else if (status !== 200 && status !== 204) {
@@ -10711,6 +10768,54 @@ export interface IUpdateMyAgencyCommand {
     clientReminderDaysBeforeEnd?: number;
 }
 
+export class AgencyCreatedDto implements IAgencyCreatedDto {
+    id?: number;
+    adminUserName?: string | undefined;
+    adminTemporaryPassword?: string | undefined;
+    welcomeEmailSent?: boolean;
+
+    constructor(data?: IAgencyCreatedDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.adminUserName = _data["adminUserName"];
+            this.adminTemporaryPassword = _data["adminTemporaryPassword"];
+            this.welcomeEmailSent = _data["welcomeEmailSent"];
+        }
+    }
+
+    static fromJS(data: any): AgencyCreatedDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new AgencyCreatedDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["adminUserName"] = this.adminUserName;
+        data["adminTemporaryPassword"] = this.adminTemporaryPassword;
+        data["welcomeEmailSent"] = this.welcomeEmailSent;
+        return data;
+    }
+}
+
+export interface IAgencyCreatedDto {
+    id?: number;
+    adminUserName?: string | undefined;
+    adminTemporaryPassword?: string | undefined;
+    welcomeEmailSent?: boolean;
+}
+
 export class CreateAgencyCommand implements ICreateAgencyCommand {
     name?: string;
     email?: string | undefined;
@@ -10723,6 +10828,8 @@ export class CreateAgencyCommand implements ICreateAgencyCommand {
     cancellationWindowHours?: number;
     reservationExpiryHours?: number;
     branches?: AgencyBranchInput[];
+    adminEmail?: string | undefined;
+    adminFullName?: string | undefined;
 
     constructor(data?: ICreateAgencyCommand) {
         if (data) {
@@ -10750,6 +10857,8 @@ export class CreateAgencyCommand implements ICreateAgencyCommand {
                 for (let item of _data["branches"])
                     this.branches!.push(AgencyBranchInput.fromJS(item));
             }
+            this.adminEmail = _data["adminEmail"];
+            this.adminFullName = _data["adminFullName"];
         }
     }
 
@@ -10777,6 +10886,8 @@ export class CreateAgencyCommand implements ICreateAgencyCommand {
             for (let item of this.branches)
                 data["branches"].push(item.toJSON());
         }
+        data["adminEmail"] = this.adminEmail;
+        data["adminFullName"] = this.adminFullName;
         return data;
     }
 }
@@ -10793,6 +10904,8 @@ export interface ICreateAgencyCommand {
     cancellationWindowHours?: number;
     reservationExpiryHours?: number;
     branches?: AgencyBranchInput[];
+    adminEmail?: string | undefined;
+    adminFullName?: string | undefined;
 }
 
 export class AgencyBranchInput implements IAgencyBranchInput {
@@ -12351,6 +12464,7 @@ export class CreateCarCommand implements ICreateCarCommand {
     power?: number | undefined;
     fuelType?: FuelType | undefined;
     mileage?: number | undefined;
+    expenseSchedules?: CarExpenseScheduleInput[] | undefined;
 
     constructor(data?: ICreateCarCommand) {
         if (data) {
@@ -12373,6 +12487,11 @@ export class CreateCarCommand implements ICreateCarCommand {
             this.power = _data["power"];
             this.fuelType = _data["fuelType"];
             this.mileage = _data["mileage"];
+            if (Array.isArray(_data["expenseSchedules"])) {
+                this.expenseSchedules = [] as any;
+                for (let item of _data["expenseSchedules"])
+                    this.expenseSchedules!.push(CarExpenseScheduleInput.fromJS(item));
+            }
         }
     }
 
@@ -12395,6 +12514,11 @@ export class CreateCarCommand implements ICreateCarCommand {
         data["power"] = this.power;
         data["fuelType"] = this.fuelType;
         data["mileage"] = this.mileage;
+        if (Array.isArray(this.expenseSchedules)) {
+            data["expenseSchedules"] = [];
+            for (let item of this.expenseSchedules)
+                data["expenseSchedules"].push(item.toJSON());
+        }
         return data;
     }
 }
@@ -12410,6 +12534,67 @@ export interface ICreateCarCommand {
     power?: number | undefined;
     fuelType?: FuelType | undefined;
     mileage?: number | undefined;
+    expenseSchedules?: CarExpenseScheduleInput[] | undefined;
+}
+
+export class CarExpenseScheduleInput implements ICarExpenseScheduleInput {
+    expenseTypeId?: number;
+    afterKilometer?: number | undefined;
+    afterMonth?: number | undefined;
+    leadKilometers?: number | undefined;
+    leadDays?: number | undefined;
+    lastDoneMileage?: number | undefined;
+    lastDoneOn?: Date | undefined;
+
+    constructor(data?: ICarExpenseScheduleInput) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.expenseTypeId = _data["expenseTypeId"];
+            this.afterKilometer = _data["afterKilometer"];
+            this.afterMonth = _data["afterMonth"];
+            this.leadKilometers = _data["leadKilometers"];
+            this.leadDays = _data["leadDays"];
+            this.lastDoneMileage = _data["lastDoneMileage"];
+            this.lastDoneOn = _data["lastDoneOn"] ? new Date(_data["lastDoneOn"].toString()) : <any>undefined;
+        }
+    }
+
+    static fromJS(data: any): CarExpenseScheduleInput {
+        data = typeof data === 'object' ? data : {};
+        let result = new CarExpenseScheduleInput();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["expenseTypeId"] = this.expenseTypeId;
+        data["afterKilometer"] = this.afterKilometer;
+        data["afterMonth"] = this.afterMonth;
+        data["leadKilometers"] = this.leadKilometers;
+        data["leadDays"] = this.leadDays;
+        data["lastDoneMileage"] = this.lastDoneMileage;
+        data["lastDoneOn"] = this.lastDoneOn ? this.lastDoneOn.toISOString() : <any>undefined;
+        return data;
+    }
+}
+
+export interface ICarExpenseScheduleInput {
+    expenseTypeId?: number;
+    afterKilometer?: number | undefined;
+    afterMonth?: number | undefined;
+    leadKilometers?: number | undefined;
+    leadDays?: number | undefined;
+    lastDoneMileage?: number | undefined;
+    lastDoneOn?: Date | undefined;
 }
 
 export class UpdateCarCommand implements IUpdateCarCommand {
@@ -12424,6 +12609,7 @@ export class UpdateCarCommand implements IUpdateCarCommand {
     power?: number | undefined;
     fuelType?: FuelType | undefined;
     mileage?: number | undefined;
+    expenseSchedules?: CarExpenseScheduleInput[] | undefined;
 
     constructor(data?: IUpdateCarCommand) {
         if (data) {
@@ -12447,6 +12633,11 @@ export class UpdateCarCommand implements IUpdateCarCommand {
             this.power = _data["power"];
             this.fuelType = _data["fuelType"];
             this.mileage = _data["mileage"];
+            if (Array.isArray(_data["expenseSchedules"])) {
+                this.expenseSchedules = [] as any;
+                for (let item of _data["expenseSchedules"])
+                    this.expenseSchedules!.push(CarExpenseScheduleInput.fromJS(item));
+            }
         }
     }
 
@@ -12470,6 +12661,11 @@ export class UpdateCarCommand implements IUpdateCarCommand {
         data["power"] = this.power;
         data["fuelType"] = this.fuelType;
         data["mileage"] = this.mileage;
+        if (Array.isArray(this.expenseSchedules)) {
+            data["expenseSchedules"] = [];
+            for (let item of this.expenseSchedules)
+                data["expenseSchedules"].push(item.toJSON());
+        }
         return data;
     }
 }
@@ -12486,6 +12682,7 @@ export interface IUpdateCarCommand {
     power?: number | undefined;
     fuelType?: FuelType | undefined;
     mileage?: number | undefined;
+    expenseSchedules?: CarExpenseScheduleInput[] | undefined;
 }
 
 export class CarOverviewDto implements ICarOverviewDto {
@@ -12797,6 +12994,114 @@ export interface ICarExpenseDto {
     expenseDate?: Date;
     amount?: MoneyDto | undefined;
     isUnpaid?: boolean;
+}
+
+export class CarExpenseScheduleDto implements ICarExpenseScheduleDto {
+    expenseTypeId?: number;
+    expenseTypeName?: string | undefined;
+    isLinked?: boolean;
+    hasOwnInterval?: boolean;
+    typeAfterKilometer?: number | undefined;
+    typeAfterMonth?: number | undefined;
+    afterKilometer?: number | undefined;
+    afterMonth?: number | undefined;
+    leadKilometers?: number | undefined;
+    leadDays?: number | undefined;
+    lastDoneMileage?: number | undefined;
+    lastDoneOn?: Date | undefined;
+    effectiveAfterKilometer?: number | undefined;
+    effectiveAfterMonth?: number | undefined;
+    baselineOn?: Date | undefined;
+    baselineMileage?: number | undefined;
+    nextDueOn?: Date | undefined;
+    nextDueAtKilometers?: number | undefined;
+    isOverdue?: boolean;
+
+    constructor(data?: ICarExpenseScheduleDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.expenseTypeId = _data["expenseTypeId"];
+            this.expenseTypeName = _data["expenseTypeName"];
+            this.isLinked = _data["isLinked"];
+            this.hasOwnInterval = _data["hasOwnInterval"];
+            this.typeAfterKilometer = _data["typeAfterKilometer"];
+            this.typeAfterMonth = _data["typeAfterMonth"];
+            this.afterKilometer = _data["afterKilometer"];
+            this.afterMonth = _data["afterMonth"];
+            this.leadKilometers = _data["leadKilometers"];
+            this.leadDays = _data["leadDays"];
+            this.lastDoneMileage = _data["lastDoneMileage"];
+            this.lastDoneOn = _data["lastDoneOn"] ? new Date(_data["lastDoneOn"].toString()) : <any>undefined;
+            this.effectiveAfterKilometer = _data["effectiveAfterKilometer"];
+            this.effectiveAfterMonth = _data["effectiveAfterMonth"];
+            this.baselineOn = _data["baselineOn"] ? new Date(_data["baselineOn"].toString()) : <any>undefined;
+            this.baselineMileage = _data["baselineMileage"];
+            this.nextDueOn = _data["nextDueOn"] ? new Date(_data["nextDueOn"].toString()) : <any>undefined;
+            this.nextDueAtKilometers = _data["nextDueAtKilometers"];
+            this.isOverdue = _data["isOverdue"];
+        }
+    }
+
+    static fromJS(data: any): CarExpenseScheduleDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new CarExpenseScheduleDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["expenseTypeId"] = this.expenseTypeId;
+        data["expenseTypeName"] = this.expenseTypeName;
+        data["isLinked"] = this.isLinked;
+        data["hasOwnInterval"] = this.hasOwnInterval;
+        data["typeAfterKilometer"] = this.typeAfterKilometer;
+        data["typeAfterMonth"] = this.typeAfterMonth;
+        data["afterKilometer"] = this.afterKilometer;
+        data["afterMonth"] = this.afterMonth;
+        data["leadKilometers"] = this.leadKilometers;
+        data["leadDays"] = this.leadDays;
+        data["lastDoneMileage"] = this.lastDoneMileage;
+        data["lastDoneOn"] = this.lastDoneOn ? this.lastDoneOn.toISOString() : <any>undefined;
+        data["effectiveAfterKilometer"] = this.effectiveAfterKilometer;
+        data["effectiveAfterMonth"] = this.effectiveAfterMonth;
+        data["baselineOn"] = this.baselineOn ? this.baselineOn.toISOString() : <any>undefined;
+        data["baselineMileage"] = this.baselineMileage;
+        data["nextDueOn"] = this.nextDueOn ? this.nextDueOn.toISOString() : <any>undefined;
+        data["nextDueAtKilometers"] = this.nextDueAtKilometers;
+        data["isOverdue"] = this.isOverdue;
+        return data;
+    }
+}
+
+export interface ICarExpenseScheduleDto {
+    expenseTypeId?: number;
+    expenseTypeName?: string | undefined;
+    isLinked?: boolean;
+    hasOwnInterval?: boolean;
+    typeAfterKilometer?: number | undefined;
+    typeAfterMonth?: number | undefined;
+    afterKilometer?: number | undefined;
+    afterMonth?: number | undefined;
+    leadKilometers?: number | undefined;
+    leadDays?: number | undefined;
+    lastDoneMileage?: number | undefined;
+    lastDoneOn?: Date | undefined;
+    effectiveAfterKilometer?: number | undefined;
+    effectiveAfterMonth?: number | undefined;
+    baselineOn?: Date | undefined;
+    baselineMileage?: number | undefined;
+    nextDueOn?: Date | undefined;
+    nextDueAtKilometers?: number | undefined;
+    isOverdue?: boolean;
 }
 
 export class CarImageDto implements ICarImageDto {

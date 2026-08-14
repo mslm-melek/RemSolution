@@ -1,6 +1,5 @@
 <div class="page car-detail" *transloco="let t">
-  <!-- The way back, then what this page is about: the plate is the car's name and
-       its availability belongs beside it. -->
+  <!-- The way back, then the plate and its availability. -->
   <div class="header-row">
     <div class="header-left">
       <a class="back-link" [routerLink]="['/car']">
@@ -9,8 +8,7 @@
       </a>
       <span class="header-sep" aria-hidden="true"></span>
       <h2 class="title">
-        <!-- The car is named by make and model together: a fleet with a Clio and
-             a 208 in it is not helped by a bare model name. -->
+        <!-- Make and model together; a bare model name is not enough. -->
         <span *ngIf="carName">{{ carName }}</span>
         <span class="num">{{ car?.matricule }}</span>
         <span class="chip" [ngClass]="availabilityClass" *ngIf="car">
@@ -21,9 +19,8 @@
   </div>
 
   <!-- ================================ THE CAR ================================
-       Left: what it looks like and how it has been doing. Right: what it is and
-       what can be done with it. Two columns because those are two different
-       questions, and neither should push the other below the fold. -->
+       Left: how it looks and how it has been doing. Right: what it is and what
+       can be done with it. -->
   <div class="detail-grid">
 
     <!-- ------------------------------ MEDIA ------------------------------ -->
@@ -48,17 +45,15 @@
         </div>
       </div>
 
-      <!-- No pictures at all: say so where they would be, and point at the one
-           screen that can fix it, rather than leaving a silent gap. -->
+      <!-- No pictures: say so here, and point at the screen that can fix it. -->
       <p class="no-photos" *ngIf="car && !hasPhotos">
         <mat-icon>no_photography</mat-icon>
         {{ t('car.noImages') }}
         <a [routerLink]="['/car', carId, 'edit']">{{ t('car.addImages') }}</a>
       </p>
 
-      <!-- How the car has been doing lately. The window is the server's (see
-           GetCarOverviewQuery) and every tile names it, so none of the three can
-           be read as an all-time figure. -->
+      <!-- The window is the server's (see GetCarOverviewQuery) and each tile names
+           it, so none reads as an all-time figure. -->
       <div class="stat-row" *ngIf="overview?.usage as usage">
         <div class="stat accent">
           <div class="stat-value num">{{ usage.utilizationPercent }}%</div>
@@ -77,8 +72,7 @@
           <div class="stat-note">{{ t('car.overview.lastDays', { days: usage.windowDays }) }}</div>
         </div>
 
-        <!-- A rating where customers have left one; otherwise how much work the
-             car took on over the same window, which every car has an answer to. -->
+        <!-- The rating when there is one, otherwise the workload. -->
         <div class="stat" *ngIf="showRating">
           <div class="stat-value num">
             {{ overview?.rating?.average | number:'1.1-1' }}
@@ -131,8 +125,8 @@
           <div class="spec-value num">{{ car.firstCirculationDate | date:'yyyy':'UTC' }}</div>
         </div>
 
-        <!-- The odometer a new booking on this car will start from. Only shown
-             once someone has entered one: "0 km" would be a claim, not a blank. -->
+        <!-- The reading a new booking starts from; hidden until one exists,
+             because "0 km" would be a claim. -->
         <div class="spec">
           <div class="spec-label">{{ t('car.mileage') }}</div>
           <div class="spec-value num" *ngIf="car.mileage != null">
@@ -147,9 +141,7 @@
         </div>
       </div>
 
-      <!-- Hire it out or take it back — the two things this page is opened to do,
-           and only one of them can apply. Everything else lives behind the menu,
-           which keeps the row the same width whatever the car is doing. -->
+      <!-- Hire it out or take it back; only one can apply. The rest is in the menu. -->
       <div class="action-row" *ngIf="car">
         <a *ngIf="canRentOut" mat-raised-button color="primary" class="action-main"
            [routerLink]="['/renting/new']" [queryParams]="{ carId: carId }">
@@ -189,9 +181,8 @@
       </div>
 
       <!-- --------------------------- BOOKINGS ---------------------------
-           The hire running now and the queue behind it: what the desk is asked
-           when the phone rings about this plate. Absent entirely — not empty —
-           when the caller cannot reach the bookings module. -->
+           The hire running now and the queue behind it. Absent, not empty, when
+           the caller cannot reach the bookings module. -->
       <section class="panel" *ngIf="overview?.bookings">
         <header class="panel-head">
           <mat-icon>schedule</mat-icon>
@@ -248,6 +239,54 @@
         </footer>
       </section>
 
+      <!-- ------------------------ SERVICING & PAPERS ------------------------
+           What this car owes next, and on which clock: its own interval where it
+           has one, the expense type's otherwise. -->
+      <section class="panel" *ngIf="scheduleRows.length">
+        <header class="panel-head">
+          <mat-icon>event_repeat</mat-icon>
+          <span class="panel-title">{{ t('car.schedule.title') }}</span>
+        </header>
+
+        <div class="panel-body">
+          <div class="expense" *ngFor="let row of scheduleRows">
+            <span class="expense-ico"><mat-icon>build_circle</mat-icon></span>
+            <div class="expense-what">
+              <div class="expense-name">
+                {{ row.schedule.expenseTypeName }}
+                <span class="chip" *ngIf="row.schedule.hasOwnInterval">{{ t('car.schedule.ownRule') }}</span>
+              </div>
+              <div class="expense-sub">
+                <ng-container *ngIf="row.schedule.effectiveAfterKilometer">
+                  {{ t('car.schedule.fleetEveryKm', { km: row.schedule.effectiveAfterKilometer }) }}
+                </ng-container>
+                <ng-container *ngIf="row.schedule.effectiveAfterMonth">
+                  {{ t('car.schedule.fleetEveryMonths', { months: row.schedule.effectiveAfterMonth }) }}
+                </ng-container>
+                <ng-container *ngIf="row.kilometersLeft != null">
+                  · {{ row.kilometersLeft >= 0
+                        ? t('car.schedule.kmToGo', { km: row.kilometersLeft })
+                        : t('car.schedule.kmOver', { km: -row.kilometersLeft }) }}
+                </ng-container>
+              </div>
+            </div>
+            <div class="expense-money">
+              <span class="expense-amount num" *ngIf="row.schedule.nextDueOn">
+                {{ row.schedule.nextDueOn | date:'dd MMM yyyy':'UTC' }}
+              </span>
+              <span class="expense-amount num" *ngIf="row.schedule.nextDueAtKilometers">
+                {{ row.schedule.nextDueAtKilometers | number:'1.0-0' }} {{ t('common.km') }}
+              </span>
+              <span class="chip warn" *ngIf="row.schedule.isOverdue">{{ t('car.schedule.overdue') }}</span>
+            </div>
+          </div>
+        </div>
+
+        <footer class="panel-foot" *ngIf="canEdit">
+          <a [routerLink]="['/car', carId, 'edit']">{{ t('car.schedule.edit') }} →</a>
+        </footer>
+      </section>
+
       <!-- --------------------------- EXPENSES --------------------------- -->
       <section class="panel" *ngIf="overview?.expenses">
         <header class="panel-head">
@@ -292,8 +331,7 @@
   </div>
 
   <!-- ============================== THE RECORD ==============================
-       Everywhere the car has been, and what it is made of. Below the fold on
-       purpose: this is the part read when the summary above raised a question. -->
+       Everywhere the car has been, and what it is made of. Below the fold. -->
   <mat-tab-group>
     <!-- HISTORY -->
     <mat-tab [label]="t('car.tabs.rentings')" *ngIf="canSeeRentings">
@@ -421,8 +459,7 @@
           </div>
         </dl>
 
-        <!-- The car's pictures are at the top of the page now, where they are seen
-             without opening a tab first. -->
+        <!-- The pictures live at the top of the page, not in a tab. -->
       </div>
     </mat-tab>
   </mat-tab-group>

@@ -45,6 +45,20 @@ namespace RemSolution.Application.Features.Agency.Commands.CreateAgencyCommand
                 .NotEmpty()
                 .Length(3).WithMessage(_ => localizer["Validation.Currency.Iso4217"]);
 
+            // Either the admin address or the agency's own satisfies the requirement.
+            RuleFor(v => v.AdminEmail)
+                .MaximumLength(320)
+                .EmailAddress()
+                .When(v => !string.IsNullOrWhiteSpace(v.AdminEmail));
+
+            RuleFor(v => v.AdminFullName)
+                .MaximumLength(200);
+
+            RuleFor(v => v)
+                .Must(v => !string.IsNullOrWhiteSpace(v.ResolveAdminEmail()))
+                .WithMessage(_ => localizer["Validation.Agency.AdminEmailRequired"])
+                .OverridePropertyName(nameof(CreateAgencyCommand.AdminEmail));
+
             RuleFor(v => v.CancellationWindowHours)
                 .GreaterThanOrEqualTo(0);
 

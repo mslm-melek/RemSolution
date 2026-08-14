@@ -124,8 +124,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "integer",
-                  "format": "int32"
+                  "$ref": "#/components/schemas/AgencyCreatedDto"
                 }
               }
             }
@@ -1477,6 +1476,41 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/CarOverviewDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Cars/expense-schedules": {
+      "get": {
+        "tags": [
+          "Cars"
+        ],
+        "operationId": "GetCarExpenseSchedules",
+        "parameters": [
+          {
+            "name": "carId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "nullable": true
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CarExpenseScheduleDto"
+                  }
                 }
               }
             }
@@ -7164,6 +7198,27 @@
           }
         }
       },
+      "AgencyCreatedDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "adminUserName": {
+            "type": "string",
+            "nullable": true
+          },
+          "adminTemporaryPassword": {
+            "type": "string",
+            "nullable": true
+          },
+          "welcomeEmailSent": {
+            "type": "boolean"
+          }
+        }
+      },
       "CreateAgencyCommand": {
         "type": "object",
         "additionalProperties": false,
@@ -7213,6 +7268,14 @@
             "items": {
               "$ref": "#/components/schemas/AgencyBranchInput"
             }
+          },
+          "adminEmail": {
+            "type": "string",
+            "nullable": true
+          },
+          "adminFullName": {
+            "type": "string",
+            "nullable": true
           }
         }
       },
@@ -8089,6 +8152,53 @@
             "type": "integer",
             "format": "int32",
             "nullable": true
+          },
+          "expenseSchedules": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "$ref": "#/components/schemas/CarExpenseScheduleInput"
+            }
+          }
+        }
+      },
+      "CarExpenseScheduleInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "expenseTypeId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "afterKilometer": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "afterMonth": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "leadKilometers": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "leadDays": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "lastDoneMileage": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "lastDoneOn": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
           }
         }
       },
@@ -8148,6 +8258,13 @@
             "type": "integer",
             "format": "int32",
             "nullable": true
+          },
+          "expenseSchedules": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "$ref": "#/components/schemas/CarExpenseScheduleInput"
+            }
           }
         }
       },
@@ -8347,6 +8464,99 @@
             ]
           },
           "isUnpaid": {
+            "type": "boolean"
+          }
+        }
+      },
+      "CarExpenseScheduleDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "expenseTypeId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "expenseTypeName": {
+            "type": "string",
+            "nullable": true
+          },
+          "isLinked": {
+            "type": "boolean"
+          },
+          "hasOwnInterval": {
+            "type": "boolean"
+          },
+          "typeAfterKilometer": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "typeAfterMonth": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "afterKilometer": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "afterMonth": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "leadKilometers": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "leadDays": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "lastDoneMileage": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "lastDoneOn": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "effectiveAfterKilometer": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "effectiveAfterMonth": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "baselineOn": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "baselineMileage": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "nextDueOn": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "nextDueAtKilometers": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "isOverdue": {
             "type": "boolean"
           }
         }

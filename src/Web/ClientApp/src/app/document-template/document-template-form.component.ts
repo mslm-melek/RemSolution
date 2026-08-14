@@ -12,8 +12,7 @@ import { DocumentTemplateComponent } from './document-template.component';
 import { LanguageService } from '../shared/language.service';
 import { TranslocoService } from '@jsverse/transloco';
 
-// A binding row as the editor works with it: the placeholder found in the blocks,
-// plus how it should be filled.
+// A placeholder found in the blocks, plus how it should be filled.
 interface BindingRow {
   placeholder: string;
   binding: DocumentFieldBinding;
@@ -39,8 +38,23 @@ export class DocumentTemplateFormComponent implements OnInit {
   saving = false;
   errorMessage = '';
 
+  /** Said out loud when a field was copied instead of inserted (see insertToken). */
+  noticeMessage = '';
+
+  /** Whether the stored template is still in the pickers — drives "Retire". */
+  isActive = true;
+
   /** The blocks being edited. Plain objects, sent as-is to the API. */
   blocks: DocumentBlock[] = [];
+
+  /** The block whose tools are open; the rest show as they will print. */
+  selected = -1;
+
+  /**
+   * The last text box typed in. Insert-field writes at its caret; with none, the
+   * token goes to the clipboard instead.
+   */
+  private lastField?: HTMLInputElement | HTMLTextAreaElement;
 
   /** One row per distinct placeholder in the blocks (plus any kept from before). */
   bindings: BindingRow[] = [];
@@ -55,13 +69,13 @@ export class DocumentTemplateFormComponent implements OnInit {
   DocumentFieldBinding = DocumentFieldBinding;
 
   blockTypes = [
-    { value: DocumentBlockType.Heading, labelKey: 'documentTemplate.blockHeading' },
-    { value: DocumentBlockType.Paragraph, labelKey: 'documentTemplate.blockParagraph' },
-    { value: DocumentBlockType.Fields, labelKey: 'documentTemplate.blockFields' },
-    { value: DocumentBlockType.LineItems, labelKey: 'documentTemplate.blockLineItems' },
-    { value: DocumentBlockType.Signatures, labelKey: 'documentTemplate.blockSignatures' },
-    { value: DocumentBlockType.PageBreak, labelKey: 'documentTemplate.blockPageBreak' },
-    { value: DocumentBlockType.Spacer, labelKey: 'documentTemplate.blockSpacer' }
+    { value: DocumentBlockType.Heading, labelKey: 'documentTemplate.blockHeading', icon: 'title' },
+    { value: DocumentBlockType.Paragraph, labelKey: 'documentTemplate.blockParagraph', icon: 'notes' },
+    { value: DocumentBlockType.Fields, labelKey: 'documentTemplate.blockFields', icon: 'view_agenda' },
+    { value: DocumentBlockType.LineItems, labelKey: 'documentTemplate.blockLineItems', icon: 'receipt_long' },
+    { value: DocumentBlockType.Signatures, labelKey: 'documentTemplate.blockSignatures', icon: 'draw' },
+    { value: DocumentBlockType.PageBreak, labelKey: 'documentTemplate.blockPageBreak', icon: 'insert_page_break' },
+    { value: DocumentBlockType.Spacer, labelKey: 'documentTemplate.blockSpacer', icon: 'space_bar' }
   ];
 
   bindingOptions = [
@@ -92,6 +106,21 @@ export class DocumentTemplateFormComponent implements OnInit {
     return this.form.get('kind')!.value;
   }
 
+  /**
+   * Which way the sheet reads: the template's own language, not the screen's, so
+   * the preview matches what the renderer will print.
+   */
+  get sheetDirection(): 'rtl' | 'ltr' {
+    return this.form.get('language')?.value === 'ar' ? 'rtl' : 'ltr';
+  }
+
+  /** The eyebrow over the title: which kind of document this prints. */
+  get kindLabelKey(): string {
+    return this.kind === DocumentTemplateKind.Facture
+      ? 'documentTemplate.kindFacture'
+      : 'documentTemplate.kindContract';
+  }
+
   ngOnInit() {
     const idParam = this.route.snapshot.paramMap.get('id');
 
@@ -104,8 +133,8 @@ export class DocumentTemplateFormComponent implements OnInit {
       return;
     }
 
-    // A draft left by "use as a start" or by an import; otherwise a blank
-    // template of the kind the query string asked for.
+    // A draft from a clone or an import; otherwise a blank template of the
+    // kind the query string asked for.
     const draft = DocumentTemplateComponent.takeDraft();
 
     if (draft) {
@@ -129,14 +158,14 @@ export class DocumentTemplateFormComponent implements OnInit {
       this.blocks = [DocumentBlock.fromJS({ type: DocumentBlockType.Heading, text: '' })];
     }
 
-    // Reconciling the bindings waits on the catalog — loadPlaceholders does it
-    // once the list arrives (see refreshBindings).
+    // The bindings are reconciled once the catalog arrives (see refreshBindings).
     this.loadPlaceholders();
   }
 
   private populate(dto: DocumentTemplateDto) {
     this.form.patchValue({ name: dto.name, kind: dto.kind, language: dto.language });
     this.rowVersion = dto.rowVersion;
+    this.isActive = !!dto.isActive;
     this.blocks = (dto.blocks || []).map(b => DocumentBlock.fromJS(b.toJSON()));
     this.bindings = (dto.fields || []).map(f => ({
       placeholder: f.placeholder!,
@@ -158,8 +187,7 @@ export class DocumentTemplateFormComponent implements OnInit {
     this.client.getDocumentPlaceholders(this.kind).subscribe({
       next: list => {
         this.placeholders = list || [];
-        // Grouped by leading segment, so the palette reads client / car / renting
-        // rather than one flat list of forty paths.
+        // Grouped by leading segment, so the palette reads client / car / renting.
         const groups = new Map<string, DocumentPlaceholderDto[]>();
         for (const item of this.placeholders) {
           const key = item.group || '';
@@ -189,11 +217,14 @@ export class DocumentTemplateFormComponent implements OnInit {
     if (type === DocumentBlockType.Spacer) block.height = 12;
 
     this.blocks = [...this.blocks, DocumentBlock.fromJS(block)];
+    // A new block opens with its options showing.
+    this.selected = this.blocks.length - 1;
     this.refreshBindings();
   }
 
   removeBlock(index: number) {
     this.blocks = this.blocks.filter((_, i) => i !== index);
+    this.selected = -1;
     this.refreshBindings();
   }
 
@@ -204,6 +235,24 @@ export class DocumentTemplateFormComponent implements OnInit {
     const blocks = [...this.blocks];
     [blocks[index], blocks[target]] = [blocks[target], blocks[index]];
     this.blocks = blocks;
+    // The selection follows the block, not the position it used to hold.
+    if (this.selected === index) this.selected = target;
+    else if (this.selected === target) this.selected = index;
+  }
+
+  /** True where the block has switches of its own to show while selected. */
+  hasOptions(block: DocumentBlock): boolean {
+    return block.type === DocumentBlockType.Paragraph
+        || block.type === DocumentBlockType.Fields
+        || block.type === DocumentBlockType.LineItems
+        || block.type === DocumentBlockType.Spacer;
+  }
+
+  /** A paragraph grows with its text; the wrap estimate is deliberately rough. */
+  paragraphRows(text?: string): number {
+    const value = text || '';
+    const lines = value.split('\n').length + Math.floor(value.length / 90);
+    return Math.min(24, Math.max(2, lines));
   }
 
   addField(block: DocumentBlock) {
@@ -223,12 +272,53 @@ export class DocumentTemplateFormComponent implements OnInit {
     block.labels = (block.labels || []).filter((_, i) => i !== index);
   }
 
-  // Copies the token so the admin can paste it wherever they want it. Inserting at
-  // the caret would need a directive per input; the clipboard is honest and works
-  // in every field on the page.
-  copyToken(placeholder: DocumentPlaceholderDto) {
-    navigator.clipboard?.writeText(placeholder.token || '');
-    this.errorMessage = '';
+  /**
+   * Remembers where the caret is, so "Insert field" has somewhere to write. Bound
+   * once on the sheet (focusin bubbles); buttons and number boxes are ignored.
+   */
+  rememberField(event: FocusEvent) {
+    const target = event.target;
+
+    if ((target instanceof HTMLInputElement && target.type === 'text')
+        || target instanceof HTMLTextAreaElement) {
+      this.lastField = target;
+    }
+  }
+
+  /**
+   * Writes the placeholder at the caret; with no live text box the token goes to
+   * the clipboard instead. An `input` event is dispatched because the box is bound
+   * with ngModel, which would otherwise overwrite the assignment.
+   */
+  insertToken(placeholder: DocumentPlaceholderDto) {
+    const token = placeholder.token || this.token(placeholder.path || '');
+    const field = this.lastField;
+
+    if (!field || !field.isConnected) {
+      navigator.clipboard?.writeText(token);
+      this.noticeMessage = this.transloco.translate('documentTemplate.tokenCopied', { token });
+      return;
+    }
+
+    const start = field.selectionStart ?? field.value.length;
+    const end = field.selectionEnd ?? start;
+
+    field.value = field.value.slice(0, start) + token + field.value.slice(end);
+    field.dispatchEvent(new Event('input', { bubbles: true }));
+
+    // A closing menu hands focus back to its button, so the caret is claimed
+    // again on the next turn of the loop.
+    const caret = start + token.length;
+    const restore = () => {
+      field.focus();
+      field.setSelectionRange(caret, caret);
+    };
+
+    restore();
+    setTimeout(restore);
+
+    this.noticeMessage = '';
+    this.refreshBindings();
   }
 
   // --- bindings ---
@@ -238,10 +328,8 @@ export class DocumentTemplateFormComponent implements OnInit {
    * rule: a placeholder named after a data path binds to it, anything else becomes
    * ask-each-time, and rows for placeholders no longer used are kept but marked.
    *
-   * No-op until the placeholder catalog has arrived. Without this guard, a first
-   * pass with an empty catalog would see every name as unrecognised and mark it
-   * ask-each-time — and because the next pass preserves existing rows as the
-   * user's own choice, that wrong classification would stick.
+   * No-op until the catalog has arrived: an empty one would mark every name
+   * ask-each-time, and later passes preserve existing rows.
    */
   refreshBindings() {
     if (!this.placeholders.length) {
@@ -277,16 +365,14 @@ export class DocumentTemplateFormComponent implements OnInit {
   }
 
   /**
-   * The placeholder as it appears in a block. Built here rather than in the
-   * template because an escaped `{{` in Angular markup is decoded before
-   * interpolation is parsed, and would open an interpolation of its own.
+   * The placeholder as it appears in a block. Built here because an escaped `{{`
+   * in Angular markup would open an interpolation of its own.
    */
   token(placeholder: string): string {
     return `{{${placeholder}}}`;
   }
 
-  // Looked up by value rather than indexed by it: indexing would silently
-  // mislabel every block if blockTypes were ever reordered.
+  // Looked up by value: indexing would mislabel blocks if blockTypes were reordered.
   blockTypeLabelKey(type?: DocumentBlockType): string {
     return this.blockTypes.find(t => t.value === type)?.labelKey ?? '';
   }
@@ -374,6 +460,21 @@ export class DocumentTemplateFormComponent implements OnInit {
         error: err => this.handleError(err)
       });
     }
+  }
+
+  /**
+   * Takes the template out of the pickers, from the screen it is being edited on.
+   * Retiring rather than deleting is the whole model: documents already issued
+   * from this template have to keep resolving (see SetDocumentTemplateActive).
+   */
+  retire() {
+    if (!this.templateId) return;
+    if (!confirm(this.transloco.translate('documentTemplate.confirmRetire'))) return;
+
+    this.client.setDocumentTemplateActive(this.templateId, false).subscribe({
+      next: () => this.router.navigate(['/document-template']),
+      error: err => this.handleError(err)
+    });
   }
 
   private handleError(err: any) {

@@ -19,26 +19,16 @@ export interface NavEntry {
   link?: string;
   links?: NavLink[];
   /**
-   * Extra paths this entry owns, beyond the one it navigates to. The bookings
-   * screen is at /booking but the forms behind it are still at /renting/:id and
-   * /reservation/:id, and the rail has to keep saying where the user is while one
-   * of those is open.
+   * Extra paths this entry owns, so the rail stays lit on them — /booking also
+   * covers /renting/:id and /reservation/:id.
    */
   alsoAt?: string[];
 }
 
 /**
- * The app's navigation rail: the modules this user can reach, then who they are
- * signed in as.
- *
- * A rail rather than a bar because the list is long and grows — five module
- * groups, a configuration menu and an account menu do not fit across the top of
- * a screen that also has to carry a branch picker and a search box. Vertically
- * there is room for every entry to be a labelled, iconned target, and a group
- * opens in place instead of behind a dropdown.
- *
- * What is IN it is unchanged and still data-driven: the role and the agency's
- * features decide, so an entry is never drawn for a screen that would 403.
+ * The navigation rail: the modules this user can reach, then who they are signed
+ * in as. Data-driven from the role and the agency's features, so an entry is
+ * never drawn for a screen that would 403.
  */
 @Component({
   selector: 'app-side-nav',
@@ -59,20 +49,17 @@ export class SideNavComponent implements OnInit {
   isAgencyAdmin = false;
   isCustomer = false;
 
-  // Set while a platform admin has an agency's workspace open: the rail becomes
-  // that agency's module nav. Read from the client-side session rather than the
-  // role, since the role stays PlatformAdministrator throughout.
+  // Set while a platform admin has an agency's workspace open; read from the
+  // session, since the role stays PlatformAdministrator throughout.
   workspace: ImpersonatedAgency | null = null;
 
   navEntries: NavEntry[] = [];
 
-  // Reference/catalog screens. These are administration, not day-to-day work, so
-  // they sit in a menu at the foot of the rail instead of taking a slot in it.
+  // Reference/catalog screens, in a menu at the foot of the rail.
   configLinks: NavLink[] = [];
 
-  // A group has no routerLinkActive of its own (its header is a button), so the
-  // open one is derived from the URL — and a group whose screen is open starts
-  // open, rather than hiding the item the user is looking at.
+  // A group header is a button with no routerLinkActive, so the open one is
+  // derived from the URL.
   private currentUrl = '/';
   private toggled = new Set<string>();
 
@@ -98,8 +85,7 @@ export class SideNavComponent implements OnInit {
       this.isAgencyAdmin = user.role === 'AgencyAdministrator';
       this.isCustomer = AuthService.isCustomer(user);
 
-      // The banner renders from the stored session so it is up before this call
-      // resolves, but the server is the authority once it does.
+      // The banner renders from the session first; the server is authority once here.
       if (this.workspace && user.isImpersonating && user.agencyName) {
         this.workspace = { ...this.workspace, name: user.agencyName };
       }
@@ -108,8 +94,7 @@ export class SideNavComponent implements OnInit {
       const can = (feature: string, permission: string) =>
         AuthService.canAccessModule(user, feature, permission);
 
-      // Paperwork layouts: either document module getting them there is enough,
-      // since one screen manages both kinds.
+      // One screen manages both kinds, so either module opens it.
       const canDocumentTemplates =
         can('Contracts', 'Contract.Read') || can('Factures', 'Facture.Read');
 
@@ -118,7 +103,7 @@ export class SideNavComponent implements OnInit {
     });
   }
 
-  /** The initials on the account tile — two letters, however the name is spelled. */
+  /** The initials on the account tile: up to two letters. */
   get initials(): string {
     const parts = (this.displayName ?? '').trim().split(/\s+/).filter(Boolean);
     if (!parts.length) return '?';
@@ -140,13 +125,10 @@ export class SideNavComponent implements OnInit {
   }
 
   private buildEntries(can: (feature: string, permission: string) => boolean): NavEntry[] {
-    // Inside an agency workspace the platform admin gets that agency's own nav,
-    // not the console's — the API answers every request for the agency, and it
-    // returns the agency's features and the full permission set, so the same
-    // feature-driven rules below produce exactly the screens that will work.
+    // Inside an agency workspace the platform admin gets that agency's own nav:
+    // the API answers with the agency's features and permissions.
     if (this.isPlatformAdmin && !this.workspace) {
-      // No dashboard entry: the console dashboard IS the platform admin's home,
-      // so the Home item at the top of the rail already leads there.
+      // No dashboard entry: the Home item already leads to the console dashboard.
       return [
         { labelKey: 'nav.agencies', icon: 'business', link: '/agency' },
         { labelKey: 'nav.subscriptionPlans', icon: 'workspace_premium', link: '/subscription-plan' }
@@ -157,18 +139,16 @@ export class SideNavComponent implements OnInit {
       return [
         { labelKey: 'nav.browseCars', icon: 'travel_explore', link: '/browse' },
         { labelKey: 'nav.myReservations', icon: 'event_available', link: '/my-reservations' },
-        // Past and current rentals — and where a finished one gets rated.
+        // Past and current rentals, and where a finished one gets rated.
         { labelKey: 'nav.myRentings', icon: 'vpn_key', link: '/my-rentings' },
-        // Not feature-gated: the customer's own threads. An agency without the
-        // Chat feature simply never opens one, so the list stays empty.
+        // Not feature-gated: the customer's own threads, empty if the agency has none.
         { labelKey: 'nav.myChats', icon: 'forum', link: '/my-chats' }
       ];
     }
 
     // Agency staff: the day's work, grouped by what it is about.
     const entries: (NavEntry | null)[] = [
-      // The overview and the statistics report are the same entitlement (see
-      // GetStatisticsQuery), so this group either has both screens or neither.
+      // Same entitlement for both screens (see GetStatisticsQuery).
       this.group('nav.dashboard', 'insights', [
         can('Dashboard', 'Dashboard.View')
           ? { labelKey: 'nav.overview', link: '/dashboard', icon: 'space_dashboard' } : null,
@@ -177,10 +157,8 @@ export class SideNavComponent implements OnInit {
       ]),
       can('Cars', 'Car.Read')
         ? { labelKey: 'nav.cars', icon: 'directions_car', link: '/car' } : null,
-      // One screen for both: hires and holds are the same booking at two points
-      // of its life, and the merged list tabs between them (see BookingComponent).
-      // Either entitlement opens it, and the screen shows only the tab the user
-      // can actually read, so the rail does not have to say which.
+      // One screen for hires and holds (see BookingComponent); either entitlement
+      // opens it and the screen shows only the readable tab.
       can('Rentings', 'Renting.Read') || can('Reservations', 'Reservation.Read')
         ? {
           labelKey: 'nav.bookings', icon: 'event_available', link: '/booking',
@@ -192,9 +170,8 @@ export class SideNavComponent implements OnInit {
         can('Chat', 'Chat.View')
           ? { labelKey: 'nav.chat', link: '/chat', icon: 'forum' } : null
       ]),
-      // One finance screen: the credits page carries both directions of money and
-      // absorbed the expense list. Either entitlement opens it, and the label
-      // says which half the user will actually find there.
+      // One finance screen for both directions of money; the label says which
+      // half the user will find there.
       this.group('nav.finance', 'request_quote', [
         can('Credits', 'Credit.Read')
           ? { labelKey: 'nav.credits', link: '/credit', icon: 'request_quote' }
@@ -206,8 +183,7 @@ export class SideNavComponent implements OnInit {
     return entries.filter((entry): entry is NavEntry => entry !== null);
   }
 
-  // A group with nothing in it disappears; a group with a single reachable
-  // screen becomes a plain item, so nobody expands a list to pick the only entry.
+  // An empty group disappears; a group of one becomes a plain item.
   private group(labelKey: string, icon: string, links: (NavLink | null)[]): NavEntry | null {
     const reachable = links.filter((link): link is NavLink => link !== null);
 
@@ -234,10 +210,8 @@ export class SideNavComponent implements OnInit {
       ];
     }
 
-    // Reference data is administrator-only, and each screen stays gated by the
-    // feature it belongs to. A platform admin in an agency workspace counts as
-    // that agency's administrator here: the catalogue screens accept either
-    // administrator role, so every link below is one they can actually open.
+    // Administrator-only, each screen still gated by its feature. A platform admin
+    // in a workspace counts as that agency's administrator.
     if (!this.isAgencyAdmin && !this.workspace) return [];
 
     const links: (NavLink | null)[] = [
@@ -256,8 +230,7 @@ export class SideNavComponent implements OnInit {
     return links.filter((link): link is NavLink => link !== null);
   }
 
-  /** Whether a group's sublist is showing. Open by default while it holds the
-   *  current screen, so the rail never hides where the user already is. */
+  /** Open by default while the group holds the current screen. */
   isOpen(entry: NavEntry): boolean {
     const active = this.isGroupActive(entry);
     return this.toggled.has(entry.labelKey) ? !active : active;
@@ -275,18 +248,13 @@ export class SideNavComponent implements OnInit {
     return (entry.links ?? []).some(child => this.isAt(child.link));
   }
 
-  /**
-   * Whether a plain item is the screen on show. Worked out here rather than left
-   * to routerLinkActive, because an entry can own more than the one path it
-   * navigates to (see {@link NavEntry.alsoAt}).
-   */
+  /** Not routerLinkActive, because an entry can own several paths (see alsoAt). */
   isItemActive(entry: NavEntry): boolean {
     return [entry.link, ...(entry.alsoAt ?? [])]
       .some((path): path is string => !!path && this.isAt(path));
   }
 
-  /** On that path, or on something under it. The query string is not part of the
-   *  answer: a filtered list is still the same screen. */
+  /** On that path or under it; the query string is ignored. */
   private isAt(path: string): boolean {
     const url = this.currentUrl.split(/[?#]/)[0];
     return url === path || url.startsWith(path + '/');
@@ -294,6 +262,13 @@ export class SideNavComponent implements OnInit {
 
   exitWorkspace() {
     this.impersonation.exit();
+  }
+
+  // Sign-out is a plain link, so the tab's workspace would outlive it. Closing it
+  // here spares the reload AuthService would otherwise do.
+  onSignOut() {
+    this.impersonation.discard();
+    this.navigated.emit();
   }
 
   onNavigate() {

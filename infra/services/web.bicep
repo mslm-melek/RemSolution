@@ -28,10 +28,17 @@ module appService '../core/host/appservice.bicep' = {
     applicationInsightsName: applicationInsightsName
     keyVaultName: keyVaultName
     runtimeName: 'dotnetcore'
-    runtimeVersion: '9.0'
+    // Must match the SDK in global.json / the projects' TargetFramework.
+    runtimeVersion: '10.0'
     healthCheckPath: '/health'
     appSettings: {
-      ASPNETCORE_ENVIRONMENT: 'Development'
+      // Production: Development would load appsettings.Development.json (a
+      // published signing key, the demo seeder, self-migration). Secrets come
+      // from Key Vault, and the host refuses to start without the signing key.
+      ASPNETCORE_ENVIRONMENT: 'Production'
+      // Uploads live on the persistent /home share, not under wwwroot, which a
+      // zip deploy replaces wholesale.
+      FileStorage__RootPath: '/home/data/uploads'
     }
   }
 }

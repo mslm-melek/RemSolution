@@ -385,7 +385,9 @@ namespace RemSolution.Application.Features.Dashboard.Queries.GetTodayQuery
         {
             var types = await _context.ExpenseTypes
                 .AsNoTracking()
-                .Where(t => t.IsActive && t.WithNotif && (t.AfterMonth > 0 || t.AfterKilometer > 0))
+                // Types with no interval stay in: a car can supply one, and the
+                // planner drops the pairs left without any.
+                .Where(t => t.IsActive && t.WithNotif)
                 .Select(t => new { t.Id, t.Name, t.AfterMonth, t.AfterKilometer })
                 .ToListAsync(cancellationToken);
 
@@ -443,28 +445,45 @@ namespace RemSolution.Application.Features.Dashboard.Queries.GetTodayQuery
                 })
                 .ToListAsync(cancellationToken);
 
+            // Per-car overrides, where a car has any.
+            var schedules = await _context.CarExpenseSchedules
+                .AsNoTracking()
+                .Where(s => typeIds.Contains(s.ExpenseTypeId) && carIds.Contains(s.CarId))
+                .Select(s => new CarExpenseScheduleValues(
+                    s.CarId, s.ExpenseTypeId, s.AfterMonth, s.AfterKilometer,
+                    s.LeadDays, s.LeadKilometers, s.LastDoneOn, s.LastDoneMileage))
+                .ToListAsync(cancellationToken);
+
+            var plans = CarExpenseSchedules.Plan(
+                types.Select(t => new CarExpenseTypeRule(t.Id, t.AfterMonth, t.AfterKilometer)),
+                baselines.Select(b => new CarExpenseBaseline(
+                    b.CarId, b.ExpenseTypeId, b.LastExpenseOn, b.LastMileage)),
+                schedules,
+                settings.ExpenseDueLeadDays,
+                settings.ExpenseDueLeadKilometers);
+
             var groups = new List<TodayExpenseGroupDto>();
 
             foreach (var type in types)
             {
                 var due = new List<TodayExpenseCarDto>();
 
-                foreach (var baseline in baselines.Where(b => b.ExpenseTypeId == type.Id))
+                foreach (var plan in plans.Where(p => p.ExpenseTypeId == type.Id))
                 {
-                    if (!carsById.TryGetValue(baseline.CarId, out var car))
+                    if (!carsById.TryGetValue(plan.CarId, out var car))
                     {
                         continue;
                     }
 
                     var answer = ExpenseDueCalculator.Evaluate(
-                        type.AfterMonth,
-                        type.AfterKilometer,
-                        baseline.LastExpenseOn,
-                        baseline.LastMileage,
+                        plan.AfterMonths,
+                        plan.AfterKilometers,
+                        plan.LastDoneOn,
+                        plan.LastDoneMileage,
                         car.Mileage,
                         now,
-                        settings.ExpenseDueLeadDays,
-                        settings.ExpenseDueLeadKilometers);
+                        plan.LeadDays,
+                        plan.LeadKilometers);
 
                     if (answer is null)
                     {

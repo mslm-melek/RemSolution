@@ -30,6 +30,12 @@ namespace RemSolution.Application.Features.Car.Commands.CreateCarCommand
         // The odometer when the car joined the fleet; a booking on it starts from
         // here (see Car.Mileage). Omitted means unknown, not zero.
         public int? Mileage { get; init; }
+
+        /// <summary>
+        /// This car's own servicing intervals (see CarExpenseSchedule); omitted
+        /// means it follows the fleet.
+        /// </summary>
+        public List<CarExpenseScheduleInput>? ExpenseSchedules { get; init; }
     }
     public class CreateCarCommandHandler : IRequestHandler<CreateCarCommand, int>
     {
@@ -82,6 +88,15 @@ namespace RemSolution.Application.Features.Car.Commands.CreateCarCommand
             _context.Cars.Add(entity);
 
             await _context.SaveChangesAsync(cancellationToken);
+
+            // After the insert (the schedules need the car's id), still in the transaction.
+            if (request.ExpenseSchedules is { Count: > 0 })
+            {
+                await CarExpenseSchedulePayload.ApplyAsync(
+                    _context, entity, request.ExpenseSchedules, cancellationToken);
+
+                await _context.SaveChangesAsync(cancellationToken);
+            }
 
             await transaction.CommitAsync(cancellationToken);
 

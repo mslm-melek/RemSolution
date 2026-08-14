@@ -45,10 +45,50 @@ jobs:
             --tenant-id "$Env:AZURE_TENANT_ID"
         shell: pwsh
 
+      # The same identity for the Azure CLI: the migration step below reads the
+      # connection string out of Key Vault, which azd does not expose.
+      - name: Log in with the Azure CLI (Federated Credentials)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
       - name: Provision Infrastructure
         run: azd provision --no-prompt
         env:
           AZD_INITIAL_ENVIRONMENT_CONFIG: ${{ secrets.AZD_INITIAL_ENVIRONMENT_CONFIG }}
+
+      # The schema is moved forward here, by one process, never by the app at
+      # startup. The bundle is idempotent, so re-running this workflow is safe.
+      #
+      # It runs BEFORE the deploy, so new code never meets an old schema — which
+      # makes every migration additive: drops belong in a later deployment.
+      - name: Build the migration bundle
+        run: |
+          dotnet tool install --global dotnet-ef --version 10.* || dotnet tool update --global dotnet-ef --version 10.*
+          dotnet ef migrations bundle \
+            --project src/Infrastructure/Infrastructure.csproj \
+            --startup-project src/Web/Web.csproj \
+            --configuration Release \
+            --self-contained -r linux-x64 \
+            --output ${{ runner.temp }}/efbundle \
+            --force
+        env:
+          # The startup project is built to read the DbContext, with no database.
+          ConnectionStrings__RemSolutionDb: NSwagBuildTimePlaceholder
+
+      - name: Apply the migrations
+        run: |
+          KEY_VAULT_NAME=$(azd env get-value AZURE_KEY_VAULT_NAME)
+          CONNECTION_STRING=$(az keyvault secret show \
+            --vault-name "$KEY_VAULT_NAME" \
+            --name "ConnectionStrings--RemSolutionDb" \
+            --query value -o tsv)
+
+          # The connection string is a secret: keep it out of the log.
+          set +x
+          ${{ runner.temp }}/efbundle --connection "$CONNECTION_STRING"
 
       - name: Deploy Application
         run: azd deploy --no-prompt

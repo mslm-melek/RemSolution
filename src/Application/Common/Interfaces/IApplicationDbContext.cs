@@ -13,6 +13,7 @@ public interface IApplicationDbContext
     DbSet<Branch> Branches { get; }
     DbSet<Brand> Brands { get; }
     DbSet<Car> Cars { get; }
+    DbSet<CarExpenseSchedule> CarExpenseSchedules { get; }
     DbSet<CarImage> CarImages { get; }
     DbSet<ChatMessage> ChatMessages { get; }
     DbSet<Client> Clients { get; }

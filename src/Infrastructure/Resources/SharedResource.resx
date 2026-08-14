@@ -76,6 +76,12 @@
   <data name="Validation.Coordinates.Together" xml:space="preserve">
     <value>Latitude and Longitude must be provided together.</value>
   </data>
+  <data name="Validation.Agency.AdminEmailRequired" xml:space="preserve">
+    <value>An email address is required for the agency's administrator account: give one here, or fill in the agency's own email.</value>
+  </data>
+  <data name="Validation.Agency.AdminEmailTaken" xml:space="preserve">
+    <value>'{0}' already has an account on the platform. Use a different address for the agency's administrator.</value>
+  </data>
   <data name="Validation.Brand.NameRequired" xml:space="preserve">
     <value>Brand name is required.</value>
   </data>
@@ -795,6 +801,27 @@
   </data>
   <data name="Validation.Client.EmailTooLong" xml:space="preserve">
     <value>The email address is too long.</value>
+  </data>
+  <data name="Email.AgencyAdmin.Subject" xml:space="preserve">
+    <value>Your administrator account for {0}</value>
+  </data>
+  <data name="Email.AgencyAdmin.Hello" xml:space="preserve">
+    <value>Hello {0},</value>
+  </data>
+  <data name="Email.AgencyAdmin.Created" xml:space="preserve">
+    <value>An administrator account has been created for {0}. It can manage the fleet, the team and every module the agency's plan unlocks.</value>
+  </data>
+  <data name="Email.AgencyAdmin.Login" xml:space="preserve">
+    <value>Login</value>
+  </data>
+  <data name="Email.AgencyAdmin.Password" xml:space="preserve">
+    <value>Temporary password</value>
+  </data>
+  <data name="Email.AgencyAdmin.MustChange" xml:space="preserve">
+    <value>You will be asked to choose a new password at your first sign-in. Until you do, the account can do nothing else.</value>
+  </data>
+  <data name="Email.AgencyAdmin.SignIn" xml:space="preserve">
+    <value>Sign in</value>
   </data>
   <data name="Email.ClientAccount.Subject" xml:space="preserve">
     <value>Your customer account at {0}</value>

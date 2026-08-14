@@ -1,159 +1,190 @@
+/* The frame comes from styles.scss; here are the identity head and the three
+   head-body-foot panels the car page also uses.
+   No global box-sizing; RTL rules need :host-context([dir='rtl']). */
+
 .profile-page {
-  max-width: 960px;
-  margin: 1.5rem auto;
-  padding: 0 1rem;
+  max-width: 1100px;
 }
 
-/* Header banner */
-.profile-header {
+/* ------------------------------------------------------------------ header ---- */
+
+.identity-head {
   display: flex;
-  align-items: center;
-  gap: 1.25rem;
-  padding: 1.5rem 1.75rem;
-  border-radius: 14px;
-  color: var(--on-accent);
-  /* Was an indigo ramp, which was both off-brand and light enough at its far
-     stop that the white text on it was marginal. Same brand gradient as the
-     marketplace headers now. */
-  background: linear-gradient(135deg, var(--brand-900) 0%, var(--brand-800) 45%, var(--brand-700) 100%);
-  margin-bottom: 1.25rem;
+  align-items: flex-start;
+  gap: var(--sp-4);
+  min-width: 0;
 }
 
-.avatar {
-  flex: 0 0 auto;
-  width: 68px;
-  height: 68px;
-  border-radius: 50%;
-  background: var(--on-accent-weak);
-  border: 2px solid var(--on-accent-edge);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 30px;
-  font-weight: 600;
-}
-
-.identity h2 {
-  margin: 0 0 2px;
-  font-size: 1.5rem;
-  font-weight: 600;
-}
-
-.identity .login {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 0.9rem;
-  opacity: 0.9;
-}
-
-.identity .login mat-icon {
-  font-size: 18px;
-  width: 18px;
-  height: 18px;
-}
-
-.chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 10px;
-}
-
-.chip {
+/* The initial in brand tint, the same square the rail's account tile draws. */
+.identity-mark {
+  flex: none;
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  padding: 4px 12px;
-  border-radius: 999px;
-  background: var(--on-accent-weak);
-  font-size: 0.8rem;
-  font-weight: 500;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: var(--r-lg);
+  background: var(--brand-50);
+  border: 1px solid var(--line);
+  color: var(--brand-600);
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: var(--fw-medium);
+  line-height: 1;
 }
 
-.chip mat-icon {
-  font-size: 16px;
-  width: 16px;
-  height: 16px;
+.identity-text {
+  min-width: 0;
 }
 
-/* Cards side by side, stacking on small screens */
-.cards {
+.identity-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin-top: var(--sp-2);
+}
+
+.identity-pills .mat-icon {
+  font-size: 14px;
+  width: 14px;
+  height: 14px;
+  color: var(--muted);
+}
+
+/* ------------------------------------------------------------------ panels ---- */
+
+/* The two account forms side by side, the preferences full width under them.
+   align-items: start so a short panel does not stretch. */
+.profile-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
-  gap: 1.25rem;
+  grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+  gap: var(--sp-5);
   align-items: start;
 }
 
-.card {
-  background: var(--surface);
-  border-radius: 14px;
-  padding: 1.25rem 1.5rem 1.5rem;
+.panel.wide {
+  grid-column: 1 / -1;
 }
 
-.card-head {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 1rem;
-  padding-bottom: 0.75rem;
-  border-bottom: 1px solid var(--line);
-}
-
-.card-head mat-icon {
-  color: var(--brand-600);
-}
-
-.card-head h3 {
-  margin: 0;
-  font-size: 1.05rem;
-  font-weight: 600;
-}
-
-.form-col {
+.panel {
   display: flex;
   flex-direction: column;
+  min-width: 0;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  overflow: hidden;
 }
 
-.form-col mat-form-field {
-  width: 100%;
+.panel-head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-4);
+  border-bottom: 1px solid var(--line);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  color: var(--ink);
 }
 
-.actions {
-  margin-top: 0.25rem;
+.panel-head .mat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+  color: var(--muted);
 }
 
-.actions button mat-icon {
-  margin-inline-end: 4px;
+.panel-body {
+  display: flex;
+  flex-direction: column;
+  padding: var(--sp-4) var(--sp-4) 0;
 }
 
-/* Banners */
-.banner {
-  padding: 0.7rem 1rem;
-  border-radius: 8px;
-  margin-bottom: 1rem;
-  font-size: 0.9rem;
+/* The panel's action, on a hairline so the form above it ends somewhere. */
+.panel-foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-4);
+  border-top: 1px solid var(--line);
+  background: var(--surface-2);
 }
 
-.banner.error {
-  background: var(--danger-bg);
-  color: var(--danger-ink);
+.panel-body .error-banner,
+.panel-body .ok-banner {
+  margin-bottom: var(--sp-3);
 }
 
-.banner.success {
-  background: var(--ok-bg);
-  color: var(--ok-ink);
+/* A field's prefix icon is decoration for the label beside it. */
+.panel-body .mat-mdc-form-field .mat-icon[matPrefix] {
+  margin-inline-end: var(--sp-2);
+  color: var(--muted);
 }
 
-/* Amber rather than red: being asked to choose a password is an instruction,
-   not something the user got wrong. */
-.banner.warning {
-  background: var(--warn-bg);
-  color: var(--warn-ink);
+/* ------------------------------------------------------------- preferences ---- */
+
+/* No form fields here, so the body closes its own bottom. */
+.preferences {
+  padding-bottom: var(--sp-2);
 }
 
-/* The hand-rolled dark block that used to live here is gone. It keyed off
-   prefers-color-scheme, so it fired whenever the OS was dark even if the user
-   had explicitly chosen the light theme — and it only ever covered these two
-   rules, leaving the rest of the screen light. The card and its head now take
-   --surface and --line like every other card, which follow the real theme. */
+/* Setting at the start, control at the end; rows split by a hairline, not cards. */
+.pref-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  padding: var(--sp-3) 0;
+}
+
+.pref-row + .pref-row {
+  border-top: 1px solid var(--line);
+}
+
+.pref-text {
+  min-width: 0;
+}
+
+.pref-label {
+  font-size: var(--fs-body);
+  font-weight: var(--fw-medium);
+  color: var(--ink);
+}
+
+.pref-hint {
+  margin-top: 2px;
+  font-size: var(--fs-label);
+  color: var(--muted);
+}
+
+.pref-control {
+  flex: none;
+  width: auto;
+  min-width: 180px;
+}
+
+/* Same rounded segmented control the dashboard pickers use. */
+.theme-choice {
+  border-radius: var(--r-pill);
+  overflow: hidden;
+  border-color: var(--line-strong);
+}
+
+/* Three choices on one line: labels go before the row wraps. */
+.theme-choice .mat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+  margin-inline-end: var(--sp-1);
+}
+
+@media (max-width: 520px) {
+  .theme-choice .theme-name {
+    display: none;
+  }
+
+  .theme-choice .mat-icon {
+    margin-inline-end: 0;
+  }
+}

@@ -1,27 +1,45 @@
-<div class="profile-page" *transloco="let t">
-  <div class="profile-header mat-elevation-z3">
-    <div class="avatar">{{ initial }}</div>
-    <div class="identity">
-      <h2>{{ headerName }}</h2>
-      <div class="login"><mat-icon>alternate_email</mat-icon>{{ userName }}</div>
-      <div class="chips">
-        <span class="chip" *ngIf="role"><mat-icon>badge</mat-icon>{{ role }}</span>
-        <span class="chip" *ngIf="agencyName"><mat-icon>business</mat-icon>{{ agencyName }}</span>
+<div class="page profile-page" *transloco="let t">
+  <!-- The same head as every record screen: initial, name, login. -->
+  <div class="header-row">
+    <div class="identity-head">
+      <span class="identity-mark" aria-hidden="true">{{ initial }}</span>
+      <div class="identity-text">
+        <p class="page-eyebrow">{{ t('profile.title') }}</p>
+        <h2 class="title">{{ headerName }}</h2>
+        <p class="page-subtitle">{{ userName }}</p>
+        <!-- What the account is, not what it is doing: pills, not chips. -->
+        <div class="identity-pills" *ngIf="role || agencyName">
+          <span class="pill" *ngIf="role">
+            <mat-icon aria-hidden="true">badge</mat-icon>{{ t(roleLabelKey) }}
+          </span>
+          <span class="pill" *ngIf="agencyName">
+            <mat-icon aria-hidden="true">business</mat-icon>{{ agencyName }}
+          </span>
+        </div>
       </div>
     </div>
   </div>
 
-  <div class="cards">
-    <!-- Account details -->
-    <section class="card mat-elevation-z2">
-      <div class="card-head">
+  <!-- Says why the rest of the app is unreachable; page level, not per field. -->
+  <div class="action-banner" *ngIf="mustChangePassword">
+    <mat-icon>lock_reset</mat-icon>
+    <div class="action-banner-text">
+      <p class="action-banner-title">{{ t('profile.mustChangePasswordTitle') }}</p>
+      <p class="action-banner-note">{{ t('profile.mustChangePassword') }}</p>
+    </div>
+  </div>
+
+  <div class="profile-grid">
+    <!-- ------------------------- ACCOUNT DETAILS ------------------------- -->
+    <form class="panel" [formGroup]="profileForm" (ngSubmit)="saveProfile()">
+      <header class="panel-head">
         <mat-icon>manage_accounts</mat-icon>
-        <h3>{{ t('profile.accountDetails') }}</h3>
-      </div>
+        <span class="panel-title">{{ t('profile.accountDetails') }}</span>
+      </header>
 
-      <div *ngIf="profileError" class="banner error">{{ profileError }}</div>
+      <div class="panel-body">
+        <div *ngIf="profileError" class="error-banner">{{ profileError }}</div>
 
-      <form [formGroup]="profileForm" (ngSubmit)="saveProfile()" class="form-col">
         <mat-form-field appearance="outline">
           <mat-label>{{ t('profile.displayName') }}</mat-label>
           <mat-icon matPrefix>person</mat-icon>
@@ -36,52 +54,29 @@
           <mat-error *ngIf="profileForm.get('email')?.hasError('email')">{{ t('profile.emailInvalid') }}</mat-error>
           <mat-hint>{{ t('profile.emailHint') }}</mat-hint>
         </mat-form-field>
-
-        <div class="actions">
-          <button mat-flat-button color="primary" type="submit" [disabled]="savingProfile">
-            <mat-icon>save</mat-icon> {{ t('common.saveChanges') }}
-          </button>
-        </div>
-      </form>
-    </section>
-
-    <!-- Interface language. Selecting one saves it on the account and reloads
-         (LOCALE_ID and the text direction are fixed at bootstrap). -->
-    <section class="card mat-elevation-z2">
-      <div class="card-head">
-        <mat-icon>language</mat-icon>
-        <h3>{{ t('profile.language') }}</h3>
       </div>
 
-      <div class="form-col">
-        <mat-form-field appearance="outline">
-          <mat-label>{{ t('language.label') }}</mat-label>
-          <mat-select [value]="currentLanguage" (selectionChange)="setLanguage($event.value)">
-            <mat-option *ngFor="let language of languages" [value]="language">
-              {{ t('language.' + language) }}
-            </mat-option>
-          </mat-select>
-          <mat-hint>{{ t('profile.languageHint') }}</mat-hint>
-        </mat-form-field>
-      </div>
-    </section>
+      <!-- The screen's main action, so the only filled button. -->
+      <footer class="panel-foot">
+        <button mat-raised-button color="primary" type="submit" [disabled]="savingProfile">
+          <mat-icon>save</mat-icon> {{ savingProfile ? t('common.saving') : t('common.saveChanges') }}
+        </button>
+      </footer>
+    </form>
 
-    <!-- Change password -->
-    <section class="card mat-elevation-z2">
-      <div class="card-head">
+    <!-- ------------------------------ PASSWORD ------------------------------ -->
+    <form class="panel" [formGroup]="passwordForm" (ngSubmit)="changePassword()">
+      <header class="panel-head">
         <mat-icon>lock</mat-icon>
-        <h3>{{ t('profile.changePassword') }}</h3>
-      </div>
+        <span class="panel-title">{{ t('profile.changePassword') }}</span>
+      </header>
 
-      <!-- Says why the rest of the app is unreachable; without it a customer
-           who just followed an invitation email sees a bare form and a
-           navigation that keeps bouncing them back here. -->
-      <div *ngIf="mustChangePassword" class="banner warning">{{ t('profile.mustChangePassword') }}</div>
+      <div class="panel-body">
+        <div *ngIf="passwordError" class="error-banner">{{ passwordError }}</div>
+        <div *ngIf="passwordSuccess" class="ok-banner">
+          <mat-icon>check_circle</mat-icon> {{ passwordSuccess }}
+        </div>
 
-      <div *ngIf="passwordError" class="banner error">{{ passwordError }}</div>
-      <div *ngIf="passwordSuccess" class="banner success">{{ passwordSuccess }}</div>
-
-      <form [formGroup]="passwordForm" (ngSubmit)="changePassword()" class="form-col">
         <mat-form-field appearance="outline">
           <mat-label>{{ t('profile.currentPassword') }}</mat-label>
           <mat-icon matPrefix>lock_outline</mat-icon>
@@ -99,13 +94,55 @@
           <mat-icon matPrefix>vpn_key</mat-icon>
           <input matInput type="password" formControlName="confirmPassword" autocomplete="new-password" />
         </mat-form-field>
+      </div>
 
-        <div class="actions">
-          <button mat-flat-button color="primary" type="submit" [disabled]="savingPassword">
-            <mat-icon>lock_reset</mat-icon> {{ t('profile.changePassword') }}
-          </button>
+      <footer class="panel-foot">
+        <button mat-stroked-button type="submit" [disabled]="savingPassword">
+          <mat-icon>lock_reset</mat-icon> {{ t('profile.changePassword') }}
+        </button>
+      </footer>
+    </form>
+
+    <!-- ---------------------------- PREFERENCES ----------------------------
+         The language is kept on the account and reloads; the theme is per-device
+         and repaints live. -->
+    <section class="panel wide">
+      <header class="panel-head">
+        <mat-icon>tune</mat-icon>
+        <span class="panel-title">{{ t('profile.preferences') }}</span>
+      </header>
+
+      <div class="panel-body preferences">
+        <div class="pref-row">
+          <div class="pref-text">
+            <div class="pref-label">{{ t('profile.language') }}</div>
+            <div class="pref-hint">{{ t('profile.languageHint') }}</div>
+          </div>
+          <mat-form-field appearance="outline" subscriptSizing="dynamic" class="pref-control">
+            <mat-select [value]="currentLanguage" (selectionChange)="setLanguage($event.value)"
+                        [attr.aria-label]="t('language.label')">
+              <mat-option *ngFor="let language of languages" [value]="language">
+                {{ t('language.' + language) }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
         </div>
-      </form>
+
+        <div class="pref-row">
+          <div class="pref-text">
+            <div class="pref-label">{{ t('theme.label') }}</div>
+            <div class="pref-hint">{{ t('profile.themeHint') }}</div>
+          </div>
+          <mat-button-toggle-group class="pref-control theme-choice" [value]="currentTheme"
+                                   (change)="setTheme($event.value)"
+                                   [attr.aria-label]="t('theme.label')">
+            <mat-button-toggle *ngFor="let choice of themes" [value]="choice">
+              <mat-icon>{{ themeIcon(choice) }}</mat-icon>
+              <span class="theme-name">{{ t('theme.' + choice) }}</span>
+            </mat-button-toggle>
+          </mat-button-toggle-group>
+        </div>
+      </div>
     </section>
   </div>
 </div>

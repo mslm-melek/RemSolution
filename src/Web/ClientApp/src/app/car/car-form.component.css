@@ -60,6 +60,52 @@
   font-size: 13px;
 }
 
+/* Recurring costs: one line per expense type, expanded only when the car has
+   figures of its own. */
+.schedule-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.schedule-row {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px 12px;
+}
+
+.schedule-row.is-linked {
+  border-color: var(--brand-600);
+  background: var(--surface-2);
+}
+
+.schedule-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.schedule-default {
+  color: var(--muted);
+  font-size: var(--fs-micro);
+}
+
+.schedule-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 8px 12px;
+  margin-top: 12px;
+}
+
+.schedule-note {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
 .gallery {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
@@ -90,11 +136,8 @@
   object-fit: cover;
 }
 
-/* These sit on a photo, so unlike a .chip they need to stay legible against an
-   unknown image: an opaque tint plus its own ink, not a translucent one. The
-   fill/ink pairs are the semantic triples, which is what makes them work in both
-   themes — the previous version filled the badge with a dark colour and wrote on
-   it in white, which inverted to light-on-light the moment the tokens flipped. */
+/* These sit on a photo, so they need an opaque tint and their own ink. The
+   fill/ink pairs are the semantic triples, so they hold in both themes. */
 .badge {
   position: absolute;
   top: 6px;

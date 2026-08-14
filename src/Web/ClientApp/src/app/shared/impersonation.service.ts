@@ -6,76 +6,111 @@ export interface ImpersonatedAgency {
   name: string;
 }
 
-// Holds the agency workspace a platform administrator has entered. While one is
-// open, the impersonation interceptor stamps X-Impersonate-Agency on every
-// tenant-scoped request, so the ordinary agency screens read and write that
-// agency's data — the API grants the agency's permissions for the duration of
-// each such request and records it.
+// What goes in the store: the agency plus the account that opened it. `owner` is
+// null until the current-user probe answers, and `reconcile` fills it in.
+interface StoredWorkspace extends ImpersonatedAgency {
+  owner: string | null;
+}
+
+// Holds the agency workspace a platform administrator has entered; while one is
+// open the interceptor stamps X-Impersonate-Agency on every tenant-scoped request.
 //
-// The state is per session rather than per screen: entering an agency changes
-// what the whole app is looking at, so it has to survive navigation and the page
-// reloads the app already does (switching language reloads). sessionStorage is
-// the right store for it — per tab, so two tabs can sit in two different
-// agencies, and readable synchronously, which matters because the interceptor
-// needs it before the very first /api/Users/me call.
+// Kept in sessionStorage: per tab (two tabs can sit in two agencies) and readable
+// synchronously, which the interceptor needs before the first /api/Users/me call.
+// Entering and leaving reload the page, because permissions and features are
+// fetched once per app load.
 //
-// Entering and leaving reload the page on purpose: the signed-in user's
-// permissions and enabled features are fetched once per app load, and they
-// change completely with the agency context.
+// Per tab also means it outlives a sign-out, so it is stamped with its owner and
+// reconciled against the server on every load (see `reconcile`).
 @Injectable({ providedIn: 'root' })
 export class ImpersonationService {
   private static readonly storageKey = 'remsolution.agency-workspace';
 
-  private agency: ImpersonatedAgency | null = ImpersonationService.read();
+  private workspace: StoredWorkspace | null = ImpersonationService.read();
 
   get current(): ImpersonatedAgency | null {
-    return this.agency;
+    return this.workspace ? { id: this.workspace.id, name: this.workspace.name } : null;
   }
 
   get currentId(): number | null {
-    return this.agency?.id ?? null;
+    return this.workspace?.id ?? null;
   }
 
   // Opens the agency's workspace and lands on `landOn`. Already being in that
   // agency is a no-op, so a repeated click does not reload the page.
   enter(agency: ImpersonatedAgency, landOn = '/dashboard'): void {
-    if (this.agency?.id === agency.id) {
+    if (this.workspace?.id === agency.id) {
       window.location.assign(landOn);
       return;
     }
 
-    this.agency = agency;
-    ImpersonationService.write(agency);
+    this.workspace = { ...agency, owner: null };
+    ImpersonationService.write(this.workspace);
     window.location.assign(landOn);
+  }
+
+  /**
+   * Drops the stored workspace when it no longer belongs to whoever is signed in,
+   * and reports whether it did.
+   *
+   * `honoured` is the server's answer about the header this load sent
+   * (CurrentUserDto.IsImpersonating); false means signed out, not a platform
+   * admin, or the agency is gone. The owner is compared too, since the API would
+   * honour the header for a different platform admin.
+   */
+  reconcile(userName: string | null | undefined, honoured: boolean): boolean {
+    if (!this.workspace) return false;
+
+    if (!honoured) {
+      this.discard();
+      return true;
+    }
+
+    const signedIn = userName ?? null;
+
+    // First load after entering: record whoever is signed in as the owner.
+    if (this.workspace.owner === null) {
+      this.workspace = { ...this.workspace, owner: signedIn };
+      ImpersonationService.write(this.workspace);
+      return false;
+    }
+
+    if (this.workspace.owner !== signedIn) {
+      this.discard();
+      return true;
+    }
+
+    return false;
   }
 
   // Leaves the workspace and returns to the agency's console page.
   exit(): void {
-    const previous = this.agency;
+    const previous = this.workspace;
 
     this.discard();
     window.location.assign(previous ? `/agency/${previous.id}` : '/agency');
   }
 
-  // Drops the workspace without navigating. For the caller that has to undo a
-  // workspace the server will not honour (see AuthService), where a navigation
-  // would fight the reload it is about to do anyway.
+  // Drops the workspace without navigating, for callers that navigate themselves
+  // (signing out) or reload (see AuthService).
   discard(): void {
-    this.agency = null;
+    this.workspace = null;
     ImpersonationService.write(null);
   }
 
-  private static read(): ImpersonatedAgency | null {
-    // Guarded rather than assumed: the app is also rendered server-side, where
-    // there is no sessionStorage (and no impersonation either).
+  private static read(): StoredWorkspace | null {
+    // Guarded: there is no sessionStorage when the app renders server-side.
     if (typeof window === 'undefined' || !window.sessionStorage) return null;
 
     const raw = window.sessionStorage.getItem(ImpersonationService.storageKey);
     if (!raw) return null;
 
     try {
-      const parsed = JSON.parse(raw) as ImpersonatedAgency;
-      return typeof parsed?.id === 'number' ? parsed : null;
+      const parsed = JSON.parse(raw) as StoredWorkspace;
+      if (typeof parsed?.id !== 'number') return null;
+
+      // Values written before owners existed read as unowned, so the next load claims them.
+      return { id: parsed.id, name: parsed.name, owner: parsed.owner ?? null };
     } catch {
       // Corrupt value: drop it rather than wedging every request behind it.
       window.sessionStorage.removeItem(ImpersonationService.storageKey);
@@ -83,11 +118,11 @@ export class ImpersonationService {
     }
   }
 
-  private static write(agency: ImpersonatedAgency | null): void {
+  private static write(workspace: StoredWorkspace | null): void {
     if (typeof window === 'undefined' || !window.sessionStorage) return;
 
-    if (agency) {
-      window.sessionStorage.setItem(ImpersonationService.storageKey, JSON.stringify(agency));
+    if (workspace) {
+      window.sessionStorage.setItem(ImpersonationService.storageKey, JSON.stringify(workspace));
     } else {
       window.sessionStorage.removeItem(ImpersonationService.storageKey);
     }

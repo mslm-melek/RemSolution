@@ -11,6 +11,7 @@ using RemSolution.Application.Features.Car.Commands.UploadCarImageCommand;
 using RemSolution.Application.Features.Car.Commands.UploadCarPhotoCommand;
 using RemSolution.Application.Features.Car.DTOs;
 using RemSolution.Application.Features.Car.Queries.GetCarByIdQuery;
+using RemSolution.Application.Features.Car.Queries.GetCarExpenseSchedulesQuery;
 using RemSolution.Application.Features.Car.Queries.GetCarFacetsQuery;
 using RemSolution.Application.Features.Car.Queries.GetCarImagesQuery;
 using RemSolution.Application.Features.Car.Queries.GetCarOverviewQuery;
@@ -51,6 +52,12 @@ public class Cars : EndpointGroupBase
         group.MapGet("{id}/overview", GetCarOverview)
             .WithName(nameof(GetCarOverview))
             .RequireAuthorization(Permissions.CarRead);
+
+        // The car's recurring-cost schedule. The car goes in the query, not the
+        // route, because the new-car form asks the same question with no car yet.
+        group.MapGet("expense-schedules", GetCarExpenseSchedules)
+            .WithName(nameof(GetCarExpenseSchedules))
+            .RequireAuthorization(Permissions.ExpenseRead);
 
         // Gallery images (multi-image, with generated thumbnail/medium).
         group.MapGet("{id}/images", GetCarImages)
@@ -142,6 +149,12 @@ public class Cars : EndpointGroupBase
         });
 
         return TypedResults.Ok(url);
+    }
+
+    public async Task<Ok<IList<CarExpenseScheduleDto>>> GetCarExpenseSchedules(ISender sender, int? carId)
+    {
+        var result = await sender.Send(new GetCarExpenseSchedulesQuery(carId));
+        return TypedResults.Ok(result);
     }
 
     public async Task<Ok<IList<CarImageDto>>> GetCarImages(ISender sender, int id)

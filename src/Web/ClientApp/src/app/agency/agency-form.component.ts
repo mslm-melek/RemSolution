@@ -17,8 +17,7 @@ import { TranslocoService } from '@jsverse/transloco';
   styleUrls: ['./agency-form.component.css']
 })
 export class AgencyFormComponent implements OnInit {
-  // Confirm/prompt dialogs and error banners are plain strings, so they are
-  // translated imperatively rather than through the template pipe.
+  // Error banners are plain strings, so they are translated imperatively.
   private readonly transloco = inject(TranslocoService);
   form: FormGroup;
   countries: CountryDto[] = [];
@@ -26,20 +25,21 @@ export class AgencyFormComponent implements OnInit {
   saving = false;
   errorMessage = '';
 
-  // The HQ pin. Kept beside the form rather than in it: the map picker reads and
-  // writes it, and nothing about it is validated in the browser (the API checks
-  // the ranges and that the pair is complete).
+  // The HQ pin, kept beside the form: the map picker owns it and the API validates it.
   latitude: number | null = null;
   longitude: number | null = null;
 
-  // The agency's locations. On a new agency these are held here and created with
-  // it in one transaction; on an existing one each change is saved immediately
-  // through the branch sub-resource, so what is on screen is what is stored.
+  // On a new agency these are held here and created with it; on an existing one
+  // each change is saved at once through the branch sub-resource.
   branches: BranchDraft[] = [];
   branchesSaving = false;
 
   // Optimistic-concurrency token read with the agency and echoed back on update.
   private rowVersion?: string;
+
+  // From the create response: the login provisioned for the agency, and its
+  // one-time password only when the welcome mail did not go out.
+  createdAdmin: { id: number; userName?: string; password?: string; emailSent: boolean } | null = null;
 
   constructor(
     private fb: FormBuilder,
@@ -56,7 +56,10 @@ export class AgencyFormComponent implements OnInit {
       countryId: [null, Validators.required],
       currency: ['TND', [Validators.required, Validators.minLength(3), Validators.maxLength(3)]],
       cancellationWindowHours: [24, [Validators.required, Validators.min(0)]],
-      reservationExpiryHours: [48, [Validators.required, Validators.min(1)]]
+      reservationExpiryHours: [48, [Validators.required, Validators.min(1)]],
+      // Left empty, the API falls back to the agency's own address.
+      adminEmail: ['', [Validators.email, Validators.maxLength(320)]],
+      adminFullName: ['', Validators.maxLength(200)]
     });
   }
 
@@ -114,9 +117,8 @@ export class AgencyFormComponent implements OnInit {
     });
   }
 
-  // The picker reports coordinates first and the reverse-geocoded address a
-  // moment later, so an address of null means "nothing to suggest yet" — what is
-  // already typed is left alone.
+  // The picker reports the address after the coordinates, so a null address means
+  // "nothing to suggest yet" and what is typed is left alone.
   onPicked(picked: PickedLocation) {
     this.latitude = picked.latitude;
     this.longitude = picked.longitude;
@@ -128,8 +130,7 @@ export class AgencyFormComponent implements OnInit {
 
   onBranchAdded(draft: BranchDraft) {
     if (!this.isEdit) {
-      // Nothing to save against yet — the agency does not exist. Held until it
-      // does, then created with it.
+      // No agency to save against yet; held and created with it.
       this.branches = [...this.branches, draft];
       return;
     }
@@ -193,15 +194,34 @@ export class AgencyFormComponent implements OnInit {
         error: err => this.handleError(err)
       });
     } else {
+      const v = this.form.value;
       const command = new CreateAgencyCommand({
         ...payload,
+        adminEmail: v.adminEmail || undefined,
+        adminFullName: v.adminFullName || undefined,
         branches: this.branches.map(branch => new AgencyBranchInput(this.toBranchPayload(branch)))
       });
       this.client.createAgency(command).subscribe({
-        // Land on the agency management page so users/subscriptions can be set up.
-        next: id => this.router.navigate(['/agency', id]),
+        // Stay here: the one-time password has to be seen, or its mail confirmed.
+        next: result => {
+          this.saving = false;
+          this.createdAdmin = {
+            id: result.id!,
+            userName: result.adminUserName,
+            // Only when the mail did not go out; otherwise it is already delivered.
+            password: result.welcomeEmailSent ? undefined : result.adminTemporaryPassword,
+            emailSent: !!result.welcomeEmailSent
+          };
+        },
         error: err => this.handleError(err)
       });
+    }
+  }
+
+  // Leaves the hand-over panel for the agency's own page.
+  continueToAgency() {
+    if (this.createdAdmin) {
+      this.router.navigate(['/agency', this.createdAdmin.id]);
     }
   }
 
@@ -221,10 +241,8 @@ export class AgencyFormComponent implements OnInit {
     };
   }
 
-  // undefined rather than null for the optional halves: the generated client
-  // omits undefined properties, and the API treats a missing coordinate as "no
-  // pin" — a null would be sent and read the same way, but only one of the two
-  // shapes is what the command declares.
+  // undefined, not null, for the optional halves: the generated client omits
+  // undefined properties, which is the shape the command declares.
   private toBranchPayload(branch: BranchDraft) {
     return {
       name: branch.name,
@@ -238,8 +256,7 @@ export class AgencyFormComponent implements OnInit {
   private afterBranchSave() {
     this.branchesSaving = false;
     this.errorMessage = '';
-    // Re-read rather than patch: the list is ordered by name server-side, and a
-    // rename has to fall into its new place.
+    // Re-read: the list is ordered by name server-side.
     this.loadBranches();
   }
 

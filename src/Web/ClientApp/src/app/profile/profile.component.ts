@@ -8,6 +8,8 @@ import { extractValidationErrors } from '../shared/form-utils';
 import { TranslocoService } from '@jsverse/transloco';
 import { LanguageService } from '../shared/language.service';
 import { AppLanguage } from '../shared/language';
+import { ThemeService } from '../shared/theme.service';
+import { ThemeChoice } from '../shared/theme';
 
 @Component({
   selector: 'app-profile',
@@ -15,12 +17,13 @@ import { AppLanguage } from '../shared/language';
   styleUrls: ['./profile.component.css']
 })
 export class ProfileComponent implements OnInit {
-  // Confirm/prompt dialogs and error banners are plain strings, so they are
-  // translated imperatively rather than through the template pipe.
+  // Error banners are plain strings, so they are translated imperatively.
   private readonly transloco = inject(TranslocoService);
   private readonly language = inject(LanguageService);
+  private readonly theme = inject(ThemeService);
 
   readonly languages = this.language.available;
+  readonly themes = this.theme.available;
 
   profileForm: FormGroup;
   passwordForm: FormGroup;
@@ -32,8 +35,7 @@ export class ProfileComponent implements OnInit {
   headerName = '';
   initial = '?';
 
-  // The account is still on the temporary password from its invitation email;
-  // the rest of the app is closed until this form is submitted.
+  // Still on its invitation password: the rest of the app is closed until it changes.
   mustChangePassword = false;
 
   savingProfile = false;
@@ -78,6 +80,16 @@ export class ProfileComponent implements OnInit {
     });
   }
 
+  /** Transloco key for this account's role, under `roles.*` — as the rail does. */
+  get roleLabelKey(): string {
+    switch (this.role) {
+      case 'PlatformAdministrator': return 'roles.platformAdmin';
+      case 'AgencyAdministrator': return 'roles.agencyAdmin';
+      case 'Customer': return 'roles.customer';
+      default: return 'roles.agencyStaff';
+    }
+  }
+
   get currentLanguage(): AppLanguage {
     return this.language.current;
   }
@@ -85,6 +97,25 @@ export class ProfileComponent implements OnInit {
   // Saves on the account and reloads — see LanguageService.use.
   setLanguage(language: AppLanguage) {
     this.language.use(language);
+  }
+
+  // What was chosen, which includes 'system' — not what is currently painted.
+  get currentTheme(): ThemeChoice {
+    return this.theme.choice;
+  }
+
+  // No reload: colours are custom properties, so the attribute on <html> is all
+  // it takes (see ThemeService).
+  setTheme(choice: ThemeChoice) {
+    this.theme.use(choice);
+  }
+
+  themeIcon(choice: ThemeChoice): string {
+    switch (choice) {
+      case 'light': return 'light_mode';
+      case 'dark': return 'dark_mode';
+      default: return 'contrast';
+    }
   }
 
   saveProfile() {
@@ -104,8 +135,7 @@ export class ProfileComponent implements OnInit {
 
     this.client.updateMyProfile(command).subscribe({
       next: () => {
-        // The name in the nav bar and (on email change) the login are cached in
-        // the SPA; reload so both reflect the change.
+        // The nav name and the login are cached in the SPA; reload to refresh them.
         window.location.reload();
       },
       error: err => {
@@ -140,8 +170,7 @@ export class ProfileComponent implements OnInit {
         this.passwordSuccess = this.transloco.translate('profile.passwordChanged');
         this.passwordForm.reset();
 
-        // A provisioned account was pinned to this page until now; tell the
-        // guard it may let go, and drop the banner.
+        // Release the guard that pinned a provisioned account to this page.
         if (this.mustChangePassword) {
           this.mustChangePassword = false;
           this.auth.markPasswordChanged();

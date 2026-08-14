@@ -1,41 +1,42 @@
 import { Injectable } from '@angular/core';
 import { Observable, of } from 'rxjs';
-import { catchError, map, shareReplay } from 'rxjs/operators';
+import { catchError, map, shareReplay, tap } from 'rxjs/operators';
 import { UsersClient, CurrentUserDto } from '../web-api-client';
 import { ImpersonationService } from './impersonation.service';
 
-// Login, register and logout are full-page Razor flows, so the auth state can
-// only change across page reloads — one fetch per app load is enough.
+// Auth state only changes across page reloads (login/logout are Razor flows), so
+// one fetch per app load is enough.
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   readonly currentUser$: Observable<CurrentUserDto>;
 
-  // Set by the profile page the moment a password change succeeds. The probe
-  // above is fetched once and replayed, so without this the user would keep
-  // being bounced back to the password form by a cached "true" they have
-  // already acted on — the one piece of auth state that changes without a page
-  // reload.
+  // Set by the profile page on a successful change: the probe is replayed, so a
+  // cached "true" would keep bouncing the user back to the password form.
   private passwordChanged = false;
 
-  // Same idea for the home-screen tiles: the probe is fetched once and replayed,
-  // so a user who customizes their home, navigates away and comes back would
-  // otherwise be handed the choice they had before saving. Null = nothing saved
-  // this session, so the probe's value stands.
+  // Same for the home tiles, so a fresh choice is not overwritten by the replayed
+  // probe. Null = nothing saved this session.
   private homeWidgetsOverride: string[] | null = null;
 
-  // Same again for the landing screen's quick actions, saved separately from the
-  // tiles.
+  // Same again for the landing screen's quick actions.
   private homeActionsOverride: string[] | null = null;
 
   constructor(client: UsersClient, impersonation: ImpersonationService) {
     this.currentUser$ = client.getCurrentUser().pipe(
+      // The stored workspace is per tab and survives a sign-out, so it is checked
+      // against whoever is signed in now. Upstream of shareReplay, so every
+      // subscriber sees the settled state.
+      tap(user => {
+        if (!impersonation.reconcile(user.userName, user.isImpersonating === true)) return;
+
+        // This call answered under the workspace just dropped, so fetch it again.
+        // It cannot loop: the second pass sends no impersonation header.
+        if (user.isAuthenticated) window.location.reload();
+      }),
       catchError(() => {
-        // An open agency workspace stamps its header on this call too, so an
-        // agency that has since been deleted makes the server refuse it — and
-        // every other request with it. Left alone that reads as "signed out"
-        // across the whole app, for a reason the user cannot see. Drop the
-        // workspace and reload into the admin's own context instead; the reload
-        // cannot loop, because the second pass sends no impersonation header.
+        // A deleted agency makes the server refuse this call and every other one
+        // carrying the header, which reads as "signed out". Drop and reload into
+        // the admin's own context instead; the second pass sends no header.
         if (impersonation.current) {
           impersonation.discard();
           window.location.reload();
@@ -48,12 +49,10 @@ export class AuthService {
   }
 
   /**
-   * True while the account is still on the temporary password it was
-   * provisioned with. The API refuses everything but the change-password call
-   * in that state, so the SPA keeps the user on the one screen that can end it.
+   * True while the account is still on its provisioned temporary password; the
+   * API refuses everything but the change-password call in that state.
    */
-  // A getter, not a field: field initializers run before the constructor body,
-  // where currentUser$ is assigned.
+  // A getter, not a field: initializers run before currentUser$ is assigned.
   get mustChangePassword$(): Observable<boolean> {
     return this.currentUser$.pipe(
       map(user => user.mustChangePassword === true && !this.passwordChanged)
@@ -66,9 +65,8 @@ export class AuthService {
   }
 
   /**
-   * The tiles the user pinned to their home screen, in their order, or null when
-   * they have never chosen (the home screen then shows its defaults). An empty
-   * array is the deliberate "no tiles" and is returned as such.
+   * The tiles pinned to the home screen, in order, or null when never chosen
+   * (defaults then show). An empty array is a deliberate "no tiles".
    */
   get homeWidgets$(): Observable<string[] | null> {
     return this.currentUser$.pipe(
@@ -82,9 +80,8 @@ export class AuthService {
   }
 
   /**
-   * The quick actions the user keeps on their landing screen, in their order, or
-   * null when they have never chosen (the screen then shows its defaults). An
-   * empty array is the deliberate "no actions" and is returned as such.
+   * The landing screen's quick actions, in order, or null when never chosen. An
+   * empty array is a deliberate "no actions".
    */
   get homeActions$(): Observable<string[] | null> {
     return this.currentUser$.pipe(
@@ -97,26 +94,20 @@ export class AuthService {
     this.homeActionsOverride = actions;
   }
 
-  // A module is visible when the agency has the feature switched on AND the
-  // user holds the module's read permission (agency administrators get every
-  // permission from the API). Names must match the Domain constants
-  // (FeatureFlags / Permissions); the API enforces the same pair, so hiding
-  // here never out-privileges the backend.
+  // Feature on AND read permission held. Names must match the Domain constants;
+  // the API enforces the same pair, so this never out-privileges the backend.
   static canAccessModule(user: CurrentUserDto, feature: string, readPermission: string): boolean {
     return !!user.features?.includes(feature)
         && !!user.permissions?.includes(readPermission);
   }
 
-  // The platform administrator (app owner) gets the agency-grouped admin
-  // console; agency users get the flat module navigation. Must match the
-  // Domain Roles constant. The backend enforces the same role on every admin
-  // endpoint, so branching here never out-privileges the API.
+  // Platform admins get the console nav, agency users the module nav. Must match
+  // the Domain Roles constant, which the backend enforces anyway.
   static isPlatformAdmin(user: CurrentUserDto): boolean {
     return user.role === 'PlatformAdministrator';
   }
 
-  // A self-registered marketplace customer — gets the browse/booking experience
-  // instead of the staff/admin navigation.
+  // A self-registered marketplace customer: browse/booking, not staff navigation.
   static isCustomer(user: CurrentUserDto): boolean {
     return user.role === 'Customer';
   }

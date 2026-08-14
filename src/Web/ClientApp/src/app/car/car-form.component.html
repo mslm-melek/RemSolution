@@ -2,8 +2,7 @@
   <div class="header-row">
     <h2 class="title">{{ isEdit ? t('car.editTitle') : t('car.newTitle') }}</h2>
     <span>
-      <!-- Editing came from somewhere: the car's own page when it exists, the
-           list otherwise. -->
+      <!-- Back to the car's own page when it exists, the list otherwise. -->
       <a *ngIf="isEdit" mat-button [routerLink]="['/car', carId]">
         <mat-icon>arrow_back</mat-icon> {{ t('car.backToCar') }}
       </a>
@@ -70,13 +69,11 @@
         <input matInput type="number" formControlName="power" />
       </mat-form-field>
 
-      <!-- The odometer as the agency last saw it. A new booking on this car
-           offers it as the pickup reading, and recording a return moves it on. -->
+      <!-- The odometer: a new booking offers it as the pickup reading. -->
       <mat-form-field appearance="outline">
         <mat-label>{{ t('car.mileage') }}</mat-label>
         <input matInput type="number" min="0" formControlName="mileage" />
-        <!-- matTextSuffix, not matSuffix: the unit is text, and the text slot is
-             the one that keeps it off the outline. -->
+        <!-- matTextSuffix, not matSuffix: the text slot keeps it off the outline. -->
         <span matTextSuffix>{{ t('common.km') }}</span>
         <mat-hint>{{ t('car.mileageHint') }}</mat-hint>
         <mat-error *ngIf="form.get('mileage')?.hasError('min')">{{ t('car.mileageMin') }}</mat-error>
@@ -89,6 +86,73 @@
           <mat-option *ngFor="let fuel of fuelTypes" [value]="fuel.value">{{ t(fuel.labelKey) }}</mat-option>
         </mat-select>
       </mat-form-field>
+
+      <!-- Servicing and papers: the fleet rule per type, with this car's own
+           figures. Hidden, and not submitted, without Expense.Read. -->
+      <div class="span-2 schedule-panel" *ngIf="schedulesLoaded && scheduleRows.length"
+           formArrayName="expenseSchedules">
+        <label class="photo-label">{{ t('car.schedule.title') }}</label>
+        <p class="photo-hint">{{ t('car.schedule.hint') }}</p>
+
+        <div *ngFor="let row of scheduleRows.controls; let i = index" [formGroupName]="i"
+             class="schedule-row" [class.is-linked]="isScheduleLinked(i)">
+          <div class="schedule-head">
+            <mat-checkbox formControlName="linked"
+                          (change)="onScheduleLinkedChange(i, $event.checked)">
+              {{ scheduleType(i)?.expenseTypeName }}
+            </mat-checkbox>
+
+            <span class="schedule-default">
+              <ng-container *ngIf="scheduleType(i)?.typeAfterKilometer as km">
+                {{ t('car.schedule.fleetEveryKm', { km: km }) }}
+              </ng-container>
+              <ng-container *ngIf="scheduleType(i)?.typeAfterMonth as months">
+                {{ t('car.schedule.fleetEveryMonths', { months: months }) }}
+              </ng-container>
+              <ng-container *ngIf="!scheduleType(i)?.typeAfterKilometer && !scheduleType(i)?.typeAfterMonth">
+                {{ t('car.schedule.noFleetRule') }}
+              </ng-container>
+            </span>
+          </div>
+
+          <div class="schedule-fields" *ngIf="isScheduleLinked(i)">
+            <mat-form-field appearance="outline">
+              <mat-label>{{ t('car.schedule.afterKm') }}</mat-label>
+              <input matInput type="number" min="1" formControlName="afterKilometer"
+                     [placeholder]="scheduleType(i)?.typeAfterKilometer?.toString() ?? ''" />
+              <span matTextSuffix>{{ t('common.km') }}</span>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>{{ t('car.schedule.afterMonths') }}</mat-label>
+              <input matInput type="number" min="1" formControlName="afterMonth"
+                     [placeholder]="scheduleType(i)?.typeAfterMonth?.toString() ?? ''" />
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>{{ t('car.schedule.leadKm') }}</mat-label>
+              <input matInput type="number" min="0" formControlName="leadKilometers" />
+              <span matTextSuffix>{{ t('common.km') }}</span>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>{{ t('car.schedule.leadDays') }}</mat-label>
+              <input matInput type="number" min="0" formControlName="leadDays" />
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>{{ t('car.schedule.lastDoneMileage') }}</mat-label>
+              <input matInput type="number" min="0" formControlName="lastDoneMileage" />
+              <span matTextSuffix>{{ t('common.km') }}</span>
+            </mat-form-field>
+
+            <app-date-field [label]="t('car.schedule.lastDoneOn')"
+                            formControlName="lastDoneOn"></app-date-field>
+
+            <p class="schedule-note">{{ t('car.schedule.blankFollowsFleet') }}</p>
+          </div>
+        </div>
+      </div>
 
       <div class="span-2 photo-panel">
         <label class="photo-label">{{ t('car.photos') }}</label>

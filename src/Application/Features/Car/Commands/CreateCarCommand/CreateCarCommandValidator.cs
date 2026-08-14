@@ -20,6 +20,8 @@ namespace RemSolution.Application.Features.Car.Commands.CreateCarCommand
             // Zero is a real reading (a car delivered new), unlike a negative one.
             RuleFor(v => v.Mileage)
                 .GreaterThanOrEqualTo(0).When(v => v.Mileage.HasValue);
+            RuleForEach(v => v.ExpenseSchedules)
+                .SetValidator(new CarExpenseScheduleInputValidator());
         }
     }
 }

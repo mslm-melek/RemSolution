@@ -5,6 +5,7 @@ using RemSolution.Infrastructure.Identity;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -32,20 +33,48 @@ public static class InitialiserExtensions
         });
     }
 
+    /// <summary>
+    /// Migrates or checks the schema (see <see cref="DatabaseOptions"/>), then
+    /// seeds the reference data. Called in every environment; configuration
+    /// decides what it does.
+    /// </summary>
     public static async Task InitialiseDatabaseAsync(this WebApplication app)
     {
+        // The NSwag build-time host has no database behind it.
+        if (app.Configuration.GetConnectionString("RemSolutionDb")
+            == DatabaseOptions.BuildTimePlaceholderConnectionString)
+        {
+            return;
+        }
+
         using var scope = app.Services.CreateScope();
 
         var initialiser = scope.ServiceProvider.GetRequiredService<ApplicationDbContextInitialiser>();
+        var options = scope.ServiceProvider.GetRequiredService<IOptions<DatabaseOptions>>().Value;
+        var development = app.Environment.IsDevelopment();
 
-        await initialiser.InitialiseAsync();
+        // Migrating from the app is a developer-machine default; elsewhere the
+        // deployment applies the bundle.
+        if (options.MigrateOnStartup ?? development)
+        {
+            await initialiser.MigrateAsync();
+        }
+        else
+        {
+            await initialiser.EnsureSchemaIsCurrentAsync(options.FailOnPendingMigrations);
+        }
+
+        if (options.SeedOnStartup)
+        {
+            await initialiser.SeedAsync();
+        }
 
         // Demo data is doubly gated: the DemoData:Enabled flag AND the Development
         // environment. Migrating a database is safe anywhere; filling it with fake
         // bookings is not, and this method is the one place both facts are known.
         var demoData = scope.ServiceProvider.GetRequiredService<IOptions<DemoDataOptions>>().Value;
 
-        if (demoData.Enabled && app.Environment.IsDevelopment())
+        if (demoData.Enabled && development)
         {
             await scope.ServiceProvider.GetRequiredService<DemoDataSeeder>().SeedAsync();
         }
@@ -54,20 +83,39 @@ public static class InitialiserExtensions
 
 public class ApplicationDbContextInitialiser
 {
+    // Instances may start together, and the seed is idempotent but not atomic, so
+    // it is serialised on a named app lock. Session-owned: the seed opens its own
+    // transactions.
+    private const string SeedLockResource = "remsolution-reference-data-seed";
+
     private readonly ILogger<ApplicationDbContextInitialiser> _logger;
     private readonly ApplicationDbContext _context;
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly RoleManager<IdentityRole> _roleManager;
+    private readonly DatabaseOptions _options;
+    private readonly IHostEnvironment _environment;
 
-    public ApplicationDbContextInitialiser(ILogger<ApplicationDbContextInitialiser> logger, ApplicationDbContext context, UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager)
+    public ApplicationDbContextInitialiser(
+        ILogger<ApplicationDbContextInitialiser> logger,
+        ApplicationDbContext context,
+        UserManager<ApplicationUser> userManager,
+        RoleManager<IdentityRole> roleManager,
+        IOptions<DatabaseOptions> options,
+        IHostEnvironment environment)
     {
         _logger = logger;
         _context = context;
         _userManager = userManager;
         _roleManager = roleManager;
+        _options = options.Value;
+        _environment = environment;
     }
 
-    public async Task InitialiseAsync()
+    /// <summary>
+    /// Applies pending migrations; only called where that is allowed (see
+    /// <see cref="DatabaseOptions.MigrateOnStartup"/>).
+    /// </summary>
+    public async Task MigrateAsync()
     {
         try
         {
@@ -75,8 +123,34 @@ public class ApplicationDbContextInitialiser
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "An error occurred while initialising the database.");
+            _logger.LogError(ex, "An error occurred while migrating the database.");
             throw;
+        }
+    }
+
+    /// <summary>
+    /// Verifies the deployment already moved the schema forward. With
+    /// <paramref name="fail"/> the host refuses to start, which is easier to
+    /// diagnose than missing-column errors one endpoint at a time.
+    /// </summary>
+    public async Task EnsureSchemaIsCurrentAsync(bool fail)
+    {
+        var pending = (await _context.Database.GetPendingMigrationsAsync()).ToList();
+
+        if (pending.Count == 0)
+        {
+            return;
+        }
+
+        _logger.LogCritical(
+            "The database is missing {Count} migration(s): {Migrations}. Apply the migration bundle as part of the deployment (see docs/RUNBOOK_Base_De_Donnees.md).",
+            pending.Count, string.Join(", ", pending));
+
+        if (fail)
+        {
+            throw new InvalidOperationException(
+                $"The database is behind this build by {pending.Count} migration(s): {string.Join(", ", pending)}. " +
+                "Apply the migration bundle before starting the application, or set Database:FailOnPendingMigrations to false to start anyway.");
         }
     }
 
@@ -84,6 +158,28 @@ public class ApplicationDbContextInitialiser
     {
         try
         {
+            // Held for the whole seed, released with the connection; a second
+            // instance waits here and then finds nothing left to do.
+            await using var connection = new Microsoft.Data.SqlClient.SqlConnection(
+                _context.Database.GetConnectionString());
+
+            await connection.OpenAsync();
+
+            await using (var command = connection.CreateCommand())
+            {
+                command.CommandText = @"
+DECLARE @result int;
+EXEC @result = sp_getapplock
+    @Resource = @resource,
+    @LockMode = 'Exclusive',
+    @LockOwner = 'Session',
+    @LockTimeout = 120000;
+IF @result < 0 THROW 51000, 'Failed to acquire the reference-data seed lock.', 1;";
+                command.Parameters.AddWithValue("@resource", SeedLockResource);
+
+                await command.ExecuteNonQueryAsync();
+            }
+
             await TrySeedAsync();
         }
         catch (Exception ex)
@@ -106,16 +202,49 @@ public class ApplicationDbContextInitialiser
 
         // One platform administrator. Deliberately no AgencyId: platform admins
         // are not tenant-scoped and must never carry the AgencyId claim.
-        var platformAdmin = new ApplicationUser { UserName = "platformadmin@localhost", Email = "platformadmin@localhost" };
+        var login = _options.PlatformAdminEmail;
 
-        if (_userManager.Users.All(u => u.UserName != platformAdmin.UserName))
+        if (_userManager.Users.All(u => u.UserName != login))
         {
-            await _userManager.CreateAsync(platformAdmin, "PlatformAdmin1!");
+            // No configured password outside Development means no account: a
+            // well-known password in the binary would be a published back door.
+            var password = _options.PlatformAdminPassword;
+
+            if (string.IsNullOrWhiteSpace(password) && _environment.IsDevelopment())
+            {
+                password = "PlatformAdmin1!";
+            }
+
+            if (string.IsNullOrWhiteSpace(password))
+            {
+                _logger.LogWarning(
+                    "No platform administrator exists and Database:PlatformAdminPassword is not configured, so none was created. Set it (Key Vault or an environment variable), restart once to create '{Login}', then sign in and change the password.",
+                    login);
+            }
+            else
+            {
+                var created = await _userManager.CreateAsync(
+                    new ApplicationUser
+                    {
+                        UserName = login,
+                        Email = login,
+                        // Whoever set the password is not necessarily its user.
+                        MustChangePassword = !_environment.IsDevelopment(),
+                    },
+                    password);
+
+                if (!created.Succeeded)
+                {
+                    _logger.LogError(
+                        "Could not create the platform administrator '{Login}': {Errors}",
+                        login, string.Join("; ", created.Errors.Select(e => e.Description)));
+                }
+            }
         }
 
         // Role assignment is done outside the creation branch so databases seeded
         // before a role existed still pick it up.
-        var platformAdminUser = await _userManager.FindByNameAsync(platformAdmin.UserName);
+        var platformAdminUser = await _userManager.FindByNameAsync(login);
 
         if (platformAdminUser is not null && !await _userManager.IsInRoleAsync(platformAdminUser, Roles.PlatformAdministrator))
         {

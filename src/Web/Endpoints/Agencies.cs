@@ -124,10 +124,12 @@ public class Agencies : EndpointGroupBase
         return TypedResults.Ok(result);
     }
 
-    public async Task<Created<int>> CreateAgency(ISender sender, CreateAgencyCommand command)
+    // Returns the outcome, not just the id: the caller needs the administrator
+    // login and its one-time password.
+    public async Task<Created<AgencyCreatedDto>> CreateAgency(ISender sender, CreateAgencyCommand command)
     {
-        var id = await sender.Send(command);
-        return TypedResults.Created($"/Agencies/{id}", id);
+        var result = await sender.Send(command);
+        return TypedResults.Created($"/Agencies/{result.Id}", result);
     }
 
     public async Task<Results<NoContent, BadRequest>> UpdateAgency(ISender sender, int id, UpdateAgencyCommand command)

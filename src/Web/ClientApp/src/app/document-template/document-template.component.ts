@@ -1,6 +1,4 @@
-import { Component, OnInit, ViewChild, inject } from '@angular/core';
-import { MatSort } from '@angular/material/sort';
-import { MatTableDataSource } from '@angular/material/table';
+import { Component, OnInit, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import {
   DocumentTemplatesClient, DocumentTemplateDto, DocumentTemplateExampleDto,
@@ -10,9 +8,8 @@ import { extractValidationErrors } from '../shared/form-utils';
 import { LanguageService } from '../shared/language.service';
 import { TranslocoService } from '@jsverse/transloco';
 
-// The draft an example-clone or an import hands to the editor. Held in the
-// service below rather than passed through the URL: it is a whole document, and a
-// query string is the wrong place for one.
+// The draft a clone, a duplicate or an import hands to the editor. Held here
+// rather than in the URL: it is a whole document.
 export interface TemplateDraft {
   name: string;
   kind: DocumentTemplateKind;
@@ -20,6 +17,9 @@ export interface TemplateDraft {
   blocks: any[];
   fields: any[];
 }
+
+/** Which slice of the shelf is on screen. Mirrors the three tabs. */
+type TemplateTab = 'all' | 'contract' | 'facture';
 
 @Component({
   selector: 'app-document-template',
@@ -31,45 +31,37 @@ export class DocumentTemplateComponent implements OnInit {
   private readonly language = inject(LanguageService);
 
   templates: DocumentTemplateDto[] = [];
-  dataSource = new MatTableDataSource<DocumentTemplateDto>([]);
 
-  // The table only exists once there is at least one template, so the sort
-  // header arrives later than ngAfterViewInit — take it through a setter.
-  @ViewChild(MatSort) set tableSort(sort: MatSort | undefined) {
-    if (sort) this.dataSource.sort = sort;
-  }
+  /** The templates the current tab shows — what the header counts. */
+  shown: DocumentTemplateDto[] = [];
+
   examples: DocumentTemplateExampleDto[] = [];
   loading = false;
   importing = false;
   errorMessage = '';
 
-  // Retired templates are hidden until asked for: the list is a working tool,
-  // not an archive.
+  // Retired templates are hidden until asked for.
   showInactive = false;
 
+  tab: TemplateTab = 'all';
+
+  tabs: { key: TemplateTab; labelKey: string }[] = [
+    { key: 'all', labelKey: 'documentTemplate.tabAll' },
+    { key: 'contract', labelKey: 'documentTemplate.tabContracts' },
+    { key: 'facture', labelKey: 'documentTemplate.tabInvoices' }
+  ];
+
   DocumentTemplateKind = DocumentTemplateKind;
-  columns = ['name', 'kind', 'language', 'status', 'actions'];
 
   constructor(
     private client: DocumentTemplatesClient,
     private router: Router
-  ) {
-    this.dataSource.sortingDataAccessor = (template, column) => {
-      switch (column) {
-        case 'kind': return template.kind ?? 0;
-        case 'language': return template.language ?? '';
-        // Status sorts the default template first, retired ones last.
-        case 'status': return template.isDefault ? 0 : (template.isActive ? 1 : 2);
-        default: return template.name ?? '';
-      }
-    };
-  }
+  ) { }
 
   ngOnInit() {
     this.reload();
 
-    // Examples come back in the language this session is working in; the API takes
-    // no language argument so the wording and the tag can never disagree.
+    // Examples come back in the session's language; the API takes no argument for it.
     this.client.getDocumentTemplateExamples().subscribe({
       next: list => this.examples = list || [],
       error: err => console.error(err)
@@ -81,7 +73,7 @@ export class DocumentTemplateComponent implements OnInit {
     this.client.getDocumentTemplates(null, null, this.showInactive).subscribe({
       next: list => {
         this.templates = list || [];
-        this.dataSource.data = this.templates;
+        this.applyTab();
         this.loading = false;
       },
       error: err => {
@@ -96,12 +88,21 @@ export class DocumentTemplateComponent implements OnInit {
     this.reload();
   }
 
+  selectTab(tab: TemplateTab) {
+    this.tab = tab;
+    this.applyTab();
+  }
+
+  /** What each tab would show, for the counts beside the labels. */
+  countFor(tab: TemplateTab): number {
+    return this.filter(tab).length;
+  }
+
   newTemplate(kind: DocumentTemplateKind) {
     this.router.navigate(['/document-template/new'], { queryParams: { kind } });
   }
 
-  // Cloning is a client-side copy of the example's blocks into a new, unsaved
-  // template — the admin reviews and names it before anything is stored.
+  // A client-side copy into a new, unsaved template; nothing is stored yet.
   cloneExample(example: DocumentTemplateExampleDto) {
     DocumentTemplateComponent.draft = {
       name: this.transloco.translate('documentTemplate.copyOf', { name: example.name }),
@@ -109,6 +110,19 @@ export class DocumentTemplateComponent implements OnInit {
       language: example.language!,
       blocks: (example.blocks || []).map(b => b.toJSON()),
       fields: []
+    };
+
+    this.router.navigate(['/document-template/new']);
+  }
+
+  // Same road: blocks and bindings are copied into an unsaved draft.
+  duplicate(template: DocumentTemplateDto) {
+    DocumentTemplateComponent.draft = {
+      name: this.transloco.translate('documentTemplate.copyOf', { name: template.name }),
+      kind: template.kind!,
+      language: template.language!,
+      blocks: (template.blocks || []).map(b => b.toJSON()),
+      fields: (template.fields || []).map(f => f.toJSON())
     };
 
     this.router.navigate(['/document-template/new']);
@@ -166,14 +180,35 @@ export class DocumentTemplateComponent implements OnInit {
       : 'documentTemplate.kindContract';
   }
 
-  // Handed to the editor on the next navigation and cleared once read, so a
-  // later visit to /new starts blank instead of resurrecting an old draft.
+  // One chip per card: default (what gets printed), retired, or in use.
+  statusFor(template: DocumentTemplateDto): { labelKey: string; icon: string; tone: string } {
+    if (!template.isActive) {
+      return { labelKey: 'documentTemplate.retired', icon: 'inventory_2', tone: 'neutral' };
+    }
+    if (template.isDefault) {
+      return { labelKey: 'documentTemplate.default', icon: 'check_circle', tone: 'ok' };
+    }
+    return { labelKey: 'common.active', icon: 'radio_button_checked', tone: 'neutral' };
+  }
+
+  // Cleared once read, so a later visit to /new starts blank.
   private static draft?: TemplateDraft;
 
   static takeDraft(): TemplateDraft | undefined {
     const draft = DocumentTemplateComponent.draft;
     DocumentTemplateComponent.draft = undefined;
     return draft;
+  }
+
+  private applyTab() {
+    this.shown = this.filter(this.tab);
+  }
+
+  private filter(tab: TemplateTab): DocumentTemplateDto[] {
+    if (tab === 'all') return this.templates;
+
+    const kind = tab === 'contract' ? DocumentTemplateKind.Contract : DocumentTemplateKind.Facture;
+    return this.templates.filter(template => template.kind === kind);
   }
 
   private handleError(err: any) {

@@ -1,10 +1,11 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
   CarsClient, CarDto, CreateCarCommand, UpdateCarCommand,
   FuelType, CarStatus, ModelCarsClient, ModelCarDto,
-  BranchesClient, BranchDto, CarImageDto, ImageProcessingStatus, FileParameter
+  BranchesClient, BranchDto, CarImageDto, ImageProcessingStatus, FileParameter,
+  CarExpenseScheduleDto, CarExpenseScheduleInput
 } from '../web-api-client';
 import { toDateInput, fromDateInput, extractValidationErrors, isConcurrencyConflict } from '../shared/form-utils';
 import { TranslocoService } from '@jsverse/transloco';
@@ -15,8 +16,7 @@ import { TranslocoService } from '@jsverse/transloco';
   styleUrls: ['./car-form.component.css']
 })
 export class CarFormComponent implements OnInit, OnDestroy {
-  // Confirm/prompt dialogs and error banners are plain strings, so they are
-  // translated imperatively rather than through the template pipe.
+  // Error banners are plain strings, so they are translated imperatively.
   private readonly transloco = inject(TranslocoService);
   form: FormGroup;
   models: ModelCarDto[] = [];
@@ -25,20 +25,23 @@ export class CarFormComponent implements OnInit, OnDestroy {
   saving = false;
   errorMessage = '';
 
-  // Currency is agency-scoped and set server-side; surfaced read-only next to
-  // the daily-rate amount once the car (and thus its currency) is known.
+  // Agency-scoped and set server-side; shown read-only beside the daily rate.
   currency?: string;
 
-  // Optimistic-concurrency token read with the car and echoed back on update,
-  // so a save that lost a race is rejected with 409 instead of clobbering.
+  // Optimistic-concurrency token, echoed back on update so a lost race 409s.
   private rowVersion?: string;
 
-  // Gallery (CarImage): many images, each with a generated thumbnail. Available
-  // only once the car exists, like the legacy single photo.
+  // One row per notifiable expense type. The DTOs are kept beside the form array
+  // for the fleet-wide labels; the editable figures live in the array.
+  // Without Expense.Read the call 403s, and the section stays hidden and unsent —
+  // an update that omits the schedules leaves them alone.
+  scheduleTypes: CarExpenseScheduleDto[] = [];
+  schedulesLoaded = false;
+
+  // Gallery (CarImage), available only once the car exists.
   images: CarImageDto[] = [];
   uploadingImage = false;
-  // Object URL for the just-picked file, shown instantly while the upload and
-  // out-of-band thumbnail generation happen; revoked once done.
+  // Object URL for the picked file, shown while the upload and resize happen.
   previewUrl?: string;
 
   fuelTypes = [
@@ -71,12 +74,17 @@ export class CarFormComponent implements OnInit, OnDestroy {
       power: [null],
       fuelType: [null],
       // The car's odometer, which a booking on it takes as its pickup reading.
-      mileage: [null, Validators.min(0)]
+      mileage: [null, Validators.min(0)],
+      expenseSchedules: this.fb.array([])
     });
   }
 
   get isEdit(): boolean {
     return this.carId !== undefined;
+  }
+
+  get scheduleRows(): FormArray {
+    return this.form.get('expenseSchedules') as FormArray;
   }
 
   ngOnInit() {
@@ -93,8 +101,7 @@ export class CarFormComponent implements OnInit, OnDestroy {
     const idParam = this.route.snapshot.paramMap.get('id');
     if (idParam) {
       this.carId = +idParam;
-      // The matricule identifies the vehicle and is not part of
-      // UpdateCarCommand, so it stays read-only when editing.
+      // Not part of UpdateCarCommand, so read-only when editing.
       this.form.get('matricule')!.disable();
       this.client.getCarById(this.carId).subscribe({
         next: dto => this.populate(dto),
@@ -102,6 +109,13 @@ export class CarFormComponent implements OnInit, OnDestroy {
       });
       this.loadImages();
     }
+
+    // Asked without a car too: a new car can be given intervals as it is created.
+    this.client.getCarExpenseSchedules(this.carId ?? undefined).subscribe({
+      next: rows => this.buildScheduleRows(rows || []),
+      // Silent: reaching this form without Expense.Read is normal, not an error.
+      error: () => this.schedulesLoaded = false
+    });
   }
 
   ngOnDestroy() {
@@ -123,6 +137,68 @@ export class CarFormComponent implements OnInit, OnDestroy {
     });
     this.currency = dto.dailyRate?.currency;
     this.rowVersion = dto.rowVersion;
+  }
+
+  private buildScheduleRows(rows: CarExpenseScheduleDto[]) {
+    this.scheduleTypes = rows;
+    this.scheduleRows.clear();
+
+    for (const row of rows) {
+      this.scheduleRows.push(this.fb.group({
+        expenseTypeId: [row.expenseTypeId],
+        // Off means "this car follows the fleet rule", which most cars do.
+        linked: [row.isLinked],
+        afterKilometer: [row.afterKilometer ?? null, Validators.min(1)],
+        afterMonth: [row.afterMonth ?? null, Validators.min(1)],
+        leadKilometers: [row.leadKilometers ?? null, Validators.min(0)],
+        leadDays: [row.leadDays ?? null, Validators.min(0)],
+        lastDoneMileage: [row.lastDoneMileage ?? null, Validators.min(0)],
+        lastDoneOn: [toDateInput(row.lastDoneOn)]
+      }));
+    }
+
+    this.schedulesLoaded = true;
+  }
+
+  /** The type's fleet-wide figures, shown beside the row as the fallback. */
+  scheduleType(index: number): CarExpenseScheduleDto | undefined {
+    return this.scheduleTypes[index];
+  }
+
+  isScheduleLinked(index: number): boolean {
+    return !!this.scheduleRows.at(index).get('linked')?.value;
+  }
+
+  /** Unticking clears the figures, so stale numbers cannot come back on re-ticking. */
+  onScheduleLinkedChange(index: number, linked: boolean) {
+    if (!linked) {
+      this.scheduleRows.at(index).patchValue({
+        afterKilometer: null, afterMonth: null,
+        leadKilometers: null, leadDays: null,
+        lastDoneMileage: null, lastDoneOn: ''
+      });
+    }
+  }
+
+  private scheduleCommand(): CarExpenseScheduleInput[] | undefined {
+    if (!this.schedulesLoaded) {
+      return undefined;
+    }
+
+    return this.scheduleRows.controls
+      .filter(row => row.get('linked')!.value)
+      .map(row => {
+        const v = row.value;
+        return new CarExpenseScheduleInput({
+          expenseTypeId: v.expenseTypeId,
+          afterKilometer: v.afterKilometer ?? undefined,
+          afterMonth: v.afterMonth ?? undefined,
+          leadKilometers: v.leadKilometers ?? undefined,
+          leadDays: v.leadDays ?? undefined,
+          lastDoneMileage: v.lastDoneMileage ?? undefined,
+          lastDoneOn: v.lastDoneOn ? fromDateInput(v.lastDoneOn) : undefined
+        });
+      });
   }
 
   save() {
@@ -147,7 +223,8 @@ export class CarFormComponent implements OnInit, OnDestroy {
         color: v.color || undefined,
         power: v.power ?? undefined,
         fuelType: v.fuelType ?? undefined,
-        mileage: v.mileage ?? undefined
+        mileage: v.mileage ?? undefined,
+        expenseSchedules: this.scheduleCommand()
       });
       this.client.updateCar(this.carId!, command).subscribe({
         next: () => this.router.navigate(['/car']),
@@ -164,7 +241,8 @@ export class CarFormComponent implements OnInit, OnDestroy {
         color: v.color || undefined,
         power: v.power ?? undefined,
         fuelType: v.fuelType ?? undefined,
-        mileage: v.mileage ?? undefined
+        mileage: v.mileage ?? undefined,
+        expenseSchedules: this.scheduleCommand()
       });
       this.client.createCar(command).subscribe({
         next: () => this.router.navigate(['/car']),
@@ -188,8 +266,7 @@ export class CarFormComponent implements OnInit, OnDestroy {
 
     this.uploadingImage = true;
     this.errorMessage = '';
-    // Instant local preview while the server stores the original and generates
-    // the thumbnail/medium out of band.
+    // Local preview while the server stores and resizes out of band.
     this.setPreview(URL.createObjectURL(file));
 
     const parameter: FileParameter = { data: file, fileName: file.name };
@@ -223,8 +300,7 @@ export class CarFormComponent implements OnInit, OnDestroy {
     });
   }
 
-  // Prefer the generated thumbnail; fall back to the original while derivatives
-  // are still being produced.
+  // Prefer the thumbnail; fall back while derivatives are still being produced.
   thumbnailFor(image: CarImageDto): string | undefined {
     return image.thumbnailUrl ?? image.originalUrl ?? undefined;
   }

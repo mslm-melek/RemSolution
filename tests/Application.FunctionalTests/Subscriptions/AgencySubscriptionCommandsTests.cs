@@ -19,11 +19,17 @@ public class AgencySubscriptionCommandsTests : BaseTestFixture
         var upgradedPlan = new SubscriptionPlan { Name = "Upgraded", MaxCars = 50, MaxClients = 200, Price = 99m };
         await AddAsync(upgradedPlan);
 
+        // The test agency has no users, so assigning a plan bootstraps its first
+        // administrator, and that needs an email to use as the login.
+        var agency = await FindAsync<Agency>(agencyId);
+        agency!.Email = "patron@testagency.test";
+        await UpdateAsync(agency);
+
         // Platform-admin operation: requires the role, carries no tenant.
         await RunAsPlatformAdministratorAsync();
         SetCurrentAgency(null);
 
-        var newSubscriptionId = await SendAsync(new AssignAgencySubscriptionCommand
+        var assigned = await SendAsync(new AssignAgencySubscriptionCommand
         {
             AgencyId = agencyId,
             PlanId = upgradedPlan.Id,
@@ -37,9 +43,13 @@ public class AgencySubscriptionCommandsTests : BaseTestFixture
         statuses.Count(s => s == SubscriptionStatus.Active).Should().Be(1);
         statuses.Count(s => s == SubscriptionStatus.Expired).Should().Be(1);
 
-        var active = await FindAsync<AgencySubscription>(newSubscriptionId);
+        var active = await FindAsync<AgencySubscription>(assigned.SubscriptionId);
         active!.Status.Should().Be(SubscriptionStatus.Active);
         active.PlanId.Should().Be(upgradedPlan.Id);
+
+        // The credentials come back so the platform admin can hand them over.
+        assigned.AdminUserName.Should().Be("patron@testagency.test");
+        assigned.AdminTemporaryPassword.Should().NotBeNullOrWhiteSpace();
     }
 
     [Test]

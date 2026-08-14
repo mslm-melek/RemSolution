@@ -65,6 +65,10 @@ public static class DependencyInjection
 
         builder.Services.AddScoped<IApplicationDbContext>(provider => provider.GetRequiredService<ApplicationDbContext>());
 
+        // What the app may do to its own schema at startup; see DatabaseOptions.
+        builder.Services.Configure<DatabaseOptions>(
+            builder.Configuration.GetSection(DatabaseOptions.SectionName));
+
         builder.Services.AddScoped<ApplicationDbContextInitialiser>();
 
         // Development-only demo dataset; see DemoDataOptions for why it is opt-in.
@@ -128,6 +132,10 @@ public static class DependencyInjection
         // insert joins the caller's transaction (same reason as
         // CreateAgencyUserAsync).
         builder.Services.AddScoped<IClientAccountService, ClientAccountService>();
+
+        // Gives a new agency its first administrator. Scoped for the same reason:
+        // the Identity insert joins the transaction that creates the agency.
+        builder.Services.AddScoped<IAgencyAccountService, AgencyAccountService>();
 
         // JWT bearer + refresh tokens for API/SPA clients. The access token
         // carries the same claims the cookie does (minted by the same claims
@@ -286,7 +294,7 @@ public static class DependencyInjection
         // no job server races the per-test database reset. In those cases the
         // enqueue seam becomes a no-op.
         var hangfireEnabled = builder.Configuration.GetValue("Hangfire:Enabled", true)
-            && connectionString != "NSwagBuildTimePlaceholder";
+            && connectionString != DatabaseOptions.BuildTimePlaceholderConnectionString;
 
         if (hangfireEnabled)
         {

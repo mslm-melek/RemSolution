@@ -8,7 +8,35 @@
 
   <div *ngIf="errorMessage" class="error-banner">{{ errorMessage }}</div>
 
-  <form [formGroup]="form" (ngSubmit)="save()">
+  <!-- Shown once after the agency is created: the only moment the temporary
+       password is readable. -->
+  <div *ngIf="createdAdmin" class="admin-handover">
+    <h3>{{ t('agency.adminCreatedTitle') }}</h3>
+
+    <p class="handover-line">
+      <span class="handover-label">{{ t('agency.adminLogin') }}</span>
+      <code>{{ createdAdmin.userName }}</code>
+    </p>
+
+    <p class="handover-line" *ngIf="createdAdmin.password">
+      <span class="handover-label">{{ t('agency.adminPassword') }}</span>
+      <code>{{ createdAdmin.password }}</code>
+    </p>
+
+    <p class="handover-note">
+      {{ createdAdmin.emailSent ? t('agency.adminMailSent') : t('agency.adminMailNotSent') }}
+    </p>
+
+    <p class="handover-note">{{ t('agency.adminMustChange') }}</p>
+
+    <div class="actions-row">
+      <button mat-raised-button color="primary" type="button" (click)="continueToAgency()">
+        {{ t('common.continue') }}
+      </button>
+    </div>
+  </div>
+
+  <form [formGroup]="form" (ngSubmit)="save()" *ngIf="!createdAdmin">
 
     <h3 class="section-title">{{ t('agency.details') }}</h3>
     <div class="field-grid">
@@ -47,8 +75,7 @@
         </mat-error>
       </mat-form-field>
 
-      <!-- subscriptSizing="dynamic": the default reserves one line under the
-           field, and this hint wraps to two on a narrow column. -->
+      <!-- subscriptSizing="dynamic": this hint wraps to two lines when narrow. -->
       <mat-form-field appearance="outline" class="span-2" subscriptSizing="dynamic">
         <mat-label>{{ t('agency.address') }}</mat-label>
         <input matInput formControlName="address" />
@@ -56,10 +83,28 @@
       </mat-form-field>
     </div>
 
-    <!-- The head office on the map. Searching an address here fills the field
-         above; so does dropping the pin, and either can then be corrected. -->
+    <!-- The head office pin; searching or dropping it fills the address above. -->
     <app-map-picker [latitude]="latitude" [longitude]="longitude"
                     (picked)="onPicked($event)"></app-map-picker>
+
+    <!-- Only on creation; editing an agency never touches its accounts. -->
+    <ng-container *ngIf="!isEdit">
+      <h3 class="section-title">{{ t('agency.adminSection') }}</h3>
+      <p class="section-note">{{ t('agency.adminNote') }}</p>
+      <div class="field-grid">
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>{{ t('agency.adminEmail') }}</mat-label>
+          <input matInput formControlName="adminEmail" type="email" />
+          <mat-hint>{{ t('agency.adminEmailHint') }}</mat-hint>
+          <mat-error *ngIf="form.get('adminEmail')?.hasError('email')">{{ t('agency.emailInvalid') }}</mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>{{ t('agency.adminFullName') }}</mat-label>
+          <input matInput formControlName="adminFullName" />
+        </mat-form-field>
+      </div>
+    </ng-container>
 
     <h3 class="section-title">{{ t('agency.bookingRules') }}</h3>
     <div class="field-grid">
@@ -84,19 +129,17 @@
     </div>
   </form>
 
-  <!-- Outside the form above, not inside it: the editor has fields of its own and
-       nesting forms is invalid HTML. On a new agency the rows collected here are
-       created with it when the form is saved; on an existing one each change is
-       already stored by the time it appears in the list, which is why the note
-       below says so rather than leaving it ambiguous. -->
-  <app-branches-editor [branches]="branches" [countries]="countries"
+  <!-- Outside the form: nesting forms is invalid HTML. On a new agency these rows
+       are created with it; on an existing one each change is already stored. -->
+  <app-branches-editor *ngIf="!createdAdmin"
+                       [branches]="branches" [countries]="countries"
                        [saving]="branchesSaving"
                        [defaultCountryId]="form.value.countryId"
                        (added)="onBranchAdded($event)"
                        (updated)="onBranchUpdated($event)"
                        (removed)="onBranchRemoved($event)"></app-branches-editor>
 
-  <p class="branches-note">
+  <p class="branches-note" *ngIf="!createdAdmin">
     {{ isEdit ? t('branch.savedImmediately') : t('branch.savedWithAgency') }}
   </p>
 </div>

@@ -76,6 +76,12 @@
   <data name="Validation.Coordinates.Together" xml:space="preserve">
     <value>يجب إدخال خط العرض وخط الطول معًا.</value>
   </data>
+  <data name="Validation.Agency.AdminEmailRequired" xml:space="preserve">
+    <value>يلزم عنوان بريد إلكتروني لحساب مسؤول الوكالة: أدخله هنا، أو املأ البريد الإلكتروني للوكالة.</value>
+  </data>
+  <data name="Validation.Agency.AdminEmailTaken" xml:space="preserve">
+    <value>«{0}» يملك بالفعل حسابًا على المنصة. استخدم عنوانًا آخر لمسؤول الوكالة.</value>
+  </data>
   <data name="Validation.Brand.NameRequired" xml:space="preserve">
     <value>اسم الماركة مطلوب.</value>
   </data>
@@ -795,6 +801,27 @@
   </data>
   <data name="Validation.Client.EmailTooLong" xml:space="preserve">
     <value>عنوان البريد الإلكتروني طويل جدًا.</value>
+  </data>
+  <data name="Email.AgencyAdmin.Subject" xml:space="preserve">
+    <value>حساب المسؤول الخاص بك لدى {0}</value>
+  </data>
+  <data name="Email.AgencyAdmin.Hello" xml:space="preserve">
+    <value>مرحبًا {0}،</value>
+  </data>
+  <data name="Email.AgencyAdmin.Created" xml:space="preserve">
+    <value>تم إنشاء حساب مسؤول لـ {0}. يتيح هذا الحساب إدارة الأسطول والفريق وكل الوحدات التي تفتحها صيغة اشتراك الوكالة.</value>
+  </data>
+  <data name="Email.AgencyAdmin.Login" xml:space="preserve">
+    <value>اسم المستخدم</value>
+  </data>
+  <data name="Email.AgencyAdmin.Password" xml:space="preserve">
+    <value>كلمة مرور مؤقتة</value>
+  </data>
+  <data name="Email.AgencyAdmin.MustChange" xml:space="preserve">
+    <value>سيُطلب منك اختيار كلمة مرور جديدة عند أول تسجيل دخول. وإلى أن تفعل ذلك، لا يمكن للحساب القيام بأي شيء آخر.</value>
+  </data>
+  <data name="Email.AgencyAdmin.SignIn" xml:space="preserve">
+    <value>تسجيل الدخول</value>
   </data>
   <data name="Email.ClientAccount.Subject" xml:space="preserve">
     <value>حسابك كعميل لدى {0}</value>

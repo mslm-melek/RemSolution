@@ -22,11 +22,12 @@ public class CreateAgencyWithBranchesTests : BaseTestFixture
         var country = new Country { Name = "Agencyland" };
         await AddAsync(country);
 
-        var agencyId = await SendAsync(new CreateAgencyCommand
+        var created = await SendAsync(new CreateAgencyCommand
         {
             Name = "Sud Cars",
             CountryId = country.Id,
             Address = "Head office, Sfax",
+            AdminEmail = "patron@sudcars.test",
             Latitude = 34.7406,
             Longitude = 10.7603,
             Branches = new[]
@@ -47,6 +48,7 @@ public class CreateAgencyWithBranchesTests : BaseTestFixture
             }
         });
 
+        var agencyId = created.Id;
         var agency = await FindAsync<Agency>(agencyId);
 
         agency!.Location.Should().NotBeNull();
@@ -77,13 +79,14 @@ public class CreateAgencyWithBranchesTests : BaseTestFixture
         var country = new Country { Name = "Agencyland" };
         await AddAsync(country);
 
-        var agencyId = await SendAsync(new CreateAgencyCommand
+        var created = await SendAsync(new CreateAgencyCommand
         {
             Name = "No branches yet",
-            CountryId = country.Id
+            CountryId = country.Id,
+            AdminEmail = "admin@nobranches.test"
         });
 
-        (await FindAsync<Agency>(agencyId)).Should().NotBeNull();
+        (await FindAsync<Agency>(created.Id)).Should().NotBeNull();
         (await AllIgnoringFiltersAsync<Branch>()).Should().BeEmpty();
     }
 
@@ -95,14 +98,15 @@ public class CreateAgencyWithBranchesTests : BaseTestFixture
         var country = new Country { Name = "Agencyland" };
         await AddAsync(country);
 
-        var agencyId = await SendAsync(new CreateAgencyCommand
+        var created = await SendAsync(new CreateAgencyCommand
         {
             Name = "Address only",
             CountryId = country.Id,
-            Address = "Somewhere not yet on the map"
+            Address = "Somewhere not yet on the map",
+            AdminEmail = "admin@addressonly.test"
         });
 
-        (await FindAsync<Agency>(agencyId))!.Location.Should().BeNull();
+        (await FindAsync<Agency>(created.Id))!.Location.Should().BeNull();
     }
 
     [Test]
@@ -117,6 +121,8 @@ public class CreateAgencyWithBranchesTests : BaseTestFixture
         {
             Name = "Half located",
             CountryId = country.Id,
+            // Set so only the coordinate pair can be the reason for the rejection.
+            AdminEmail = "admin@halflocated.test",
             Latitude = 34.7406
         })).Should().ThrowAsync<ValidationException>();
     }
@@ -135,6 +141,7 @@ public class CreateAgencyWithBranchesTests : BaseTestFixture
         {
             Name = "Has a nameless branch",
             CountryId = country.Id,
+            AdminEmail = "admin@namelessbranch.test",
             Branches = new[]
             {
                 new AgencyBranchInput { Name = string.Empty, CountryId = country.Id }

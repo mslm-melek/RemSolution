@@ -11,13 +11,9 @@ import { BranchDraft, BranchEdit, BranchesEditorComponent } from '../shared/bran
 import { MapPickerComponent, PickedLocation } from '../shared/map-picker.component';
 
 /**
- * The agency administrator's own view of their agency: the details customers
- * see, the places they collect cars from, and the people who work there — the
- * three things an administrator manages about the agency itself, in one place.
- *
- * Branches are saved through the ordinary Branches endpoints, which take the
- * tenant from the caller's claim. That is the same data the platform
- * administrator edits from the agency form, by a different route.
+ * The agency administrator's view of their own agency: its details, its branches
+ * and its staff. Branches go through the ordinary Branches endpoints, which take
+ * the tenant from the caller's claim.
  */
 @Component({
   selector: 'app-my-agency',
@@ -25,8 +21,7 @@ import { MapPickerComponent, PickedLocation } from '../shared/map-picker.compone
   styleUrls: ['./my-agency.component.css']
 })
 export class MyAgencyComponent implements OnInit {
-  // Error banners are plain strings, so they are translated imperatively rather
-  // than through the template pipe.
+  // Error banners are plain strings, so they are translated imperatively.
   private readonly transloco = inject(TranslocoService);
   private readonly auth = inject(AuthService);
 
@@ -38,9 +33,11 @@ export class MyAgencyComponent implements OnInit {
   saving = false;
   errorMessage = '';
 
-  // Shown but not editable: changing the currency would reinterpret every Money
-  // amount the agency has already stored, so it stays with the platform
-  // administrator (see UpdateMyAgencyCommand).
+  // The saved name, not the field's, so the head does not change as a rename is typed.
+  agencyName = '';
+
+  // Read-only: a currency change would reinterpret every stored amount, so it
+  // stays with the platform administrator (see UpdateMyAgencyCommand).
   currency = '';
 
   latitude: number | null = null;
@@ -48,12 +45,10 @@ export class MyAgencyComponent implements OnInit {
 
   branches: BranchDraft[] = [];
   branchesSaving = false;
-  // The Branches module is part of the agency's plan, so the tab is only offered
-  // when it is on — the API would refuse the calls behind it otherwise.
+  // Plan feature, so the tab is only offered when it is on.
   canBranches = false;
 
-  // Same for notifications. Feature only: these are the agency's settings, which
-  // an administrator holds by role.
+  // Feature only: these are agency settings, which an administrator holds by role.
   canNotifications = false;
 
   private rowVersion?: string;
@@ -72,10 +67,8 @@ export class MyAgencyComponent implements OnInit {
       countryId: [null, Validators.required],
       cancellationWindowHours: [24, [Validators.required, Validators.min(0)]],
       reservationExpiryHours: [48, [Validators.required, Validators.min(1)]],
-      // Notification settings. In the same form as the rest, because they are
-      // saved by the same command — one Save button for the agency's settings.
-      // Bounds mirror UpdateMyAgencyCommandValidator so the field says what the
-      // API would refuse.
+      // Notification settings, saved by the same command as the rest. Bounds
+      // mirror UpdateMyAgencyCommandValidator.
       expenseDueLeadDays: [14, [Validators.required, Validators.min(0), Validators.max(365)]],
       expenseDueLeadKilometers: [1000, [Validators.required, Validators.min(0), Validators.max(100000)]],
       reservationUpcomingLeadDays: [3, [Validators.required, Validators.min(0), Validators.max(365)]],
@@ -118,8 +111,7 @@ export class MyAgencyComponent implements OnInit {
       countryId: dto.countryId ?? null,
       cancellationWindowHours: dto.cancellationWindowHours ?? 24,
       reservationExpiryHours: dto.reservationExpiryHours ?? 48,
-      // ?? rather than ||: zero is a real choice here ("do not warn me" / "that
-      // reminder off"), so it must not fall back to the default.
+      // ?? not ||: zero is a real choice and must not fall back to the default.
       expenseDueLeadDays: dto.expenseDueLeadDays ?? 14,
       expenseDueLeadKilometers: dto.expenseDueLeadKilometers ?? 1000,
       reservationUpcomingLeadDays: dto.reservationUpcomingLeadDays ?? 3,
@@ -129,10 +121,17 @@ export class MyAgencyComponent implements OnInit {
       clientReminderDaysBeforeEnd: dto.clientReminderDaysBeforeEnd ?? 1
     });
 
+    this.agencyName = dto.name ?? '';
     this.currency = dto.currency ?? '';
     this.latitude = dto.latitude ?? null;
     this.longitude = dto.longitude ?? null;
     this.rowVersion = dto.rowVersion;
+  }
+
+  /** The country pill in the head. Empty until the list and the agency are in. */
+  get countryName(): string {
+    const id = this.form.value.countryId;
+    return this.countries.find(country => country.id === id)?.name ?? '';
   }
 
   private loadBranches() {
@@ -149,9 +148,8 @@ export class MyAgencyComponent implements OnInit {
     });
   }
 
-  // The picker reports coordinates first and the reverse-geocoded address a
-  // moment later, so an address of null means "nothing to suggest yet" — what is
-  // already typed is left alone.
+  // The picker reports the address after the coordinates, so a null address means
+  // "nothing to suggest yet" and what is typed is left alone.
   onPicked(picked: PickedLocation) {
     this.latitude = picked.latitude;
     this.longitude = picked.longitude;
@@ -194,8 +192,7 @@ export class MyAgencyComponent implements OnInit {
     this.client.updateMyAgency(command).subscribe({
       next: () => {
         this.saving = false;
-        // Re-read for the new row version, so a second save in the same visit
-        // is not rejected as stale.
+        // Re-read for the new row version, so a second save is not stale.
         this.load();
       },
       error: err => this.handleError(err)
@@ -211,8 +208,7 @@ export class MyAgencyComponent implements OnInit {
   }
 
   onBranchUpdated(edit: BranchEdit) {
-    // Every row here came from the server, so it has an id; the guard is for the
-    // type, not for a case that can happen.
+    // Every row came from the server, so the guard is for the type only.
     if (edit.values.id === undefined) return;
 
     this.branchesSaving = true;
@@ -235,8 +231,7 @@ export class MyAgencyComponent implements OnInit {
     });
   }
 
-  // Leaflet measures its container when the map is created, so a map built while
-  // its tab was off screen comes out 0×0.
+  // Leaflet measures on create, so a map built on a hidden tab comes out 0×0.
   onTabChange() {
     this.picker?.refresh();
     this.editor?.refresh();
@@ -255,8 +250,7 @@ export class MyAgencyComponent implements OnInit {
   private afterBranchSave() {
     this.branchesSaving = false;
     this.errorMessage = '';
-    // Re-read rather than patch: the list is ordered by name server-side, and a
-    // rename has to fall into its new place.
+    // Re-read: the list is ordered by name server-side.
     this.loadBranches();
   }
 

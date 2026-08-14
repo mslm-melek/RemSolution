@@ -1418,6 +1418,24 @@ th.num,
   letter-spacing: 0;
 }
 
+/* ----------------------------------------------------------------- menus ---- */
+
+/* A heading inside a long menu, not an item, so not focusable. Global because a
+   menu renders in the CDK overlay, outside every component's style scope. */
+.mat-mdc-menu-panel .menu-group {
+  padding: var(--sp-3) var(--sp-4) var(--sp-1);
+  font-size: var(--fs-micro);
+  font-weight: var(--fw-medium);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+
+.mat-mdc-menu-panel .menu-path {
+  font-family: var(--font-mono);
+  font-size: var(--fs-label);
+}
+
 /* ----------------------------------------------------------- side panel ---- */
 
 /* A dialog opened as a slide-over: full height, flush against the edge the page

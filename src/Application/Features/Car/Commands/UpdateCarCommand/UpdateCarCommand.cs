@@ -31,6 +31,13 @@ namespace RemSolution.Application.Features.Car.Commands.UpdateCarCommand
         /// constrained to move forward.
         /// </summary>
         public int? Mileage { get; init; }
+
+        /// <summary>
+        /// This car's own servicing intervals (see CarExpenseSchedule), as the full
+        /// set: types missing from the list are unlinked. Null means "leave them
+        /// alone" — an empty list clears them.
+        /// </summary>
+        public List<CarExpenseScheduleInput>? ExpenseSchedules { get; init; }
     }
 
     public class UpdateCarCommandHandler : IRequestHandler<UpdateCarCommand>
@@ -64,6 +71,12 @@ namespace RemSolution.Application.Features.Car.Commands.UpdateCarCommand
             entity.Power = request.Power;
             entity.FuelType = request.FuelType;
             entity.Mileage = request.Mileage;
+
+            if (request.ExpenseSchedules is not null)
+            {
+                await CarExpenseSchedulePayload.ApplyAsync(
+                    _context, entity, request.ExpenseSchedules, cancellationToken);
+            }
 
             await _context.SaveChangesAsync(cancellationToken);
         }

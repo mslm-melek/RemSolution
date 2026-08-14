@@ -39,13 +39,14 @@ public class RoleAuthorizationTests : BaseTestFixture
         var country = new Country { Name = "Adminland" };
         await AddAsync(country);
 
-        var agencyId = await SendAsync(new CreateAgencyCommand
+        var created = await SendAsync(new CreateAgencyCommand
         {
             Name = "Created by platform admin",
-            CountryId = country.Id
+            CountryId = country.Id,
+            AdminEmail = "admin@created-by-platform-admin.test"
         });
 
-        var agency = await FindAsync<Agency>(agencyId);
+        var agency = await FindAsync<Agency>(created.Id);
 
         agency.Should().NotBeNull();
         agency!.Name.Should().Be("Created by platform admin");

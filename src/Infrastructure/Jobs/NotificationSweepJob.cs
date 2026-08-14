@@ -129,13 +129,11 @@ public sealed class NotificationSweepJob
     private async Task SweepCarExpensesAsync(
         AgencySettingsSnapshot settings, DateTime now, CancellationToken cancellationToken)
     {
-        // The agency's own recurrence rules. A type flagged for notification with
-        // neither interval set has nothing to compute from, so it is excluded
-        // here rather than evaluated to null car by car.
+        // The agency's own recurrence rules. Types with neither interval set stay
+        // in: a car can supply one, and the planner drops the pairs left without any.
         var types = await _context.ExpenseTypes
             .AsNoTracking()
-            .Where(t => t.IsActive && t.WithNotif
-                        && (t.AfterMonth > 0 || t.AfterKilometer > 0))
+            .Where(t => t.IsActive && t.WithNotif)
             .Select(t => new { t.Id, t.Name, t.AfterMonth, t.AfterKilometer })
             .ToListAsync(cancellationToken);
 
@@ -183,14 +181,31 @@ public sealed class NotificationSweepJob
             })
             .ToListAsync(cancellationToken);
 
-        foreach (var baseline in baselines)
+        // Per-car overrides, where a car has any.
+        var schedules = await _context.CarExpenseSchedules
+            .AsNoTracking()
+            .Where(s => typeIds.Contains(s.ExpenseTypeId))
+            .Select(s => new CarExpenseScheduleValues(
+                s.CarId, s.ExpenseTypeId, s.AfterMonth, s.AfterKilometer,
+                s.LeadDays, s.LeadKilometers, s.LastDoneOn, s.LastDoneMileage))
+            .ToListAsync(cancellationToken);
+
+        var plans = CarExpenseSchedules.Plan(
+            types.Select(t => new CarExpenseTypeRule(t.Id, t.AfterMonth, t.AfterKilometer)),
+            baselines.Select(b => new CarExpenseBaseline(
+                b.CarId, b.ExpenseTypeId, b.LastExpenseOn, b.LastMileage)),
+            schedules,
+            settings.ExpenseDueLeadDays,
+            settings.ExpenseDueLeadKilometers);
+
+        foreach (var plan in plans)
         {
-            if (!carsById.TryGetValue(baseline.CarId, out var car))
+            if (!carsById.TryGetValue(plan.CarId, out var car))
             {
                 continue;
             }
 
-            var type = types.FirstOrDefault(t => t.Id == baseline.ExpenseTypeId);
+            var type = types.FirstOrDefault(t => t.Id == plan.ExpenseTypeId);
 
             if (type is null)
             {
@@ -198,14 +213,14 @@ public sealed class NotificationSweepJob
             }
 
             var due = ExpenseDueCalculator.Evaluate(
-                type.AfterMonth,
-                type.AfterKilometer,
-                baseline.LastExpenseOn,
-                baseline.LastMileage,
+                plan.AfterMonths,
+                plan.AfterKilometers,
+                plan.LastDoneOn,
+                plan.LastDoneMileage,
                 car.Mileage,
                 now,
-                settings.ExpenseDueLeadDays,
-                settings.ExpenseDueLeadKilometers);
+                plan.LeadDays,
+                plan.LeadKilometers);
 
             if (due is null)
             {

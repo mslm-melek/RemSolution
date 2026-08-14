@@ -1,238 +1,339 @@
-<div class="page template-form-card" *transloco="let t">
+<div class="page template-editor" *transloco="let t">
   <div class="header-row">
-    <h2 class="title">{{ isEdit ? t('documentTemplate.editTitle') : t('documentTemplate.newTitle') }}</h2>
+    <div>
+      <p class="page-eyebrow">
+        {{ t(kindLabelKey) }} · {{ t('language.' + form.get('language')?.value) }}
+      </p>
+      <h2 class="title">
+        {{ form.get('name')?.value || (isEdit ? t('documentTemplate.editTitle') : t('documentTemplate.newTitle')) }}
+      </h2>
+    </div>
     <a mat-stroked-button [routerLink]="['/document-template']">
       <mat-icon>arrow_back</mat-icon> {{ t('common.back') }}
     </a>
   </div>
 
-  <div *ngIf="errorMessage" class="error-banner">{{ errorMessage }}</div>
-
-  <form [formGroup]="form" class="meta-grid">
-    <mat-form-field appearance="outline">
-      <mat-label>{{ t('common.name') }}</mat-label>
-      <input matInput formControlName="name" required />
-      <mat-error *ngIf="form.get('name')?.hasError('required')">{{ t('documentTemplate.nameRequired') }}</mat-error>
-    </mat-form-field>
-
-    <mat-form-field appearance="outline">
-      <mat-label>{{ t('common.type') }}</mat-label>
-      <mat-select formControlName="kind">
-        <mat-option [value]="DocumentTemplateKind.Contract">{{ t('documentTemplate.kindContract') }}</mat-option>
-        <mat-option [value]="DocumentTemplateKind.Facture">{{ t('documentTemplate.kindFacture') }}</mat-option>
-      </mat-select>
-      <mat-hint *ngIf="isEdit">{{ t('documentTemplate.kindFixed') }}</mat-hint>
-    </mat-form-field>
-
-    <mat-form-field appearance="outline">
-      <mat-label>{{ t('language.label') }}</mat-label>
-      <mat-select formControlName="language">
-        <mat-option value="fr">{{ t('language.fr') }}</mat-option>
-        <mat-option value="ar">{{ t('language.ar') }}</mat-option>
-        <mat-option value="en">{{ t('language.en') }}</mat-option>
-      </mat-select>
-    </mat-form-field>
-  </form>
-
-  <div class="editor">
-    <!-- The blocks, in the order they print. -->
-    <section class="blocks">
-      <h3>{{ t('documentTemplate.content') }}</h3>
-      <p class="muted hint">{{ t('documentTemplate.contentHint') }}</p>
-
-      <div class="block" *ngFor="let block of blocks; let i = index">
-        <div class="block-head">
-          <span class="block-type">{{ t(blockTypeLabelKey(block.type)) }}</span>
-          <span class="block-tools">
-            <button mat-icon-button (click)="moveBlock(i, -1)" [disabled]="i === 0"
-                    [attr.aria-label]="t('documentTemplate.moveUp')">
-              <mat-icon>arrow_upward</mat-icon>
-            </button>
-            <button mat-icon-button (click)="moveBlock(i, 1)" [disabled]="i === blocks.length - 1"
-                    [attr.aria-label]="t('documentTemplate.moveDown')">
-              <mat-icon>arrow_downward</mat-icon>
-            </button>
-            <button mat-icon-button color="warn" (click)="removeBlock(i)"
-                    [attr.aria-label]="t('common.remove')">
-              <mat-icon>delete</mat-icon>
-            </button>
-          </span>
-        </div>
-
-        <!-- Heading -->
-        <mat-form-field appearance="outline" class="full-width" *ngIf="block.type === DocumentBlockType.Heading">
-          <mat-label>{{ t('documentTemplate.blockHeading') }}</mat-label>
-          <input matInput [(ngModel)]="block.text" (blur)="refreshBindings()" />
-        </mat-form-field>
-
-        <!-- Paragraph -->
-        <ng-container *ngIf="block.type === DocumentBlockType.Paragraph">
-          <mat-form-field appearance="outline" class="full-width">
-            <mat-label>{{ t('documentTemplate.blockParagraph') }}</mat-label>
-            <textarea matInput rows="4" [(ngModel)]="block.text" (blur)="refreshBindings()"></textarea>
-          </mat-form-field>
-          <mat-checkbox [(ngModel)]="block.fine">{{ t('documentTemplate.finePrint') }}</mat-checkbox>
-        </ng-container>
-
-        <!-- Fields grid -->
-        <ng-container *ngIf="block.type === DocumentBlockType.Fields">
-          <mat-form-field appearance="outline" class="full-width">
-            <mat-label>{{ t('documentTemplate.boxTitle') }}</mat-label>
-            <input matInput [(ngModel)]="block.title" (blur)="refreshBindings()" />
-          </mat-form-field>
-
-          <div class="field-row" *ngFor="let field of block.fields; let f = index">
-            <mat-form-field appearance="outline">
-              <mat-label>{{ t('documentTemplate.fieldLabel') }}</mat-label>
-              <input matInput [(ngModel)]="field.label" (blur)="refreshBindings()" />
-            </mat-form-field>
-            <mat-form-field appearance="outline" class="grow">
-              <mat-label>{{ t('documentTemplate.fieldValue') }}</mat-label>
-              <input matInput [(ngModel)]="field.value" (blur)="refreshBindings()" />
-            </mat-form-field>
-            <mat-checkbox [(ngModel)]="field.hideWhenEmpty"
-                          [matTooltip]="t('documentTemplate.hideWhenEmptyHint')">
-              {{ t('documentTemplate.hideWhenEmpty') }}
-            </mat-checkbox>
-            <button mat-icon-button color="warn" (click)="removeField(block, f)"
-                    [attr.aria-label]="t('common.remove')">
-              <mat-icon>delete</mat-icon>
-            </button>
-          </div>
-
-          <div class="block-actions">
-            <button mat-button (click)="addField(block)">
-              <mat-icon>add</mat-icon> {{ t('documentTemplate.addRow') }}
-            </button>
-            <mat-checkbox [(ngModel)]="block.sideBySide"
-                          [matTooltip]="t('documentTemplate.sideBySideHint')">
-              {{ t('documentTemplate.sideBySide') }}
-            </mat-checkbox>
-          </div>
-        </ng-container>
-
-        <!-- Invoice line items -->
-        <ng-container *ngIf="block.type === DocumentBlockType.LineItems">
-          <p class="muted hint">{{ t('documentTemplate.lineItemsHint') }}</p>
-          <mat-form-field appearance="outline" class="full-width">
-            <mat-label>{{ t('documentTemplate.boxTitle') }}</mat-label>
-            <input matInput [(ngModel)]="block.title" (blur)="refreshBindings()" />
-          </mat-form-field>
-          <mat-checkbox [(ngModel)]="block.showTotals">{{ t('documentTemplate.showTotals') }}</mat-checkbox>
-        </ng-container>
-
-        <!-- Signature lines -->
-        <ng-container *ngIf="block.type === DocumentBlockType.Signatures">
-          <div class="field-row" *ngFor="let label of block.labels; let s = index">
-            <mat-form-field appearance="outline" class="grow">
-              <mat-label>{{ t('documentTemplate.signatureLabel') }}</mat-label>
-              <input matInput [ngModel]="block.labels![s]"
-                     (ngModelChange)="block.labels![s] = $event" (blur)="refreshBindings()" />
-            </mat-form-field>
-            <button mat-icon-button color="warn" (click)="removeSignature(block, s)"
-                    [attr.aria-label]="t('common.remove')">
-              <mat-icon>delete</mat-icon>
-            </button>
-          </div>
-          <button mat-button (click)="addSignature(block)">
-            <mat-icon>add</mat-icon> {{ t('documentTemplate.addSignature') }}
-          </button>
-        </ng-container>
-
-        <!-- Spacer -->
-        <mat-form-field appearance="outline" *ngIf="block.type === DocumentBlockType.Spacer">
-          <mat-label>{{ t('documentTemplate.spacerHeight') }}</mat-label>
-          <input matInput type="number" min="1" [(ngModel)]="block.height" />
-        </mat-form-field>
-
-        <p class="muted" *ngIf="block.type === DocumentBlockType.PageBreak">
-          {{ t('documentTemplate.pageBreakHint') }}
-        </p>
-      </div>
-
-      <div class="add-block">
-        <span class="muted">{{ t('documentTemplate.addBlock') }}:</span>
-        <button mat-stroked-button *ngFor="let type of blockTypes" (click)="addBlock(type.value)">
-          {{ t(type.labelKey) }}
-        </button>
-      </div>
-    </section>
-
-    <!-- The palette of values a booking can supply. -->
-    <aside class="palette">
-      <h3>{{ t('documentTemplate.availableFields') }}</h3>
-      <p class="muted hint">{{ t('documentTemplate.paletteHint') }}</p>
-
-      <div class="palette-group" *ngFor="let group of placeholderGroups">
-        <h4>{{ group.group }}</h4>
-        <button mat-button class="palette-item" *ngFor="let item of group.items" (click)="copyToken(item)"
-                [matTooltip]="t('documentTemplate.copyToken')">
-          <mat-icon>content_copy</mat-icon> {{ item.path }}
-        </button>
-      </div>
-    </aside>
+  <div *ngIf="errorMessage" class="error-banner">
+    <mat-icon>error_outline</mat-icon> {{ errorMessage }}
   </div>
 
-  <mat-divider></mat-divider>
+  <!-- Not an error: the field went to the clipboard, having nowhere to be written. -->
+  <div *ngIf="noticeMessage" class="info-banner">
+    <mat-icon>content_paste</mat-icon> {{ noticeMessage }}
+    <button mat-icon-button (click)="noticeMessage = ''" [attr.aria-label]="t('common.clear')">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
 
-  <!-- One row per placeholder used anywhere above: what fills it in. -->
-  <section class="panel">
-    <div class="panel-header">
-      <h3>{{ t('documentTemplate.bindings') }} ({{ bindings.length }})</h3>
-      <span class="muted" *ngIf="unboundCount">
-        {{ t('documentTemplate.askCount', { count: unboundCount }) }}
-      </span>
+  <!-- =============================== WORKSPACE ===============================
+       What the template IS on the left, what it PRINTS on the right. -->
+  <div class="workspace">
+    <aside class="side">
+      <section class="side-block">
+        <h3 class="side-title"><mat-icon>tune</mat-icon> {{ t('documentTemplate.properties') }}</h3>
+
+        <form [formGroup]="form" class="side-form">
+          <mat-form-field appearance="outline" class="side-field">
+            <mat-label>{{ t('common.name') }}</mat-label>
+            <input matInput formControlName="name" required />
+            <mat-error *ngIf="form.get('name')?.hasError('required')">
+              {{ t('documentTemplate.nameRequired') }}
+            </mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="side-field">
+            <mat-label>{{ t('common.type') }}</mat-label>
+            <mat-select formControlName="kind">
+              <mat-option [value]="DocumentTemplateKind.Contract">{{ t('documentTemplate.kindContract') }}</mat-option>
+              <mat-option [value]="DocumentTemplateKind.Facture">{{ t('documentTemplate.kindFacture') }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+          <!-- Under the field, not a mat-hint: two lines would run into the label. -->
+          <p class="muted hint" *ngIf="isEdit">{{ t('documentTemplate.kindFixed') }}</p>
+
+          <mat-form-field appearance="outline" class="side-field">
+            <mat-label>{{ t('language.label') }}</mat-label>
+            <mat-select formControlName="language">
+              <mat-option value="fr">{{ t('language.fr') }}</mat-option>
+              <mat-option value="ar">{{ t('language.ar') }}</mat-option>
+              <mat-option value="en">{{ t('language.en') }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </form>
+      </section>
+
+      <!-- One row per placeholder on the sheet, appearing as its token is typed. -->
+      <section class="side-block">
+        <h3 class="side-title">
+          <mat-icon>data_object</mat-icon> {{ t('documentTemplate.bindings') }}
+          <span class="side-count num">{{ bindings.length }}</span>
+        </h3>
+
+        <p class="muted hint" *ngIf="unboundCount">
+          {{ t('documentTemplate.askCount', { count: unboundCount }) }}
+        </p>
+        <p class="muted hint" *ngIf="!bindings.length">{{ t('documentTemplate.noPlaceholders') }}</p>
+
+        <div class="bind" *ngFor="let row of bindings" [class.unused]="row.unused">
+          <div class="bind-head">
+            <!-- Built in code: an escaped "{{" here would start an interpolation. -->
+            <code class="bind-token">{{ token(row.placeholder) }}</code>
+            <span class="muted unused-note" *ngIf="row.unused">{{ t('documentTemplate.unused') }}</span>
+          </div>
+
+          <mat-form-field appearance="outline" class="side-field">
+            <mat-label>{{ t('documentTemplate.filledBy') }}</mat-label>
+            <mat-select [(ngModel)]="row.binding">
+              <mat-option *ngFor="let option of bindingOptions" [value]="option.value">
+                {{ t(option.labelKey) }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="side-field"
+                          *ngIf="row.binding === DocumentFieldBinding.DataField">
+            <mat-label>{{ t('documentTemplate.dataField') }}</mat-label>
+            <mat-select [(ngModel)]="row.dataPath">
+              <mat-option *ngFor="let item of placeholders" [value]="item.path">{{ item.path }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="side-field"
+                          *ngIf="row.binding === DocumentFieldBinding.FixedValue">
+            <mat-label>{{ t('documentTemplate.fixedValue') }}</mat-label>
+            <input matInput [(ngModel)]="row.fixedValue" />
+          </mat-form-field>
+
+          <ng-container *ngIf="row.binding === DocumentFieldBinding.AskEachTime">
+            <mat-form-field appearance="outline" class="side-field">
+              <mat-label>{{ t('documentTemplate.promptLabel') }}</mat-label>
+              <input matInput [(ngModel)]="row.label" />
+            </mat-form-field>
+            <mat-checkbox [(ngModel)]="row.isRequired">
+              {{ t('documentTemplate.required') }}
+            </mat-checkbox>
+          </ng-container>
+
+          <p class="muted hint" *ngIf="row.binding === DocumentFieldBinding.Blank">
+            {{ t('documentTemplate.blankHint') }}
+          </p>
+        </div>
+      </section>
+    </aside>
+
+    <!-- ============================== THE SHEET ==============================
+         The blocks drawn as they print, editable in place. A block's own switches
+         live on the block, shown while it is selected. -->
+    <div class="editor-area">
+      <div class="editor-toolbar">
+        <button type="button" class="tool-btn" [matMenuTriggerFor]="fieldMenu"
+                [disabled]="!placeholderGroups.length">
+          <mat-icon>add</mat-icon> {{ t('documentTemplate.insertField') }}
+        </button>
+        <mat-menu #fieldMenu="matMenu" class="field-menu">
+          <ng-container *ngFor="let group of placeholderGroups">
+            <div class="menu-group">{{ group.group }}</div>
+            <button mat-menu-item type="button" *ngFor="let item of group.items"
+                    (click)="insertToken(item)">
+              <span class="menu-path">{{ item.path }}</span>
+            </button>
+          </ng-container>
+        </mat-menu>
+
+        <span class="toolbar-sep"></span>
+
+        <button type="button" class="tool-btn" [matMenuTriggerFor]="blockMenu">
+          <mat-icon>library_add</mat-icon> {{ t('documentTemplate.addBlock') }}
+        </button>
+        <mat-menu #blockMenu="matMenu">
+          <button mat-menu-item type="button" *ngFor="let type of blockTypes"
+                  (click)="addBlock(type.value)">
+            <mat-icon>{{ type.icon }}</mat-icon> {{ t(type.labelKey) }}
+          </button>
+        </mat-menu>
+
+        <span class="spacer"></span>
+
+        <span class="muted toolbar-hint">{{ t('documentTemplate.insertHint') }}</span>
+      </div>
+
+      <div class="editor-canvas">
+        <!-- The sheet reads the way the document prints, not the screen around it. -->
+        <div class="sheet" [attr.dir]="sheetDirection" (focusin)="rememberField($event)">
+          <div class="doc-block" *ngFor="let block of blocks; let i = index"
+               [class.selected]="selected === i" (click)="selected = i" (focusin)="selected = i">
+
+            <div class="block-tools">
+              <span class="block-type">{{ t(blockTypeLabelKey(block.type)) }}</span>
+              <button type="button" class="block-tool" (click)="moveBlock(i, -1)" [disabled]="i === 0"
+                      [matTooltip]="t('documentTemplate.moveUp')"
+                      [attr.aria-label]="t('documentTemplate.moveUp')">
+                <mat-icon>arrow_upward</mat-icon>
+              </button>
+              <button type="button" class="block-tool" (click)="moveBlock(i, 1)"
+                      [disabled]="i === blocks.length - 1"
+                      [matTooltip]="t('documentTemplate.moveDown')"
+                      [attr.aria-label]="t('documentTemplate.moveDown')">
+                <mat-icon>arrow_downward</mat-icon>
+              </button>
+              <button type="button" class="block-tool danger" (click)="removeBlock(i)"
+                      [matTooltip]="t('common.remove')" [attr.aria-label]="t('common.remove')">
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+
+            <!-- Heading: 16pt bold over a rule, as the renderer draws it. -->
+            <ng-container *ngIf="block.type === DocumentBlockType.Heading">
+              <input type="text" class="doc-input doc-heading" [(ngModel)]="block.text"
+                     (blur)="refreshBindings()" [placeholder]="t('documentTemplate.blockHeading')"
+                     [attr.aria-label]="t('documentTemplate.blockHeading')" />
+              <div class="doc-rule"></div>
+            </ng-container>
+
+            <!-- Paragraph -->
+            <textarea *ngIf="block.type === DocumentBlockType.Paragraph"
+                      class="doc-input doc-paragraph" [class.fine]="block.fine"
+                      [rows]="paragraphRows(block.text)" [(ngModel)]="block.text"
+                      (blur)="refreshBindings()"
+                      [placeholder]="t('documentTemplate.blockParagraph')"
+                      [attr.aria-label]="t('documentTemplate.blockParagraph')"></textarea>
+
+            <!-- Detail box: a ruled frame of "label: value" rows. -->
+            <div class="doc-box" *ngIf="block.type === DocumentBlockType.Fields">
+              <input type="text" class="doc-input doc-box-title" [(ngModel)]="block.title"
+                     (blur)="refreshBindings()" [placeholder]="t('documentTemplate.boxTitle')"
+                     [attr.aria-label]="t('documentTemplate.boxTitle')" />
+
+              <div class="doc-box-row" *ngFor="let field of block.fields; let f = index">
+                <input type="text" class="doc-input doc-box-label" [(ngModel)]="field.label"
+                       (blur)="refreshBindings()" [placeholder]="t('documentTemplate.fieldLabel')"
+                       [attr.aria-label]="t('documentTemplate.fieldLabel')" />
+                <!-- The renderer only prints "label: " where there is a label. -->
+                <span class="doc-colon" aria-hidden="true" *ngIf="field.label">:</span>
+                <input type="text" class="doc-input doc-box-value" [(ngModel)]="field.value"
+                       (blur)="refreshBindings()" [placeholder]="t('documentTemplate.fieldValue')"
+                       [attr.aria-label]="t('documentTemplate.fieldValue')" />
+
+                <!-- Per row: whether this line drops out when it has no value. -->
+                <button type="button" class="row-tool" [class.on]="field.hideWhenEmpty"
+                        (click)="field.hideWhenEmpty = !field.hideWhenEmpty"
+                        [matTooltip]="t('documentTemplate.hideWhenEmptyHint')"
+                        [attr.aria-pressed]="!!field.hideWhenEmpty"
+                        [attr.aria-label]="t('documentTemplate.hideWhenEmpty')">
+                  <mat-icon>visibility_off</mat-icon>
+                </button>
+                <button type="button" class="row-tool danger" (click)="removeField(block, f)"
+                        [matTooltip]="t('common.remove')" [attr.aria-label]="t('common.remove')">
+                  <mat-icon>close</mat-icon>
+                </button>
+              </div>
+
+              <button type="button" class="doc-add" (click)="addField(block)">
+                <mat-icon>add</mat-icon> {{ t('documentTemplate.addRow') }}
+              </button>
+            </div>
+
+            <!-- Billed lines: the template's columns, with a ghost row for the data. -->
+            <div class="doc-lines" *ngIf="block.type === DocumentBlockType.LineItems">
+              <input type="text" class="doc-input doc-box-title" [(ngModel)]="block.title"
+                     (blur)="refreshBindings()" [placeholder]="t('documentTemplate.boxTitle')"
+                     [attr.aria-label]="t('documentTemplate.boxTitle')" />
+
+              <table class="doc-table">
+                <thead>
+                  <tr>
+                    <th>{{ t('common.description') }}</th>
+                    <th class="end">{{ t('common.amount') }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr class="ghost">
+                    <td>{{ t('documentTemplate.lineItemsHint') }}</td>
+                    <td class="end">—</td>
+                  </tr>
+                </tbody>
+              </table>
+
+              <div class="doc-totals ghost" *ngIf="block.showTotals">
+                {{ t('documentTemplate.showTotals') }} —
+              </div>
+            </div>
+
+            <!-- Signature lines: a label over the signing space, closed by a rule. -->
+            <div class="doc-signatures" *ngIf="block.type === DocumentBlockType.Signatures">
+              <div class="doc-sign" *ngFor="let label of block.labels; let s = index">
+                <div class="doc-sign-head">
+                  <input type="text" class="doc-input doc-sign-label" [ngModel]="block.labels![s]"
+                         (ngModelChange)="block.labels![s] = $event" (blur)="refreshBindings()"
+                         [placeholder]="t('documentTemplate.signatureLabel')"
+                         [attr.aria-label]="t('documentTemplate.signatureLabel')" />
+                  <button type="button" class="row-tool danger" (click)="removeSignature(block, s)"
+                          [matTooltip]="t('common.remove')" [attr.aria-label]="t('common.remove')">
+                    <mat-icon>close</mat-icon>
+                  </button>
+                </div>
+                <div class="doc-sign-space"></div>
+                <div class="doc-rule"></div>
+              </div>
+
+              <button type="button" class="doc-add" (click)="addSignature(block)">
+                <mat-icon>add</mat-icon> {{ t('documentTemplate.addSignature') }}
+              </button>
+            </div>
+
+            <!-- Page break -->
+            <div class="doc-break" *ngIf="block.type === DocumentBlockType.PageBreak">
+              <span>{{ t('documentTemplate.pageBreakHint') }}</span>
+            </div>
+
+            <!-- Spacer: drawn at the height it will print. -->
+            <div class="doc-spacer" *ngIf="block.type === DocumentBlockType.Spacer"
+                 [style.height.pt]="block.height || 12"></div>
+
+            <!-- The block's own switches, while it is selected. -->
+            <div class="block-options" *ngIf="selected === i && hasOptions(block)">
+              <mat-checkbox *ngIf="block.type === DocumentBlockType.Paragraph"
+                            [(ngModel)]="block.fine">
+                {{ t('documentTemplate.finePrint') }}
+              </mat-checkbox>
+
+              <mat-checkbox *ngIf="block.type === DocumentBlockType.Fields"
+                            [(ngModel)]="block.sideBySide"
+                            [matTooltip]="t('documentTemplate.sideBySideHint')">
+                {{ t('documentTemplate.sideBySide') }}
+              </mat-checkbox>
+
+              <mat-checkbox *ngIf="block.type === DocumentBlockType.LineItems"
+                            [(ngModel)]="block.showTotals">
+                {{ t('documentTemplate.showTotals') }}
+              </mat-checkbox>
+
+              <label class="option-number" *ngIf="block.type === DocumentBlockType.Spacer">
+                {{ t('documentTemplate.spacerHeight') }}
+                <input type="number" min="1" class="num" [(ngModel)]="block.height"
+                       />
+              </label>
+            </div>
+          </div>
+
+          <p class="sheet-empty" *ngIf="!blocks.length">{{ t('documentTemplate.contentHint') }}</p>
+        </div>
+      </div>
     </div>
-    <p class="muted hint">{{ t('documentTemplate.bindingsHint') }}</p>
+  </div>
 
-    <div class="binding" *ngFor="let row of bindings" [class.unused]="row.unused">
-      <!-- Built in code, not markup: an escaped "{{" in a template is decoded
-           before Angular parses interpolation, so it would start one. -->
-      <code class="placeholder">{{ token(row.placeholder) }}</code>
+  <!-- Follows the sheet down, so Save is never a scroll away. -->
+  <div class="editor-actions">
+    <button type="button" mat-stroked-button color="warn" *ngIf="isEdit && isActive"
+            (click)="retire()">
+      <mat-icon>archive</mat-icon> {{ t('documentTemplate.retire') }}
+    </button>
 
-      <span class="muted unused-note" *ngIf="row.unused">{{ t('documentTemplate.unused') }}</span>
+    <span class="spacer"></span>
 
-      <mat-form-field appearance="outline" class="binding-kind">
-        <mat-label>{{ t('documentTemplate.filledBy') }}</mat-label>
-        <mat-select [(ngModel)]="row.binding">
-          <mat-option *ngFor="let option of bindingOptions" [value]="option.value">
-            {{ t(option.labelKey) }}
-          </mat-option>
-        </mat-select>
-      </mat-form-field>
-
-      <mat-form-field appearance="outline" class="grow"
-                      *ngIf="row.binding === DocumentFieldBinding.DataField">
-        <mat-label>{{ t('documentTemplate.dataField') }}</mat-label>
-        <mat-select [(ngModel)]="row.dataPath">
-          <mat-option *ngFor="let item of placeholders" [value]="item.path">{{ item.path }}</mat-option>
-        </mat-select>
-      </mat-form-field>
-
-      <mat-form-field appearance="outline" class="grow"
-                      *ngIf="row.binding === DocumentFieldBinding.FixedValue">
-        <mat-label>{{ t('documentTemplate.fixedValue') }}</mat-label>
-        <input matInput [(ngModel)]="row.fixedValue" />
-      </mat-form-field>
-
-      <ng-container *ngIf="row.binding === DocumentFieldBinding.AskEachTime">
-        <mat-form-field appearance="outline" class="grow">
-          <mat-label>{{ t('documentTemplate.promptLabel') }}</mat-label>
-          <input matInput [(ngModel)]="row.label" />
-        </mat-form-field>
-        <mat-checkbox [(ngModel)]="row.isRequired">{{ t('documentTemplate.required') }}</mat-checkbox>
-      </ng-container>
-
-      <span class="muted" *ngIf="row.binding === DocumentFieldBinding.Blank">
-        {{ t('documentTemplate.blankHint') }}
-      </span>
-    </div>
-
-    <p *ngIf="!bindings.length" class="muted">{{ t('documentTemplate.noPlaceholders') }}</p>
-  </section>
-
-  <div class="actions">
+    <a mat-stroked-button [routerLink]="['/document-template']">{{ t('common.cancel') }}</a>
     <button mat-raised-button color="primary" (click)="save()" [disabled]="saving">
+      <mat-icon>save</mat-icon>
       {{ saving ? t('common.saving') : (isEdit ? t('common.saveChanges') : t('documentTemplate.createTemplate')) }}
     </button>
   </div>

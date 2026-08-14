@@ -658,6 +658,65 @@ namespace RemSolution.Infrastructure.Data.Migrations
                     b.ToTable("Cars");
                 });
 
+            modelBuilder.Entity("RemSolution.Domain.Entities.CarExpenseSchedule", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("AfterKilometer")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("AfterMonth")
+                        .HasColumnType("int");
+
+                    b.Property<int>("AgencyId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("CarId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTimeOffset?>("CreatedOn")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<int>("ExpenseTypeId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("LastDoneMileage")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("LastDoneOn")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("LeadDays")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("LeadKilometers")
+                        .HasColumnType("int");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTimeOffset?>("UpdatedOn")
+                        .HasColumnType("datetimeoffset");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CarId");
+
+                    b.HasIndex("ExpenseTypeId");
+
+                    b.HasIndex("AgencyId", "CarId", "ExpenseTypeId")
+                        .IsUnique();
+
+                    b.ToTable("CarExpenseSchedules");
+                });
+
             modelBuilder.Entity("RemSolution.Domain.Entities.CarImage", b =>
                 {
                     b.Property<int>("Id")
@@ -2327,6 +2386,33 @@ namespace RemSolution.Infrastructure.Data.Migrations
                     b.Navigation("PhotoFile");
                 });
 
+            modelBuilder.Entity("RemSolution.Domain.Entities.CarExpenseSchedule", b =>
+                {
+                    b.HasOne("RemSolution.Domain.Entities.Agency", "Agency")
+                        .WithMany()
+                        .HasForeignKey("AgencyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("RemSolution.Domain.Entities.Car", "Car")
+                        .WithMany("ExpenseSchedules")
+                        .HasForeignKey("CarId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("RemSolution.Domain.Entities.ExpenseType", "ExpenseType")
+                        .WithMany()
+                        .HasForeignKey("ExpenseTypeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Agency");
+
+                    b.Navigation("Car");
+
+                    b.Navigation("ExpenseType");
+                });
+
             modelBuilder.Entity("RemSolution.Domain.Entities.CarImage", b =>
                 {
                     b.HasOne("RemSolution.Domain.Entities.Agency", "Agency")
@@ -3200,6 +3286,8 @@ namespace RemSolution.Infrastructure.Data.Migrations
 
             modelBuilder.Entity("RemSolution.Domain.Entities.Car", b =>
                 {
+                    b.Navigation("ExpenseSchedules");
+
                     b.Navigation("Expenses");
 
                     b.Navigation("Images");

@@ -1,6 +1,26 @@
 <div class="page my-agency-card" *transloco="let t">
+  <!-- The record-screen head, with currency, country and branch count as pills. -->
   <div class="header-row">
-    <h2 class="title">{{ t('myAgency.title') }}</h2>
+    <div class="identity-head">
+      <span class="identity-mark" aria-hidden="true"><mat-icon>business</mat-icon></span>
+      <div class="identity-text">
+        <p class="page-eyebrow">{{ t('myAgency.title') }}</p>
+        <h2 class="title">{{ agencyName || t('agency.fallbackName') }}</h2>
+        <p class="page-subtitle">{{ t('myAgency.subtitle') }}</p>
+        <div class="identity-pills">
+          <span class="pill" *ngIf="currency">
+            <mat-icon aria-hidden="true">payments</mat-icon><span class="num">{{ currency }}</span>
+          </span>
+          <span class="pill" *ngIf="countryName">
+            <mat-icon aria-hidden="true">public</mat-icon>{{ countryName }}
+          </span>
+          <span class="pill" *ngIf="canBranches">
+            <mat-icon aria-hidden="true">location_on</mat-icon>
+            {{ t('branch.title') }} <span class="num">{{ branches.length }}</span>
+          </span>
+        </div>
+      </div>
+    </div>
   </div>
 
   <div *ngIf="errorMessage" class="error-banner">{{ errorMessage }}</div>
@@ -10,68 +30,85 @@
     <mat-tab [label]="t('myAgency.tabs.details')">
       <div class="tab-body">
         <form [formGroup]="form" (ngSubmit)="save()">
-          <div class="field-grid">
-            <mat-form-field appearance="outline" class="span-2">
-              <mat-label>{{ t('common.name') }}</mat-label>
-              <input matInput formControlName="name" required />
-              <mat-error *ngIf="form.get('name')?.hasError('required')">{{ t('agency.nameRequired') }}</mat-error>
-              <mat-error *ngIf="form.get('name')?.hasError('maxlength')">{{ t('agency.nameTooLong') }}</mat-error>
-            </mat-form-field>
+          <!-- Grouped with a label each, separated by hairlines, no inner cards. -->
+          <section class="settings-section">
+            <h3 class="section-title">{{ t('agency.details') }}</h3>
+            <div class="field-grid">
+              <mat-form-field appearance="outline" class="span-2">
+                <mat-label>{{ t('common.name') }}</mat-label>
+                <input matInput formControlName="name" required />
+                <mat-error *ngIf="form.get('name')?.hasError('required')">{{ t('agency.nameRequired') }}</mat-error>
+                <mat-error *ngIf="form.get('name')?.hasError('maxlength')">{{ t('agency.nameTooLong') }}</mat-error>
+              </mat-form-field>
 
-            <mat-form-field appearance="outline">
-              <mat-label>{{ t('agency.email') }}</mat-label>
-              <input matInput formControlName="email" type="email" />
-              <mat-error *ngIf="form.get('email')?.hasError('email')">{{ t('agency.emailInvalid') }}</mat-error>
-            </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>{{ t('agency.country') }}</mat-label>
+                <mat-select formControlName="countryId" required>
+                  <mat-option *ngFor="let country of countries" [value]="country.id">{{ country.name }}</mat-option>
+                </mat-select>
+                <mat-error *ngIf="form.get('countryId')?.hasError('required')">{{ t('agency.countryRequired') }}</mat-error>
+              </mat-form-field>
 
-            <mat-form-field appearance="outline">
-              <mat-label>{{ t('agency.phoneNumber') }}</mat-label>
-              <input matInput formControlName="phoneNumber" />
-            </mat-form-field>
+              <!-- Read-only on purpose (see myAgency.currencyLocked).
+                   subscriptSizing="dynamic": these hints wrap to two lines. -->
+              <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                <mat-label>{{ t('agency.currencyIso') }}</mat-label>
+                <input matInput [value]="currency" disabled />
+                <mat-hint>{{ t('myAgency.currencyLocked') }}</mat-hint>
+              </mat-form-field>
+            </div>
+          </section>
 
-            <mat-form-field appearance="outline">
-              <mat-label>{{ t('agency.country') }}</mat-label>
-              <mat-select formControlName="countryId" required>
-                <mat-option *ngFor="let country of countries" [value]="country.id">{{ country.name }}</mat-option>
-              </mat-select>
-              <mat-error *ngIf="form.get('countryId')?.hasError('required')">{{ t('agency.countryRequired') }}</mat-error>
-            </mat-form-field>
+          <section class="settings-section">
+            <h3 class="section-title">{{ t('agency.contact') }}</h3>
+            <p class="settings-note">{{ t('myAgency.contactHint') }}</p>
+            <div class="field-grid">
+              <mat-form-field appearance="outline">
+                <mat-label>{{ t('agency.email') }}</mat-label>
+                <mat-icon matPrefix>mail</mat-icon>
+                <input matInput formControlName="email" type="email" />
+                <mat-error *ngIf="form.get('email')?.hasError('email')">{{ t('agency.emailInvalid') }}</mat-error>
+              </mat-form-field>
 
-            <!-- Read-only on purpose: see myAgency.currencyLocked.
-                 subscriptSizing="dynamic" on the hinted fields: the default
-                 reserves exactly one line under the field, and both of these
-                 hints wrap to two on a narrow column — which overlapped the
-                 field below instead of pushing it down. -->
-            <mat-form-field appearance="outline" subscriptSizing="dynamic">
-              <mat-label>{{ t('agency.currencyIso') }}</mat-label>
-              <input matInput [value]="currency" disabled />
-              <mat-hint>{{ t('myAgency.currencyLocked') }}</mat-hint>
-            </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>{{ t('agency.phoneNumber') }}</mat-label>
+                <mat-icon matPrefix>call</mat-icon>
+                <input matInput formControlName="phoneNumber" />
+              </mat-form-field>
+            </div>
+          </section>
 
-            <mat-form-field appearance="outline" class="span-2" subscriptSizing="dynamic">
-              <mat-label>{{ t('agency.address') }}</mat-label>
-              <input matInput formControlName="address" />
-              <mat-hint>{{ t('agency.addressHint') }}</mat-hint>
-            </mat-form-field>
-          </div>
+          <section class="settings-section">
+            <h3 class="section-title">{{ t('myAgency.location') }}</h3>
+            <div class="field-grid">
+              <mat-form-field appearance="outline" class="span-2" subscriptSizing="dynamic">
+                <mat-label>{{ t('agency.address') }}</mat-label>
+                <mat-icon matPrefix>place</mat-icon>
+                <input matInput formControlName="address" />
+                <mat-hint>{{ t('agency.addressHint') }}</mat-hint>
+              </mat-form-field>
+            </div>
 
-          <app-map-picker [latitude]="latitude" [longitude]="longitude"
-                          (picked)="onPicked($event)"></app-map-picker>
+            <app-map-picker [latitude]="latitude" [longitude]="longitude"
+                            (picked)="onPicked($event)"></app-map-picker>
+          </section>
 
-          <h3 class="section-title">{{ t('agency.bookingRules') }}</h3>
-          <div class="field-grid">
-            <mat-form-field appearance="outline">
-              <mat-label>{{ t('agency.cancellationWindow') }}</mat-label>
-              <input matInput type="number" formControlName="cancellationWindowHours" min="0" />
-              <mat-error *ngIf="form.get('cancellationWindowHours')?.invalid">{{ t('agency.cancellationWindowInvalid') }}</mat-error>
-            </mat-form-field>
+          <section class="settings-section">
+            <h3 class="section-title">{{ t('agency.bookingRules') }}</h3>
+            <div class="field-grid">
+              <mat-form-field appearance="outline">
+                <mat-label>{{ t('agency.cancellationWindow') }}</mat-label>
+                <input matInput type="number" formControlName="cancellationWindowHours" min="0" />
+                <mat-error *ngIf="form.get('cancellationWindowHours')?.invalid">{{ t('agency.cancellationWindowInvalid') }}</mat-error>
+              </mat-form-field>
 
-            <mat-form-field appearance="outline">
-              <mat-label>{{ t('agency.reservationExpiry') }}</mat-label>
-              <input matInput type="number" formControlName="reservationExpiryHours" min="1" />
-              <mat-error *ngIf="form.get('reservationExpiryHours')?.invalid">{{ t('agency.reservationExpiryInvalid') }}</mat-error>
-            </mat-form-field>
-          </div>
+              <mat-form-field appearance="outline">
+                <mat-label>{{ t('agency.reservationExpiry') }}</mat-label>
+                <input matInput type="number" formControlName="reservationExpiryHours" min="1" />
+                <mat-error *ngIf="form.get('reservationExpiryHours')?.invalid">{{ t('agency.reservationExpiryInvalid') }}</mat-error>
+              </mat-form-field>
+            </div>
+          </section>
 
           <div class="actions-row">
             <button mat-raised-button color="primary" type="submit" [disabled]="saving">
@@ -83,66 +120,73 @@
     </mat-tab>
 
     <!-- NOTIFICATIONS -->
-    <!-- Same FormGroup as the details tab, bound to a div rather than a second
-         <form>: these are all AgencySettings and one command saves them, so there
-         is only ever one set of values in flight. -->
+    <!-- Same FormGroup as the details tab: one command saves them all. -->
     <mat-tab [label]="t('myAgency.tabs.notifications')" *ngIf="canNotifications">
       <div class="tab-body" [formGroup]="form">
-        <p class="settings-note">{{ t('myAgency.notifications.intro') }}</p>
+        <section class="settings-section">
+          <h3 class="section-title">{{ t('myAgency.notifications.fleet') }}</h3>
+          <p class="settings-note">{{ t('myAgency.notifications.intro') }}</p>
 
-        <h3 class="section-title">{{ t('myAgency.notifications.fleet') }}</h3>
-        <div class="field-grid">
-          <mat-form-field appearance="outline" subscriptSizing="dynamic">
-            <mat-label>{{ t('myAgency.notifications.expenseDueLeadDays') }}</mat-label>
-            <input matInput type="number" formControlName="expenseDueLeadDays" min="0" max="365" />
-            <mat-hint>{{ t('myAgency.notifications.expenseDueLeadDaysHint') }}</mat-hint>
-          </mat-form-field>
+          <div class="field-grid">
+            <mat-form-field appearance="outline" subscriptSizing="dynamic">
+              <mat-label>{{ t('myAgency.notifications.expenseDueLeadDays') }}</mat-label>
+              <input matInput type="number" formControlName="expenseDueLeadDays" min="0" max="365" />
+              <mat-hint>{{ t('myAgency.notifications.expenseDueLeadDaysHint') }}</mat-hint>
+            </mat-form-field>
 
-          <mat-form-field appearance="outline" subscriptSizing="dynamic">
-            <mat-label>{{ t('myAgency.notifications.expenseDueLeadKm') }}</mat-label>
-            <input matInput type="number" formControlName="expenseDueLeadKilometers" min="0" max="100000" />
-            <mat-hint>{{ t('myAgency.notifications.expenseDueLeadKmHint') }}</mat-hint>
-          </mat-form-field>
+            <mat-form-field appearance="outline" subscriptSizing="dynamic">
+              <mat-label>{{ t('myAgency.notifications.expenseDueLeadKm') }}</mat-label>
+              <input matInput type="number" formControlName="expenseDueLeadKilometers" min="0" max="100000" />
+              <mat-hint>{{ t('myAgency.notifications.expenseDueLeadKmHint') }}</mat-hint>
+            </mat-form-field>
 
-          <mat-form-field appearance="outline" subscriptSizing="dynamic">
-            <mat-label>{{ t('myAgency.notifications.reservationLeadDays') }}</mat-label>
-            <input matInput type="number" formControlName="reservationUpcomingLeadDays" min="0" max="365" />
-            <mat-hint>{{ t('myAgency.notifications.reservationLeadDaysHint') }}</mat-hint>
-          </mat-form-field>
-        </div>
+            <mat-form-field appearance="outline" subscriptSizing="dynamic">
+              <mat-label>{{ t('myAgency.notifications.reservationLeadDays') }}</mat-label>
+              <input matInput type="number" formControlName="reservationUpcomingLeadDays" min="0" max="365" />
+              <mat-hint>{{ t('myAgency.notifications.reservationLeadDaysHint') }}</mat-hint>
+            </mat-form-field>
+          </div>
 
-        <mat-checkbox formControlName="notifyStaffByEmail">
-          {{ t('myAgency.notifications.notifyStaffByEmail') }}
-        </mat-checkbox>
-        <p class="settings-hint">{{ t('myAgency.notifications.notifyStaffByEmailHint') }}</p>
+          <div class="switch-row">
+            <mat-checkbox formControlName="notifyStaffByEmail">
+              {{ t('myAgency.notifications.notifyStaffByEmail') }}
+            </mat-checkbox>
+            <p class="settings-hint">{{ t('myAgency.notifications.notifyStaffByEmailHint') }}</p>
+          </div>
+        </section>
 
-        <h3 class="section-title">{{ t('myAgency.notifications.clients') }}</h3>
+        <section class="settings-section">
+          <h3 class="section-title">{{ t('myAgency.notifications.clients') }}</h3>
 
-        <mat-checkbox formControlName="notifyClientsByEmail">
-          {{ t('myAgency.notifications.notifyClientsByEmail') }}
-        </mat-checkbox>
-        <p class="settings-hint">{{ t('myAgency.notifications.notifyClientsByEmailHint') }}</p>
+          <div class="switch-row">
+            <mat-checkbox formControlName="notifyClientsByEmail">
+              {{ t('myAgency.notifications.notifyClientsByEmail') }}
+            </mat-checkbox>
+            <p class="settings-hint">{{ t('myAgency.notifications.notifyClientsByEmailHint') }}</p>
+          </div>
 
-        <!-- Left editable while the master switch is off rather than disabled or
-             hidden: these are the values that will apply the moment it is turned
-             on, so an agency setting up its reminders can fill them in first. -->
-        <div class="field-grid">
-          <mat-form-field appearance="outline" subscriptSizing="dynamic">
-            <mat-label>{{ t('myAgency.notifications.beforeStart') }}</mat-label>
-            <input matInput type="number" formControlName="clientReminderDaysBeforeStart"
-                   min="0" max="90" />
-            <mat-hint>{{ t('myAgency.notifications.zeroIsOff') }}</mat-hint>
-          </mat-form-field>
+          <!-- Editable while the master switch is off, so they can be set up first. -->
+          <div class="field-grid">
+            <mat-form-field appearance="outline" subscriptSizing="dynamic">
+              <mat-label>{{ t('myAgency.notifications.beforeStart') }}</mat-label>
+              <input matInput type="number" formControlName="clientReminderDaysBeforeStart"
+                     min="0" max="90" />
+              <mat-hint>{{ t('myAgency.notifications.zeroIsOff') }}</mat-hint>
+            </mat-form-field>
 
-          <mat-form-field appearance="outline" subscriptSizing="dynamic">
-            <mat-label>{{ t('myAgency.notifications.beforeEnd') }}</mat-label>
-            <input matInput type="number" formControlName="clientReminderDaysBeforeEnd"
-                   min="0" max="90" />
-            <mat-hint>{{ t('myAgency.notifications.zeroIsOff') }}</mat-hint>
-          </mat-form-field>
-        </div>
+            <mat-form-field appearance="outline" subscriptSizing="dynamic">
+              <mat-label>{{ t('myAgency.notifications.beforeEnd') }}</mat-label>
+              <input matInput type="number" formControlName="clientReminderDaysBeforeEnd"
+                     min="0" max="90" />
+              <mat-hint>{{ t('myAgency.notifications.zeroIsOff') }}</mat-hint>
+            </mat-form-field>
+          </div>
 
-        <p class="settings-hint">{{ t('myAgency.notifications.lateNoticeNote') }}</p>
+          <div class="info-banner">
+            <mat-icon>outgoing_mail</mat-icon>
+            {{ t('myAgency.notifications.lateNoticeNote') }}
+          </div>
+        </section>
 
         <div class="actions-row">
           <button mat-raised-button color="primary" type="button" (click)="save()" [disabled]="saving">

@@ -1,14 +1,18 @@
+using FluentValidation.Results;
+using ValidationException = RemSolution.Application.Common.Exceptions.ValidationException;
 using RemSolution.Application.Common.Geo;
 using RemSolution.Application.Common.Interfaces;
+using RemSolution.Application.Common.Models;
 using RemSolution.Application.Common.Security;
 using RemSolution.Application.Common.Tenancy;
+using RemSolution.Application.Features.Agency.DTOs;
 using RemSolution.Application.Features.Agency.Models;
 using RemSolution.Domain.Constants;
 
 namespace RemSolution.Application.Features.Agency.Commands.CreateAgencyCommand
 {
     [Authorize(Roles = Roles.PlatformAdministrator)]
-    public record CreateAgencyCommand : IRequest<int>
+    public record CreateAgencyCommand : IRequest<AgencyCreatedDto>
     {
         public string Name { get; init; } = string.Empty;
         public string? Email { get; init; }
@@ -29,18 +33,39 @@ namespace RemSolution.Application.Features.Agency.Commands.CreateAgencyCommand
         // rather than a follow-up step that is easy to forget. Editing them later
         // goes through the Agencies/{id}/branches sub-resource.
         public IReadOnlyList<AgencyBranchInput> Branches { get; init; } = Array.Empty<AgencyBranchInput>();
+
+        // Who runs the agency: the administrator login is created with it, so no
+        // agency exists that nobody can sign in to. Empty falls back to the
+        // agency's own email; the validator refuses the command when neither is set.
+        public string? AdminEmail { get; init; }
+        public string? AdminFullName { get; init; }
+
+        /// <summary>
+        /// The address the administrator login is created for. A method, not a
+        /// property, so it stays out of the API schema.
+        /// </summary>
+        public string? ResolveAdminEmail() =>
+            string.IsNullOrWhiteSpace(AdminEmail) ? Trimmed(Email) : AdminEmail.Trim();
+
+        private static string? Trimmed(string? value) =>
+            string.IsNullOrWhiteSpace(value) ? null : value.Trim();
     }
 
-    public class CreateAgencyCommandHandler : IRequestHandler<CreateAgencyCommand, int>
+    public class CreateAgencyCommandHandler : IRequestHandler<CreateAgencyCommand, AgencyCreatedDto>
     {
         private readonly IApplicationDbContext _context;
+        private readonly IAgencyAccountService _accounts;
+        private readonly ILocalizer _localizer;
 
-        public CreateAgencyCommandHandler(IApplicationDbContext context)
+        public CreateAgencyCommandHandler(
+            IApplicationDbContext context, IAgencyAccountService accounts, ILocalizer localizer)
         {
             _context = context;
+            _accounts = accounts;
+            _localizer = localizer;
         }
 
-        public async Task<int> Handle(CreateAgencyCommand request, CancellationToken cancellationToken)
+        public async Task<AgencyCreatedDto> Handle(CreateAgencyCommand request, CancellationToken cancellationToken)
         {
             var entity = new RemSolution.Domain.Entities.Agency
             {
@@ -59,9 +84,7 @@ namespace RemSolution.Application.Features.Agency.Commands.CreateAgencyCommand
                 },
             };
 
-            // Agency and branches land together or not at all: disposing without
-            // commit rolls back, so a failure part-way through cannot leave a live
-            // agency holding only some of the locations entered for it.
+            // Agency, branches and administrator land together or not at all.
             await using var transaction = await _context.BeginTransactionAsync(cancellationToken);
 
             _context.Agencies.Add(entity);
@@ -97,9 +120,32 @@ namespace RemSolution.Application.Features.Agency.Commands.CreateAgencyCommand
                 }
             }
 
+            // Inside the transaction, on the same DbContext.
+            var admin = await _accounts.EnsureAdministratorAsync(
+                entity.Id, entity.Name, request.ResolveAdminEmail(), request.AdminFullName, cancellationToken);
+
+            if (admin.Outcome == AgencyAdminOutcome.EmailTaken)
+            {
+                // A 400 naming the field, not a 500; throwing rolls the agency back.
+                throw new ValidationException(new[]
+                {
+                    new ValidationFailure(nameof(request.AdminEmail),
+                        _localizer["Validation.Agency.AdminEmailTaken", admin.Email ?? string.Empty]),
+                });
+            }
+
             await transaction.CommitAsync(cancellationToken);
 
-            return entity.Id;
+            // After the commit, and never throws: a mail cannot be unsent.
+            var sent = await _accounts.SendWelcomeAsync(admin, cancellationToken);
+
+            return new AgencyCreatedDto
+            {
+                Id = entity.Id,
+                AdminUserName = admin.Email,
+                AdminTemporaryPassword = admin.TemporaryPassword,
+                WelcomeEmailSent = sent,
+            };
         }
     }
 }

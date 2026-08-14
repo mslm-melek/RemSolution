@@ -47,6 +47,8 @@
         public int? Mileage { get; set; }
         public virtual ICollection<Expense>? Expenses { get; set; }
         public virtual ICollection<Renting>? Rentings { get; set; }
+        // This car's own servicing intervals (see CarExpenseSchedule).
+        public virtual ICollection<CarExpenseSchedule>? ExpenseSchedules { get; set; }
 
         /// <summary>
         /// Takes a reading measured on this car — a pickup or return mileage — and

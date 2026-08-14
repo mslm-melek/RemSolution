@@ -76,6 +76,12 @@
   <data name="Validation.Coordinates.Together" xml:space="preserve">
     <value>La latitude et la longitude doivent être renseignées ensemble.</value>
   </data>
+  <data name="Validation.Agency.AdminEmailRequired" xml:space="preserve">
+    <value>Une adresse e-mail est nécessaire pour le compte administrateur de l'agence : saisissez-la ici, ou renseignez l'e-mail de l'agence.</value>
+  </data>
+  <data name="Validation.Agency.AdminEmailTaken" xml:space="preserve">
+    <value>« {0} » correspond déjà à un compte de la plateforme. Utilisez une autre adresse pour l'administrateur de l'agence.</value>
+  </data>
   <data name="Validation.Brand.NameRequired" xml:space="preserve">
     <value>Le nom de la marque est obligatoire.</value>
   </data>
@@ -795,6 +801,27 @@
   </data>
   <data name="Validation.Client.EmailTooLong" xml:space="preserve">
     <value>L'adresse e-mail est trop longue.</value>
+  </data>
+  <data name="Email.AgencyAdmin.Subject" xml:space="preserve">
+    <value>Votre compte administrateur pour {0}</value>
+  </data>
+  <data name="Email.AgencyAdmin.Hello" xml:space="preserve">
+    <value>Bonjour {0},</value>
+  </data>
+  <data name="Email.AgencyAdmin.Created" xml:space="preserve">
+    <value>Un compte administrateur a été créé pour {0}. Il permet de gérer la flotte, l'équipe et tous les modules ouverts par la formule de l'agence.</value>
+  </data>
+  <data name="Email.AgencyAdmin.Login" xml:space="preserve">
+    <value>Identifiant</value>
+  </data>
+  <data name="Email.AgencyAdmin.Password" xml:space="preserve">
+    <value>Mot de passe temporaire</value>
+  </data>
+  <data name="Email.AgencyAdmin.MustChange" xml:space="preserve">
+    <value>Un nouveau mot de passe vous sera demandé lors de votre première connexion. Tant qu'il n'est pas changé, le compte ne peut rien faire d'autre.</value>
+  </data>
+  <data name="Email.AgencyAdmin.SignIn" xml:space="preserve">
+    <value>Se connecter</value>
   </data>
   <data name="Email.ClientAccount.Subject" xml:space="preserve">
     <value>Votre compte client chez {0}</value>

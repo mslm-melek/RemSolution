@@ -2,6 +2,7 @@ using FluentValidation.Results;
 using ValidationException = RemSolution.Application.Common.Exceptions.ValidationException;
 using RemSolution.Application.Common.Audit;
 using RemSolution.Application.Common.Interfaces;
+using RemSolution.Application.Common.Models;
 using RemSolution.Application.Common.Security;
 using RemSolution.Domain.Constants;
 using RemSolution.Domain.Enums;
@@ -25,6 +26,11 @@ namespace RemSolution.Application.Features.AgencySubscription.Commands.AssignAge
     /// enforces at most one Active subscription per agency. If the agency has no
     /// users yet, an administrator account is created automatically (requires the
     /// agency to have an email, used as the username).
+    /// <para>
+    /// A safety net only, since agencies are now created with their administrator.
+    /// It uses the same <see cref="IAgencyAccountService"/>, so the account is
+    /// identical: temporary password, forced change, welcome mail.
+    /// </para>
     /// </summary>
     [Authorize(Roles = Roles.PlatformAdministrator)]
     [Auditable("AssignAgencySubscription", "AgencySubscription")]
@@ -39,12 +45,15 @@ namespace RemSolution.Application.Features.AgencySubscription.Commands.AssignAge
     public class AssignAgencySubscriptionCommandHandler : IRequestHandler<AssignAgencySubscriptionCommand, AssignAgencySubscriptionResult>
     {
         private readonly IApplicationDbContext _context;
-        private readonly IIdentityService _identityService;
+        private readonly IAgencyAccountService _accounts;
+        private readonly ILocalizer _localizer;
 
-        public AssignAgencySubscriptionCommandHandler(IApplicationDbContext context, IIdentityService identityService)
+        public AssignAgencySubscriptionCommandHandler(
+            IApplicationDbContext context, IAgencyAccountService accounts, ILocalizer localizer)
         {
             _context = context;
-            _identityService = identityService;
+            _accounts = accounts;
+            _localizer = localizer;
         }
 
         public async Task<AssignAgencySubscriptionResult> Handle(AssignAgencySubscriptionCommand request, CancellationToken cancellationToken)
@@ -89,45 +98,34 @@ namespace RemSolution.Application.Features.AgencySubscription.Commands.AssignAge
             await _context.SaveChangesAsync(cancellationToken);
 
             // Bootstrap the agency's first administrator when it has no users yet.
-            string? adminUserName = null;
-            string? adminPassword = null;
+            // AgencyAdministrator holds every permission implicitly.
+            var admin = await _accounts.EnsureAdministratorAsync(
+                request.AgencyId, agency!.Name, agency.Email, null, cancellationToken);
 
-            var userCount = await _identityService.CountAgencyUsersAsync(request.AgencyId, cancellationToken);
-
-            if (userCount == 0)
+            if (admin.Outcome == AgencyAdminOutcome.NoEmail)
             {
-                if (string.IsNullOrWhiteSpace(agency!.Email))
+                throw new ValidationException(new[]
                 {
-                    throw new ValidationException(new[]
-                    {
-                        new ValidationFailure(nameof(request.AgencyId),
-                            "The agency has no users and no email: set an agency email before assigning a plan, so the first administrator account can be created."),
-                    });
-                }
+                    new ValidationFailure(nameof(request.AgencyId),
+                        "The agency has no users and no email: set an agency email before assigning a plan, so the first administrator account can be created."),
+                });
+            }
 
-                adminUserName = agency.Email;
-                adminPassword = GenerateTemporaryPassword();
-
-                // AgencyAdministrator holds every permission implicitly — no
-                // UserPermission rows needed.
-                var (result, _) = await _identityService.CreateAgencyUserAsync(
-                    adminUserName, adminPassword, request.AgencyId, Roles.AgencyAdministrator, cancellationToken);
-
-                if (!result.Succeeded)
+            if (admin.Outcome == AgencyAdminOutcome.EmailTaken)
+            {
+                throw new ValidationException(new[]
                 {
-                    throw new ValidationException(
-                        result.Errors.Select(e => new ValidationFailure(nameof(request.AgencyId), e)));
-                }
+                    new ValidationFailure(nameof(request.AgencyId),
+                        _localizer["Validation.Agency.AdminEmailTaken", admin.Email ?? string.Empty]),
+                });
             }
 
             await transaction.CommitAsync(cancellationToken);
 
-            return new AssignAgencySubscriptionResult(entity.Id, adminUserName, adminPassword);
-        }
+            // After the commit, and never fatal: the caller gets the credentials anyway.
+            await _accounts.SendWelcomeAsync(admin, cancellationToken);
 
-        // A temporary password that satisfies the default Identity complexity
-        // rules (upper, lower, digit, symbol, length). The admin resets it.
-        private static string GenerateTemporaryPassword() =>
-            "Aa1!" + Guid.NewGuid().ToString("N")[..12];
+            return new AssignAgencySubscriptionResult(entity.Id, admin.Email, admin.TemporaryPassword);
+        }
     }
 }
