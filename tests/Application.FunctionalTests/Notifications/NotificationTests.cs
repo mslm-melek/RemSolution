@@ -73,15 +73,8 @@ public class NotificationTests : BaseTestFixture
     private static async Task<int> RentingAsync(
         int carId, int clientId, DateTime start, DateTime end, RentingState state)
     {
-        var renting = new Renting
-        {
-            CarId = carId,
-            ClientId = clientId,
-            StartDate = start,
-            EndDate = end,
-            RentingState = state,
-            Price = Money.Of(200m, "TND")
-        };
+        var renting = RentingFixture.Hire(
+            carId, clientId, start, end, state, Money.Of(200m, "TND"));
         await AddAsync(renting);
         return renting.Id;
     }

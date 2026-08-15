@@ -29,15 +29,10 @@ public class CreditQueryTests : BaseTestFixture
         var client = new Client { FirstName = name, LastName = "Debtor" };
         await AddAsync(client);
 
-        await AddAsync(new Renting
-        {
-            CarId = car.Id,
-            ClientId = client.Id,
-            StartDate = Start,
-            EndDate = End,
-            RentingState = RentingState.InProgress,
-            Price = Money.Of(price, "TND")
-        });
+        await AddAsync(RentingFixture.Hire(
+            car.Id, client.Id, Start, End,
+            RentingState.InProgress,
+            price: Money.Of(price, "TND")));
 
         if (paid > 0)
         {
@@ -120,11 +115,9 @@ public class CreditQueryTests : BaseTestFixture
         await AddAsync(car);
         var client = new Client { FirstName = "No", LastName = "Charge" };
         await AddAsync(client);
-        await AddAsync(new Renting
-        {
-            CarId = car.Id, ClientId = client.Id, StartDate = Start, EndDate = End,
-            RentingState = RentingState.Cancelled, Price = Money.Of(500m, "TND")
-        });
+        await AddAsync(RentingFixture.Hire(
+            car.Id, client.Id, Start, End,
+            RentingState.Cancelled, price: Money.Of(500m, "TND")));
 
         var result = await SendAsync(new GetClientCreditsQuery());
 

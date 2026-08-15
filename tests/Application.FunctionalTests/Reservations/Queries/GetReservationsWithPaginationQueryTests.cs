@@ -97,6 +97,9 @@ public class GetReservationsWithPaginationQueryTests : BaseTestFixture
         var car = new Car { Matricule = matricule, Status = CarStatus.Active };
         await AddAsync(car);
 
+        var client = new Client { FirstName = "Hold", LastName = "Client" };
+        await AddAsync(client);
+
         var end = start.AddDays(3);
         var reservation = Reservation.Create(car.Id, start, end, null, expiresAt: start.AddDays(-1));
 
@@ -113,7 +116,7 @@ public class GetReservationsWithPaginationQueryTests : BaseTestFixture
                 break;
             case ReservationStatus.Converted:
                 reservation.Confirm();
-                reservation.Convert(new Renting { CarId = car.Id, StartDate = start, EndDate = end });
+                reservation.Convert(RentingFixture.Hire(car.Id, client.Id, start, end));
                 break;
             case ReservationStatus.Rejected:
                 reservation.Reject("That car is spoken for.");

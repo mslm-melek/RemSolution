@@ -38,15 +38,8 @@ public class ChatTests : BaseTestFixture
         };
         await AddAsync(client);
 
-        var renting = new Renting
-        {
-            CarId = car.Id,
-            ClientId = client.Id,
-            StartDate = Start,
-            EndDate = End,
-            RentingState = state,
-            Price = Money.Of(200m, "TND")
-        };
+        var renting = RentingFixture.Hire(
+            car.Id, client.Id, Start, End, state, price: Money.Of(200m, "TND"));
         await AddAsync(renting);
 
         return renting.Id;

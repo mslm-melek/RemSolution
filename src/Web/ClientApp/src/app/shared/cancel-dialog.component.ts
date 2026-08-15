@@ -4,7 +4,7 @@ import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { TranslocoService } from '@jsverse/transloco';
 import { RentingsClient, RentingDto, CancelRentingCommand } from '../web-api-client';
 import { AuthService } from './auth.service';
-import { extractValidationErrors } from './form-utils';
+import { extractValidationErrors, extractProblemDetail, isInvalidTransition } from './form-utils';
 
 export interface CancelDialogData {
   rentingId: number;
@@ -150,8 +150,17 @@ export class CancelDialogComponent implements OnInit {
   }
 
   private handleError(err: any) {
+    // Already returned or already cancelled: the server refuses the transition
+    // rather than reporting a bad field.
+    if (isInvalidTransition(err)) {
+      this.errorMessage = this.transloco.translate('renting.staleState');
+      return;
+    }
+
     const validationErrors = extractValidationErrors(err);
-    this.errorMessage = validationErrors ?? this.transloco.translate('common.unexpectedError');
+    this.errorMessage = validationErrors
+      ?? extractProblemDetail(err)
+      ?? this.transloco.translate('common.unexpectedError');
     if (!validationErrors) console.error(err);
   }
 }

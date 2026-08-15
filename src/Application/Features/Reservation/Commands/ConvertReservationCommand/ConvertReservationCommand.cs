@@ -73,7 +73,17 @@ namespace RemSolution.Application.Features.Reservation.Commands.ConvertReservati
             _context.SetOriginalRowVersion(entity, request.RowVersion);
 
             await using var transaction = await _context.BeginTransactionAsync(cancellationToken);
-            await _context.AcquireTenantWriteLockAsync(cancellationToken);
+
+            // The agency lock too, and first, when an identity number is supplied:
+            // ResolveClientAsync dedups it across the whole agency and Client.CIN
+            // has no unique index, so the read and the write have to be atomic
+            // against the other paths that create clients.
+            if (!string.IsNullOrWhiteSpace(request.CIN) || !string.IsNullOrWhiteSpace(request.PasseportNumber))
+            {
+                await _context.AcquireTenantWriteLockAsync(cancellationToken);
+            }
+
+            await _context.AcquireCarWriteLockAsync(carId, cancellationToken);
 
             // Any OTHER active booking that appeared for this car since the hold
             // was placed blocks the conversion; the hold itself is excluded.
@@ -82,18 +92,15 @@ namespace RemSolution.Application.Features.Reservation.Commands.ConvertReservati
 
             var client = await ResolveClientAsync(entity.Client, request, cancellationToken);
 
-            var renting = new RentingEntity
-            {
-                CarId = carId,
-                ClientId = client.Id,
-                StartDate = start,
-                EndDate = end,
+            var renting = RentingEntity.Create(
+                carId: carId,
+                clientId: client.Id,
+                startDate: start,
+                endDate: end,
                 // Keep the agreed price and deposit from the hold — not re-quoted.
-                Price = entity.Price,
-                DepositAmount = entity.DepositAmount,
-                RentingState = RentingState.NotYet,
-                Notes = entity.Notes,
-            };
+                price: entity.Price,
+                depositAmount: entity.DepositAmount,
+                notes: entity.Notes);
 
             _context.Rentings.Add(renting);
 

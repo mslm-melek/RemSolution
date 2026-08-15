@@ -102,12 +102,7 @@ public class RentingBalanceTests : BaseTestFixture
         var client = new Client { FirstName = "Priceless", LastName = "Client" };
         await AddAsync(client);
 
-        var renting = new Renting
-        {
-            CarId = car.Id, ClientId = client.Id,
-            StartDate = Start, EndDate = End,
-            RentingState = RentingState.NotYet
-        };
+        var renting = RentingFixture.Hire(car.Id, client.Id, Start, End);
         await AddAsync(renting);
 
         var dto = await SendAsync(new GetRentingByIdQuery(renting.Id));

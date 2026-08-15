@@ -8,6 +8,7 @@ using RemSolution.Application.Features.Renting.Queries.GetRentingByIdQuery;
 using RemSolution.Domain.Constants;
 using RemSolution.Domain.Entities;
 using RemSolution.Domain.Enums;
+using RemSolution.Domain.Exceptions;
 using RemSolution.Domain.ValueObjects;
 
 namespace RemSolution.Application.FunctionalTests.Rentings.Commands;
@@ -144,17 +145,13 @@ public class CancelRentingTests : BaseTestFixture
         await AddAsync(car);
         var client = new Client { FirstName = "Free", LastName = "Rider" };
         await AddAsync(client);
-        var renting = new Renting
-        {
-            CarId = car.Id, ClientId = client.Id,
-            StartDate = Start, EndDate = End, RentingState = RentingState.NotYet
-        };
+        var renting = RentingFixture.Hire(car.Id, client.Id, Start, End);
         await AddAsync(renting);
 
         await FluentActions.Invoking(() => SendAsync(new CancelRentingCommand
         {
             Id = renting.Id, CancellationFee = 50m
-        })).Should().ThrowAsync<ValidationException>();
+        })).Should().ThrowAsync<DomainRuleException>();
 
         // Cancelling it for free is still fine.
         await SendAsync(new CancelRentingCommand { Id = renting.Id });
@@ -172,7 +169,7 @@ public class CancelRentingTests : BaseTestFixture
         await FluentActions.Invoking(() => SendAsync(new CancelRentingCommand
         {
             Id = rentingId, CancellationFee = 501m
-        })).Should().ThrowAsync<ValidationException>();
+        })).Should().ThrowAsync<DomainRuleException>();
 
         (await FindAsync<Renting>(rentingId))!.RentingState.Should().Be(RentingState.NotYet);
     }

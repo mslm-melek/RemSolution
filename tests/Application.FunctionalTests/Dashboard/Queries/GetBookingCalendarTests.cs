@@ -40,15 +40,9 @@ public class GetBookingCalendarTests : BaseTestFixture
         var car = await AddCarAsync("CAL-1");
         var client = await AddClientAsync("Split");
 
-        var renting = new Renting
-        {
-            CarId = car.Id,
-            ClientId = client.Id,
-            StartDate = InMonth,
-            EndDate = InMonth.AddDays(3),
-            RentingState = RentingState.NotYet,
-            Price = Money.Of(150m, "TND")
-        };
+        var renting = RentingFixture.Hire(
+            car.Id, client.Id, InMonth, InMonth.AddDays(3),
+            RentingState.NotYet, Money.Of(150m, "TND"));
         await AddAsync(renting);
 
         var result = await SendAsync(new GetBookingCalendarQuery(MonthStart, MonthEnd));
@@ -84,15 +78,9 @@ public class GetBookingCalendarTests : BaseTestFixture
 
         // Picked up the month before and due back inside the window: the return is
         // this month's work, the pickup was last month's.
-        await AddAsync(new Renting
-        {
-            CarId = car.Id,
-            ClientId = client.Id,
-            StartDate = MonthStart.AddDays(-5),
-            EndDate = InMonth,
-            RentingState = RentingState.InProgress,
-            Price = Money.Of(300m, "TND")
-        });
+        await AddAsync(RentingFixture.Hire(
+            car.Id, client.Id, MonthStart.AddDays(-5), InMonth,
+            RentingState.InProgress, Money.Of(300m, "TND")));
 
         var result = await SendAsync(new GetBookingCalendarQuery(MonthStart, MonthEnd));
 
@@ -109,15 +97,9 @@ public class GetBookingCalendarTests : BaseTestFixture
         var car = await AddCarAsync("CAL-3");
         var client = await AddClientAsync("Dead");
 
-        await AddAsync(new Renting
-        {
-            CarId = car.Id,
-            ClientId = client.Id,
-            StartDate = InMonth,
-            EndDate = InMonth.AddDays(2),
-            RentingState = RentingState.Cancelled,
-            Price = Money.Of(90m, "TND")
-        });
+        await AddAsync(RentingFixture.Hire(
+            car.Id, client.Id, InMonth, InMonth.AddDays(2),
+            RentingState.Cancelled, Money.Of(90m, "TND")));
 
         var rejected = Reservation.Create(
             car.Id, InMonth, InMonth.AddDays(2), Money.Of(80m, "TND"), InMonth.AddHours(24), client.Id);
@@ -173,26 +155,14 @@ public class GetBookingCalendarTests : BaseTestFixture
         // the client list's overdue count applies.
         var today = DateTime.UtcNow.Date;
 
-        await AddAsync(new Renting
-        {
-            CarId = car.Id,
-            ClientId = client.Id,
-            StartDate = today.AddDays(-5),
-            EndDate = today.AddDays(-1),
-            RentingState = RentingState.InProgress,
-            Price = Money.Of(120m, "TND")
-        });
+        await AddAsync(RentingFixture.Hire(
+            car.Id, client.Id, today.AddDays(-5), today.AddDays(-1),
+            RentingState.InProgress, Money.Of(120m, "TND")));
 
         // A finished hire that also came back before now is not late: it is back.
-        await AddAsync(new Renting
-        {
-            CarId = car.Id,
-            ClientId = client.Id,
-            StartDate = today.AddDays(-5),
-            EndDate = today.AddDays(-2),
-            RentingState = RentingState.Done,
-            Price = Money.Of(100m, "TND")
-        });
+        await AddAsync(RentingFixture.Hire(
+            car.Id, client.Id, today.AddDays(-5), today.AddDays(-2),
+            RentingState.Done, Money.Of(100m, "TND")));
 
         var result = await SendAsync(new GetBookingCalendarQuery(today.AddDays(-7), today.AddDays(1)));
 

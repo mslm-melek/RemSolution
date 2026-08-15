@@ -52,6 +52,17 @@ public interface IApplicationDbContext
     Task AcquireTenantWriteLockAsync(CancellationToken cancellationToken);
 
     /// <summary>
+    /// Serializes writers of ONE car, for the availability check + insert race.
+    /// Transaction-owned like the tenant lock, and a no-op without a tenant.
+    /// <para>
+    /// Two rules: every availability path must take it, even one that also holds
+    /// the agency lock (paths holding different locks exclude nobody), and when
+    /// both are needed the agency lock comes FIRST, or two writers deadlock.
+    /// </para>
+    /// </summary>
+    Task AcquireCarWriteLockAsync(int carId, CancellationToken cancellationToken);
+
+    /// <summary>
     /// Sets the optimistic-concurrency original value of a tracked entity to the
     /// token the client last read, so the update targets that exact row version
     /// and a stale write raises <c>DbUpdateConcurrencyException</c> instead of

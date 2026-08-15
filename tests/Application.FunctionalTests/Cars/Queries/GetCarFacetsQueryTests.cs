@@ -24,13 +24,13 @@ public class GetCarFacetsQueryTests : BaseTestFixture
         await AddAsync(new Car { Matricule = "F-IN", Status = CarStatus.Active });
         await AddAsync(new Car { Matricule = "F-GARAGE", Status = CarStatus.Maintenance });
 
-        await AddAsync(new Renting
-        {
-            CarId = held.Id,
-            StartDate = DateTime.UtcNow.AddDays(-1),
-            EndDate = DateTime.UtcNow.AddDays(1),
-            RentingState = RentingState.InProgress
-        });
+        var client = new Client { FirstName = "Facet", LastName = "Driver" };
+        await AddAsync(client);
+
+        await AddAsync(RentingFixture.Hire(
+            held.Id, client.Id,
+            DateTime.UtcNow.AddDays(-1), DateTime.UtcNow.AddDays(1),
+            RentingState.InProgress));
 
         var facets = await SendAsync(new GetCarFacetsQuery());
 

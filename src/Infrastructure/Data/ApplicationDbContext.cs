@@ -66,9 +66,19 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>, IApplica
     public async Task<ITransactionScope> BeginTransactionAsync(CancellationToken cancellationToken)
         => new TransactionScope(await Database.BeginTransactionAsync(cancellationToken));
 
-    public async Task AcquireTenantWriteLockAsync(CancellationToken cancellationToken)
+    public Task AcquireTenantWriteLockAsync(CancellationToken cancellationToken) =>
+        AcquireAppLockAsync($"agency-writes-{_tenant.AgencyId}", "agency write lock", cancellationToken);
+
+    public Task AcquireCarWriteLockAsync(int carId, CancellationToken cancellationToken) =>
+        AcquireAppLockAsync(
+            $"car-writes-{_tenant.AgencyId}-{carId}", "car write lock", cancellationToken);
+
+    // Both write locks are the same app lock, differing only in what they are
+    // keyed on (see IApplicationDbContext for which to take).
+    private async Task AcquireAppLockAsync(
+        string resource, string description, CancellationToken cancellationToken)
     {
-        if (_tenant.AgencyId is not int agencyId)
+        if (_tenant.AgencyId is null)
         {
             return;
         }
@@ -76,7 +86,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>, IApplica
         if (Database.CurrentTransaction is null)
         {
             throw new InvalidOperationException(
-                "The tenant write lock is transaction-owned and must be acquired inside a transaction.");
+                $"The {description} is transaction-owned and must be acquired inside a transaction.");
         }
 
         // sp_getapplock reports failure (timeout, deadlock victim) through its
@@ -84,11 +94,11 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>, IApplica
         await Database.ExecuteSqlAsync($@"
 DECLARE @result int;
 EXEC @result = sp_getapplock
-    @Resource = {$"agency-writes-{agencyId}"},
+    @Resource = {resource},
     @LockMode = 'Exclusive',
     @LockOwner = 'Transaction',
     @LockTimeout = 10000;
-IF @result < 0 THROW 51000, 'Failed to acquire the agency write lock.', 1;", cancellationToken);
+IF @result < 0 THROW 51000, 'Failed to acquire a write lock.', 1;", cancellationToken);
     }
 
     private sealed class TransactionScope : ITransactionScope

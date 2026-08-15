@@ -581,6 +581,7 @@
     "confirmReverse": "Post a reversal for this payment?",
     "promptPickupMileage": "Pickup mileage (optional):",
     "concurrency": "This renting was reloaded by another user since you opened it. Reload the page to get the latest version, then re-apply your changes.",
+    "staleState": "This renting has moved on since you opened it — someone started, closed or cancelled it. Reload the page to see where it stands.",
     "existingClient": "Existing client",
     "newClient": "New client",
     "newClientHint": "The essentials are enough to sign the paperwork — the client is created together with the renting, and the rest of their file can be completed later from the Clients screen.",

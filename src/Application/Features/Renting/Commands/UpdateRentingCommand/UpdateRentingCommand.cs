@@ -85,14 +85,9 @@ namespace RemSolution.Application.Features.Renting.Commands.UpdateRentingCommand
 
             Guard.Against.NotFound(request.Id, entity);
 
-            if (entity.RentingState is RentingState.Done or RentingState.Cancelled)
-            {
-                throw new ValidationException(new[]
-                {
-                    new ValidationFailure(nameof(request.Id),
-                        "A completed or cancelled renting can no longer be edited.")
-                });
-            }
+            // Up front, so a closed hire never reaches the availability check or
+            // an inline client insert; Amend would refuse it anyway.
+            entity.EnsureLive("edited");
 
             _context.SetOriginalRowVersion(entity, request.RowVersion);
 
@@ -133,7 +128,16 @@ namespace RemSolution.Application.Features.Renting.Commands.UpdateRentingCommand
             }
 
             await using var transaction = await _context.BeginTransactionAsync(cancellationToken);
-            await _context.AcquireTenantWriteLockAsync(cancellationToken);
+
+            // Only the car being booked needs locking — the one being left just
+            // frees time up. The agency lock first, when an inline second driver
+            // counts against the plan's quota.
+            if (request.SecondNewClient is not null)
+            {
+                await _context.AcquireTenantWriteLockAsync(cancellationToken);
+            }
+
+            await _context.AcquireCarWriteLockAsync(request.CarId, cancellationToken);
 
             await _availability.EnsureCarAvailableAsync(
                 request.CarId, request.StartDate, request.EndDate,
@@ -158,27 +162,15 @@ namespace RemSolution.Application.Features.Renting.Commands.UpdateRentingCommand
                 new RentingClientContext(_context, _user, _identityService, _tenant, _dateTime),
                 renter, request.SecondClientId, request.SecondNewClient, cancellationToken);
 
-            entity.CarId = request.CarId;
-            entity.ClientId = request.ClientId;
-            entity.SecondClientId = secondDriver?.Id;
-            entity.StartDate = request.StartDate;
-            entity.EndDate = request.EndDate;
-            entity.StartMileage = request.StartMileage;
-            entity.EndMileage = request.EndMileage;
-            entity.Notes = request.Notes;
-
-            // Corrected readings still belong to the car (see Car.RecordOdometer).
-            // Only ever forward: an edit that lowers a mileage is a correction to
-            // this hire, not evidence that the car has driven less.
-            car.RecordOdometer(entity.StartMileage);
-            car.RecordOdometer(entity.EndMileage);
+            // The typed figure, the re-quote, or the original snapshot.
+            var price = entity.Price;
 
             if (request.PriceOverride is decimal agreed)
             {
                 // Same currency rule as the create path: the car's, then the
                 // agency's. Keeping the existing snapshot's currency would be
                 // wrong when the edit is what moves the renting to another car.
-                entity.Price = Money.Of(
+                price = Money.Of(
                     agreed,
                     car.DailyRate?.Currency
                         ?? (await _settings.GetAsync(car.AgencyId, cancellationToken)).CurrencyCode)
@@ -186,8 +178,25 @@ namespace RemSolution.Application.Features.Renting.Commands.UpdateRentingCommand
             }
             else if (repricing)
             {
-                entity.Price = _pricing.CalculateRentalPrice(car, request.StartDate, request.EndDate);
+                price = _pricing.CalculateRentalPrice(car, request.StartDate, request.EndDate);
             }
+
+            entity.Amend(
+                carId: request.CarId,
+                clientId: request.ClientId,
+                secondClientId: secondDriver?.Id,
+                startDate: request.StartDate,
+                endDate: request.EndDate,
+                startMileage: request.StartMileage,
+                endMileage: request.EndMileage,
+                price: price,
+                notes: request.Notes);
+
+            // Corrected readings still belong to the car (see Car.RecordOdometer).
+            // Only ever forward: an edit that lowers a mileage is a correction to
+            // this hire, not evidence that the car has driven less.
+            car.RecordOdometer(entity.StartMileage);
+            car.RecordOdometer(entity.EndMileage);
 
             await _context.SaveChangesAsync(cancellationToken);
 

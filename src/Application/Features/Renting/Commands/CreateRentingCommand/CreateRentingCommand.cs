@@ -154,12 +154,22 @@ namespace RemSolution.Application.Features.Renting.Commands.CreateRentingCommand
             // car-image upload path).
             var generatedFiles = new List<StoredFile>();
 
-            // Everything below is atomic under the per-agency write lock: the
-            // availability check, the client quota, the document numbering and
-            // every insert. A booking conflict therefore also rolls back a client
-            // created inline — no orphan record from a failed booking.
+            // Everything below is atomic: the availability check, the client
+            // quota, the document numbering and every insert. A booking conflict
+            // therefore also rolls back a client created inline — no orphan
+            // record from a failed booking.
             await using var transaction = await _context.BeginTransactionAsync(cancellationToken);
-            await _context.AcquireTenantWriteLockAsync(cancellationToken);
+
+            // The agency lock too, and first, when this booking also touches
+            // something agency-wide: an inline client counts against the plan's
+            // quota, and a document number is MAX + 1 over the agency's paperwork.
+            if (request.NewClient is not null || request.SecondNewClient is not null
+                || request.GenerateContract || request.GenerateFacture)
+            {
+                await _context.AcquireTenantWriteLockAsync(cancellationToken);
+            }
+
+            await _context.AcquireCarWriteLockAsync(request.CarId, cancellationToken);
 
             try
             {
@@ -175,18 +185,15 @@ namespace RemSolution.Application.Features.Renting.Commands.CreateRentingCommand
                 var secondClient = await RentingClients.ResolveSecondDriverAsync(
                     clients, client, request.SecondClientId, request.SecondNewClient, cancellationToken);
 
-                var entity = new RentingEntity
-                {
-                    CarId = request.CarId,
-                    ClientId = client.Id,
-                    SecondClientId = secondClient?.Id,
-                    StartDate = request.StartDate,
-                    EndDate = request.EndDate,
-                    StartMileage = request.StartMileage,
-                    Price = price,
-                    RentingState = RentingState.NotYet,
-                    Notes = request.Notes,
-                };
+                var entity = RentingEntity.Create(
+                    carId: request.CarId,
+                    clientId: client.Id,
+                    startDate: request.StartDate,
+                    endDate: request.EndDate,
+                    price: price,
+                    startMileage: request.StartMileage,
+                    secondClientId: secondClient?.Id,
+                    notes: request.Notes);
 
                 _context.Rentings.Add(entity);
 

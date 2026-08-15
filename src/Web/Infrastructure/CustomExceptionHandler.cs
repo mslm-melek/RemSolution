@@ -5,6 +5,9 @@ using RemSolution.Application.Common.Interfaces;
 // Ardalis and Application ones this file already maps.
 using InvalidReservationTransitionException =
     RemSolution.Domain.Exceptions.InvalidReservationTransitionException;
+using InvalidRentingTransitionException =
+    RemSolution.Domain.Exceptions.InvalidRentingTransitionException;
+using DomainRuleException = RemSolution.Domain.Exceptions.DomainRuleException;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -34,6 +37,8 @@ public class CustomExceptionHandler : IExceptionHandler
                 { typeof(PlanLimitExceededException), HandlePlanLimitExceededException },
                 { typeof(BookingConflictException), HandleBookingConflictException },
                 { typeof(InvalidReservationTransitionException), HandleInvalidTransitionException },
+                { typeof(InvalidRentingTransitionException), HandleInvalidTransitionException },
+                { typeof(DomainRuleException), HandleDomainRuleException },
                 { typeof(DbUpdateConcurrencyException), HandleConcurrencyException },
                 { typeof(Exception), HandleUnknownException }
             };
@@ -151,28 +156,64 @@ public class CustomExceptionHandler : IExceptionHandler
     }
 
     // A lifecycle method was called from a state that does not allow it — almost
-    // always because someone else moved the reservation on since this user loaded
-    // the list. That is a conflict, not a server fault: without this the domain
+    // always because someone else moved the booking on since this user loaded the
+    // list. That is a conflict, not a server fault: without this the domain
     // exception would fall through to HandleUnknownException and answer 500.
+    // Both booking aggregates land here.
     private async Task HandleInvalidTransitionException(HttpContext httpContext, Exception ex)
     {
-        var exception = (InvalidReservationTransitionException)ex;
+        var (titleKey, from) = ex switch
+        {
+            InvalidReservationTransitionException reservation =>
+                ("Error.ReservationTransition.Title", reservation.From.ToString()),
+            InvalidRentingTransitionException renting =>
+                ("Error.RentingTransition.Title", renting.From.ToString()),
+            _ => ("Error.ReservationTransition.Title", null)
+        };
 
         httpContext.Response.StatusCode = StatusCodes.Status409Conflict;
 
         var problemDetails = new ProblemDetails
         {
             Status = StatusCodes.Status409Conflict,
-            Title = _localizer["Error.ReservationTransition.Title"],
-            Detail = exception.Message,
+            Title = _localizer[titleKey],
+            Detail = ex.Message,
             Type = "https://tools.ietf.org/html/rfc7231#section-6.5.8"
         };
         // 409 also carries plan limits, booking conflicts and concurrency, so the
         // client keys on this code to reload the row and say what happened.
         problemDetails.Extensions["code"] = "invalid_transition";
-        problemDetails.Extensions["from"] = exception.From.ToString();
+
+        // Left out rather than sent empty for a type nobody added a case for:
+        // absent reads as "unknown", "" reads as a state.
+        if (from is not null)
+        {
+            problemDetails.Extensions["from"] = from;
+        }
 
         await httpContext.Response.WriteAsJsonAsync(problemDetails);
+    }
+
+    // Answered exactly like a FluentValidation failure — same status, same errors
+    // map — so a client that already shows one needs no new branch.
+    private async Task HandleDomainRuleException(HttpContext httpContext, Exception ex)
+    {
+        var exception = (DomainRuleException)ex;
+
+        httpContext.Response.StatusCode = StatusCodes.Status400BadRequest;
+        httpContext.Response.ContentType = "application/json";
+
+        var errors = new Dictionary<string, string[]>
+        {
+            [exception.Property] = new[] { exception.Message }
+        };
+
+        await httpContext.Response.WriteAsJsonAsync(new ValidationProblemDetails(errors)
+        {
+            Status = StatusCodes.Status400BadRequest,
+            Title = _localizer["Error.Validation.Title"],
+            Type = "https://tools.ietf.org/html/rfc7231#section-6.5.1"
+        });
     }
 
     private async Task HandleConcurrencyException(HttpContext httpContext, Exception ex)

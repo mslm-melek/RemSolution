@@ -85,9 +85,9 @@ public class GetRentingsWithPaginationQueryTests : BaseTestFixture
         var car = new Car { Matricule = matricule, Status = CarStatus.Active };
         await AddAsync(car);
 
-        await AddAsync(new Renting
-        {
-            CarId = car.Id, StartDate = start, EndDate = end, RentingState = state
-        });
+        var client = new Client { FirstName = "Listed", LastName = "Client" };
+        await AddAsync(client);
+
+        await AddAsync(RentingFixture.Hire(car.Id, client.Id, start, end, state));
     }
 }

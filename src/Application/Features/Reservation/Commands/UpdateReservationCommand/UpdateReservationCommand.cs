@@ -90,7 +90,7 @@ namespace RemSolution.Application.Features.Reservation.Commands.UpdateReservatio
             var settings = await _settings.GetAsync(entity.AgencyId, cancellationToken);
 
             await using var transaction = await _context.BeginTransactionAsync(cancellationToken);
-            await _context.AcquireTenantWriteLockAsync(cancellationToken);
+            await _context.AcquireCarWriteLockAsync(request.CarId, cancellationToken);
 
             await _availability.EnsureCarAvailableAsync(
                 request.CarId, request.StartDate, request.EndDate,

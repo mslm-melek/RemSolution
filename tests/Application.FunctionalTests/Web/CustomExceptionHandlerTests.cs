@@ -41,6 +41,42 @@ public class CustomExceptionHandlerTests : BaseTestFixture
         title.Should().NotBe("Error.ReservationTransition.Title");
     }
 
+    // The hire's state machine answers exactly like the hold's: either way, the
+    // row on screen is stale.
+    [Test]
+    public async Task ARefusedRentingTransitionIsTheSameConflict()
+    {
+        var (status, body) = await HandleAsync(
+            new InvalidRentingTransitionException(RentingState.Done, "cancelled"));
+
+        status.Should().Be(StatusCodes.Status409Conflict);
+        body.GetProperty("code").GetString().Should().Be("invalid_transition");
+        body.GetProperty("from").GetString().Should().Be(nameof(RentingState.Done));
+
+        // Its own title: a hire titled with the reservation wording reads as a
+        // different record to whoever is looking at it.
+        var (_, hold) = await HandleAsync(
+            new InvalidReservationTransitionException(ReservationStatus.Cancelled, "confirmed"));
+
+        var title = body.GetProperty("title").GetString();
+        title.Should().NotBeNullOrWhiteSpace();
+        title.Should().NotBe("Error.RentingTransition.Title");
+        title.Should().NotBe(hold.GetProperty("title").GetString());
+    }
+
+    // A broken domain rule is a bad request, and comes back in the same shape a
+    // validator's would — so the SPA needs no second way to read it.
+    [Test]
+    public async Task ABrokenDomainRuleAnswersLikeAValidationFailure()
+    {
+        var (status, body) = await HandleAsync(
+            new DomainRuleException("EndMileage", "The return mileage cannot be less than the pickup mileage."));
+
+        status.Should().Be(StatusCodes.Status400BadRequest);
+        body.GetProperty("errors").GetProperty("EndMileage")[0].GetString()
+            .Should().Contain("return mileage");
+    }
+
     [Test]
     public async Task ABookingConflictKeepsItsOwnCode()
     {

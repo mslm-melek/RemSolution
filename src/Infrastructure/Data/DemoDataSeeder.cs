@@ -1341,25 +1341,48 @@ public class DemoDataSeeder
         int? startMileage = null, int? endMileage = null,
         string? notes = null, Client? secondDriver = null)
     {
+        // A return reading only reaches the hire through Complete, so asking for
+        // one on a hire that never finishes would silently drop it.
+        if (endMileage.HasValue && state != RentingState.Done)
+        {
+            throw new ArgumentException(
+                "A return mileage only belongs on a finished hire.", nameof(endMileage));
+        }
+
         var start = Today.AddDays(startOffsetDays);
         var end = Today.AddDays(endOffsetDays);
 
-        return new Renting
-        {
-            CarId = car.Id,
-            ClientId = client.Id,
-            SecondClientId = secondDriver?.Id,
-            StartDate = start,
-            EndDate = end,
-            StartMileage = startMileage,
-            EndMileage = endMileage,
+        var renting = RemSolution.Domain.Entities.Renting.Create(
+            carId: car.Id,
+            clientId: client.Id,
+            startDate: start,
+            endDate: end,
             // From the pricing seam rather than a second copy of the arithmetic, so
             // seeded prices match what the app would have quoted.
-            Price = _pricing.CalculateRentalPrice(car, start, end),
-            DepositAmount = Money.Of(300m, _currency),
-            RentingState = state,
-            Notes = notes
-        };
+            price: _pricing.CalculateRentalPrice(car, start, end),
+            startMileage: startMileage,
+            secondClientId: secondDriver?.Id,
+            depositAmount: Money.Of(300m, _currency),
+            notes: notes);
+
+        // The only way into a state is the one the app uses.
+        switch (state)
+        {
+            case RentingState.InProgress:
+                renting.Start();
+                break;
+
+            case RentingState.Done:
+                renting.Start();
+                renting.Complete(endMileage, end);
+                break;
+
+            case RentingState.Cancelled:
+                renting.Cancel();
+                break;
+        }
+
+        return renting;
     }
 
     // A published rating. AgencyReview is platform-level shop-window content

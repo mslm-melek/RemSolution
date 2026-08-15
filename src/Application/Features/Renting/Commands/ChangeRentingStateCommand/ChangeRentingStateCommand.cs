@@ -4,7 +4,6 @@ using RemSolution.Application.Common.Interfaces;
 using RemSolution.Application.Common.Security;
 using RemSolution.Domain.Constants;
 using RemSolution.Domain.Enums;
-using RemSolution.Domain.Events;
 using FluentValidation.Results;
 using RentingHistoryEntity = RemSolution.Domain.Entities.RentingHistory;
 
@@ -50,26 +49,11 @@ namespace RemSolution.Application.Features.Renting.Commands.ChangeRentingStateCo
             switch (request.NewState)
             {
                 case RentingState.InProgress:
-                    Require(entity.RentingState == RentingState.NotYet,
-                        "Only an upcoming (NotYet) renting can be started.");
-                    if (request.Mileage.HasValue)
-                    {
-                        entity.StartMileage = request.Mileage;
-                    }
-                    entity.RentingState = RentingState.InProgress;
+                    entity.Start(request.Mileage);
                     break;
 
                 case RentingState.Done:
-                    Require(entity.RentingState == RentingState.InProgress,
-                        "Only an in-progress renting can be completed.");
-                    if (request.Mileage.HasValue)
-                    {
-                        Require(!entity.StartMileage.HasValue || request.Mileage >= entity.StartMileage,
-                            "The return mileage cannot be less than the pickup mileage.");
-                        entity.EndMileage = request.Mileage;
-                    }
-                    entity.EndDate ??= _dateTime.GetUtcNow().UtcDateTime;
-                    entity.RentingState = RentingState.Done;
+                    entity.Complete(request.Mileage, _dateTime.GetUtcNow().UtcDateTime);
 
                     // Snapshot the finished period. Written here (not in the event
                     // handler) so it goes through the tenant/audit interceptors in
@@ -85,10 +69,6 @@ namespace RemSolution.Application.Features.Renting.Commands.ChangeRentingStateCo
                         Price = entity.Price,
                         RentingState = RentingState.Done,
                     });
-
-                    // First consumer of the domain-event pipeline; side-effects
-                    // (notifications, stats) hang off this event later.
-                    entity.AddDomainEvent(new RentingCompletedEvent(entity));
                     break;
 
                 default:
@@ -113,17 +93,6 @@ namespace RemSolution.Application.Features.Renting.Commands.ChangeRentingStateCo
             }
 
             await _context.SaveChangesAsync(cancellationToken);
-        }
-
-        private static void Require(bool condition, string message)
-        {
-            if (!condition)
-            {
-                throw new ValidationException(new[]
-                {
-                    new ValidationFailure(nameof(ChangeRentingStateCommand.NewState), message)
-                });
-            }
         }
     }
 }

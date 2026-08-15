@@ -27,28 +27,21 @@ public class GetCarOverviewQueryTests : BaseTestFixture
         var car = new Car { Matricule = "OV-USE", Status = CarStatus.Active };
         await AddAsync(car);
 
+        var client = new Client { FirstName = "Usage", LastName = "Client" };
+        await AddAsync(client);
+
         var today = DateTime.UtcNow.Date;
 
         // Ten whole days inside the window, finished.
-        await AddAsync(new Renting
-        {
-            CarId = car.Id,
-            StartDate = today.AddDays(-20),
-            EndDate = today.AddDays(-10),
-            RentingState = RentingState.Done,
-            Price = Money.Of(1000m, "TND"),
-        });
+        await AddAsync(RentingFixture.Hire(
+            car.Id, client.Id, today.AddDays(-20), today.AddDays(-10),
+            RentingState.Done, price: Money.Of(1000m, "TND")));
 
         // A cancelled hire never held the car and never billed the price.
-        await AddAsync(new Renting
-        {
-            CarId = car.Id,
-            StartDate = today.AddDays(-8),
-            EndDate = today.AddDays(-5),
-            RentingState = RentingState.Cancelled,
-            Price = Money.Of(500m, "TND"),
-            CancellationFee = Money.Of(50m, "TND"),
-        });
+        await AddAsync(RentingFixture.Hire(
+            car.Id, client.Id, today.AddDays(-8), today.AddDays(-5),
+            RentingState.Cancelled, price: Money.Of(500m, "TND"),
+            cancellationFee: Money.Of(50m, "TND")));
 
         var overview = await SendAsync(new GetCarOverviewQuery(car.Id));
 
@@ -74,22 +67,15 @@ public class GetCarOverviewQueryTests : BaseTestFixture
         var car = new Car { Matricule = "OV-LAP", Status = CarStatus.Active };
         await AddAsync(car);
 
+        var client = new Client { FirstName = "Overlap", LastName = "Client" };
+        await AddAsync(client);
+
         var today = DateTime.UtcNow.Date;
 
-        await AddAsync(new Renting
-        {
-            CarId = car.Id,
-            StartDate = today.AddDays(-10),
-            EndDate = today.AddDays(-5),
-            RentingState = RentingState.Done,
-        });
-        await AddAsync(new Renting
-        {
-            CarId = car.Id,
-            StartDate = today.AddDays(-7),
-            EndDate = today.AddDays(-3),
-            RentingState = RentingState.Done,
-        });
+        await AddAsync(RentingFixture.Hire(
+            car.Id, client.Id, today.AddDays(-10), today.AddDays(-5), RentingState.Done));
+        await AddAsync(RentingFixture.Hire(
+            car.Id, client.Id, today.AddDays(-7), today.AddDays(-3), RentingState.Done));
 
         var overview = await SendAsync(new GetCarOverviewQuery(car.Id));
 
@@ -110,16 +96,14 @@ public class GetCarOverviewQueryTests : BaseTestFixture
         var car = new Car { Matricule = "OV-TAIL", Status = CarStatus.Active };
         await AddAsync(car);
 
+        var client = new Client { FirstName = "Tail", LastName = "Client" };
+        await AddAsync(client);
+
         var today = DateTime.UtcNow.Date;
 
-        await AddAsync(new Renting
-        {
-            CarId = car.Id,
-            StartDate = today.AddDays(-120),
-            EndDate = today.AddDays(-85),
-            RentingState = RentingState.Done,
-            Price = Money.Of(400m, "TND"),
-        });
+        await AddAsync(RentingFixture.Hire(
+            car.Id, client.Id, today.AddDays(-120), today.AddDays(-85),
+            RentingState.Done, price: Money.Of(400m, "TND")));
 
         var overview = await SendAsync(new GetCarOverviewQuery(car.Id));
 
@@ -145,33 +129,15 @@ public class GetCarOverviewQueryTests : BaseTestFixture
 
         var today = DateTime.UtcNow.Date;
 
-        await AddAsync(new Renting
-        {
-            CarId = car.Id,
-            ClientId = client.Id,
-            StartDate = today.AddDays(5),
-            EndDate = today.AddDays(8),
-            RentingState = RentingState.NotYet,
-        });
-        await AddAsync(new Renting
-        {
-            CarId = car.Id,
-            ClientId = client.Id,
-            // Due back yesterday and still out: late.
-            StartDate = today.AddDays(-3),
-            EndDate = today.AddDays(-1),
-            RentingState = RentingState.InProgress,
-        });
+        await AddAsync(RentingFixture.Hire(
+            car.Id, client.Id, today.AddDays(5), today.AddDays(8), RentingState.NotYet));
+        // Due back yesterday and still out: late.
+        await AddAsync(RentingFixture.Hire(
+            car.Id, client.Id, today.AddDays(-3), today.AddDays(-1), RentingState.InProgress));
         // History: neither current nor upcoming, so it belongs to the page's
         // table rather than this list — but it still counts towards the total.
-        await AddAsync(new Renting
-        {
-            CarId = car.Id,
-            ClientId = client.Id,
-            StartDate = today.AddDays(-30),
-            EndDate = today.AddDays(-28),
-            RentingState = RentingState.Done,
-        });
+        await AddAsync(RentingFixture.Hire(
+            car.Id, client.Id, today.AddDays(-30), today.AddDays(-28), RentingState.Done));
 
         var overview = await SendAsync(new GetCarOverviewQuery(car.Id));
 
@@ -289,7 +255,10 @@ public class GetCarOverviewQueryTests : BaseTestFixture
     // is platform-level and carries no tenant filter).
     private static async Task AddReviewAsync(int agencyId, int carId, int rating)
     {
-        var renting = new Renting { CarId = carId, RentingState = RentingState.Done };
+        var client = new Client { FirstName = "Review", LastName = "Author" };
+        await AddAsync(client);
+
+        var renting = RentingFixture.Hire(carId, client.Id, state: RentingState.Done);
         await AddAsync(renting);
 
         await AddAsync(new AgencyReview

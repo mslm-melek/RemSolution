@@ -41,16 +41,12 @@ public class GetDashboardTests : BaseTestFixture
         var client = new Client { FirstName = "Dash", LastName = "Client" };
         await AddAsync(client);
 
-        await AddAsync(new Renting
-        {
-            CarId = onRent.Id, ClientId = client.Id, StartDate = InPeriod, EndDate = InPeriod.AddDays(3),
-            RentingState = RentingState.InProgress, Price = Money.Of(150m, "TND")
-        });
-        await AddAsync(new Renting
-        {
-            CarId = onRent.Id, ClientId = client.Id, StartDate = InPeriod.AddDays(20),
-            EndDate = InPeriod.AddDays(22), RentingState = RentingState.NotYet, Price = Money.Of(100m, "TND")
-        });
+        await AddAsync(RentingFixture.Hire(
+            onRent.Id, client.Id, InPeriod, InPeriod.AddDays(3),
+            RentingState.InProgress, Money.Of(150m, "TND")));
+        await AddAsync(RentingFixture.Hire(
+            onRent.Id, client.Id, InPeriod.AddDays(20), InPeriod.AddDays(22),
+            RentingState.NotYet, Money.Of(100m, "TND")));
 
         var result = await SendAsync(new GetDashboardQuery(PeriodStart, PeriodEnd));
 
@@ -75,16 +71,12 @@ public class GetDashboardTests : BaseTestFixture
         await AddAsync(client);
 
         // Charged: one renting inside the window, one outside it.
-        await AddAsync(new Renting
-        {
-            CarId = car.Id, ClientId = client.Id, StartDate = InPeriod, EndDate = InPeriod.AddDays(2),
-            RentingState = RentingState.InProgress, Price = Money.Of(200m, "TND")
-        });
-        await AddAsync(new Renting
-        {
-            CarId = car.Id, ClientId = client.Id, StartDate = OutOfPeriod, EndDate = OutOfPeriod.AddDays(2),
-            RentingState = RentingState.Done, Price = Money.Of(500m, "TND")
-        });
+        await AddAsync(RentingFixture.Hire(
+            car.Id, client.Id, InPeriod, InPeriod.AddDays(2),
+            RentingState.InProgress, Money.Of(200m, "TND")));
+        await AddAsync(RentingFixture.Hire(
+            car.Id, client.Id, OutOfPeriod, OutOfPeriod.AddDays(2),
+            RentingState.Done, Money.Of(500m, "TND")));
 
         // Collected: one payment inside, one outside.
         await SendAsync(new CreatePaymentCommand
@@ -127,11 +119,9 @@ public class GetDashboardTests : BaseTestFixture
         await AddAsync(client);
 
         // Charged outside the window and unpaid: still counts as owed.
-        await AddAsync(new Renting
-        {
-            CarId = car.Id, ClientId = client.Id, StartDate = OutOfPeriod, EndDate = OutOfPeriod.AddDays(2),
-            RentingState = RentingState.Done, Price = Money.Of(400m, "TND")
-        });
+        await AddAsync(RentingFixture.Hire(
+            car.Id, client.Id, OutOfPeriod, OutOfPeriod.AddDays(2),
+            RentingState.Done, Money.Of(400m, "TND")));
         await SendAsync(new CreatePaymentCommand
         {
             ClientId = client.Id, Amount = 100m, PayementDate = OutOfPeriod
@@ -176,11 +166,9 @@ public class GetDashboardTests : BaseTestFixture
         var car = await AddCarAsync("DB-SERIES");
         var client = new Client { FirstName = "Series", LastName = "Client" };
         await AddAsync(client);
-        await AddAsync(new Renting
-        {
-            CarId = car.Id, ClientId = client.Id, StartDate = InPeriod, EndDate = InPeriod.AddDays(2),
-            RentingState = RentingState.InProgress, Price = Money.Of(300m, "TND")
-        });
+        await AddAsync(RentingFixture.Hire(
+            car.Id, client.Id, InPeriod, InPeriod.AddDays(2),
+            RentingState.InProgress, Money.Of(300m, "TND")));
         await SendAsync(new CreatePaymentCommand
         {
             ClientId = client.Id, Amount = 300m, PayementDate = InPeriod

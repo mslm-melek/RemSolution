@@ -20,7 +20,8 @@ import {
   DocumentTemplatesClient, DocumentTemplateDto, DocumentTemplateFieldDto, DocumentTemplateKind
 } from '../web-api-client';
 import {
-  toDateInput, toDateTimeInput, fromDateInput, extractValidationErrors, isConcurrencyConflict
+  toDateInput, toDateTimeInput, fromDateInput, extractValidationErrors, extractProblemDetail,
+  isConcurrencyConflict, isInvalidTransition
 } from '../shared/form-utils';
 import { AuthService } from '../shared/auth.service';
 import { ReturnDialogComponent } from '../shared/return-dialog.component';
@@ -1520,8 +1521,17 @@ export class RentingFormComponent implements OnInit {
       return;
     }
 
+    // Someone started, closed or cancelled the hire while this form was open;
+    // the server refuses the edit outright rather than reporting a bad field.
+    if (isInvalidTransition(err)) {
+      this.errorMessage = this.transloco.translate('renting.staleState');
+      return;
+    }
+
     const validationErrors = extractValidationErrors(err);
-    this.errorMessage = validationErrors ?? 'An unexpected error occurred. Please try again.';
+    this.errorMessage = validationErrors
+      ?? extractProblemDetail(err)
+      ?? this.transloco.translate('common.unexpectedError');
     if (!validationErrors) console.error(err);
   }
 }

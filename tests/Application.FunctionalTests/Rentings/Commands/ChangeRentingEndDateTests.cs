@@ -4,6 +4,7 @@ using RemSolution.Application.Features.Renting.Commands.ChangeRentingStateComman
 using RemSolution.Application.Features.Renting.Commands.CreateRentingCommand;
 using RemSolution.Domain.Entities;
 using RemSolution.Domain.Enums;
+using RemSolution.Domain.Exceptions;
 using RemSolution.Domain.ValueObjects;
 using ContractEntity = RemSolution.Domain.Entities.Contract;
 using RentingEntity = RemSolution.Domain.Entities.Renting;
@@ -132,7 +133,7 @@ public class ChangeRentingEndDateTests : BaseTestFixture
             Id = id, EndDate = End.AddDays(2)
         });
 
-        await act.Should().ThrowAsync<ValidationException>();
+        await act.Should().ThrowAsync<InvalidRentingTransitionException>();
     }
 
     [Test]

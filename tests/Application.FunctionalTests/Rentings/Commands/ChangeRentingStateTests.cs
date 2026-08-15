@@ -4,6 +4,7 @@ using RemSolution.Application.Features.Renting.Commands.CreateRentingCommand;
 using RemSolution.Domain.Constants;
 using RemSolution.Domain.Entities;
 using RemSolution.Domain.Enums;
+using RemSolution.Domain.Exceptions;
 using RemSolution.Domain.ValueObjects;
 
 namespace RemSolution.Application.FunctionalTests.Rentings.Commands;
@@ -120,7 +121,7 @@ public class ChangeRentingStateTests : BaseTestFixture
         await FluentActions.Invoking(() => SendAsync(new ChangeRentingStateCommand
         {
             Id = rentingId, NewState = RentingState.Done
-        })).Should().ThrowAsync<ValidationException>();
+        })).Should().ThrowAsync<InvalidRentingTransitionException>();
     }
 
     private static async Task<int> SeedRentingAsync()

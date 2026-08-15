@@ -1,12 +1,10 @@
 using RemSolution.Application.Common.Audit;
-using ValidationException = RemSolution.Application.Common.Exceptions.ValidationException;
 using RemSolution.Application.Common.Interfaces;
 using RemSolution.Application.Common.Security;
 using RemSolution.Application.Common.Settings;
 using RemSolution.Domain.Constants;
 using RemSolution.Domain.Enums;
 using RemSolution.Domain.ValueObjects;
-using FluentValidation.Results;
 using PaymentEntity = RemSolution.Domain.Entities.Payment;
 
 namespace RemSolution.Application.Features.Renting.Commands.CancelRentingCommand
@@ -85,42 +83,6 @@ namespace RemSolution.Application.Features.Renting.Commands.CancelRentingCommand
 
             Guard.Against.NotFound(request.Id, entity);
 
-            if (entity.RentingState is RentingState.Done or RentingState.Cancelled)
-            {
-                throw new ValidationException(new[]
-                {
-                    new ValidationFailure(nameof(request.Id),
-                        "A completed or already-cancelled renting cannot be cancelled.")
-                });
-            }
-
-            var fee = request.CancellationFee ?? 0m;
-
-            if (fee > 0m)
-            {
-                // A hire that charges nothing cannot charge for being called off:
-                // the fee is a part of the price kept, and there is no price to
-                // take it from (a priceless renting has no balance at all — see
-                // RentingDto.Outstanding).
-                if (entity.Price is not Money price)
-                {
-                    throw new ValidationException(new[]
-                    {
-                        new ValidationFailure(nameof(request.CancellationFee),
-                            "This renting carries no price, so no cancellation fee can be charged on it.")
-                    });
-                }
-
-                if (fee > price.Amount)
-                {
-                    throw new ValidationException(new[]
-                    {
-                        new ValidationFailure(nameof(request.CancellationFee),
-                            $"The cancellation fee cannot exceed the agreed price ({price.Amount}).")
-                    });
-                }
-            }
-
             _context.SetOriginalRowVersion(entity, request.RowVersion);
 
             // The currency is the booking's own, falling back to the agency's for a
@@ -128,8 +90,9 @@ namespace RemSolution.Application.Features.Renting.Commands.CancelRentingCommand
             var currency = entity.Price?.Currency
                 ?? (await _settings.GetAsync(entity.AgencyId, cancellationToken)).CurrencyCode;
 
-            entity.RentingState = RentingState.Cancelled;
-            entity.CancellationFee = fee > 0m ? Money.Of(fee, currency).Round() : null;
+            var fee = request.CancellationFee ?? 0m;
+
+            entity.Cancel(fee > 0m ? Money.Of(fee, currency).Round() : null);
 
             if (request.RefundExcess)
             {

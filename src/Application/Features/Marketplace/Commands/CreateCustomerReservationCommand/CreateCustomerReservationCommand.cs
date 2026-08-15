@@ -77,7 +77,11 @@ namespace RemSolution.Application.Features.Marketplace.Commands.CreateCustomerRe
             var settings = await _settings.GetAsync(car.AgencyId, cancellationToken);
 
             await using var transaction = await _context.BeginTransactionAsync(cancellationToken);
+
+            // Both locks, agency first: this path may add the customer's Client
+            // row, of which there is one per agency per customer.
             await _context.AcquireTenantWriteLockAsync(cancellationToken);
+            await _context.AcquireCarWriteLockAsync(request.CarId, cancellationToken);
 
             await _availability.EnsureCarAvailableAsync(
                 request.CarId, request.StartDate, request.EndDate, null, null, cancellationToken);

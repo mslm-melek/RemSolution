@@ -38,16 +38,10 @@ public class GetStatisticsTests : BaseTestFixture
         Car car, Client client, DateTime start, int days, decimal price,
         RentingState state = RentingState.Done, decimal? cancellationFee = null)
     {
-        var renting = new Renting
-        {
-            CarId = car.Id,
-            ClientId = client.Id,
-            StartDate = start,
-            EndDate = start.AddDays(days),
-            RentingState = state,
-            Price = Money.Of(price, "TND"),
-            CancellationFee = cancellationFee == null ? null : Money.Of(cancellationFee.Value, "TND")
-        };
+        var renting = RentingFixture.Hire(
+            car.Id, client.Id, start, start.AddDays(days), state,
+            price: Money.Of(price, "TND"),
+            cancellationFee: cancellationFee is null ? null : Money.Of(cancellationFee.Value, "TND"));
         await AddAsync(renting);
         return renting;
     }

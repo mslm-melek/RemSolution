@@ -85,7 +85,9 @@ namespace RemSolution.Application.Features.Reservation.Commands.CreateReservatio
                 notes: request.Notes);
 
             await using var transaction = await _context.BeginTransactionAsync(cancellationToken);
-            await _context.AcquireTenantWriteLockAsync(cancellationToken);
+            // Holds block bookings, so they take the same lock (see
+            // IApplicationDbContext.AcquireCarWriteLockAsync).
+            await _context.AcquireCarWriteLockAsync(request.CarId, cancellationToken);
 
             await _availability.EnsureCarAvailableAsync(
                 request.CarId, request.StartDate, request.EndDate, null, null, cancellationToken);

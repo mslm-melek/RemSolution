@@ -67,20 +67,19 @@ public class MarketplaceTests : BaseTestFixture
     {
         await AddTestAgencyAsync();
 
+        var client = new Client { FirstName = "Search", LastName = "Renter" };
+        await AddAsync(client);
+
         var rented = new Car { Matricule = "MK-RENT", Status = CarStatus.Active, DailyRate = Money.Of(50m, "TND") };
         await AddAsync(rented);
-        await AddAsync(new Renting
-        {
-            CarId = rented.Id, StartDate = Start, EndDate = End, RentingState = RentingState.InProgress
-        });
+        await AddAsync(RentingFixture.Hire(
+            rented.Id, client.Id, Start, End, RentingState.InProgress));
 
         var free = new Car { Matricule = "MK-FREE", Status = CarStatus.Active, DailyRate = Money.Of(50m, "TND") };
         await AddAsync(free);
         // A completed renting is terminal and must NOT block availability.
-        await AddAsync(new Renting
-        {
-            CarId = free.Id, StartDate = Start, EndDate = End, RentingState = RentingState.Done
-        });
+        await AddAsync(RentingFixture.Hire(
+            free.Id, client.Id, Start, End, RentingState.Done));
 
         var result = await SendAsync(new SearchAvailableCarsQuery(Start, End));
 
@@ -276,10 +275,12 @@ public class MarketplaceTests : BaseTestFixture
 
         var booked = new Car { Matricule = "MK-BOOKED", Status = CarStatus.Active, DailyRate = Money.Of(50m, "TND") };
         await AddAsync(booked);
-        await AddAsync(new Renting
-        {
-            CarId = booked.Id, StartDate = Start, EndDate = End, RentingState = RentingState.InProgress
-        });
+
+        var client = new Client { FirstName = "Showcase", LastName = "Renter" };
+        await AddAsync(client);
+
+        await AddAsync(RentingFixture.Hire(
+            booked.Id, client.Id, Start, End, RentingState.InProgress));
 
         // The shop window advertises the fleet; the dates are chosen on /browse.
         var showcase = await SendAsync(new GetShowcaseCarsQuery());
@@ -619,15 +620,8 @@ public class MarketplaceTests : BaseTestFixture
         var client = new Client { FirstName = "Ann", LastName = "Bee", MarketplaceUserId = customerId };
         await AddAsync(client);
 
-        var renting = new Renting
-        {
-            CarId = car.Id,
-            ClientId = client.Id,
-            StartDate = Start,
-            EndDate = End,
-            RentingState = state,
-            Price = Money.Of(150m, "TND"),
-        };
+        var renting = RentingFixture.Hire(
+            car.Id, client.Id, Start, End, state, Money.Of(150m, "TND"));
         await AddAsync(renting);
 
         SetCurrentAgency(null); // a customer has no tenant of their own
@@ -645,9 +639,19 @@ public class MarketplaceTests : BaseTestFixture
     {
         SetCurrentAgency(agencyId);
 
-        // No car: Renting.CarId is nullable, and which car it was does not
-        // matter to an average.
-        var renting = new Renting { RentingState = RentingState.Done };
+        // Neither the car nor the driver matters to an average, but a hire cannot
+        // be built without them.
+        var car = new Car
+        {
+            // Unique: the aggregation tests seed several reviews in a row.
+            Matricule = $"MK-AVG-{Guid.NewGuid():N}"[..12],
+            Status = CarStatus.Active
+        };
+        await AddAsync(car);
+        var client = new Client { FirstName = "Average", LastName = "Author" };
+        await AddAsync(client);
+
+        var renting = RentingFixture.Hire(car.Id, client.Id, state: RentingState.Done);
         await AddAsync(renting);
 
         await AddAsync(new AgencyReview

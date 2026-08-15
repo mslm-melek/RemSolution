@@ -57,25 +57,19 @@ public class GetClientsWithPaginationQueryTests : BaseTestFixture
         var car = new Domain.Entities.Car { Matricule = "HIST-1", Status = CarStatus.Active };
         await AddAsync(car);
 
-        await AddAsync(new Domain.Entities.Renting
-        {
-            CarId = car.Id, ClientId = client.Id, SecondClientId = passenger.Id,
-            StartDate = DateTime.UtcNow.AddDays(-20), EndDate = DateTime.UtcNow.AddDays(-18),
-            RentingState = RentingState.Done
-        });
-        await AddAsync(new Domain.Entities.Renting
-        {
-            CarId = car.Id, ClientId = client.Id,
-            StartDate = DateTime.UtcNow.AddDays(-1), EndDate = DateTime.UtcNow.AddDays(2),
-            RentingState = RentingState.InProgress
-        });
+        await AddAsync(RentingFixture.Hire(
+            car.Id, client.Id,
+            DateTime.UtcNow.AddDays(-20), DateTime.UtcNow.AddDays(-18),
+            RentingState.Done, secondClientId: passenger.Id));
+        await AddAsync(RentingFixture.Hire(
+            car.Id, client.Id,
+            DateTime.UtcNow.AddDays(-1), DateTime.UtcNow.AddDays(2),
+            RentingState.InProgress));
         // Cancelled hires are not history.
-        await AddAsync(new Domain.Entities.Renting
-        {
-            CarId = car.Id, ClientId = client.Id,
-            StartDate = DateTime.UtcNow.AddDays(5), EndDate = DateTime.UtcNow.AddDays(6),
-            RentingState = RentingState.Cancelled
-        });
+        await AddAsync(RentingFixture.Hire(
+            car.Id, client.Id,
+            DateTime.UtcNow.AddDays(5), DateTime.UtcNow.AddDays(6),
+            RentingState.Cancelled));
 
         var result = await SendAsync(new GetClientsWithPaginationQuery());
 

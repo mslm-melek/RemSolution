@@ -7,7 +7,10 @@ import {
   RentingsClient, RentingDto, RentingState,
   ChangeRentingStateCommand, ChangeRentingEndDateCommand
 } from '../web-api-client';
-import { extractValidationErrors, fromDateInput, toDateTimeInput } from './form-utils';
+import {
+  extractValidationErrors, extractProblemDetail, isInvalidTransition,
+  fromDateInput, toDateTimeInput
+} from './form-utils';
 
 export interface ReturnDialogData {
   rentingId: number;
@@ -210,8 +213,16 @@ export class ReturnDialogComponent implements OnInit {
   }
 
   private handleError(err: any) {
+    // The hire was returned or cancelled by someone else while this was open.
+    if (isInvalidTransition(err)) {
+      this.errorMessage = this.transloco.translate('renting.staleState');
+      return;
+    }
+
     const validationErrors = extractValidationErrors(err);
-    this.errorMessage = validationErrors ?? this.transloco.translate('common.unexpectedError');
+    this.errorMessage = validationErrors
+      ?? extractProblemDetail(err)
+      ?? this.transloco.translate('common.unexpectedError');
     if (!validationErrors) console.error(err);
   }
 }

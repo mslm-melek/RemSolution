@@ -231,13 +231,11 @@ public class ListSortKeyTests : BaseTestFixture
         var client = new Client { FirstName = "Nour", LastName = "Trabelsi", CIN = "44444444" };
         await AddAsync(client);
 
-        await AddAsync(new Renting
-        {
-            CarId = car.Id, ClientId = client.Id,
-            StartDate = new DateTime(2030, 4, 1, 0, 0, 0, DateTimeKind.Utc),
-            EndDate = new DateTime(2030, 4, 5, 0, 0, 0, DateTimeKind.Utc),
-            Price = Money.Of(600m, "TND"), RentingState = RentingState.NotYet
-        });
+        await AddAsync(RentingFixture.Hire(
+            car.Id, client.Id,
+            new DateTime(2030, 4, 1, 0, 0, 0, DateTimeKind.Utc),
+            new DateTime(2030, 4, 5, 0, 0, 0, DateTimeKind.Utc),
+            RentingState.NotYet, Money.Of(600m, "TND")));
 
         foreach (var key in RentingKeys.Append("noSuchColumn"))
         {

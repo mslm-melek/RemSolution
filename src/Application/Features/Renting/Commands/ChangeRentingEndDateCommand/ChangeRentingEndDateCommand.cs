@@ -119,14 +119,8 @@ namespace RemSolution.Application.Features.Renting.Commands.ChangeRentingEndDate
 
             Guard.Against.NotFound(request.Id, entity);
 
-            if (entity.RentingState is RentingState.Done or RentingState.Cancelled)
-            {
-                throw new ValidationException(new[]
-                {
-                    new ValidationFailure(nameof(request.Id),
-                        "A completed or cancelled renting can no longer be changed.")
-                });
-            }
+            // Up front, so a closed hire never gets as far as a rendered contract.
+            entity.EnsureLive("changed");
 
             if (entity.CarId is not int carId || entity.StartDate is not DateTime startDate)
             {
@@ -154,9 +148,15 @@ namespace RemSolution.Application.Features.Renting.Commands.ChangeRentingEndDate
             var generatedFiles = new List<StoredFile>();
 
             await using var transaction = await _context.BeginTransactionAsync(cancellationToken);
-            // Held for the whole unit of work: the availability check must not
-            // race another booking, and contract numbering is MAX + 1.
-            await _context.AcquireTenantWriteLockAsync(cancellationToken);
+
+            // Held for the whole unit of work. The agency lock first, and only
+            // for the contract number (MAX + 1 over the agency's paperwork).
+            if (request.RegenerateContract)
+            {
+                await _context.AcquireTenantWriteLockAsync(cancellationToken);
+            }
+
+            await _context.AcquireCarWriteLockAsync(carId, cancellationToken);
 
             try
             {
@@ -169,12 +169,14 @@ namespace RemSolution.Application.Features.Renting.Commands.ChangeRentingEndDate
 
                 var originalEnd = entity.EndDate;
 
+                Money? price;
+
                 if (request.PriceOverride is decimal negotiated)
                 {
                     // The agent has said what the whole period now costs, so there
                     // is no difference left to price. Same currency rule as the
                     // other renting writes: the car's, then the agency's.
-                    entity.Price = Money.Of(
+                    price = Money.Of(
                         negotiated,
                         entity.Price?.Currency
                             ?? car.DailyRate?.Currency
@@ -185,12 +187,12 @@ namespace RemSolution.Application.Features.Renting.Commands.ChangeRentingEndDate
                 {
                     // With no agreed price to preserve there is nothing to carry
                     // over, so the new period is quoted from scratch.
-                    entity.Price = entity.Price is { } agreedPrice && originalEnd is DateTime previousEnd
+                    price = entity.Price is { } agreedPrice && originalEnd is DateTime previousEnd
                         ? _pricing.RepriceForNewEndDate(car, agreedPrice, startDate, previousEnd, request.EndDate)
                         : _pricing.CalculateRentalPrice(car, startDate, request.EndDate);
                 }
 
-                entity.EndDate = request.EndDate;
+                entity.ChangeEndDate(request.EndDate, price);
 
                 if (request.RegenerateContract)
                 {

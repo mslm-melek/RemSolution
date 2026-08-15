@@ -581,6 +581,7 @@
     "confirmReverse": "Enregistrer une contrepassation pour ce paiement ?",
     "promptPickupMileage": "Kilométrage au départ (facultatif) :",
     "concurrency": "Cette location a été modifiée par un autre utilisateur depuis son ouverture. Rechargez la page pour obtenir la dernière version, puis réappliquez vos modifications.",
+    "staleState": "Cette location a changé d'état depuis son ouverture — quelqu'un l'a démarrée, clôturée ou annulée. Rechargez la page pour voir où elle en est.",
     "existingClient": "Client existant",
     "newClient": "Nouveau client",
     "newClientHint": "L'essentiel suffit pour établir les documents : le client est créé en même temps que la location, le reste de sa fiche peut être complété plus tard depuis l'écran Clients.",

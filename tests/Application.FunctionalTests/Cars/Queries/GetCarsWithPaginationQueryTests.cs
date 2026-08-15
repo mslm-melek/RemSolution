@@ -59,13 +59,13 @@ public class GetCarsWithPaginationQueryTests : BaseTestFixture
         await AddAsync(onRent);
         await AddAsync(new Car { Matricule = "IN-1", Status = CarStatus.Active });
 
-        await AddAsync(new Renting
-        {
-            CarId = onRent.Id,
-            StartDate = DateTime.UtcNow.AddDays(-1),
-            EndDate = DateTime.UtcNow.AddDays(1),
-            RentingState = RentingState.InProgress
-        });
+        var client = new Client { FirstName = "Out", LastName = "Driver" };
+        await AddAsync(client);
+
+        await AddAsync(RentingFixture.Hire(
+            onRent.Id, client.Id,
+            DateTime.UtcNow.AddDays(-1), DateTime.UtcNow.AddDays(1),
+            RentingState.InProgress));
 
         var out_ = await SendAsync(new GetCarsWithPaginationQuery { OnRent = true });
 
@@ -94,35 +94,22 @@ public class GetCarsWithPaginationQueryTests : BaseTestFixture
         var idle = new Car { Matricule = "IDLE-1", Status = CarStatus.Active };
         await AddAsync(idle);
 
-        await AddAsync(new Renting
-        {
-            CarId = held.Id,
-            ClientId = client.Id,
-            StartDate = DateTime.UtcNow.AddDays(-2),
-            EndDate = DateTime.UtcNow.AddDays(3),
-            StartMileage = 42100,
-            RentingState = RentingState.InProgress
-        });
+        await AddAsync(RentingFixture.Hire(
+            held.Id, client.Id,
+            DateTime.UtcNow.AddDays(-2), DateTime.UtcNow.AddDays(3),
+            RentingState.InProgress, startMileage: 42100));
 
         // Finished: part of the car's history, but it is not holding the car.
-        await AddAsync(new Renting
-        {
-            CarId = held.Id,
-            ClientId = client.Id,
-            StartDate = DateTime.UtcNow.AddDays(-20),
-            EndDate = DateTime.UtcNow.AddDays(-15),
-            RentingState = RentingState.Done
-        });
+        await AddAsync(RentingFixture.Hire(
+            held.Id, client.Id,
+            DateTime.UtcNow.AddDays(-20), DateTime.UtcNow.AddDays(-15),
+            RentingState.Done));
 
         // Cancelled: never happened, so it is not history either.
-        await AddAsync(new Renting
-        {
-            CarId = idle.Id,
-            ClientId = client.Id,
-            StartDate = DateTime.UtcNow.AddDays(-10),
-            EndDate = DateTime.UtcNow.AddDays(-8),
-            RentingState = RentingState.Cancelled
-        });
+        await AddAsync(RentingFixture.Hire(
+            idle.Id, client.Id,
+            DateTime.UtcNow.AddDays(-10), DateTime.UtcNow.AddDays(-8),
+            RentingState.Cancelled));
 
         var result = await SendAsync(new GetCarsWithPaginationQuery());
 
