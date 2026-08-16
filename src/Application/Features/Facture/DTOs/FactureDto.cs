@@ -19,6 +19,10 @@ namespace RemSolution.Application.Features.Facture.DTOs
         /// <summary>Totals as invoiced — snapshots, not recomputed values.</summary>
         public MoneyDto? RentalAmount { get; init; }
         public MoneyDto? ExtraServicesAmount { get; init; }
+
+        /// <summary>Charges established at the return (see RentingFee).</summary>
+        public MoneyDto? FeesAmount { get; init; }
+
         public MoneyDto? TotalAmount { get; init; }
 
         /// <summary>See <c>ContractDto.DocumentUrl</c>.</summary>

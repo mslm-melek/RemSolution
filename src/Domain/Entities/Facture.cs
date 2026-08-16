@@ -29,11 +29,13 @@ namespace RemSolution.Domain.Entities
         public DateTime IssuedAt { get; set; }
 
         // Totals snapshotted at issue time, in the agency's currency: the rental
-        // charge, the extra services billed alongside it, and their sum. Stored
-        // rather than recomputed because later edits to the renting must not
-        // change what an issued invoice says.
+        // charge, the extra services billed alongside it, the charges the return
+        // established (see RentingFee), and their sum. Stored rather than
+        // recomputed because later edits to the renting must not change what an
+        // issued invoice says.
         public Money? RentalAmount { get; set; }
         public Money? ExtraServicesAmount { get; set; }
+        public Money? FeesAmount { get; set; }
         public Money? TotalAmount { get; set; }
 
         public int DocumentFileId { get; set; }

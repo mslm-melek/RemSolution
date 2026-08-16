@@ -10,7 +10,8 @@ import { catchError, debounceTime, switchMap } from 'rxjs/operators';
 import {
   RentingsClient, RentingDto, CreateRentingCommand, UpdateRentingCommand,
   ChangeRentingStateCommand, ChangeRentingEndDateCommand, RentingState, RentingHistoryDto,
-  RentingQuoteDto, CarsClient, CarDto, CarStatus, ClientsClient, ClientDto, NewRentingClient,
+  RentingQuoteDto, RentingFeeDto, RentingFeeKind, RentingFeePayload, AddRentingFeeCommand,
+  CarsClient, CarDto, CarStatus, ClientsClient, ClientDto, NewRentingClient,
   UpdateClientCommand, ClientDocumentType, FileParameter,
   ExtraServicesClient, ExtraServiceDto, CreateExtraServiceCommand,
   ExtraServiceTypesClient, ExtraServicesTypeDto,
@@ -26,6 +27,7 @@ import {
 import { AuthService } from '../shared/auth.service';
 import { ReturnDialogComponent } from '../shared/return-dialog.component';
 import { CancelDialogComponent } from '../shared/cancel-dialog.component';
+import { RENTING_FEE_KINDS, feeKindLabelKey, feesTotal } from '../shared/renting-fees';
 import { TranslocoService } from '@jsverse/transloco';
 
 // One of the selected client's identity papers, as shown in the renting form.
@@ -110,6 +112,15 @@ export class RentingFormComponent implements OnInit {
   extraServiceTypes: ExtraServicesTypeDto[] = [];
   newExtraTypeId: number | null = null;
   newExtraAmount: number | null = null;
+
+  // Charges established at the return. Normally entered in the return dialog;
+  // this panel is for what turns up afterwards, and for taking one back off.
+  fees: RentingFeeDto[] = [];
+  readonly feeKinds = RENTING_FEE_KINDS;
+  readonly feeKindLabelKey = feeKindLabelKey;
+  newFeeKind: RentingFeeKind = RentingFeeKind.Damage;
+  newFeeAmount: number | null = null;
+  newFeeNote = '';
 
   payments: PaymentDto[] = [];
   newPaymentAmount: number | null = null;
@@ -1018,6 +1029,12 @@ export class RentingFormComponent implements OnInit {
         error: err => console.error(err)
       });
     }
+    // No gate of its own: charges are part of the hire, so whoever may read the
+    // booking may read what it was charged (see GetRentingFeesQuery).
+    this.client.getRentingFees(this.rentingId).subscribe({
+      next: list => this.fees = list || [],
+      error: err => console.error(err)
+    });
     if (this.canUsePayments) {
       this.paymentsClient.getPayments(1, 100, this.rentingId, null, null).subscribe({
         next: r => this.payments = r.items || [],
@@ -1406,6 +1423,46 @@ export class RentingFormComponent implements OnInit {
     });
   }
 
+  // Charges the return did not catch. The server refuses them on a hire whose
+  // car never went out, so the section only offers this once one has.
+  get canChargeFees(): boolean {
+    return this.renting?.rentingState === RentingState.InProgress
+        || this.renting?.rentingState === RentingState.Done;
+  }
+
+  get feesTotal(): number {
+    return feesTotal(this.fees);
+  }
+
+  addFee() {
+    if (!this.rentingId || !this.newFeeAmount) return;
+
+    this.client.addRentingFee(this.rentingId, new AddRentingFeeCommand({
+      rentingId: this.rentingId,
+      fee: new RentingFeePayload({
+        kind: this.newFeeKind,
+        amount: this.newFeeAmount,
+        note: this.newFeeNote.trim() || undefined
+      })
+    })).subscribe({
+      next: () => {
+        this.newFeeAmount = null;
+        this.newFeeNote = '';
+        this.reload();
+      },
+      error: err => this.handleError(err)
+    });
+  }
+
+  deleteFee(fee: RentingFeeDto) {
+    if (!this.rentingId || !fee.id) return;
+
+    this.client.deleteRentingFee(this.rentingId, fee.id).subscribe({
+      next: () => this.reload(),
+      error: err => this.handleError(err)
+    });
+  }
+
   addPayment() {
     if (!this.rentingId || !this.newPaymentAmount) return;
     const command = new CreatePaymentCommand({
@@ -1464,15 +1521,17 @@ export class RentingFormComponent implements OnInit {
    * instead of its price — nothing at all when it was called off for free — which
    * is the same rule the client's balance and the credits screen apply (see
    * ClientCreditRows). Extras go with it: a hire that did not happen does not
-   * bill the services that were to come with it.
+   * bill the services that were to come with it. Charges established at the
+   * return do NOT: they are money the hire turned out to owe, so they are added
+   * whatever became of it.
    */
   get chargeAmount(): number {
-    if (this.renting?.rentingState === RentingState.Cancelled) {
-      return this.renting?.cancellationFee?.amount ?? 0;
-    }
+    const rental = this.renting?.rentingState === RentingState.Cancelled
+      ? this.renting?.cancellationFee?.amount ?? 0
+      : (this.renting?.price?.amount ?? 0)
+        + this.extraServices.reduce((sum, e) => sum + (e.totalAmount?.amount ?? 0), 0);
 
-    const extras = this.extraServices.reduce((sum, e) => sum + (e.totalAmount?.amount ?? 0), 0);
-    return (this.renting?.price?.amount ?? 0) + extras;
+    return rental + this.feesTotal;
   }
 
   /** Still owed on this booking; negative means the agency owes it back. */

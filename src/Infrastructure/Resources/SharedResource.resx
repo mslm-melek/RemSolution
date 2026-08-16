@@ -739,6 +739,24 @@
   <data name="Document.RentalLine" xml:space="preserve">
     <value>Vehicle rental</value>
   </data>
+  <data name="Document.Fee.Late" xml:space="preserve">
+    <value>Late return</value>
+  </data>
+  <data name="Document.Fee.Damage" xml:space="preserve">
+    <value>Damage</value>
+  </data>
+  <data name="Document.Fee.ExcessMileage" xml:space="preserve">
+    <value>Excess mileage</value>
+  </data>
+  <data name="Document.Fee.Fuel" xml:space="preserve">
+    <value>Missing fuel</value>
+  </data>
+  <data name="Document.Fee.Cleaning" xml:space="preserve">
+    <value>Cleaning</value>
+  </data>
+  <data name="Document.Fee.Other" xml:space="preserve">
+    <value>Additional charge</value>
+  </data>
   <data name="Document.Total" xml:space="preserve">
     <value>Total</value>
   </data>

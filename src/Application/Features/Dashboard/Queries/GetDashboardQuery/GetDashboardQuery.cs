@@ -106,11 +106,15 @@ namespace RemSolution.Application.Features.Dashboard.Queries.GetDashboardQuery
                                  && r.StartDate >= periodStart && r.StartDate < periodEnd, cancellationToken);
 
             // --- Money in the period ---
+            // Price plus what the return established on top of it (see
+            // ClientCreditRows) — a hire with no price but a charge for the dent
+            // it came back with still earned the agency that charge.
             var chargedInPeriod = await _context.Rentings
                 .Where(r => r.RentingState != RentingState.Cancelled
-                            && r.Price != null
                             && r.StartDate >= periodStart && r.StartDate < periodEnd)
-                .SumAsync(r => r.Price!.Amount, cancellationToken);
+                .SumAsync(r => (r.Price == null ? 0m : r.Price.Amount)
+                               + r.Fees.Sum(f => f.Amount == null ? 0m : f.Amount.Amount),
+                          cancellationToken);
 
             var collectedInPeriod = await _context.Payments
                 .Where(p => p.PayementAmount != null

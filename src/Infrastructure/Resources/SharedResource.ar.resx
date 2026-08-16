@@ -739,6 +739,24 @@
   <data name="Document.RentalLine" xml:space="preserve">
     <value>إيجار السيارة</value>
   </data>
+  <data name="Document.Fee.Late" xml:space="preserve">
+    <value>تأخير في الإرجاع</value>
+  </data>
+  <data name="Document.Fee.Damage" xml:space="preserve">
+    <value>أضرار</value>
+  </data>
+  <data name="Document.Fee.ExcessMileage" xml:space="preserve">
+    <value>كيلومترات إضافية</value>
+  </data>
+  <data name="Document.Fee.Fuel" xml:space="preserve">
+    <value>نقص في الوقود</value>
+  </data>
+  <data name="Document.Fee.Cleaning" xml:space="preserve">
+    <value>تنظيف</value>
+  </data>
+  <data name="Document.Fee.Other" xml:space="preserve">
+    <value>مصاريف إضافية</value>
+  </data>
   <data name="Document.Total" xml:space="preserve">
     <value>المجموع</value>
   </data>

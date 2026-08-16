@@ -1,13 +1,16 @@
 using Microsoft.AspNetCore.Http.HttpResults;
 using RemSolution.Application.Common.Models;
 using RemSolution.Domain.Constants;
+using RemSolution.Application.Features.Renting.Commands.AddRentingFeeCommand;
 using RemSolution.Application.Features.Renting.Commands.CancelRentingCommand;
 using RemSolution.Application.Features.Renting.Commands.ChangeRentingEndDateCommand;
 using RemSolution.Application.Features.Renting.Commands.ChangeRentingStateCommand;
 using RemSolution.Application.Features.Renting.Commands.CreateRentingCommand;
+using RemSolution.Application.Features.Renting.Commands.DeleteRentingFeeCommand;
 using RemSolution.Application.Features.Renting.Commands.UpdateRentingCommand;
 using RemSolution.Application.Features.Renting.DTOs;
 using RemSolution.Application.Features.Renting.Queries.GetRentingByIdQuery;
+using RemSolution.Application.Features.Renting.Queries.GetRentingFeesQuery;
 using RemSolution.Application.Features.Renting.Queries.GetRentingHistoryQuery;
 using RemSolution.Application.Features.Renting.Queries.GetRentingQuoteQuery;
 using RemSolution.Application.Features.Renting.Queries.GetRentingsWithPaginationQuery;
@@ -27,7 +30,13 @@ public class Rentings : EndpointGroupBase
             .MapGet(GetRentingQuote, "quote", Permissions.RentingRead)
             .MapGet(GetRentingById, "{id}", Permissions.RentingRead)
             .MapGet(GetRentingHistory, "{id}/history", Permissions.RentingRead)
+            .MapGet(GetRentingFees, "{id}/fees", Permissions.RentingRead)
             .MapPost(CreateRenting, policy: Permissions.RentingCreate)
+            // Correcting the charges of a hire already returned. The usual case —
+            // charges found AS the car comes back — rides on the state change
+            // below instead, so the return is one write.
+            .MapPost(AddRentingFee, "{id}/fees", Permissions.RentingUpdate)
+            .MapDelete(DeleteRentingFee, "{id}/fees/{feeId}", Permissions.RentingUpdate)
             .MapPut(UpdateRenting, "{id}", Permissions.RentingUpdate)
             .MapPut(ChangeRentingState, "{id}/state", Permissions.RentingUpdate)
             .MapPut(ChangeRentingEndDate, "{id}/end-date", Permissions.RentingUpdate)
@@ -68,6 +77,28 @@ public class Rentings : EndpointGroupBase
     {
         var result = await sender.Send(new GetRentingHistoryQuery(id));
         return TypedResults.Ok(result);
+    }
+
+    public async Task<Ok<IList<RentingFeeDto>>> GetRentingFees(ISender sender, int id)
+    {
+        var result = await sender.Send(new GetRentingFeesQuery(id));
+        return TypedResults.Ok(result);
+    }
+
+    public async Task<Results<Created<int>, BadRequest>> AddRentingFee(
+        ISender sender, int id, AddRentingFeeCommand command)
+    {
+        if (id != command.RentingId)
+            return TypedResults.BadRequest();
+
+        var feeId = await sender.Send(command);
+        return TypedResults.Created($"/rentings/{id}/fees/{feeId}", feeId);
+    }
+
+    public async Task<NoContent> DeleteRentingFee(ISender sender, int id, int feeId)
+    {
+        await sender.Send(new DeleteRentingFeeCommand(id, feeId));
+        return TypedResults.NoContent();
     }
 
     public async Task<Created<int>> CreateRenting(ISender sender, CreateRentingCommand command)

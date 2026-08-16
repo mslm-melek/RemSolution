@@ -1,16 +1,19 @@
 import { Component, OnInit, inject } from '@angular/core';
-import { AbstractControl, FormBuilder, FormGroup, ValidationErrors } from '@angular/forms';
+import {
+  AbstractControl, FormArray, FormBuilder, FormGroup, ValidationErrors, Validators
+} from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { TranslocoService } from '@jsverse/transloco';
 import { Observable, of, switchMap, tap } from 'rxjs';
 import {
-  RentingsClient, RentingDto, RentingState,
+  RentingsClient, RentingDto, RentingState, RentingFeeKind, RentingFeePayload,
   ChangeRentingStateCommand, ChangeRentingEndDateCommand
 } from '../web-api-client';
 import {
   extractValidationErrors, extractProblemDetail, isInvalidTransition,
   fromDateInput, toDateTimeInput
 } from './form-utils';
+import { RENTING_FEE_KINDS, feeKindLabelKey } from './renting-fees';
 
 export interface ReturnDialogData {
   rentingId: number;
@@ -42,6 +45,9 @@ export class ReturnDialogComponent implements OnInit {
   saving = false;
   errorMessage = '';
 
+  readonly feeKinds = RENTING_FEE_KINDS;
+  readonly feeKindLabelKey = feeKindLabelKey;
+
   // The end date as the booking has it; the field starts there, so leaving it
   // alone means "returned as scheduled" and touches no price.
   private scheduledEnd = '';
@@ -61,8 +67,37 @@ export class ReturnDialogComponent implements OnInit {
       // Optional, like the state endpoint itself: an agency that does not track
       // the odometer must still be able to close the hire.
       mileage: [null, this.notBelowPickup.bind(this)],
-      returnDate: ['']
+      returnDate: [''],
+      // Empty until the user adds a line: a return with nothing to charge is the
+      // normal one, and an empty row would only be a field to clear.
+      fees: this.fb.array([])
     });
+  }
+
+  get fees(): FormArray {
+    return this.form.get('fees') as FormArray;
+  }
+
+  addFee() {
+    this.fees.push(this.fb.group({
+      kind: [RentingFeeKind.Late, Validators.required],
+      amount: [null, [Validators.required, Validators.min(0.01)]],
+      note: ['', Validators.maxLength(500)]
+    }));
+  }
+
+  removeFee(index: number) {
+    this.fees.removeAt(index);
+  }
+
+  /** What the extra charges add up to, for the running total under the list. */
+  get feesTotal(): number {
+    return this.fees.controls.reduce(
+      (sum, line) => sum + (Number(line.value.amount) || 0), 0);
+  }
+
+  get currency(): string {
+    return this.renting?.price?.currency ?? this.renting?.fees?.currency ?? '';
   }
 
   ngOnInit() {
@@ -198,7 +233,21 @@ export class ReturnDialogComponent implements OnInit {
       id: renting.id,
       rowVersion: renting.rowVersion,
       newState: RentingState.Done,
-      mileage: mileage === null || mileage === '' ? undefined : Number(mileage)
+      mileage: mileage === null || mileage === '' ? undefined : Number(mileage),
+      // Sent with the transition rather than as calls of their own, so the hire
+      // is never left returned with the damage unbilled (see
+      // ChangeRentingStateCommand.Fees). Undefined, not [], when there is
+      // nothing: the server refuses fees on anything but a return, and an empty
+      // list would only be noise on the wire.
+      fees: this.fees.length ? this.feePayloads() : undefined
+    }));
+  }
+
+  private feePayloads(): RentingFeePayload[] {
+    return this.fees.controls.map(line => new RentingFeePayload({
+      kind: line.value.kind,
+      amount: Number(line.value.amount),
+      note: line.value.note?.trim() || undefined
     }));
   }
 

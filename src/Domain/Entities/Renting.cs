@@ -41,6 +41,17 @@ namespace RemSolution.Domain.Entities
         public Money? CancellationFee { get; private set; }
         public RentingState RentingState { get; private set; } = RentingState.NotYet;
         public string? Notes { get; private set; }
+
+        // Owned outright by this aggregate, so the list is exposed read-only and
+        // moves only through AddFee/RemoveFee below.
+        private readonly List<RentingFee> _fees = new();
+
+        /// <summary>
+        /// What the hire turned out to owe beyond its price — see
+        /// <see cref="AddFee"/>.
+        /// </summary>
+        public IReadOnlyCollection<RentingFee> Fees => _fees;
+
         public virtual ICollection<ExtraService>? ExtraServices { get; set; }
         public virtual ICollection<RentingHistory>? RentingHistories { get; set; }
         public virtual ICollection<Reservation>? Reservations { get; set; }
@@ -216,10 +227,82 @@ namespace RemSolution.Domain.Entities
         }
 
         /// <summary>
+        /// Books an extra charge established at the counter — a late day, a dent,
+        /// the kilometres over the allowance. It ADDS to what the hire charges
+        /// (see ClientCreditRows) and never touches <see cref="Price"/>, which
+        /// stays the agreed price of the rental itself.
+        /// <para>
+        /// Only on a hire whose car actually went out, and only while the hire is
+        /// not cancelled: these are things found on a returning vehicle.
+        /// </para>
+        /// </summary>
+        public RentingFee AddFee(RentingFeeKind kind, Money amount, string? note = null)
+        {
+            RequireReturnable();
+            ArgumentNullException.ThrowIfNull(amount);
+
+            if (amount.Amount <= 0m)
+            {
+                throw new DomainRuleException(nameof(RentingFee.Amount),
+                    "An extra charge must be more than nothing.");
+            }
+
+            // The hire's own currency, for the same reason the cancellation fee
+            // takes it: these amounts are summed with the price on one invoice.
+            // A hire with no price has no currency of its own, so the first
+            // charge sets one and the rest follow it — the agency's setting can
+            // be changed between two of them, and a total in two currencies is
+            // not a total.
+            var expected = Price?.Currency ?? _fees.FirstOrDefault()?.Amount?.Currency;
+
+            if (expected is not null && amount.Currency != expected)
+            {
+                throw new DomainRuleException(nameof(RentingFee.Amount),
+                    $"An extra charge must be in the hire's own currency ({expected}).");
+            }
+
+            var fee = new RentingFee(kind, amount, note);
+            _fees.Add(fee);
+            return fee;
+        }
+
+        /// <summary>
+        /// Takes a charge back off — the counter mistyped it, or the damage
+        /// turned out to be already recorded.
+        /// <para>
+        /// Deliberately unconstrained by state, unlike <see cref="AddFee"/>: a
+        /// charge booked on a running hire survives that hire being cancelled
+        /// (the charge rule still bills it), so refusing to remove it on a
+        /// cancelled hire would strand it on the client's balance with no way
+        /// back off.
+        /// </para>
+        /// </summary>
+        public void RemoveFee(RentingFee fee)
+        {
+            ArgumentNullException.ThrowIfNull(fee);
+
+            if (!_fees.Remove(fee))
+            {
+                throw new DomainRuleException(nameof(Fees),
+                    "That charge does not belong to this hire.");
+            }
+        }
+
+        /// <summary>
         /// Refuses a closed hire early, for callers that would otherwise do
         /// expensive work before reaching the method that refuses it anyway.
         /// </summary>
         public void EnsureLive(string action) => RequireLive(action);
+
+        // Fees describe a car coming back, so a hire that never left (NotYet) and
+        // one called off (Cancelled) both refuse them.
+        private void RequireReturnable()
+        {
+            if (RentingState is not (RentingState.InProgress or RentingState.Done))
+            {
+                throw new InvalidRentingTransitionException(RentingState, "charged extra fees");
+            }
+        }
 
         private void RequireLive(string action)
         {

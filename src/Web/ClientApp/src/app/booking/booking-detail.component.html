@@ -160,6 +160,26 @@
         </div>
       </section>
 
+      <!-- The other way round from the extras below: what the return established
+           IS inside the outstanding figure above (see RentingDto.Outstanding), so
+           this section is the breakdown of why that figure exceeds the price. -->
+      <section class="section" *ngIf="fees.length">
+        <h3 class="section-title">{{ t('renting.returnFees') }}</h3>
+
+        <div class="money-row" *ngFor="let fee of fees">
+          <span>
+            {{ t(feeKindLabelKey(fee.kind)) }}<span class="muted" *ngIf="fee.note"> — {{ fee.note }}</span>
+          </span>
+          <span class="num money">
+            {{ fee.amount?.amount | number:'1.2-2' }} {{ fee.amount?.currency }}
+          </span>
+        </div>
+        <div class="money-row total">
+          <span>{{ t('renting.feesTotal') }}</span>
+          <span class="num money">{{ feesTotal | number:'1.2-2' }} {{ feesCurrency }}</span>
+        </div>
+      </section>
+
       <!-- Billed apart from the hire's price — the outstanding figure above does
            not include them (see RentingDto.Outstanding) — so they are their own
            section rather than a line in that total. -->

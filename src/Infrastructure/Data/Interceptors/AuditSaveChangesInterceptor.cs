@@ -147,6 +147,29 @@ public class AuditSaveChangesInterceptor : SaveChangesInterceptor
             payload[property.Metadata.Name] = ToJsonSafe(value);
         }
 
+        // Owned values — every Money on the model (see OwnsMoney) — are tracked as
+        // entries of their own, so their columns are absent from Properties above.
+        // Without this an audited money record carries no money: the row saying a
+        // client was charged 250 would read Kind and Note and nothing else, which
+        // is worthless precisely on the deletions where the audit is the only
+        // surviving copy. Owned entries are the one graph worth following: they
+        // are values, not related rows, so this stays a flat-ish payload.
+        foreach (var reference in entry.References)
+        {
+            if (reference.TargetEntry is not { } owned || !owned.Metadata.IsOwned())
+            {
+                continue;
+            }
+
+            payload[reference.Metadata.Name] = owned.Properties
+                // The owner's foreign key is repeated in every owned entry and
+                // says nothing about the value.
+                .Where(p => !p.Metadata.IsPrimaryKey())
+                .ToDictionary(
+                    p => p.Metadata.Name,
+                    p => ToJsonSafe(current ? p.CurrentValue : p.OriginalValue));
+        }
+
         return JsonSerializer.Serialize(payload);
     }
 

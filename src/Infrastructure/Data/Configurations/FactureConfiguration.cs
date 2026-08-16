@@ -15,6 +15,7 @@ public class FactureConfiguration : IEntityTypeConfiguration<Facture>
 
         builder.OwnsMoney(f => f.RentalAmount, "RentalAmount", "RentalAmountCurrency");
         builder.OwnsMoney(f => f.ExtraServicesAmount, "ExtraServicesAmount", "ExtraServicesAmountCurrency");
+        builder.OwnsMoney(f => f.FeesAmount, "FeesAmount", "FeesAmountCurrency");
         builder.OwnsMoney(f => f.TotalAmount, "TotalAmount", "TotalAmountCurrency");
 
         // See ContractConfiguration: the database owns the numbering invariant.

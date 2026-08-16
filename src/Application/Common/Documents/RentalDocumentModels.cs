@@ -66,6 +66,10 @@ public sealed record DocumentDataSource
     /// <summary>Invoice totals; all null on a contract, which has nothing to total.</summary>
     public decimal? RentalAmount { get; init; }
     public decimal? ExtraServicesAmount { get; init; }
+
+    /// <summary>The charges the return established (see RentingFee).</summary>
+    public decimal? FeesAmount { get; init; }
+
     public decimal? Total { get; init; }
     public decimal? AmountPaid { get; init; }
     public decimal? BalanceDue { get; init; }

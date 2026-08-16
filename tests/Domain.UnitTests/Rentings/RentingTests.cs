@@ -398,4 +398,134 @@ public class RentingTests
 
         renting.EndDate.Should().Be(End);
     }
+
+    // --- Charges established at the return (3.2) -----------------------------
+
+    [Test]
+    public void AddFee_ShouldBookACharge_WithoutTouchingThePrice()
+    {
+        var renting = AHire(Money.Of(400m, "TND"));
+        renting.Start();
+
+        var fee = renting.AddFee(RentingFeeKind.Late, Money.Of(60m, "TND"), "  Two hours late  ");
+
+        renting.Fees.Should().ContainSingle().Which.Should().BeSameAs(fee);
+        fee.Kind.Should().Be(RentingFeeKind.Late);
+        fee.Amount.Should().Be(Money.Of(60m, "TND"));
+        // Trimmed, so a stray space does not print on the invoice.
+        fee.Note.Should().Be("Two hours late");
+        renting.Price.Should().Be(Money.Of(400m, "TND"));
+    }
+
+    [Test]
+    public void AddFee_ShouldStillBeAllowedAfterTheHireIsClosed()
+    {
+        var renting = AHire();
+        renting.Start();
+        renting.Complete(null, DateTime.UtcNow);
+
+        // The workshop finds the dent the next morning.
+        renting.AddFee(RentingFeeKind.Damage, Money.Of(250m, "TND"));
+
+        renting.Fees.Should().HaveCount(1);
+    }
+
+    [Test]
+    public void AddFee_ShouldRefuseAHireWhoseCarNeverWentOut()
+    {
+        var renting = AHire();
+
+        FluentActions.Invoking(() => renting.AddFee(RentingFeeKind.Fuel, Money.Of(40m, "TND")))
+            .Should().Throw<InvalidRentingTransitionException>()
+            .Which.From.Should().Be(RentingState.NotYet);
+    }
+
+    [Test]
+    public void AddFee_ShouldRefuseACancelledHire()
+    {
+        var renting = AHire();
+        renting.Cancel();
+
+        FluentActions.Invoking(() => renting.AddFee(RentingFeeKind.Cleaning, Money.Of(30m, "TND")))
+            .Should().Throw<InvalidRentingTransitionException>()
+            .Which.From.Should().Be(RentingState.Cancelled);
+    }
+
+    [Test]
+    public void AddFee_ShouldRefuseNothingOrLess()
+    {
+        var renting = AHire();
+        renting.Start();
+
+        foreach (var amount in new[] { 0m, -1m })
+        {
+            FluentActions.Invoking(() => renting.AddFee(RentingFeeKind.Other, Money.Of(amount, "TND")))
+                .Should().Throw<DomainRuleException>()
+                .Which.Property.Should().Be(nameof(RentingFee.Amount));
+        }
+
+        renting.Fees.Should().BeEmpty();
+    }
+
+    // The charge is summed with the price on one invoice, so it cannot be in
+    // another currency — the same rule the cancellation fee follows.
+    [Test]
+    public void AddFee_ShouldRefuseAnotherCurrencyThanTheHires()
+    {
+        var renting = AHire(Money.Of(400m, "TND"));
+        renting.Start();
+
+        FluentActions.Invoking(() => renting.AddFee(RentingFeeKind.Damage, Money.Of(100m, "EUR")))
+            .Should().Throw<DomainRuleException>();
+    }
+
+    // A courtesy car has no price to take a currency from, so the FIRST charge
+    // sets one — and the rest have to follow it, or the total is in two
+    // currencies (the agency's own setting can change between two of them).
+    [Test]
+    public void AddFee_ShouldLetTheFirstChargeSetTheCurrencyOfAHireWithNoPrice()
+    {
+        var renting = Renting.Create(1, 2, Start, End, price: null);
+        renting.Start();
+
+        renting.AddFee(RentingFeeKind.Damage, Money.Of(100m, "EUR"));
+
+        renting.Fees.Should().ContainSingle();
+
+        FluentActions.Invoking(() => renting.AddFee(RentingFeeKind.Fuel, Money.Of(40m, "TND")))
+            .Should().Throw<DomainRuleException>();
+    }
+
+    [Test]
+    public void RemoveFee_ShouldTakeAChargeBackOff()
+    {
+        var renting = AHire();
+        renting.Start();
+        var fee = renting.AddFee(RentingFeeKind.Late, Money.Of(60m, "TND"));
+
+        renting.RemoveFee(fee);
+
+        renting.Fees.Should().BeEmpty();
+
+        // And a second removal is a rule failure, not a silent no-op.
+        FluentActions.Invoking(() => renting.RemoveFee(fee))
+            .Should().Throw<DomainRuleException>()
+            .Which.Property.Should().Be(nameof(Renting.Fees));
+    }
+
+    // A charge booked on a running hire outlives that hire being cancelled — the
+    // charge rule still bills it — so if removal were refused here the client
+    // would carry a charge nobody could ever take off.
+    [Test]
+    public void RemoveFee_ShouldStillWorkOnceTheHireIsCancelled()
+    {
+        var renting = AHire();
+        renting.Start();
+        var fee = renting.AddFee(RentingFeeKind.Damage, Money.Of(250m, "TND"));
+        renting.Cancel();
+
+        renting.RemoveFee(fee);
+
+        renting.Fees.Should().BeEmpty();
+    }
 }

@@ -43,6 +43,53 @@
       <p class="dialog-hint warn" *ngIf="endDateChanged">
         <mat-icon>info</mat-icon> {{ t('renting.returnDateChangedHint') }}
       </p>
+
+      <!-- What the car came back owing, on top of the rental: added to the bill
+           and printed on the invoice. Starts empty — most returns charge nothing. -->
+      <div class="fees" formArrayName="fees">
+        <h4 class="section-label">{{ t('renting.returnFees') }}</h4>
+
+        <div class="fee-line" *ngFor="let line of fees.controls; let i = index" [formGroupName]="i">
+          <mat-form-field appearance="outline" class="fee-kind">
+            <mat-label>{{ t('renting.feeKindLabel') }}</mat-label>
+            <mat-select formControlName="kind">
+              <mat-option *ngFor="let kind of feeKinds" [value]="kind">
+                {{ t(feeKindLabelKey(kind)) }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="fee-amount">
+            <mat-label>{{ t('common.amount') }}</mat-label>
+            <input matInput type="number" min="0.01" step="0.01" formControlName="amount" />
+            <span matSuffix *ngIf="currency">&nbsp;{{ currency }}</span>
+            <!-- Otherwise a half-filled line blocks the return with nothing on
+                 screen saying why. -->
+            <mat-error>{{ t('renting.feeAmountRequired') }}</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="fee-note">
+            <mat-label>{{ t('renting.feeNote') }}</mat-label>
+            <input matInput formControlName="note" />
+          </mat-form-field>
+
+          <button mat-icon-button type="button" color="warn" (click)="removeFee(i)"
+                  [attr.aria-label]="t('common.remove')">
+            <mat-icon>delete</mat-icon>
+          </button>
+        </div>
+
+        <div class="fee-foot">
+          <button mat-stroked-button type="button" (click)="addFee()">
+            <mat-icon>add</mat-icon> {{ t('renting.addFee') }}
+          </button>
+          <span class="fee-total" *ngIf="fees.length">
+            {{ t('renting.feesTotalAmount', { amount: (feesTotal | number:'1.2-2'), currency: currency }) }}
+          </span>
+        </div>
+
+        <p class="dialog-hint" *ngIf="!fees.length">{{ t('renting.returnFeesHint') }}</p>
+      </div>
     </form>
   </mat-dialog-content>
 

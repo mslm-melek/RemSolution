@@ -110,6 +110,7 @@ public class RentalDocumentService : IRentalDocumentService
         {
             RentalAmount = billing.Rental,
             ExtraServicesAmount = billing.ExtrasTotal,
+            FeesAmount = billing.FeesTotal,
             Total = billing.Total,
             AmountPaid = billing.Paid,
             BalanceDue = billing.Total - billing.Paid
@@ -133,6 +134,7 @@ public class RentalDocumentService : IRentalDocumentService
             IssuedAt = context.IssuedAt,
             RentalAmount = Money.Of(billing.Rental, context.Currency),
             ExtraServicesAmount = Money.Of(billing.ExtrasTotal, context.Currency),
+            FeesAmount = Money.Of(billing.FeesTotal, context.Currency),
             TotalAmount = Money.Of(billing.Total, context.Currency),
             DocumentFile = file,
             Language = context.Language,
@@ -314,6 +316,16 @@ public class RentalDocumentService : IRentalDocumentService
                 (decimal?)e.TotalAmount!.Amount))
             .ToListAsync(cancellationToken);
 
+        // What the return established: one line each, labelled by kind in the
+        // document's language, with the counter's note appended when there is one
+        // ("Damage — rear bumper"). Read from the table rather than the loaded
+        // aggregate so the query shape matches the extras above.
+        var fees = await _context.RentingFees
+            .Where(f => f.RentingId == renting.Id)
+            .OrderBy(f => f.Id)
+            .Select(f => new FeeLine(f.Kind, f.Note, (decimal?)f.Amount!.Amount))
+            .ToListAsync(cancellationToken);
+
         // Net of everything recorded against the renting: refunds are stored as
         // negative amounts and a reversal is an offsetting entry, so the plain
         // sum is what has actually been collected.
@@ -322,7 +334,7 @@ public class RentalDocumentService : IRentalDocumentService
             .Select(p => (decimal?)p.PayementAmount!.Amount)
             .SumAsync(cancellationToken) ?? 0m;
 
-        return new Billing(rental, extras, paid, currency);
+        return new Billing(rental, extras, fees, paid, currency);
     }
 
     // The printed form of a sequence: "CTR-2026-000042". Zero-padded so numbers
@@ -404,13 +416,18 @@ public class RentalDocumentService : IRentalDocumentService
 
     private sealed record ExtraLine(string? Label, decimal? Amount);
 
+    private sealed record FeeLine(RentingFeeKind Kind, string? Note, decimal? Amount);
+
     // The invoice's money, in one place so the rows the renderer draws and the
     // totals snapshotted on the Facture row cannot drift apart.
-    private sealed record Billing(decimal Rental, List<ExtraLine> Extras, decimal Paid, string Currency)
+    private sealed record Billing(
+        decimal Rental, List<ExtraLine> Extras, List<FeeLine> Fees, decimal Paid, string Currency)
     {
         public decimal ExtrasTotal => Extras.Sum(e => e.Amount ?? 0m);
 
-        public decimal Total => Rental + ExtrasTotal;
+        public decimal FeesTotal => Fees.Sum(f => f.Amount ?? 0m);
+
+        public decimal Total => Rental + ExtrasTotal + FeesTotal;
 
         public IReadOnlyList<RenderedLineItem> Lines(DocumentContext context, ILocalizer localizer)
         {
@@ -428,6 +445,13 @@ public class RentalDocumentService : IRentalDocumentService
                 string.IsNullOrWhiteSpace(e.Label) ? localizer["Document.Description"] : e.Label,
                 Amount(e.Amount ?? 0m))));
 
+            // Charges established at the return come last: the invoice reads as
+            // what was agreed, then what was sold, then what the car came back
+            // owing.
+            lines.AddRange(Fees.Select(f => new RenderedLineItem(
+                FeeLabel(f, localizer),
+                Amount(f.Amount ?? 0m))));
+
             return lines;
         }
 
@@ -442,6 +466,15 @@ public class RentalDocumentService : IRentalDocumentService
                 new(localizer["Document.AmountPaid"], Amount(Paid)),
                 new(localizer["Document.BalanceDue"], Amount(Total - Paid)),
             };
+        }
+
+        // "Damage — rear bumper": the kind names the charge, the note says which
+        // one, and a charge with no note simply prints its kind.
+        private static string FeeLabel(FeeLine fee, ILocalizer localizer)
+        {
+            var kind = localizer[$"Document.Fee.{fee.Kind}"];
+
+            return string.IsNullOrWhiteSpace(fee.Note) ? kind : $"{kind} — {fee.Note}";
         }
     }
 

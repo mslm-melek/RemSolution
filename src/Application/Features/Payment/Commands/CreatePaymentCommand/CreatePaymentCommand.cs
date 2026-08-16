@@ -60,18 +60,27 @@ namespace RemSolution.Application.Features.Payment.Commands.CreatePaymentCommand
             if (request.RentingId is int rentingId)
             {
                 var renting = await _context.Rentings
+                    .Include(r => r.Fees)
                     .FirstOrDefaultAsync(r => r.Id == rentingId, cancellationToken);
                 Guard.Against.NotFound(rentingId, renting);
 
                 agencyId = renting.AgencyId;
                 clientId = renting.ClientId;
                 // What this booking charges, which for a cancelled one is its
-                // cancellation fee rather than its price (see ClientCreditRows).
-                // A hire cancelled for free therefore caps at nothing: there is
-                // no longer anything to collect against it.
-                price = renting.RentingState == RentingState.Cancelled
+                // cancellation fee rather than its price, plus whatever the
+                // return established on top (see ClientCreditRows). A hire
+                // cancelled for free and charged nothing therefore caps at
+                // nothing: there is no longer anything to collect against it.
+                var fees = renting.Fees.Sum(f => f.Amount?.Amount ?? 0m);
+
+                var rental = renting.RentingState == RentingState.Cancelled
                     ? renting.CancellationFee?.Amount ?? 0m
                     : renting.Price?.Amount;
+
+                // A hire with neither a price nor a charge stays uncapped, as it
+                // was before there were charges; one with only charges caps at
+                // them.
+                price = rental is null && fees == 0m ? null : (rental ?? 0m) + fees;
                 currentNet = await _context.Payments
                     .Where(p => p.RentingId == rentingId && p.PayementAmount != null)
                     .SumAsync(p => p.PayementAmount!.Amount, cancellationToken);

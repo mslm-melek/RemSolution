@@ -64,6 +64,9 @@ public static class DocumentPlaceholders
     // Invoice-only totals: on a contract there is nothing yet to total.
     public const string FactureRentalAmount = "facture.rentalAmount";
     public const string FactureExtrasAmount = "facture.extraServicesAmount";
+
+    /// <summary>Charges established at the return (see RentingFee).</summary>
+    public const string FactureFeesAmount = "facture.feesAmount";
     public const string FactureTotal = "facture.total";
     public const string FactureAmountPaid = "facture.amountPaid";
     public const string FactureBalanceDue = "facture.balanceDue";
@@ -84,7 +87,8 @@ public static class DocumentPlaceholders
 
     private static readonly string[] FactureOnly =
     {
-        FactureRentalAmount, FactureExtrasAmount, FactureTotal, FactureAmountPaid, FactureBalanceDue,
+        FactureRentalAmount, FactureExtrasAmount, FactureFeesAmount,
+        FactureTotal, FactureAmountPaid, FactureBalanceDue,
     };
 
     /// <summary>Every known path, regardless of document kind.</summary>

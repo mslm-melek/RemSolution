@@ -8236,6 +8236,9 @@ export interface IRentingsClient {
     getRentingById(id: number): Observable<RentingDto>;
     updateRenting(id: number, command: UpdateRentingCommand): Observable<void>;
     getRentingHistory(id: number): Observable<RentingHistoryDto[]>;
+    getRentingFees(id: number): Observable<RentingFeeDto[]>;
+    addRentingFee(id: number, command: AddRentingFeeCommand): Observable<number>;
+    deleteRentingFee(id: number, feeId: number): Observable<void>;
     changeRentingState(id: number, command: ChangeRentingStateCommand): Observable<void>;
     changeRentingEndDate(id: number, command: ChangeRentingEndDateCommand): Observable<void>;
     cancelRenting(id: number, command: CancelRentingCommand): Observable<void>;
@@ -8610,6 +8613,174 @@ export class RentingsClient implements IRentingsClient {
                 result200 = <any>null;
             }
             return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getRentingFees(id: number): Observable<RentingFeeDto[]> {
+        let url_ = this.baseUrl + "/api/Rentings/{id}/fees";
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetRentingFees(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetRentingFees(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<RentingFeeDto[]>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<RentingFeeDto[]>;
+        }));
+    }
+
+    protected processGetRentingFees(response: HttpResponseBase): Observable<RentingFeeDto[]> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            if (Array.isArray(resultData200)) {
+                result200 = [] as any;
+                for (let item of resultData200)
+                    result200!.push(RentingFeeDto.fromJS(item));
+            }
+            else {
+                result200 = <any>null;
+            }
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    addRentingFee(id: number, command: AddRentingFeeCommand): Observable<number> {
+        let url_ = this.baseUrl + "/api/Rentings/{id}/fees";
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(command);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processAddRentingFee(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processAddRentingFee(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<number>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<number>;
+        }));
+    }
+
+    protected processAddRentingFee(response: HttpResponseBase): Observable<number> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 201) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result201: any = null;
+            let resultData201 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+                result201 = resultData201 !== undefined ? resultData201 : <any>null;
+    
+            return _observableOf(result201);
+            }));
+        } else if (status === 400) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("A server side error occurred.", status, _responseText, _headers);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    deleteRentingFee(id: number, feeId: number): Observable<void> {
+        let url_ = this.baseUrl + "/api/Rentings/{id}/fees/{feeId}";
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        if (feeId === undefined || feeId === null)
+            throw new Error("The parameter 'feeId' must be defined.");
+        url_ = url_.replace("{feeId}", encodeURIComponent("" + feeId));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+            })
+        };
+
+        return this.http.request("delete", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processDeleteRentingFee(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processDeleteRentingFee(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processDeleteRentingFee(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return _observableOf(null as any);
             }));
         } else if (status !== 200 && status !== 204) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
@@ -17008,6 +17179,7 @@ export class FactureDto implements IFactureDto {
     language?: string;
     rentalAmount?: MoneyDto | undefined;
     extraServicesAmount?: MoneyDto | undefined;
+    feesAmount?: MoneyDto | undefined;
     totalAmount?: MoneyDto | undefined;
     documentUrl?: string | undefined;
     documentSize?: number | undefined;
@@ -17033,6 +17205,7 @@ export class FactureDto implements IFactureDto {
             this.language = _data["language"];
             this.rentalAmount = _data["rentalAmount"] ? MoneyDto.fromJS(_data["rentalAmount"]) : <any>undefined;
             this.extraServicesAmount = _data["extraServicesAmount"] ? MoneyDto.fromJS(_data["extraServicesAmount"]) : <any>undefined;
+            this.feesAmount = _data["feesAmount"] ? MoneyDto.fromJS(_data["feesAmount"]) : <any>undefined;
             this.totalAmount = _data["totalAmount"] ? MoneyDto.fromJS(_data["totalAmount"]) : <any>undefined;
             this.documentUrl = _data["documentUrl"];
             this.documentSize = _data["documentSize"];
@@ -17058,6 +17231,7 @@ export class FactureDto implements IFactureDto {
         data["language"] = this.language;
         data["rentalAmount"] = this.rentalAmount ? this.rentalAmount.toJSON() : <any>undefined;
         data["extraServicesAmount"] = this.extraServicesAmount ? this.extraServicesAmount.toJSON() : <any>undefined;
+        data["feesAmount"] = this.feesAmount ? this.feesAmount.toJSON() : <any>undefined;
         data["totalAmount"] = this.totalAmount ? this.totalAmount.toJSON() : <any>undefined;
         data["documentUrl"] = this.documentUrl;
         data["documentSize"] = this.documentSize;
@@ -17076,6 +17250,7 @@ export interface IFactureDto {
     language?: string;
     rentalAmount?: MoneyDto | undefined;
     extraServicesAmount?: MoneyDto | undefined;
+    feesAmount?: MoneyDto | undefined;
     totalAmount?: MoneyDto | undefined;
     documentUrl?: string | undefined;
     documentSize?: number | undefined;
@@ -19371,6 +19546,7 @@ export class RentingDto implements IRentingDto {
     carMileage?: number | undefined;
     price?: MoneyDto | undefined;
     cancellationFee?: MoneyDto | undefined;
+    fees?: MoneyDto | undefined;
     paid?: MoneyDto | undefined;
     outstanding?: MoneyDto | undefined;
     rentingState?: RentingState;
@@ -19404,6 +19580,7 @@ export class RentingDto implements IRentingDto {
             this.carMileage = _data["carMileage"];
             this.price = _data["price"] ? MoneyDto.fromJS(_data["price"]) : <any>undefined;
             this.cancellationFee = _data["cancellationFee"] ? MoneyDto.fromJS(_data["cancellationFee"]) : <any>undefined;
+            this.fees = _data["fees"] ? MoneyDto.fromJS(_data["fees"]) : <any>undefined;
             this.paid = _data["paid"] ? MoneyDto.fromJS(_data["paid"]) : <any>undefined;
             this.outstanding = _data["outstanding"] ? MoneyDto.fromJS(_data["outstanding"]) : <any>undefined;
             this.rentingState = _data["rentingState"];
@@ -19437,6 +19614,7 @@ export class RentingDto implements IRentingDto {
         data["carMileage"] = this.carMileage;
         data["price"] = this.price ? this.price.toJSON() : <any>undefined;
         data["cancellationFee"] = this.cancellationFee ? this.cancellationFee.toJSON() : <any>undefined;
+        data["fees"] = this.fees ? this.fees.toJSON() : <any>undefined;
         data["paid"] = this.paid ? this.paid.toJSON() : <any>undefined;
         data["outstanding"] = this.outstanding ? this.outstanding.toJSON() : <any>undefined;
         data["rentingState"] = this.rentingState;
@@ -19463,6 +19641,7 @@ export interface IRentingDto {
     carMileage?: number | undefined;
     price?: MoneyDto | undefined;
     cancellationFee?: MoneyDto | undefined;
+    fees?: MoneyDto | undefined;
     paid?: MoneyDto | undefined;
     outstanding?: MoneyDto | undefined;
     rentingState?: RentingState;
@@ -19601,6 +19780,71 @@ export interface IRentingHistoryDto {
     endMileage?: number | undefined;
     price?: MoneyDto | undefined;
     rentingState?: RentingState;
+}
+
+export class RentingFeeDto implements IRentingFeeDto {
+    id?: number;
+    rentingId?: number;
+    kind?: RentingFeeKind;
+    amount?: MoneyDto | undefined;
+    note?: string | undefined;
+    createdOn?: Date | undefined;
+
+    constructor(data?: IRentingFeeDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.rentingId = _data["rentingId"];
+            this.kind = _data["kind"];
+            this.amount = _data["amount"] ? MoneyDto.fromJS(_data["amount"]) : <any>undefined;
+            this.note = _data["note"];
+            this.createdOn = _data["createdOn"] ? new Date(_data["createdOn"].toString()) : <any>undefined;
+        }
+    }
+
+    static fromJS(data: any): RentingFeeDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new RentingFeeDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["rentingId"] = this.rentingId;
+        data["kind"] = this.kind;
+        data["amount"] = this.amount ? this.amount.toJSON() : <any>undefined;
+        data["note"] = this.note;
+        data["createdOn"] = this.createdOn ? this.createdOn.toISOString() : <any>undefined;
+        return data;
+    }
+}
+
+export interface IRentingFeeDto {
+    id?: number;
+    rentingId?: number;
+    kind?: RentingFeeKind;
+    amount?: MoneyDto | undefined;
+    note?: string | undefined;
+    createdOn?: Date | undefined;
+}
+
+export enum RentingFeeKind {
+    Late = 0,
+    Damage = 1,
+    ExcessMileage = 2,
+    Fuel = 3,
+    Cleaning = 4,
+    Other = 5,
 }
 
 export class CreateRentingCommand implements ICreateRentingCommand {
@@ -19815,6 +20059,90 @@ export interface INewRentingClient {
     description?: string | undefined;
 }
 
+export class AddRentingFeeCommand implements IAddRentingFeeCommand {
+    rentingId?: number;
+    fee?: RentingFeePayload;
+
+    constructor(data?: IAddRentingFeeCommand) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.rentingId = _data["rentingId"];
+            this.fee = _data["fee"] ? RentingFeePayload.fromJS(_data["fee"]) : <any>undefined;
+        }
+    }
+
+    static fromJS(data: any): AddRentingFeeCommand {
+        data = typeof data === 'object' ? data : {};
+        let result = new AddRentingFeeCommand();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["rentingId"] = this.rentingId;
+        data["fee"] = this.fee ? this.fee.toJSON() : <any>undefined;
+        return data;
+    }
+}
+
+export interface IAddRentingFeeCommand {
+    rentingId?: number;
+    fee?: RentingFeePayload;
+}
+
+export class RentingFeePayload implements IRentingFeePayload {
+    kind?: RentingFeeKind;
+    amount?: number;
+    note?: string | undefined;
+
+    constructor(data?: IRentingFeePayload) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.kind = _data["kind"];
+            this.amount = _data["amount"];
+            this.note = _data["note"];
+        }
+    }
+
+    static fromJS(data: any): RentingFeePayload {
+        data = typeof data === 'object' ? data : {};
+        let result = new RentingFeePayload();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["kind"] = this.kind;
+        data["amount"] = this.amount;
+        data["note"] = this.note;
+        return data;
+    }
+}
+
+export interface IRentingFeePayload {
+    kind?: RentingFeeKind;
+    amount?: number;
+    note?: string | undefined;
+}
+
 export class UpdateRentingCommand implements IUpdateRentingCommand {
     id?: number;
     rowVersion?: string | undefined;
@@ -19900,6 +20228,7 @@ export class ChangeRentingStateCommand implements IChangeRentingStateCommand {
     rowVersion?: string | undefined;
     newState?: RentingState;
     mileage?: number | undefined;
+    fees?: RentingFeePayload[] | undefined;
 
     constructor(data?: IChangeRentingStateCommand) {
         if (data) {
@@ -19916,6 +20245,11 @@ export class ChangeRentingStateCommand implements IChangeRentingStateCommand {
             this.rowVersion = _data["rowVersion"];
             this.newState = _data["newState"];
             this.mileage = _data["mileage"];
+            if (Array.isArray(_data["fees"])) {
+                this.fees = [] as any;
+                for (let item of _data["fees"])
+                    this.fees!.push(RentingFeePayload.fromJS(item));
+            }
         }
     }
 
@@ -19932,6 +20266,11 @@ export class ChangeRentingStateCommand implements IChangeRentingStateCommand {
         data["rowVersion"] = this.rowVersion;
         data["newState"] = this.newState;
         data["mileage"] = this.mileage;
+        if (Array.isArray(this.fees)) {
+            data["fees"] = [];
+            for (let item of this.fees)
+                data["fees"].push(item.toJSON());
+        }
         return data;
     }
 }
@@ -19941,6 +20280,7 @@ export interface IChangeRentingStateCommand {
     rowVersion?: string | undefined;
     newState?: RentingState;
     mileage?: number | undefined;
+    fees?: RentingFeePayload[] | undefined;
 }
 
 export class ChangeRentingEndDateCommand implements IChangeRentingEndDateCommand {

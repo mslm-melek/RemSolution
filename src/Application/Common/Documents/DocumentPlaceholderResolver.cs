@@ -75,6 +75,7 @@ public static class DocumentPlaceholderResolver
 
             [DocumentPlaceholders.FactureRentalAmount] = Amount(source.RentalAmount, currency, culture),
             [DocumentPlaceholders.FactureExtrasAmount] = Amount(source.ExtraServicesAmount, currency, culture),
+            [DocumentPlaceholders.FactureFeesAmount] = Amount(source.FeesAmount, currency, culture),
             [DocumentPlaceholders.FactureTotal] = Amount(source.Total, currency, culture),
             [DocumentPlaceholders.FactureAmountPaid] = Amount(source.AmountPaid, currency, culture),
             [DocumentPlaceholders.FactureBalanceDue] = Amount(source.BalanceDue, currency, culture),

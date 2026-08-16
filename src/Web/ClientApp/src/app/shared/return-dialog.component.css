@@ -43,3 +43,59 @@
 .error-banner {
   margin-bottom: 8px;
 }
+
+/* The charges break the single-column rule on purpose: a charge is a triplet
+   (what / how much / which one) and reads as one line, not three fields. */
+.fees {
+  margin-top: 8px;
+  border-top: 1px solid var(--line);
+  padding-top: 12px;
+}
+
+.fees .section-label {
+  margin: 0 0 8px;
+}
+
+.fee-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 8px;
+  /* Wide enough that the three fields sit on one line, but never wider than the
+     screen — below that the note wraps onto its own row. */
+  min-width: min(520px, 80vw);
+}
+
+/* Widths, not flex-basis: in this column container a basis would size the
+   HEIGHT of a field (see the booking wizard's notes). */
+.fee-line .fee-kind {
+  width: 150px;
+  flex: none;
+}
+
+.fee-line .fee-amount {
+  width: 120px;
+  flex: none;
+}
+
+.fee-line .fee-note {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* The delete button sits on the field row, not on the label above it. */
+.fee-line button {
+  margin-top: 8px;
+}
+
+.fee-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.fee-total {
+  font-weight: 600;
+  color: var(--ink-2);
+}

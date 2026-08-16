@@ -87,6 +87,7 @@ public class ApplicationDbContextInitialiser
     // it is serialised on a named app lock. Session-owned: the seed opens its own
     // transactions.
     private const string SeedLockResource = "remsolution-reference-data-seed";
+    private const int SeedLockTimeoutMs = 120_000;
 
     private readonly ILogger<ApplicationDbContextInitialiser> _logger;
     private readonly ApplicationDbContext _context;
@@ -158,35 +159,64 @@ public class ApplicationDbContextInitialiser
     {
         try
         {
-            // Held for the whole seed, released with the connection; a second
-            // instance waits here and then finds nothing left to do.
+            // Held for the whole seed; a second instance waits here and then
+            // finds nothing left to do.
             await using var connection = new Microsoft.Data.SqlClient.SqlConnection(
                 _context.Database.GetConnectionString());
 
             await connection.OpenAsync();
 
-            await using (var command = connection.CreateCommand())
+            await AcquireSeedLockAsync(connection);
+
+            try
             {
-                command.CommandText = @"
-DECLARE @result int;
-EXEC @result = sp_getapplock
-    @Resource = @resource,
-    @LockMode = 'Exclusive',
-    @LockOwner = 'Session',
-    @LockTimeout = 120000;
-IF @result < 0 THROW 51000, 'Failed to acquire the reference-data seed lock.', 1;";
-                command.Parameters.AddWithValue("@resource", SeedLockResource);
-
-                await command.ExecuteNonQueryAsync();
+                await TrySeedAsync();
             }
-
-            await TrySeedAsync();
+            finally
+            {
+                await ReleaseSeedLockAsync(connection);
+            }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "An error occurred while seeding the database.");
             throw;
         }
+    }
+
+    private static async Task AcquireSeedLockAsync(Microsoft.Data.SqlClient.SqlConnection connection)
+    {
+        await using var command = connection.CreateCommand();
+
+        command.CommandText = @"
+DECLARE @result int;
+EXEC @result = sp_getapplock
+    @Resource = @resource,
+    @LockMode = 'Exclusive',
+    @LockOwner = 'Session',
+    @LockTimeout = @timeout;
+IF @result < 0 THROW 51000, 'Failed to acquire the reference-data seed lock.', 1;";
+        command.Parameters.AddWithValue("@resource", SeedLockResource);
+        command.Parameters.AddWithValue("@timeout", SeedLockTimeoutMs);
+        // The client has to outwait the lock, or it gives up at its own 30s
+        // default and the wait above never gets the chance to succeed.
+        command.CommandTimeout = (SeedLockTimeoutMs / 1000) + 30;
+
+        await command.ExecuteNonQueryAsync();
+    }
+
+    // A session lock outlives Close(): the connection goes back to the pool still
+    // holding it, and the next seed — same startup, since EF runs this once from
+    // MigrateAsync too — waits on a connection nobody will touch again.
+    private static async Task ReleaseSeedLockAsync(Microsoft.Data.SqlClient.SqlConnection connection)
+    {
+        await using var command = connection.CreateCommand();
+
+        command.CommandText =
+            "EXEC sp_releaseapplock @Resource = @resource, @LockOwner = 'Session';";
+        command.Parameters.AddWithValue("@resource", SeedLockResource);
+
+        await command.ExecuteNonQueryAsync();
     }
 
     public async Task TrySeedAsync()

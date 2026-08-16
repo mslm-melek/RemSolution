@@ -2,6 +2,8 @@ using RemSolution.Application.Common.Audit;
 using ValidationException = RemSolution.Application.Common.Exceptions.ValidationException;
 using RemSolution.Application.Common.Interfaces;
 using RemSolution.Application.Common.Security;
+using RemSolution.Application.Common.Settings;
+using RemSolution.Application.Features.Renting.Booking;
 using RemSolution.Domain.Constants;
 using RemSolution.Domain.Enums;
 using FluentValidation.Results;
@@ -24,22 +26,45 @@ namespace RemSolution.Application.Features.Renting.Commands.ChangeRentingStateCo
         // Odometer reading captured at the transition: StartMileage on pickup,
         // EndMileage on return.
         public int? Mileage { get; init; }
+
+        /// <summary>
+        /// Extra charges established as the car came back — a late day, a dent,
+        /// the kilometres over the allowance (see Renting.AddFee). They ride on
+        /// the return rather than following it as separate calls so that closing
+        /// a hire is one write: the counter never ends up with a hire marked
+        /// returned and the damage un-billed because the second call failed.
+        /// <para>Only on the Done transition; anything else is refused.</para>
+        /// </summary>
+        public IList<RentingFeePayload>? Fees { get; init; }
     }
 
     public class ChangeRentingStateCommandHandler : IRequestHandler<ChangeRentingStateCommand>
     {
         private readonly IApplicationDbContext _context;
+        private readonly IAgencySettingsProvider _settings;
         private readonly TimeProvider _dateTime;
 
-        public ChangeRentingStateCommandHandler(IApplicationDbContext context, TimeProvider dateTime)
+        public ChangeRentingStateCommandHandler(
+            IApplicationDbContext context, IAgencySettingsProvider settings, TimeProvider dateTime)
         {
             _context = context;
+            _settings = settings;
             _dateTime = dateTime;
         }
 
         public async Task Handle(ChangeRentingStateCommand request, CancellationToken cancellationToken)
         {
-            var entity = await _context.Rentings
+            // Fees are added through the aggregate, which needs its own list in
+            // hand to add to; a pickup carries none, so the join is only paid for
+            // on a return that books some.
+            IQueryable<Domain.Entities.Renting> rentings = _context.Rentings;
+
+            if (request.Fees is { Count: > 0 })
+            {
+                rentings = rentings.Include(r => r.Fees);
+            }
+
+            var entity = await rentings
                 .FirstOrDefaultAsync(r => r.Id == request.Id, cancellationToken);
 
             Guard.Against.NotFound(request.Id, entity);
@@ -54,6 +79,17 @@ namespace RemSolution.Application.Features.Renting.Commands.ChangeRentingStateCo
 
                 case RentingState.Done:
                     entity.Complete(request.Mileage, _dateTime.GetUtcNow().UtcDateTime);
+
+                    // What the return turned up, booked in the same unit of work
+                    // as the return itself. After Complete, because the aggregate
+                    // only takes fees on a car that went out or came back.
+                    if (request.Fees is { Count: > 0 })
+                    {
+                        var settings = await _settings.GetAsync(entity.AgencyId, cancellationToken);
+
+                        RentingFees.AddAll(
+                            entity, request.Fees, RentingFees.CurrencyOf(entity, settings.CurrencyCode));
+                    }
 
                     // Snapshot the finished period. Written here (not in the event
                     // handler) so it goes through the tenant/audit interceptors in
@@ -106,6 +142,16 @@ namespace RemSolution.Application.Features.Renting.Commands.ChangeRentingStateCo
             RuleFor(v => v.Id).GreaterThan(0);
             RuleFor(v => v.NewState).IsInEnum();
             RuleFor(v => v.Mileage).GreaterThanOrEqualTo(0).When(v => v.Mileage.HasValue);
+
+            RuleForEach(v => v.Fees).SetValidator(new RentingFeePayloadValidator());
+
+            // Extra charges are things found on a returning car, so a pickup
+            // carrying them is a mistake on the caller's side, not a silent
+            // no-op that leaves the money unbilled.
+            RuleFor(v => v.Fees)
+                .Empty()
+                .When(v => v.NewState != RentingState.Done)
+                .WithMessage("Extra charges can only be recorded when the hire is returned.");
         }
     }
 }

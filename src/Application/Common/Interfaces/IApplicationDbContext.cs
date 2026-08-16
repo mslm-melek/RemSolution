@@ -30,6 +30,7 @@ public interface IApplicationDbContext
     DbSet<Notification> Notifications { get; }
     DbSet<Renting> Rentings { get; }
     DbSet<RentingHistory> RentingHistories { get; }
+    DbSet<RentingFee> RentingFees { get; }
     DbSet<Payment> Payments { get; }
     DbSet<Reservation> Reservations { get; }
     DbSet<StoredFile> StoredFiles { get; }

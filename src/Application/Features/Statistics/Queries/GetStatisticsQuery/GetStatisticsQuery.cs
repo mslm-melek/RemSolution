@@ -91,7 +91,8 @@ namespace RemSolution.Application.Features.Statistics.Queries.GetStatisticsQuery
                     r.EndDate,
                     r.RentingState,
                     r.Price == null ? 0m : r.Price.Amount,
-                    r.CancellationFee == null ? 0m : r.CancellationFee.Amount))
+                    r.CancellationFee == null ? 0m : r.CancellationFee.Amount,
+                    r.Fees.Sum(f => f.Amount == null ? 0m : f.Amount.Amount)))
                 .ToListAsync(cancellationToken);
 
             // Only hire-linked payments: money a client hands over against their
@@ -330,13 +331,15 @@ namespace RemSolution.Application.Features.Statistics.Queries.GetStatisticsQuery
         /// <summary>
         /// One hire, as SQL hands it over. <see cref="Charge"/> applies the app's
         /// charge rule (see ClientCreditRows): a cancelled hire bills the fee the
-        /// agency kept, not the price it would have earned.
+        /// agency kept, not the price it would have earned, and either way it
+        /// bills what the return established on top of it.
         /// </summary>
         private sealed record HireRow(
             int? CarId, DateTime Start, DateTime? End, RentingState State,
-            decimal Price, decimal CancellationFee)
+            decimal Price, decimal CancellationFee, decimal Fees)
         {
-            public decimal Charge => State == RentingState.Cancelled ? CancellationFee : Price;
+            public decimal Charge =>
+                (State == RentingState.Cancelled ? CancellationFee : Price) + Fees;
 
             /// <summary>
             /// Calendar days the hire runs, a part day counting as a day and a hire

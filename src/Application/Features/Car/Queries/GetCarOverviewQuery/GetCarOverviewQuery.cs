@@ -202,12 +202,13 @@ namespace RemSolution.Application.Features.Car.Queries.GetCarOverviewQuery
                 {
                     r.RentingState,
                     Price = r.Price == null ? 0m : r.Price.Amount,
-                    Fee = r.CancellationFee == null ? 0m : r.CancellationFee.Amount
+                    Fee = r.CancellationFee == null ? 0m : r.CancellationFee.Amount,
+                    ReturnFees = r.Fees.Sum(f => f.Amount == null ? 0m : f.Amount.Amount)
                 })
                 .ToListAsync(cancellationToken);
 
             var charged = started.Sum(
-                h => h.RentingState == RentingState.Cancelled ? h.Fee : h.Price);
+                h => (h.RentingState == RentingState.Cancelled ? h.Fee : h.Price) + h.ReturnFees);
 
             return new CarUsageDto
             {

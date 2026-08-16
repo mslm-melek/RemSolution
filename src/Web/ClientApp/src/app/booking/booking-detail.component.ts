@@ -5,9 +5,10 @@ import { catchError } from 'rxjs/operators';
 import { TranslocoService } from '@jsverse/transloco';
 import {
   ClientDto, ClientsClient, ExtraServiceDto, ExtraServicesClient, MoneyDto,
-  RentingDto, RentingState, RentingsClient,
+  RentingDto, RentingFeeDto, RentingState, RentingsClient,
   ReservationDto, ReservationStatus, ReservationsClient
 } from '../web-api-client';
+import { feeKindLabelKey, feesTotal } from '../shared/renting-fees';
 import { AuthService } from '../shared/auth.service';
 import { BookingActionOutcome, BookingActionsService } from '../shared/booking-actions.service';
 import { PaymentDialogComponent } from '../shared/payment-dialog.component';
@@ -79,6 +80,8 @@ export class BookingDetailComponent implements OnInit {
   /** Billed separately from the hire's price (see RentingDto.Outstanding), so
    *  they get a section of their own rather than a line in the total. */
   extras: ExtraServiceDto[] = [];
+  fees: RentingFeeDto[] = [];
+  readonly feeKindLabelKey = feeKindLabelKey;
 
   /**
    * Derived from the record once it lands, not read off a getter. Both are bound
@@ -179,9 +182,18 @@ export class BookingDetailComponent implements OnInit {
       ? this.extraServices.getExtraServicesByRenting(rentingId).pipe(catchError(() => of(null)))
       : of(null);
 
-    forkJoin({ client, extras }).subscribe(result => {
+    // Read on the booking's own permission, unlike the extras above: charges
+    // established at the return are part of the hire, and the outstanding figure
+    // this panel shows already counts them, so the breakdown has to be here to
+    // explain it.
+    const fees: Observable<RentingFeeDto[] | null> = rentingId
+      ? this.rentings.getRentingFees(rentingId).pipe(catchError(() => of(null)))
+      : of(null);
+
+    forkJoin({ client, extras, fees }).subscribe(result => {
       this.client = result.client ?? undefined;
       this.extras = result.extras ?? [];
+      this.fees = result.fees ?? [];
       this.steps = this.buildSteps();
       this.papers = this.buildPapers();
       this.outstanding = this.money();
@@ -374,6 +386,14 @@ export class BookingDetailComponent implements OnInit {
 
   get extrasTotal(): number {
     return this.extras.reduce((sum, extra) => sum + (extra.totalAmount?.amount ?? 0), 0);
+  }
+
+  get feesTotal(): number {
+    return feesTotal(this.fees);
+  }
+
+  get feesCurrency(): string | undefined {
+    return this.fees.find(fee => fee.amount?.currency)?.amount?.currency ?? this.price?.currency;
   }
 
   get extrasCurrency(): string | undefined {

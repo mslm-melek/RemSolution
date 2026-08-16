@@ -695,6 +695,12 @@
             <ng-container *ngIf="!renting.cancellationFee">{{ t('renting.cancelledFree') }}</ng-container>
           </div>
 
+          <!-- Otherwise the balance below reads as more than the price with
+               nothing saying why. -->
+          <div class="tile-note num" *ngIf="feesTotal">
+            {{ t('renting.feesAdded', { amount: (feesTotal | number:'1.2-2'), currency: currency }) }}
+          </div>
+
           <!-- Only when payments are readable: otherwise the figure would be a
                half-truth (see the Payments feature gate). Overpaid — which is what
                a cancellation with money already collected leaves behind — is a
@@ -958,8 +964,71 @@
       </mat-tab>
 
       <!-- Money: what was added to the rental, and what came in for it. -->
-      <mat-tab [label]="t('renting.tabMoney')" *ngIf="canUseExtraServices || canUsePayments">
+      <mat-tab [label]="t('renting.tabMoney')"
+               *ngIf="canUseExtraServices || canUsePayments || fees.length || canChargeFees">
         <div class="tab-body">
+          <!-- What the car came back owing. Usually entered in the return dialog;
+               here for what turns up afterwards, and for taking one back off. -->
+          <div class="doc-group" *ngIf="fees.length || canChargeFees">
+            <h4 class="section-label">{{ t('renting.returnFees') }}</h4>
+            <table mat-table [dataSource]="fees" class="data-table full-width" *ngIf="fees.length">
+              <ng-container matColumnDef="kind">
+                <th mat-header-cell *matHeaderCellDef>{{ t('renting.feeKindLabel') }}</th>
+                <td mat-cell *matCellDef="let f">{{ t(feeKindLabelKey(f.kind)) }}</td>
+              </ng-container>
+              <ng-container matColumnDef="note">
+                <th mat-header-cell *matHeaderCellDef>{{ t('renting.feeNote') }}</th>
+                <td mat-cell *matCellDef="let f" class="muted">{{ f.note }}</td>
+              </ng-container>
+              <ng-container matColumnDef="amount">
+                <th mat-header-cell *matHeaderCellDef class="num-cell">{{ t('common.amount') }}</th>
+                <td mat-cell *matCellDef="let f" class="num-cell">
+                  <span *ngIf="f.amount">{{ f.amount.amount | number:'1.2-2' }} {{ f.amount.currency }}</span>
+                </td>
+              </ng-container>
+              <ng-container matColumnDef="actions">
+                <th mat-header-cell *matHeaderCellDef class="actions-cell"></th>
+                <td mat-cell *matCellDef="let f" class="actions-cell">
+                  <!-- Never gated on canChargeFees: a charge booked on a running
+                       hire outlives that hire being cancelled, and hiding the
+                       button would strand it on the client's balance. -->
+                  <button mat-icon-button color="warn" (click)="deleteFee(f)"
+                          [attr.aria-label]="t('common.remove')">
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </td>
+              </ng-container>
+              <tr mat-header-row *matHeaderRowDef="['kind', 'note', 'amount', 'actions']"></tr>
+              <tr mat-row *matRowDef="let row; columns: ['kind', 'note', 'amount', 'actions']"></tr>
+            </table>
+            <p *ngIf="!fees.length" class="muted">{{ t('renting.noReturnFees') }}</p>
+
+            <div class="inline-add" *ngIf="canChargeFees">
+              <mat-form-field appearance="outline">
+                <mat-label>{{ t('renting.feeKindLabel') }}</mat-label>
+                <mat-select [(ngModel)]="newFeeKind">
+                  <mat-option *ngFor="let kind of feeKinds" [value]="kind">
+                    {{ t(feeKindLabelKey(kind)) }}
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>{{ t('common.amount') }}</mat-label>
+                <input matInput type="number" min="0.01" step="0.01" [(ngModel)]="newFeeAmount" />
+                <span matSuffix *ngIf="currency">&nbsp;{{ currency }}</span>
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>{{ t('renting.feeNote') }}</mat-label>
+                <input matInput [(ngModel)]="newFeeNote" />
+              </mat-form-field>
+              <button mat-raised-button (click)="addFee()" [disabled]="!newFeeAmount">
+                <mat-icon>add</mat-icon> {{ t('common.add') }}
+              </button>
+            </div>
+          </div>
+
+          <mat-divider *ngIf="(fees.length || canChargeFees) && canUseExtraServices"></mat-divider>
+
           <div class="doc-group" *ngIf="canUseExtraServices">
             <h4 class="section-label">{{ t('renting.extraServices') }}</h4>
             <table mat-table [dataSource]="extraServices" class="data-table full-width"

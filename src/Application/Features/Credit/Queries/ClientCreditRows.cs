@@ -27,6 +27,11 @@ namespace RemSolution.Application.Features.Credit.Queries
         /// agreed <c>Price</c> — unless it was cancelled, in which case it charges
         /// its <c>CancellationFee</c>: nothing when the agency called it off for
         /// free, or the part of the price it kept (see Renting.CancellationFee).
+        /// On top of either come its <c>Fees</c>, the charges established when the
+        /// car came back (see Renting.AddFee): those are money the hire turned out
+        /// to owe, so they are added whatever became of it. Extra SERVICES are
+        /// not — an option sold at the counter is invoiced beside the rental and
+        /// has never been part of this figure.
         /// Reservations charge their price while they are still an obligation; a
         /// converted one has become a renting and would otherwise count twice.
         /// Paid is the net of the ledger, so refunds and reversals subtract
@@ -51,9 +56,10 @@ namespace RemSolution.Application.Features.Credit.Queries
                 CIN = c.CIN,
                 Charged =
                     c.Rentings!
-                        .Sum(r => r.RentingState == RentingState.Cancelled
-                            ? (r.CancellationFee == null ? 0m : r.CancellationFee.Amount)
-                            : (r.Price == null ? 0m : r.Price.Amount))
+                        .Sum(r => (r.RentingState == RentingState.Cancelled
+                                ? (r.CancellationFee == null ? 0m : r.CancellationFee.Amount)
+                                : (r.Price == null ? 0m : r.Price.Amount))
+                            + r.Fees.Sum(f => f.Amount == null ? 0m : f.Amount.Amount))
                     + c.Reservations!
                         .Where(r => (r.Status == ReservationStatus.Confirmed || r.Status == ReservationStatus.Paid)
                                     && r.Price != null)

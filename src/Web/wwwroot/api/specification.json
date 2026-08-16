@@ -5837,6 +5837,122 @@
         }
       }
     },
+    "/api/Rentings/{id}/fees": {
+      "get": {
+        "tags": [
+          "Rentings"
+        ],
+        "operationId": "GetRentingFees",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RentingFeeDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Rentings"
+        ],
+        "operationId": "AddRentingFee",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          }
+        ],
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddRentingFeeCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 2
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/Rentings/{id}/fees/{feeId}": {
+      "delete": {
+        "tags": [
+          "Rentings"
+        ],
+        "operationId": "DeleteRentingFee",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "feeId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 2
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        }
+      }
+    },
     "/api/Rentings/{id}/state": {
       "put": {
         "tags": [
@@ -11010,6 +11126,14 @@
               }
             ]
           },
+          "feesAmount": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/MoneyDto"
+              }
+            ]
+          },
           "totalAmount": {
             "nullable": true,
             "oneOf": [
@@ -12473,6 +12597,14 @@
               }
             ]
           },
+          "fees": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/MoneyDto"
+              }
+            ]
+          },
           "paid": {
             "nullable": true,
             "oneOf": [
@@ -12599,6 +12731,60 @@
             "$ref": "#/components/schemas/RentingState"
           }
         }
+      },
+      "RentingFeeDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "rentingId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/RentingFeeKind"
+          },
+          "amount": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/MoneyDto"
+              }
+            ]
+          },
+          "note": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdOn": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        }
+      },
+      "RentingFeeKind": {
+        "type": "integer",
+        "description": "",
+        "x-enumNames": [
+          "Late",
+          "Damage",
+          "ExcessMileage",
+          "Fuel",
+          "Cleaning",
+          "Other"
+        ],
+        "enum": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
       },
       "CreateRentingCommand": {
         "type": "object",
@@ -12769,6 +12955,36 @@
           }
         }
       },
+      "AddRentingFeeCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "rentingId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "fee": {
+            "$ref": "#/components/schemas/RentingFeePayload"
+          }
+        }
+      },
+      "RentingFeePayload": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "$ref": "#/components/schemas/RentingFeeKind"
+          },
+          "amount": {
+            "type": "number",
+            "format": "decimal"
+          },
+          "note": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
       "UpdateRentingCommand": {
         "type": "object",
         "additionalProperties": false,
@@ -12852,6 +13068,13 @@
             "type": "integer",
             "format": "int32",
             "nullable": true
+          },
+          "fees": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "$ref": "#/components/schemas/RentingFeePayload"
+            }
           }
         }
       },
