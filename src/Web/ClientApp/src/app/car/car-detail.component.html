@@ -287,6 +287,60 @@
         </footer>
       </section>
 
+      <!-- ------------------------- OFF THE ROAD -------------------------
+           Dates declared ahead of time. Car.Status answers "available now";
+           these answer "available on the 20th", which is what a booking asks.
+           The panel is shown to anyone who may edit the car even when empty —
+           an absent panel would read as "this car is never blocked" rather
+           than "nothing is declared". -->
+      <section class="panel" *ngIf="unavailabilities.length || canEdit">
+        <header class="panel-head">
+          <mat-icon>event_busy</mat-icon>
+          <span class="panel-title">{{ t('car.unavailability.title') }}</span>
+          <button mat-stroked-button *ngIf="canEdit" (click)="declareUnavailability()">
+            <mat-icon>add</mat-icon> {{ t('car.unavailability.declare') }}
+          </button>
+        </header>
+
+        <div class="panel-body">
+          <div class="expense" *ngFor="let block of unavailabilities"
+               [class.needs-action]="block.isCurrent">
+            <span class="expense-ico"><mat-icon>car_repair</mat-icon></span>
+            <div class="expense-what">
+              <div class="expense-name">
+                {{ t(unavailabilityReasonLabelKey(block.reason)) }}
+                <span class="chip warn" *ngIf="block.isCurrent">
+                  {{ t('car.unavailability.currentlyAway') }}
+                </span>
+              </div>
+              <div class="expense-sub" *ngIf="block.note">{{ block.note }}</div>
+            </div>
+            <div class="expense-money">
+              <!-- Wall-clock dates: rendered in UTC so the calendar day is the
+                   day that was picked, whatever the reader's offset. -->
+              <span class="expense-amount num">
+                {{ block.startDate | date:'dd MMM':'UTC' }} →
+                {{ block.endDate | date:'dd MMM yyyy':'UTC' }}
+              </span>
+              <span class="row-actions" *ngIf="canEdit">
+                <button mat-icon-button (click)="declareUnavailability(block)"
+                        [attr.aria-label]="t('common.edit')">
+                  <mat-icon>edit</mat-icon>
+                </button>
+                <button mat-icon-button color="warn" (click)="removeUnavailability(block)"
+                        [attr.aria-label]="t('common.remove')">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </span>
+            </div>
+          </div>
+
+          <p class="muted" *ngIf="!unavailabilities.length">
+            {{ t('car.unavailability.empty') }}
+          </p>
+        </div>
+      </section>
+
       <!-- --------------------------- EXPENSES --------------------------- -->
       <section class="panel" *ngIf="overview?.expenses">
         <header class="panel-head">

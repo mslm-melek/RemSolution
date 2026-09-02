@@ -3,9 +3,10 @@ import { TranslocoService } from '@jsverse/transloco';
 import { CreateMyReviewCommand, MarketplaceClient, MyRentingDto, RentingState } from '../web-api-client';
 import { extractValidationErrors } from '../shared/form-utils';
 
-// "My trips": the customer's rentals across every agency, and the only place a
-// rating starts from — you rate a rental you actually took, not an agency you
-// browsed.
+// The rentals half of "Mes voyages" (see MyBookingsComponent): the customer's
+// rentals across every agency, and the only place a rating starts from — you
+// rate a rental you actually took, not an agency you browsed. The page frame is
+// the parent's; this renders the list alone.
 @Component({
   selector: 'app-my-rentings',
   templateUrl: './my-rentings.component.html',
@@ -56,6 +57,7 @@ export class MyRentingsComponent implements OnInit {
     return state === undefined || state === null ? '' : this.labelKeys[state] ?? '';
   }
 
+  /** Tone class for the global `.chip` (see styles.scss), not a local pill. */
   stateClass(state?: RentingState): string {
     switch (state) {
       case RentingState.Done: return 'done';

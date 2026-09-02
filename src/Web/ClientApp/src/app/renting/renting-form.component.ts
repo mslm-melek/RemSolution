@@ -140,6 +140,17 @@ export class RentingFormComponent implements OnInit {
   generatingContract = false;
   generatingFacture = false;
 
+  /**
+   * The invoice in force: regenerating issues the NEXT number rather than
+   * replacing the previous one, so the highest sequence is the current bill and
+   * the one whose tax breakdown is worth showing.
+   */
+  get latestFacture(): FactureDto | undefined {
+    return this.factures.length
+      ? this.factures.reduce((latest, f) => (f.issuedAt > latest.issuedAt ? f : latest))
+      : undefined;
+  }
+
   // Which layout each document uses. Null means the agency's default (and then the
   // platform's shipped example), so an agency with no templates never sees a
   // decision it does not have.

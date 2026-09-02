@@ -1,0 +1,115 @@
+name: CI
+
+# Every pull request and every push to mainline. azure-dev.yml deploys; this one
+# is the gate that decides whether there is anything worth deploying.
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  # Compile plus the tests that need nothing but a CPU. Fast enough to be the
+  # signal a reviewer actually waits for.
+  build-and-unit-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: 'global.json'
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: src/Web/ClientApp/package-lock.json
+
+      - name: Restore
+        run: dotnet restore RemSolution.sln
+
+      # Release skips the NSwag post-build target, which would otherwise need to
+      # host the app to emit the spec. The generated client is checked in and its
+      # drift is caught by the job below.
+      - name: Build
+        run: dotnet build RemSolution.sln --configuration Release --no-restore
+
+      - name: Domain unit tests
+        run: dotnet test tests/Domain.UnitTests/Domain.UnitTests.csproj --configuration Release --no-build --logger "trx;LogFileName=domain.trx"
+
+      - name: Application unit tests
+        run: dotnet test tests/Application.UnitTests/Application.UnitTests.csproj --configuration Release --no-build --logger "trx;LogFileName=application.trx"
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-test-results
+          path: '**/*.trx'
+          if-no-files-found: ignore
+
+  # The Angular half. Kept separate so a broken template does not hide a broken
+  # handler, and vice versa.
+  client-app:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: src/Web/ClientApp/package-lock.json
+
+      - name: Install
+        working-directory: src/Web/ClientApp
+        run: npm ci
+
+      - name: Build
+        working-directory: src/Web/ClientApp
+        run: npm run build -- --configuration production
+
+      # The two rules in docs/DESIGN_SYSTEM.md and docs/PROJECT_OVERVIEW.md that
+      # a compiler cannot see: no colour literals in component styles, and the
+      # wall-clock/instant date split. Both were violated in code that built and
+      # passed its tests, which is exactly why they belong here.
+      - name: Check design-system and date-rendering conventions
+        # Invoked through bash rather than executed directly: the repository is
+        # worked on from Windows, where the executable bit is not set.
+        run: bash scripts/check-frontend-conventions.sh
+
+  # Testcontainers spins up real SQL Server, so this is slower and needs Docker.
+  # Runs on pull requests too: tenant isolation and the booking rules are only
+  # actually proven against a database.
+  functional-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: 'global.json'
+
+      - name: Functional tests
+        run: dotnet test tests/Application.FunctionalTests/Application.FunctionalTests.csproj --configuration Release --logger "trx;LogFileName=functional.trx"
+
+      - name: Integration tests
+        run: dotnet test tests/Infrastructure.IntegrationTests/Infrastructure.IntegrationTests.csproj --configuration Release --logger "trx;LogFileName=integration.trx"
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: functional-test-results
+          path: '**/*.trx'
+          if-no-files-found: ignore

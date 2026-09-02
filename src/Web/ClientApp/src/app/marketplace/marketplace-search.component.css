@@ -1,42 +1,54 @@
+/* This screen is a page at /browse and the signed-in customer's home screen at
+   the same time (see HomeComponent), so it brings its own measure and rhythm and
+   assumes nothing about what is above it. */
 .marketplace {
   max-width: 1240px;
   margin: 0 auto;
-  padding: 24px 0 40px;
+  padding: var(--sp-6) 0 40px;
 }
 
 /* The customer-facing banner keeps the brand blue: the app bar is chrome and
-   stays charcoal, this is an inviting surface. */
+   stays charcoal, this is an inviting surface. It is dark in BOTH themes, so
+   everything on it comes from the --on-accent set and never from --ink. The
+   highlight is what stops a flat gradient reading as a coloured rectangle. */
 .hero {
   border-radius: var(--r-lg);
-  padding: 30px 30px 24px;
+  padding: 34px 30px 26px;
   color: var(--on-accent);
-  background: linear-gradient(100deg, var(--brand-900) 0%, var(--brand-800) 45%, var(--brand-700) 100%);
+  background:
+    radial-gradient(120% 150% at 100% 0%, var(--on-accent-weak), transparent 62%),
+    linear-gradient(100deg, var(--brand-900) 0%, var(--brand-800) 45%, var(--brand-700) 100%);
   box-shadow: var(--shadow-3);
-  margin-bottom: var(--gap-5);
+  margin-bottom: var(--sp-5);
 }
 
 .hero h1 {
-  margin: 0 0 4px;
-  font-size: 27px;
-  font-weight: 680;
+  margin: 0 0 6px;
+  font-family: var(--font-display);
+  font-size: var(--fs-page);
+  font-weight: var(--fw-medium);
   letter-spacing: -0.02em;
   color: var(--on-accent);
 }
 
+/* De-emphasis is a token, not opacity: an opacity here would also fade the
+   glyphs against whichever gradient stop happened to be behind them. */
 .hero p {
-  margin: 0 0 1.25rem;
-  opacity: 0.9;
+  margin: 0 0 var(--sp-5);
+  max-width: 60ch;
+  color: var(--on-accent-2);
+  line-height: 1.55;
 }
 
 .search-bar {
   display: flex;
   align-items: center;
-  gap: var(--gap-3);
+  gap: var(--sp-3);
   flex-wrap: wrap;
   background: var(--on-accent-weak);
-  border: 1px solid var(--on-accent-weak);
+  border: 1px solid var(--on-accent-edge);
   border-radius: var(--r);
-  padding: 12px;
+  padding: var(--sp-3);
 }
 
 .search-bar .date {
@@ -50,23 +62,30 @@
 /* Make the outlined date fields readable on the coloured hero. */
 .search-bar ::ng-deep .mat-mdc-text-field-wrapper {
   background: var(--surface);
-  border-radius: 8px;
+  border-radius: var(--r-sm);
+}
+
+/* The hint/error line under each field would add 20px of empty space to the
+   band; the fields here are filters, and their errors are the banner below. */
+.search-bar ::ng-deep .mat-mdc-form-field-subscript-wrapper {
+  display: none;
 }
 
 .error {
-  margin-top: var(--gap-3);
+  margin-top: var(--sp-3);
   background: var(--surface);
-  color: var(--danger);
-  padding: 8px 14px;
+  color: var(--danger-ink);
+  padding: var(--sp-2) var(--sp-4);
   border-radius: var(--r-sm);
   display: inline-block;
-  font-size: 13.5px;
+  font-size: var(--fs-sm);
 }
 
 .state {
   text-align: center;
   color: var(--muted);
-  padding: 40px 16px;
+  padding: 40px var(--sp-4);
+  font-size: var(--fs-sm);
 }
 
 .results-head {
@@ -80,7 +99,7 @@
 
 .results-head .count {
   color: var(--muted);
-  font-size: 13.5px;
+  font-size: var(--fs-sm);
 }
 
 /* Pushed to the end even when there is no count yet on its left. */
@@ -98,7 +117,7 @@
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: 1.25rem;
+  gap: var(--sp-5);
 }
 
 /* ------------------------------------------------------- map split view ----
@@ -107,7 +126,7 @@
    neither pane usable. */
 .panes {
   display: grid;
-  gap: var(--gap-4);
+  gap: var(--sp-4);
 }
 
 .split .panes {
@@ -155,18 +174,31 @@
 .car-card {
   display: block;
   border: 1px solid var(--line);
-  border-radius: var(--r);
+  border-radius: var(--r-lg);
   overflow: hidden;
   background: var(--surface);
   box-shadow: var(--shadow-1);
   color: inherit;
   text-decoration: none;
-  transition: transform .14s ease, box-shadow .14s ease;
+  transition: transform .14s ease, box-shadow .14s ease, border-color .14s ease;
 }
 
-.car-card:hover {
+.car-card:hover,
+.car-card:focus-within {
   transform: translateY(-3px);
+  border-color: var(--brand-500);
   box-shadow: var(--shadow-2);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .car-card {
+    transition: none;
+  }
+
+  .car-card:hover,
+  .car-card:focus-within {
+    transform: none;
+  }
 }
 
 .thumb {
@@ -190,16 +222,17 @@
 }
 
 .body {
-  padding: 0.85rem 1rem 1rem;
+  padding: var(--sp-3) var(--sp-4) var(--sp-4);
 }
 
 .model {
   display: block;
-  font-weight: 650;
-  font-size: 15.5px;
+  font-family: var(--font-display);
+  font-size: var(--fs-section);
+  font-weight: var(--fw-medium);
   color: var(--ink);
   text-decoration: none;
-  margin-bottom: 4px;
+  margin-bottom: var(--sp-1);
 }
 
 .model:hover {
@@ -213,10 +246,10 @@
   align-items: flex-start;
   gap: 4px;
   color: var(--muted);
-  font-size: 12.5px;
+  font-size: var(--fs-label);
   line-height: 1.45;
   text-decoration: none;
-  margin-bottom: var(--gap-3);
+  margin-bottom: var(--sp-3);
 }
 
 .agency:hover {
@@ -236,7 +269,7 @@
 .rating {
   display: inline-block;
   margin-top: -8px;
-  margin-bottom: var(--gap-3);
+  margin-bottom: var(--sp-3);
   text-decoration: none;
 }
 
@@ -246,25 +279,29 @@
   justify-content: space-between;
 }
 
+/* The amount itself is .money (mono, tabular) in the markup; this only carries
+   the weight and the ink. */
 .price {
-  font-weight: 700;
+  font-weight: var(--fw-medium);
   color: var(--ink);
-  font-variant-numeric: tabular-nums;
 }
 
+/* "/ jour" is the label on the figure, not part of it, so it drops back to the
+   body face (see DESIGN_SYSTEM rule 3). */
 .price .per {
-  font-weight: 500;
+  font-family: var(--font-body);
+  font-weight: var(--fw-normal);
   color: var(--muted);
-  font-size: 12px;
+  font-size: var(--fs-label);
 }
 
 .book {
   display: inline-flex;
   align-items: center;
   gap: 2px;
-  font-size: 12.5px;
+  font-size: var(--fs-sm);
   color: var(--brand-600);
-  font-weight: 650;
+  font-weight: var(--fw-medium);
   text-decoration: none;
 }
 

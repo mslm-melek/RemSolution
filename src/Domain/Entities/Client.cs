@@ -16,6 +16,8 @@
         public string? BirthPlace { get; set; }
         public int? BirthCountryId { get; set; }
         public virtual Country? BirthCountry { get; set; }
+        // Each identity document records number, when it was issued, where, and
+        // — see the expiry dates below — until when.
         public string? CIN { get; set; }
         public DateTime? CINDeliveranceDate { get; set; }
         public string? CINDeliverancePlace { get; set; }
@@ -31,6 +33,21 @@
         public string? DrivingLicenceDeliverancePlace { get; set; }
         public int? DrivingLicenceDeliveranceCountryId { get; set; }
         public virtual Country? DrivingLicenceDeliveranceCountry { get; set; }
+
+        // Wall-clock dates (a calendar day, stored as picked — see the UTC note
+        // in docs/PROJECT_OVERVIEW.md). Null means "not recorded", which is not
+        // the same as valid: an unknown expiry never blocks a hire, it just
+        // cannot vouch for one either.
+        //
+        // The licence date is the one with money behind it. Handing keys to a
+        // driver whose licence has lapsed lets the insurer decline the claim,
+        // and the liability lands on the agency — so ClientDocumentValidity
+        // reads these at the moment a hire is created, not only on the client
+        // screen. See DrivingLicenceExpiringSoon in NotificationKind for the
+        // heads-up that arrives before it comes to that.
+        public DateTime? CINExpiryDate { get; set; }
+        public DateTime? PasseportExpiryDate { get; set; }
+        public DateTime? DrivingLicenceExpiryDate { get; set; }
         // Identity-document images are StoredFile records, not raw URL strings:
         // size/mime/SHA-256/uploader travel with each file. Managed solely by
         // UploadClientDocumentCommand; the ClientDto still surfaces the plain URL.
@@ -76,6 +93,27 @@
         // every "my …" marketplace query filters on, so it is the single
         // answer to "which portal user is this client?".
         public string? MarketplaceUserId { get; set; }
+        /// <summary>
+        /// Whether the driving licence is known to have lapsed by
+        /// <paramref name="on"/>. An expiry date is exclusive of the day itself —
+        /// a licence "valid until the 14th" is good for the whole of the 14th —
+        /// so only a date strictly before the day counts as expired.
+        /// <para>
+        /// False when no expiry is recorded. That is not the same as valid, and it
+        /// is deliberately not treated as expired either: refusing every hire to
+        /// every client whose paperwork predates this field would take the agency
+        /// off the road, and a guess is worse than an honest silence.
+        /// </para>
+        /// <para>
+        /// Only the licence has a method: it is the one an expiry actually
+        /// forbids something on (see CreateRentingCommand). The equivalent rule
+        /// for all three is spelled out again as a SQL expression in ClientDto,
+        /// which is projected and cannot call this.
+        /// </para>
+        /// </summary>
+        public bool IsDrivingLicenceExpiredOn(DateTime on) =>
+            DrivingLicenceExpiryDate is DateTime expiry && expiry.Date < on.Date;
+
         public virtual ICollection<Renting>? Rentings { get; set; }
         public virtual ICollection<Renting>? SecondRentings { get; set; }
         public virtual ICollection<Reservation>? Reservations { get; set; }

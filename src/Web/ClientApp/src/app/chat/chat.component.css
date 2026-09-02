@@ -127,53 +127,130 @@
   gap: 8px;
 }
 
+/* ------------------------------------------------- the conversation ----------
+   Bubbles, grouped. Consecutive messages from one side are ONE stack: the name
+   and the clock are said once per stack rather than once per message, and only
+   the corners between neighbours are squared off, so a run of three reads as
+   one turn of the conversation instead of three boxed rows. The grouping itself
+   is in shared/chat-bubbles.
+
+   Every side is expressed with logical properties, so the whole thread mirrors
+   in Arabic without one direction-specific rule. */
+
 .messages {
   flex: 1;
   overflow-y: auto;
   padding: 14px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--sp-4);
   max-height: 380px;
 }
 
-.message {
+/* The date, with the hairline running through it. */
+.day-sep {
   display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  margin: var(--sp-2) 0;
+  color: var(--muted);
+  font-size: var(--fs-micro);
 }
 
-/* The agency's own messages sit on the end side, the client's on the start side
-   — logical properties so the layout flips with the Arabic RTL direction. */
-.message.mine {
-  justify-content: flex-end;
+.day-sep::before,
+.day-sep::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--line);
 }
 
-.message.theirs {
-  justify-content: flex-start;
+.group {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--sp-2);
+  margin-top: var(--sp-3);
+}
+
+.group.mine {
+  flex-direction: row-reverse;
+}
+
+.who-avatar {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--brand-100);
+  color: var(--brand-600);
+  font-size: var(--fs-label);
+  font-weight: var(--fw-medium);
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  max-width: 72%;
+}
+
+.group.mine .stack {
+  align-items: flex-end;
+}
+
+.who {
+  margin-inline-start: var(--sp-3);
+  color: var(--muted);
+  font-size: var(--fs-micro);
 }
 
 .bubble {
-  max-width: 70%;
-  border-radius: 12px;
-  padding: 8px 12px;
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--r-bubble);
   background: var(--surface-3);
-}
-
-.message.mine .bubble {
-  background: var(--ok-bg);
-}
-
-.bubble-body {
+  color: var(--ink);
   white-space: pre-wrap;
   word-break: break-word;
+  line-height: 1.4;
 }
 
-.bubble-meta {
+/* My own side takes the filled brand blue with white ink. --brand-500 is the one
+   brand stop that deliberately does NOT lighten in dark mode, precisely because
+   it carries white text (see DESIGN_SYSTEM, Dark mode) — which is what makes it
+   safe as a fill on both themes. */
+.group.mine .bubble {
+  background: var(--brand-500);
+  color: var(--on-accent);
+}
+
+/* The squared corner is the join: on the side the stack is aligned to, and only
+   between neighbours. */
+.group:not(.mine) .bubble:not(:first-child) {
+  border-start-start-radius: var(--r-xs);
+}
+
+.group:not(.mine) .bubble:not(:last-child) {
+  border-end-start-radius: var(--r-xs);
+}
+
+.group.mine .bubble:not(:first-child) {
+  border-start-end-radius: var(--r-xs);
+}
+
+.group.mine .bubble:not(:last-child) {
+  border-end-end-radius: var(--r-xs);
+}
+
+.stack-meta {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-top: 4px;
-  font-size: 11px;
+  gap: var(--sp-1);
+  margin: 2px var(--sp-3) 0;
   color: var(--muted);
+  font-size: var(--fs-micro);
 }
 
 .read-tick {
@@ -183,16 +260,29 @@
   color: var(--brand-600);
 }
 
+/* Centred, not top-aligned: the send button is a circle beside a two-row box
+   now, and pinned to the top it reads as floating loose of the field. */
 .composer {
   display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 12px 14px;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-3) 14px;
   border-top: 1px solid var(--line);
 }
 
 .composer-input {
   flex: 1;
+}
+
+/* Icon only, like every messenger: the field beside it already says what this
+   does, and the word "Send" beside a paper plane is the label twice. */
+.composer-send {
+  flex: none;
+  min-width: 0;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border-radius: 50%;
 }
 
 .composer-note {

@@ -116,6 +116,13 @@ public sealed class NotificationSweepJob
             await SweepUpcomingReservationsAsync(settings, utcNow, cancellationToken);
         }
 
+        // Gated on Clients rather than on a booking module: the alert is about a
+        // client's file, and the link opens the client screen.
+        if (features.Contains(FeatureFlags.Clients))
+        {
+            await SweepClientDocumentsAsync(settings, utcNow, cancellationToken);
+        }
+
         if (settings.NotifyClientsByEmail)
         {
             await SweepClientRemindersAsync(settings, utcNow, features, cancellationToken);
@@ -360,6 +367,107 @@ public sealed class NotificationSweepJob
                     DedupToken: IsoDate(reservation.StartDate),
                     ClientId: reservation.ClientId),
                 cancellationToken);
+        }
+    }
+
+    // -----------------------------------------------------------------------
+    // Client paperwork: identity documents and licences running out.
+    // -----------------------------------------------------------------------
+
+    private async Task SweepClientDocumentsAsync(
+        AgencySettingsSnapshot settings, DateTime now, CancellationToken cancellationToken)
+    {
+        var lead = Math.Max(settings.ClientDocumentExpiryLeadDays, 0);
+        var today = now.Date;
+        var horizon = today.AddDays(lead + 1);
+
+        // Only clients the agency still deals with. A client who has never
+        // booked and never will is not worth chasing for a licence renewal, and
+        // an agency with a long tail of one-off walk-ins would otherwise get an
+        // inbox of them. "Still deals with" = has a booking that is not finished.
+        var clients = await _context.Clients
+            .AsNoTracking()
+            .Where(c =>
+                (c.CINExpiryDate != null && c.CINExpiryDate < horizon)
+                || (c.PasseportExpiryDate != null && c.PasseportExpiryDate < horizon)
+                || (c.DrivingLicenceExpiryDate != null && c.DrivingLicenceExpiryDate < horizon))
+            .Where(c =>
+                c.Rentings!.Any(r => r.RentingState == RentingState.NotYet
+                                     || r.RentingState == RentingState.InProgress)
+                || c.Reservations!.Any(r => r.Status == ReservationStatus.PendingConfirmation
+                                            || r.Status == ReservationStatus.Confirmed
+                                            || r.Status == ReservationStatus.Paid))
+            .Select(c => new
+            {
+                c.Id,
+                c.FirstName,
+                c.LastName,
+                c.CINExpiryDate,
+                c.PasseportExpiryDate,
+                c.DrivingLicenceExpiryDate,
+            })
+            .ToListAsync(cancellationToken);
+
+        foreach (var client in clients)
+        {
+            // One alert per document, not per client: a licence that has already
+            // lapsed and a passport running out next month are two different
+            // things to do, and merging them into one sentence loses both. The
+            // document is identified by its pair of wordings rather than by an
+            // argument (see NotificationMessages).
+            var documents = new (string Token, string Expiring, string Expired, DateTime? Expiry)[]
+            {
+                (nameof(ClientDocumentType.DrivingLicence),
+                    NotificationMessages.ClientLicenceExpiring,
+                    NotificationMessages.ClientLicenceExpired,
+                    client.DrivingLicenceExpiryDate),
+                (nameof(ClientDocumentType.CIN),
+                    NotificationMessages.ClientCinExpiring,
+                    NotificationMessages.ClientCinExpired,
+                    client.CINExpiryDate),
+                (nameof(ClientDocumentType.Passeport),
+                    NotificationMessages.ClientPasseportExpiring,
+                    NotificationMessages.ClientPasseportExpired,
+                    client.PasseportExpiryDate),
+            };
+
+            foreach (var (documentToken, expiringKey, expiredKey, expiry) in documents)
+            {
+                if (expiry is not DateTime expiresOn || expiresOn >= horizon)
+                {
+                    continue;
+                }
+
+                // Exclusive of the day itself, the same rule
+                // Client.IsDrivingLicenceExpiredOn applies.
+                var expired = expiresOn.Date < today;
+
+                var args = new NotificationArgs()
+                    .Set("client", PersonLabel(client.FirstName, client.LastName))
+                    .Set("days", expired
+                        ? WholeDaysBetween(expiresOn, today)
+                        : WholeDaysBetween(today, expiresOn))
+                    .SetDate("expiryDate", expiresOn);
+
+                await _notifications.NotifyStaffAsync(
+                    new StaffNotification(
+                        NotificationKind.ClientDocumentExpiring,
+                        expired ? expiredKey : expiringKey,
+                        // Whoever keeps client files is who asks for a new one.
+                        Permissions.ClientRead,
+                        NotificationSubject.Client,
+                        client.Id,
+                        $"/client/{client.Id}",
+                        args,
+                        // The document is part of the identity, and the week
+                        // bucket is the nagging rate — the same shape as the car
+                        // expense alert above. Crossing into expired changes the
+                        // message key, which is itself part of the key, so it is
+                        // said again at once rather than the following week.
+                        DedupToken: $"d{documentToken}|{WeekBucket(now)}",
+                        ClientId: client.Id),
+                    cancellationToken);
+            }
         }
     }
 

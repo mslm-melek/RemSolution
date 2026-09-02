@@ -23,10 +23,16 @@ namespace RemSolution.Application.Features.Agency.DTOs
         public int ExpenseDueLeadDays { get; init; }
         public int ExpenseDueLeadKilometers { get; init; }
         public int ReservationUpcomingLeadDays { get; init; }
+        public int ClientDocumentExpiryLeadDays { get; init; }
         public bool NotifyStaffByEmail { get; init; }
         public bool NotifyClientsByEmail { get; init; }
         public int ClientReminderDaysBeforeStart { get; init; }
         public int ClientReminderDaysBeforeEnd { get; init; }
+        // Tax settings, from the same row. What the invoice needs to be a legal
+        // document; see the tax section of AgencySettings.
+        public string? TaxIdentifier { get; init; }
+        public decimal VatRatePercent { get; init; }
+        public decimal FiscalStampAmount { get; init; }
 
         public class Mapping : IRegister
         {
@@ -43,10 +49,14 @@ namespace RemSolution.Application.Features.Agency.DTOs
                     .Map(d => d.ExpenseDueLeadDays, s => s.Settings != null ? s.Settings.ExpenseDueLeadDays : 0)
                     .Map(d => d.ExpenseDueLeadKilometers, s => s.Settings != null ? s.Settings.ExpenseDueLeadKilometers : 0)
                     .Map(d => d.ReservationUpcomingLeadDays, s => s.Settings != null ? s.Settings.ReservationUpcomingLeadDays : 0)
+                    .Map(d => d.ClientDocumentExpiryLeadDays, s => s.Settings != null ? s.Settings.ClientDocumentExpiryLeadDays : 0)
                     .Map(d => d.NotifyStaffByEmail, s => s.Settings != null && s.Settings.NotifyStaffByEmail)
                     .Map(d => d.NotifyClientsByEmail, s => s.Settings != null && s.Settings.NotifyClientsByEmail)
                     .Map(d => d.ClientReminderDaysBeforeStart, s => s.Settings != null ? s.Settings.ClientReminderDaysBeforeStart : 0)
-                    .Map(d => d.ClientReminderDaysBeforeEnd, s => s.Settings != null ? s.Settings.ClientReminderDaysBeforeEnd : 0);
+                    .Map(d => d.ClientReminderDaysBeforeEnd, s => s.Settings != null ? s.Settings.ClientReminderDaysBeforeEnd : 0)
+                    .Map(d => d.TaxIdentifier, s => s.Settings != null ? s.Settings.TaxIdentifier : null)
+                    .Map(d => d.VatRatePercent, s => s.Settings != null ? s.Settings.VatRatePercent : 0m)
+                    .Map(d => d.FiscalStampAmount, s => s.Settings != null ? s.Settings.FiscalStampAmount : 0m);
             }
         }
     }

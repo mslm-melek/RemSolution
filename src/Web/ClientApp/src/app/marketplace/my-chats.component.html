@@ -42,7 +42,7 @@
           <div class="muted">
             {{ carLabel(selected) }}
             <span *ngIf="selected.startDate">
-              · {{ selected.startDate | date:'yyyy-MM-dd':'UTC' }} → {{ selected.endDate | date:'yyyy-MM-dd':'UTC' }}
+              · {{ selected.startDate | date:'yyyy-MM-dd':'UTC' }} – {{ selected.endDate | date:'yyyy-MM-dd':'UTC' }}
             </span>
           </div>
         </div>
@@ -53,18 +53,27 @@
         </div>
       </div>
 
-      <div class="messages">
-        <!-- Mirror of the agency view: here the CLIENT's messages are "mine". -->
-        <div class="message" *ngFor="let message of messages"
-             [class.mine]="message.authorKind === ChatAuthorKind.Client"
-             [class.theirs]="message.authorKind === ChatAuthorKind.Agency">
-          <div class="bubble">
-            <div class="bubble-body">{{ message.body }}</div>
-            <div class="bubble-meta">
-              <span>{{ message.senderName }}</span>
-              <span>{{ message.sentAt | date:'yyyy-MM-dd HH:mm' }}</span>
-              <mat-icon class="read-tick" *ngIf="message.authorKind === ChatAuthorKind.Client && message.readAt"
-                        [matTooltip]="t('chat.read')">done_all</mat-icon>
+      <!-- Mirror of the agency view: here the CLIENT's messages are "mine". The
+           grouping and the markup are the same on both sides (see
+           shared/chat-bubbles). -->
+      <div class="messages" appStickToBottom>
+        <div class="day" *ngFor="let day of bubbles.of(messages)">
+          <!-- sentAt is an instant, so the separator says the reader's own day. -->
+          <div class="day-sep"><span>{{ day.day | date:'dd MMMM yyyy' }}</span></div>
+
+          <div class="group" *ngFor="let group of day.groups" [class.mine]="group.mine">
+            <!-- The other side's face, once per run. My own runs need none: I
+                 know who I am, and Messenger does not draw one either. -->
+            <span class="who-avatar" *ngIf="!group.mine" aria-hidden="true">{{ group.initial }}</span>
+
+            <div class="stack">
+              <span class="who" *ngIf="!group.mine">{{ group.senderName }}</span>
+              <div class="bubble" *ngFor="let message of group.messages">{{ message.body }}</div>
+              <span class="stack-meta">
+                <span class="num">{{ group.sentAt | date:'HH:mm' }}</span>
+                <mat-icon class="read-tick" *ngIf="group.mine && group.read"
+                          [matTooltip]="t('chat.read')">done_all</mat-icon>
+              </span>
             </div>
           </div>
         </div>
@@ -77,8 +86,9 @@
           <mat-label>{{ t('chat.yourMessage') }}</mat-label>
           <textarea matInput rows="2" [(ngModel)]="draft" (keydown.enter)="send($event)"></textarea>
         </mat-form-field>
-        <button mat-raised-button color="primary" (click)="send()" [disabled]="sending || !draft.trim()">
-          <mat-icon>send</mat-icon> {{ t('chat.send') }}
+        <button mat-flat-button color="primary" class="composer-send" (click)="send()"
+                [disabled]="sending || !draft.trim()" [attr.aria-label]="t('chat.send')">
+          <mat-icon aria-hidden="true">send</mat-icon>
         </button>
       </div>
 

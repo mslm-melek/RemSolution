@@ -163,6 +163,9 @@
   <data name="Validation.Client.LicenceIssueDateFuture" xml:space="preserve">
     <value>Driving licence issue date cannot be in the future.</value>
   </data>
+  <data name="Validation.Client.ExpiryBeforeIssue" xml:space="preserve">
+    <value>The expiry date must be after the issue date.</value>
+  </data>
   <data name="Validation.Client.LicenceIssueDateBeforeBirth" xml:space="preserve">
     <value>Driving licence issue date cannot be before the birth date.</value>
   </data>
@@ -174,6 +177,9 @@
   </data>
   <data name="Validation.Booking.EndAfterStart" xml:space="preserve">
     <value>The end date must be after the start date.</value>
+  </data>
+  <data name="Validation.Renting.DriverLicenceExpired" xml:space="preserve">
+    <value>{0}'s driving licence expired on {1}. Record a valid licence, or confirm you have seen it to book anyway.</value>
   </data>
   <data name="Validation.Payment.SingleTarget" xml:space="preserve">
     <value>A payment must target exactly one of a renting, a reservation, or a client.</value>
@@ -673,6 +679,9 @@
   <data name="Document.Lessor" xml:space="preserve">
     <value>Lessor</value>
   </data>
+  <data name="Document.TaxIdentifier" xml:space="preserve">
+    <value>Tax ID</value>
+  </data>
   <data name="Document.Renter" xml:space="preserve">
     <value>Renter</value>
   </data>
@@ -757,8 +766,20 @@
   <data name="Document.Fee.Other" xml:space="preserve">
     <value>Additional charge</value>
   </data>
+  <data name="Document.NetAmount" xml:space="preserve">
+    <value>Net amount</value>
+  </data>
+  <data name="Document.VatAmount" xml:space="preserve">
+    <value>VAT {0} %</value>
+  </data>
+  <data name="Document.FiscalStamp" xml:space="preserve">
+    <value>Duty stamp</value>
+  </data>
+  <data name="Document.TotalDue" xml:space="preserve">
+    <value>Total payable</value>
+  </data>
   <data name="Document.Total" xml:space="preserve">
-    <value>Total</value>
+    <value>Total incl. VAT</value>
   </data>
   <data name="Document.AmountPaid" xml:space="preserve">
     <value>Already paid</value>
@@ -906,6 +927,42 @@
   </data>
   <data name="Notification.rentingOverdue.Body" xml:space="preserve">
     <value>{{car}} was due back on {{endDate}} and has not been returned — {{days}} day(s) late. Renter: {{client}}.</value>
+  </data>
+  <data name="Notification.clientLicenceExpiring.Subject" xml:space="preserve">
+    <value>{{client}}'s driving licence expires soon</value>
+  </data>
+  <data name="Notification.clientLicenceExpiring.Body" xml:space="preserve">
+    <value>{{client}}'s driving licence expires on {{expiryDate}}, in {{days}} day(s). Ask for the renewed licence before their next rental.</value>
+  </data>
+  <data name="Notification.clientLicenceExpired.Subject" xml:space="preserve">
+    <value>{{client}}'s driving licence has expired</value>
+  </data>
+  <data name="Notification.clientLicenceExpired.Body" xml:space="preserve">
+    <value>{{client}}'s driving licence expired on {{expiryDate}}, {{days}} day(s) ago. Do not hand over a vehicle until a valid licence is on file — an insurer can decline a claim on an expired one.</value>
+  </data>
+  <data name="Notification.clientCinExpiring.Subject" xml:space="preserve">
+    <value>{{client}}'s ID card expires soon</value>
+  </data>
+  <data name="Notification.clientCinExpiring.Body" xml:space="preserve">
+    <value>{{client}}'s ID card expires on {{expiryDate}}, in {{days}} day(s).</value>
+  </data>
+  <data name="Notification.clientCinExpired.Subject" xml:space="preserve">
+    <value>{{client}}'s ID card has expired</value>
+  </data>
+  <data name="Notification.clientCinExpired.Body" xml:space="preserve">
+    <value>{{client}}'s ID card expired on {{expiryDate}}, {{days}} day(s) ago. Ask for an up-to-date copy.</value>
+  </data>
+  <data name="Notification.clientPasseportExpiring.Subject" xml:space="preserve">
+    <value>{{client}}'s passport expires soon</value>
+  </data>
+  <data name="Notification.clientPasseportExpiring.Body" xml:space="preserve">
+    <value>{{client}}'s passport expires on {{expiryDate}}, in {{days}} day(s).</value>
+  </data>
+  <data name="Notification.clientPasseportExpired.Subject" xml:space="preserve">
+    <value>{{client}}'s passport has expired</value>
+  </data>
+  <data name="Notification.clientPasseportExpired.Body" xml:space="preserve">
+    <value>{{client}}'s passport expired on {{expiryDate}}, {{days}} day(s) ago. Ask for an up-to-date copy.</value>
   </data>
   <data name="Notification.reservationUpcoming.Subject" xml:space="preserve">
     <value>Pickup coming up: {{car}}</value>

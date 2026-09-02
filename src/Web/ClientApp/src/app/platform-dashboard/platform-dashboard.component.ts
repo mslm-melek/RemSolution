@@ -137,7 +137,7 @@ export class PlatformDashboardComponent implements OnInit, AfterViewInit {
   // Opens the agency's workspace, landing on the screen the clicked figure is
   // about. From there every module reads and writes that agency's data until the
   // banner's exit — see ImpersonationService for why this reloads.
-  openAgency(row: PlatformAgencyRowDto, landOn = '/dashboard') {
+  openAgency(row: PlatformAgencyRowDto, landOn = '/') {
     if (!row.agencyId) return;
 
     this.impersonation.enter({ id: row.agencyId, name: row.name ?? '' }, landOn);

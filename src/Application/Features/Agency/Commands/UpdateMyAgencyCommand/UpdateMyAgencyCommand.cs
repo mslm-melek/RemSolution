@@ -44,10 +44,19 @@ namespace RemSolution.Application.Features.Agency.Commands.UpdateMyAgencyCommand
         public int ExpenseDueLeadDays { get; init; } = 14;
         public int ExpenseDueLeadKilometers { get; init; } = 1000;
         public int ReservationUpcomingLeadDays { get; init; } = 3;
+        public int ClientDocumentExpiryLeadDays { get; init; } = 30;
         public bool NotifyStaffByEmail { get; init; } = true;
         public bool NotifyClientsByEmail { get; init; }
         public int ClientReminderDaysBeforeStart { get; init; } = 2;
         public int ClientReminderDaysBeforeEnd { get; init; } = 1;
+
+        // Tax. Editable by the agency administrator because these are their own
+        // registration and their own jurisdiction's figures — unlike the currency
+        // above, changing them reinterprets nothing already stored: every issued
+        // invoice keeps its own frozen copy (see the Facture entity).
+        public string? TaxIdentifier { get; init; }
+        public decimal VatRatePercent { get; init; } = 19m;
+        public decimal FiscalStampAmount { get; init; } = 1m;
     }
 
     public class UpdateMyAgencyCommandHandler : IRequestHandler<UpdateMyAgencyCommand>
@@ -97,10 +106,17 @@ namespace RemSolution.Application.Features.Agency.Commands.UpdateMyAgencyCommand
             settings.ExpenseDueLeadDays = request.ExpenseDueLeadDays;
             settings.ExpenseDueLeadKilometers = request.ExpenseDueLeadKilometers;
             settings.ReservationUpcomingLeadDays = request.ReservationUpcomingLeadDays;
+            settings.ClientDocumentExpiryLeadDays = request.ClientDocumentExpiryLeadDays;
             settings.NotifyStaffByEmail = request.NotifyStaffByEmail;
             settings.NotifyClientsByEmail = request.NotifyClientsByEmail;
             settings.ClientReminderDaysBeforeStart = request.ClientReminderDaysBeforeStart;
             settings.ClientReminderDaysBeforeEnd = request.ClientReminderDaysBeforeEnd;
+
+            settings.TaxIdentifier = string.IsNullOrWhiteSpace(request.TaxIdentifier)
+                ? null
+                : request.TaxIdentifier.Trim();
+            settings.VatRatePercent = request.VatRatePercent;
+            settings.FiscalStampAmount = request.FiscalStampAmount;
 
             await _context.SaveChangesAsync(cancellationToken);
 

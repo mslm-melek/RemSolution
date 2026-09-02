@@ -49,6 +49,10 @@
         public virtual ICollection<Renting>? Rentings { get; set; }
         // This car's own servicing intervals (see CarExpenseSchedule).
         public virtual ICollection<CarExpenseSchedule>? ExpenseSchedules { get; set; }
+        // Dates this car is off the road, declared ahead of time. Status above
+        // says whether it is available now; these say whether it will be (see
+        // CarUnavailability).
+        public virtual ICollection<CarUnavailability>? Unavailabilities { get; set; }
 
         /// <summary>
         /// Takes a reading measured on this car — a pickup or return mileage — and

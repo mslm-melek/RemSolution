@@ -68,7 +68,10 @@
     <!-- NSwag hosts the app to emit the OpenAPI spec; it builds the DI graph but never opens a DB connection.
          When NSwag hosts the app the entry assembly isn't RemSolution.Web, so user secrets don't load.
          Supply a throwaway placeholder connection string (not a real secret) so DI construction succeeds. -->
-    <Exec ConsoleToMSBuild="true" ContinueOnError="true" WorkingDirectory="$(ProjectDir)" EnvironmentVariables="ASPNETCORE_ENVIRONMENT=Development;ConnectionStrings__RemSolutionDb=NSwagBuildTimePlaceholder" Command="$(NSwagExe_Net90) run config.nswag /variables:Configuration=$(Configuration)">
+    <!-- NSwag.MSBuild 14.2.0 ships no Net100 tool, so the Net90 one is the newest available.
+         DOTNET_ROLL_FORWARD lets it run on the .NET 10 runtime this solution targets, instead of
+         requiring a .NET 9 runtime nobody else here needs. -->
+    <Exec ConsoleToMSBuild="true" ContinueOnError="true" WorkingDirectory="$(ProjectDir)" EnvironmentVariables="ASPNETCORE_ENVIRONMENT=Development;ConnectionStrings__RemSolutionDb=NSwagBuildTimePlaceholder;DOTNET_ROLL_FORWARD=LatestMajor" Command="$(NSwagExe_Net90) run config.nswag /variables:Configuration=$(Configuration)">
       <Output TaskParameter="ExitCode" PropertyName="NSwagExitCode" />
       <Output TaskParameter="ConsoleOutput" PropertyName="NSwagOutput" />
     </Exec>

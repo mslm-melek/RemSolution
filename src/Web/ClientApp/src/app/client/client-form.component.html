@@ -66,6 +66,8 @@
 
       <app-date-field [label]="t('client.issueDate')" formControlName="cinDeliveranceDate"></app-date-field>
 
+      <app-date-field [label]="t('client.expiryDate')" formControlName="cinExpiryDate"></app-date-field>
+
       <mat-form-field appearance="outline">
         <mat-label>{{ t('client.issuePlace') }}</mat-label>
         <input matInput formControlName="cinDeliverancePlace" />
@@ -90,6 +92,8 @@
 
       <app-date-field [label]="t('client.issueDate')" formControlName="passeportDeliveranceDate"></app-date-field>
 
+      <app-date-field [label]="t('client.expiryDate')" formControlName="passeportExpiryDate"></app-date-field>
+
       <mat-form-field appearance="outline">
         <mat-label>{{ t('client.issuePlace') }}</mat-label>
         <input matInput formControlName="passeportDeliverancePlace" />
@@ -106,6 +110,18 @@
 
     <!-- Driving licence -->
     <h3 class="section-title">{{ t('client.drivingLicence') }}</h3>
+
+    <!-- The one expiry with money behind it: an expired licence blocks the
+         booking outright (see CreateRentingCommand), so it is said here, on the
+         screen that can fix it, rather than only at the counter. -->
+    <div class="action-banner is-overdue" *ngIf="licenceExpired">
+      <mat-icon>gpp_bad</mat-icon>
+      <div>
+        <p>{{ t('client.licenceExpiredTitle') }}</p>
+        <p class="hint">{{ t('client.licenceExpiredHint') }}</p>
+      </div>
+    </div>
+
     <div class="field-grid">
       <mat-form-field appearance="outline">
         <mat-label>{{ t('client.licenceNumber') }}</mat-label>
@@ -113,6 +129,8 @@
       </mat-form-field>
 
       <app-date-field [label]="t('client.issueDate')" formControlName="drivingLicenceDeliveranceDate"></app-date-field>
+
+      <app-date-field [label]="t('client.expiryDate')" formControlName="drivingLicenceExpiryDate"></app-date-field>
 
       <mat-form-field appearance="outline">
         <mat-label>{{ t('client.issuePlace') }}</mat-label>

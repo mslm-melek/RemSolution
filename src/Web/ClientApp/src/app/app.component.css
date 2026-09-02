@@ -35,7 +35,7 @@
   position: fixed;
   inset: 0;
   z-index: 28;
-  background: rgba(15, 23, 42, 0.45);
+  background: var(--backdrop);
 }
 
 @media (min-width: 1024px) {

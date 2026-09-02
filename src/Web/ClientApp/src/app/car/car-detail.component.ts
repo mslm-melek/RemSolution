@@ -5,8 +5,12 @@ import { PageEvent } from '@angular/material/paginator';
 import { ActivatedRoute } from '@angular/router';
 import {
   CarsClient, CarDto, CarImageDto, CarOverviewDto, CarBookingDto, FuelType,
-  CarExpenseScheduleDto, RentingsClient, RentingDto, RentingState
+  CarExpenseScheduleDto, CarUnavailabilityDto, RentingsClient, RentingDto, RentingState
 } from '../web-api-client';
+import { unavailabilityReasonLabelKey } from '../shared/car-unavailability';
+import {
+  CarUnavailabilityDialogComponent, CarUnavailabilityDialogData
+} from './car-unavailability-dialog.component';
 import {
   CarAvailability, canRentNow, carAvailability, carAvailabilityClass, carAvailabilityLabelKey
 } from '../shared/car-availability';
@@ -52,6 +56,11 @@ export class CarDetailComponent implements OnInit {
   // getter would rebuild the panel on every change-detection pass.
   scheduleRows: CarScheduleRow[] = [];
 
+  // Dates this car is declared off the road. Upcoming only: the panel exists to
+  // plan around, and a car's servicing history belongs to its expenses.
+  unavailabilities: CarUnavailabilityDto[] = [];
+  readonly unavailabilityReasonLabelKey = unavailabilityReasonLabelKey;
+
   rentings: RentingDto[] = [];
   rentingColumns: string[] = ['period', 'client', 'state', 'mileage', 'price', 'actions'];
   rentingsTotal = 0;
@@ -92,6 +101,7 @@ export class CarDetailComponent implements OnInit {
     this.loadOverview();
     this.loadImages();
     this.loadSchedules();
+    this.loadUnavailabilities();
 
     this.auth.currentUser$.subscribe(user => {
       this.canSeeRentings = AuthService.canAccessModule(user, 'Rentings', 'Renting.Read');
@@ -137,6 +147,41 @@ export class CarDetailComponent implements OnInit {
         this.schedules = [];
         this.buildScheduleRows();
       }
+    });
+  }
+
+  private loadUnavailabilities() {
+    this.cars.getCarUnavailabilities(this.carId, false).subscribe({
+      next: rows => this.unavailabilities = rows || [],
+      // A car whose blocks cannot be read is still a car worth showing, so this
+      // panel degrades to empty rather than taking the page down.
+      error: () => this.unavailabilities = []
+    });
+  }
+
+  declareUnavailability(block?: CarUnavailabilityDto) {
+    this.dialog
+      .open<CarUnavailabilityDialogComponent, CarUnavailabilityDialogData, boolean>(
+        CarUnavailabilityDialogComponent,
+        { data: { carId: this.carId, carLabel: this.car?.matricule ?? undefined, block } })
+      .afterClosed()
+      .subscribe(saved => {
+        if (saved) {
+          this.loadUnavailabilities();
+          // A block changes what the car is available for, which the overview
+          // tiles report.
+          this.loadOverview();
+        }
+      });
+  }
+
+  removeUnavailability(block: CarUnavailabilityDto) {
+    this.cars.deleteCarUnavailability(block.id!).subscribe({
+      next: () => {
+        this.loadUnavailabilities();
+        this.loadOverview();
+      },
+      error: err => console.error(err)
     });
   }
 

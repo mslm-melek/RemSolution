@@ -1809,6 +1809,10 @@ export interface ICarsClient {
     setPrimaryCarImage(id: number, imageId: number): Observable<void>;
     reorderCarImages(id: number, orderedImageIds: number[]): Observable<void>;
     deleteCarImage(id: number, imageId: number): Observable<void>;
+    getCarUnavailabilities(carId: number | null | undefined, includePast: boolean | null | undefined): Observable<CarUnavailabilityDto[]>;
+    createCarUnavailability(id: number, command: CreateCarUnavailabilityCommand): Observable<number>;
+    updateCarUnavailability(unavailabilityId: number, command: UpdateCarUnavailabilityCommand): Observable<void>;
+    deleteCarUnavailability(unavailabilityId: number): Observable<void>;
 }
 
 @Injectable({
@@ -2596,6 +2600,227 @@ export class CarsClient implements ICarsClient {
     }
 
     protected processDeleteCarImage(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return _observableOf(null as any);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getCarUnavailabilities(carId: number | null | undefined, includePast: boolean | null | undefined): Observable<CarUnavailabilityDto[]> {
+        let url_ = this.baseUrl + "/api/Cars/unavailabilities?";
+        if (carId !== undefined && carId !== null)
+            url_ += "carId=" + encodeURIComponent("" + carId) + "&";
+        if (includePast !== undefined && includePast !== null)
+            url_ += "includePast=" + encodeURIComponent("" + includePast) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetCarUnavailabilities(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetCarUnavailabilities(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<CarUnavailabilityDto[]>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<CarUnavailabilityDto[]>;
+        }));
+    }
+
+    protected processGetCarUnavailabilities(response: HttpResponseBase): Observable<CarUnavailabilityDto[]> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            if (Array.isArray(resultData200)) {
+                result200 = [] as any;
+                for (let item of resultData200)
+                    result200!.push(CarUnavailabilityDto.fromJS(item));
+            }
+            else {
+                result200 = <any>null;
+            }
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    createCarUnavailability(id: number, command: CreateCarUnavailabilityCommand): Observable<number> {
+        let url_ = this.baseUrl + "/api/Cars/{id}/unavailabilities";
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(command);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processCreateCarUnavailability(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processCreateCarUnavailability(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<number>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<number>;
+        }));
+    }
+
+    protected processCreateCarUnavailability(response: HttpResponseBase): Observable<number> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 201) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result201: any = null;
+            let resultData201 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+                result201 = resultData201 !== undefined ? resultData201 : <any>null;
+    
+            return _observableOf(result201);
+            }));
+        } else if (status === 400) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("A server side error occurred.", status, _responseText, _headers);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    updateCarUnavailability(unavailabilityId: number, command: UpdateCarUnavailabilityCommand): Observable<void> {
+        let url_ = this.baseUrl + "/api/Cars/unavailabilities/{unavailabilityId}";
+        if (unavailabilityId === undefined || unavailabilityId === null)
+            throw new Error("The parameter 'unavailabilityId' must be defined.");
+        url_ = url_.replace("{unavailabilityId}", encodeURIComponent("" + unavailabilityId));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(command);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+            })
+        };
+
+        return this.http.request("put", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processUpdateCarUnavailability(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processUpdateCarUnavailability(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processUpdateCarUnavailability(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return _observableOf(null as any);
+            }));
+        } else if (status === 400) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("A server side error occurred.", status, _responseText, _headers);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    deleteCarUnavailability(unavailabilityId: number): Observable<void> {
+        let url_ = this.baseUrl + "/api/Cars/unavailabilities/{unavailabilityId}";
+        if (unavailabilityId === undefined || unavailabilityId === null)
+            throw new Error("The parameter 'unavailabilityId' must be defined.");
+        url_ = url_.replace("{unavailabilityId}", encodeURIComponent("" + unavailabilityId));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+            })
+        };
+
+        return this.http.request("delete", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processDeleteCarUnavailability(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processDeleteCarUnavailability(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processDeleteCarUnavailability(response: HttpResponseBase): Observable<void> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -8242,6 +8467,7 @@ export interface IRentingsClient {
     changeRentingState(id: number, command: ChangeRentingStateCommand): Observable<void>;
     changeRentingEndDate(id: number, command: ChangeRentingEndDateCommand): Observable<void>;
     cancelRenting(id: number, command: CancelRentingCommand): Observable<void>;
+    settleRentingDeposit(id: number, command: SettleRentingDepositCommand): Observable<void>;
 }
 
 @Injectable({
@@ -8933,6 +9159,61 @@ export class RentingsClient implements IRentingsClient {
     }
 
     protected processCancelRenting(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return _observableOf(null as any);
+            }));
+        } else if (status === 400) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("A server side error occurred.", status, _responseText, _headers);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    settleRentingDeposit(id: number, command: SettleRentingDepositCommand): Observable<void> {
+        let url_ = this.baseUrl + "/api/Rentings/{id}/deposit";
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(command);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+            })
+        };
+
+        return this.http.request("put", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processSettleRentingDeposit(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processSettleRentingDeposit(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processSettleRentingDeposit(response: HttpResponseBase): Observable<void> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -10744,10 +11025,14 @@ export class AgencyDto implements IAgencyDto {
     expenseDueLeadDays?: number;
     expenseDueLeadKilometers?: number;
     reservationUpcomingLeadDays?: number;
+    clientDocumentExpiryLeadDays?: number;
     notifyStaffByEmail?: boolean;
     notifyClientsByEmail?: boolean;
     clientReminderDaysBeforeStart?: number;
     clientReminderDaysBeforeEnd?: number;
+    taxIdentifier?: string | undefined;
+    vatRatePercent?: number;
+    fiscalStampAmount?: number;
 
     constructor(data?: IAgencyDto) {
         if (data) {
@@ -10776,10 +11061,14 @@ export class AgencyDto implements IAgencyDto {
             this.expenseDueLeadDays = _data["expenseDueLeadDays"];
             this.expenseDueLeadKilometers = _data["expenseDueLeadKilometers"];
             this.reservationUpcomingLeadDays = _data["reservationUpcomingLeadDays"];
+            this.clientDocumentExpiryLeadDays = _data["clientDocumentExpiryLeadDays"];
             this.notifyStaffByEmail = _data["notifyStaffByEmail"];
             this.notifyClientsByEmail = _data["notifyClientsByEmail"];
             this.clientReminderDaysBeforeStart = _data["clientReminderDaysBeforeStart"];
             this.clientReminderDaysBeforeEnd = _data["clientReminderDaysBeforeEnd"];
+            this.taxIdentifier = _data["taxIdentifier"];
+            this.vatRatePercent = _data["vatRatePercent"];
+            this.fiscalStampAmount = _data["fiscalStampAmount"];
         }
     }
 
@@ -10808,10 +11097,14 @@ export class AgencyDto implements IAgencyDto {
         data["expenseDueLeadDays"] = this.expenseDueLeadDays;
         data["expenseDueLeadKilometers"] = this.expenseDueLeadKilometers;
         data["reservationUpcomingLeadDays"] = this.reservationUpcomingLeadDays;
+        data["clientDocumentExpiryLeadDays"] = this.clientDocumentExpiryLeadDays;
         data["notifyStaffByEmail"] = this.notifyStaffByEmail;
         data["notifyClientsByEmail"] = this.notifyClientsByEmail;
         data["clientReminderDaysBeforeStart"] = this.clientReminderDaysBeforeStart;
         data["clientReminderDaysBeforeEnd"] = this.clientReminderDaysBeforeEnd;
+        data["taxIdentifier"] = this.taxIdentifier;
+        data["vatRatePercent"] = this.vatRatePercent;
+        data["fiscalStampAmount"] = this.fiscalStampAmount;
         return data;
     }
 }
@@ -10833,10 +11126,14 @@ export interface IAgencyDto {
     expenseDueLeadDays?: number;
     expenseDueLeadKilometers?: number;
     reservationUpcomingLeadDays?: number;
+    clientDocumentExpiryLeadDays?: number;
     notifyStaffByEmail?: boolean;
     notifyClientsByEmail?: boolean;
     clientReminderDaysBeforeStart?: number;
     clientReminderDaysBeforeEnd?: number;
+    taxIdentifier?: string | undefined;
+    vatRatePercent?: number;
+    fiscalStampAmount?: number;
 }
 
 export class UpdateMyAgencyCommand implements IUpdateMyAgencyCommand {
@@ -10853,10 +11150,14 @@ export class UpdateMyAgencyCommand implements IUpdateMyAgencyCommand {
     expenseDueLeadDays?: number;
     expenseDueLeadKilometers?: number;
     reservationUpcomingLeadDays?: number;
+    clientDocumentExpiryLeadDays?: number;
     notifyStaffByEmail?: boolean;
     notifyClientsByEmail?: boolean;
     clientReminderDaysBeforeStart?: number;
     clientReminderDaysBeforeEnd?: number;
+    taxIdentifier?: string | undefined;
+    vatRatePercent?: number;
+    fiscalStampAmount?: number;
 
     constructor(data?: IUpdateMyAgencyCommand) {
         if (data) {
@@ -10882,10 +11183,14 @@ export class UpdateMyAgencyCommand implements IUpdateMyAgencyCommand {
             this.expenseDueLeadDays = _data["expenseDueLeadDays"];
             this.expenseDueLeadKilometers = _data["expenseDueLeadKilometers"];
             this.reservationUpcomingLeadDays = _data["reservationUpcomingLeadDays"];
+            this.clientDocumentExpiryLeadDays = _data["clientDocumentExpiryLeadDays"];
             this.notifyStaffByEmail = _data["notifyStaffByEmail"];
             this.notifyClientsByEmail = _data["notifyClientsByEmail"];
             this.clientReminderDaysBeforeStart = _data["clientReminderDaysBeforeStart"];
             this.clientReminderDaysBeforeEnd = _data["clientReminderDaysBeforeEnd"];
+            this.taxIdentifier = _data["taxIdentifier"];
+            this.vatRatePercent = _data["vatRatePercent"];
+            this.fiscalStampAmount = _data["fiscalStampAmount"];
         }
     }
 
@@ -10911,10 +11216,14 @@ export class UpdateMyAgencyCommand implements IUpdateMyAgencyCommand {
         data["expenseDueLeadDays"] = this.expenseDueLeadDays;
         data["expenseDueLeadKilometers"] = this.expenseDueLeadKilometers;
         data["reservationUpcomingLeadDays"] = this.reservationUpcomingLeadDays;
+        data["clientDocumentExpiryLeadDays"] = this.clientDocumentExpiryLeadDays;
         data["notifyStaffByEmail"] = this.notifyStaffByEmail;
         data["notifyClientsByEmail"] = this.notifyClientsByEmail;
         data["clientReminderDaysBeforeStart"] = this.clientReminderDaysBeforeStart;
         data["clientReminderDaysBeforeEnd"] = this.clientReminderDaysBeforeEnd;
+        data["taxIdentifier"] = this.taxIdentifier;
+        data["vatRatePercent"] = this.vatRatePercent;
+        data["fiscalStampAmount"] = this.fiscalStampAmount;
         return data;
     }
 }
@@ -10933,10 +11242,14 @@ export interface IUpdateMyAgencyCommand {
     expenseDueLeadDays?: number;
     expenseDueLeadKilometers?: number;
     reservationUpcomingLeadDays?: number;
+    clientDocumentExpiryLeadDays?: number;
     notifyStaffByEmail?: boolean;
     notifyClientsByEmail?: boolean;
     clientReminderDaysBeforeStart?: number;
     clientReminderDaysBeforeEnd?: number;
+    taxIdentifier?: string | undefined;
+    vatRatePercent?: number;
+    fiscalStampAmount?: number;
 }
 
 export class AgencyCreatedDto implements IAgencyCreatedDto {
@@ -13346,6 +13659,182 @@ export enum ImageProcessingStatus {
     Failed = 3,
 }
 
+export class CarUnavailabilityDto implements ICarUnavailabilityDto {
+    id?: number;
+    carId?: number;
+    carMatricule?: string | undefined;
+    startDate?: Date;
+    endDate?: Date;
+    reason?: CarUnavailabilityReason;
+    note?: string | undefined;
+    isCurrent?: boolean;
+
+    constructor(data?: ICarUnavailabilityDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.carId = _data["carId"];
+            this.carMatricule = _data["carMatricule"];
+            this.startDate = _data["startDate"] ? new Date(_data["startDate"].toString()) : <any>undefined;
+            this.endDate = _data["endDate"] ? new Date(_data["endDate"].toString()) : <any>undefined;
+            this.reason = _data["reason"];
+            this.note = _data["note"];
+            this.isCurrent = _data["isCurrent"];
+        }
+    }
+
+    static fromJS(data: any): CarUnavailabilityDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new CarUnavailabilityDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["carId"] = this.carId;
+        data["carMatricule"] = this.carMatricule;
+        data["startDate"] = this.startDate ? this.startDate.toISOString() : <any>undefined;
+        data["endDate"] = this.endDate ? this.endDate.toISOString() : <any>undefined;
+        data["reason"] = this.reason;
+        data["note"] = this.note;
+        data["isCurrent"] = this.isCurrent;
+        return data;
+    }
+}
+
+export interface ICarUnavailabilityDto {
+    id?: number;
+    carId?: number;
+    carMatricule?: string | undefined;
+    startDate?: Date;
+    endDate?: Date;
+    reason?: CarUnavailabilityReason;
+    note?: string | undefined;
+    isCurrent?: boolean;
+}
+
+export enum CarUnavailabilityReason {
+    Maintenance = 1,
+    Repair = 2,
+    Administrative = 3,
+    InternalUse = 4,
+    Other = 5,
+}
+
+export class CreateCarUnavailabilityCommand implements ICreateCarUnavailabilityCommand {
+    carId?: number;
+    startDate?: Date;
+    endDate?: Date;
+    reason?: CarUnavailabilityReason;
+    note?: string | undefined;
+
+    constructor(data?: ICreateCarUnavailabilityCommand) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.carId = _data["carId"];
+            this.startDate = _data["startDate"] ? new Date(_data["startDate"].toString()) : <any>undefined;
+            this.endDate = _data["endDate"] ? new Date(_data["endDate"].toString()) : <any>undefined;
+            this.reason = _data["reason"];
+            this.note = _data["note"];
+        }
+    }
+
+    static fromJS(data: any): CreateCarUnavailabilityCommand {
+        data = typeof data === 'object' ? data : {};
+        let result = new CreateCarUnavailabilityCommand();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["carId"] = this.carId;
+        data["startDate"] = this.startDate ? this.startDate.toISOString() : <any>undefined;
+        data["endDate"] = this.endDate ? this.endDate.toISOString() : <any>undefined;
+        data["reason"] = this.reason;
+        data["note"] = this.note;
+        return data;
+    }
+}
+
+export interface ICreateCarUnavailabilityCommand {
+    carId?: number;
+    startDate?: Date;
+    endDate?: Date;
+    reason?: CarUnavailabilityReason;
+    note?: string | undefined;
+}
+
+export class UpdateCarUnavailabilityCommand implements IUpdateCarUnavailabilityCommand {
+    id?: number;
+    startDate?: Date;
+    endDate?: Date;
+    reason?: CarUnavailabilityReason;
+    note?: string | undefined;
+
+    constructor(data?: IUpdateCarUnavailabilityCommand) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.startDate = _data["startDate"] ? new Date(_data["startDate"].toString()) : <any>undefined;
+            this.endDate = _data["endDate"] ? new Date(_data["endDate"].toString()) : <any>undefined;
+            this.reason = _data["reason"];
+            this.note = _data["note"];
+        }
+    }
+
+    static fromJS(data: any): UpdateCarUnavailabilityCommand {
+        data = typeof data === 'object' ? data : {};
+        let result = new UpdateCarUnavailabilityCommand();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["startDate"] = this.startDate ? this.startDate.toISOString() : <any>undefined;
+        data["endDate"] = this.endDate ? this.endDate.toISOString() : <any>undefined;
+        data["reason"] = this.reason;
+        data["note"] = this.note;
+        return data;
+    }
+}
+
+export interface IUpdateCarUnavailabilityCommand {
+    id?: number;
+    startDate?: Date;
+    endDate?: Date;
+    reason?: CarUnavailabilityReason;
+    note?: string | undefined;
+}
+
 export class PaginatedListOfChatThreadDto implements IPaginatedListOfChatThreadDto {
     items?: ChatThreadDto[];
     pageNumber?: number;
@@ -13686,6 +14175,11 @@ export class ClientDto implements IClientDto {
     drivingLicenceDeliveranceDate?: Date | undefined;
     drivingLicenceDeliverancePlace?: string | undefined;
     drivingLicenceDeliveranceCountryId?: number | undefined;
+    cinExpiryDate?: Date | undefined;
+    passeportExpiryDate?: Date | undefined;
+    drivingLicenceExpiryDate?: Date | undefined;
+    isDrivingLicenceExpired?: boolean;
+    hasExpiredDocument?: boolean;
     cinImageUrl?: string | undefined;
     drivingLicenceImageUrl?: string | undefined;
     passerportImageUrl?: string | undefined;
@@ -13732,6 +14226,11 @@ export class ClientDto implements IClientDto {
             this.drivingLicenceDeliveranceDate = _data["drivingLicenceDeliveranceDate"] ? new Date(_data["drivingLicenceDeliveranceDate"].toString()) : <any>undefined;
             this.drivingLicenceDeliverancePlace = _data["drivingLicenceDeliverancePlace"];
             this.drivingLicenceDeliveranceCountryId = _data["drivingLicenceDeliveranceCountryId"];
+            this.cinExpiryDate = _data["cinExpiryDate"] ? new Date(_data["cinExpiryDate"].toString()) : <any>undefined;
+            this.passeportExpiryDate = _data["passeportExpiryDate"] ? new Date(_data["passeportExpiryDate"].toString()) : <any>undefined;
+            this.drivingLicenceExpiryDate = _data["drivingLicenceExpiryDate"] ? new Date(_data["drivingLicenceExpiryDate"].toString()) : <any>undefined;
+            this.isDrivingLicenceExpired = _data["isDrivingLicenceExpired"];
+            this.hasExpiredDocument = _data["hasExpiredDocument"];
             this.cinImageUrl = _data["cinImageUrl"];
             this.drivingLicenceImageUrl = _data["drivingLicenceImageUrl"];
             this.passerportImageUrl = _data["passerportImageUrl"];
@@ -13778,6 +14277,11 @@ export class ClientDto implements IClientDto {
         data["drivingLicenceDeliveranceDate"] = this.drivingLicenceDeliveranceDate ? this.drivingLicenceDeliveranceDate.toISOString() : <any>undefined;
         data["drivingLicenceDeliverancePlace"] = this.drivingLicenceDeliverancePlace;
         data["drivingLicenceDeliveranceCountryId"] = this.drivingLicenceDeliveranceCountryId;
+        data["cinExpiryDate"] = this.cinExpiryDate ? this.cinExpiryDate.toISOString() : <any>undefined;
+        data["passeportExpiryDate"] = this.passeportExpiryDate ? this.passeportExpiryDate.toISOString() : <any>undefined;
+        data["drivingLicenceExpiryDate"] = this.drivingLicenceExpiryDate ? this.drivingLicenceExpiryDate.toISOString() : <any>undefined;
+        data["isDrivingLicenceExpired"] = this.isDrivingLicenceExpired;
+        data["hasExpiredDocument"] = this.hasExpiredDocument;
         data["cinImageUrl"] = this.cinImageUrl;
         data["drivingLicenceImageUrl"] = this.drivingLicenceImageUrl;
         data["passerportImageUrl"] = this.passerportImageUrl;
@@ -13817,6 +14321,11 @@ export interface IClientDto {
     drivingLicenceDeliveranceDate?: Date | undefined;
     drivingLicenceDeliverancePlace?: string | undefined;
     drivingLicenceDeliveranceCountryId?: number | undefined;
+    cinExpiryDate?: Date | undefined;
+    passeportExpiryDate?: Date | undefined;
+    drivingLicenceExpiryDate?: Date | undefined;
+    isDrivingLicenceExpired?: boolean;
+    hasExpiredDocument?: boolean;
     cinImageUrl?: string | undefined;
     drivingLicenceImageUrl?: string | undefined;
     passerportImageUrl?: string | undefined;
@@ -13842,14 +14351,17 @@ export class CreateClientCommand implements ICreateClientCommand {
     cinDeliveranceDate?: Date | undefined;
     cinDeliverancePlace?: string | undefined;
     cinDeliveranceCountryId?: number | undefined;
+    cinExpiryDate?: Date | undefined;
     passeportNumber?: string | undefined;
     passeportDeliveranceDate?: Date | undefined;
     passeportDeliverancePlace?: string | undefined;
     passeportDeliveranceCountryId?: number | undefined;
+    passeportExpiryDate?: Date | undefined;
     drivingLicenceNumber?: string | undefined;
     drivingLicenceDeliveranceDate?: Date | undefined;
     drivingLicenceDeliverancePlace?: string | undefined;
     drivingLicenceDeliveranceCountryId?: number | undefined;
+    drivingLicenceExpiryDate?: Date | undefined;
     description?: string | undefined;
 
     constructor(data?: ICreateClientCommand) {
@@ -13873,14 +14385,17 @@ export class CreateClientCommand implements ICreateClientCommand {
             this.cinDeliveranceDate = _data["cinDeliveranceDate"] ? new Date(_data["cinDeliveranceDate"].toString()) : <any>undefined;
             this.cinDeliverancePlace = _data["cinDeliverancePlace"];
             this.cinDeliveranceCountryId = _data["cinDeliveranceCountryId"];
+            this.cinExpiryDate = _data["cinExpiryDate"] ? new Date(_data["cinExpiryDate"].toString()) : <any>undefined;
             this.passeportNumber = _data["passeportNumber"];
             this.passeportDeliveranceDate = _data["passeportDeliveranceDate"] ? new Date(_data["passeportDeliveranceDate"].toString()) : <any>undefined;
             this.passeportDeliverancePlace = _data["passeportDeliverancePlace"];
             this.passeportDeliveranceCountryId = _data["passeportDeliveranceCountryId"];
+            this.passeportExpiryDate = _data["passeportExpiryDate"] ? new Date(_data["passeportExpiryDate"].toString()) : <any>undefined;
             this.drivingLicenceNumber = _data["drivingLicenceNumber"];
             this.drivingLicenceDeliveranceDate = _data["drivingLicenceDeliveranceDate"] ? new Date(_data["drivingLicenceDeliveranceDate"].toString()) : <any>undefined;
             this.drivingLicenceDeliverancePlace = _data["drivingLicenceDeliverancePlace"];
             this.drivingLicenceDeliveranceCountryId = _data["drivingLicenceDeliveranceCountryId"];
+            this.drivingLicenceExpiryDate = _data["drivingLicenceExpiryDate"] ? new Date(_data["drivingLicenceExpiryDate"].toString()) : <any>undefined;
             this.description = _data["description"];
         }
     }
@@ -13904,14 +14419,17 @@ export class CreateClientCommand implements ICreateClientCommand {
         data["cinDeliveranceDate"] = this.cinDeliveranceDate ? this.cinDeliveranceDate.toISOString() : <any>undefined;
         data["cinDeliverancePlace"] = this.cinDeliverancePlace;
         data["cinDeliveranceCountryId"] = this.cinDeliveranceCountryId;
+        data["cinExpiryDate"] = this.cinExpiryDate ? this.cinExpiryDate.toISOString() : <any>undefined;
         data["passeportNumber"] = this.passeportNumber;
         data["passeportDeliveranceDate"] = this.passeportDeliveranceDate ? this.passeportDeliveranceDate.toISOString() : <any>undefined;
         data["passeportDeliverancePlace"] = this.passeportDeliverancePlace;
         data["passeportDeliveranceCountryId"] = this.passeportDeliveranceCountryId;
+        data["passeportExpiryDate"] = this.passeportExpiryDate ? this.passeportExpiryDate.toISOString() : <any>undefined;
         data["drivingLicenceNumber"] = this.drivingLicenceNumber;
         data["drivingLicenceDeliveranceDate"] = this.drivingLicenceDeliveranceDate ? this.drivingLicenceDeliveranceDate.toISOString() : <any>undefined;
         data["drivingLicenceDeliverancePlace"] = this.drivingLicenceDeliverancePlace;
         data["drivingLicenceDeliveranceCountryId"] = this.drivingLicenceDeliveranceCountryId;
+        data["drivingLicenceExpiryDate"] = this.drivingLicenceExpiryDate ? this.drivingLicenceExpiryDate.toISOString() : <any>undefined;
         data["description"] = this.description;
         return data;
     }
@@ -13928,14 +14446,17 @@ export interface ICreateClientCommand {
     cinDeliveranceDate?: Date | undefined;
     cinDeliverancePlace?: string | undefined;
     cinDeliveranceCountryId?: number | undefined;
+    cinExpiryDate?: Date | undefined;
     passeportNumber?: string | undefined;
     passeportDeliveranceDate?: Date | undefined;
     passeportDeliverancePlace?: string | undefined;
     passeportDeliveranceCountryId?: number | undefined;
+    passeportExpiryDate?: Date | undefined;
     drivingLicenceNumber?: string | undefined;
     drivingLicenceDeliveranceDate?: Date | undefined;
     drivingLicenceDeliverancePlace?: string | undefined;
     drivingLicenceDeliveranceCountryId?: number | undefined;
+    drivingLicenceExpiryDate?: Date | undefined;
     description?: string | undefined;
 }
 
@@ -13952,14 +14473,17 @@ export class UpdateClientCommand implements IUpdateClientCommand {
     cinDeliveranceDate?: Date | undefined;
     cinDeliverancePlace?: string | undefined;
     cinDeliveranceCountryId?: number | undefined;
+    cinExpiryDate?: Date | undefined;
     passeportNumber?: string | undefined;
     passeportDeliveranceDate?: Date | undefined;
     passeportDeliverancePlace?: string | undefined;
     passeportDeliveranceCountryId?: number | undefined;
+    passeportExpiryDate?: Date | undefined;
     drivingLicenceNumber?: string | undefined;
     drivingLicenceDeliveranceDate?: Date | undefined;
     drivingLicenceDeliverancePlace?: string | undefined;
     drivingLicenceDeliveranceCountryId?: number | undefined;
+    drivingLicenceExpiryDate?: Date | undefined;
     description?: string | undefined;
 
     constructor(data?: IUpdateClientCommand) {
@@ -13985,14 +14509,17 @@ export class UpdateClientCommand implements IUpdateClientCommand {
             this.cinDeliveranceDate = _data["cinDeliveranceDate"] ? new Date(_data["cinDeliveranceDate"].toString()) : <any>undefined;
             this.cinDeliverancePlace = _data["cinDeliverancePlace"];
             this.cinDeliveranceCountryId = _data["cinDeliveranceCountryId"];
+            this.cinExpiryDate = _data["cinExpiryDate"] ? new Date(_data["cinExpiryDate"].toString()) : <any>undefined;
             this.passeportNumber = _data["passeportNumber"];
             this.passeportDeliveranceDate = _data["passeportDeliveranceDate"] ? new Date(_data["passeportDeliveranceDate"].toString()) : <any>undefined;
             this.passeportDeliverancePlace = _data["passeportDeliverancePlace"];
             this.passeportDeliveranceCountryId = _data["passeportDeliveranceCountryId"];
+            this.passeportExpiryDate = _data["passeportExpiryDate"] ? new Date(_data["passeportExpiryDate"].toString()) : <any>undefined;
             this.drivingLicenceNumber = _data["drivingLicenceNumber"];
             this.drivingLicenceDeliveranceDate = _data["drivingLicenceDeliveranceDate"] ? new Date(_data["drivingLicenceDeliveranceDate"].toString()) : <any>undefined;
             this.drivingLicenceDeliverancePlace = _data["drivingLicenceDeliverancePlace"];
             this.drivingLicenceDeliveranceCountryId = _data["drivingLicenceDeliveranceCountryId"];
+            this.drivingLicenceExpiryDate = _data["drivingLicenceExpiryDate"] ? new Date(_data["drivingLicenceExpiryDate"].toString()) : <any>undefined;
             this.description = _data["description"];
         }
     }
@@ -14018,14 +14545,17 @@ export class UpdateClientCommand implements IUpdateClientCommand {
         data["cinDeliveranceDate"] = this.cinDeliveranceDate ? this.cinDeliveranceDate.toISOString() : <any>undefined;
         data["cinDeliverancePlace"] = this.cinDeliverancePlace;
         data["cinDeliveranceCountryId"] = this.cinDeliveranceCountryId;
+        data["cinExpiryDate"] = this.cinExpiryDate ? this.cinExpiryDate.toISOString() : <any>undefined;
         data["passeportNumber"] = this.passeportNumber;
         data["passeportDeliveranceDate"] = this.passeportDeliveranceDate ? this.passeportDeliveranceDate.toISOString() : <any>undefined;
         data["passeportDeliverancePlace"] = this.passeportDeliverancePlace;
         data["passeportDeliveranceCountryId"] = this.passeportDeliveranceCountryId;
+        data["passeportExpiryDate"] = this.passeportExpiryDate ? this.passeportExpiryDate.toISOString() : <any>undefined;
         data["drivingLicenceNumber"] = this.drivingLicenceNumber;
         data["drivingLicenceDeliveranceDate"] = this.drivingLicenceDeliveranceDate ? this.drivingLicenceDeliveranceDate.toISOString() : <any>undefined;
         data["drivingLicenceDeliverancePlace"] = this.drivingLicenceDeliverancePlace;
         data["drivingLicenceDeliveranceCountryId"] = this.drivingLicenceDeliveranceCountryId;
+        data["drivingLicenceExpiryDate"] = this.drivingLicenceExpiryDate ? this.drivingLicenceExpiryDate.toISOString() : <any>undefined;
         data["description"] = this.description;
         return data;
     }
@@ -14044,14 +14574,17 @@ export interface IUpdateClientCommand {
     cinDeliveranceDate?: Date | undefined;
     cinDeliverancePlace?: string | undefined;
     cinDeliveranceCountryId?: number | undefined;
+    cinExpiryDate?: Date | undefined;
     passeportNumber?: string | undefined;
     passeportDeliveranceDate?: Date | undefined;
     passeportDeliverancePlace?: string | undefined;
     passeportDeliveranceCountryId?: number | undefined;
+    passeportExpiryDate?: Date | undefined;
     drivingLicenceNumber?: string | undefined;
     drivingLicenceDeliveranceDate?: Date | undefined;
     drivingLicenceDeliverancePlace?: string | undefined;
     drivingLicenceDeliveranceCountryId?: number | undefined;
+    drivingLicenceExpiryDate?: Date | undefined;
     description?: string | undefined;
 }
 
@@ -15651,6 +16184,7 @@ export class BookingCalendarEventDto implements IBookingCalendarEventDto {
     on?: Date;
     rentingId?: number | undefined;
     reservationId?: number | undefined;
+    unavailabilityId?: number | undefined;
     carId?: number | undefined;
     carMatricule?: string | undefined;
     carModelName?: string | undefined;
@@ -15658,6 +16192,8 @@ export class BookingCalendarEventDto implements IBookingCalendarEventDto {
     clientName?: string | undefined;
     rentingState?: RentingState | undefined;
     reservationStatus?: ReservationStatus | undefined;
+    unavailabilityReason?: CarUnavailabilityReason | undefined;
+    until?: Date | undefined;
     isLate?: boolean;
 
     constructor(data?: IBookingCalendarEventDto) {
@@ -15675,6 +16211,7 @@ export class BookingCalendarEventDto implements IBookingCalendarEventDto {
             this.on = _data["on"] ? new Date(_data["on"].toString()) : <any>undefined;
             this.rentingId = _data["rentingId"];
             this.reservationId = _data["reservationId"];
+            this.unavailabilityId = _data["unavailabilityId"];
             this.carId = _data["carId"];
             this.carMatricule = _data["carMatricule"];
             this.carModelName = _data["carModelName"];
@@ -15682,6 +16219,8 @@ export class BookingCalendarEventDto implements IBookingCalendarEventDto {
             this.clientName = _data["clientName"];
             this.rentingState = _data["rentingState"];
             this.reservationStatus = _data["reservationStatus"];
+            this.unavailabilityReason = _data["unavailabilityReason"];
+            this.until = _data["until"] ? new Date(_data["until"].toString()) : <any>undefined;
             this.isLate = _data["isLate"];
         }
     }
@@ -15699,6 +16238,7 @@ export class BookingCalendarEventDto implements IBookingCalendarEventDto {
         data["on"] = this.on ? this.on.toISOString() : <any>undefined;
         data["rentingId"] = this.rentingId;
         data["reservationId"] = this.reservationId;
+        data["unavailabilityId"] = this.unavailabilityId;
         data["carId"] = this.carId;
         data["carMatricule"] = this.carMatricule;
         data["carModelName"] = this.carModelName;
@@ -15706,6 +16246,8 @@ export class BookingCalendarEventDto implements IBookingCalendarEventDto {
         data["clientName"] = this.clientName;
         data["rentingState"] = this.rentingState;
         data["reservationStatus"] = this.reservationStatus;
+        data["unavailabilityReason"] = this.unavailabilityReason;
+        data["until"] = this.until ? this.until.toISOString() : <any>undefined;
         data["isLate"] = this.isLate;
         return data;
     }
@@ -15716,6 +16258,7 @@ export interface IBookingCalendarEventDto {
     on?: Date;
     rentingId?: number | undefined;
     reservationId?: number | undefined;
+    unavailabilityId?: number | undefined;
     carId?: number | undefined;
     carMatricule?: string | undefined;
     carModelName?: string | undefined;
@@ -15723,6 +16266,8 @@ export interface IBookingCalendarEventDto {
     clientName?: string | undefined;
     rentingState?: RentingState | undefined;
     reservationStatus?: ReservationStatus | undefined;
+    unavailabilityReason?: CarUnavailabilityReason | undefined;
+    until?: Date | undefined;
     isLate?: boolean;
 }
 
@@ -15730,6 +16275,7 @@ export enum BookingCalendarEventKind {
     Pickup = 1,
     Return = 2,
     ReservationStart = 3,
+    UnavailabilityStart = 4,
 }
 
 export enum ReservationStatus {
@@ -17181,6 +17727,12 @@ export class FactureDto implements IFactureDto {
     extraServicesAmount?: MoneyDto | undefined;
     feesAmount?: MoneyDto | undefined;
     totalAmount?: MoneyDto | undefined;
+    netAmount?: MoneyDto | undefined;
+    vatRatePercent?: number;
+    vatAmount?: MoneyDto | undefined;
+    fiscalStampAmount?: MoneyDto | undefined;
+    totalDue?: MoneyDto | undefined;
+    taxIdentifier?: string | undefined;
     documentUrl?: string | undefined;
     documentSize?: number | undefined;
 
@@ -17207,6 +17759,12 @@ export class FactureDto implements IFactureDto {
             this.extraServicesAmount = _data["extraServicesAmount"] ? MoneyDto.fromJS(_data["extraServicesAmount"]) : <any>undefined;
             this.feesAmount = _data["feesAmount"] ? MoneyDto.fromJS(_data["feesAmount"]) : <any>undefined;
             this.totalAmount = _data["totalAmount"] ? MoneyDto.fromJS(_data["totalAmount"]) : <any>undefined;
+            this.netAmount = _data["netAmount"] ? MoneyDto.fromJS(_data["netAmount"]) : <any>undefined;
+            this.vatRatePercent = _data["vatRatePercent"];
+            this.vatAmount = _data["vatAmount"] ? MoneyDto.fromJS(_data["vatAmount"]) : <any>undefined;
+            this.fiscalStampAmount = _data["fiscalStampAmount"] ? MoneyDto.fromJS(_data["fiscalStampAmount"]) : <any>undefined;
+            this.totalDue = _data["totalDue"] ? MoneyDto.fromJS(_data["totalDue"]) : <any>undefined;
+            this.taxIdentifier = _data["taxIdentifier"];
             this.documentUrl = _data["documentUrl"];
             this.documentSize = _data["documentSize"];
         }
@@ -17233,6 +17791,12 @@ export class FactureDto implements IFactureDto {
         data["extraServicesAmount"] = this.extraServicesAmount ? this.extraServicesAmount.toJSON() : <any>undefined;
         data["feesAmount"] = this.feesAmount ? this.feesAmount.toJSON() : <any>undefined;
         data["totalAmount"] = this.totalAmount ? this.totalAmount.toJSON() : <any>undefined;
+        data["netAmount"] = this.netAmount ? this.netAmount.toJSON() : <any>undefined;
+        data["vatRatePercent"] = this.vatRatePercent;
+        data["vatAmount"] = this.vatAmount ? this.vatAmount.toJSON() : <any>undefined;
+        data["fiscalStampAmount"] = this.fiscalStampAmount ? this.fiscalStampAmount.toJSON() : <any>undefined;
+        data["totalDue"] = this.totalDue ? this.totalDue.toJSON() : <any>undefined;
+        data["taxIdentifier"] = this.taxIdentifier;
         data["documentUrl"] = this.documentUrl;
         data["documentSize"] = this.documentSize;
         return data;
@@ -17252,6 +17816,12 @@ export interface IFactureDto {
     extraServicesAmount?: MoneyDto | undefined;
     feesAmount?: MoneyDto | undefined;
     totalAmount?: MoneyDto | undefined;
+    netAmount?: MoneyDto | undefined;
+    vatRatePercent?: number;
+    vatAmount?: MoneyDto | undefined;
+    fiscalStampAmount?: MoneyDto | undefined;
+    totalDue?: MoneyDto | undefined;
+    taxIdentifier?: string | undefined;
     documentUrl?: string | undefined;
     documentSize?: number | undefined;
 }
@@ -18651,6 +19221,7 @@ export enum NotificationKind {
     RentingStartingSoon = 4,
     RentingEndingSoon = 5,
     RentingLateNotice = 6,
+    ClientDocumentExpiring = 7,
 }
 
 export enum NotificationSubject {
@@ -19546,6 +20117,10 @@ export class RentingDto implements IRentingDto {
     carMileage?: number | undefined;
     price?: MoneyDto | undefined;
     cancellationFee?: MoneyDto | undefined;
+    depositAmount?: MoneyDto | undefined;
+    depositRetainedAmount?: MoneyDto | undefined;
+    depositSettledAt?: Date | undefined;
+    hasUnsettledDeposit?: boolean;
     fees?: MoneyDto | undefined;
     paid?: MoneyDto | undefined;
     outstanding?: MoneyDto | undefined;
@@ -19580,6 +20155,10 @@ export class RentingDto implements IRentingDto {
             this.carMileage = _data["carMileage"];
             this.price = _data["price"] ? MoneyDto.fromJS(_data["price"]) : <any>undefined;
             this.cancellationFee = _data["cancellationFee"] ? MoneyDto.fromJS(_data["cancellationFee"]) : <any>undefined;
+            this.depositAmount = _data["depositAmount"] ? MoneyDto.fromJS(_data["depositAmount"]) : <any>undefined;
+            this.depositRetainedAmount = _data["depositRetainedAmount"] ? MoneyDto.fromJS(_data["depositRetainedAmount"]) : <any>undefined;
+            this.depositSettledAt = _data["depositSettledAt"] ? new Date(_data["depositSettledAt"].toString()) : <any>undefined;
+            this.hasUnsettledDeposit = _data["hasUnsettledDeposit"];
             this.fees = _data["fees"] ? MoneyDto.fromJS(_data["fees"]) : <any>undefined;
             this.paid = _data["paid"] ? MoneyDto.fromJS(_data["paid"]) : <any>undefined;
             this.outstanding = _data["outstanding"] ? MoneyDto.fromJS(_data["outstanding"]) : <any>undefined;
@@ -19614,6 +20193,10 @@ export class RentingDto implements IRentingDto {
         data["carMileage"] = this.carMileage;
         data["price"] = this.price ? this.price.toJSON() : <any>undefined;
         data["cancellationFee"] = this.cancellationFee ? this.cancellationFee.toJSON() : <any>undefined;
+        data["depositAmount"] = this.depositAmount ? this.depositAmount.toJSON() : <any>undefined;
+        data["depositRetainedAmount"] = this.depositRetainedAmount ? this.depositRetainedAmount.toJSON() : <any>undefined;
+        data["depositSettledAt"] = this.depositSettledAt ? this.depositSettledAt.toISOString() : <any>undefined;
+        data["hasUnsettledDeposit"] = this.hasUnsettledDeposit;
         data["fees"] = this.fees ? this.fees.toJSON() : <any>undefined;
         data["paid"] = this.paid ? this.paid.toJSON() : <any>undefined;
         data["outstanding"] = this.outstanding ? this.outstanding.toJSON() : <any>undefined;
@@ -19641,6 +20224,10 @@ export interface IRentingDto {
     carMileage?: number | undefined;
     price?: MoneyDto | undefined;
     cancellationFee?: MoneyDto | undefined;
+    depositAmount?: MoneyDto | undefined;
+    depositRetainedAmount?: MoneyDto | undefined;
+    depositSettledAt?: Date | undefined;
+    hasUnsettledDeposit?: boolean;
     fees?: MoneyDto | undefined;
     paid?: MoneyDto | undefined;
     outstanding?: MoneyDto | undefined;
@@ -19863,6 +20450,7 @@ export class CreateRentingCommand implements ICreateRentingCommand {
     contractTemplateId?: number | undefined;
     factureTemplateId?: number | undefined;
     documentValues?: { [key: string]: string; } | undefined;
+    acknowledgeExpiredDocuments?: boolean;
 
     constructor(data?: ICreateRentingCommand) {
         if (data) {
@@ -19896,6 +20484,7 @@ export class CreateRentingCommand implements ICreateRentingCommand {
                         (<any>this.documentValues)![key] = _data["documentValues"][key];
                 }
             }
+            this.acknowledgeExpiredDocuments = _data["acknowledgeExpiredDocuments"];
         }
     }
 
@@ -19929,6 +20518,7 @@ export class CreateRentingCommand implements ICreateRentingCommand {
                     (<any>data["documentValues"])[key] = (<any>this.documentValues)[key];
             }
         }
+        data["acknowledgeExpiredDocuments"] = this.acknowledgeExpiredDocuments;
         return data;
     }
 }
@@ -19949,6 +20539,7 @@ export interface ICreateRentingCommand {
     contractTemplateId?: number | undefined;
     factureTemplateId?: number | undefined;
     documentValues?: { [key: string]: string; } | undefined;
+    acknowledgeExpiredDocuments?: boolean;
 }
 
 export class NewRentingClient implements INewRentingClient {
@@ -19962,14 +20553,17 @@ export class NewRentingClient implements INewRentingClient {
     cinDeliveranceDate?: Date | undefined;
     cinDeliverancePlace?: string | undefined;
     cinDeliveranceCountryId?: number | undefined;
+    cinExpiryDate?: Date | undefined;
     passeportNumber?: string | undefined;
     passeportDeliveranceDate?: Date | undefined;
     passeportDeliverancePlace?: string | undefined;
     passeportDeliveranceCountryId?: number | undefined;
+    passeportExpiryDate?: Date | undefined;
     drivingLicenceNumber?: string | undefined;
     drivingLicenceDeliveranceDate?: Date | undefined;
     drivingLicenceDeliverancePlace?: string | undefined;
     drivingLicenceDeliveranceCountryId?: number | undefined;
+    drivingLicenceExpiryDate?: Date | undefined;
     description?: string | undefined;
 
     constructor(data?: INewRentingClient) {
@@ -19993,14 +20587,17 @@ export class NewRentingClient implements INewRentingClient {
             this.cinDeliveranceDate = _data["cinDeliveranceDate"] ? new Date(_data["cinDeliveranceDate"].toString()) : <any>undefined;
             this.cinDeliverancePlace = _data["cinDeliverancePlace"];
             this.cinDeliveranceCountryId = _data["cinDeliveranceCountryId"];
+            this.cinExpiryDate = _data["cinExpiryDate"] ? new Date(_data["cinExpiryDate"].toString()) : <any>undefined;
             this.passeportNumber = _data["passeportNumber"];
             this.passeportDeliveranceDate = _data["passeportDeliveranceDate"] ? new Date(_data["passeportDeliveranceDate"].toString()) : <any>undefined;
             this.passeportDeliverancePlace = _data["passeportDeliverancePlace"];
             this.passeportDeliveranceCountryId = _data["passeportDeliveranceCountryId"];
+            this.passeportExpiryDate = _data["passeportExpiryDate"] ? new Date(_data["passeportExpiryDate"].toString()) : <any>undefined;
             this.drivingLicenceNumber = _data["drivingLicenceNumber"];
             this.drivingLicenceDeliveranceDate = _data["drivingLicenceDeliveranceDate"] ? new Date(_data["drivingLicenceDeliveranceDate"].toString()) : <any>undefined;
             this.drivingLicenceDeliverancePlace = _data["drivingLicenceDeliverancePlace"];
             this.drivingLicenceDeliveranceCountryId = _data["drivingLicenceDeliveranceCountryId"];
+            this.drivingLicenceExpiryDate = _data["drivingLicenceExpiryDate"] ? new Date(_data["drivingLicenceExpiryDate"].toString()) : <any>undefined;
             this.description = _data["description"];
         }
     }
@@ -20024,14 +20621,17 @@ export class NewRentingClient implements INewRentingClient {
         data["cinDeliveranceDate"] = this.cinDeliveranceDate ? this.cinDeliveranceDate.toISOString() : <any>undefined;
         data["cinDeliverancePlace"] = this.cinDeliverancePlace;
         data["cinDeliveranceCountryId"] = this.cinDeliveranceCountryId;
+        data["cinExpiryDate"] = this.cinExpiryDate ? this.cinExpiryDate.toISOString() : <any>undefined;
         data["passeportNumber"] = this.passeportNumber;
         data["passeportDeliveranceDate"] = this.passeportDeliveranceDate ? this.passeportDeliveranceDate.toISOString() : <any>undefined;
         data["passeportDeliverancePlace"] = this.passeportDeliverancePlace;
         data["passeportDeliveranceCountryId"] = this.passeportDeliveranceCountryId;
+        data["passeportExpiryDate"] = this.passeportExpiryDate ? this.passeportExpiryDate.toISOString() : <any>undefined;
         data["drivingLicenceNumber"] = this.drivingLicenceNumber;
         data["drivingLicenceDeliveranceDate"] = this.drivingLicenceDeliveranceDate ? this.drivingLicenceDeliveranceDate.toISOString() : <any>undefined;
         data["drivingLicenceDeliverancePlace"] = this.drivingLicenceDeliverancePlace;
         data["drivingLicenceDeliveranceCountryId"] = this.drivingLicenceDeliveranceCountryId;
+        data["drivingLicenceExpiryDate"] = this.drivingLicenceExpiryDate ? this.drivingLicenceExpiryDate.toISOString() : <any>undefined;
         data["description"] = this.description;
         return data;
     }
@@ -20048,14 +20648,17 @@ export interface INewRentingClient {
     cinDeliveranceDate?: Date | undefined;
     cinDeliverancePlace?: string | undefined;
     cinDeliveranceCountryId?: number | undefined;
+    cinExpiryDate?: Date | undefined;
     passeportNumber?: string | undefined;
     passeportDeliveranceDate?: Date | undefined;
     passeportDeliverancePlace?: string | undefined;
     passeportDeliveranceCountryId?: number | undefined;
+    passeportExpiryDate?: Date | undefined;
     drivingLicenceNumber?: string | undefined;
     drivingLicenceDeliveranceDate?: Date | undefined;
     drivingLicenceDeliverancePlace?: string | undefined;
     drivingLicenceDeliveranceCountryId?: number | undefined;
+    drivingLicenceExpiryDate?: Date | undefined;
     description?: string | undefined;
 }
 
@@ -20229,6 +20832,7 @@ export class ChangeRentingStateCommand implements IChangeRentingStateCommand {
     newState?: RentingState;
     mileage?: number | undefined;
     fees?: RentingFeePayload[] | undefined;
+    depositSettlement?: DepositSettlementPayload | undefined;
 
     constructor(data?: IChangeRentingStateCommand) {
         if (data) {
@@ -20250,6 +20854,7 @@ export class ChangeRentingStateCommand implements IChangeRentingStateCommand {
                 for (let item of _data["fees"])
                     this.fees!.push(RentingFeePayload.fromJS(item));
             }
+            this.depositSettlement = _data["depositSettlement"] ? DepositSettlementPayload.fromJS(_data["depositSettlement"]) : <any>undefined;
         }
     }
 
@@ -20271,6 +20876,7 @@ export class ChangeRentingStateCommand implements IChangeRentingStateCommand {
             for (let item of this.fees)
                 data["fees"].push(item.toJSON());
         }
+        data["depositSettlement"] = this.depositSettlement ? this.depositSettlement.toJSON() : <any>undefined;
         return data;
     }
 }
@@ -20281,6 +20887,51 @@ export interface IChangeRentingStateCommand {
     newState?: RentingState;
     mileage?: number | undefined;
     fees?: RentingFeePayload[] | undefined;
+    depositSettlement?: DepositSettlementPayload | undefined;
+}
+
+export class DepositSettlementPayload implements IDepositSettlementPayload {
+    retainedAmount?: number;
+    refundMethod?: PaymentMethod;
+    note?: string | undefined;
+
+    constructor(data?: IDepositSettlementPayload) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.retainedAmount = _data["retainedAmount"];
+            this.refundMethod = _data["refundMethod"];
+            this.note = _data["note"];
+        }
+    }
+
+    static fromJS(data: any): DepositSettlementPayload {
+        data = typeof data === 'object' ? data : {};
+        let result = new DepositSettlementPayload();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["retainedAmount"] = this.retainedAmount;
+        data["refundMethod"] = this.refundMethod;
+        data["note"] = this.note;
+        return data;
+    }
+}
+
+export interface IDepositSettlementPayload {
+    retainedAmount?: number;
+    refundMethod?: PaymentMethod;
+    note?: string | undefined;
 }
 
 export class ChangeRentingEndDateCommand implements IChangeRentingEndDateCommand {
@@ -20405,6 +21056,50 @@ export interface ICancelRentingCommand {
     cancellationFee?: number | undefined;
     refundExcess?: boolean;
     refundMethod?: PaymentMethod;
+}
+
+export class SettleRentingDepositCommand implements ISettleRentingDepositCommand {
+    rentingId?: number;
+    rowVersion?: string | undefined;
+    settlement?: DepositSettlementPayload;
+
+    constructor(data?: ISettleRentingDepositCommand) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.rentingId = _data["rentingId"];
+            this.rowVersion = _data["rowVersion"];
+            this.settlement = _data["settlement"] ? DepositSettlementPayload.fromJS(_data["settlement"]) : <any>undefined;
+        }
+    }
+
+    static fromJS(data: any): SettleRentingDepositCommand {
+        data = typeof data === 'object' ? data : {};
+        let result = new SettleRentingDepositCommand();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["rentingId"] = this.rentingId;
+        data["rowVersion"] = this.rowVersion;
+        data["settlement"] = this.settlement ? this.settlement.toJSON() : <any>undefined;
+        return data;
+    }
+}
+
+export interface ISettleRentingDepositCommand {
+    rentingId?: number;
+    rowVersion?: string | undefined;
+    settlement?: DepositSettlementPayload;
 }
 
 export class PaginatedListOfReservationDto implements IPaginatedListOfReservationDto {

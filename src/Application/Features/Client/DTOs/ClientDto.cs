@@ -27,6 +27,23 @@ namespace RemSolution.Application.Features.Client.DTOs
         public DateTime? DrivingLicenceDeliveranceDate { get; init; }
         public string? DrivingLicenceDeliverancePlace { get; init; }
         public int? DrivingLicenceDeliveranceCountryId { get; init; }
+        // Until when each document is valid. Wall-clock, so a template renders
+        // them with the 'UTC' date argument.
+        public DateTime? CINExpiryDate { get; init; }
+        public DateTime? PasseportExpiryDate { get; init; }
+        public DateTime? DrivingLicenceExpiryDate { get; init; }
+
+        /// <summary>
+        /// The licence has lapsed. Computed here rather than left to the client's
+        /// clock, because it is what the booking command refuses on (see
+        /// CreateRentingCommand) and the two must agree — a screen offering a
+        /// booking the server will reject is worse than no warning at all.
+        /// </summary>
+        public bool IsDrivingLicenceExpired { get; init; }
+
+        /// <summary>Any of the three has lapsed — the list row's warning marker.</summary>
+        public bool HasExpiredDocument { get; init; }
+
         public string? CINImageUrl { get; init; }
         public string? DrivingLicenceImageUrl { get; init; }
         public string? PasserportImageUrl { get; init; }
@@ -114,6 +131,22 @@ namespace RemSolution.Application.Features.Client.DTOs
                                                                 && r.EndDate != null
                                                                 && r.EndDate < DateTime.UtcNow))
                       .Map(dest => dest.HasPortalAccount, src => src.MarketplaceUserId != null)
+                      // Spelled out rather than taken from the entity's own
+                      // Client.IsDrivingLicenceExpiredOn: this DTO is projected to
+                      // SQL and a computed C# property has nothing to translate
+                      // to. DateTime.UtcNow becomes GETUTCDATE(), like the overdue
+                      // count above. Expiry is exclusive of the day itself, the
+                      // same rule the entity applies.
+                      .Map(dest => dest.IsDrivingLicenceExpired,
+                           src => src.DrivingLicenceExpiryDate != null
+                                  && src.DrivingLicenceExpiryDate < DateTime.UtcNow.Date)
+                      .Map(dest => dest.HasExpiredDocument,
+                           src => (src.DrivingLicenceExpiryDate != null
+                                   && src.DrivingLicenceExpiryDate < DateTime.UtcNow.Date)
+                                  || (src.CINExpiryDate != null
+                                      && src.CINExpiryDate < DateTime.UtcNow.Date)
+                                  || (src.PasseportExpiryDate != null
+                                      && src.PasseportExpiryDate < DateTime.UtcNow.Date))
                       // Document URLs now live on StoredFile records; surface the
                       // plain URL so the API contract is unchanged for readers.
                       .Map(dest => dest.CINImageUrl, src => src.CINFile != null ? src.CINFile.Url : null)

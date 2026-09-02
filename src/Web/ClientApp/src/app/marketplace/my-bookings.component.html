@@ -1,0 +1,25 @@
+<div class="my-bookings" *transloco="let t">
+  <div class="head">
+    <h1>{{ t('marketplace.myTrips') }}</h1>
+    <a mat-stroked-button [routerLink]="['/']">
+      <mat-icon aria-hidden="true">search</mat-icon> {{ t('nav.browseCars') }}
+    </a>
+  </div>
+
+  <!-- A hold and a rental are the same booking at two points of its life, so
+       they are two views of one screen. Same tab pattern as the agency's own
+       Bookings screen. -->
+  <div class="tabs" role="tablist">
+    <button type="button" role="tab" class="tab" [class.active]="tab === 'reservations'"
+            [attr.aria-selected]="tab === 'reservations'" (click)="switchTab('reservations')">
+      <mat-icon aria-hidden="true">event_available</mat-icon> {{ t('marketplace.myReservations') }}
+    </button>
+    <button type="button" role="tab" class="tab" [class.active]="tab === 'rentings'"
+            [attr.aria-selected]="tab === 'rentings'" (click)="switchTab('rentings')">
+      <mat-icon aria-hidden="true">vpn_key</mat-icon> {{ t('marketplace.myRentings') }}
+    </button>
+  </div>
+
+  <app-my-reservations *ngIf="tab === 'reservations'"></app-my-reservations>
+  <app-my-rentings *ngIf="tab === 'rentings'"></app-my-rentings>
+</div>

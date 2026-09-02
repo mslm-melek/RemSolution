@@ -52,13 +52,18 @@ namespace RemSolution.Application.Features.MarketplaceSearch
             return cars;
         }
 
-        // Available = no blocking renting (non-terminal) and no active
-        // reservation overlapping the half-open [start, end). Both checks are
-        // written as correlated sub-queries with their OWN IgnoreQueryFilters:
-        // the customer has no tenant, so a sub-query that re-applied the tenant
-        // filter would match nothing and wrongly show a booked car. (Relying on
-        // the root's IgnoreQueryFilters to propagate through the Car.Rentings
-        // navigation is not something to depend on.)
+        // Available = no blocking renting (non-terminal), no active reservation,
+        // and no declared time off the road overlapping the half-open
+        // [start, end). All three are written as correlated sub-queries with
+        // their OWN IgnoreQueryFilters: the customer has no tenant, so a
+        // sub-query that re-applied the tenant filter would match nothing and
+        // wrongly show a booked car. (Relying on the root's IgnoreQueryFilters to
+        // propagate through the Car.Rentings navigation is not something to
+        // depend on.)
+        //
+        // The predicate is deliberately the same shape as AvailabilityChecker's:
+        // a car the marketplace offers must be a car the booking command will
+        // accept, or the customer meets a conflict at the last step.
         public static IQueryable<Domain.Entities.Car> AvailableBetween(
             this IQueryable<Domain.Entities.Car> cars,
             IApplicationDbContext context, DateTime start, DateTime end)
@@ -70,13 +75,18 @@ namespace RemSolution.Application.Features.MarketplaceSearch
                 && r.StartDate < end
                 && r.EndDate > start));
 
-            return cars.Where(c => !context.Reservations.IgnoreQueryFilters().Any(r =>
+            cars = cars.Where(c => !context.Reservations.IgnoreQueryFilters().Any(r =>
                 r.CarId == c.Id
                 && (r.Status == ReservationStatus.PendingConfirmation
                     || r.Status == ReservationStatus.Confirmed
                     || r.Status == ReservationStatus.Paid)
                 && r.StartDate < end
                 && r.EndDate > start));
+
+            return cars.Where(c => !context.CarUnavailabilities.IgnoreQueryFilters().Any(u =>
+                u.CarId == c.Id
+                && u.StartDate < end
+                && u.EndDate > start));
         }
 
         // Viewport filter for the map: keep the cars whose pick-up point falls

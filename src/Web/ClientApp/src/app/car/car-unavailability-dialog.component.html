@@ -1,0 +1,53 @@
+<ng-container *transloco="let t">
+  <h2 mat-dialog-title>
+    {{ isEdit ? t('car.unavailability.editTitle') : t('car.unavailability.newTitle') }}
+  </h2>
+
+  <mat-dialog-content>
+    <p class="dialog-subtitle" *ngIf="data.carLabel">{{ data.carLabel }}</p>
+
+    <div *ngIf="errorMessage" class="error-banner">
+      <mat-icon>error_outline</mat-icon> {{ errorMessage }}
+    </div>
+
+    <form [formGroup]="form" class="dialog-form" (ngSubmit)="submit()">
+      <app-date-field [label]="t('car.unavailability.from')" formControlName="startDate"
+                      required [error]="t('common.required')"></app-date-field>
+
+      <!-- Exclusive, and said so: "back on the 24th" is what a fleet manager
+           needs to read, not "away until the 24th". -->
+      <app-date-field [label]="t('car.unavailability.backOn')" formControlName="endDate"
+                      required [error]="t('common.required')"></app-date-field>
+
+      <p class="dialog-hint warn" *ngIf="periodInvalid">
+        <mat-icon>error_outline</mat-icon> {{ t('car.unavailability.periodInvalid') }}
+      </p>
+
+      <mat-form-field appearance="outline">
+        <mat-label>{{ t('car.unavailability.reasonLabel') }}</mat-label>
+        <mat-select formControlName="reason">
+          <mat-option *ngFor="let reason of reasons" [value]="reason">
+            {{ t(reasonLabelKey(reason)) }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>{{ t('car.unavailability.note') }}</mat-label>
+        <input matInput formControlName="note" maxlength="500" />
+        <mat-hint>{{ t('common.optional') }}</mat-hint>
+      </mat-form-field>
+
+      <p class="dialog-hint">{{ t('car.unavailability.blocksBookingsHint') }}</p>
+    </form>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-button type="button" (click)="cancel()">{{ t('common.cancel') }}</button>
+    <button mat-raised-button color="primary" type="button" (click)="submit()"
+            [disabled]="saving || periodInvalid">
+      <mat-icon>event_busy</mat-icon>
+      {{ saving ? t('common.saving') : t('common.save') }}
+    </button>
+  </mat-dialog-actions>
+</ng-container>

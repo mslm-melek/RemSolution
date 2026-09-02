@@ -56,6 +56,13 @@ public static class DocumentPlaceholders
     public const string AgencyPhone = "agency.phoneNumber";
     public const string AgencyEmail = "agency.email";
 
+    /// <summary>
+    /// The agency's tax registration number ("matricule fiscal"). Shared rather
+    /// than invoice-only: a contract may carry it too, and an agency that has not
+    /// entered one gets a blank, not a placeholder.
+    /// </summary>
+    public const string AgencyTaxIdentifier = "agency.taxIdentifier";
+
     // The document itself
     public const string DocumentNumber = "document.number";
     public const string DocumentIssuedAt = "document.issuedAt";
@@ -67,9 +74,20 @@ public static class DocumentPlaceholders
 
     /// <summary>Charges established at the return (see RentingFee).</summary>
     public const string FactureFeesAmount = "facture.feesAmount";
+    /// <summary>Tax-inclusive total of the lines. See <see cref="FactureTotalDue"/>.</summary>
     public const string FactureTotal = "facture.total";
     public const string FactureAmountPaid = "facture.amountPaid";
     public const string FactureBalanceDue = "facture.balanceDue";
+
+    // The tax breakdown a legal invoice has to print. Frozen on the Facture row
+    // at issue, so a reprint years later still shows the rate that was charged.
+    public const string FactureNetAmount = "facture.netAmount";
+    public const string FactureVatRate = "facture.vatRate";
+    public const string FactureVatAmount = "facture.vatAmount";
+    public const string FactureFiscalStamp = "facture.fiscalStamp";
+
+    /// <summary>Lines plus duty stamp — what the client owes.</summary>
+    public const string FactureTotalDue = "facture.totalDue";
 
     private static readonly string[] Shared =
     {
@@ -81,7 +99,7 @@ public static class DocumentPlaceholders
         CarModel, CarMatricule, CarColor, CarPower, CarFuelType,
         RentingStartDate, RentingEndDate, RentingDays, RentingStartMileage,
         RentingPrice, RentingDeposit, RentingNotes,
-        AgencyName, AgencyAddress, AgencyPhone, AgencyEmail,
+        AgencyName, AgencyAddress, AgencyPhone, AgencyEmail, AgencyTaxIdentifier,
         DocumentNumber, DocumentIssuedAt, DocumentCurrency,
     };
 
@@ -89,6 +107,8 @@ public static class DocumentPlaceholders
     {
         FactureRentalAmount, FactureExtrasAmount, FactureFeesAmount,
         FactureTotal, FactureAmountPaid, FactureBalanceDue,
+        FactureNetAmount, FactureVatRate, FactureVatAmount,
+        FactureFiscalStamp, FactureTotalDue,
     };
 
     /// <summary>Every known path, regardless of document kind.</summary>

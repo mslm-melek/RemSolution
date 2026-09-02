@@ -5,7 +5,10 @@ namespace RemSolution.Application.Features.Client.Validation
     // Formats stay permissive (alphanumeric, bounded length) because clients
     // can hold documents from any country; strict national formats would
     // reject legitimate foreign documents.
-    // The entity has no expiry columns yet, so only issue-date rules apply.
+    // An expiry date, unlike an issue date, is allowed to be in the past: that is
+    // precisely the case worth recording, and refusing it would leave the agency
+    // unable to enter the expired licence a client turned up with. What it may not
+    // be is before the document was issued.
     public abstract class ClientPayloadValidator<T> : AbstractValidator<T> where T : IClientPayload
     {
         private readonly IApplicationDbContext _context;
@@ -65,6 +68,10 @@ namespace RemSolution.Application.Features.Client.Validation
                 .MustAsync(CountryExists).WithMessage(_ => localizer["Validation.Client.CinCountryUnknown"])
                 .When(c => c.CINDeliveranceCountryId.HasValue);
 
+            RuleFor(c => c.CINExpiryDate)
+                .Must((c, expiry) => NotBeforeIssue(expiry, c.CINDeliveranceDate))
+                    .WithMessage(_ => localizer["Validation.Client.ExpiryBeforeIssue"]);
+
             // Passeport block
             RuleFor(c => c.PasseportNumber)
                 .Matches("^[A-Za-z0-9]{5,20}$").WithMessage(_ => localizer["Validation.Client.PasseportFormat"])
@@ -86,6 +93,10 @@ namespace RemSolution.Application.Features.Client.Validation
             RuleFor(c => c.PasseportDeliveranceCountryId)
                 .MustAsync(CountryExists).WithMessage(_ => localizer["Validation.Client.PasseportCountryUnknown"])
                 .When(c => c.PasseportDeliveranceCountryId.HasValue);
+
+            RuleFor(c => c.PasseportExpiryDate)
+                .Must((c, expiry) => NotBeforeIssue(expiry, c.PasseportDeliveranceDate))
+                    .WithMessage(_ => localizer["Validation.Client.ExpiryBeforeIssue"]);
 
             // Driving licence block (dashes, slashes and spaces are common in
             // licence numbers).
@@ -109,6 +120,10 @@ namespace RemSolution.Application.Features.Client.Validation
             RuleFor(c => c.DrivingLicenceDeliveranceCountryId)
                 .MustAsync(CountryExists).WithMessage(_ => localizer["Validation.Client.LicenceCountryUnknown"])
                 .When(c => c.DrivingLicenceDeliveranceCountryId.HasValue);
+
+            RuleFor(c => c.DrivingLicenceExpiryDate)
+                .Must((c, expiry) => NotBeforeIssue(expiry, c.DrivingLicenceDeliveranceDate))
+                    .WithMessage(_ => localizer["Validation.Client.ExpiryBeforeIssue"]);
         }
 
         private DateTime Today() => _dateTime.GetUtcNow().UtcDateTime.Date;
@@ -118,6 +133,11 @@ namespace RemSolution.Application.Features.Client.Validation
 
         private bool NotBeInTheFuture(DateTime? date) =>
             date is null || date.Value.Date <= Today();
+
+        // A document valid before it was issued is a typo, whichever field the
+        // typo is in. Either date being absent says nothing, so it passes.
+        private static bool NotBeforeIssue(DateTime? expiry, DateTime? issued) =>
+            expiry is null || issued is null || expiry.Value.Date > issued.Value.Date;
 
         private static bool NotBeBeforeBirthDate(T command, DateTime? issueDate) =>
             issueDate is null || command.BirthDate is null || issueDate.Value.Date >= command.BirthDate.Value.Date;

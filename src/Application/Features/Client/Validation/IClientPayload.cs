@@ -18,13 +18,16 @@ namespace RemSolution.Application.Features.Client.Validation
         DateTime? CINDeliveranceDate { get; }
         string? CINDeliverancePlace { get; }
         int? CINDeliveranceCountryId { get; }
+        DateTime? CINExpiryDate { get; }
         string? PasseportNumber { get; }
         DateTime? PasseportDeliveranceDate { get; }
         string? PasseportDeliverancePlace { get; }
         int? PasseportDeliveranceCountryId { get; }
+        DateTime? PasseportExpiryDate { get; }
         string? DrivingLicenceNumber { get; }
         DateTime? DrivingLicenceDeliveranceDate { get; }
         string? DrivingLicenceDeliverancePlace { get; }
         int? DrivingLicenceDeliveranceCountryId { get; }
+        DateTime? DrivingLicenceExpiryDate { get; }
     }
 }

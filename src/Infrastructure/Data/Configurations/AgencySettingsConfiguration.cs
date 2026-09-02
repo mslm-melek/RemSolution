@@ -13,6 +13,13 @@ public class AgencySettingsConfiguration : IEntityTypeConfiguration<AgencySettin
                .HasMaxLength(3)
                .IsUnicode(false);
 
+        builder.Property(s => s.TaxIdentifier).HasMaxLength(40);
+
+        // Same shapes as the frozen copies on Facture, so a value cannot round
+        // differently on its way from the setting to the invoice.
+        builder.Property(s => s.VatRatePercent).HasColumnType("decimal(5,2)");
+        builder.Property(s => s.FiscalStampAmount).HasColumnType("decimal(18,2)");
+
         // 1:1 with Agency, keyed on the FK; the settings row is created with the
         // agency and dies with it.
         builder.HasOne(s => s.Agency)

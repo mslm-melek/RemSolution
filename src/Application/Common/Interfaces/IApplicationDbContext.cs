@@ -15,6 +15,7 @@ public interface IApplicationDbContext
     DbSet<Car> Cars { get; }
     DbSet<CarExpenseSchedule> CarExpenseSchedules { get; }
     DbSet<CarImage> CarImages { get; }
+    DbSet<CarUnavailability> CarUnavailabilities { get; }
     DbSet<ChatMessage> ChatMessages { get; }
     DbSet<Client> Clients { get; }
     DbSet<Contract> Contracts { get; }

@@ -17,9 +17,16 @@ public class SqlTestcontainersTestDatabase : ITestDatabase
     private string _connectionString = null!;
     private Respawner _respawner = null!;
 
+    // Pinned rather than left to the library's default: Testcontainers 4.14
+    // dropped the parameterless builder precisely so the image a test runs
+    // against is stated in the repository and not silently moved by a package
+    // bump. 2022-latest is the edition the deployment targets (see
+    // infra/core/database/sqlserver/sqlserver.bicep).
+    private const string Image = "mcr.microsoft.com/mssql/server:2022-latest";
+
     public SqlTestcontainersTestDatabase()
     {
-        _container = new MsSqlBuilder()
+        _container = new MsSqlBuilder(Image)
             .WithAutoRemove(true)
             .Build();
     }

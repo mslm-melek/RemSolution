@@ -6,6 +6,7 @@ import {
   SendCustomerChatMessageCommand
 } from '../web-api-client';
 import { extractValidationErrors } from '../shared/form-utils';
+import { ChatBubbles } from '../shared/chat-bubbles';
 import { TranslocoService } from '@jsverse/transloco';
 
 // Same cadence and cursor contract as the agency inbox (see ChatComponent).
@@ -30,6 +31,10 @@ export class MyChatsComponent implements OnInit, OnDestroy {
   errorMessage = '';
 
   ChatAuthorKind = ChatAuthorKind;
+
+  // On this side of the conversation the CLIENT's messages are the ones drawn as
+  // mine — the mirror of the agency inbox.
+  readonly bubbles = new ChatBubbles(ChatAuthorKind.Client);
 
   private poll?: Subscription;
 

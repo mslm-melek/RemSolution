@@ -28,6 +28,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>, IApplica
     public DbSet<Car> Cars => Set<Car>();
     public DbSet<CarExpenseSchedule> CarExpenseSchedules => Set<CarExpenseSchedule>();
     public DbSet<CarImage> CarImages => Set<CarImage>();
+    public DbSet<CarUnavailability> CarUnavailabilities => Set<CarUnavailability>();
     public DbSet<ChatMessage> ChatMessages => Set<ChatMessage>();
     public DbSet<Client> Clients => Set<Client>();
     public DbSet<Contract> Contracts => Set<Contract>();

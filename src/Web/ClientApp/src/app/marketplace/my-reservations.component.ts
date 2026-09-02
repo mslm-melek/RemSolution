@@ -1,6 +1,7 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { MarketplaceClient, MyReservationDto, ReservationStatus } from '../web-api-client';
 import { TranslocoService } from '@jsverse/transloco';
+import { reservationStatusLabelKey, reservationStatusTone } from '../shared/reservation-status';
 
 @Component({
   selector: 'app-my-reservations',
@@ -16,15 +17,6 @@ export class MyReservationsComponent implements OnInit {
   error = '';
 
   ReservationStatus = ReservationStatus;
-  private labelKeys: { [key: number]: string } = {
-    [ReservationStatus.PendingConfirmation]: 'enums.reservationStatus.pendingConfirmation',
-    [ReservationStatus.Confirmed]: 'enums.reservationStatus.confirmed',
-    [ReservationStatus.Cancelled]: 'enums.reservationStatus.cancelled',
-    [ReservationStatus.Expired]: 'enums.reservationStatus.expired',
-    [ReservationStatus.Rejected]: 'enums.reservationStatus.rejected',
-    [ReservationStatus.Paid]: 'enums.reservationStatus.paid',
-    [ReservationStatus.Converted]: 'enums.reservationStatus.converted'
-  };
 
   constructor(private client: MarketplaceClient) { }
 
@@ -42,20 +34,12 @@ export class MyReservationsComponent implements OnInit {
 
   // Returns a transloco key; the template pipes it.
   statusLabelKey(status?: ReservationStatus): string {
-    return status === undefined || status === null ? '' : this.labelKeys[status] ?? '';
+    return reservationStatusLabelKey(status);
   }
 
-  statusClass(status?: ReservationStatus): string {
-    switch (status) {
-      case ReservationStatus.Confirmed: return 'confirmed';
-      case ReservationStatus.Paid: return 'confirmed';
-      case ReservationStatus.Converted: return 'confirmed';
-      case ReservationStatus.PendingConfirmation: return 'pending';
-      case ReservationStatus.Cancelled: return 'cancelled';
-      case ReservationStatus.Rejected: return 'cancelled';
-      case ReservationStatus.Expired: return 'expired';
-      default: return '';
-    }
+  /** Tone class for the global `.chip` — see shared/reservation-status. */
+  statusTone(status?: ReservationStatus): string {
+    return reservationStatusTone(status);
   }
 
   isPending(r: MyReservationDto): boolean {

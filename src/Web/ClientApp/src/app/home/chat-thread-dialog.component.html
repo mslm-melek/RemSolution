@@ -18,7 +18,7 @@
          [class.mine]="message.authorKind !== ChatAuthorKind.Client">
       <span class="ct-bubble">{{ message.body }}</span>
       <span class="ct-when">
-        {{ message.sentAt | date:'dd MMM HH:mm':'UTC' }}
+        {{ message.sentAt | date:'dd MMM HH:mm' }}
         <span *ngIf="message.senderName"> · {{ message.senderName }}</span>
       </span>
     </div>

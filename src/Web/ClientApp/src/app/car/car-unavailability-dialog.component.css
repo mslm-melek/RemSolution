@@ -1,0 +1,12 @@
+/* The dialog form shell. Everything visual comes from the shared classes in
+   styles.scss (.dialog-form, .dialog-hint, .error-banner); this file only sets
+   the width, which is the one thing a dialog has to decide for itself. */
+.dialog-form {
+  min-width: 320px;
+}
+
+@media (min-width: 600px) {
+  .dialog-form {
+    min-width: 420px;
+  }
+}

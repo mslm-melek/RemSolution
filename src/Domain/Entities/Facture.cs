@@ -36,7 +36,51 @@ namespace RemSolution.Domain.Entities
         public Money? RentalAmount { get; set; }
         public Money? ExtraServicesAmount { get; set; }
         public Money? FeesAmount { get; set; }
+
+        /// <summary>
+        /// The sum of the three above, TAX-INCLUSIVE (see AgencySettings' tax
+        /// section). This is the amount the lines add up to, not the amount the
+        /// client hands over — that is <see cref="TotalDue"/>, which adds the
+        /// duty stamp.
+        /// </summary>
         public Money? TotalAmount { get; set; }
+
+        // ------------------------------------------------------------------
+        // The tax breakdown, computed once at issue and never recomputed. A VAT
+        // rate is changed by law and a duty stamp by budget; an invoice reprinted
+        // next year has to keep saying what was actually charged, so the rate and
+        // the agency's tax number are frozen here alongside the amounts rather
+        // than read back from AgencySettings.
+        // ------------------------------------------------------------------
+
+        /// <summary>The rate applied, as a percentage (19 means 19%).</summary>
+        public decimal VatRatePercent { get; set; }
+
+        /// <summary>Net of tax — <see cref="TotalAmount"/> divided out.</summary>
+        public Money? NetAmount { get; set; }
+
+        /// <summary>
+        /// The tax itself. Deliberately stored rather than derived: it is
+        /// TotalAmount − NetAmount exactly, so no reader can reproduce a
+        /// different rounding than the one printed.
+        /// </summary>
+        public Money? VatAmount { get; set; }
+
+        /// <summary>The fixed duty stamp, as it stood when this was issued.</summary>
+        public Money? FiscalStampAmount { get; set; }
+
+        /// <summary>
+        /// What the client owes: <see cref="TotalAmount"/> plus the stamp. The one
+        /// figure on the document a person acts on.
+        /// </summary>
+        public Money? TotalDue { get; set; }
+
+        /// <summary>
+        /// The agency's tax registration number as printed on this invoice.
+        /// Snapshotted for the same reason as the rate: an agency that corrects
+        /// its number must not silently rewrite the invoices already issued.
+        /// </summary>
+        public string? TaxIdentifier { get; set; }
 
         public int DocumentFileId { get; set; }
         public virtual StoredFile? DocumentFile { get; set; }

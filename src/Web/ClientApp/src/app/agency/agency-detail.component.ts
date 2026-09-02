@@ -113,7 +113,7 @@ export class AgencyDetailComponent implements OnInit {
   // writes this agency's data, until the banner's exit. Reloads the page — the
   // signed-in user's permissions and enabled features come from one fetch per app
   // load and both change with the agency.
-  openWorkspace(landOn = '/dashboard') {
+  openWorkspace(landOn = '/') {
     if (!this.agency) return;
 
     this.impersonation.enter(

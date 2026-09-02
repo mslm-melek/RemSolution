@@ -3,9 +3,14 @@ namespace RemSolution.Domain.Constants;
 /// <summary>
 /// Per-agency capability modules. A feature is enabled for an agency when its
 /// active subscription plan includes it, unless an <c>AgencyFeature</c> override
-/// row forces it on or off (see the feature resolver). No active subscription
-/// means no features. A disabled feature = 403 for every request in the module
-/// (agency administrator included) and the module is hidden in the SPA.
+/// row forces it on or off (see the feature resolver). A feature the plan
+/// excludes = 403 for every request in the module (agency administrator
+/// included) and the module is hidden in the SPA.
+///
+/// A LAPSED subscription resolves to no features, but it is a write freeze, not
+/// a lockout: reads still pass and only writes are refused (see
+/// FeatureEnforcementBehaviour and SubscriptionEnforcementInterceptor). An
+/// agency behind on payment keeps sight of its own bookings and client files.
 ///
 /// See <see cref="FeatureCatalog"/> for the feature → permission mapping.
 /// </summary>

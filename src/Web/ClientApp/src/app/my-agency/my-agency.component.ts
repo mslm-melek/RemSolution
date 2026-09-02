@@ -75,7 +75,14 @@ export class MyAgencyComponent implements OnInit {
       notifyStaffByEmail: [true],
       notifyClientsByEmail: [false],
       clientReminderDaysBeforeStart: [2, [Validators.required, Validators.min(0), Validators.max(90)]],
-      clientReminderDaysBeforeEnd: [1, [Validators.required, Validators.min(0), Validators.max(90)]]
+      clientReminderDaysBeforeEnd: [1, [Validators.required, Validators.min(0), Validators.max(90)]],
+      clientDocumentExpiryLeadDays: [30, [Validators.required, Validators.min(0), Validators.max(365)]],
+      // Tax. These three are what make a generated invoice a legal document;
+      // each issued invoice keeps its own frozen copy, so changing them here
+      // affects the next one and never the ones already out.
+      taxIdentifier: ['', Validators.maxLength(40)],
+      vatRatePercent: [19, [Validators.required, Validators.min(0), Validators.max(100)]],
+      fiscalStampAmount: [1, [Validators.required, Validators.min(0)]]
     });
   }
 
@@ -118,7 +125,11 @@ export class MyAgencyComponent implements OnInit {
       notifyStaffByEmail: dto.notifyStaffByEmail ?? true,
       notifyClientsByEmail: dto.notifyClientsByEmail ?? false,
       clientReminderDaysBeforeStart: dto.clientReminderDaysBeforeStart ?? 2,
-      clientReminderDaysBeforeEnd: dto.clientReminderDaysBeforeEnd ?? 1
+      clientReminderDaysBeforeEnd: dto.clientReminderDaysBeforeEnd ?? 1,
+      clientDocumentExpiryLeadDays: dto.clientDocumentExpiryLeadDays ?? 30,
+      taxIdentifier: dto.taxIdentifier ?? '',
+      vatRatePercent: dto.vatRatePercent ?? 19,
+      fiscalStampAmount: dto.fiscalStampAmount ?? 1
     });
 
     this.agencyName = dto.name ?? '';
@@ -186,7 +197,11 @@ export class MyAgencyComponent implements OnInit {
       notifyStaffByEmail: v.notifyStaffByEmail,
       notifyClientsByEmail: v.notifyClientsByEmail,
       clientReminderDaysBeforeStart: v.clientReminderDaysBeforeStart,
-      clientReminderDaysBeforeEnd: v.clientReminderDaysBeforeEnd
+      clientReminderDaysBeforeEnd: v.clientReminderDaysBeforeEnd,
+      clientDocumentExpiryLeadDays: v.clientDocumentExpiryLeadDays,
+      taxIdentifier: v.taxIdentifier || undefined,
+      vatRatePercent: v.vatRatePercent,
+      fiscalStampAmount: v.fiscalStampAmount
     });
 
     this.client.updateMyAgency(command).subscribe({

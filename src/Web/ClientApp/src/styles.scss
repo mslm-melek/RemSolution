@@ -117,6 +117,10 @@
   --r: 8px;
   --r-lg: 12px;
   --r-pill: 999px;
+  /* A chat bubble. Off the general radius scale on purpose: a bubble is read as
+     a speech shape rather than as a panel, and --r-lg is visibly too square for
+     it while --r-pill collapses a multi-line one into a lozenge. */
+  --r-bubble: 18px;
 
   /* Controls. */
   --h-control: 38px;
@@ -133,10 +137,12 @@
   --overlay-weak: rgba(15, 23, 42, 0.04);
   --overlay: rgba(15, 23, 42, 0.08);
 
-  /* Ink and fills that sit ON a brand-coloured surface — the home hero, the
-     marketplace header, a filled button. Those surfaces are deep blue in both
-     themes, so what sits on them is the light-on-dark set either way. Separate
-     from --nav-* because the nav band is charcoal, not brand. */
+  /* Ink and fills that sit ON a surface which is dark in BOTH themes — the home
+     hero, the marketplace header, a filled button, --danger-solid, a scrim over
+     a photo. Those surfaces do not flip with the theme, so what sits on them is
+     the light-on-dark set either way. This is the white you want: a literal
+     #fff in a component is invisible to the theme and to review. Separate from
+     --nav-* because the nav band is charcoal, not brand. */
   --on-accent: #ffffff;
   --on-accent-2: rgba(255, 255, 255, 0.82);
   --on-accent-3: rgba(255, 255, 255, 0.4);
@@ -146,6 +152,19 @@
   /* Gradient laid over a photo so caption text stays legible whatever the
      image. Black in both themes, because it is darkening an image. */
   --scrim: rgba(0, 0, 0, 0.72);
+
+  /* The same job the other way round: a near-opaque light chip laid over a
+     photo, carrying --ink. Fixed like --scrim — it is covering an image, not
+     following the page. */
+  --scrim-light: rgba(255, 255, 255, 0.94);
+
+  /* Behind a glyph or a label sitting directly on a photo with no chip of its
+     own (a rating star on bodywork). Fixed for the same reason. */
+  --text-shadow-photo: 0 1px 2px rgba(15, 23, 42, 0.6);
+
+  /* Dims the page behind an overlay — the mobile nav rail, a modal. Darkens in
+     both themes, so it does not flip. */
+  --backdrop: rgba(15, 23, 42, 0.45);
 
   /* A rating star. Gold is not one of the semantic states — it means "quality",
      not ok/warn/danger — so it gets its own token rather than borrowing --warn. */

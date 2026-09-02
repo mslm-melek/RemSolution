@@ -1,4 +1,4 @@
-{
+﻿{
   "language": {
     "label": "Language",
     "en": "English",
@@ -103,7 +103,6 @@
     "extraServiceTypes": "Extra service types",
     "expenseTypes": "Expense types",
     "browseCars": "Browse cars",
-    "myReservations": "My reservations",
     "cars": "Cars",
     "reservations": "Reservations",
     "rentings": "Rentings",
@@ -120,10 +119,10 @@
     "credits": "Payments & credits",
     "chat": "Chat",
     "myChats": "My messages",
+    "myTrips": "My trips",
     "bookings": "Bookings",
     "finance": "Finance",
     "clientsList": "All clients",
-    "myRentings": "My rentals",
     "myAgency": "My agency",
     "mainLabel": "Main navigation"
   },
@@ -132,11 +131,14 @@
     "welcomeTagline": "Manage your rental fleet, clients and reservations in one place.",
     "signIn": "Sign in",
     "createAccount": "Create an account",
-    "customerTitle": "Welcome",
-    "customerTitleNamed": "Welcome, {{ name }}",
-    "customerTagline": "Find and book a car from any of our agencies.",
-    "browseCars": "Browse cars",
-    "myReservations": "My reservations",
+    "steps": {
+      "oneTitle": "Pick your dates",
+      "oneText": "Tell us when you are travelling and where you are collecting the car. We only show cars that are genuinely free for those days.",
+      "twoTitle": "Book in minutes",
+      "twoText": "The agency gets your request and answers it. The car is held for you until they do.",
+      "threeTitle": "Hit the road",
+      "threeText": "Come to the agency with your driving licence and your ID, and drive away."
+    },
     "showcaseTitle": "Featured cars",
     "showcaseSeeAll": "See all cars",
     "showcasePrevious": "Previous car",
@@ -372,6 +374,27 @@
     "modelRequired": "Model is required.",
     "dailyRateMin": "Daily rate must be greater than 0.",
     "firstCirculationRequired": "First circulation date is required.",
+    "unavailability": {
+      "title": "Off the road",
+      "declare": "Declare a period",
+      "newTitle": "Declare a period off the road",
+      "editTitle": "Edit the period",
+      "from": "Away from",
+      "backOn": "Back on",
+      "periodInvalid": "The car must be back after it leaves.",
+      "reasonLabel": "Reason",
+      "note": "Note",
+      "blocksBookingsHint": "These dates stop the car being booked, here and on the marketplace. A period covering an existing booking is refused — move the booking first.",
+      "currentlyAway": "Away now",
+      "empty": "Nothing declared. Add a period when the car is going in for work.",
+      "reason": {
+        "maintenance": "Servicing",
+        "repair": "Repair",
+        "administrative": "Inspection or papers",
+        "internalUse": "Agency use",
+        "other": "Other"
+      }
+    },
     "schedule": {
       "title": "Servicing & papers",
       "hint": "Each type is tracked on the fleet-wide rule. Tick one to give this car its own figures.",
@@ -472,6 +495,10 @@
     "cinSection": "CIN",
     "cinNumber": "CIN number",
     "issueDate": "Issue date",
+    "expiryDate": "Valid until",
+    "licenceExpiredTitle": "This driving licence has expired.",
+    "licenceExpiredHint": "Record the renewed licence. A booking will be refused until you do, or until you confirm at the counter that you have seen a valid one.",
+    "documentsExpired": "Expired document",
     "issuePlace": "Issue place",
     "issueCountry": "Issue country",
     "passeport": "Passport",
@@ -573,6 +600,16 @@
     "noExtraServices": "No extra services.",
     "returnFees": "Charges at return",
     "returnFeesHint": "Add a line if the car comes back owing something: late hours, damage, extra kilometres…",
+    "depositTitle": "Deposit",
+    "depositHeld": "You are holding {{amount}} {{currency}} for this vehicle.",
+    "depositSettleNow": "Settle the deposit now",
+    "depositRetained": "Amount kept",
+    "depositRetainedHint": "0 returns the whole deposit.",
+    "depositRetainedTooHigh": "You cannot keep more than the {{amount}} {{currency}} you are holding.",
+    "depositRefundMethod": "Refunded by",
+    "depositRefundAmount": "{{amount}} {{currency}} goes back to the client, recorded as a refund.",
+    "depositNote": "Note",
+    "depositDeferHint": "The deposit stays open and will show as outstanding until you settle it.",
     "noReturnFees": "No charges at return.",
     "addFee": "Add a charge",
     "feeKindLabel": "Reason",
@@ -614,6 +651,12 @@
     "generateFacture": "Generate invoice",
     "noContracts": "No contract generated yet.",
     "noFactures": "No invoice generated yet.",
+    "factureNet": "Net amount",
+    "factureVat": "VAT {{rate}} %",
+    "factureGross": "Total incl. VAT",
+    "factureStamp": "Duty stamp",
+    "factureTotalDue": "Total payable",
+    "factureNoTaxId": "This invoice carries no tax ID. Add one under My agency → Tax so the next one is deductible for a business client.",
     "clientDetails": "Client file",
     "clientReadOnly": "You can view this client's file but not change it.",
     "clientPapers": "Identity papers",
@@ -722,6 +765,7 @@
     "awaitingYou": "This reservation is waiting on you"
   },
   "marketplace": {
+    "myTrips": "My trips",
     "findYourCar": "Find your car",
     "findSubtitle": "Browse available cars across all our agencies and book in minutes.",
     "country": "Country",
@@ -1361,6 +1405,8 @@
       "expenseDueLeadKmHint": "For expense types that recur by distance (servicing…).",
       "reservationLeadDays": "Warn about pickups this many days ahead",
       "reservationLeadDaysHint": "Confirmed reservations starting soon.",
+      "documentExpiryLeadDays": "Client documents (days)",
+      "documentExpiryLeadDaysHint": "Warning before an ID card, passport or licence expires.",
       "notifyStaffByEmail": "Also email these alerts to staff",
       "notifyStaffByEmailHint": "They always appear in the app; this adds email.",
       "notifyClientsByEmail": "Email clients about their bookings",
@@ -1369,6 +1415,17 @@
       "beforeEnd": "Days before the end",
       "zeroIsOff": "0 turns this reminder off.",
       "lateNoticeNote": "Overdue-return notices are never automatic — you send those from the client screens."
+    },
+    "tax": {
+      "title": "Tax",
+      "intro": "What every invoice you issue has to carry. Each issued invoice keeps its own copy, so changing these affects the next one and never the ones already out.",
+      "identifier": "Tax ID",
+      "identifierHint": "Printed on every contract and invoice.",
+      "vatRate": "VAT rate (%)",
+      "vatRateHint": "0 for an exempt agency.",
+      "fiscalStamp": "Duty stamp",
+      "fiscalStampHint": "A flat amount added to the total. 0 where none applies.",
+      "inclusiveNote": "Daily rates and fees you enter are tax-inclusive. The invoice works backwards to the net amount."
     }
   },
   "branch": {
@@ -1428,7 +1485,8 @@
       "3": "Upcoming pickups",
       "4": "Client reminders",
       "5": "Client reminders",
-      "6": "Late-return notices"
+      "6": "Late-return notices",
+      "7": "Client documents"
     },
     "message": {
       "carExpenseDueByDate": "{{type}} is due for {{car}} on {{dueDate}} — in {{days}} day(s).",
@@ -1440,7 +1498,13 @@
       "clientRentingStartingSoon": "Reminder sent to the client: their rental of {{car}} starts on {{startDate}}.",
       "clientRentingEndingSoon": "Reminder sent to the client: their rental of {{car}} ends on {{endDate}}.",
       "clientReservationStartingSoon": "Reminder sent to the client: their booking of {{car}} starts on {{startDate}}.",
-      "clientRentingLateNotice": "Overdue notice sent to the client about {{car}}, due back on {{endDate}}."
+      "clientRentingLateNotice": "Overdue notice sent to the client about {{car}}, due back on {{endDate}}.",
+      "clientLicenceExpiring": "{{client}}'s driving licence expires on {{expiryDate}} — in {{days}} day(s).",
+      "clientLicenceExpired": "{{client}}'s driving licence expired on {{expiryDate}} — {{days}} day(s) ago. Do not hand over a vehicle until a valid licence is on file.",
+      "clientCinExpiring": "{{client}}'s ID card expires on {{expiryDate}} — in {{days}} day(s).",
+      "clientCinExpired": "{{client}}'s ID card expired on {{expiryDate}} — {{days}} day(s) ago.",
+      "clientPasseportExpiring": "{{client}}'s passport expires on {{expiryDate}} — in {{days}} day(s).",
+      "clientPasseportExpired": "{{client}}'s passport expired on {{expiryDate}} — {{days}} day(s) ago."
     }
   },
   "calendar": {

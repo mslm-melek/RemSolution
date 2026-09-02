@@ -39,6 +39,18 @@ namespace RemSolution.Application.Features.Renting.DTOs
         public MoneyDto? CancellationFee { get; init; }
 
         /// <summary>
+        /// The refundable deposit held for the vehicle, and what became of it:
+        /// how much was kept and when that was decided (see
+        /// Renting.SettleDeposit). <see cref="HasUnsettledDeposit"/> is the flag
+        /// a screen acts on — a deposit taken and never accounted for is the one
+        /// thing here a person has to chase.
+        /// </summary>
+        public MoneyDto? DepositAmount { get; init; }
+        public MoneyDto? DepositRetainedAmount { get; init; }
+        public DateTime? DepositSettledAt { get; init; }
+        public bool HasUnsettledDeposit { get; init; }
+
+        /// <summary>
         /// What the return turned out to owe on top of the price — late days,
         /// damage, kilometres over the allowance (see Renting.AddFee). Zero, not
         /// null, when there are none: a row showing money needs a figure to add.
@@ -66,6 +78,14 @@ namespace RemSolution.Application.Features.Renting.DTOs
                       .Map(dest => dest.CarModelName,
                            src => src.Car != null && src.Car.Model != null ? src.Car.Model.Name : null)
                       .Map(dest => dest.CarMileage, src => src.Car != null ? src.Car.Mileage : null)
+                      // Spelled out rather than taken from the entity's own
+                      // Renting.HasUnsettledDeposit: this DTO is produced by
+                      // ProjectToType, and a computed C# property has no SQL to
+                      // translate to. The two definitions must agree.
+                      .Map(dest => dest.HasUnsettledDeposit,
+                           src => src.DepositAmount != null
+                                  && src.DepositAmount.Amount > 0m
+                                  && src.DepositSettledAt == null)
                       .Map(dest => dest.ClientName,
                            src => src.Client != null ? src.Client.FirstName + " " + src.Client.LastName : null)
                       .Map(dest => dest.SecondClientName,

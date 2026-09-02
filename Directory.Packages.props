@@ -36,7 +36,9 @@
     <PackageVersion Include="Microsoft.EntityFrameworkCore.SqlServer" Version="$(EfcoreVersion)" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.SqlServer.NetTopologySuite" Version="$(EfcoreVersion)" />
     <PackageVersion Include="NetTopologySuite" Version="2.6.0" />
-    <PackageVersion Include="Testcontainers.MsSql" Version="4.0.0" />
+    <!-- 4.0.0 dragged in SSH.NET 2023.0.0 (GHSA-q939-rpr3-3284, NU1903); the 4.14
+         line resolves a patched one. -->
+    <PackageVersion Include="Testcontainers.MsSql" Version="4.14.0" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Tools" Version="$(EfcoreVersion)" />
     <PackageVersion Include="Microsoft.Extensions.Configuration.Json" Version="$(MicrosoftExtensionsVersion)" />
     <PackageVersion Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="$(MicrosoftExtensionsVersion)" />

@@ -224,6 +224,11 @@ public class DocumentTemplateExamples
             Field(string.Empty, DocumentPlaceholders.AgencyAddress, hideWhenEmpty: true),
             Field(string.Empty, DocumentPlaceholders.AgencyPhone, hideWhenEmpty: true),
             Field(string.Empty, DocumentPlaceholders.AgencyEmail, hideWhenEmpty: true),
+            // The tax number belongs on the lessor block of BOTH documents: an
+            // invoice is not deductible without it, and a contract that names it
+            // is the one a professional client files alongside. Labelled, unlike
+            // the rows above, because a bare registration number is unreadable.
+            Field(_localizer["Document.TaxIdentifier"], DocumentPlaceholders.AgencyTaxIdentifier, hideWhenEmpty: true),
         }
     };
 

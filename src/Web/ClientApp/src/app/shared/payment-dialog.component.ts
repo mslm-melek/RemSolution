@@ -7,6 +7,7 @@ import {
   PaymentMethod, FileParameter
 } from '../web-api-client';
 import { extractValidationErrors } from './form-utils';
+import { PAYMENT_METHODS, paymentMethodLabelKey } from './payment-methods';
 
 // What the money is being recorded against. An incoming payment targets exactly
 // one of a renting, a reservation or a client (see CreatePaymentCommand);
@@ -61,12 +62,10 @@ export class PaymentDialogComponent {
   private recordedPaymentId?: number;
 
   PaymentMethod = PaymentMethod;
-  paymentMethods = [
-    { value: PaymentMethod.Cash, labelKey: 'enums.paymentMethod.cash' },
-    { value: PaymentMethod.Card, labelKey: 'enums.paymentMethod.card' },
-    { value: PaymentMethod.Transfer, labelKey: 'enums.paymentMethod.transfer' },
-    { value: PaymentMethod.Cheque, labelKey: 'enums.paymentMethod.cheque' }
-  ];
+  // The order and the labels come from shared/payment-methods.ts, so the deposit
+  // refund on the return dialog offers exactly the same list.
+  readonly paymentMethods = PAYMENT_METHODS;
+  readonly paymentMethodLabelKey = paymentMethodLabelKey;
 
   constructor(
     private fb: FormBuilder,

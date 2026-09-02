@@ -26,6 +26,19 @@ public static class NotificationMessages
     public const string RentingOverdue = "rentingOverdue";
     public const string ReservationUpcoming = "reservationUpcoming";
 
+    // ---- Client paperwork running out ---------------------------------------
+    // Six wordings for one alert, for the same reason the car-expense alert has
+    // four: "expires in 12 days" and "expired on the 3rd" are a reminder and a
+    // problem, and the document has to name itself IN the sentence. Both
+    // renderers substitute {{name}} only — they cannot look a nested key up — so
+    // a localised document name has to come from the wording, not an argument.
+    public const string ClientLicenceExpiring = "clientLicenceExpiring";
+    public const string ClientLicenceExpired = "clientLicenceExpired";
+    public const string ClientCinExpiring = "clientCinExpiring";
+    public const string ClientCinExpired = "clientCinExpired";
+    public const string ClientPasseportExpiring = "clientPasseportExpiring";
+    public const string ClientPasseportExpired = "clientPasseportExpired";
+
     // ---- Written to the client ----------------------------------------------
     public const string ClientRentingStartingSoon = "clientRentingStartingSoon";
     public const string ClientRentingEndingSoon = "clientRentingEndingSoon";

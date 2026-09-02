@@ -12,13 +12,22 @@ public sealed record AgencySettingsSnapshot(
     int ExpenseDueLeadDays = 14,
     int ExpenseDueLeadKilometers = 1000,
     int ReservationUpcomingLeadDays = 3,
+    // How far ahead to warn that a client's paperwork is running out.
+    int ClientDocumentExpiryLeadDays = 30,
     // Staff alerts are always in-app; this only decides whether they are mailed.
     bool NotifyStaffByEmail = true,
     // Master switch for mailing clients, and the two lead times it governs. Zero
     // days switches that one reminder off without touching the other.
     bool NotifyClientsByEmail = false,
     int ClientReminderDaysBeforeStart = 2,
-    int ClientReminderDaysBeforeEnd = 1);
+    int ClientReminderDaysBeforeEnd = 1,
+    // What the invoice needs to be a legal document: the agency's tax number,
+    // the rate to apply, and the flat duty stamp. Read here and then FROZEN onto
+    // each Facture — see the tax section of the AgencySettings entity, and note
+    // that stored amounts are tax-INCLUSIVE.
+    string? TaxIdentifier = null,
+    decimal VatRatePercent = 19m,
+    decimal FiscalStampAmount = 1m);
 
 /// <summary>
 /// The single read path for per-agency settings. Settings change rarely and are

@@ -77,20 +77,40 @@ export class ClientFormComponent implements OnInit {
       cinDeliveranceDate: [''],
       cinDeliverancePlace: [''],
       cinDeliveranceCountryId: [null],
+      cinExpiryDate: [''],
       passeportNumber: [''],
       passeportDeliveranceDate: [''],
       passeportDeliverancePlace: [''],
       passeportDeliveranceCountryId: [null],
+      passeportExpiryDate: [''],
       drivingLicenceNumber: [''],
       drivingLicenceDeliveranceDate: [''],
       drivingLicenceDeliverancePlace: [''],
       drivingLicenceDeliveranceCountryId: [null],
+      drivingLicenceExpiryDate: [''],
       description: ['']
     });
   }
 
   get isEdit(): boolean {
     return this.clientId !== undefined;
+  }
+
+  /**
+   * Whether the licence in the form has lapsed. Read off the form rather than
+   * the loaded DTO so the warning follows what the user is typing, and compared
+   * by day — the same rule the server applies (see Client.IsDrivingLicenceExpiredOn).
+   */
+  get licenceExpired(): boolean {
+    const value = this.form.get('drivingLicenceExpiryDate')?.value as string;
+
+    if (!value) {
+      return false;
+    }
+
+    // The control holds a yyyy-MM-dd string, so a string comparison against
+    // today in the same shape is the comparison — no Date, no zone to get wrong.
+    return value < new Date().toISOString().slice(0, 10);
   }
 
   ngOnInit() {
@@ -121,14 +141,17 @@ export class ClientFormComponent implements OnInit {
       cinDeliveranceDate: toDateInput(dto.cinDeliveranceDate),
       cinDeliverancePlace: dto.cinDeliverancePlace ?? '',
       cinDeliveranceCountryId: dto.cinDeliveranceCountryId ?? null,
+      cinExpiryDate: toDateInput(dto.cinExpiryDate),
       passeportNumber: dto.passeportNumber ?? '',
       passeportDeliveranceDate: toDateInput(dto.passeportDeliveranceDate),
       passeportDeliverancePlace: dto.passeportDeliverancePlace ?? '',
       passeportDeliveranceCountryId: dto.passeportDeliveranceCountryId ?? null,
+      passeportExpiryDate: toDateInput(dto.passeportExpiryDate),
       drivingLicenceNumber: dto.drivingLicenceNumber ?? '',
       drivingLicenceDeliveranceDate: toDateInput(dto.drivingLicenceDeliveranceDate),
       drivingLicenceDeliverancePlace: dto.drivingLicenceDeliverancePlace ?? '',
       drivingLicenceDeliveranceCountryId: dto.drivingLicenceDeliveranceCountryId ?? null,
+      drivingLicenceExpiryDate: toDateInput(dto.drivingLicenceExpiryDate),
       description: dto.description ?? ''
     });
 
@@ -307,14 +330,17 @@ export class ClientFormComponent implements OnInit {
       cinDeliveranceDate: fromDateInput(v.cinDeliveranceDate),
       cinDeliverancePlace: v.cinDeliverancePlace || undefined,
       cinDeliveranceCountryId: v.cinDeliveranceCountryId ?? undefined,
+      cinExpiryDate: fromDateInput(v.cinExpiryDate),
       passeportNumber: v.passeportNumber || undefined,
       passeportDeliveranceDate: fromDateInput(v.passeportDeliveranceDate),
       passeportDeliverancePlace: v.passeportDeliverancePlace || undefined,
       passeportDeliveranceCountryId: v.passeportDeliveranceCountryId ?? undefined,
+      passeportExpiryDate: fromDateInput(v.passeportExpiryDate),
       drivingLicenceNumber: v.drivingLicenceNumber || undefined,
       drivingLicenceDeliveranceDate: fromDateInput(v.drivingLicenceDeliveranceDate),
       drivingLicenceDeliverancePlace: v.drivingLicenceDeliverancePlace || undefined,
       drivingLicenceDeliveranceCountryId: v.drivingLicenceDeliveranceCountryId ?? undefined,
+      drivingLicenceExpiryDate: fromDateInput(v.drivingLicenceExpiryDate),
       description: v.description || undefined
     };
   }

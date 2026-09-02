@@ -163,6 +163,9 @@
   <data name="Validation.Client.LicenceIssueDateFuture" xml:space="preserve">
     <value>لا يمكن أن يكون تاريخ إصدار رخصة السياقة في المستقبل.</value>
   </data>
+  <data name="Validation.Client.ExpiryBeforeIssue" xml:space="preserve">
+    <value>يجب أن يكون تاريخ انتهاء الصلاحية بعد تاريخ الإصدار.</value>
+  </data>
   <data name="Validation.Client.LicenceIssueDateBeforeBirth" xml:space="preserve">
     <value>لا يمكن أن يسبق تاريخ إصدار رخصة السياقة تاريخ الميلاد.</value>
   </data>
@@ -174,6 +177,9 @@
   </data>
   <data name="Validation.Booking.EndAfterStart" xml:space="preserve">
     <value>يجب أن يكون تاريخ النهاية بعد تاريخ البداية.</value>
+  </data>
+  <data name="Validation.Renting.DriverLicenceExpired" xml:space="preserve">
+    <value>انتهت صلاحية رخصة {0} في {1}. سجّلوا رخصة سارية، أو أكّدوا أنكم رأيتموها للكراء رغم ذلك.</value>
   </data>
   <data name="Validation.Payment.SingleTarget" xml:space="preserve">
     <value>يجب أن ترتبط الدفعة بعملية كراء واحدة أو حجز واحد أو عميل واحد فقط.</value>
@@ -673,6 +679,9 @@
   <data name="Document.Lessor" xml:space="preserve">
     <value>المؤجر</value>
   </data>
+  <data name="Document.TaxIdentifier" xml:space="preserve">
+    <value>المعرّف الجبائي</value>
+  </data>
   <data name="Document.Renter" xml:space="preserve">
     <value>المستأجر</value>
   </data>
@@ -757,8 +766,20 @@
   <data name="Document.Fee.Other" xml:space="preserve">
     <value>مصاريف إضافية</value>
   </data>
+  <data name="Document.NetAmount" xml:space="preserve">
+    <value>المبلغ دون الأداء</value>
+  </data>
+  <data name="Document.VatAmount" xml:space="preserve">
+    <value>الأداء على القيمة المضافة {0} %</value>
+  </data>
+  <data name="Document.FiscalStamp" xml:space="preserve">
+    <value>الطابع الجبائي</value>
+  </data>
+  <data name="Document.TotalDue" xml:space="preserve">
+    <value>الصافي للدفع</value>
+  </data>
   <data name="Document.Total" xml:space="preserve">
-    <value>المجموع</value>
+    <value>المجموع بالأداء</value>
   </data>
   <data name="Document.AmountPaid" xml:space="preserve">
     <value>المبلغ المدفوع</value>
@@ -906,6 +927,42 @@
   </data>
   <data name="Notification.rentingOverdue.Body" xml:space="preserve">
     <value>كان من المفترض إرجاع {{car}} في {{endDate}} ولم تُرجَع — بتأخير {{days}} يوم. المستأجر: {{client}}.</value>
+  </data>
+  <data name="Notification.clientLicenceExpiring.Subject" xml:space="preserve">
+    <value>رخصة سياقة {{client}} على وشك الانتهاء</value>
+  </data>
+  <data name="Notification.clientLicenceExpiring.Body" xml:space="preserve">
+    <value>تنتهي صلاحية رخصة سياقة {{client}} في {{expiryDate}}، أي بعد {{days}} يوم. اطلبوا الرخصة المجدَّدة قبل الكراء القادم.</value>
+  </data>
+  <data name="Notification.clientLicenceExpired.Subject" xml:space="preserve">
+    <value>انتهت صلاحية رخصة سياقة {{client}}</value>
+  </data>
+  <data name="Notification.clientLicenceExpired.Body" xml:space="preserve">
+    <value>انتهت صلاحية رخصة سياقة {{client}} في {{expiryDate}}، منذ {{days}} يوم. لا تسلّموا السيارة قبل إيداع رخصة سارية: قد يرفض المؤمِّن التغطية على رخصة منتهية.</value>
+  </data>
+  <data name="Notification.clientCinExpiring.Subject" xml:space="preserve">
+    <value>بطاقة تعريف {{client}} على وشك الانتهاء</value>
+  </data>
+  <data name="Notification.clientCinExpiring.Body" xml:space="preserve">
+    <value>تنتهي صلاحية بطاقة تعريف {{client}} في {{expiryDate}}، أي بعد {{days}} يوم.</value>
+  </data>
+  <data name="Notification.clientCinExpired.Subject" xml:space="preserve">
+    <value>انتهت صلاحية بطاقة تعريف {{client}}</value>
+  </data>
+  <data name="Notification.clientCinExpired.Body" xml:space="preserve">
+    <value>انتهت صلاحية بطاقة تعريف {{client}} في {{expiryDate}}، منذ {{days}} يوم. اطلبوا نسخة محدَّثة.</value>
+  </data>
+  <data name="Notification.clientPasseportExpiring.Subject" xml:space="preserve">
+    <value>جواز سفر {{client}} على وشك الانتهاء</value>
+  </data>
+  <data name="Notification.clientPasseportExpiring.Body" xml:space="preserve">
+    <value>تنتهي صلاحية جواز سفر {{client}} في {{expiryDate}}، أي بعد {{days}} يوم.</value>
+  </data>
+  <data name="Notification.clientPasseportExpired.Subject" xml:space="preserve">
+    <value>انتهت صلاحية جواز سفر {{client}}</value>
+  </data>
+  <data name="Notification.clientPasseportExpired.Body" xml:space="preserve">
+    <value>انتهت صلاحية جواز سفر {{client}} في {{expiryDate}}، منذ {{days}} يوم. اطلبوا نسخة محدَّثة.</value>
   </data>
   <data name="Notification.reservationUpcoming.Subject" xml:space="preserve">
     <value>تسليم قريب: {{car}}</value>

@@ -33,14 +33,17 @@ namespace RemSolution.Application.Features.Client.Commands.UpdateClientCommand
         public DateTime? CINDeliveranceDate { get; init; }
         public string? CINDeliverancePlace { get; init; }
         public int? CINDeliveranceCountryId { get; init; }
+        public DateTime? CINExpiryDate { get; init; }
         public string? PasseportNumber { get; init; }
         public DateTime? PasseportDeliveranceDate { get; init; }
         public string? PasseportDeliverancePlace { get; init; }
         public int? PasseportDeliveranceCountryId { get; init; }
+        public DateTime? PasseportExpiryDate { get; init; }
         public string? DrivingLicenceNumber { get; init; }
         public DateTime? DrivingLicenceDeliveranceDate { get; init; }
         public string? DrivingLicenceDeliverancePlace { get; init; }
         public int? DrivingLicenceDeliveranceCountryId { get; init; }
+        public DateTime? DrivingLicenceExpiryDate { get; init; }
         public string? Description { get; init; }
     }
 
@@ -82,6 +85,9 @@ namespace RemSolution.Application.Features.Client.Commands.UpdateClientCommand
             entity.DrivingLicenceDeliveranceDate = request.DrivingLicenceDeliveranceDate;
             entity.DrivingLicenceDeliverancePlace = request.DrivingLicenceDeliverancePlace;
             entity.DrivingLicenceDeliveranceCountryId = request.DrivingLicenceDeliveranceCountryId;
+            entity.CINExpiryDate = request.CINExpiryDate;
+            entity.PasseportExpiryDate = request.PasseportExpiryDate;
+            entity.DrivingLicenceExpiryDate = request.DrivingLicenceExpiryDate;
             entity.Description = request.Description;
 
             // Adding an email to a client who never had one gives them a login;

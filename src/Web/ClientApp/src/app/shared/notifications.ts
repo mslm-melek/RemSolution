@@ -21,7 +21,11 @@ const LOOKS: Record<NotificationKind, NotificationLook> = {
   [NotificationKind.ReservationUpcoming]: { icon: 'event_available', severity: 'info' },
   [NotificationKind.RentingStartingSoon]: { icon: 'outgoing_mail', severity: 'info' },
   [NotificationKind.RentingEndingSoon]: { icon: 'outgoing_mail', severity: 'info' },
-  [NotificationKind.RentingLateNotice]: { icon: 'outgoing_mail', severity: 'warn' }
+  [NotificationKind.RentingLateNotice]: { icon: 'outgoing_mail', severity: 'warn' },
+  // A lapsed licence stops a booking outright, so it is the loud one; the
+  // wording (see NotificationMessages) is what distinguishes "expires soon"
+  // from "has expired".
+  [NotificationKind.ClientDocumentExpiring]: { icon: 'badge', severity: 'warn' }
 };
 
 const FALLBACK: NotificationLook = { icon: 'notifications', severity: 'info' };

@@ -486,3 +486,7 @@ $RECYCLE.BIN/
 
 # Local file storage (dev): uploaded documents live outside git
 src/Web/wwwroot/uploads/
+
+# curl cookie jars from manual API poking. They hold live session cookies, and
+# git keeps whatever lands in it — so they never get committed in the first place.
+cookies*.txt

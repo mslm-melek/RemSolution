@@ -6,6 +6,7 @@ import {
   SendChatMessageCommand, RentingState
 } from '../web-api-client';
 import { extractValidationErrors } from '../shared/form-utils';
+import { ChatBubbles } from '../shared/chat-bubbles';
 import { applyListFilters, boolParam } from '../shared/list-filters';
 import { AuthService } from '../shared/auth.service';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -36,6 +37,10 @@ export class ChatComponent implements OnInit, OnDestroy {
 
   ChatAuthorKind = ChatAuthorKind;
   RentingState = RentingState;
+
+  // At the desk the AGENCY's messages are the ones drawn as mine; the customer's
+  // own screen groups the same thread the other way round.
+  readonly bubbles = new ChatBubbles(ChatAuthorKind.Agency);
 
   private poll?: Subscription;
 

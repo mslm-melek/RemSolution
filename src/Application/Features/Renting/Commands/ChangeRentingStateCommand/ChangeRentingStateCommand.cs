@@ -36,6 +36,17 @@ namespace RemSolution.Application.Features.Renting.Commands.ChangeRentingStateCo
         /// <para>Only on the Done transition; anything else is refused.</para>
         /// </summary>
         public IList<RentingFeePayload>? Fees { get; init; }
+
+        /// <summary>
+        /// What becomes of the deposit, decided at the counter with the car in
+        /// front of the person deciding. Asked here because this is the only
+        /// moment the answer is obvious — chased afterwards it becomes a
+        /// three-week-old argument (see Renting.SettleDeposit). Omitting it
+        /// leaves the deposit unsettled rather than assuming a refund, so it
+        /// stays on the desk's list.
+        /// <para>Only on the Done transition; anything else is refused.</para>
+        /// </summary>
+        public DepositSettlementPayload? DepositSettlement { get; init; }
     }
 
     public class ChangeRentingStateCommandHandler : IRequestHandler<ChangeRentingStateCommand>
@@ -89,6 +100,30 @@ namespace RemSolution.Application.Features.Renting.Commands.ChangeRentingStateCo
 
                         RentingFees.AddAll(
                             entity, request.Fees, RentingFees.CurrencyOf(entity, settings.CurrencyCode));
+                    }
+
+                    // The deposit, in the same write as the return: the car is
+                    // there, the damage is visible, and the money is decided once.
+                    if (request.DepositSettlement is { } settlement)
+                    {
+                        if (!entity.HasUnsettledDeposit)
+                        {
+                            throw new ValidationException(new[]
+                            {
+                                new ValidationFailure(nameof(request.DepositSettlement),
+                                    entity.DepositAmount is null or { Amount: <= 0m }
+                                        ? "This hire took no deposit."
+                                        : "This hire's deposit has already been settled.")
+                            });
+                        }
+
+                        var refund = DepositSettlements.Settle(
+                            entity, settlement, _dateTime.GetUtcNow().UtcDateTime);
+
+                        if (refund is not null)
+                        {
+                            _context.Payments.Add(refund);
+                        }
                     }
 
                     // Snapshot the finished period. Written here (not in the event
@@ -152,6 +187,17 @@ namespace RemSolution.Application.Features.Renting.Commands.ChangeRentingStateCo
                 .Empty()
                 .When(v => v.NewState != RentingState.Done)
                 .WithMessage("Extra charges can only be recorded when the hire is returned.");
+
+            RuleFor(v => v.DepositSettlement!)
+                .SetValidator(new DepositSettlementPayloadValidator())
+                .When(v => v.DepositSettlement is not null);
+
+            // Same reason as the fees above: the deposit is decided when the car
+            // comes back, so settling it on a pickup is a caller mistake.
+            RuleFor(v => v.DepositSettlement)
+                .Null()
+                .When(v => v.NewState != RentingState.Done)
+                .WithMessage("The deposit can only be settled when the hire is returned.");
         }
     }
 }

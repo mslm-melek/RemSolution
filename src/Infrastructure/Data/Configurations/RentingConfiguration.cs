@@ -10,9 +10,21 @@ public class RentingConfiguration : IEntityTypeConfiguration<Renting>
     {
         builder.HasAgencyTenant(nameof(Renting.RentingState));
 
+        // The overlap predicate AvailabilityChecker runs for every candidate car
+        // (CarId = @car AND StartDate < @end AND EndDate > @start). IX(AgencyId,
+        // RentingState) cannot serve it — it leads with the wrong column and
+        // carries no dates — so the alternative is a scan of every hire the
+        // agency ever recorded, growing with its history rather than its fleet.
+        // The included columns keep it a covering seek: marketplace search runs
+        // this once per nearby car.
+        builder.HasIndex(e => new { e.CarId, e.StartDate, e.EndDate })
+               .HasDatabaseName("IX_Rentings_CarId_Dates")
+               .IncludeProperties(e => new { e.RentingState, e.AgencyId });
+
         builder.OwnsMoney(e => e.Price, "Price", "PriceCurrency");
         builder.OwnsMoney(e => e.DepositAmount, "DepositAmount", "DepositAmountCurrency");
         builder.OwnsMoney(e => e.CancellationFee, "CancellationFee", "CancellationFeeCurrency");
+        builder.OwnsMoney(e => e.DepositRetainedAmount, "DepositRetainedAmount", "DepositRetainedAmountCurrency");
 
         builder.Property(e => e.Notes).HasMaxLength(1000);
 

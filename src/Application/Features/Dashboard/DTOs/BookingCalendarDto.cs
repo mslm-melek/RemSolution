@@ -14,6 +14,10 @@ namespace RemSolution.Application.Features.Dashboard.DTOs
         // An active hold starting — still a request the desk has to turn into a
         // hire, so it is marked apart from the pickups it may become.
         ReservationStart = 3,
+        // A declared block starting: the car leaves the fleet for a while. One
+        // entry on the day it starts, not two, because unlike a hire there is no
+        // second job at the far end — the car simply comes back.
+        UnavailabilityStart = 4,
     }
 
     // One thing happening on one day. Deliberately flat and label-carrying rather
@@ -26,10 +30,11 @@ namespace RemSolution.Application.Features.Dashboard.DTOs
         // The moment it happens, UTC like every other domain date.
         public DateTime On { get; init; }
 
-        // Exactly one of the two is set, following Kind: an entry links back to
+        // Exactly one of the three is set, following Kind: an entry links back to
         // the record it came from, so a click can open it.
         public int? RentingId { get; init; }
         public int? ReservationId { get; init; }
+        public int? UnavailabilityId { get; init; }
 
         public int? CarId { get; init; }
         public string? CarMatricule { get; init; }
@@ -42,6 +47,12 @@ namespace RemSolution.Application.Features.Dashboard.DTOs
         // agency has confirmed. Set to match Kind, like the ids above.
         public RentingState? RentingState { get; init; }
         public ReservationStatus? ReservationStatus { get; init; }
+
+        // A block's own two facts: why the car is away, and when it is back. The
+        // end date is carried here because a block is read as a span ("at the
+        // garage until the 24th") where a hire is read as two dated jobs.
+        public CarUnavailabilityReason? UnavailabilityReason { get; init; }
+        public DateTime? Until { get; init; }
 
         /// <summary>
         /// A return that was due before now and whose hire is still out. The desk

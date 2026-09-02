@@ -71,6 +71,14 @@ namespace RemSolution.Application.Features.Renting.Commands.CreateRentingCommand
         // prompts for the union of what they need, and a name shared by both
         // templates means the same thing on both.
         public Dictionary<string, string>? DocumentValues { get; init; }
+
+        /// <summary>
+        /// Books the hire even though a driver's licence has expired. The check
+        /// is refused-by-default and this is the deliberate override: the counter
+        /// sometimes holds a renewal that is not on file yet, and a rule with no
+        /// way past it gets worked around by typing a wrong expiry date instead.
+        /// </summary>
+        public bool AcknowledgeExpiredDocuments { get; init; }
     }
 
     public class CreateRentingCommandHandler : IRequestHandler<CreateRentingCommand, int>
@@ -85,6 +93,7 @@ namespace RemSolution.Application.Features.Renting.Commands.CreateRentingCommand
         private readonly IIdentityService _identityService;
         private readonly IUser _user;
         private readonly ITenantProvider _tenant;
+        private readonly ILocalizer _localizer;
         private readonly TimeProvider _dateTime;
 
         public CreateRentingCommandHandler(
@@ -98,8 +107,10 @@ namespace RemSolution.Application.Features.Renting.Commands.CreateRentingCommand
             IIdentityService identityService,
             IUser user,
             ITenantProvider tenant,
+            ILocalizer localizer,
             TimeProvider dateTime)
         {
+            _localizer = localizer;
             _context = context;
             _pricing = pricing;
             _settings = settings;
@@ -184,6 +195,37 @@ namespace RemSolution.Application.Features.Renting.Commands.CreateRentingCommand
 
                 var secondClient = await RentingClients.ResolveSecondDriverAsync(
                     clients, client, request.SecondClientId, request.SecondNewClient, cancellationToken);
+
+                // Handing keys to a driver whose licence has lapsed lets the
+                // insurer decline the claim, and the liability lands on the
+                // agency. So it is refused — but overridably, because the desk
+                // sometimes has a paper renewal in hand that is not on file yet,
+                // and a rule that cannot be overridden gets worked around by
+                // typing a wrong date instead.
+                if (!request.AcknowledgeExpiredDocuments)
+                {
+                    var today = _dateTime.GetUtcNow().UtcDateTime;
+
+                    // Both drivers: the additional one is precisely the gap in an
+                    // insurance file, and is no less likely to be the one driving.
+                    foreach (var (driver, field) in new[]
+                    {
+                        (client, nameof(request.ClientId)),
+                        (secondClient, nameof(request.SecondClientId)),
+                    })
+                    {
+                        if (driver is not null && driver.IsDrivingLicenceExpiredOn(today))
+                        {
+                            throw new ValidationException(new[]
+                            {
+                                new ValidationFailure(field, _localizer[
+                                    "Validation.Renting.DriverLicenceExpired",
+                                    $"{driver.FirstName} {driver.LastName}".Trim(),
+                                    driver.DrivingLicenceExpiryDate?.ToString("yyyy-MM-dd") ?? string.Empty])
+                            });
+                        }
+                    }
+                }
 
                 var entity = RentingEntity.Create(
                     carId: request.CarId,

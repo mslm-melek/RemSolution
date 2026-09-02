@@ -136,11 +136,16 @@ export class SideNavComponent implements OnInit {
     }
 
     if (this.isCustomer) {
+      // No "browse cars" entry: the Home item already leads to the search, the
+      // same way the platform admin's Home leads to the console dashboard.
       return [
-        { labelKey: 'nav.browseCars', icon: 'travel_explore', link: '/browse' },
-        { labelKey: 'nav.myReservations', icon: 'event_available', link: '/my-reservations' },
-        // Past and current rentals, and where a finished one gets rated.
-        { labelKey: 'nav.myRentings', icon: 'vpn_key', link: '/my-rentings' },
+        // Holds and rentals on one screen, and where a finished rental gets
+        // rated. The two old paths redirect onto its tabs, and `alsoAt` keeps
+        // the entry lit while the router is still on one of them.
+        {
+          labelKey: 'nav.myTrips', icon: 'event_available', link: '/my-bookings',
+          alsoAt: ['/my-reservations', '/my-rentings']
+        },
         // Not feature-gated: the customer's own threads, empty if the agency has none.
         { labelKey: 'nav.myChats', icon: 'forum', link: '/my-chats' }
       ];

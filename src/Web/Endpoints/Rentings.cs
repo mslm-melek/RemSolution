@@ -7,6 +7,7 @@ using RemSolution.Application.Features.Renting.Commands.ChangeRentingEndDateComm
 using RemSolution.Application.Features.Renting.Commands.ChangeRentingStateCommand;
 using RemSolution.Application.Features.Renting.Commands.CreateRentingCommand;
 using RemSolution.Application.Features.Renting.Commands.DeleteRentingFeeCommand;
+using RemSolution.Application.Features.Renting.Commands.SettleRentingDepositCommand;
 using RemSolution.Application.Features.Renting.Commands.UpdateRentingCommand;
 using RemSolution.Application.Features.Renting.DTOs;
 using RemSolution.Application.Features.Renting.Queries.GetRentingByIdQuery;
@@ -44,7 +45,11 @@ public class Rentings : EndpointGroupBase
             // whether the excess is refunded), so it takes a body like the two
             // above rather than being a bare DELETE. Still Renting.Delete: for a
             // financial record, cancelling IS deleting (P.11).
-            .MapPut(CancelRenting, "{id}/cancel", Permissions.RentingDelete);
+            .MapPut(CancelRenting, "{id}/cancel", Permissions.RentingDelete)
+            // Saying what became of the deposit when the return did not. Payment
+            // rather than Renting permission: it hands money back and writes the
+            // refund to the ledger (see SettleRentingDepositCommand).
+            .MapPut(SettleRentingDeposit, "{id}/deposit", Permissions.PaymentCreate);
     }
 
     public async Task<Ok<PaginatedList<RentingDto>>> GetRentings(
@@ -143,6 +148,16 @@ public class Rentings : EndpointGroupBase
         ISender sender, int id, CancelRentingCommand command)
     {
         if (id != command.Id)
+            return TypedResults.BadRequest();
+
+        await sender.Send(command);
+        return TypedResults.NoContent();
+    }
+
+    public async Task<Results<NoContent, BadRequest>> SettleRentingDeposit(
+        ISender sender, int id, SettleRentingDepositCommand command)
+    {
+        if (id != command.RentingId)
             return TypedResults.BadRequest();
 
         await sender.Send(command);

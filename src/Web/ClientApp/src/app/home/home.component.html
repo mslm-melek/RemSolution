@@ -14,28 +14,37 @@
     </div>
   </div>
 
-  <!-- Signed-in customer: browse-oriented home (no staff dashboard). -->
-  <div class="hero" *ngIf="isCustomer">
-    <div class="hero-card">
-      <span class="hero-logo">R</span>
-      <h1>{{ displayName ? t('home.customerTitleNamed', { name: displayName }) : t('home.customerTitle') }}</h1>
-      <p class="hero-tagline">{{ t('home.customerTagline') }}</p>
-      <div class="hero-actions">
-        <a mat-raised-button color="primary" [routerLink]="['/browse']">
-          <mat-icon>search</mat-icon> {{ t('home.browseCars') }}
-        </a>
-        <a mat-stroked-button color="primary" [routerLink]="['/my-reservations']">{{ t('home.myReservations') }}</a>
+  <!-- ===================== THE CUSTOMER'S HOME ===================== -->
+  <!-- The search IS the customer's home screen, the same way the console
+       dashboard is the platform admin's: browsing was the only thing a second
+       page offered, so it lives here and the nav has one entry, not two. What
+       they have already booked is NOT here — that is what "Mes voyages" is, and
+       repeating it above the search only pushed the search down the page. -->
+  <div class="shop" *ngIf="isCustomer">
+
+    <!-- The whole search: its own hero, the four controls, the results and the
+         map. Rendered rather than reimplemented, so /browse (still the visitor's
+         and the platform admin's way in) and this screen cannot drift apart. -->
+    <app-marketplace-search></app-marketplace-search>
+
+    <section class="steps">
+      <div class="step" *ngFor="let step of steps">
+        <mat-icon aria-hidden="true">{{ step.icon }}</mat-icon>
+        <h3>{{ t('home.steps.' + step.key + 'Title') }}</h3>
+        <p>{{ t('home.steps.' + step.key + 'Text') }}</p>
       </div>
-    </div>
+    </section>
   </div>
 
-  <!-- Shop window for visitors and customers. Cross-fades rather than slides so
-       it reads the same way in right-to-left Arabic. -->
-  <section class="showcase" *ngIf="showcase.length && (isAuthenticated === false || isCustomer)">
+  <!-- The visitor's shop window: they have no search on this screen, so the
+       slideshow is what shows them there are cars, and "see all" is what takes
+       them to one. Cross-fades rather than slides, so it reads the same way in
+       right-to-left Arabic. -->
+  <section class="showcase" *ngIf="showcase.length && isAuthenticated === false">
     <div class="showcase-head">
       <h2>{{ t('home.showcaseTitle') }}</h2>
       <a mat-button color="primary" [routerLink]="['/browse']">
-        {{ t('home.showcaseSeeAll') }} <mat-icon>arrow_forward</mat-icon>
+        {{ t('home.showcaseSeeAll') }} <mat-icon aria-hidden="true">arrow_forward</mat-icon>
       </a>
     </div>
 
@@ -52,7 +61,7 @@
           <div class="slide-caption">
             <span class="slide-model">{{ car.brandName }} {{ car.modelName }}</span>
             <span class="slide-agency">
-              <mat-icon>place</mat-icon>
+              <mat-icon aria-hidden="true">place</mat-icon>
               <span>{{ car.agencyName }}<span *ngIf="car.branchName"> · {{ car.branchName }}</span></span>
             </span>
             <!-- Only for an agency that has actually been rated: "not rated" on

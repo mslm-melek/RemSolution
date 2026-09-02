@@ -34,8 +34,10 @@ public sealed class CachedAgencySettingsProvider : IAgencySettingsProvider
             .Select(s => new AgencySettingsSnapshot(
                 s.CurrencyCode, s.CancellationWindowHours, s.ReservationExpiryHours,
                 s.ExpenseDueLeadDays, s.ExpenseDueLeadKilometers, s.ReservationUpcomingLeadDays,
+                s.ClientDocumentExpiryLeadDays,
                 s.NotifyStaffByEmail, s.NotifyClientsByEmail,
-                s.ClientReminderDaysBeforeStart, s.ClientReminderDaysBeforeEnd))
+                s.ClientReminderDaysBeforeStart, s.ClientReminderDaysBeforeEnd,
+                s.TaxIdentifier, s.VatRatePercent, s.FiscalStampAmount))
             .FirstOrDefaultAsync(cancellationToken);
 
         if (snapshot is null)

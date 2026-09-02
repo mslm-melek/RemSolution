@@ -21,6 +21,34 @@ namespace RemSolution.Domain.Entities
         public int ReservationExpiryHours { get; set; } = 48;
 
         // ---------------------------------------------------------------------
+        // Tax. An invoice that does not carry the agency's tax number, the rate
+        // applied, and the split between net and tax is not an invoice a
+        // professional client can deduct or an accountant can file — so these
+        // three are what turn the generated PDF into a legal document.
+        //
+        // THE DAILY RATE AN AGENCY ENTERS IS TAX-INCLUSIVE. Car.DailyRate,
+        // Renting.Price and every fee are gross; the invoice works backwards to
+        // the net amount (see FactureTax). This is deliberate — it is what staff
+        // quote at the counter — and it is not a setting, because flipping it
+        // would silently reinterpret every amount already stored.
+        // ---------------------------------------------------------------------
+
+        // The agency's tax registration number, printed on every invoice
+        // ("matricule fiscal" in Tunisia). Null until the agency fills it in;
+        // the invoice then prints nothing rather than a wrong number.
+        public string? TaxIdentifier { get; set; }
+
+        // VAT rate as a percentage — 19 means 19%. Frozen onto each invoice at
+        // issue, because a rate is changed by law and an issued invoice must keep
+        // saying what was charged. 19% is the standard Tunisian rate.
+        public decimal VatRatePercent { get; set; } = 19m;
+
+        // The fixed duty stamp added to the invoice total ("timbre fiscal"), in
+        // the agency's currency. A flat amount, not a rate, and zero for a
+        // jurisdiction that has no such thing.
+        public decimal FiscalStampAmount { get; set; } = 1m;
+
+        // ---------------------------------------------------------------------
         // Notifications. The lead times below are how far ahead the agency wants
         // to be warned; they are per-agency because a two-car outfit and a fifty-
         // car fleet do not plan on the same horizon.
@@ -37,6 +65,13 @@ namespace RemSolution.Domain.Entities
 
         // Days of warning before a confirmed reservation starts.
         public int ReservationUpcomingLeadDays { get; set; } = 3;
+
+        // Days of warning before a client's CIN, passport or driving licence
+        // expires. A month by default, and deliberately longer than the other
+        // lead times: renewing a licence is an appointment at an administration,
+        // not an errand, and the point is to ask the client before the day they
+        // turn up to collect a car.
+        public int ClientDocumentExpiryLeadDays { get; set; } = 30;
 
         // Whether staff notifications are emailed as well. They are always
         // in-app; this only adds mail, so switching it off is quieting the inbox,

@@ -29,7 +29,10 @@ public class Marketplace : EndpointGroupBase
 {
     public override void Map(WebApplication app)
     {
-        var group = app.MapGroup(this);
+        // The whole group, not just the anonymous half: an authenticated
+        // customer hits the same expensive search.
+        var group = app.MapGroup(this)
+            .RequireRateLimiting(RateLimitPolicies.PublicBrowse);
 
         group
             .MapGet(SearchCars, "cars")

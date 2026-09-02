@@ -444,8 +444,8 @@
   bottom: var(--sp-2);
   padding: 1px 5px;
   border-radius: var(--r-xs);
-  background: rgba(15, 23, 42, 0.72);
-  color: #fff;
+  background: var(--scrim);
+  color: var(--on-accent);
   font-size: var(--fs-micro);
 }
 

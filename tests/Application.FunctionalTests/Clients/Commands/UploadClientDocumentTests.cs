@@ -304,9 +304,13 @@ public class UploadClientDocumentTests : BaseTestFixture
     {
         await RunAsAgencyAdministratorAsync();
 
+        // Above UploadClientDocumentCommandValidator's 15 MB ceiling. The test
+        // used to send 6 MB, which stopped being oversized when the limit was
+        // raised — it then reached the handler and failed on the client lookup
+        // instead, which looked like a passing size check.
         var command = MakeUpload(1, ClientDocumentType.CIN) with
         {
-            Length = 6 * 1024 * 1024
+            Length = 16 * 1024 * 1024
         };
 
         await FluentActions.Invoking(() =>

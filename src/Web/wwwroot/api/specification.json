@@ -1710,6 +1710,161 @@
         }
       }
     },
+    "/api/Cars/unavailabilities": {
+      "get": {
+        "tags": [
+          "Cars"
+        ],
+        "operationId": "GetCarUnavailabilities",
+        "parameters": [
+          {
+            "name": "carId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "nullable": true
+            },
+            "x-position": 1
+          },
+          {
+            "name": "includePast",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "nullable": true
+            },
+            "x-position": 2
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CarUnavailabilityDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Cars/{id}/unavailabilities": {
+      "post": {
+        "tags": [
+          "Cars"
+        ],
+        "operationId": "CreateCarUnavailability",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          }
+        ],
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCarUnavailabilityCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 2
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/Cars/unavailabilities/{unavailabilityId}": {
+      "put": {
+        "tags": [
+          "Cars"
+        ],
+        "operationId": "UpdateCarUnavailability",
+        "parameters": [
+          {
+            "name": "unavailabilityId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          }
+        ],
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCarUnavailabilityCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 2
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "400": {
+            "description": ""
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Cars"
+        ],
+        "operationId": "DeleteCarUnavailability",
+        "parameters": [
+          {
+            "name": "unavailabilityId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        }
+      }
+    },
     "/api/Chat/threads": {
       "get": {
         "tags": [
@@ -6073,6 +6228,46 @@
         }
       }
     },
+    "/api/Rentings/{id}/deposit": {
+      "put": {
+        "tags": [
+          "Rentings"
+        ],
+        "operationId": "SettleRentingDeposit",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          }
+        ],
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SettleRentingDepositCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 2
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "400": {
+            "description": ""
+          }
+        }
+      }
+    },
     "/api/Reservations": {
       "get": {
         "tags": [
@@ -7224,6 +7419,10 @@
             "type": "integer",
             "format": "int32"
           },
+          "clientDocumentExpiryLeadDays": {
+            "type": "integer",
+            "format": "int32"
+          },
           "notifyStaffByEmail": {
             "type": "boolean"
           },
@@ -7237,6 +7436,18 @@
           "clientReminderDaysBeforeEnd": {
             "type": "integer",
             "format": "int32"
+          },
+          "taxIdentifier": {
+            "type": "string",
+            "nullable": true
+          },
+          "vatRatePercent": {
+            "type": "number",
+            "format": "decimal"
+          },
+          "fiscalStampAmount": {
+            "type": "number",
+            "format": "decimal"
           }
         }
       },
@@ -7298,6 +7509,10 @@
             "type": "integer",
             "format": "int32"
           },
+          "clientDocumentExpiryLeadDays": {
+            "type": "integer",
+            "format": "int32"
+          },
           "notifyStaffByEmail": {
             "type": "boolean"
           },
@@ -7311,6 +7526,18 @@
           "clientReminderDaysBeforeEnd": {
             "type": "integer",
             "format": "int32"
+          },
+          "taxIdentifier": {
+            "type": "string",
+            "nullable": true
+          },
+          "vatRatePercent": {
+            "type": "number",
+            "format": "decimal"
+          },
+          "fiscalStampAmount": {
+            "type": "number",
+            "format": "decimal"
           }
         }
       },
@@ -8729,6 +8956,110 @@
           3
         ]
       },
+      "CarUnavailabilityDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "carId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "carMatricule": {
+            "type": "string",
+            "nullable": true
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "reason": {
+            "$ref": "#/components/schemas/CarUnavailabilityReason"
+          },
+          "note": {
+            "type": "string",
+            "nullable": true
+          },
+          "isCurrent": {
+            "type": "boolean"
+          }
+        }
+      },
+      "CarUnavailabilityReason": {
+        "type": "integer",
+        "description": "",
+        "x-enumNames": [
+          "Maintenance",
+          "Repair",
+          "Administrative",
+          "InternalUse",
+          "Other"
+        ],
+        "enum": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "CreateCarUnavailabilityCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "carId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "reason": {
+            "$ref": "#/components/schemas/CarUnavailabilityReason"
+          },
+          "note": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "UpdateCarUnavailabilityCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "reason": {
+            "$ref": "#/components/schemas/CarUnavailabilityReason"
+          },
+          "note": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
       "PaginatedListOfChatThreadDto": {
         "type": "object",
         "additionalProperties": false,
@@ -9014,6 +9345,27 @@
             "format": "int32",
             "nullable": true
           },
+          "cinExpiryDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "passeportExpiryDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "drivingLicenceExpiryDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "isDrivingLicenceExpired": {
+            "type": "boolean"
+          },
+          "hasExpiredDocument": {
+            "type": "boolean"
+          },
           "cinImageUrl": {
             "type": "string",
             "nullable": true
@@ -9108,6 +9460,11 @@
             "format": "int32",
             "nullable": true
           },
+          "cinExpiryDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
           "passeportNumber": {
             "type": "string",
             "nullable": true
@@ -9126,6 +9483,11 @@
             "format": "int32",
             "nullable": true
           },
+          "passeportExpiryDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
           "drivingLicenceNumber": {
             "type": "string",
             "nullable": true
@@ -9142,6 +9504,11 @@
           "drivingLicenceDeliveranceCountryId": {
             "type": "integer",
             "format": "int32",
+            "nullable": true
+          },
+          "drivingLicenceExpiryDate": {
+            "type": "string",
+            "format": "date-time",
             "nullable": true
           },
           "description": {
@@ -9205,6 +9572,11 @@
             "format": "int32",
             "nullable": true
           },
+          "cinExpiryDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
           "passeportNumber": {
             "type": "string",
             "nullable": true
@@ -9223,6 +9595,11 @@
             "format": "int32",
             "nullable": true
           },
+          "passeportExpiryDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
           "drivingLicenceNumber": {
             "type": "string",
             "nullable": true
@@ -9239,6 +9616,11 @@
           "drivingLicenceDeliveranceCountryId": {
             "type": "integer",
             "format": "int32",
+            "nullable": true
+          },
+          "drivingLicenceExpiryDate": {
+            "type": "string",
+            "format": "date-time",
             "nullable": true
           },
           "description": {
@@ -10246,6 +10628,11 @@
             "format": "int32",
             "nullable": true
           },
+          "unavailabilityId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
           "carId": {
             "type": "integer",
             "format": "int32",
@@ -10284,6 +10671,19 @@
               }
             ]
           },
+          "unavailabilityReason": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/CarUnavailabilityReason"
+              }
+            ]
+          },
+          "until": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
           "isLate": {
             "type": "boolean"
           }
@@ -10295,12 +10695,14 @@
         "x-enumNames": [
           "Pickup",
           "Return",
-          "ReservationStart"
+          "ReservationStart",
+          "UnavailabilityStart"
         ],
         "enum": [
           1,
           2,
-          3
+          3,
+          4
         ]
       },
       "ReservationStatus": {
@@ -11142,6 +11544,46 @@
               }
             ]
           },
+          "netAmount": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/MoneyDto"
+              }
+            ]
+          },
+          "vatRatePercent": {
+            "type": "number",
+            "format": "decimal"
+          },
+          "vatAmount": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/MoneyDto"
+              }
+            ]
+          },
+          "fiscalStampAmount": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/MoneyDto"
+              }
+            ]
+          },
+          "totalDue": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/MoneyDto"
+              }
+            ]
+          },
+          "taxIdentifier": {
+            "type": "string",
+            "nullable": true
+          },
           "documentUrl": {
             "type": "string",
             "nullable": true
@@ -11946,7 +12388,8 @@
           "ReservationUpcoming",
           "RentingStartingSoon",
           "RentingEndingSoon",
-          "RentingLateNotice"
+          "RentingLateNotice",
+          "ClientDocumentExpiring"
         ],
         "enum": [
           1,
@@ -11954,7 +12397,8 @@
           3,
           4,
           5,
-          6
+          6,
+          7
         ]
       },
       "NotificationSubject": {
@@ -12597,6 +13041,30 @@
               }
             ]
           },
+          "depositAmount": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/MoneyDto"
+              }
+            ]
+          },
+          "depositRetainedAmount": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/MoneyDto"
+              }
+            ]
+          },
+          "depositSettledAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "hasUnsettledDeposit": {
+            "type": "boolean"
+          },
           "fees": {
             "nullable": true,
             "oneOf": [
@@ -12864,6 +13332,9 @@
             "additionalProperties": {
               "type": "string"
             }
+          },
+          "acknowledgeExpiredDocuments": {
+            "type": "boolean"
           }
         }
       },
@@ -12913,6 +13384,11 @@
             "format": "int32",
             "nullable": true
           },
+          "cinExpiryDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
           "passeportNumber": {
             "type": "string",
             "nullable": true
@@ -12931,6 +13407,11 @@
             "format": "int32",
             "nullable": true
           },
+          "passeportExpiryDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
           "drivingLicenceNumber": {
             "type": "string",
             "nullable": true
@@ -12947,6 +13428,11 @@
           "drivingLicenceDeliveranceCountryId": {
             "type": "integer",
             "format": "int32",
+            "nullable": true
+          },
+          "drivingLicenceExpiryDate": {
+            "type": "string",
+            "format": "date-time",
             "nullable": true
           },
           "description": {
@@ -13075,6 +13561,31 @@
             "items": {
               "$ref": "#/components/schemas/RentingFeePayload"
             }
+          },
+          "depositSettlement": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/DepositSettlementPayload"
+              }
+            ]
+          }
+        }
+      },
+      "DepositSettlementPayload": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "retainedAmount": {
+            "type": "number",
+            "format": "decimal"
+          },
+          "refundMethod": {
+            "$ref": "#/components/schemas/PaymentMethod"
+          },
+          "note": {
+            "type": "string",
+            "nullable": true
           }
         }
       },
@@ -13140,6 +13651,24 @@
           },
           "refundMethod": {
             "$ref": "#/components/schemas/PaymentMethod"
+          }
+        }
+      },
+      "SettleRentingDepositCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "rentingId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "rowVersion": {
+            "type": "string",
+            "format": "byte",
+            "nullable": true
+          },
+          "settlement": {
+            "$ref": "#/components/schemas/DepositSettlementPayload"
           }
         }
       },

@@ -163,6 +163,9 @@
   <data name="Validation.Client.LicenceIssueDateFuture" xml:space="preserve">
     <value>La date de délivrance du permis ne peut pas être dans le futur.</value>
   </data>
+  <data name="Validation.Client.ExpiryBeforeIssue" xml:space="preserve">
+    <value>La date d'expiration doit être postérieure à la date de délivrance.</value>
+  </data>
   <data name="Validation.Client.LicenceIssueDateBeforeBirth" xml:space="preserve">
     <value>La date de délivrance du permis ne peut pas précéder la date de naissance.</value>
   </data>
@@ -174,6 +177,9 @@
   </data>
   <data name="Validation.Booking.EndAfterStart" xml:space="preserve">
     <value>La date de fin doit être postérieure à la date de début.</value>
+  </data>
+  <data name="Validation.Renting.DriverLicenceExpired" xml:space="preserve">
+    <value>Le permis de {0} a expiré le {1}. Enregistrez un permis valide, ou confirmez l'avoir vu pour louer quand même.</value>
   </data>
   <data name="Validation.Payment.SingleTarget" xml:space="preserve">
     <value>Un paiement doit se rattacher à une seule location, réservation ou client.</value>
@@ -673,6 +679,9 @@
   <data name="Document.Lessor" xml:space="preserve">
     <value>Loueur</value>
   </data>
+  <data name="Document.TaxIdentifier" xml:space="preserve">
+    <value>Matricule fiscal</value>
+  </data>
   <data name="Document.Renter" xml:space="preserve">
     <value>Locataire</value>
   </data>
@@ -757,8 +766,20 @@
   <data name="Document.Fee.Other" xml:space="preserve">
     <value>Frais supplémentaires</value>
   </data>
+  <data name="Document.NetAmount" xml:space="preserve">
+    <value>Montant HT</value>
+  </data>
+  <data name="Document.VatAmount" xml:space="preserve">
+    <value>TVA {0} %</value>
+  </data>
+  <data name="Document.FiscalStamp" xml:space="preserve">
+    <value>Timbre fiscal</value>
+  </data>
+  <data name="Document.TotalDue" xml:space="preserve">
+    <value>Net à payer</value>
+  </data>
   <data name="Document.Total" xml:space="preserve">
-    <value>Total</value>
+    <value>Total TTC</value>
   </data>
   <data name="Document.AmountPaid" xml:space="preserve">
     <value>Déjà réglé</value>
@@ -906,6 +927,42 @@
   </data>
   <data name="Notification.rentingOverdue.Body" xml:space="preserve">
     <value>{{car}} devait être rendue le {{endDate}} et ne l'a pas été — {{days}} jour(s) de retard. Locataire : {{client}}.</value>
+  </data>
+  <data name="Notification.clientLicenceExpiring.Subject" xml:space="preserve">
+    <value>Le permis de {{client}} arrive à échéance</value>
+  </data>
+  <data name="Notification.clientLicenceExpiring.Body" xml:space="preserve">
+    <value>Le permis de conduire de {{client}} expire le {{expiryDate}}, dans {{days}} jour(s). Demandez le permis renouvelé avant sa prochaine location.</value>
+  </data>
+  <data name="Notification.clientLicenceExpired.Subject" xml:space="preserve">
+    <value>Le permis de {{client}} est périmé</value>
+  </data>
+  <data name="Notification.clientLicenceExpired.Body" xml:space="preserve">
+    <value>Le permis de conduire de {{client}} a expiré le {{expiryDate}}, il y a {{days}} jour(s). Ne remettez pas de véhicule avant d'avoir un permis valide au dossier : l'assurance peut refuser sa garantie sur un permis périmé.</value>
+  </data>
+  <data name="Notification.clientCinExpiring.Subject" xml:space="preserve">
+    <value>La CIN de {{client}} arrive à échéance</value>
+  </data>
+  <data name="Notification.clientCinExpiring.Body" xml:space="preserve">
+    <value>La carte d'identité de {{client}} expire le {{expiryDate}}, dans {{days}} jour(s).</value>
+  </data>
+  <data name="Notification.clientCinExpired.Subject" xml:space="preserve">
+    <value>La CIN de {{client}} est périmée</value>
+  </data>
+  <data name="Notification.clientCinExpired.Body" xml:space="preserve">
+    <value>La carte d'identité de {{client}} a expiré le {{expiryDate}}, il y a {{days}} jour(s). Demandez une copie à jour.</value>
+  </data>
+  <data name="Notification.clientPasseportExpiring.Subject" xml:space="preserve">
+    <value>Le passeport de {{client}} arrive à échéance</value>
+  </data>
+  <data name="Notification.clientPasseportExpiring.Body" xml:space="preserve">
+    <value>Le passeport de {{client}} expire le {{expiryDate}}, dans {{days}} jour(s).</value>
+  </data>
+  <data name="Notification.clientPasseportExpired.Subject" xml:space="preserve">
+    <value>Le passeport de {{client}} est périmé</value>
+  </data>
+  <data name="Notification.clientPasseportExpired.Body" xml:space="preserve">
+    <value>Le passeport de {{client}} a expiré le {{expiryDate}}, il y a {{days}} jour(s). Demandez une copie à jour.</value>
   </data>
   <data name="Notification.reservationUpcoming.Subject" xml:space="preserve">
     <value>Départ à préparer : {{car}}</value>

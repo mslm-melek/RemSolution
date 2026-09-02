@@ -27,14 +27,17 @@ namespace RemSolution.Application.Features.Client.Commands.CreateClientCommand
         public DateTime? CINDeliveranceDate { get; init; }
         public string? CINDeliverancePlace { get; init; }
         public int? CINDeliveranceCountryId { get; init; }
+        public DateTime? CINExpiryDate { get; init; }
         public string? PasseportNumber { get; init; }
         public DateTime? PasseportDeliveranceDate { get; init; }
         public string? PasseportDeliverancePlace { get; init; }
         public int? PasseportDeliveranceCountryId { get; init; }
+        public DateTime? PasseportExpiryDate { get; init; }
         public string? DrivingLicenceNumber { get; init; }
         public DateTime? DrivingLicenceDeliveranceDate { get; init; }
         public string? DrivingLicenceDeliverancePlace { get; init; }
         public int? DrivingLicenceDeliveranceCountryId { get; init; }
+        public DateTime? DrivingLicenceExpiryDate { get; init; }
         // The document image URLs are deliberately absent: they are owned by
         // UploadClientDocumentCommand, which manages the stored files'
         // lifecycle. Accepting them here would let callers plant arbitrary
@@ -83,6 +86,9 @@ namespace RemSolution.Application.Features.Client.Commands.CreateClientCommand
                 DrivingLicenceDeliveranceDate = request.DrivingLicenceDeliveranceDate,
                 DrivingLicenceDeliverancePlace = request.DrivingLicenceDeliverancePlace,
                 DrivingLicenceDeliveranceCountryId = request.DrivingLicenceDeliveranceCountryId,
+                CINExpiryDate = request.CINExpiryDate,
+                PasseportExpiryDate = request.PasseportExpiryDate,
+                DrivingLicenceExpiryDate = request.DrivingLicenceExpiryDate,
                 Description = request.Description
             };
 

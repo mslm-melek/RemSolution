@@ -33,7 +33,7 @@
         <mat-form-field appearance="outline">
           <mat-label>{{ t('common.method') }}</mat-label>
           <mat-select formControlName="method">
-            <mat-option *ngFor="let m of paymentMethods" [value]="m.value">{{ t(m.labelKey) }}</mat-option>
+            <mat-option *ngFor="let m of paymentMethods" [value]="m">{{ t(paymentMethodLabelKey(m)) }}</mat-option>
           </mat-select>
         </mat-form-field>
 

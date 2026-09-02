@@ -1,4 +1,4 @@
-{
+﻿{
   "language": {
     "label": "اللغة",
     "en": "English",
@@ -103,7 +103,6 @@
     "extraServiceTypes": "أنواع الخدمات الإضافية",
     "expenseTypes": "أنواع المصاريف",
     "browseCars": "تصفّح السيارات",
-    "myReservations": "حجوزاتي",
     "cars": "السيارات",
     "reservations": "الحجوزات",
     "rentings": "عمليات الكراء",
@@ -120,10 +119,10 @@
     "credits": "المدفوعات والأرصدة",
     "chat": "المحادثة",
     "myChats": "رسائلي",
+    "myTrips": "رحلاتي",
     "bookings": "الحجوزات والكراء",
     "finance": "المالية",
     "clientsList": "كل العملاء",
-    "myRentings": "إيجاراتي",
     "myAgency": "وكالتي",
     "mainLabel": "التنقل الرئيسي"
   },
@@ -132,11 +131,14 @@
     "welcomeTagline": "أدِر أسطولك وعملاءك وحجوزاتك من مكان واحد.",
     "signIn": "تسجيل الدخول",
     "createAccount": "إنشاء حساب",
-    "customerTitle": "مرحبًا",
-    "customerTitleNamed": "مرحبًا، {{ name }}",
-    "customerTagline": "ابحث عن سيارة واحجزها من أي من وكالاتنا.",
-    "browseCars": "تصفّح السيارات",
-    "myReservations": "حجوزاتي",
+    "steps": {
+      "oneTitle": "اختر تواريخك",
+      "oneText": "حدّد موعد سفرك ومكان استلام السيارة. لا نعرض إلا السيارات المتاحة فعلًا في تلك الأيام.",
+      "twoTitle": "احجز في دقائق",
+      "twoText": "تستلم الوكالة طلبك وتردّ عليه، وتبقى السيارة محجوزة لك حتى ذلك الحين.",
+      "threeTitle": "انطلق",
+      "threeText": "توجّه إلى الوكالة برخصة السياقة وبطاقة هويتك، واستلم سيارتك."
+    },
     "showcaseTitle": "سيارات مختارة",
     "showcaseSeeAll": "عرض كل السيارات",
     "showcasePrevious": "السيارة السابقة",
@@ -372,6 +374,27 @@
     "modelRequired": "الطراز مطلوب.",
     "dailyRateMin": "يجب أن يكون السعر اليومي أكبر من 0.",
     "firstCirculationRequired": "تاريخ أول تسجيل مطلوب.",
+    "unavailability": {
+      "title": "خارج الخدمة",
+      "declare": "تحديد فترة",
+      "newTitle": "تحديد فترة خارج الخدمة",
+      "editTitle": "تعديل الفترة",
+      "from": "غير متوفّرة من",
+      "backOn": "تعود في",
+      "periodInvalid": "يجب أن يكون تاريخ العودة بعد تاريخ المغادرة.",
+      "reasonLabel": "السبب",
+      "note": "ملاحظة",
+      "blocksBookingsHint": "هذه التواريخ تمنع كراء السيارة، هنا وفي سوق العروض. تُرفض أي فترة تتقاطع مع حجز قائم: انقلوا الحجز أولاً.",
+      "currentlyAway": "خارج الخدمة الآن",
+      "empty": "لا شيء محدَّد. أضيفوا فترة عند دخول السيارة إلى الورشة.",
+      "reason": {
+        "maintenance": "صيانة",
+        "repair": "إصلاح",
+        "administrative": "فحص فني أو وثائق",
+        "internalUse": "استعمال الوكالة",
+        "other": "أخرى"
+      }
+    },
     "schedule": {
       "title": "الصيانة والأوراق",
       "hint": "كل نوع يتبع القاعدة العامة للأسطول. أشّر على نوع لتمنح هذه السيارة قيمها الخاصة.",
@@ -472,6 +495,10 @@
     "cinSection": "بطاقة التعريف",
     "cinNumber": "رقم بطاقة التعريف",
     "issueDate": "تاريخ الإصدار",
+    "expiryDate": "صالح إلى",
+    "licenceExpiredTitle": "رخصة السياقة هذه منتهية الصلاحية.",
+    "licenceExpiredHint": "سجّلوا الرخصة المجدَّدة. سيُرفض أي كراء إلى ذلك الحين، أو إلى أن تؤكّدوا في المكتب أنكم رأيتم رخصة سارية.",
+    "documentsExpired": "وثيقة منتهية",
     "issuePlace": "مكان الإصدار",
     "issueCountry": "بلد الإصدار",
     "passeport": "جواز السفر",
@@ -573,6 +600,16 @@
     "noExtraServices": "لا توجد خدمات إضافية.",
     "returnFees": "مصاريف عند الإرجاع",
     "returnFeesHint": "أضف سطرا إذا رجعت السيارة بمصاريف: تأخير، أضرار، كيلومترات إضافية…",
+    "depositTitle": "الضمان",
+    "depositHeld": "تحتفظون بـ {{amount}} {{currency}} مقابل هذه السيارة.",
+    "depositSettleNow": "تسوية الضمان الآن",
+    "depositRetained": "المبلغ المحتفظ به",
+    "depositRetainedHint": "0 يعني إرجاع كامل الضمان.",
+    "depositRetainedTooHigh": "لا يمكنكم الاحتفاظ بأكثر من {{amount}} {{currency}} المودعة.",
+    "depositRefundMethod": "الإرجاع عبر",
+    "depositRefundAmount": "يُرجَع {{amount}} {{currency}} إلى الحريف، ويُسجَّل كإرجاع مبلغ.",
+    "depositNote": "الملاحظة",
+    "depositDeferHint": "يبقى الضمان معلّقاً وسيظهر كغير مسوّى إلى أن تسوّوه.",
     "noReturnFees": "لا توجد مصاريف عند الإرجاع.",
     "addFee": "إضافة مصاريف",
     "feeKindLabel": "السبب",
@@ -614,6 +651,12 @@
     "generateFacture": "إصدار الفاتورة",
     "noContracts": "لم يتم إصدار أي عقد.",
     "noFactures": "لم يتم إصدار أي فاتورة.",
+    "factureNet": "المبلغ دون الأداء",
+    "factureVat": "الأداء {{rate}} %",
+    "factureGross": "المجموع بالأداء",
+    "factureStamp": "الطابع الجبائي",
+    "factureTotalDue": "الصافي للدفع",
+    "factureNoTaxId": "هذه الفاتورة لا تحمل معرّفاً جبائياً. أضيفوه في «وكالتي ← الجباية» لتكون الفاتورة القادمة قابلة للخصم لدى حريف مهني.",
     "clientDetails": "بطاقة العميل",
     "clientReadOnly": "يمكنك الاطلاع على بطاقة هذا العميل دون تعديلها.",
     "clientPapers": "وثائق الهوية",
@@ -722,6 +765,7 @@
     "awaitingYou": "هذا الحجز ينتظر ردك"
   },
   "marketplace": {
+    "myTrips": "رحلاتي",
     "findYourCar": "ابحث عن سيارتك",
     "findSubtitle": "تصفّح السيارات المتاحة في كل وكالاتنا واحجز في دقائق.",
     "country": "البلد",
@@ -1361,6 +1405,8 @@
       "expenseDueLeadKmHint": "لأنواع المصاريف التي تتكرّر بالمسافة (الصيانة…).",
       "reservationLeadDays": "التنبيه بالتسليمات قبل عدد الأيام",
       "reservationLeadDaysHint": "الحجوزات المؤكّدة التي تبدأ قريباً.",
+      "documentExpiryLeadDays": "وثائق الحرفاء (أيام)",
+      "documentExpiryLeadDaysHint": "تنبيه قبل انتهاء بطاقة تعريف أو جواز سفر أو رخصة سياقة.",
       "notifyStaffByEmail": "إرسال هذه التنبيهات أيضاً بالبريد إلى الموظفين",
       "notifyStaffByEmailHint": "تظهر دائماً في التطبيق؛ هذا يضيف البريد الإلكتروني.",
       "notifyClientsByEmail": "إرسال بريد إلى الحرفاء بشأن حجوزاتهم",
@@ -1369,6 +1415,17 @@
       "beforeEnd": "الأيام قبل النهاية",
       "zeroIsOff": "0 يعطّل هذا التذكير.",
       "lateNoticeNote": "إشعارات التأخير ليست آلية أبداً: تُرسلونها من صفحات الحرفاء."
+    },
+    "tax": {
+      "title": "الجباية",
+      "intro": "ما يجب أن تحمله كل فاتورة تُصدرونها. كل فاتورة صادرة تحفظ نسختها الخاصة، لذا تعديل هذه القيم يؤثّر على الفاتورة القادمة لا على الصادرة سابقاً.",
+      "identifier": "المعرّف الجبائي",
+      "identifierHint": "يُطبع على كل عقد وكل فاتورة.",
+      "vatRate": "نسبة الأداء (%)",
+      "vatRateHint": "0 للوكالة المعفاة.",
+      "fiscalStamp": "الطابع الجبائي",
+      "fiscalStampHint": "مبلغ ثابت يُضاف إلى المجموع. 0 إن لم يكن هناك.",
+      "inclusiveNote": "الأسعار اليومية والمصاريف التي تُدخلونها بالأداء. الفاتورة تحسب المبلغ دون الأداء تلقائياً."
     }
   },
   "branch": {
@@ -1428,7 +1485,8 @@
       "3": "التسليمات القادمة",
       "4": "تذكيرات الحرفاء",
       "5": "تذكيرات الحرفاء",
-      "6": "إشعارات التأخير"
+      "6": "إشعارات التأخير",
+      "7": "وثائق الحرفاء"
     },
     "message": {
       "carExpenseDueByDate": "{{type}} تستحق للسيارة {{car}} في {{dueDate}} — بعد {{days}} يوم.",
@@ -1440,7 +1498,13 @@
       "clientRentingStartingSoon": "تم إرسال تذكير إلى الحريف: إيجاره للسيارة {{car}} يبدأ في {{startDate}}.",
       "clientRentingEndingSoon": "تم إرسال تذكير إلى الحريف: إيجاره للسيارة {{car}} ينتهي في {{endDate}}.",
       "clientReservationStartingSoon": "تم إرسال تذكير إلى الحريف: حجزه للسيارة {{car}} يبدأ في {{startDate}}.",
-      "clientRentingLateNotice": "تم إرسال إشعار تأخير إلى الحريف بشأن {{car}}، المقرّر إرجاعها في {{endDate}}."
+      "clientRentingLateNotice": "تم إرسال إشعار تأخير إلى الحريف بشأن {{car}}، المقرّر إرجاعها في {{endDate}}.",
+      "clientLicenceExpiring": "تنتهي رخصة سياقة {{client}} في {{expiryDate}} — بعد {{days}} يوم.",
+      "clientLicenceExpired": "انتهت رخصة سياقة {{client}} في {{expiryDate}} — منذ {{days}} يوم. لا تسلّموا السيارة قبل إيداع رخصة سارية.",
+      "clientCinExpiring": "تنتهي بطاقة تعريف {{client}} في {{expiryDate}} — بعد {{days}} يوم.",
+      "clientCinExpired": "انتهت بطاقة تعريف {{client}} في {{expiryDate}} — منذ {{days}} يوم.",
+      "clientPasseportExpiring": "ينتهي جواز سفر {{client}} في {{expiryDate}} — بعد {{days}} يوم.",
+      "clientPasseportExpired": "انتهى جواز سفر {{client}} في {{expiryDate}} — منذ {{days}} يوم."
     }
   },
   "calendar": {

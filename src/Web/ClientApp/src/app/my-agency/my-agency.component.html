@@ -145,6 +145,12 @@
               <input matInput type="number" formControlName="reservationUpcomingLeadDays" min="0" max="365" />
               <mat-hint>{{ t('myAgency.notifications.reservationLeadDaysHint') }}</mat-hint>
             </mat-form-field>
+
+            <mat-form-field appearance="outline" subscriptSizing="dynamic">
+              <mat-label>{{ t('myAgency.notifications.documentExpiryLeadDays') }}</mat-label>
+              <input matInput type="number" formControlName="clientDocumentExpiryLeadDays" min="0" max="365" />
+              <mat-hint>{{ t('myAgency.notifications.documentExpiryLeadDaysHint') }}</mat-hint>
+            </mat-form-field>
           </div>
 
           <div class="switch-row">
@@ -185,6 +191,41 @@
           <div class="info-banner">
             <mat-icon>outgoing_mail</mat-icon>
             {{ t('myAgency.notifications.lateNoticeNote') }}
+          </div>
+        </section>
+
+        <!-- Tax. What turns a generated PDF into an invoice an accountant can
+             file and a professional client can deduct. -->
+        <section class="settings-section">
+          <h3 class="section-title">{{ t('myAgency.tax.title') }}</h3>
+          <p class="settings-hint">{{ t('myAgency.tax.intro') }}</p>
+
+          <div class="field-grid">
+            <mat-form-field appearance="outline" subscriptSizing="dynamic">
+              <mat-label>{{ t('myAgency.tax.identifier') }}</mat-label>
+              <input matInput formControlName="taxIdentifier" maxlength="40" />
+              <mat-hint>{{ t('myAgency.tax.identifierHint') }}</mat-hint>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" subscriptSizing="dynamic">
+              <mat-label>{{ t('myAgency.tax.vatRate') }}</mat-label>
+              <input matInput type="number" formControlName="vatRatePercent" min="0" max="100" step="0.01" />
+              <mat-hint>{{ t('myAgency.tax.vatRateHint') }}</mat-hint>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" subscriptSizing="dynamic">
+              <mat-label>{{ t('myAgency.tax.fiscalStamp') }}</mat-label>
+              <input matInput type="number" formControlName="fiscalStampAmount" min="0" step="0.01" />
+              <mat-hint>{{ t('myAgency.tax.fiscalStampHint') }}</mat-hint>
+            </mat-form-field>
+          </div>
+
+          <!-- The decision behind every stored amount, said out loud where it is
+               relevant: an agency that read this as net would price everything
+               wrong, and there is no switch to change it. -->
+          <div class="info-banner">
+            <mat-icon>receipt_long</mat-icon>
+            {{ t('myAgency.tax.inclusiveNote') }}
           </div>
         </section>
 

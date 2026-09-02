@@ -58,6 +58,7 @@ import { MarketplaceSearchComponent } from './marketplace/marketplace-search.com
 import { MarketplaceCarComponent } from './marketplace/marketplace-car.component';
 import { MarketplaceAgencyComponent } from './marketplace/marketplace-agency.component';
 import { MarketplaceMapComponent } from './marketplace/marketplace-map.component';
+import { MyBookingsComponent } from './marketplace/my-bookings.component';
 import { MyReservationsComponent } from './marketplace/my-reservations.component';
 import { MyRentingsComponent } from './marketplace/my-rentings.component';
 import { MyChatsComponent } from './marketplace/my-chats.component';
@@ -69,8 +70,10 @@ import { MapPickerComponent } from './shared/map-picker.component';
 import { BranchesEditorComponent } from './shared/branches-editor.component';
 import { PaymentDialogComponent } from './shared/payment-dialog.component';
 import { ReturnDialogComponent } from './shared/return-dialog.component';
+import { CarUnavailabilityDialogComponent } from './car/car-unavailability-dialog.component';
 import { CancelDialogComponent } from './shared/cancel-dialog.component';
 import { DateFieldComponent } from './shared/date-field.component';
+import { StickToBottomDirective } from './shared/stick-to-bottom.directive';
 import { AppDateAdapter, APP_DATE_FORMATS } from './shared/date-adapter';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { MatButtonModule } from '@angular/material/button';
@@ -129,6 +132,13 @@ function toBookings(tab: 'reservations' | null): RedirectFunction {
   });
 }
 
+/** The same, for the customer's own two lists (see MyBookingsComponent). */
+function toMyBookings(tab: 'rentings' | null): RedirectFunction {
+  return route => inject(Router).createUrlTree(['/my-bookings'], {
+    queryParams: tab === null ? route.queryParams : { ...route.queryParams, tab }
+  });
+}
+
 @NgModule({
   declarations: [
     AppComponent,
@@ -177,6 +187,7 @@ function toBookings(tab: 'reservations' | null): RedirectFunction {
     MarketplaceCarComponent,
     MarketplaceAgencyComponent,
     MarketplaceMapComponent,
+    MyBookingsComponent,
     MyReservationsComponent,
     MyRentingsComponent,
     MyChatsComponent,
@@ -188,8 +199,10 @@ function toBookings(tab: 'reservations' | null): RedirectFunction {
     BranchesEditorComponent,
     PaymentDialogComponent,
     ReturnDialogComponent,
+    CarUnavailabilityDialogComponent,
     CancelDialogComponent,
-    DateFieldComponent
+    DateFieldComponent,
+    StickToBottomDirective
   ],
   bootstrap: [AppComponent],
   imports: [
@@ -271,11 +284,20 @@ function toBookings(tab: 'reservations' | null): RedirectFunction {
       { path: 'document-template/new', component: DocumentTemplateFormComponent },
       { path: 'document-template/:id', component: DocumentTemplateFormComponent },
       { path: 'profile', component: ProfileComponent },
+      // A customer meets this screen as their home (see HomeComponent), so the
+      // route is not theirs: it is how a signed-out visitor searches, where a
+      // car page's "back to search" goes, and how a platform admin looks at the
+      // public marketplace from the console. Not a redirect for that reason —
+      // '' is a different screen for each of those three.
       { path: 'browse', component: MarketplaceSearchComponent },
       { path: 'browse/car/:id', component: MarketplaceCarComponent },
       { path: 'browse/agency/:id', component: MarketplaceAgencyComponent },
-      { path: 'my-reservations', component: MyReservationsComponent },
-      { path: 'my-rentings', component: MyRentingsComponent },
+      // Holds and rentals are one screen for the customer too (see
+      // MyBookingsComponent); the two old routes only redirect onto the half
+      // they used to be, so bookmarks and older links keep working.
+      { path: 'my-bookings', component: MyBookingsComponent },
+      { path: 'my-reservations', redirectTo: toMyBookings(null), pathMatch: 'full' },
+      { path: 'my-rentings', redirectTo: toMyBookings('rentings'), pathMatch: 'full' },
       { path: 'my-chats', component: MyChatsComponent },
 
       // Platform-admin console. The dashboard is the admin's home screen (see

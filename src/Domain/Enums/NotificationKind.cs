@@ -47,5 +47,13 @@ namespace RemSolution.Domain.Enums
         /// late return is worth a letter, so nothing sends this on a schedule.
         /// </summary>
         RentingLateNotice = 6,
+
+        /// <summary>
+        /// A client's identity or driving document is about to expire, or already
+        /// has. The agency's own queue, not the client's: it is the agency that
+        /// cannot legally hand keys to a driver whose licence has lapsed, and it
+        /// is the agency that has to ask them for a new one.
+        /// </summary>
+        ClientDocumentExpiring = 7,
     }
 }

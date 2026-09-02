@@ -12,6 +12,14 @@ public class ReservationConfiguration : IEntityTypeConfiguration<Reservation>
         // per-agency expiry sweep (Pending holds past ExpiresAt).
         builder.HasAgencyTenant(nameof(Reservation.Status), nameof(Reservation.ExpiresAt));
 
+        // The other half of the availability check — see the note on
+        // IX_Rentings_CarId_Dates. Status is included, not keyed, because the
+        // predicate filters on three active statuses out of seven and the date
+        // range is what makes the seek narrow.
+        builder.HasIndex(e => new { e.CarId, e.StartDate, e.EndDate })
+               .HasDatabaseName("IX_Reservations_CarId_Dates")
+               .IncludeProperties(e => new { e.Status, e.AgencyId });
+
         builder.OwnsMoney(e => e.Price, "Price", "PriceCurrency");
         builder.OwnsMoney(e => e.PayedPrice, "PayedPrice", "PayedPriceCurrency");
         builder.OwnsMoney(e => e.DepositAmount, "DepositAmount", "DepositAmountCurrency");

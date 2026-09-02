@@ -68,6 +68,7 @@ public static class DocumentPlaceholderResolver
             [DocumentPlaceholders.AgencyAddress] = Text(agency?.Address),
             [DocumentPlaceholders.AgencyPhone] = Text(agency?.PhoneNumber),
             [DocumentPlaceholders.AgencyEmail] = Text(agency?.Email),
+            [DocumentPlaceholders.AgencyTaxIdentifier] = Text(agency?.TaxIdentifier),
 
             [DocumentPlaceholders.DocumentNumber] = source.Number,
             [DocumentPlaceholders.DocumentIssuedAt] = Date(source.IssuedAt, culture),
@@ -79,6 +80,14 @@ public static class DocumentPlaceholderResolver
             [DocumentPlaceholders.FactureTotal] = Amount(source.Total, currency, culture),
             [DocumentPlaceholders.FactureAmountPaid] = Amount(source.AmountPaid, currency, culture),
             [DocumentPlaceholders.FactureBalanceDue] = Amount(source.BalanceDue, currency, culture),
+
+            [DocumentPlaceholders.FactureNetAmount] = Amount(source.NetAmount, currency, culture),
+            // A rate, not money: printed as "19 %", and without trailing zeros
+            // so a whole-number rate does not read as a suspiciously precise one.
+            [DocumentPlaceholders.FactureVatRate] = Rate(source.VatRatePercent, culture),
+            [DocumentPlaceholders.FactureVatAmount] = Amount(source.VatAmount, currency, culture),
+            [DocumentPlaceholders.FactureFiscalStamp] = Amount(source.FiscalStampAmount, currency, culture),
+            [DocumentPlaceholders.FactureTotalDue] = Amount(source.TotalDue, currency, culture),
         };
 
         return values;
@@ -135,4 +144,12 @@ public static class DocumentPlaceholderResolver
 
     private static string Amount(decimal? value, string currency, CultureInfo culture) =>
         value is decimal amount ? $"{amount.ToString("N2", culture)} {currency}" : string.Empty;
+
+    // "19 %" for a whole rate, "19,25 %" for a fractional one. The narrow no-break
+    // space before the sign is the French and Arabic typographic convention and is
+    // harmless in English.
+    private static string Rate(decimal? value, CultureInfo culture) =>
+        value is decimal rate
+            ? $"{rate.ToString(rate == Math.Truncate(rate) ? "N0" : "N2", culture)} %"
+            : string.Empty;
 }

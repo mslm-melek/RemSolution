@@ -1,0 +1,63 @@
+/* The frame both halves sit in: the title, the way back to the search, and the
+   tabs. Each half brings only its list (see my-reservations / my-rentings). */
+
+.my-bookings {
+  max-width: 880px;
+  margin: 0 auto;
+  padding: var(--sp-6) 0 48px;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  flex-wrap: wrap;
+  margin-bottom: var(--sp-4);
+}
+
+.head h1 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-page);
+  font-weight: var(--fw-medium);
+  letter-spacing: -0.02em;
+}
+
+/* Same underlined tabs as the agency's Bookings screen — one tab vocabulary
+   across the product. */
+.tabs {
+  display: flex;
+  gap: var(--sp-1);
+  border-bottom: 1px solid var(--line);
+  margin-bottom: var(--sp-5);
+}
+
+.tab {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  box-sizing: border-box;
+  padding: var(--sp-3) var(--sp-4);
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: none;
+  color: var(--muted);
+  font: var(--fw-medium) var(--fs-body) / 1 var(--font-body);
+  cursor: pointer;
+}
+
+.tab:hover {
+  color: var(--ink);
+}
+
+.tab.active {
+  color: var(--brand-600);
+  border-bottom-color: var(--brand-600);
+}
+
+.tab .mat-icon {
+  width: 18px;
+  height: 18px;
+  font-size: 18px;
+}

@@ -5,7 +5,9 @@ public sealed record RentalDocumentAgency(
     string Name,
     string? Address,
     string? PhoneNumber,
-    string? Email);
+    string? Email,
+    /// <summary>Tax registration number; blank on the document when unset.</summary>
+    string? TaxIdentifier = null);
 
 /// <summary>A party on the document — the renter or the additional driver.</summary>
 public sealed record RentalDocumentParty(
@@ -70,7 +72,18 @@ public sealed record DocumentDataSource
     /// <summary>The charges the return established (see RentingFee).</summary>
     public decimal? FeesAmount { get; init; }
 
+    /// <summary>Tax-inclusive total of the lines.</summary>
     public decimal? Total { get; init; }
+
     public decimal? AmountPaid { get; init; }
     public decimal? BalanceDue { get; init; }
+
+    /// <summary>The tax breakdown; null on a contract, like the totals above.</summary>
+    public decimal? NetAmount { get; init; }
+    public decimal? VatRatePercent { get; init; }
+    public decimal? VatAmount { get; init; }
+    public decimal? FiscalStampAmount { get; init; }
+
+    /// <summary>Lines plus duty stamp.</summary>
+    public decimal? TotalDue { get; init; }
 }

@@ -149,7 +149,7 @@ main .page.car-detail .header-row {
   inset-inline-end: var(--sp-3);
   padding: 3px 9px;
   border-radius: var(--r-pill);
-  background: rgba(255, 255, 255, 0.94);
+  background: var(--scrim-light);
   color: var(--ink);
   font-size: var(--fs-micro);
   font-weight: var(--fw-medium);
@@ -202,7 +202,7 @@ main .page.car-detail .header-row {
   color: var(--star);
   /* Stars land on light bodywork as often as dark; the shadow keeps it readable
      on both. */
-  text-shadow: 0 1px 2px rgba(15, 23, 42, 0.6);
+  text-shadow: var(--text-shadow-photo);
 }
 
 /* Nothing to show, and where to go about it. */

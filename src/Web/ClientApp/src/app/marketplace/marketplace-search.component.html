@@ -1,4 +1,4 @@
-<div class="marketplace" *transloco="let t">
+﻿<div class="marketplace" *transloco="let t">
   <div class="hero">
     <h1>{{ t('marketplace.findYourCar') }}</h1>
     <p>{{ t('marketplace.findSubtitle') }}</p>
@@ -31,7 +31,7 @@
       <app-date-field class="date" [label]="t('marketplace.returnDate')"
                       [(ngModel)]="endDate"></app-date-field>
       <button mat-flat-button color="primary" (click)="onSearchClick()">
-        <mat-icon>search</mat-icon> {{ t('common.search') }}
+        <mat-icon aria-hidden="true">search</mat-icon> {{ t('common.search') }}
       </button>
     </div>
     <div *ngIf="error" class="error">{{ error }}</div>
@@ -45,10 +45,10 @@
       <mat-button-toggle-group class="view-toggle" [value]="view"
                                [attr.aria-label]="t('marketplace.viewMode')">
         <mat-button-toggle value="list" (click)="setView('list')">
-          <mat-icon>view_list</mat-icon> {{ t('marketplace.viewList') }}
+          <mat-icon aria-hidden="true">view_list</mat-icon> {{ t('marketplace.viewList') }}
         </mat-button-toggle>
         <mat-button-toggle value="map" (click)="setView('map')">
-          <mat-icon>map</mat-icon> {{ t('marketplace.viewMap') }}
+          <mat-icon aria-hidden="true">map</mat-icon> {{ t('marketplace.viewMap') }}
         </mat-button-toggle>
       </mat-button-toggle-group>
     </div>
@@ -70,7 +70,7 @@
                [style.background-image]="car.imageUrl ? 'url(' + car.imageUrl + ')' : null"
                [routerLink]="['/browse/car', car.id]"
                [attr.aria-label]="car.brandName + ' ' + car.modelName">
-              <mat-icon *ngIf="!car.imageUrl">directions_car</mat-icon>
+              <mat-icon aria-hidden="true" *ngIf="!car.imageUrl">directions_car</mat-icon>
             </a>
             <div class="body">
               <a class="model" [routerLink]="['/browse/car', car.id]">{{ car.brandName }} {{ car.modelName }}</a>
@@ -78,7 +78,7 @@
                    sentence rather than as two side-by-side flex columns. -->
               <a class="agency" [routerLink]="['/browse/agency', car.agencyId]"
                  [matTooltip]="t('marketplace.viewAgency')">
-                <mat-icon>place</mat-icon>
+                <mat-icon aria-hidden="true">place</mat-icon>
                 <span>{{ car.agencyName }}<span *ngIf="car.branchName"> · {{ car.branchName }}</span></span>
               </a>
               <!-- The seller's reputation, next to who they are. Hidden entirely
@@ -94,7 +94,7 @@
                   <span class="money">{{ car.dailyRate.amount | number:'1.2-2' }} {{ car.dailyRate.currency }}</span><span class="per">{{ t('marketplace.perDay') }}</span>
                 </span>
                 <a class="book" [routerLink]="['/browse/car', car.id]">
-                  {{ t('marketplace.viewAndBook') }} <mat-icon>arrow_forward</mat-icon>
+                  {{ t('marketplace.viewAndBook') }} <mat-icon aria-hidden="true">arrow_forward</mat-icon>
                 </a>
               </div>
             </div>

@@ -121,6 +121,9 @@ namespace RemSolution.Application.Features.Renting.Booking
                 DrivingLicenceDeliveranceDate = payload.DrivingLicenceDeliveranceDate,
                 DrivingLicenceDeliverancePlace = payload.DrivingLicenceDeliverancePlace,
                 DrivingLicenceDeliveranceCountryId = payload.DrivingLicenceDeliveranceCountryId,
+                CINExpiryDate = payload.CINExpiryDate,
+                PasseportExpiryDate = payload.PasseportExpiryDate,
+                DrivingLicenceExpiryDate = payload.DrivingLicenceExpiryDate,
                 Description = payload.Description
                 // AgencyId is stamped by TenantEntityInterceptor on insert.
             };

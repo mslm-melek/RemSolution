@@ -123,7 +123,7 @@
 
 .step.current {
   background: var(--brand-600);
-  color: #fff;
+  color: var(--on-accent);
   box-shadow: 0 0 0 3px var(--brand-100);
 }
 

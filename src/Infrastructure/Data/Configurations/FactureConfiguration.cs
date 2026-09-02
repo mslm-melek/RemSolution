@@ -17,6 +17,16 @@ public class FactureConfiguration : IEntityTypeConfiguration<Facture>
         builder.OwnsMoney(f => f.ExtraServicesAmount, "ExtraServicesAmount", "ExtraServicesAmountCurrency");
         builder.OwnsMoney(f => f.FeesAmount, "FeesAmount", "FeesAmountCurrency");
         builder.OwnsMoney(f => f.TotalAmount, "TotalAmount", "TotalAmountCurrency");
+        builder.OwnsMoney(f => f.NetAmount, "NetAmount", "NetAmountCurrency");
+        builder.OwnsMoney(f => f.VatAmount, "VatAmount", "VatAmountCurrency");
+        builder.OwnsMoney(f => f.FiscalStampAmount, "FiscalStampAmount", "FiscalStampAmountCurrency");
+        builder.OwnsMoney(f => f.TotalDue, "TotalDue", "TotalDueCurrency");
+
+        // 5,2 covers every real rate (0.00–999.99%) in the smallest column that
+        // does; the default decimal mapping would be 18,2.
+        builder.Property(f => f.VatRatePercent).HasColumnType("decimal(5,2)");
+
+        builder.Property(f => f.TaxIdentifier).HasMaxLength(40);
 
         // See ContractConfiguration: the database owns the numbering invariant.
         builder.HasIndex(f => new { f.AgencyId, f.Year, f.SequenceNumber }).IsUnique();

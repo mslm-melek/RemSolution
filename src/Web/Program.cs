@@ -1,4 +1,5 @@
 using Hangfire;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Options;
@@ -64,10 +65,34 @@ try
     await app.InitialiseDatabaseAsync();
 
     // Configure the HTTP request pipeline.
+
+    // First, so it wraps EVERY middleware below and not just endpoint execution:
+    // the impersonation, password-change and localization middleware all throw,
+    // and registered last this handler never saw them — those became bare 500s
+    // instead of the RFC-7807 body CustomExceptionHandler produces.
+    app.UseExceptionHandler(options => { });
+
     if (!app.Environment.IsDevelopment())
     {
         // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
         app.UseHsts();
+
+        // Behind the App Service front end the socket peer is the ingress, so
+        // without this every caller shares one IP: the rate limiter would
+        // partition the whole internet together and the logs would record the
+        // proxy. ForwardLimit 1 takes only the hop our own front end added, and
+        // the known-proxy lists must be cleared because its address is not
+        // stable or documented.
+        var forwardedHeaders = new ForwardedHeadersOptions
+        {
+            ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto,
+            ForwardLimit = 1,
+        };
+
+        forwardedHeaders.KnownIPNetworks.Clear();
+        forwardedHeaders.KnownProxies.Clear();
+
+        app.UseForwardedHeaders(forwardedHeaders);
     }
 
     app.UseHealthChecks("/health");
@@ -98,6 +123,11 @@ try
     // authentication (needs the principal) and before authorization (so the
     // ambient tenant + impersonation flag are live when endpoint policies run).
     app.UseMiddleware<PlatformAdminImpersonationMiddleware>();
+
+    // After authentication so a signed-in caller is limited as a person rather
+    // than as an address, and after the static-file/health middleware above so
+    // SPA assets and probes never consume a permit.
+    app.UseRemSolutionRateLimiter();
 
     // After authentication so the signed-in user's PreferredLanguage claim can
     // outrank the culture cookie, and before anything that produces user-facing
@@ -169,9 +199,6 @@ try
     }).AllowAnonymous();
 
     app.MapFallbackToFile("index.html");
-
-    app.UseExceptionHandler(options => { });
-
 
     app.MapEndpoints();
 

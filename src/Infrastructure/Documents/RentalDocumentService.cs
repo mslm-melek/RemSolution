@@ -106,6 +106,11 @@ public class RentalDocumentService : IRentalDocumentService
 
         var billing = await BuildBillingAsync(renting, context.Currency, cancellationToken);
 
+        // The lines are tax-inclusive (see AgencySettings' tax section), so the
+        // breakdown is computed backwards out of their total.
+        var tax = TaxBreakdown.FromGross(
+            Money.Of(billing.Total, context.Currency), context.VatRatePercent, context.FiscalStampAmount);
+
         var source = BaseSource(renting, context, number) with
         {
             RentalAmount = billing.Rental,
@@ -113,12 +118,20 @@ public class RentalDocumentService : IRentalDocumentService
             FeesAmount = billing.FeesTotal,
             Total = billing.Total,
             AmountPaid = billing.Paid,
-            BalanceDue = billing.Total - billing.Paid
+            // Against what is owed, stamp included — not against the line total.
+            // The stamp is part of the bill, so a client who has paid the lines
+            // but not the stamp has a balance.
+            BalanceDue = tax.TotalDue.Amount - billing.Paid,
+            NetAmount = tax.Net.Amount,
+            VatRatePercent = tax.VatRatePercent,
+            VatAmount = tax.Vat.Amount,
+            FiscalStampAmount = tax.FiscalStamp.Amount,
+            TotalDue = tax.TotalDue.Amount
         };
 
         var rendered = Resolve(
             template, source, request.ManualValues,
-            billing.Lines(context, _localizer), billing.Totals(context, _localizer));
+            billing.Lines(context, _localizer), billing.Totals(context, tax, _localizer));
 
         var file = await StoreAsync(
             _renderer.Render(rendered), renting.AgencyId, "factures", number,
@@ -135,7 +148,15 @@ public class RentalDocumentService : IRentalDocumentService
             RentalAmount = Money.Of(billing.Rental, context.Currency),
             ExtraServicesAmount = Money.Of(billing.ExtrasTotal, context.Currency),
             FeesAmount = Money.Of(billing.FeesTotal, context.Currency),
-            TotalAmount = Money.Of(billing.Total, context.Currency),
+            TotalAmount = tax.Gross,
+            // Frozen with the document: the rate and the tax number the invoice
+            // was issued under, not whatever the settings say when it is read.
+            NetAmount = tax.Net,
+            VatAmount = tax.Vat,
+            VatRatePercent = tax.VatRatePercent,
+            FiscalStampAmount = tax.FiscalStamp,
+            TotalDue = tax.TotalDue,
+            TaxIdentifier = context.Agency.TaxIdentifier,
             DocumentFile = file,
             Language = context.Language,
             DocumentTemplateId = template.Id,
@@ -271,10 +292,13 @@ public class RentalDocumentService : IRentalDocumentService
 
         return new DocumentContext(
             new RentalDocumentAgency(
-                agency?.Name ?? string.Empty, agency?.Address, agency?.PhoneNumber, agency?.Email),
+                agency?.Name ?? string.Empty, agency?.Address, agency?.PhoneNumber, agency?.Email,
+                settings.TaxIdentifier),
             settings.CurrencyCode,
             _dateTime.GetUtcNow().UtcDateTime,
-            CurrentLanguage());
+            CurrentLanguage(),
+            settings.VatRatePercent,
+            settings.FiscalStampAmount);
     }
 
     // The language of the request that asked for the document; a background caller
@@ -412,7 +436,12 @@ public class RentalDocumentService : IRentalDocumentService
         RentalDocumentAgency Agency,
         string Currency,
         DateTime IssuedAt,
-        string Language);
+        string Language,
+        // Read from the agency's settings here and frozen onto the invoice, so
+        // the two figures a legal document must carry are decided once per
+        // document rather than looked up again by every reader.
+        decimal VatRatePercent,
+        decimal FiscalStampAmount);
 
     private sealed record ExtraLine(string? Label, decimal? Amount);
 
@@ -455,17 +484,54 @@ public class RentalDocumentService : IRentalDocumentService
             return lines;
         }
 
-        public IReadOnlyList<RenderedLineItem> Totals(DocumentContext context, ILocalizer localizer)
+        /// <summary>
+        /// The block under the lines, in the order an invoice is read: what the
+        /// goods cost net, the tax on them, the tax-inclusive total, the duty
+        /// stamp, what is owed, what has been paid, what remains.
+        /// </summary>
+        public IReadOnlyList<RenderedLineItem> Totals(
+            DocumentContext context, TaxBreakdown tax, ILocalizer localizer)
         {
             string Amount(decimal? value) =>
                 DocumentPlaceholderResolver.FormatAmount(value, Currency, context.Language);
 
-            return new List<RenderedLineItem>
+            var totals = new List<RenderedLineItem>();
+
+            // An exempt agency (rate 0) prints no net/tax pair: two identical
+            // figures either side of a zero tax line is noise, and the reader
+            // needs the total, which is below.
+            if (tax.VatRatePercent > 0m)
             {
-                new(localizer["Document.Total"], Amount(Total)),
-                new(localizer["Document.AmountPaid"], Amount(Paid)),
-                new(localizer["Document.BalanceDue"], Amount(Total - Paid)),
-            };
+                totals.Add(new(localizer["Document.NetAmount"], Amount(tax.Net.Amount)));
+                // The rate is in the label, where a reader looks for it, rather
+                // than in a column of its own.
+                totals.Add(new(
+                    localizer["Document.VatAmount", FormatRate(tax.VatRatePercent, context.Language)],
+                    Amount(tax.Vat.Amount)));
+            }
+
+            totals.Add(new(localizer["Document.Total"], Amount(tax.Gross.Amount)));
+
+            // Only where the jurisdiction has one.
+            if (tax.FiscalStamp.Amount > 0m)
+            {
+                totals.Add(new(localizer["Document.FiscalStamp"], Amount(tax.FiscalStamp.Amount)));
+                totals.Add(new(localizer["Document.TotalDue"], Amount(tax.TotalDue.Amount)));
+            }
+
+            totals.Add(new(localizer["Document.AmountPaid"], Amount(Paid)));
+            totals.Add(new(localizer["Document.BalanceDue"], Amount(tax.TotalDue.Amount - Paid)));
+
+            return totals;
+        }
+
+        // "19" / "19,25", in the document's own culture. The label carries the
+        // per-cent sign, so this is the number alone.
+        private static string FormatRate(decimal rate, string language)
+        {
+            var culture = DocumentPlaceholderResolver.CultureFor(language);
+
+            return rate.ToString(rate == Math.Truncate(rate) ? "N0" : "N2", culture);
         }
 
         // "Damage — rear bumper": the kind names the charge, the note says which

@@ -64,7 +64,7 @@ namespace RemSolution.Application.Features.Dashboard.Queries.GetBookingCalendarQ
         public async Task<BookingCalendarDto> Handle(
             GetBookingCalendarQuery request, CancellationToken cancellationToken)
         {
-            var (canRentings, canReservations) = await ModulesAsync(cancellationToken);
+            var (canRentings, canReservations, canCars) = await ModulesAsync(cancellationToken);
 
             var now = _dateTime.GetUtcNow().UtcDateTime;
 
@@ -86,11 +86,13 @@ namespace RemSolution.Application.Features.Dashboard.Queries.GetBookingCalendarQ
             // they are rows, but they are not work.
             var rentingsQuery = _context.Rentings.AsNoTracking();
             var reservationsQuery = _context.Reservations.AsNoTracking();
+            var blocksQuery = _context.CarUnavailabilities.AsNoTracking();
 
             if (request.BranchId is int branchId)
             {
                 rentingsQuery = rentingsQuery.Where(r => r.Car != null && r.Car.BranchId == branchId);
                 reservationsQuery = reservationsQuery.Where(r => r.Car != null && r.Car.BranchId == branchId);
+                blocksQuery = blocksQuery.Where(u => u.Car != null && u.Car.BranchId == branchId);
             }
 
             var rentings = !canRentings ? new List<BookingRow>() : await rentingsQuery
@@ -134,8 +136,29 @@ namespace RemSolution.Application.Features.Dashboard.Queries.GetBookingCalendarQ
                 .Take(MaxRowsPerSource + 1)
                 .ToListAsync(cancellationToken);
 
+            // Declared time off the road. A block that overlaps the window at all
+            // is worth showing, not only one starting inside it: a car away for
+            // three weeks is the answer to "why can I not book this" on every day
+            // of them, and a block starting last month would otherwise vanish.
+            var blocks = !canCars ? new List<BlockRow>() : await blocksQuery
+                .Where(u => u.StartDate < to && u.EndDate > from)
+                .OrderBy(u => u.StartDate)
+                .ThenBy(u => u.Id)
+                .Select(u => new BlockRow(
+                    u.Id,
+                    u.StartDate,
+                    u.EndDate,
+                    u.Reason,
+                    u.CarId,
+                    u.Car == null ? null : u.Car.Matricule,
+                    u.Car == null || u.Car.Model == null ? null : u.Car.Model.Name))
+                .Take(MaxRowsPerSource + 1)
+                .ToListAsync(cancellationToken);
+
             // One row over the cap is how the tail is detected; it is not returned.
-            var truncated = rentings.Count > MaxRowsPerSource || reservations.Count > MaxRowsPerSource;
+            var truncated = rentings.Count > MaxRowsPerSource
+                || reservations.Count > MaxRowsPerSource
+                || blocks.Count > MaxRowsPerSource;
 
             var events = new List<BookingCalendarEventDto>();
 
@@ -192,6 +215,24 @@ namespace RemSolution.Application.Features.Dashboard.Queries.GetBookingCalendarQ
                 });
             }
 
+            foreach (var row in blocks.Take(MaxRowsPerSource))
+            {
+                events.Add(new BookingCalendarEventDto
+                {
+                    Kind = BookingCalendarEventKind.UnavailabilityStart,
+                    // Clamped into the window: a block that began before it is
+                    // still happening on the first day shown, and an entry dated
+                    // outside [from, to) would land on no cell of the grid.
+                    On = row.StartDate < from ? from : row.StartDate,
+                    Until = row.EndDate,
+                    UnavailabilityId = row.Id,
+                    UnavailabilityReason = row.Reason,
+                    CarId = row.CarId,
+                    CarMatricule = row.CarMatricule,
+                    CarModelName = row.CarModelName,
+                });
+            }
+
             return new BookingCalendarDto
             {
                 From = from,
@@ -211,7 +252,7 @@ namespace RemSolution.Application.Features.Dashboard.Queries.GetBookingCalendarQ
         // every list apply — feature on for the agency AND the read permission held
         // — asked imperatively because the two halves are gated separately and an
         // attribute cannot say "and also, only if" (see Entitlements).
-        private async Task<(bool Rentings, bool Reservations)> ModulesAsync(
+        private async Task<(bool Rentings, bool Reservations, bool Cars)> ModulesAsync(
             CancellationToken cancellationToken)
         {
             var userId = _user.Id ?? throw new UnauthorizedAccessException();
@@ -227,7 +268,11 @@ namespace RemSolution.Application.Features.Dashboard.Queries.GetBookingCalendarQ
                 features.Contains(FeatureFlags.Rentings)
                     && await _identity.AuthorizeAsync(userId, Permissions.RentingRead),
                 features.Contains(FeatureFlags.Reservations)
-                    && await _identity.AuthorizeAsync(userId, Permissions.ReservationRead));
+                    && await _identity.AuthorizeAsync(userId, Permissions.ReservationRead),
+                // A block belongs to the fleet, not to the bookings: whoever may
+                // read cars may see why one is off the road.
+                features.Contains(FeatureFlags.Cars)
+                    && await _identity.AuthorizeAsync(userId, Permissions.CarRead));
         }
 
         // The columns the entries are built from, projected straight out of SQL —
@@ -241,5 +286,11 @@ namespace RemSolution.Application.Features.Dashboard.Queries.GetBookingCalendarQ
             int Id, DateTime? StartDate, ReservationStatus Status,
             int? CarId, string? CarMatricule, string? CarModelName,
             int? ClientId, string? ClientName);
+
+        // Dates are non-nullable here, unlike the two above: a block cannot
+        // exist without a period (see CarUnavailability.Create).
+        private sealed record BlockRow(
+            int Id, DateTime StartDate, DateTime EndDate, CarUnavailabilityReason Reason,
+            int CarId, string? CarMatricule, string? CarModelName);
     }
 }

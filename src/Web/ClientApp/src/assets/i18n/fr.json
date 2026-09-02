@@ -1,4 +1,4 @@
-{
+﻿{
   "language": {
     "label": "Langue",
     "en": "English",
@@ -103,7 +103,6 @@
     "extraServiceTypes": "Types de services additionnels",
     "expenseTypes": "Types de dépenses",
     "browseCars": "Parcourir les voitures",
-    "myReservations": "Mes réservations",
     "cars": "Voitures",
     "reservations": "Réservations",
     "rentings": "Locations",
@@ -120,10 +119,10 @@
     "credits": "Paiements & crédits",
     "chat": "Messagerie",
     "myChats": "Mes messages",
+    "myTrips": "Mes voyages",
     "bookings": "Réservations & locations",
     "finance": "Finances",
     "clientsList": "Tous les clients",
-    "myRentings": "Mes locations",
     "myAgency": "Mon agence",
     "mainLabel": "Navigation principale"
   },
@@ -132,11 +131,14 @@
     "welcomeTagline": "Gérez votre flotte, vos clients et vos réservations en un seul endroit.",
     "signIn": "Se connecter",
     "createAccount": "Créer un compte",
-    "customerTitle": "Bienvenue",
-    "customerTitleNamed": "Bienvenue, {{ name }}",
-    "customerTagline": "Trouvez et réservez une voiture dans l'une de nos agences.",
-    "browseCars": "Parcourir les voitures",
-    "myReservations": "Mes réservations",
+    "steps": {
+      "oneTitle": "Choisissez vos dates",
+      "oneText": "Indiquez quand vous partez et où vous prenez la voiture. Nous n'affichons que les voitures réellement libres sur cette période.",
+      "twoTitle": "Réservez en quelques minutes",
+      "twoText": "L'agence reçoit votre demande et vous répond. La voiture est retenue pour vous jusqu'à sa réponse.",
+      "threeTitle": "Prenez la route",
+      "threeText": "Présentez-vous à l'agence avec votre permis et votre pièce d'identité, et repartez avec la voiture."
+    },
     "showcaseTitle": "À la une",
     "showcaseSeeAll": "Voir toutes les voitures",
     "showcasePrevious": "Voiture précédente",
@@ -372,6 +374,27 @@
     "modelRequired": "Le modèle est obligatoire.",
     "dailyRateMin": "Le tarif journalier doit être supérieur à 0.",
     "firstCirculationRequired": "La date de mise en circulation est obligatoire.",
+    "unavailability": {
+      "title": "Immobilisation",
+      "declare": "Déclarer une période",
+      "newTitle": "Déclarer une immobilisation",
+      "editTitle": "Modifier la période",
+      "from": "Indisponible à partir du",
+      "backOn": "De retour le",
+      "periodInvalid": "Le retour doit être postérieur au départ.",
+      "reasonLabel": "Motif",
+      "note": "Précision",
+      "blocksBookingsHint": "Ces dates empêchent toute location du véhicule, ici comme sur la place de marché. Une période couvrant une réservation existante est refusée : déplacez d'abord la réservation.",
+      "currentlyAway": "Immobilisé",
+      "empty": "Rien de déclaré. Ajoutez une période quand le véhicule part au garage.",
+      "reason": {
+        "maintenance": "Entretien",
+        "repair": "Réparation",
+        "administrative": "Visite technique ou papiers",
+        "internalUse": "Usage de l'agence",
+        "other": "Autre"
+      }
+    },
     "schedule": {
       "title": "Entretien et papiers",
       "hint": "Chaque type suit la règle commune à toute la flotte. Cochez-en un pour donner à cette voiture ses propres valeurs.",
@@ -472,6 +495,10 @@
     "cinSection": "CIN",
     "cinNumber": "Numéro de CIN",
     "issueDate": "Date de délivrance",
+    "expiryDate": "Valable jusqu'au",
+    "licenceExpiredTitle": "Ce permis de conduire est périmé.",
+    "licenceExpiredHint": "Enregistrez le permis renouvelé. Toute location sera refusée jusque-là, ou jusqu'à ce que vous confirmiez au comptoir avoir vu un permis valide.",
+    "documentsExpired": "Document périmé",
     "issuePlace": "Lieu de délivrance",
     "issueCountry": "Pays de délivrance",
     "passeport": "Passeport",
@@ -573,6 +600,16 @@
     "noExtraServices": "Aucun service additionnel.",
     "returnFees": "Frais au retour",
     "returnFeesHint": "Ajoutez une ligne si le véhicule revient avec des frais : retard, dommages, kilométrage supplémentaire…",
+    "depositTitle": "Caution",
+    "depositHeld": "Vous détenez {{amount}} {{currency}} pour ce véhicule.",
+    "depositSettleNow": "Régler la caution maintenant",
+    "depositRetained": "Montant retenu",
+    "depositRetainedHint": "0 rend la totalité de la caution.",
+    "depositRetainedTooHigh": "Vous ne pouvez pas retenir plus que les {{amount}} {{currency}} détenus.",
+    "depositRefundMethod": "Remboursée par",
+    "depositRefundAmount": "{{amount}} {{currency}} sont rendus au client, enregistrés comme remboursement.",
+    "depositNote": "Motif",
+    "depositDeferHint": "La caution reste en attente et apparaîtra comme non réglée jusqu'à ce que vous la régliez.",
     "noReturnFees": "Aucun frais au retour.",
     "addFee": "Ajouter des frais",
     "feeKindLabel": "Motif",
@@ -614,6 +651,12 @@
     "generateFacture": "Générer la facture",
     "noContracts": "Aucun contrat généré.",
     "noFactures": "Aucune facture générée.",
+    "factureNet": "Montant HT",
+    "factureVat": "TVA {{rate}} %",
+    "factureGross": "Total TTC",
+    "factureStamp": "Timbre fiscal",
+    "factureTotalDue": "Net à payer",
+    "factureNoTaxId": "Cette facture ne porte pas de matricule fiscal. Renseignez-le dans Mon agence → Fiscalité pour que la prochaine soit déductible pour un client professionnel.",
     "clientDetails": "Fiche du client",
     "clientReadOnly": "Vous pouvez consulter la fiche de ce client sans la modifier.",
     "clientPapers": "Pièces d'identité",
@@ -722,6 +765,7 @@
     "awaitingYou": "Cette réservation attend votre réponse"
   },
   "marketplace": {
+    "myTrips": "Mes voyages",
     "findYourCar": "Trouvez votre voiture",
     "findSubtitle": "Parcourez les voitures disponibles dans toutes nos agences et réservez en quelques minutes.",
     "country": "Pays",
@@ -1361,6 +1405,8 @@
       "expenseDueLeadKmHint": "Pour les types de dépense qui reviennent au kilométrage (entretien…).",
       "reservationLeadDays": "Prévenir des départs X jours à l'avance",
       "reservationLeadDaysHint": "Réservations confirmées qui commencent bientôt.",
+      "documentExpiryLeadDays": "Documents clients (jours)",
+      "documentExpiryLeadDaysHint": "Avertissement avant l'expiration d'une CIN, d'un passeport ou d'un permis.",
       "notifyStaffByEmail": "Envoyer aussi ces alertes par e-mail au personnel",
       "notifyStaffByEmailHint": "Elles apparaissent toujours dans l'application ; ceci ajoute l'e-mail.",
       "notifyClientsByEmail": "Envoyer des e-mails aux clients sur leurs locations",
@@ -1369,6 +1415,17 @@
       "beforeEnd": "Jours avant la fin",
       "zeroIsOff": "0 désactive ce rappel.",
       "lateNoticeNote": "Les avis de retard ne sont jamais automatiques : vous les envoyez depuis les écrans clients."
+    },
+    "tax": {
+      "title": "Fiscalité",
+      "intro": "Ce que toute facture émise doit porter. Chaque facture émise en conserve sa propre copie : modifier ces valeurs agit sur la prochaine, jamais sur celles déjà sorties.",
+      "identifier": "Matricule fiscal",
+      "identifierHint": "Imprimé sur chaque contrat et chaque facture.",
+      "vatRate": "Taux de TVA (%)",
+      "vatRateHint": "0 pour une agence exonérée.",
+      "fiscalStamp": "Timbre fiscal",
+      "fiscalStampHint": "Montant fixe ajouté au total. 0 s'il n'y en a pas.",
+      "inclusiveNote": "Les tarifs journaliers et les frais que vous saisissez sont TTC. La facture recalcule le montant HT."
     }
   },
   "branch": {
@@ -1428,7 +1485,8 @@
       "3": "Départs à venir",
       "4": "Rappels aux clients",
       "5": "Rappels aux clients",
-      "6": "Avis de retard"
+      "6": "Avis de retard",
+      "7": "Documents des clients"
     },
     "message": {
       "carExpenseDueByDate": "{{type}} arrive à échéance pour {{car}} le {{dueDate}} — dans {{days}} jour(s).",
@@ -1440,7 +1498,13 @@
       "clientRentingStartingSoon": "Rappel envoyé au client : sa location de {{car}} commence le {{startDate}}.",
       "clientRentingEndingSoon": "Rappel envoyé au client : sa location de {{car}} se termine le {{endDate}}.",
       "clientReservationStartingSoon": "Rappel envoyé au client : sa réservation de {{car}} commence le {{startDate}}.",
-      "clientRentingLateNotice": "Avis de retard envoyé au client pour {{car}}, à rendre le {{endDate}}."
+      "clientRentingLateNotice": "Avis de retard envoyé au client pour {{car}}, à rendre le {{endDate}}.",
+      "clientLicenceExpiring": "Le permis de {{client}} expire le {{expiryDate}} — dans {{days}} jour(s).",
+      "clientLicenceExpired": "Le permis de {{client}} a expiré le {{expiryDate}} — il y a {{days}} jour(s). Ne remettez pas de véhicule avant d'avoir un permis valide au dossier.",
+      "clientCinExpiring": "La CIN de {{client}} expire le {{expiryDate}} — dans {{days}} jour(s).",
+      "clientCinExpired": "La CIN de {{client}} a expiré le {{expiryDate}} — il y a {{days}} jour(s).",
+      "clientPasseportExpiring": "Le passeport de {{client}} expire le {{expiryDate}} — dans {{days}} jour(s).",
+      "clientPasseportExpired": "Le passeport de {{client}} a expiré le {{expiryDate}} — il y a {{days}} jour(s)."
     }
   },
   "calendar": {

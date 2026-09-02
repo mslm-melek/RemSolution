@@ -38,7 +38,12 @@ export class ImpersonationService {
 
   // Opens the agency's workspace and lands on `landOn`. Already being in that
   // agency is a no-op, so a repeated click does not reload the page.
-  enter(agency: ImpersonatedAgency, landOn = '/dashboard'): void {
+  //
+  // Home is the default landing, not the dashboard: the dashboard needs the
+  // Dashboard feature, which the agency's plan may exclude — 403 for the whole
+  // module, platform admin included. Home works for every agency and shows what
+  // this one actually has.
+  enter(agency: ImpersonatedAgency, landOn = '/'): void {
     if (this.workspace?.id === agency.id) {
       window.location.assign(landOn);
       return;

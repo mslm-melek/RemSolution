@@ -33,6 +33,29 @@ namespace RemSolution.Domain.Entities
         public Money? Price { get; private set; }
         // Refundable deposit, carried over from the reservation on conversion.
         public Money? DepositAmount { get; private set; }
+
+        /// <summary>
+        /// How much of <see cref="DepositAmount"/> the agency kept, and when that
+        /// was decided. Both null while the question is still open — which is the
+        /// point of storing them: a deposit whose fate nobody recorded is the
+        /// dispute that surfaces three weeks later with nothing to arbitrate it,
+        /// so an unsettled deposit stays visible instead of quietly lapsing.
+        /// <para>
+        /// Only the DECISION lives here. The money moving back to the client is a
+        /// refund <see cref="Payment"/> like any other, because that is what the
+        /// client's balance is computed from (see ClientCreditRows).
+        /// </para>
+        /// </summary>
+        public Money? DepositRetainedAmount { get; private set; }
+
+        public DateTime? DepositSettledAt { get; private set; }
+
+        /// <summary>
+        /// A deposit was taken and nobody has said what became of it. What the
+        /// return screen and the desk's follow-up list ask.
+        /// </summary>
+        public bool HasUnsettledDeposit =>
+            DepositAmount is { Amount: > 0m } && DepositSettledAt is null;
         /// <summary>
         /// What a cancelled hire charges: it REPLACES <see cref="Price"/> on the
         /// client's balance (see ClientCreditRows), so cancelling for free leaves
@@ -286,6 +309,53 @@ namespace RemSolution.Domain.Entities
                 throw new DomainRuleException(nameof(Fees),
                     "That charge does not belong to this hire.");
             }
+        }
+
+        /// <summary>
+        /// Records what became of the deposit: how much was kept, the rest going
+        /// back to the client. Answering it is what closes the question — a
+        /// settlement of nothing retained is a decision, not an absence of one.
+        /// <para>
+        /// Deliberately allowed on any hire that took a deposit, including a
+        /// cancelled one: a hire called off after the deposit was collected still
+        /// has to say where that money went.
+        /// </para>
+        /// </summary>
+        /// <param name="retained">
+        /// How much the agency keeps. Null or zero means the whole deposit goes
+        /// back.
+        /// </param>
+        public void SettleDeposit(Money? retained, DateTime settledAt)
+        {
+            if (DepositAmount is not Money deposit || deposit.Amount <= 0m)
+            {
+                throw new DomainRuleException(nameof(DepositRetainedAmount),
+                    "This hire took no deposit, so there is nothing to settle.");
+            }
+
+            if (retained is { Amount: < 0m })
+            {
+                throw new DomainRuleException(nameof(DepositRetainedAmount),
+                    "A retained amount cannot be negative.");
+            }
+
+            if (retained is not null && retained.Currency != deposit.Currency)
+            {
+                throw new DomainRuleException(nameof(DepositRetainedAmount),
+                    $"The retained amount must be in the deposit's own currency ({deposit.Currency}).");
+            }
+
+            if (retained is { } kept && kept.Amount > deposit.Amount)
+            {
+                throw new DomainRuleException(nameof(DepositRetainedAmount),
+                    $"The agency cannot keep more than the deposit it holds ({deposit.Amount}).");
+            }
+
+            // Zero normalises to null so "nothing retained" and "no amount
+            // recorded" are not two states meaning the same thing; SettledAt is
+            // what says the question was answered.
+            DepositRetainedAmount = retained is { Amount: > 0m } ? retained : null;
+            DepositSettledAt = settledAt;
         }
 
         /// <summary>

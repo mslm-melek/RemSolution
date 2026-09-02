@@ -55,11 +55,25 @@ namespace RemSolution.Application.Features.Agency.Commands.UpdateMyAgencyCommand
             RuleFor(v => v.ReservationUpcomingLeadDays)
                 .InclusiveBetween(0, 365);
 
+            RuleFor(v => v.ClientDocumentExpiryLeadDays)
+                .InclusiveBetween(0, 365);
+
             RuleFor(v => v.ClientReminderDaysBeforeStart)
                 .InclusiveBetween(0, 90);
 
             RuleFor(v => v.ClientReminderDaysBeforeEnd)
                 .InclusiveBetween(0, 90);
+
+            RuleFor(v => v.TaxIdentifier)
+                .MaximumLength(40);
+
+            // Zero is a legitimate rate (an exempt agency); the ceiling only
+            // catches a rate typed as a fraction the wrong way round.
+            RuleFor(v => v.VatRatePercent)
+                .InclusiveBetween(0m, 100m);
+
+            RuleFor(v => v.FiscalStampAmount)
+                .GreaterThanOrEqualTo(0m);
         }
     }
 }

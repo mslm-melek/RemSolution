@@ -40,9 +40,11 @@ const MS_PER_DAY = 24 * MS_PER_HOUR;
  * The landing screen.
  *
  * Four different screens live here, because "home" means four different things:
- * a shop window for a visitor, a browse-oriented start for a customer, the
- * console for the platform administrator, and — the one this file is mostly
- * about — TODAY for an agency's desk.
+ * a shop window for a visitor, the marketplace search itself for a customer,
+ * the console for the platform administrator, and — the one this file is mostly
+ * about — TODAY for an agency's desk. The last three are all screens that used
+ * to live behind a route of their own; each is its own home because a nav with
+ * both entries only ever asked the user which of two identical pages they meant.
  *
  * The desk's version answers three questions in order: what does today ask for,
  * what is waiting on somebody, and what is the fleet doing. All of it comes from
@@ -75,6 +77,19 @@ export class HomeComponent implements OnInit, OnDestroy {
   slide = 0;
   private autoplay?: Subscription;
   private showcaseRequested = false;
+
+  // --- The customer's home --------------------------------------------------
+
+  // The search itself is MarketplaceSearchComponent, rendered by the template,
+  // and it holds its own state — so all this screen owns is the copy below.
+
+  // Three lines about how a booking works. A customer's first visit is the one
+  // where they decide whether to hand us a passport scan.
+  readonly steps = [
+    { icon: 'search', key: 'one' },
+    { icon: 'event_available', key: 'two' },
+    { icon: 'directions_car', key: 'three' }
+  ];
 
   // --- Today ----------------------------------------------------------------
 
@@ -144,10 +159,14 @@ export class HomeComponent implements OnInit, OnDestroy {
       this.isCustomer = AuthService.isCustomer(user);
       this.displayName = user.fullName || user.userName;
 
-      // Customers get a browse-oriented home, not the desk's one (and none of the
-      // staff calls, which they aren't authorized for).
+      // Customers get a shop front, not the desk's day (and none of the staff
+      // calls, which they aren't authorized for).
       if (!this.isAuthenticated || this.isCustomer) {
-        this.loadShowcase();
+        // A customer has the search itself on the screen and it loads its own
+        // cars, so there is nothing for this component to fetch. The slideshow
+        // is the visitor's, who has no search here — for a customer it would
+        // only be a second, smaller list of the same cars.
+        if (!this.isCustomer) this.loadShowcase();
         return;
       }
 

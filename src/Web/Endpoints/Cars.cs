@@ -2,7 +2,11 @@
 using RemSolution.Application.Common.Models;
 using RemSolution.Domain.Constants;
 using RemSolution.Application.Features.Car.Commands.CreateCarCommand;
+using RemSolution.Application.Features.Car.Commands.CreateCarUnavailabilityCommand;
 using RemSolution.Application.Features.Car.Commands.DeleteCarCommand;
+using RemSolution.Application.Features.Car.Commands.DeleteCarUnavailabilityCommand;
+using RemSolution.Application.Features.Car.Commands.UpdateCarUnavailabilityCommand;
+using RemSolution.Application.Features.Car.Queries.GetCarUnavailabilitiesQuery;
 using RemSolution.Application.Features.Car.Commands.DeleteCarImageCommand;
 using RemSolution.Application.Features.Car.Commands.ReorderCarImagesCommand;
 using RemSolution.Application.Features.Car.Commands.SetPrimaryCarImageCommand;
@@ -79,6 +83,28 @@ public class Cars : EndpointGroupBase
 
         group.MapDelete("{id}/images/{imageId}", DeleteCarImage)
             .WithName(nameof(DeleteCarImage))
+            .RequireAuthorization(Permissions.CarUpdate);
+
+        // Declared time off the road. The list takes the car in the query rather
+        // than the route, like expense-schedules above, so the same endpoint
+        // answers "this car's blocks" and "the fleet's blocks this month".
+        group.MapGet("unavailabilities", GetCarUnavailabilities)
+            .WithName(nameof(GetCarUnavailabilities))
+            .RequireAuthorization(Permissions.CarRead);
+
+        group.MapPost("{id}/unavailabilities", CreateCarUnavailability)
+            .WithName(nameof(CreateCarUnavailability))
+            .RequireAuthorization(Permissions.CarUpdate);
+
+        // Keyed on the block alone, not on the car: a block cannot move between
+        // cars (see CarUnavailability.Amend), so the car in the route would be
+        // decoration a caller could get wrong.
+        group.MapPut("unavailabilities/{unavailabilityId}", UpdateCarUnavailability)
+            .WithName(nameof(UpdateCarUnavailability))
+            .RequireAuthorization(Permissions.CarUpdate);
+
+        group.MapDelete("unavailabilities/{unavailabilityId}", DeleteCarUnavailability)
+            .WithName(nameof(DeleteCarUnavailability))
             .RequireAuthorization(Permissions.CarUpdate);
     }
 
@@ -197,4 +223,38 @@ public class Cars : EndpointGroupBase
         return TypedResults.NoContent();
     }
 
+    public async Task<Ok<IList<CarUnavailabilityDto>>> GetCarUnavailabilities(
+        ISender sender, int? carId, bool? includePast)
+    {
+        var result = await sender.Send(new GetCarUnavailabilitiesQuery(carId, includePast ?? false));
+        return TypedResults.Ok(result);
+    }
+
+    public async Task<Results<Created<int>, BadRequest>> CreateCarUnavailability(
+        ISender sender, int id, CreateCarUnavailabilityCommand command)
+    {
+        if (id != command.CarId)
+            return TypedResults.BadRequest();
+
+        var unavailabilityId = await sender.Send(command);
+
+        return TypedResults.Created($"/cars/unavailabilities/{unavailabilityId}", unavailabilityId);
+    }
+
+    public async Task<Results<NoContent, BadRequest>> UpdateCarUnavailability(
+        ISender sender, int unavailabilityId, UpdateCarUnavailabilityCommand command)
+    {
+        if (unavailabilityId != command.Id)
+            return TypedResults.BadRequest();
+
+        await sender.Send(command);
+
+        return TypedResults.NoContent();
+    }
+
+    public async Task<NoContent> DeleteCarUnavailability(ISender sender, int unavailabilityId)
+    {
+        await sender.Send(new DeleteCarUnavailabilityCommand(unavailabilityId));
+        return TypedResults.NoContent();
+    }
 }

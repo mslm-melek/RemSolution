@@ -952,12 +952,52 @@
                 <button mat-button color="primary" (click)="downloadFacture(f)">
                   <mat-icon>picture_as_pdf</mat-icon> {{ f.number }}
                 </button>
-                <span class="num" *ngIf="f.totalAmount">
-                  {{ f.totalAmount.amount | number:'1.2-2' }} {{ f.totalAmount.currency }}
+                <!-- What the client owes: the line total plus the duty stamp.
+                     The row shows the figure the invoice is settled against, not
+                     the sum of its lines. -->
+                <span class="num" *ngIf="f.totalDue ?? f.totalAmount as due">
+                  {{ due.amount | number:'1.2-2' }} {{ due.currency }}
                 </span>
                 <span class="muted">{{ f.issuedAt | date:'yyyy-MM-dd HH:mm' }}</span>
               </li>
             </ul>
+
+            <!-- The breakdown of the most recent invoice, as frozen on it. Shown
+                 here so the desk can read it without opening the PDF, and so a
+                 missing tax ID is visible before a client asks for one. -->
+            <dl class="money-lines" *ngIf="latestFacture as f">
+              <ng-container *ngIf="f.vatRatePercent">
+                <dt>{{ t('renting.factureNet') }}</dt>
+                <dd class="num" *ngIf="f.netAmount">
+                  {{ f.netAmount.amount | number:'1.2-2' }} {{ f.netAmount.currency }}
+                </dd>
+                <dt>{{ t('renting.factureVat', { rate: f.vatRatePercent }) }}</dt>
+                <dd class="num" *ngIf="f.vatAmount">
+                  {{ f.vatAmount.amount | number:'1.2-2' }} {{ f.vatAmount.currency }}
+                </dd>
+              </ng-container>
+
+              <dt>{{ t('renting.factureGross') }}</dt>
+              <dd class="num" *ngIf="f.totalAmount">
+                {{ f.totalAmount.amount | number:'1.2-2' }} {{ f.totalAmount.currency }}
+              </dd>
+
+              <ng-container *ngIf="f.fiscalStampAmount && f.fiscalStampAmount.amount">
+                <dt>{{ t('renting.factureStamp') }}</dt>
+                <dd class="num">
+                  {{ f.fiscalStampAmount.amount | number:'1.2-2' }} {{ f.fiscalStampAmount.currency }}
+                </dd>
+              </ng-container>
+
+              <dt class="total">{{ t('renting.factureTotalDue') }}</dt>
+              <dd class="num total" *ngIf="f.totalDue">
+                {{ f.totalDue.amount | number:'1.2-2' }} {{ f.totalDue.currency }}
+              </dd>
+            </dl>
+
+            <p class="needs-action is-info" *ngIf="latestFacture && !latestFacture.taxIdentifier">
+              {{ t('renting.factureNoTaxId') }}
+            </p>
             <p *ngIf="!factures.length" class="muted">{{ t('renting.noFactures') }}</p>
           </div>
         </div>

@@ -61,17 +61,25 @@
         </div>
       </div>
 
-      <div class="messages">
-        <div class="message" *ngFor="let message of messages"
-             [class.mine]="message.authorKind === ChatAuthorKind.Agency"
-             [class.theirs]="message.authorKind === ChatAuthorKind.Client">
-          <div class="bubble">
-            <div class="bubble-body">{{ message.body }}</div>
-            <div class="bubble-meta">
-              <span>{{ message.senderName }}</span>
-              <span>{{ message.sentAt | date:'yyyy-MM-dd HH:mm' }}</span>
-              <mat-icon class="read-tick" *ngIf="message.authorKind === ChatAuthorKind.Agency && message.readAt"
-                        [matTooltip]="t('chat.read')">done_all</mat-icon>
+      <!-- Consecutive messages from one side are one stack of bubbles, the same
+           way they are on the customer's side of the same conversation (see
+           shared/chat-bubbles). Here the AGENCY's messages are "mine". -->
+      <div class="messages" appStickToBottom>
+        <div class="day" *ngFor="let day of bubbles.of(messages)">
+          <!-- sentAt is an instant, so the separator says the reader's own day. -->
+          <div class="day-sep"><span>{{ day.day | date:'dd MMMM yyyy' }}</span></div>
+
+          <div class="group" *ngFor="let group of day.groups" [class.mine]="group.mine">
+            <span class="who-avatar" *ngIf="!group.mine" aria-hidden="true">{{ group.initial }}</span>
+
+            <div class="stack">
+              <span class="who" *ngIf="!group.mine">{{ group.senderName }}</span>
+              <div class="bubble" *ngFor="let message of group.messages">{{ message.body }}</div>
+              <span class="stack-meta">
+                <span class="num">{{ group.sentAt | date:'HH:mm' }}</span>
+                <mat-icon class="read-tick" *ngIf="group.mine && group.read"
+                          [matTooltip]="t('chat.read')">done_all</mat-icon>
+              </span>
             </div>
           </div>
         </div>
@@ -86,8 +94,9 @@
           <mat-label>{{ t('chat.yourMessage') }}</mat-label>
           <textarea matInput rows="2" [(ngModel)]="draft" (keydown.enter)="send($event)"></textarea>
         </mat-form-field>
-        <button mat-raised-button color="primary" (click)="send()" [disabled]="sending || !draft.trim()">
-          <mat-icon>send</mat-icon> {{ t('chat.send') }}
+        <button mat-flat-button color="primary" class="composer-send" (click)="send()"
+                [disabled]="sending || !draft.trim()" [attr.aria-label]="t('chat.send')">
+          <mat-icon aria-hidden="true">send</mat-icon>
         </button>
       </div>
 

@@ -90,13 +90,66 @@
 
         <p class="dialog-hint" *ngIf="!fees.length">{{ t('renting.returnFeesHint') }}</p>
       </div>
+
+      <!-- The deposit, asked here because this is the only moment the answer is
+           obvious. Chased afterwards it becomes a three-week-old argument. Only
+           shown when the hire is actually holding one. -->
+      <div class="deposit" *ngIf="depositAmount !== undefined">
+        <h4 class="section-label">{{ t('renting.depositTitle') }}</h4>
+
+        <p class="dialog-hint">
+          {{ t('renting.depositHeld', { amount: (depositAmount | number:'1.2-2'), currency: currency }) }}
+        </p>
+
+        <mat-checkbox formControlName="settleDeposit">
+          {{ t('renting.depositSettleNow') }}
+        </mat-checkbox>
+
+        <ng-container *ngIf="form.value.settleDeposit">
+          <mat-form-field appearance="outline">
+            <mat-label>{{ t('renting.depositRetained') }}</mat-label>
+            <input matInput type="number" min="0" step="0.01" formControlName="depositRetained" />
+            <span matSuffix *ngIf="currency">&nbsp;{{ currency }}</span>
+            <mat-hint>{{ t('renting.depositRetainedHint') }}</mat-hint>
+          </mat-form-field>
+
+          <p class="dialog-hint warn" *ngIf="depositRetainedExceedsHeld">
+            <mat-icon>error_outline</mat-icon>
+            {{ t('renting.depositRetainedTooHigh', { amount: (depositAmount | number:'1.2-2'), currency: currency }) }}
+          </p>
+
+          <ng-container *ngIf="depositRefund > 0 && !depositRetainedExceedsHeld">
+            <mat-form-field appearance="outline">
+              <mat-label>{{ t('renting.depositRefundMethod') }}</mat-label>
+              <mat-select formControlName="depositRefundMethod">
+                <mat-option *ngFor="let method of paymentMethods" [value]="method">
+                  {{ t(paymentMethodLabelKey(method)) }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <p class="dialog-hint">
+              {{ t('renting.depositRefundAmount', { amount: (depositRefund | number:'1.2-2'), currency: currency }) }}
+            </p>
+          </ng-container>
+
+          <mat-form-field appearance="outline">
+            <mat-label>{{ t('renting.depositNote') }}</mat-label>
+            <input matInput formControlName="depositNote" />
+          </mat-form-field>
+        </ng-container>
+
+        <p class="dialog-hint" *ngIf="!form.value.settleDeposit">
+          {{ t('renting.depositDeferHint') }}
+        </p>
+      </div>
     </form>
   </mat-dialog-content>
 
   <mat-dialog-actions align="end">
     <button mat-button type="button" (click)="cancel()">{{ t('common.cancel') }}</button>
     <button mat-raised-button color="primary" type="button" (click)="submit()"
-            [disabled]="saving || loading || !renting">
+            [disabled]="saving || loading || !renting || depositRetainedExceedsHeld">
       <mat-icon>assignment_turned_in</mat-icon>
       {{ saving ? t('common.saving') : t('renting.returnCar') }}
     </button>

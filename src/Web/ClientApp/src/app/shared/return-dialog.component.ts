@@ -7,13 +7,15 @@ import { TranslocoService } from '@jsverse/transloco';
 import { Observable, of, switchMap, tap } from 'rxjs';
 import {
   RentingsClient, RentingDto, RentingState, RentingFeeKind, RentingFeePayload,
-  ChangeRentingStateCommand, ChangeRentingEndDateCommand
+  ChangeRentingStateCommand, ChangeRentingEndDateCommand,
+  DepositSettlementPayload, PaymentMethod
 } from '../web-api-client';
 import {
   extractValidationErrors, extractProblemDetail, isInvalidTransition,
   fromDateInput, toDateTimeInput
 } from './form-utils';
 import { RENTING_FEE_KINDS, feeKindLabelKey } from './renting-fees';
+import { PAYMENT_METHODS, paymentMethodLabelKey } from './payment-methods';
 
 export interface ReturnDialogData {
   rentingId: number;
@@ -48,6 +50,9 @@ export class ReturnDialogComponent implements OnInit {
   readonly feeKinds = RENTING_FEE_KINDS;
   readonly feeKindLabelKey = feeKindLabelKey;
 
+  readonly paymentMethods = PAYMENT_METHODS;
+  readonly paymentMethodLabelKey = paymentMethodLabelKey;
+
   // The end date as the booking has it; the field starts there, so leaving it
   // alone means "returned as scheduled" and touches no price.
   private scheduledEnd = '';
@@ -70,8 +75,36 @@ export class ReturnDialogComponent implements OnInit {
       returnDate: [''],
       // Empty until the user adds a line: a return with nothing to charge is the
       // normal one, and an empty row would only be a field to clear.
-      fees: this.fb.array([])
+      fees: this.fb.array([]),
+      // What becomes of the deposit. Only asked when there is one; see
+      // depositAmount below and the note on settleDeposit.
+      settleDeposit: [true],
+      depositRetained: [0, [Validators.min(0)]],
+      depositRefundMethod: [PaymentMethod.Cash],
+      depositNote: ['', Validators.maxLength(500)]
     });
+  }
+
+  /**
+   * The deposit this hire is holding, or undefined when it took none — which is
+   * what decides whether the dialog asks the question at all.
+   */
+  get depositAmount(): number | undefined {
+    return this.renting?.hasUnsettledDeposit
+      ? this.renting?.depositAmount?.amount
+      : undefined;
+  }
+
+  /** What goes back to the client on the figures currently typed. */
+  get depositRefund(): number {
+    const held = this.depositAmount ?? 0;
+    const retained = Number(this.form.value.depositRetained) || 0;
+
+    return Math.max(0, held - retained);
+  }
+
+  get depositRetainedExceedsHeld(): boolean {
+    return (Number(this.form.value.depositRetained) || 0) > (this.depositAmount ?? 0);
   }
 
   get fees(): FormArray {
@@ -239,8 +272,25 @@ export class ReturnDialogComponent implements OnInit {
       // ChangeRentingStateCommand.Fees). Undefined, not [], when there is
       // nothing: the server refuses fees on anything but a return, and an empty
       // list would only be noise on the wire.
-      fees: this.fees.length ? this.feePayloads() : undefined
+      fees: this.fees.length ? this.feePayloads() : undefined,
+      // Settled in the same write as the return: the car is here, the damage is
+      // visible, and the money is decided once. Omitted when the user unticks it
+      // — the server then leaves the deposit open rather than assuming a refund,
+      // so it stays on the desk's list (see Renting.HasUnsettledDeposit).
+      depositSettlement: this.depositSettlementPayload()
     }));
+  }
+
+  private depositSettlementPayload(): DepositSettlementPayload | undefined {
+    if (this.depositAmount === undefined || !this.form.value.settleDeposit) {
+      return undefined;
+    }
+
+    return new DepositSettlementPayload({
+      retainedAmount: Number(this.form.value.depositRetained) || 0,
+      refundMethod: this.form.value.depositRefundMethod,
+      note: this.form.value.depositNote?.trim() || undefined
+    });
   }
 
   private feePayloads(): RentingFeePayload[] {

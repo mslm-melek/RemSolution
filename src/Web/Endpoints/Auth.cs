@@ -14,6 +14,7 @@ public class Auth : EndpointGroupBase
         // revoke only needs the refresh token itself (the access token may
         // already be expired at logout).
         app.MapGroup(this)
+            .RequireRateLimiting(RateLimitPolicies.Authentication)
             .MapPost(Login, "login")
             .MapPost(Refresh, "refresh")
             .MapPost(Revoke, "revoke");
