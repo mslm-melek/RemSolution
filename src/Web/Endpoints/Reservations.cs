@@ -6,9 +6,12 @@ using RemSolution.Application.Features.Reservation.Commands.ConfirmReservationCo
 using RemSolution.Application.Features.Reservation.Commands.ConvertReservationCommand;
 using RemSolution.Application.Features.Reservation.Commands.CreateReservationCommand;
 using RemSolution.Application.Features.Reservation.Commands.RejectReservationCommand;
+using RemSolution.Application.Features.Reservation.Commands.ReviewReservationRequirementCommand;
+using RemSolution.Application.Features.Reservation.Commands.SetReservationRequirementsCommand;
 using RemSolution.Application.Features.Reservation.Commands.UpdateReservationCommand;
 using RemSolution.Application.Features.Reservation.DTOs;
 using RemSolution.Application.Features.Reservation.Queries.GetReservationByIdQuery;
+using RemSolution.Application.Features.Reservation.Queries.GetReservationRequirementsQuery;
 using RemSolution.Application.Features.Reservation.Queries.GetReservationsWithPaginationQuery;
 
 namespace RemSolution.Web.Endpoints;
@@ -27,6 +30,10 @@ public class Reservations : EndpointGroupBase
             .MapPost(ConfirmReservation, "{id}/confirm", Permissions.ReservationUpdate)
             .MapPost(RejectReservation, "{id}/reject", Permissions.ReservationUpdate)
             .MapPost(ConvertReservation, "{id}/convert", Permissions.ReservationUpdate)
+            .MapGet(GetReservationRequirements, "{id}/requirements", Permissions.ReservationRead)
+            .MapPut(SetReservationRequirements, "{id}/requirements", Permissions.ReservationUpdate)
+            .MapPost(ReviewReservationRequirement,
+                "{id}/requirements/{requirementId}/review", Permissions.ReservationUpdate)
             .MapPut(UpdateReservation, "{id}", Permissions.ReservationUpdate)
             .MapDelete(CancelReservation, "{id}", Permissions.ReservationDelete);
     }
@@ -82,6 +89,36 @@ public class Reservations : EndpointGroupBase
 
         var rentingId = await sender.Send(command);
         return TypedResults.Ok(rentingId);
+    }
+
+    // What the agency asks for before the keys change hands, and where each ask
+    // stands. See ReservationRequirement.
+    public async Task<Ok<IList<ReservationRequirementDto>>> GetReservationRequirements(
+        ISender sender, int id)
+    {
+        var result = await sender.Send(new GetReservationRequirementsQuery(id));
+        return TypedResults.Ok(result);
+    }
+
+    // The whole list at once: sending it replaces what was there.
+    public async Task<Results<NoContent, BadRequest>> SetReservationRequirements(
+        ISender sender, int id, SetReservationRequirementsCommand command)
+    {
+        if (id != command.Id)
+            return TypedResults.BadRequest();
+
+        await sender.Send(command);
+        return TypedResults.NoContent();
+    }
+
+    public async Task<Results<NoContent, BadRequest>> ReviewReservationRequirement(
+        ISender sender, int id, int requirementId, ReviewReservationRequirementCommand command)
+    {
+        if (requirementId != command.Id)
+            return TypedResults.BadRequest();
+
+        await sender.Send(command);
+        return TypedResults.NoContent();
     }
 
     public async Task<Results<NoContent, BadRequest>> UpdateReservation(

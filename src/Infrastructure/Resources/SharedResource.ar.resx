@@ -970,6 +970,18 @@
   <data name="Notification.reservationUpcoming.Body" xml:space="preserve">
     <value>{{client}} سيتسلّم {{car}} في {{startDate}}، أي بعد {{days}} يوم.</value>
   </data>
+  <data name="Notification.reservationPending.Subject" xml:space="preserve">
+    <value>طلب جديد: {{car}}</value>
+  </data>
+  <data name="Notification.reservationPending.Body" xml:space="preserve">
+    <value>{{client}} طلب {{car}} انطلاقا من {{startDate}}. أكّدوه أو ارفضوه — تبقى السيارة معروضة إلى أن تردّوا.</value>
+  </data>
+  <data name="Notification.reservationPendingExpiringSoon.Subject" xml:space="preserve">
+    <value>طلب على وشك الانتهاء: {{car}}</value>
+  </data>
+  <data name="Notification.reservationPendingExpiringSoon.Body" xml:space="preserve">
+    <value>طلب {{client}} على {{car}} انطلاقا من {{startDate}} تنتهي مدته في أقل من ساعة ولم يتلقّ ردّا.</value>
+  </data>
   <data name="Notification.clientRentingStartingSoon.Subject" xml:space="preserve">
     <value>تبدأ فترة الإيجار في {{startDate}}</value>
   </data>
@@ -997,4 +1009,13 @@
     <value>تُشير سجلاتنا إلى أن {{car}} كان من المفترض إرجاعها في {{endDate}}، أي منذ {{days}} يوم، ولم تُرجَع.
 يُرجى إرجاع السيارة أو الاتصال بنا في أقرب وقت ممكن.</value>
   </data>
-</root>
+  <data name="Validation.Agency.CancellationFeeValue" xml:space="preserve">
+    <value>حدّدوا مبلغ أو نسبة معاليم الإلغاء.</value>
+  </data>
+  <data name="Validation.Agency.CancellationFeePercent" xml:space="preserve">
+    <value>لا يمكن أن تتجاوز معاليم الإلغاء 100٪ من الثمن.</value>
+  </data>
+  <data name="Validation.Agency.CancellationFreeHours" xml:space="preserve">
+    <value>يجب أن تغطّي فترة الإلغاء المجاني على الأقل المهلة القصوى للإلغاء، وإلا لن يُحتسب أي مبلغ أبدا.</value>
+  </data></root>
+

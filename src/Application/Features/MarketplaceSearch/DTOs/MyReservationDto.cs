@@ -7,6 +7,8 @@ namespace RemSolution.Application.Features.MarketplaceSearch.DTOs
     public class MyReservationDto
     {
         public int Id { get; init; }
+        // Which agency's terms apply to it — the cancellation policy is theirs.
+        public int AgencyId { get; init; }
         public string? AgencyName { get; init; }
         public string? CarBrandName { get; init; }
         public string? CarModelName { get; init; }
@@ -17,6 +19,13 @@ namespace RemSolution.Application.Features.MarketplaceSearch.DTOs
         public DateTime? ExpiresAt { get; init; }
         // Shown to the customer when the agency declined the request.
         public string? RejectedReason { get; init; }
+
+        // What calling it off actually costs, told before the decision and not
+        // after it. CancellationFee is what WAS charged on a booking already
+        // cancelled; the two below are the live answer for one that is not.
+        public MoneyDto? CancellationFee { get; init; }
+        public bool CanCancel { get; set; }
+        public MoneyDto? CancellationFeeIfCancelledNow { get; set; }
 
         public class Mapping : IRegister
         {

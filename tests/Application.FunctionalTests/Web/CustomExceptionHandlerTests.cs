@@ -83,10 +83,15 @@ public class CustomExceptionHandlerTests : BaseTestFixture
         var (status, body) = await HandleAsync(new BookingConflictException(
             carId: 7,
             startDate: new DateTime(2030, 5, 1, 0, 0, 0, DateTimeKind.Utc),
-            endDate: new DateTime(2030, 5, 4, 0, 0, 0, DateTimeKind.Utc)));
+            endDate: new DateTime(2030, 5, 4, 0, 0, 0, DateTimeKind.Utc),
+            kind: BookingConflictKind.Reservation,
+            conflictingId: 12));
 
         status.Should().Be(StatusCodes.Status409Conflict);
         body.GetProperty("code").GetString().Should().Be("booking_conflict");
+        // The agency is told what to cancel, not just that it cannot proceed.
+        body.GetProperty("conflictKind").GetString().Should().Be("Reservation");
+        body.GetProperty("conflictId").GetInt32().Should().Be(12);
     }
 
     [Test]

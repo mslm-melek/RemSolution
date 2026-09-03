@@ -61,7 +61,11 @@ namespace RemSolution.Application.Features.Reservation.Commands.CancelReservatio
 
             // Throws InvalidReservationTransitionException (→ 409) if the hold is
             // already converted/rejected/expired/cancelled.
-            entity.Cancel(request.Reason);
+            //
+            // No fee and not counted against the customer: this is the AGENCY
+            // calling its own booking off, and charging someone for a decision
+            // they did not take would be the wrong way round.
+            entity.Cancel(request.Reason, at: _dateTime.GetUtcNow().UtcDateTime);
 
             await _context.SaveChangesAsync(cancellationToken);
         }

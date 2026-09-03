@@ -7,6 +7,7 @@ using RemSolution.Application.Features.Notification.Commands.MarkNotificationsRe
 using RemSolution.Application.Features.Notification.Commands.SendClientLateNoticeCommand;
 using RemSolution.Application.Features.Notification.Queries.GetMyNotificationsQuery;
 using RemSolution.Application.Features.Notification.Queries.GetMyUnreadNotificationCountQuery;
+using RemSolution.Application.Features.Reservation.Commands.CreateReservationCommand;
 using RemSolution.Domain.Constants;
 using RemSolution.Domain.Entities;
 using RemSolution.Domain.Enums;
@@ -472,6 +473,72 @@ public class NotificationTests : BaseTestFixture
         await RunSweepAsync();
 
         (await SendAsync(new GetMyNotificationsQuery())).Items.Should().BeEmpty();
+    }
+
+    // ---------------------------------------------------------------------
+    // Requests waiting for an answer
+    // ---------------------------------------------------------------------
+
+    [Test]
+    public async Task ANewRequestIsReportedToWhoeverCanAnswerIt()
+    {
+        var userId = await RunAsAgencyStaffAsync(
+            Permissions.ReservationCreate, Permissions.ReservationUpdate);
+        var agencyId = await AddTestAgencyAsync();
+        await JoinAgencyAsync(userId, agencyId);
+        await AddAsync(new AgencyFeature { Feature = FeatureFlags.Reservations, Enabled = true });
+
+        var car = new Car
+        {
+            Matricule = "NT-12", Status = CarStatus.Active, DailyRate = Money.Of(40m, "TND")
+        };
+        await AddAsync(car);
+        var clientId = await ClientAsync();
+
+        var reservationId = await SendAsync(new CreateReservationCommand
+        {
+            CarId = car.Id,
+            ClientId = clientId,
+            StartDate = DateTime.UtcNow.Date.AddDays(4),
+            EndDate = DateTime.UtcNow.Date.AddDays(6)
+        });
+
+        var notification = (await SendAsync(new GetMyNotificationsQuery())).Items.Single();
+
+        notification.Kind.Should().Be(NotificationKind.ReservationPending);
+        notification.MessageKey.Should().Be(NotificationMessages.ReservationPending);
+        notification.SubjectId.Should().Be(reservationId);
+    }
+
+    /// <summary>
+    /// The last call before the hold lapses. It matters because a pending request
+    /// blocks nothing: the car stayed on offer the whole time, so an unanswered
+    /// request costs the agency the booking.
+    /// </summary>
+    [Test]
+    public async Task ARequestAboutToLapseIsReported()
+    {
+        var userId = await RunAsAgencyStaffAsync(Permissions.ReservationUpdate);
+        var agencyId = await AddTestAgencyAsync();
+        await JoinAgencyAsync(userId, agencyId);
+
+        var carId = await CarAsync("NT-13");
+        var clientId = await ClientAsync();
+
+        await AddAsync(Reservation.Create(
+            carId,
+            DateTime.UtcNow.AddDays(2),
+            DateTime.UtcNow.AddDays(5),
+            Money.Of(300m, "TND"),
+            expiresAt: DateTime.UtcNow.AddMinutes(30),
+            clientId));
+
+        await RunSweepAsync();
+
+        var notification = (await SendAsync(new GetMyNotificationsQuery())).Items.Single();
+
+        notification.Kind.Should().Be(NotificationKind.ReservationPending);
+        notification.MessageKey.Should().Be(NotificationMessages.ReservationPendingExpiringSoon);
     }
 
     // ---------------------------------------------------------------------

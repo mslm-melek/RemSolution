@@ -4,11 +4,17 @@ import { Observable, forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { TranslocoService } from '@jsverse/transloco';
 import {
-  ClientDto, ClientsClient, ExtraServiceDto, ExtraServicesClient, MoneyDto,
+  ClientDto, ClientReliabilityDto, ClientsClient, ExtraServiceDto, ExtraServicesClient, MoneyDto,
   RentingDto, RentingFeeDto, RentingState, RentingsClient,
-  ReservationDto, ReservationStatus, ReservationsClient
+  ReservationDto, ReservationRequirementDecision, ReservationRequirementDto,
+  ReservationRequirementItem, ReservationRequirementKind, ReservationRequirementStatus,
+  ReservationStatus, ReservationsClient, ReviewReservationRequirementCommand,
+  SetReservationRequirementsCommand
 } from '../web-api-client';
 import { feeKindLabelKey, feesTotal } from '../shared/renting-fees';
+import {
+  REQUIREMENT_KINDS, requirementKindLabelKey, requirementStatusLabelKey
+} from '../shared/reservation-requirements';
 import { AuthService } from '../shared/auth.service';
 import { BookingActionOutcome, BookingActionsService } from '../shared/booking-actions.service';
 import { PaymentDialogComponent } from '../shared/payment-dialog.component';
@@ -83,6 +89,18 @@ export class BookingDetailComponent implements OnInit {
   fees: RentingFeeDto[] = [];
   readonly feeKindLabelKey = feeKindLabelKey;
 
+  /** The client's record with this agency, shown where a hold is answered. */
+  reliability?: ClientReliabilityDto;
+
+  /** What the agency asks for before the keys change hands (holds only). */
+  requirements: ReservationRequirementDto[] = [];
+  /** The row being typed into the "ask for something else" line. */
+  newRequirement = { kind: ReservationRequirementKind.Document, label: '', amount: null as number | null };
+  savingRequirements = false;
+  readonly requirementKinds = REQUIREMENT_KINDS;
+  readonly requirementKindLabelKey = requirementKindLabelKey;
+  readonly requirementStatusLabelKey = requirementStatusLabelKey;
+
   /**
    * Derived from the record once it lands, not read off a getter. Both are bound
    * with *ngFor, and a getter that builds a new array is a new array on every
@@ -106,6 +124,8 @@ export class BookingDetailComponent implements OnInit {
 
   RentingState = RentingState;
   ReservationStatus = ReservationStatus;
+  ReservationRequirementKind = ReservationRequirementKind;
+  ReservationRequirementStatus = ReservationRequirementStatus;
 
   constructor(
     private rentings: RentingsClient,
@@ -190,10 +210,24 @@ export class BookingDetailComponent implements OnInit {
       ? this.rentings.getRentingFees(rentingId).pipe(catchError(() => of(null)))
       : of(null);
 
-    forkJoin({ client, extras, fees }).subscribe(result => {
+    // Only a hold has them, and only the booking's own permission gates them:
+    // what the agency asked this customer for is part of the hold.
+    const requirements: Observable<ReservationRequirementDto[] | null> = this.isRenting
+      ? of(null)
+      : this.reservations.getReservationRequirements(this.data.id).pipe(catchError(() => of(null)));
+
+    // The customer's record, read where the decision to confirm is taken. Only
+    // for a hold: on a hire it is already too late for it to change anything.
+    const reliability: Observable<ClientReliabilityDto | null> = clientId && !this.isRenting
+      ? this.clients.getClientReliability(clientId).pipe(catchError(() => of(null)))
+      : of(null);
+
+    forkJoin({ client, extras, fees, requirements, reliability }).subscribe(result => {
       this.client = result.client ?? undefined;
       this.extras = result.extras ?? [];
       this.fees = result.fees ?? [];
+      this.requirements = result.requirements ?? [];
+      this.reliability = result.reliability ?? undefined;
       this.steps = this.buildSteps();
       this.papers = this.buildPapers();
       this.outstanding = this.money();
@@ -486,6 +520,118 @@ export class BookingDetailComponent implements OnInit {
 
   confirm() {
     if (this.reservation) this.apply(this.actions.confirmReservation(this.reservation));
+  }
+
+  // --- The customer's record ------------------------------------------------
+
+  /**
+   * Only worth showing where it can change a decision — a hold still waiting for
+   * an answer — and only once there is something to say. A clean record is not
+   * news; a cancellation is.
+   */
+  get showReliability(): boolean {
+    return this.isPending && (this.reliability?.cancellations ?? 0) > 0;
+  }
+
+  /** Loud below 70 (two cancellations, or one late one), quiet above. */
+  get reliabilityTone(): string {
+    const score = this.reliability?.score ?? 100;
+    return score < 70 ? 'danger' : score < 100 ? 'warn' : 'ok';
+  }
+
+  // --- Actions: what the agency asks for before pickup ----------------------
+
+  /** Asks are set on a hold the agency has already committed to (see the command). */
+  get canAskForThings(): boolean {
+    return !this.isRenting && this.isConvertible;
+  }
+
+  get outstandingRequirements(): number {
+    return this.requirements.filter(r =>
+      r.status !== ReservationRequirementStatus.Accepted
+      && r.status !== ReservationRequirementStatus.Waived).length;
+  }
+
+  addRequirement() {
+    const label = this.newRequirement.label.trim();
+    if (!label || !this.reservation?.id) return;
+
+    // The whole list goes back: the command replaces it, and existing rows are
+    // sent by id so their answers and their history survive.
+    this.saveRequirements([
+      ...this.requirements.map(r => new ReservationRequirementItem({
+        id: r.id, kind: r.kind, label: r.label, amount: r.amount?.amount, expectedMethod: r.expectedMethod
+      })),
+      new ReservationRequirementItem({
+        kind: this.newRequirement.kind,
+        label,
+        amount: this.newRequirement.amount ?? undefined
+      })
+    ]);
+  }
+
+  removeRequirement(requirement: ReservationRequirementDto) {
+    this.saveRequirements(this.requirements
+      .filter(r => r.id !== requirement.id)
+      .map(r => new ReservationRequirementItem({
+        id: r.id, kind: r.kind, label: r.label, amount: r.amount?.amount, expectedMethod: r.expectedMethod
+      })));
+  }
+
+  private saveRequirements(items: ReservationRequirementItem[]) {
+    if (!this.reservation?.id) return;
+
+    this.errorMessage = '';
+    this.savingRequirements = true;
+
+    this.reservations.setReservationRequirements(
+      this.reservation.id,
+      new SetReservationRequirementsCommand({ id: this.reservation.id, items })
+    ).subscribe({
+      next: () => {
+        this.savingRequirements = false;
+        this.newRequirement = { kind: ReservationRequirementKind.Document, label: '', amount: null };
+        this.reload();
+      },
+      error: err => {
+        this.savingRequirements = false;
+        this.fail(err);
+      }
+    });
+  }
+
+  acceptRequirement(requirement: ReservationRequirementDto) {
+    this.review(requirement, ReservationRequirementDecision.Accept);
+  }
+
+  rejectRequirement(requirement: ReservationRequirementDto) {
+    // The reason is mandatory server-side: the customer has to be told what to
+    // send instead, so there is no point offering the action without asking.
+    const note = prompt(this.transloco.translate('reservation.requirements.promptRejectReason'));
+    if (!note) return;
+
+    this.review(requirement, ReservationRequirementDecision.Reject, note);
+  }
+
+  waiveRequirement(requirement: ReservationRequirementDto) {
+    this.review(requirement, ReservationRequirementDecision.Waive);
+  }
+
+  private review(
+    requirement: ReservationRequirementDto,
+    decision: ReservationRequirementDecision,
+    note?: string) {
+    if (!this.reservation?.id || !requirement.id) return;
+
+    this.errorMessage = '';
+
+    this.reservations.reviewReservationRequirement(
+      this.reservation.id, requirement.id,
+      new ReviewReservationRequirementCommand({ id: requirement.id, decision, note })
+    ).subscribe({
+      next: () => this.reload(),
+      error: err => this.fail(err)
+    });
   }
 
   reject() {

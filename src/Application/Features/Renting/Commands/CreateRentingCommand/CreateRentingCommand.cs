@@ -188,7 +188,7 @@ namespace RemSolution.Application.Features.Renting.Commands.CreateRentingCommand
                     request.CarId, request.StartDate, request.EndDate, null, null, cancellationToken);
 
                 var clients = new RentingClientContext(
-                    _context, _user, _identityService, _tenant, _dateTime);
+                    _context, _user, _identityService, _tenant, _dateTime, _settings);
 
                 var client = await RentingClients.ResolveAsync(
                     clients, request.ClientId, request.NewClient, cancellationToken);

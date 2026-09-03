@@ -34,6 +34,7 @@ public interface IApplicationDbContext
     DbSet<RentingFee> RentingFees { get; }
     DbSet<Payment> Payments { get; }
     DbSet<Reservation> Reservations { get; }
+    DbSet<ReservationRequirement> ReservationRequirements { get; }
     DbSet<StoredFile> StoredFiles { get; }
     DbSet<SubscriptionPlan> SubscriptionPlans { get; }
     DbSet<PlanFeature> PlanFeatures { get; }

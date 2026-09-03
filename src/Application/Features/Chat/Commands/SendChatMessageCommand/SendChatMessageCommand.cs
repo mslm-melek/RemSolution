@@ -16,7 +16,8 @@ namespace RemSolution.Application.Features.Chat.Commands.SendChatMessageCommand
     [RequiresFeature(FeatureFlags.Chat)]
     public record SendChatMessageCommand : IRequest<int>
     {
-        public int RentingId { get; init; }
+        public ChatSubjectKind Subject { get; init; }
+        public int Id { get; init; }
         public string Body { get; init; } = string.Empty;
     }
 
@@ -36,25 +37,10 @@ namespace RemSolution.Application.Features.Chat.Commands.SendChatMessageCommand
 
         public async Task<int> Handle(SendChatMessageCommand request, CancellationToken cancellationToken)
         {
-            // Tenant-filtered: another agency's renting reads as absent.
-            var renting = await _context.Rentings
-                .AsNoTracking()
-                .FirstOrDefaultAsync(r => r.Id == request.RentingId, cancellationToken);
-
-            Guard.Against.NotFound(request.RentingId, renting);
-
-            if (!ChatMessage.CanPostTo(renting.RentingState))
-            {
-                throw new ValidationException(new[]
-                {
-                    new ValidationFailure(nameof(request.RentingId),
-                        "This renting is closed, so its conversation is read-only.")
-                });
-            }
+            await EnsureOpenAsync(request, cancellationToken);
 
             var entity = new ChatMessage
             {
-                RentingId = request.RentingId,
                 AuthorKind = ChatAuthorKind.Agency,
                 SenderUserId = _user.Id,
                 SenderName = _user.UserName,
@@ -62,10 +48,57 @@ namespace RemSolution.Application.Features.Chat.Commands.SendChatMessageCommand
                 SentAt = _dateTime.GetUtcNow().UtcDateTime,
             };
 
+            entity.SetThread(request.Subject, request.Id);
+
             _context.ChatMessages.Add(entity);
             await _context.SaveChangesAsync(cancellationToken);
 
             return entity.Id;
+        }
+
+        // Tenant-filtered on both branches: another agency's booking reads as
+        // absent rather than as a refusal.
+        private async Task EnsureOpenAsync(
+            SendChatMessageCommand request, CancellationToken cancellationToken)
+        {
+            if (request.Subject == ChatSubjectKind.Reservation)
+            {
+                var status = await _context.Reservations
+                    .AsNoTracking()
+                    .Where(r => r.Id == request.Id)
+                    .Select(r => (ReservationStatus?)r.Status)
+                    .FirstOrDefaultAsync(cancellationToken);
+
+                Guard.Against.NotFound(request.Id, status);
+
+                if (!ChatMessage.CanPostTo(status.Value))
+                {
+                    throw new ValidationException(new[]
+                    {
+                        new ValidationFailure(nameof(request.Id),
+                            "This reservation is not open to messages.")
+                    });
+                }
+
+                return;
+            }
+
+            var state = await _context.Rentings
+                .AsNoTracking()
+                .Where(r => r.Id == request.Id)
+                .Select(r => (RentingState?)r.RentingState)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            Guard.Against.NotFound(request.Id, state);
+
+            if (!ChatMessage.CanPostTo(state.Value))
+            {
+                throw new ValidationException(new[]
+                {
+                    new ValidationFailure(nameof(request.Id),
+                        "This renting is closed, so its conversation is read-only.")
+                });
+            }
         }
     }
 }
@@ -76,7 +109,8 @@ namespace RemSolution.Application.Features.Chat.Commands.SendChatMessageCommand
     {
         public SendChatMessageCommandValidator()
         {
-            RuleFor(v => v.RentingId).GreaterThan(0);
+            RuleFor(v => v.Id).GreaterThan(0);
+            RuleFor(v => v.Subject).IsInEnum();
             RuleFor(v => v.Body).NotEmpty().MaximumLength(2000);
         }
     }

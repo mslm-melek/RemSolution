@@ -116,3 +116,77 @@
     text-align: start;
   }
 }
+
+/* ---------------------------------------------------------------- asks ---- */
+
+/* What the agency needs before pickup, under the booking it belongs to. The card
+   above is a two-column row; this takes a full line of its own beneath it, which
+   is why the card wraps. */
+.res-card {
+  flex-wrap: wrap;
+}
+
+.asks {
+  flex: 1 1 100%;
+  margin-top: var(--sp-3);
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--line);
+}
+
+.asks-title {
+  font-size: var(--fs-micro);
+  font-weight: var(--fw-medium);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  margin-bottom: var(--sp-2);
+}
+
+.ask {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding: var(--sp-2) 0;
+}
+
+.ask + .ask {
+  border-top: 1px solid var(--line);
+}
+
+.ask-label {
+  font-size: var(--fs-sm);
+}
+
+.ask-state,
+.ask-note {
+  font-size: var(--fs-micro);
+  color: var(--muted);
+}
+
+.ask-action {
+  flex: 0 0 auto;
+}
+
+/* A file picker that looks like the buttons beside it — the input itself is
+   hidden, and the label is what the customer clicks. */
+.upload {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--sp-1) var(--sp-3);
+  border: 1px solid var(--line-strong, var(--line));
+  border-radius: var(--r-sm);
+  font-size: var(--fs-sm);
+  cursor: pointer;
+}
+
+.upload:hover {
+  background: var(--surface-2);
+}
+
+/* What cancelling costs, beside the button that does it. */
+.cancel-fee {
+  font-size: var(--fs-micro);
+  color: var(--warn-ink);
+  text-align: end;
+}

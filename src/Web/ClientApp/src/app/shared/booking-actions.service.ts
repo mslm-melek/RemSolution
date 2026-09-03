@@ -7,7 +7,9 @@ import {
   ChangeRentingStateCommand, ConvertReservationCommand, RejectReservationCommand,
   RentingDto, RentingState, ReservationDto, ReservationsClient, RentingsClient
 } from '../web-api-client';
-import { extractProblemDetail, extractValidationErrors, isInvalidTransition } from './form-utils';
+import {
+  bookingConflict, extractProblemDetail, extractValidationErrors, isInvalidTransition
+} from './form-utils';
 import { ReturnDialogComponent } from './return-dialog.component';
 
 /**
@@ -153,6 +155,17 @@ export class BookingActionsService {
     // action buttons up.
     if (isInvalidTransition(err)) {
       return { changed: true, error: this.transloco.translate('reservation.staleState') };
+    }
+
+    // The period is taken. Name what has it: the agent's next move is to clear
+    // that booking, and the server's own sentence does not say which one.
+    const conflict = bookingConflict(err);
+    if (conflict) {
+      return {
+        changed: true,
+        error: this.transloco.translate(
+          `reservation.conflict.${conflict.kind.toLowerCase()}`, { id: conflict.id })
+      };
     }
 
     // What the server said, whether it came as a validation map or as a plain

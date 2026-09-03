@@ -8,7 +8,8 @@
   <div class="chat-layout">
     <div class="thread-list">
       <div class="thread" *ngFor="let thread of threads"
-           [class.active]="selected?.rentingId === thread.rentingId"
+           [class.active]="selected?.subject === thread.subject
+                           && selected?.subjectId === thread.subjectId"
            (click)="open(thread)">
         <div class="thread-head">
           <span class="thread-client">{{ thread.agencyName }}</span>

@@ -2842,9 +2842,9 @@ export class CarsClient implements ICarsClient {
 
 export interface IChatClient {
     getThreads(pageNumber: number | undefined, pageSize: number | undefined, onlyUnread: boolean | undefined): Observable<PaginatedListOfChatThreadDto>;
-    getMessages(rentingId: number, afterId: number | null | undefined): Observable<ChatMessageDto[]>;
-    sendMessage(rentingId: number, command: SendChatMessageCommand): Observable<number>;
-    markRead(rentingId: number): Observable<void>;
+    getMessages(subject: ChatSubjectKind, id: number, afterId: number | null | undefined): Observable<ChatMessageDto[]>;
+    sendMessage(subject: ChatSubjectKind, id: number, command: SendChatMessageCommand): Observable<number>;
+    markRead(subject: ChatSubjectKind, id: number): Observable<void>;
 }
 
 @Injectable({
@@ -2920,11 +2920,14 @@ export class ChatClient implements IChatClient {
         return _observableOf(null as any);
     }
 
-    getMessages(rentingId: number, afterId: number | null | undefined): Observable<ChatMessageDto[]> {
-        let url_ = this.baseUrl + "/api/Chat/threads/{rentingId}?";
-        if (rentingId === undefined || rentingId === null)
-            throw new Error("The parameter 'rentingId' must be defined.");
-        url_ = url_.replace("{rentingId}", encodeURIComponent("" + rentingId));
+    getMessages(subject: ChatSubjectKind, id: number, afterId: number | null | undefined): Observable<ChatMessageDto[]> {
+        let url_ = this.baseUrl + "/api/Chat/threads/{subject}/{id}?";
+        if (subject === undefined || subject === null)
+            throw new Error("The parameter 'subject' must be defined.");
+        url_ = url_.replace("{subject}", encodeURIComponent("" + subject));
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
         if (afterId !== undefined && afterId !== null)
             url_ += "afterId=" + encodeURIComponent("" + afterId) + "&";
         url_ = url_.replace(/[?&]$/, "");
@@ -2980,11 +2983,14 @@ export class ChatClient implements IChatClient {
         return _observableOf(null as any);
     }
 
-    sendMessage(rentingId: number, command: SendChatMessageCommand): Observable<number> {
-        let url_ = this.baseUrl + "/api/Chat/threads/{rentingId}/messages";
-        if (rentingId === undefined || rentingId === null)
-            throw new Error("The parameter 'rentingId' must be defined.");
-        url_ = url_.replace("{rentingId}", encodeURIComponent("" + rentingId));
+    sendMessage(subject: ChatSubjectKind, id: number, command: SendChatMessageCommand): Observable<number> {
+        let url_ = this.baseUrl + "/api/Chat/threads/{subject}/{id}/messages";
+        if (subject === undefined || subject === null)
+            throw new Error("The parameter 'subject' must be defined.");
+        url_ = url_.replace("{subject}", encodeURIComponent("" + subject));
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
         url_ = url_.replace(/[?&]$/, "");
 
         const content_ = JSON.stringify(command);
@@ -3040,11 +3046,14 @@ export class ChatClient implements IChatClient {
         return _observableOf(null as any);
     }
 
-    markRead(rentingId: number): Observable<void> {
-        let url_ = this.baseUrl + "/api/Chat/threads/{rentingId}/read";
-        if (rentingId === undefined || rentingId === null)
-            throw new Error("The parameter 'rentingId' must be defined.");
-        url_ = url_.replace("{rentingId}", encodeURIComponent("" + rentingId));
+    markRead(subject: ChatSubjectKind, id: number): Observable<void> {
+        let url_ = this.baseUrl + "/api/Chat/threads/{subject}/{id}/read";
+        if (subject === undefined || subject === null)
+            throw new Error("The parameter 'subject' must be defined.");
+        url_ = url_.replace("{subject}", encodeURIComponent("" + subject));
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
         url_ = url_.replace(/[?&]$/, "");
 
         let options_ : any = {
@@ -3094,6 +3103,7 @@ export interface IClientsClient {
     getClientById(id: number): Observable<ClientDto>;
     updateClient(id: number, command: UpdateClientCommand): Observable<void>;
     deleteClient(id: number): Observable<void>;
+    getClientReliability(id: number): Observable<ClientReliabilityDto>;
     flagClient(id: number, command: FlagClientCommand): Observable<void>;
     inviteClient(id: number): Observable<ClientInvitationDto>;
     regenerateClientPortrait(id: number): Observable<ClientPortraitDto>;
@@ -3384,6 +3394,57 @@ export class ClientsClient implements IClientsClient {
         if (status === 204) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
             return _observableOf(null as any);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getClientReliability(id: number): Observable<ClientReliabilityDto> {
+        let url_ = this.baseUrl + "/api/Clients/{id}/reliability";
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetClientReliability(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetClientReliability(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<ClientReliabilityDto>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<ClientReliabilityDto>;
+        }));
+    }
+
+    protected processGetClientReliability(response: HttpResponseBase): Observable<ClientReliabilityDto> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = ClientReliabilityDto.fromJS(resultData200);
+            return _observableOf(result200);
             }));
         } else if (status !== 200 && status !== 204) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
@@ -6429,13 +6490,15 @@ export interface IMarketplaceClient {
     getAgencyReviews(id: number, pageNumber: number | null | undefined, pageSize: number | null | undefined): Observable<PaginatedListOfAgencyReviewDto>;
     bookCar(command: CreateCustomerReservationCommand): Observable<number>;
     getMyReservations(): Observable<MyReservationDto[]>;
-    cancelMyReservation(id: number): Observable<void>;
+    cancelMyReservation(id: number, reason: string | null | undefined): Observable<void>;
     getMyRentings(): Observable<MyRentingDto[]>;
     reviewMyRenting(rentingId: number, command: CreateMyReviewCommand): Observable<number>;
     getMyChatThreads(): Observable<MyChatThreadDto[]>;
-    getMyChatMessages(rentingId: number, afterId: number | null | undefined): Observable<ChatMessageDto[]>;
-    sendMyChatMessage(rentingId: number, command: SendCustomerChatMessageCommand): Observable<number>;
-    markMyChatRead(rentingId: number): Observable<void>;
+    getMyChatMessages(subject: ChatSubjectKind, id: number, afterId: number | null | undefined): Observable<ChatMessageDto[]>;
+    sendMyChatMessage(subject: ChatSubjectKind, id: number, command: SendCustomerChatMessageCommand): Observable<number>;
+    markMyChatRead(subject: ChatSubjectKind, id: number): Observable<void>;
+    getMyReservationRequirements(id: number): Observable<ReservationRequirementDto[]>;
+    submitMyReservationRequirement(id: number, note: string | null | undefined, file: FileParameter | null | undefined): Observable<void>;
 }
 
 @Injectable({
@@ -6997,11 +7060,13 @@ export class MarketplaceClient implements IMarketplaceClient {
         return _observableOf(null as any);
     }
 
-    cancelMyReservation(id: number): Observable<void> {
-        let url_ = this.baseUrl + "/api/Marketplace/reservations/{id}/cancel";
+    cancelMyReservation(id: number, reason: string | null | undefined): Observable<void> {
+        let url_ = this.baseUrl + "/api/Marketplace/reservations/{id}/cancel?";
         if (id === undefined || id === null)
             throw new Error("The parameter 'id' must be defined.");
         url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        if (reason !== undefined && reason !== null)
+            url_ += "reason=" + encodeURIComponent("" + reason) + "&";
         url_ = url_.replace(/[?&]$/, "");
 
         let options_ : any = {
@@ -7214,11 +7279,14 @@ export class MarketplaceClient implements IMarketplaceClient {
         return _observableOf(null as any);
     }
 
-    getMyChatMessages(rentingId: number, afterId: number | null | undefined): Observable<ChatMessageDto[]> {
-        let url_ = this.baseUrl + "/api/Marketplace/my-chats/{rentingId}?";
-        if (rentingId === undefined || rentingId === null)
-            throw new Error("The parameter 'rentingId' must be defined.");
-        url_ = url_.replace("{rentingId}", encodeURIComponent("" + rentingId));
+    getMyChatMessages(subject: ChatSubjectKind, id: number, afterId: number | null | undefined): Observable<ChatMessageDto[]> {
+        let url_ = this.baseUrl + "/api/Marketplace/my-chats/{subject}/{id}?";
+        if (subject === undefined || subject === null)
+            throw new Error("The parameter 'subject' must be defined.");
+        url_ = url_.replace("{subject}", encodeURIComponent("" + subject));
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
         if (afterId !== undefined && afterId !== null)
             url_ += "afterId=" + encodeURIComponent("" + afterId) + "&";
         url_ = url_.replace(/[?&]$/, "");
@@ -7274,11 +7342,14 @@ export class MarketplaceClient implements IMarketplaceClient {
         return _observableOf(null as any);
     }
 
-    sendMyChatMessage(rentingId: number, command: SendCustomerChatMessageCommand): Observable<number> {
-        let url_ = this.baseUrl + "/api/Marketplace/my-chats/{rentingId}/messages";
-        if (rentingId === undefined || rentingId === null)
-            throw new Error("The parameter 'rentingId' must be defined.");
-        url_ = url_.replace("{rentingId}", encodeURIComponent("" + rentingId));
+    sendMyChatMessage(subject: ChatSubjectKind, id: number, command: SendCustomerChatMessageCommand): Observable<number> {
+        let url_ = this.baseUrl + "/api/Marketplace/my-chats/{subject}/{id}/messages";
+        if (subject === undefined || subject === null)
+            throw new Error("The parameter 'subject' must be defined.");
+        url_ = url_.replace("{subject}", encodeURIComponent("" + subject));
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
         url_ = url_.replace(/[?&]$/, "");
 
         const content_ = JSON.stringify(command);
@@ -7334,11 +7405,14 @@ export class MarketplaceClient implements IMarketplaceClient {
         return _observableOf(null as any);
     }
 
-    markMyChatRead(rentingId: number): Observable<void> {
-        let url_ = this.baseUrl + "/api/Marketplace/my-chats/{rentingId}/read";
-        if (rentingId === undefined || rentingId === null)
-            throw new Error("The parameter 'rentingId' must be defined.");
-        url_ = url_.replace("{rentingId}", encodeURIComponent("" + rentingId));
+    markMyChatRead(subject: ChatSubjectKind, id: number): Observable<void> {
+        let url_ = this.baseUrl + "/api/Marketplace/my-chats/{subject}/{id}/read";
+        if (subject === undefined || subject === null)
+            throw new Error("The parameter 'subject' must be defined.");
+        url_ = url_.replace("{subject}", encodeURIComponent("" + subject));
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
         url_ = url_.replace(/[?&]$/, "");
 
         let options_ : any = {
@@ -7363,6 +7437,118 @@ export class MarketplaceClient implements IMarketplaceClient {
     }
 
     protected processMarkMyChatRead(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return _observableOf(null as any);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getMyReservationRequirements(id: number): Observable<ReservationRequirementDto[]> {
+        let url_ = this.baseUrl + "/api/Marketplace/my-reservations/{id}/requirements";
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetMyReservationRequirements(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetMyReservationRequirements(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<ReservationRequirementDto[]>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<ReservationRequirementDto[]>;
+        }));
+    }
+
+    protected processGetMyReservationRequirements(response: HttpResponseBase): Observable<ReservationRequirementDto[]> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            if (Array.isArray(resultData200)) {
+                result200 = [] as any;
+                for (let item of resultData200)
+                    result200!.push(ReservationRequirementDto.fromJS(item));
+            }
+            else {
+                result200 = <any>null;
+            }
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    submitMyReservationRequirement(id: number, note: string | null | undefined, file: FileParameter | null | undefined): Observable<void> {
+        let url_ = this.baseUrl + "/api/Marketplace/my-reservations/requirements/{id}/submit?";
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        if (note !== undefined && note !== null)
+            url_ += "note=" + encodeURIComponent("" + note) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = new FormData();
+        if (file !== null && file !== undefined)
+            content_.append("file", file.data, file.fileName ? file.fileName : "file");
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processSubmitMyReservationRequirement(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processSubmitMyReservationRequirement(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processSubmitMyReservationRequirement(response: HttpResponseBase): Observable<void> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -9246,6 +9432,9 @@ export interface IReservationsClient {
     confirmReservation(id: number): Observable<void>;
     rejectReservation(id: number, command: RejectReservationCommand): Observable<void>;
     convertReservation(id: number, command: ConvertReservationCommand): Observable<number>;
+    getReservationRequirements(id: number): Observable<ReservationRequirementDto[]>;
+    setReservationRequirements(id: number, command: SetReservationRequirementsCommand): Observable<void>;
+    reviewReservationRequirement(id: number, requirementId: number, command: ReviewReservationRequirementCommand): Observable<void>;
 }
 
 @Injectable({
@@ -9698,6 +9887,177 @@ export class ReservationsClient implements IReservationsClient {
                 result200 = resultData200 !== undefined ? resultData200 : <any>null;
     
             return _observableOf(result200);
+            }));
+        } else if (status === 400) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("A server side error occurred.", status, _responseText, _headers);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getReservationRequirements(id: number): Observable<ReservationRequirementDto[]> {
+        let url_ = this.baseUrl + "/api/Reservations/{id}/requirements";
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetReservationRequirements(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetReservationRequirements(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<ReservationRequirementDto[]>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<ReservationRequirementDto[]>;
+        }));
+    }
+
+    protected processGetReservationRequirements(response: HttpResponseBase): Observable<ReservationRequirementDto[]> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            if (Array.isArray(resultData200)) {
+                result200 = [] as any;
+                for (let item of resultData200)
+                    result200!.push(ReservationRequirementDto.fromJS(item));
+            }
+            else {
+                result200 = <any>null;
+            }
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    setReservationRequirements(id: number, command: SetReservationRequirementsCommand): Observable<void> {
+        let url_ = this.baseUrl + "/api/Reservations/{id}/requirements";
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(command);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+            })
+        };
+
+        return this.http.request("put", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processSetReservationRequirements(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processSetReservationRequirements(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processSetReservationRequirements(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return _observableOf(null as any);
+            }));
+        } else if (status === 400) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("A server side error occurred.", status, _responseText, _headers);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    reviewReservationRequirement(id: number, requirementId: number, command: ReviewReservationRequirementCommand): Observable<void> {
+        let url_ = this.baseUrl + "/api/Reservations/{id}/requirements/{requirementId}/review";
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        if (requirementId === undefined || requirementId === null)
+            throw new Error("The parameter 'requirementId' must be defined.");
+        url_ = url_.replace("{requirementId}", encodeURIComponent("" + requirementId));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(command);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processReviewReservationRequirement(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processReviewReservationRequirement(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processReviewReservationRequirement(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return _observableOf(null as any);
             }));
         } else if (status === 400) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
@@ -11033,6 +11393,12 @@ export class AgencyDto implements IAgencyDto {
     taxIdentifier?: string | undefined;
     vatRatePercent?: number;
     fiscalStampAmount?: number;
+    cinValidityYears?: number;
+    passeportValidityYears?: number;
+    drivingLicenceValidityYears?: number;
+    cancellationFeeMode?: CancellationFeeMode;
+    cancellationFeeValue?: number;
+    cancellationFreeHours?: number;
 
     constructor(data?: IAgencyDto) {
         if (data) {
@@ -11069,6 +11435,12 @@ export class AgencyDto implements IAgencyDto {
             this.taxIdentifier = _data["taxIdentifier"];
             this.vatRatePercent = _data["vatRatePercent"];
             this.fiscalStampAmount = _data["fiscalStampAmount"];
+            this.cinValidityYears = _data["cinValidityYears"];
+            this.passeportValidityYears = _data["passeportValidityYears"];
+            this.drivingLicenceValidityYears = _data["drivingLicenceValidityYears"];
+            this.cancellationFeeMode = _data["cancellationFeeMode"];
+            this.cancellationFeeValue = _data["cancellationFeeValue"];
+            this.cancellationFreeHours = _data["cancellationFreeHours"];
         }
     }
 
@@ -11105,6 +11477,12 @@ export class AgencyDto implements IAgencyDto {
         data["taxIdentifier"] = this.taxIdentifier;
         data["vatRatePercent"] = this.vatRatePercent;
         data["fiscalStampAmount"] = this.fiscalStampAmount;
+        data["cinValidityYears"] = this.cinValidityYears;
+        data["passeportValidityYears"] = this.passeportValidityYears;
+        data["drivingLicenceValidityYears"] = this.drivingLicenceValidityYears;
+        data["cancellationFeeMode"] = this.cancellationFeeMode;
+        data["cancellationFeeValue"] = this.cancellationFeeValue;
+        data["cancellationFreeHours"] = this.cancellationFreeHours;
         return data;
     }
 }
@@ -11134,6 +11512,18 @@ export interface IAgencyDto {
     taxIdentifier?: string | undefined;
     vatRatePercent?: number;
     fiscalStampAmount?: number;
+    cinValidityYears?: number;
+    passeportValidityYears?: number;
+    drivingLicenceValidityYears?: number;
+    cancellationFeeMode?: CancellationFeeMode;
+    cancellationFeeValue?: number;
+    cancellationFreeHours?: number;
+}
+
+export enum CancellationFeeMode {
+    None = 0,
+    FixedAmount = 1,
+    PercentOfPrice = 2,
 }
 
 export class UpdateMyAgencyCommand implements IUpdateMyAgencyCommand {
@@ -11158,6 +11548,12 @@ export class UpdateMyAgencyCommand implements IUpdateMyAgencyCommand {
     taxIdentifier?: string | undefined;
     vatRatePercent?: number;
     fiscalStampAmount?: number;
+    cinValidityYears?: number;
+    passeportValidityYears?: number;
+    drivingLicenceValidityYears?: number;
+    cancellationFeeMode?: CancellationFeeMode;
+    cancellationFeeValue?: number;
+    cancellationFreeHours?: number;
 
     constructor(data?: IUpdateMyAgencyCommand) {
         if (data) {
@@ -11191,6 +11587,12 @@ export class UpdateMyAgencyCommand implements IUpdateMyAgencyCommand {
             this.taxIdentifier = _data["taxIdentifier"];
             this.vatRatePercent = _data["vatRatePercent"];
             this.fiscalStampAmount = _data["fiscalStampAmount"];
+            this.cinValidityYears = _data["cinValidityYears"];
+            this.passeportValidityYears = _data["passeportValidityYears"];
+            this.drivingLicenceValidityYears = _data["drivingLicenceValidityYears"];
+            this.cancellationFeeMode = _data["cancellationFeeMode"];
+            this.cancellationFeeValue = _data["cancellationFeeValue"];
+            this.cancellationFreeHours = _data["cancellationFreeHours"];
         }
     }
 
@@ -11224,6 +11626,12 @@ export class UpdateMyAgencyCommand implements IUpdateMyAgencyCommand {
         data["taxIdentifier"] = this.taxIdentifier;
         data["vatRatePercent"] = this.vatRatePercent;
         data["fiscalStampAmount"] = this.fiscalStampAmount;
+        data["cinValidityYears"] = this.cinValidityYears;
+        data["passeportValidityYears"] = this.passeportValidityYears;
+        data["drivingLicenceValidityYears"] = this.drivingLicenceValidityYears;
+        data["cancellationFeeMode"] = this.cancellationFeeMode;
+        data["cancellationFeeValue"] = this.cancellationFeeValue;
+        data["cancellationFreeHours"] = this.cancellationFreeHours;
         return data;
     }
 }
@@ -11250,6 +11658,12 @@ export interface IUpdateMyAgencyCommand {
     taxIdentifier?: string | undefined;
     vatRatePercent?: number;
     fiscalStampAmount?: number;
+    cinValidityYears?: number;
+    passeportValidityYears?: number;
+    drivingLicenceValidityYears?: number;
+    cancellationFeeMode?: CancellationFeeMode;
+    cancellationFeeValue?: number;
+    cancellationFreeHours?: number;
 }
 
 export class AgencyCreatedDto implements IAgencyCreatedDto {
@@ -13900,19 +14314,23 @@ export interface IPaginatedListOfChatThreadDto {
 }
 
 export class ChatThreadDto implements IChatThreadDto {
-    rentingId?: number;
+    subject?: ChatSubjectKind;
+    rentingId?: number | undefined;
+    reservationId?: number | undefined;
     carId?: number | undefined;
     carMatricule?: string | undefined;
     clientId?: number | undefined;
     clientName?: string | undefined;
     startDate?: Date | undefined;
     endDate?: Date | undefined;
-    rentingState?: RentingState;
+    rentingState?: RentingState | undefined;
+    reservationStatus?: ReservationStatus | undefined;
     lastMessagePreview?: string | undefined;
     lastMessageAt?: Date | undefined;
     lastMessageAuthorKind?: ChatAuthorKind | undefined;
     unreadCount?: number;
     isOpen?: boolean;
+    subjectId?: number;
 
     constructor(data?: IChatThreadDto) {
         if (data) {
@@ -13925,7 +14343,9 @@ export class ChatThreadDto implements IChatThreadDto {
 
     init(_data?: any) {
         if (_data) {
+            this.subject = _data["subject"];
             this.rentingId = _data["rentingId"];
+            this.reservationId = _data["reservationId"];
             this.carId = _data["carId"];
             this.carMatricule = _data["carMatricule"];
             this.clientId = _data["clientId"];
@@ -13933,11 +14353,13 @@ export class ChatThreadDto implements IChatThreadDto {
             this.startDate = _data["startDate"] ? new Date(_data["startDate"].toString()) : <any>undefined;
             this.endDate = _data["endDate"] ? new Date(_data["endDate"].toString()) : <any>undefined;
             this.rentingState = _data["rentingState"];
+            this.reservationStatus = _data["reservationStatus"];
             this.lastMessagePreview = _data["lastMessagePreview"];
             this.lastMessageAt = _data["lastMessageAt"] ? new Date(_data["lastMessageAt"].toString()) : <any>undefined;
             this.lastMessageAuthorKind = _data["lastMessageAuthorKind"];
             this.unreadCount = _data["unreadCount"];
             this.isOpen = _data["isOpen"];
+            this.subjectId = _data["subjectId"];
         }
     }
 
@@ -13950,7 +14372,9 @@ export class ChatThreadDto implements IChatThreadDto {
 
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
+        data["subject"] = this.subject;
         data["rentingId"] = this.rentingId;
+        data["reservationId"] = this.reservationId;
         data["carId"] = this.carId;
         data["carMatricule"] = this.carMatricule;
         data["clientId"] = this.clientId;
@@ -13958,29 +14382,50 @@ export class ChatThreadDto implements IChatThreadDto {
         data["startDate"] = this.startDate ? this.startDate.toISOString() : <any>undefined;
         data["endDate"] = this.endDate ? this.endDate.toISOString() : <any>undefined;
         data["rentingState"] = this.rentingState;
+        data["reservationStatus"] = this.reservationStatus;
         data["lastMessagePreview"] = this.lastMessagePreview;
         data["lastMessageAt"] = this.lastMessageAt ? this.lastMessageAt.toISOString() : <any>undefined;
         data["lastMessageAuthorKind"] = this.lastMessageAuthorKind;
         data["unreadCount"] = this.unreadCount;
         data["isOpen"] = this.isOpen;
+        data["subjectId"] = this.subjectId;
         return data;
     }
 }
 
 export interface IChatThreadDto {
-    rentingId?: number;
+    subject?: ChatSubjectKind;
+    rentingId?: number | undefined;
+    reservationId?: number | undefined;
     carId?: number | undefined;
     carMatricule?: string | undefined;
     clientId?: number | undefined;
     clientName?: string | undefined;
     startDate?: Date | undefined;
     endDate?: Date | undefined;
-    rentingState?: RentingState;
+    rentingState?: RentingState | undefined;
+    reservationStatus?: ReservationStatus | undefined;
     lastMessagePreview?: string | undefined;
     lastMessageAt?: Date | undefined;
     lastMessageAuthorKind?: ChatAuthorKind | undefined;
     unreadCount?: number;
     isOpen?: boolean;
+    subjectId?: number;
+}
+
+export enum ChatSubjectKind {
+    Renting = 1,
+    Reservation = 2,
+}
+
+export enum ReservationStatus {
+    PendingConfirmation = 0,
+    Confirmed = 1,
+    Cancelled = 2,
+    Expired = 3,
+    Rejected = 4,
+    Paid = 5,
+    Converted = 6,
 }
 
 export enum ChatAuthorKind {
@@ -13990,7 +14435,9 @@ export enum ChatAuthorKind {
 
 export class ChatMessageDto implements IChatMessageDto {
     id?: number;
-    rentingId?: number;
+    rentingId?: number | undefined;
+    reservationId?: number | undefined;
+    subject?: ChatSubjectKind;
     authorKind?: ChatAuthorKind;
     senderName?: string | undefined;
     body?: string | undefined;
@@ -14010,6 +14457,8 @@ export class ChatMessageDto implements IChatMessageDto {
         if (_data) {
             this.id = _data["id"];
             this.rentingId = _data["rentingId"];
+            this.reservationId = _data["reservationId"];
+            this.subject = _data["subject"];
             this.authorKind = _data["authorKind"];
             this.senderName = _data["senderName"];
             this.body = _data["body"];
@@ -14029,6 +14478,8 @@ export class ChatMessageDto implements IChatMessageDto {
         data = typeof data === 'object' ? data : {};
         data["id"] = this.id;
         data["rentingId"] = this.rentingId;
+        data["reservationId"] = this.reservationId;
+        data["subject"] = this.subject;
         data["authorKind"] = this.authorKind;
         data["senderName"] = this.senderName;
         data["body"] = this.body;
@@ -14040,7 +14491,9 @@ export class ChatMessageDto implements IChatMessageDto {
 
 export interface IChatMessageDto {
     id?: number;
-    rentingId?: number;
+    rentingId?: number | undefined;
+    reservationId?: number | undefined;
+    subject?: ChatSubjectKind;
     authorKind?: ChatAuthorKind;
     senderName?: string | undefined;
     body?: string | undefined;
@@ -14049,7 +14502,8 @@ export interface IChatMessageDto {
 }
 
 export class SendChatMessageCommand implements ISendChatMessageCommand {
-    rentingId?: number;
+    subject?: ChatSubjectKind;
+    id?: number;
     body?: string;
 
     constructor(data?: ISendChatMessageCommand) {
@@ -14063,7 +14517,8 @@ export class SendChatMessageCommand implements ISendChatMessageCommand {
 
     init(_data?: any) {
         if (_data) {
-            this.rentingId = _data["rentingId"];
+            this.subject = _data["subject"];
+            this.id = _data["id"];
             this.body = _data["body"];
         }
     }
@@ -14077,14 +14532,16 @@ export class SendChatMessageCommand implements ISendChatMessageCommand {
 
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
-        data["rentingId"] = this.rentingId;
+        data["subject"] = this.subject;
+        data["id"] = this.id;
         data["body"] = this.body;
         return data;
     }
 }
 
 export interface ISendChatMessageCommand {
-    rentingId?: number;
+    subject?: ChatSubjectKind;
+    id?: number;
     body?: string;
 }
 
@@ -14338,6 +14795,62 @@ export interface IClientDto {
     rentingCount?: number;
     openRentingCount?: number;
     overdueRentingCount?: number;
+}
+
+export class ClientReliabilityDto implements IClientReliabilityDto {
+    clientId?: number;
+    bookings?: number;
+    cancellations?: number;
+    lateCancellations?: number;
+    completed?: number;
+    score?: number;
+
+    constructor(data?: IClientReliabilityDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.clientId = _data["clientId"];
+            this.bookings = _data["bookings"];
+            this.cancellations = _data["cancellations"];
+            this.lateCancellations = _data["lateCancellations"];
+            this.completed = _data["completed"];
+            this.score = _data["score"];
+        }
+    }
+
+    static fromJS(data: any): ClientReliabilityDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new ClientReliabilityDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["clientId"] = this.clientId;
+        data["bookings"] = this.bookings;
+        data["cancellations"] = this.cancellations;
+        data["lateCancellations"] = this.lateCancellations;
+        data["completed"] = this.completed;
+        data["score"] = this.score;
+        return data;
+    }
+}
+
+export interface IClientReliabilityDto {
+    clientId?: number;
+    bookings?: number;
+    cancellations?: number;
+    lateCancellations?: number;
+    completed?: number;
+    score?: number;
 }
 
 export class CreateClientCommand implements ICreateClientCommand {
@@ -16276,16 +16789,6 @@ export enum BookingCalendarEventKind {
     Return = 2,
     ReservationStart = 3,
     UnavailabilityStart = 4,
-}
-
-export enum ReservationStatus {
-    PendingConfirmation = 0,
-    Confirmed = 1,
-    Cancelled = 2,
-    Expired = 3,
-    Rejected = 4,
-    Paid = 5,
-    Converted = 6,
 }
 
 export class DocumentTemplateDto implements IDocumentTemplateDto {
@@ -18540,6 +19043,7 @@ export interface ICreateCustomerReservationCommand {
 
 export class MyReservationDto implements IMyReservationDto {
     id?: number;
+    agencyId?: number;
     agencyName?: string | undefined;
     carBrandName?: string | undefined;
     carModelName?: string | undefined;
@@ -18549,6 +19053,9 @@ export class MyReservationDto implements IMyReservationDto {
     status?: ReservationStatus;
     expiresAt?: Date | undefined;
     rejectedReason?: string | undefined;
+    cancellationFee?: MoneyDto | undefined;
+    canCancel?: boolean;
+    cancellationFeeIfCancelledNow?: MoneyDto | undefined;
 
     constructor(data?: IMyReservationDto) {
         if (data) {
@@ -18562,6 +19069,7 @@ export class MyReservationDto implements IMyReservationDto {
     init(_data?: any) {
         if (_data) {
             this.id = _data["id"];
+            this.agencyId = _data["agencyId"];
             this.agencyName = _data["agencyName"];
             this.carBrandName = _data["carBrandName"];
             this.carModelName = _data["carModelName"];
@@ -18571,6 +19079,9 @@ export class MyReservationDto implements IMyReservationDto {
             this.status = _data["status"];
             this.expiresAt = _data["expiresAt"] ? new Date(_data["expiresAt"].toString()) : <any>undefined;
             this.rejectedReason = _data["rejectedReason"];
+            this.cancellationFee = _data["cancellationFee"] ? MoneyDto.fromJS(_data["cancellationFee"]) : <any>undefined;
+            this.canCancel = _data["canCancel"];
+            this.cancellationFeeIfCancelledNow = _data["cancellationFeeIfCancelledNow"] ? MoneyDto.fromJS(_data["cancellationFeeIfCancelledNow"]) : <any>undefined;
         }
     }
 
@@ -18584,6 +19095,7 @@ export class MyReservationDto implements IMyReservationDto {
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
         data["id"] = this.id;
+        data["agencyId"] = this.agencyId;
         data["agencyName"] = this.agencyName;
         data["carBrandName"] = this.carBrandName;
         data["carModelName"] = this.carModelName;
@@ -18593,12 +19105,16 @@ export class MyReservationDto implements IMyReservationDto {
         data["status"] = this.status;
         data["expiresAt"] = this.expiresAt ? this.expiresAt.toISOString() : <any>undefined;
         data["rejectedReason"] = this.rejectedReason;
+        data["cancellationFee"] = this.cancellationFee ? this.cancellationFee.toJSON() : <any>undefined;
+        data["canCancel"] = this.canCancel;
+        data["cancellationFeeIfCancelledNow"] = this.cancellationFeeIfCancelledNow ? this.cancellationFeeIfCancelledNow.toJSON() : <any>undefined;
         return data;
     }
 }
 
 export interface IMyReservationDto {
     id?: number;
+    agencyId?: number;
     agencyName?: string | undefined;
     carBrandName?: string | undefined;
     carModelName?: string | undefined;
@@ -18608,6 +19124,9 @@ export interface IMyReservationDto {
     status?: ReservationStatus;
     expiresAt?: Date | undefined;
     rejectedReason?: string | undefined;
+    cancellationFee?: MoneyDto | undefined;
+    canCancel?: boolean;
+    cancellationFeeIfCancelledNow?: MoneyDto | undefined;
 }
 
 export class MyRentingDto implements IMyRentingDto {
@@ -18743,7 +19262,9 @@ export interface ICreateMyReviewCommand {
 }
 
 export class MyChatThreadDto implements IMyChatThreadDto {
-    rentingId?: number;
+    subject?: ChatSubjectKind;
+    rentingId?: number | undefined;
+    reservationId?: number | undefined;
     agencyId?: number;
     agencyName?: string | undefined;
     carBrandName?: string | undefined;
@@ -18751,12 +19272,14 @@ export class MyChatThreadDto implements IMyChatThreadDto {
     carMatricule?: string | undefined;
     startDate?: Date | undefined;
     endDate?: Date | undefined;
-    rentingState?: RentingState;
+    rentingState?: RentingState | undefined;
+    reservationStatus?: ReservationStatus | undefined;
     lastMessagePreview?: string | undefined;
     lastMessageAt?: Date | undefined;
     lastMessageAuthorKind?: ChatAuthorKind | undefined;
     unreadCount?: number;
     isOpen?: boolean;
+    subjectId?: number;
 
     constructor(data?: IMyChatThreadDto) {
         if (data) {
@@ -18769,7 +19292,9 @@ export class MyChatThreadDto implements IMyChatThreadDto {
 
     init(_data?: any) {
         if (_data) {
+            this.subject = _data["subject"];
             this.rentingId = _data["rentingId"];
+            this.reservationId = _data["reservationId"];
             this.agencyId = _data["agencyId"];
             this.agencyName = _data["agencyName"];
             this.carBrandName = _data["carBrandName"];
@@ -18778,11 +19303,13 @@ export class MyChatThreadDto implements IMyChatThreadDto {
             this.startDate = _data["startDate"] ? new Date(_data["startDate"].toString()) : <any>undefined;
             this.endDate = _data["endDate"] ? new Date(_data["endDate"].toString()) : <any>undefined;
             this.rentingState = _data["rentingState"];
+            this.reservationStatus = _data["reservationStatus"];
             this.lastMessagePreview = _data["lastMessagePreview"];
             this.lastMessageAt = _data["lastMessageAt"] ? new Date(_data["lastMessageAt"].toString()) : <any>undefined;
             this.lastMessageAuthorKind = _data["lastMessageAuthorKind"];
             this.unreadCount = _data["unreadCount"];
             this.isOpen = _data["isOpen"];
+            this.subjectId = _data["subjectId"];
         }
     }
 
@@ -18795,7 +19322,9 @@ export class MyChatThreadDto implements IMyChatThreadDto {
 
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
+        data["subject"] = this.subject;
         data["rentingId"] = this.rentingId;
+        data["reservationId"] = this.reservationId;
         data["agencyId"] = this.agencyId;
         data["agencyName"] = this.agencyName;
         data["carBrandName"] = this.carBrandName;
@@ -18804,17 +19333,21 @@ export class MyChatThreadDto implements IMyChatThreadDto {
         data["startDate"] = this.startDate ? this.startDate.toISOString() : <any>undefined;
         data["endDate"] = this.endDate ? this.endDate.toISOString() : <any>undefined;
         data["rentingState"] = this.rentingState;
+        data["reservationStatus"] = this.reservationStatus;
         data["lastMessagePreview"] = this.lastMessagePreview;
         data["lastMessageAt"] = this.lastMessageAt ? this.lastMessageAt.toISOString() : <any>undefined;
         data["lastMessageAuthorKind"] = this.lastMessageAuthorKind;
         data["unreadCount"] = this.unreadCount;
         data["isOpen"] = this.isOpen;
+        data["subjectId"] = this.subjectId;
         return data;
     }
 }
 
 export interface IMyChatThreadDto {
-    rentingId?: number;
+    subject?: ChatSubjectKind;
+    rentingId?: number | undefined;
+    reservationId?: number | undefined;
     agencyId?: number;
     agencyName?: string | undefined;
     carBrandName?: string | undefined;
@@ -18822,16 +19355,19 @@ export interface IMyChatThreadDto {
     carMatricule?: string | undefined;
     startDate?: Date | undefined;
     endDate?: Date | undefined;
-    rentingState?: RentingState;
+    rentingState?: RentingState | undefined;
+    reservationStatus?: ReservationStatus | undefined;
     lastMessagePreview?: string | undefined;
     lastMessageAt?: Date | undefined;
     lastMessageAuthorKind?: ChatAuthorKind | undefined;
     unreadCount?: number;
     isOpen?: boolean;
+    subjectId?: number;
 }
 
 export class SendCustomerChatMessageCommand implements ISendCustomerChatMessageCommand {
-    rentingId?: number;
+    subject?: ChatSubjectKind;
+    id?: number;
     body?: string;
 
     constructor(data?: ISendCustomerChatMessageCommand) {
@@ -18845,7 +19381,8 @@ export class SendCustomerChatMessageCommand implements ISendCustomerChatMessageC
 
     init(_data?: any) {
         if (_data) {
-            this.rentingId = _data["rentingId"];
+            this.subject = _data["subject"];
+            this.id = _data["id"];
             this.body = _data["body"];
         }
     }
@@ -18859,15 +19396,120 @@ export class SendCustomerChatMessageCommand implements ISendCustomerChatMessageC
 
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
-        data["rentingId"] = this.rentingId;
+        data["subject"] = this.subject;
+        data["id"] = this.id;
         data["body"] = this.body;
         return data;
     }
 }
 
 export interface ISendCustomerChatMessageCommand {
-    rentingId?: number;
+    subject?: ChatSubjectKind;
+    id?: number;
     body?: string;
+}
+
+export class ReservationRequirementDto implements IReservationRequirementDto {
+    id?: number;
+    reservationId?: number;
+    kind?: ReservationRequirementKind;
+    label?: string;
+    amount?: MoneyDto | undefined;
+    expectedMethod?: PaymentMethod | undefined;
+    status?: ReservationRequirementStatus;
+    submittedFileUrl?: string | undefined;
+    submittedNote?: string | undefined;
+    submittedAt?: Date | undefined;
+    reviewedAt?: Date | undefined;
+    reviewNote?: string | undefined;
+
+    constructor(data?: IReservationRequirementDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.reservationId = _data["reservationId"];
+            this.kind = _data["kind"];
+            this.label = _data["label"];
+            this.amount = _data["amount"] ? MoneyDto.fromJS(_data["amount"]) : <any>undefined;
+            this.expectedMethod = _data["expectedMethod"];
+            this.status = _data["status"];
+            this.submittedFileUrl = _data["submittedFileUrl"];
+            this.submittedNote = _data["submittedNote"];
+            this.submittedAt = _data["submittedAt"] ? new Date(_data["submittedAt"].toString()) : <any>undefined;
+            this.reviewedAt = _data["reviewedAt"] ? new Date(_data["reviewedAt"].toString()) : <any>undefined;
+            this.reviewNote = _data["reviewNote"];
+        }
+    }
+
+    static fromJS(data: any): ReservationRequirementDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new ReservationRequirementDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["reservationId"] = this.reservationId;
+        data["kind"] = this.kind;
+        data["label"] = this.label;
+        data["amount"] = this.amount ? this.amount.toJSON() : <any>undefined;
+        data["expectedMethod"] = this.expectedMethod;
+        data["status"] = this.status;
+        data["submittedFileUrl"] = this.submittedFileUrl;
+        data["submittedNote"] = this.submittedNote;
+        data["submittedAt"] = this.submittedAt ? this.submittedAt.toISOString() : <any>undefined;
+        data["reviewedAt"] = this.reviewedAt ? this.reviewedAt.toISOString() : <any>undefined;
+        data["reviewNote"] = this.reviewNote;
+        return data;
+    }
+}
+
+export interface IReservationRequirementDto {
+    id?: number;
+    reservationId?: number;
+    kind?: ReservationRequirementKind;
+    label?: string;
+    amount?: MoneyDto | undefined;
+    expectedMethod?: PaymentMethod | undefined;
+    status?: ReservationRequirementStatus;
+    submittedFileUrl?: string | undefined;
+    submittedNote?: string | undefined;
+    submittedAt?: Date | undefined;
+    reviewedAt?: Date | undefined;
+    reviewNote?: string | undefined;
+}
+
+export enum ReservationRequirementKind {
+    Payment = 1,
+    Deposit = 2,
+    Document = 3,
+    Conditions = 4,
+    Contract = 5,
+}
+
+export enum PaymentMethod {
+    Cash = 0,
+    Card = 1,
+    Transfer = 2,
+    Cheque = 3,
+}
+
+export enum ReservationRequirementStatus {
+    Requested = 0,
+    Submitted = 1,
+    Accepted = 2,
+    Rejected = 3,
+    Waived = 4,
 }
 
 export class PaginatedListOfModelCarDto implements IPaginatedListOfModelCarDto {
@@ -19222,6 +19864,7 @@ export enum NotificationKind {
     RentingEndingSoon = 5,
     RentingLateNotice = 6,
     ClientDocumentExpiring = 7,
+    ReservationPending = 8,
 }
 
 export enum NotificationSubject {
@@ -19514,13 +20157,6 @@ export interface IPaymentDto {
     reversesPaymentId?: number | undefined;
     proofFileUrl?: string | undefined;
     proofFileName?: string | undefined;
-}
-
-export enum PaymentMethod {
-    Cash = 0,
-    Card = 1,
-    Transfer = 2,
-    Cheque = 3,
 }
 
 export class ClientBalanceDto implements IClientBalanceDto {
@@ -21186,6 +21822,8 @@ export class ReservationDto implements IReservationDto {
     rejectedReason?: string | undefined;
     cancelledReason?: string | undefined;
     expiredReason?: string | undefined;
+    cancelledByCustomer?: boolean;
+    cancellationFee?: MoneyDto | undefined;
     rentingId?: number | undefined;
 
     constructor(data?: IReservationDto) {
@@ -21218,6 +21856,8 @@ export class ReservationDto implements IReservationDto {
             this.rejectedReason = _data["rejectedReason"];
             this.cancelledReason = _data["cancelledReason"];
             this.expiredReason = _data["expiredReason"];
+            this.cancelledByCustomer = _data["cancelledByCustomer"];
+            this.cancellationFee = _data["cancellationFee"] ? MoneyDto.fromJS(_data["cancellationFee"]) : <any>undefined;
             this.rentingId = _data["rentingId"];
         }
     }
@@ -21250,6 +21890,8 @@ export class ReservationDto implements IReservationDto {
         data["rejectedReason"] = this.rejectedReason;
         data["cancelledReason"] = this.cancelledReason;
         data["expiredReason"] = this.expiredReason;
+        data["cancelledByCustomer"] = this.cancelledByCustomer;
+        data["cancellationFee"] = this.cancellationFee ? this.cancellationFee.toJSON() : <any>undefined;
         data["rentingId"] = this.rentingId;
         return data;
     }
@@ -21275,6 +21917,8 @@ export interface IReservationDto {
     rejectedReason?: string | undefined;
     cancelledReason?: string | undefined;
     expiredReason?: string | undefined;
+    cancelledByCustomer?: boolean;
+    cancellationFee?: MoneyDto | undefined;
     rentingId?: number | undefined;
 }
 
@@ -21383,6 +22027,7 @@ export class ConvertReservationCommand implements IConvertReservationCommand {
     rowVersion?: string | undefined;
     cin?: string | undefined;
     passeportNumber?: string | undefined;
+    acknowledgeUnmetRequirements?: boolean;
 
     constructor(data?: IConvertReservationCommand) {
         if (data) {
@@ -21399,6 +22044,7 @@ export class ConvertReservationCommand implements IConvertReservationCommand {
             this.rowVersion = _data["rowVersion"];
             this.cin = _data["cin"];
             this.passeportNumber = _data["passeportNumber"];
+            this.acknowledgeUnmetRequirements = _data["acknowledgeUnmetRequirements"];
         }
     }
 
@@ -21415,6 +22061,7 @@ export class ConvertReservationCommand implements IConvertReservationCommand {
         data["rowVersion"] = this.rowVersion;
         data["cin"] = this.cin;
         data["passeportNumber"] = this.passeportNumber;
+        data["acknowledgeUnmetRequirements"] = this.acknowledgeUnmetRequirements;
         return data;
     }
 }
@@ -21424,6 +22071,157 @@ export interface IConvertReservationCommand {
     rowVersion?: string | undefined;
     cin?: string | undefined;
     passeportNumber?: string | undefined;
+    acknowledgeUnmetRequirements?: boolean;
+}
+
+export class SetReservationRequirementsCommand implements ISetReservationRequirementsCommand {
+    id?: number;
+    items?: ReservationRequirementItem[];
+
+    constructor(data?: ISetReservationRequirementsCommand) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            if (Array.isArray(_data["items"])) {
+                this.items = [] as any;
+                for (let item of _data["items"])
+                    this.items!.push(ReservationRequirementItem.fromJS(item));
+            }
+        }
+    }
+
+    static fromJS(data: any): SetReservationRequirementsCommand {
+        data = typeof data === 'object' ? data : {};
+        let result = new SetReservationRequirementsCommand();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        if (Array.isArray(this.items)) {
+            data["items"] = [];
+            for (let item of this.items)
+                data["items"].push(item.toJSON());
+        }
+        return data;
+    }
+}
+
+export interface ISetReservationRequirementsCommand {
+    id?: number;
+    items?: ReservationRequirementItem[];
+}
+
+export class ReservationRequirementItem implements IReservationRequirementItem {
+    id?: number;
+    kind?: ReservationRequirementKind;
+    label?: string;
+    amount?: number | undefined;
+    expectedMethod?: PaymentMethod | undefined;
+
+    constructor(data?: IReservationRequirementItem) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.kind = _data["kind"];
+            this.label = _data["label"];
+            this.amount = _data["amount"];
+            this.expectedMethod = _data["expectedMethod"];
+        }
+    }
+
+    static fromJS(data: any): ReservationRequirementItem {
+        data = typeof data === 'object' ? data : {};
+        let result = new ReservationRequirementItem();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["kind"] = this.kind;
+        data["label"] = this.label;
+        data["amount"] = this.amount;
+        data["expectedMethod"] = this.expectedMethod;
+        return data;
+    }
+}
+
+export interface IReservationRequirementItem {
+    id?: number;
+    kind?: ReservationRequirementKind;
+    label?: string;
+    amount?: number | undefined;
+    expectedMethod?: PaymentMethod | undefined;
+}
+
+export class ReviewReservationRequirementCommand implements IReviewReservationRequirementCommand {
+    id?: number;
+    decision?: ReservationRequirementDecision;
+    note?: string | undefined;
+
+    constructor(data?: IReviewReservationRequirementCommand) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.decision = _data["decision"];
+            this.note = _data["note"];
+        }
+    }
+
+    static fromJS(data: any): ReviewReservationRequirementCommand {
+        data = typeof data === 'object' ? data : {};
+        let result = new ReviewReservationRequirementCommand();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["decision"] = this.decision;
+        data["note"] = this.note;
+        return data;
+    }
+}
+
+export interface IReviewReservationRequirementCommand {
+    id?: number;
+    decision?: ReservationRequirementDecision;
+    note?: string | undefined;
+}
+
+export enum ReservationRequirementDecision {
+    Accept = 1,
+    Reject = 2,
+    Waive = 3,
 }
 
 export class UpdateReservationCommand implements IUpdateReservationCommand {

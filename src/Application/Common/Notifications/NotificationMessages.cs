@@ -25,6 +25,10 @@ public static class NotificationMessages
     // ---- Bookings the agency needs to act on --------------------------------
     public const string RentingOverdue = "rentingOverdue";
     public const string ReservationUpcoming = "reservationUpcoming";
+    // A request has arrived, and the same request about to run out of time. Two
+    // wordings because the second one is the last chance to answer it.
+    public const string ReservationPending = "reservationPending";
+    public const string ReservationPendingExpiringSoon = "reservationPendingExpiringSoon";
 
     // ---- Client paperwork running out ---------------------------------------
     // Six wordings for one alert, for the same reason the car-expense alert has

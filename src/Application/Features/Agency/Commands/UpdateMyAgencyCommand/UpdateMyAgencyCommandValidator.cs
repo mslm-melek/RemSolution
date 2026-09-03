@@ -1,5 +1,6 @@
 
 using RemSolution.Application.Common.Interfaces;
+using RemSolution.Domain.Enums;
 
 namespace RemSolution.Application.Features.Agency.Commands.UpdateMyAgencyCommand
 {
@@ -74,6 +75,32 @@ namespace RemSolution.Application.Features.Agency.Commands.UpdateMyAgencyCommand
 
             RuleFor(v => v.FiscalStampAmount)
                 .GreaterThanOrEqualTo(0m);
+
+            // Zero switches the derivation off for that document; the ceiling is
+            // only there to catch a date typed into a duration field.
+            RuleFor(v => v.CINValidityYears).InclusiveBetween(0, 50);
+            RuleFor(v => v.PasseportValidityYears).InclusiveBetween(0, 50);
+            RuleFor(v => v.DrivingLicenceValidityYears).InclusiveBetween(0, 50);
+
+            RuleFor(v => v.CancellationFeeMode).IsInEnum();
+
+            RuleFor(v => v.CancellationFeeValue)
+                .GreaterThan(0m)
+                .When(v => v.CancellationFeeMode != CancellationFeeMode.None)
+                .WithMessage(_ => localizer["Validation.Agency.CancellationFeeValue"]);
+
+            RuleFor(v => v.CancellationFeeValue)
+                .LessThanOrEqualTo(100m)
+                .When(v => v.CancellationFeeMode == CancellationFeeMode.PercentOfPrice)
+                .WithMessage(_ => localizer["Validation.Agency.CancellationFeePercent"]);
+
+            // Below the cutoff there is no band left to charge in: cancelling is
+            // free right up to the moment it becomes impossible.
+            RuleFor(v => v.CancellationFreeHours)
+                .InclusiveBetween(0, 8760)
+                .GreaterThanOrEqualTo(v => v.CancellationWindowHours)
+                .When(v => v.CancellationFeeMode != CancellationFeeMode.None)
+                .WithMessage(_ => localizer["Validation.Agency.CancellationFreeHours"]);
         }
     }
 }

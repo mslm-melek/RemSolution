@@ -37,7 +37,9 @@ public sealed class CachedAgencySettingsProvider : IAgencySettingsProvider
                 s.ClientDocumentExpiryLeadDays,
                 s.NotifyStaffByEmail, s.NotifyClientsByEmail,
                 s.ClientReminderDaysBeforeStart, s.ClientReminderDaysBeforeEnd,
-                s.TaxIdentifier, s.VatRatePercent, s.FiscalStampAmount))
+                s.TaxIdentifier, s.VatRatePercent, s.FiscalStampAmount,
+                s.CINValidityYears, s.PasseportValidityYears, s.DrivingLicenceValidityYears,
+                s.CancellationFeeMode, s.CancellationFeeValue, s.CancellationFreeHours))
             .FirstOrDefaultAsync(cancellationToken);
 
         if (snapshot is null)

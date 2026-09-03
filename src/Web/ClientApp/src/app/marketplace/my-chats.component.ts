@@ -1,8 +1,8 @@
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+﻿import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { Subscription, timer } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 import {
-  MarketplaceClient, MyChatThreadDto, ChatMessageDto, ChatAuthorKind,
+  MarketplaceClient, MyChatThreadDto, ChatMessageDto, ChatAuthorKind, ChatSubjectKind,
   SendCustomerChatMessageCommand
 } from '../web-api-client';
 import { extractValidationErrors } from '../shared/form-utils';
@@ -33,7 +33,7 @@ export class MyChatsComponent implements OnInit, OnDestroy {
   ChatAuthorKind = ChatAuthorKind;
 
   // On this side of the conversation the CLIENT's messages are the ones drawn as
-  // mine — the mirror of the agency inbox.
+  // mine â€” the mirror of the agency inbox.
   readonly bubbles = new ChatBubbles(ChatAuthorKind.Client);
 
   private poll?: Subscription;
@@ -54,7 +54,8 @@ export class MyChatsComponent implements OnInit, OnDestroy {
         this.threads = threads || [];
 
         if (this.selected) {
-          const refreshed = this.threads.find(x => x.rentingId === this.selected!.rentingId);
+          const refreshed = this.threads.find(x =>
+            x.subject === this.selected!.subject && x.subjectId === this.selected!.subjectId);
           if (refreshed) this.selected = refreshed;
         }
       },
@@ -68,9 +69,9 @@ export class MyChatsComponent implements OnInit, OnDestroy {
     this.draft = '';
     this.errorMessage = '';
 
-    if (!thread.rentingId) return;
+    if (!thread.subjectId || thread.subject === undefined) return;
 
-    this.client.getMyChatMessages(thread.rentingId, null).subscribe({
+    this.client.getMyChatMessages(thread.subject, thread.subjectId, null).subscribe({
       next: messages => {
         this.messages = messages || [];
         this.markRead();
@@ -78,7 +79,7 @@ export class MyChatsComponent implements OnInit, OnDestroy {
       error: err => this.handleError(err)
     });
 
-    this.startPolling(thread.rentingId);
+    this.startPolling(thread.subject, thread.subjectId);
   }
 
   close() {
@@ -93,10 +94,10 @@ export class MyChatsComponent implements OnInit, OnDestroy {
       || '';
   }
 
-  private startPolling(rentingId: number) {
+  private startPolling(subject: ChatSubjectKind, id: number) {
     this.stopPolling();
     this.poll = timer(POLL_INTERVAL_MS, POLL_INTERVAL_MS).pipe(
-      switchMap(() => this.client.getMyChatMessages(rentingId, this.lastMessageId()))
+      switchMap(() => this.client.getMyChatMessages(subject, id, this.lastMessageId()))
     ).subscribe({
       next: incoming => {
         if (!this.appendMessages(incoming)) return;
@@ -130,10 +131,10 @@ export class MyChatsComponent implements OnInit, OnDestroy {
 
   // The customer's unread are the AGENCY's messages (the mirror of the desk side).
   private markRead() {
-    if (!this.selected?.rentingId) return;
+    if (!this.selected?.subjectId || this.selected.subject === undefined) return;
     if (!this.messages.some(m => m.authorKind === ChatAuthorKind.Agency && !m.readAt)) return;
 
-    this.client.markMyChatRead(this.selected.rentingId).subscribe({
+    this.client.markMyChatRead(this.selected.subject, this.selected.subjectId).subscribe({
       next: () => this.loadThreads(),
       error: err => console.error(err)
     });
@@ -144,18 +145,19 @@ export class MyChatsComponent implements OnInit, OnDestroy {
     event?.preventDefault();
 
     const body = this.draft.trim();
-    if (!body || !this.selected?.rentingId) return;
+    if (!body || !this.selected?.subjectId || this.selected.subject === undefined) return;
 
     this.sending = true;
     this.errorMessage = '';
-    const rentingId = this.selected.rentingId;
-    const command = new SendCustomerChatMessageCommand({ rentingId, body });
+    const subject = this.selected.subject;
+    const id = this.selected.subjectId;
+    const command = new SendCustomerChatMessageCommand({ subject, id, body });
 
-    this.client.sendMyChatMessage(rentingId, command).subscribe({
+    this.client.sendMyChatMessage(subject, id, command).subscribe({
       next: () => {
         this.sending = false;
         this.draft = '';
-        this.client.getMyChatMessages(rentingId, this.lastMessageId()).subscribe({
+        this.client.getMyChatMessages(subject, id, this.lastMessageId()).subscribe({
           next: incoming => {
             this.appendMessages(incoming);
             this.loadThreads();
@@ -176,3 +178,4 @@ export class MyChatsComponent implements OnInit, OnDestroy {
     if (!validationErrors) console.error(err);
   }
 }
+

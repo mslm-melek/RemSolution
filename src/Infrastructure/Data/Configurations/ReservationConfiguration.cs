@@ -23,6 +23,7 @@ public class ReservationConfiguration : IEntityTypeConfiguration<Reservation>
         builder.OwnsMoney(e => e.Price, "Price", "PriceCurrency");
         builder.OwnsMoney(e => e.PayedPrice, "PayedPrice", "PayedPriceCurrency");
         builder.OwnsMoney(e => e.DepositAmount, "DepositAmount", "DepositAmountCurrency");
+        builder.OwnsMoney(e => e.CancellationFee, "CancellationFee", "CancellationFeeCurrency");
 
         builder.Property(e => e.Notes).HasMaxLength(1000);
         builder.Property(e => e.RejectedReason).HasMaxLength(1000);

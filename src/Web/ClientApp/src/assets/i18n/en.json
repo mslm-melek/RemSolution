@@ -760,9 +760,49 @@
     "confirmReverse": "Reverse this payment? An offsetting entry will be posted.",
     "concurrency": "This reservation was reloaded by another user since you opened it. Reload the page to get the latest version, then re-apply your changes.",
     "staleState": "This reservation changed since the list was loaded — it has been refreshed.",
-    "heldUntil": "The car is held until {{time}}",
-    "heldUntilNote": "Without an answer the reservation expires and the car becomes available again.",
-    "awaitingYou": "This reservation is waiting on you"
+    "heldUntil": "To answer before {{time}}",
+    "heldUntilNote": "The car stays on offer until you confirm; without an answer the request expires on its own.",
+    "awaitingYou": "This reservation is waiting on you",
+    "reliability": {
+      "title": "This client's record",
+      "summary": "{{cancellations}} cancellation(s) out of {{bookings}} booking(s)",
+      "late": "{{count}} late, with a fee",
+      "scope": "Only what happened with your agency."
+    },
+    "requirements": {
+      "title": "Needed before pickup",
+      "empty": "Nothing is being asked of the customer yet.",
+      "kind": "Kind",
+      "label": "What you are asking for",
+      "amount": "Amount (optional)",
+      "amountHint": "In the agency's currency, tax included.",
+      "add": "Add",
+      "accept": "Accept",
+      "reject": "Refuse",
+      "waive": "No longer required",
+      "openFile": "Open the file they sent",
+      "answeredOn": "answered on",
+      "promptRejectReason": "Why are you refusing? The customer will see this reason:",
+      "kinds": {
+        "payment": "Payment",
+        "deposit": "Deposit",
+        "document": "Document",
+        "conditions": "Terms to accept",
+        "contract": "Agreement to sign"
+      },
+      "states": {
+        "requested": "Requested",
+        "submitted": "Answered, to check",
+        "accepted": "Accepted",
+        "rejected": "Refused",
+        "waived": "No longer required"
+      }
+    },
+    "conflict": {
+      "reservation": "The car is already taken for this period by reservation #{{id}}. Cancel or decline it before confirming this one.",
+      "renting": "The car is already out for this period (renting #{{id}}). That renting has to be cancelled before this reservation can be confirmed.",
+      "unavailability": "The car is declared off the road for this period (block #{{id}}). Remove the block before confirming."
+    }
   },
   "marketplace": {
     "myTrips": "My trips",
@@ -800,10 +840,21 @@
     "myReservations": "My reservations",
     "loadFailed": "Could not load your reservations.",
     "cancelFailed": "Could not cancel the reservation.",
-    "confirmCancel": "Cancel this reservation request?",
+    "confirmCancel": "Cancel this reservation?",
+    "confirmCancelWithFee": "Cancel this reservation? A cancellation fee of {{amount}} {{currency}} will be charged to you.",
+    "promptCancelReason": "Why are you cancelling? (optional, but useful to the agency)",
+    "cancelCosts": "Cancelling now costs {{amount}} {{currency}}",
+    "cancelCharged": "Cancellation fee: {{amount}} {{currency}}",
     "noReservations": "You have no reservations yet.",
     "findACar": "Find a car to book.",
     "holdsUntil": "Holds until {{ date }}",
+    "requirements": {
+      "title": "Needed before pickup",
+      "accept": "I accept",
+      "accepted": "Accepted",
+      "send": "Send a file",
+      "submitFailed": "Your answer could not be sent. Try again."
+    },
     "resultCount": "{{ count }} cars available",
     "viewMode": "Result view",
     "viewList": "List",
@@ -1357,6 +1408,7 @@
     "noThreads": "No conversation.",
     "noMyThreads": "No conversation yet. They open with your rentings.",
     "openRenting": "Open renting",
+    "openReservation": "Open reservation",
     "read": "Read",
     "startConversation": "Write the first message.",
     "yourMessage": "Your message",
@@ -1415,6 +1467,28 @@
       "beforeEnd": "Days before the end",
       "zeroIsOff": "0 turns this reminder off.",
       "lateNoticeNote": "Overdue-return notices are never automatic — you send those from the client screens."
+    },
+    "cancellation": {
+      "title": "Cancellation fees",
+      "intro": "What calling a booking off costs the customer. Not the same as the cutoff above: that one says when cancelling stops being possible, these say when it stops being free.",
+      "mode": "Fee type",
+      "value": "Amount or percentage",
+      "valueHint": "In your currency, or as a % of the reservation's price.",
+      "freeHours": "Free cancellation (hours before pickup)",
+      "freeHoursHint": "Earlier than this, cancelling is free. Must reach at least as far as the cutoff.",
+      "modes": {
+        "none": "No fee",
+        "fixed": "Fixed amount",
+        "percent": "Percentage of the price"
+      }
+    },
+    "documents": {
+      "title": "Client document validity",
+      "intro": "How long each document stays valid in the country you trade in. When no expiry date is typed, it is worked out from the issue date — and stays editable by hand on the client's file.",
+      "cinYears": "ID card (years)",
+      "passeportYears": "Passport (years)",
+      "licenceYears": "Driving licence (years)",
+      "zeroIsNoExpiry": "0 if this document does not expire here."
     },
     "tax": {
       "title": "Tax",
@@ -1495,6 +1569,8 @@
       "carExpenseOverdueByDistance": "{{type}} was due for {{car}} at {{dueKm}} km — {{km}} km past due ({{mileage}} km now).",
       "rentingOverdue": "{{car}} was due back on {{endDate}} and has not been returned — {{days}} day(s) late. Renter: {{client}}.",
       "reservationUpcoming": "{{client}} picks up {{car}} on {{startDate}} — in {{days}} day(s).",
+      "reservationPending": "New request from {{client}} for {{car}}, from {{startDate}}. Confirm or decline it.",
+      "reservationPendingExpiringSoon": "{{client}}'s request for {{car}} ({{startDate}}) runs out within the hour and has had no answer.",
       "clientRentingStartingSoon": "Reminder sent to the client: their rental of {{car}} starts on {{startDate}}.",
       "clientRentingEndingSoon": "Reminder sent to the client: their rental of {{car}} ends on {{endDate}}.",
       "clientReservationStartingSoon": "Reminder sent to the client: their booking of {{car}} starts on {{startDate}}.",

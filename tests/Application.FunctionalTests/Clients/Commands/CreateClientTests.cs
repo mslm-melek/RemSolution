@@ -174,4 +174,41 @@ public class CreateClientTests : BaseTestFixture
         client.MarketplaceUserId.Should().BeNull();
         client.CreatedBy.Should().Be(userId);
     }
+
+    /// <summary>
+    /// The agent types what is printed on the card; the "valid until" the agency
+    /// then gets warned about — and refuses a hire on — is worked out from the
+    /// issue date and the agency's default validity.
+    /// </summary>
+    [Test]
+    public async Task ShouldDeriveMissingExpiryDatesFromTheIssueDates()
+    {
+        await RunAsAgencyAdministratorAsync();
+        await AddTestAgencyAsync();
+
+        var issued = new DateTime(2015, 7, 4, 0, 0, 0, DateTimeKind.Utc);
+        var onThePassport = new DateTime(2028, 2, 1, 0, 0, 0, DateTimeKind.Utc);
+
+        var clientId = await SendAsync(new CreateClientCommand
+        {
+            FirstName = "Derived",
+            LastName = "Dates",
+            BirthDate = new DateTime(1990, 5, 20),
+            CIN = "CD654321",
+            CINDeliveranceDate = issued,
+            PasseportNumber = "P9988776",
+            PasseportDeliveranceDate = issued,
+            PasseportExpiryDate = onThePassport,
+            DrivingLicenceNumber = "12/998877",
+            DrivingLicenceDeliveranceDate = issued
+        });
+
+        var client = await FindAsync<Client>(clientId);
+
+        // Agency defaults: CIN 10 years, licence 10 years.
+        client!.CINExpiryDate.Should().Be(issued.AddYears(10));
+        client.DrivingLicenceExpiryDate.Should().Be(issued.AddYears(10));
+        // Typed in, so kept as typed rather than derived to 2020.
+        client.PasseportExpiryDate.Should().Be(onThePassport);
+    }
 }

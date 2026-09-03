@@ -1,4 +1,6 @@
 
+using RemSolution.Domain.Enums;
+
 namespace RemSolution.Application.Features.Agency.DTOs
 {
     public class AgencyDto
@@ -33,6 +35,16 @@ namespace RemSolution.Application.Features.Agency.DTOs
         public string? TaxIdentifier { get; init; }
         public decimal VatRatePercent { get; init; }
         public decimal FiscalStampAmount { get; init; }
+        // Default validity of each identity document, in years; zero means the
+        // document does not expire in this jurisdiction.
+        public int CINValidityYears { get; init; }
+        public int PasseportValidityYears { get; init; }
+        public int DrivingLicenceValidityYears { get; init; }
+        // What calling a booking off costs the customer, and how far ahead it
+        // stays free. See CancellationPolicy.
+        public CancellationFeeMode CancellationFeeMode { get; init; }
+        public decimal CancellationFeeValue { get; init; }
+        public int CancellationFreeHours { get; init; }
 
         public class Mapping : IRegister
         {
@@ -56,7 +68,14 @@ namespace RemSolution.Application.Features.Agency.DTOs
                     .Map(d => d.ClientReminderDaysBeforeEnd, s => s.Settings != null ? s.Settings.ClientReminderDaysBeforeEnd : 0)
                     .Map(d => d.TaxIdentifier, s => s.Settings != null ? s.Settings.TaxIdentifier : null)
                     .Map(d => d.VatRatePercent, s => s.Settings != null ? s.Settings.VatRatePercent : 0m)
-                    .Map(d => d.FiscalStampAmount, s => s.Settings != null ? s.Settings.FiscalStampAmount : 0m);
+                    .Map(d => d.FiscalStampAmount, s => s.Settings != null ? s.Settings.FiscalStampAmount : 0m)
+                    .Map(d => d.CINValidityYears, s => s.Settings != null ? s.Settings.CINValidityYears : 0)
+                    .Map(d => d.PasseportValidityYears, s => s.Settings != null ? s.Settings.PasseportValidityYears : 0)
+                    .Map(d => d.DrivingLicenceValidityYears, s => s.Settings != null ? s.Settings.DrivingLicenceValidityYears : 0)
+                    .Map(d => d.CancellationFeeMode,
+                         s => s.Settings != null ? s.Settings.CancellationFeeMode : CancellationFeeMode.None)
+                    .Map(d => d.CancellationFeeValue, s => s.Settings != null ? s.Settings.CancellationFeeValue : 0m)
+                    .Map(d => d.CancellationFreeHours, s => s.Settings != null ? s.Settings.CancellationFreeHours : 0);
             }
         }
     }

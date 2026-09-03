@@ -144,3 +144,33 @@ export function isConcurrencyConflict(err: any): boolean {
 export function isInvalidTransition(err: any): boolean {
   return err?.status === 409 && errorCode(err) === 'invalid_transition';
 }
+
+/** What is holding the period, when a write was refused as a booking conflict. */
+export interface BookingConflict {
+  kind: 'Renting' | 'Reservation' | 'Unavailability';
+  id: number;
+}
+
+// A pending request blocks nothing, so the clash only surfaces when the agency
+// confirms — and at that point it has to be told what to clear, not just that it
+// cannot proceed. Undefined for any other failure.
+export function bookingConflict(err: any): BookingConflict | undefined {
+  if (err?.status !== 409 || errorCode(err) !== 'booking_conflict') return undefined;
+
+  let body = err?.error;
+
+  if (!body && typeof err?.response === 'string') {
+    try {
+      body = JSON.parse(err.response);
+    } catch {
+      return undefined;
+    }
+  }
+
+  const kind = body?.conflictKind;
+  const id = body?.conflictId;
+
+  return typeof kind === 'string' && typeof id === 'number'
+    ? { kind: kind as BookingConflict['kind'], id }
+    : undefined;
+}

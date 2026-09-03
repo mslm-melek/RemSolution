@@ -8,10 +8,10 @@ using RemSolution.Domain.Enums;
 
 namespace RemSolution.Application.Features.Chat.Queries.GetChatThreadsQuery
 {
-    // The agency's chat inbox. Lists every renting the desk can talk on — the
-    // ongoing and upcoming ones, whether or not anything has been said yet, so
-    // staff can open the conversation first — plus any closed renting that still
-    // has history to read back.
+    // The agency's chat inbox. Lists every booking the desk can talk on — the
+    // ongoing and upcoming hires, and the holds it has confirmed, whether or not
+    // anything has been said yet so staff can open the conversation first — plus
+    // any closed booking that still has history to read back.
     [Authorize(Policy = Permissions.ChatView)]
     [RequiresFeature(FeatureFlags.Chat)]
     public record GetChatThreadsQuery(
@@ -35,49 +35,100 @@ namespace RemSolution.Application.Features.Chat.Queries.GetChatThreadsQuery
         public async Task<PaginatedList<ChatThreadDto>> Handle(
             GetChatThreadsQuery request, CancellationToken cancellationToken)
         {
-            var query = _context.Rentings
+            var rentings = _context.Rentings
                 .AsNoTracking()
                 .Where(r => r.RentingState == RentingState.NotYet
                             || r.RentingState == RentingState.InProgress
                             || r.ChatMessages!.Any());
 
+            // A hold is listed once the agency has committed to it — the same
+            // rule the send path enforces (ChatMessage.CanPostTo) — or once it
+            // carries history, so a conversation held before a hold was cancelled
+            // stays readable.
+            var reservations = _context.Reservations
+                .AsNoTracking()
+                .Where(r => r.Status == ReservationStatus.Confirmed
+                            || r.Status == ReservationStatus.Paid
+                            || r.ChatMessages!.Any());
+
             if (request.OnlyUnread)
             {
-                query = query.Where(r => r.ChatMessages!
+                rentings = rentings.Where(r => r.ChatMessages!
+                    .Any(m => m.AuthorKind == ChatAuthorKind.Client && m.ReadAt == null));
+
+                reservations = reservations.Where(r => r.ChatMessages!
                     .Any(m => m.AuthorKind == ChatAuthorKind.Client && m.ReadAt == null));
             }
 
-            return await query
-                // Most recent conversation first; rentings with nothing said yet
+            var rentingThreads = rentings.Select(r => new ChatThreadDto
+            {
+                Subject = ChatSubjectKind.Renting,
+                RentingId = r.Id,
+                ReservationId = null,
+                CarId = r.CarId,
+                CarMatricule = r.Car != null ? r.Car.Matricule : null,
+                ClientId = r.ClientId,
+                ClientName = r.Client != null
+                    ? ((r.Client.FirstName ?? string.Empty) + " " + (r.Client.LastName ?? string.Empty)).Trim()
+                    : null,
+                StartDate = r.StartDate,
+                EndDate = r.EndDate,
+                RentingState = r.RentingState,
+                ReservationStatus = null,
+                LastMessageAt = r.ChatMessages!.Max(m => (DateTime?)m.SentAt),
+                LastMessagePreview = r.ChatMessages!
+                    .OrderByDescending(m => m.Id)
+                    .Select(m => m.Body.Length > PreviewLength ? m.Body.Substring(0, PreviewLength) : m.Body)
+                    .FirstOrDefault(),
+                LastMessageAuthorKind = r.ChatMessages!
+                    .OrderByDescending(m => m.Id)
+                    .Select(m => (ChatAuthorKind?)m.AuthorKind)
+                    .FirstOrDefault(),
+                UnreadCount = r.ChatMessages!
+                    .Count(m => m.AuthorKind == ChatAuthorKind.Client && m.ReadAt == null),
+                IsOpen = r.RentingState == RentingState.NotYet
+                         || r.RentingState == RentingState.InProgress,
+            });
+
+            var reservationThreads = reservations.Select(r => new ChatThreadDto
+            {
+                Subject = ChatSubjectKind.Reservation,
+                RentingId = null,
+                ReservationId = r.Id,
+                CarId = r.CarId,
+                CarMatricule = r.Car != null ? r.Car.Matricule : null,
+                ClientId = r.ClientId,
+                ClientName = r.Client != null
+                    ? ((r.Client.FirstName ?? string.Empty) + " " + (r.Client.LastName ?? string.Empty)).Trim()
+                    : null,
+                StartDate = r.StartDate,
+                EndDate = r.EndDate,
+                RentingState = null,
+                ReservationStatus = r.Status,
+                LastMessageAt = r.ChatMessages!.Max(m => (DateTime?)m.SentAt),
+                LastMessagePreview = r.ChatMessages!
+                    .OrderByDescending(m => m.Id)
+                    .Select(m => m.Body.Length > PreviewLength ? m.Body.Substring(0, PreviewLength) : m.Body)
+                    .FirstOrDefault(),
+                LastMessageAuthorKind = r.ChatMessages!
+                    .OrderByDescending(m => m.Id)
+                    .Select(m => (ChatAuthorKind?)m.AuthorKind)
+                    .FirstOrDefault(),
+                UnreadCount = r.ChatMessages!
+                    .Count(m => m.AuthorKind == ChatAuthorKind.Client && m.ReadAt == null),
+                IsOpen = r.Status == ReservationStatus.Confirmed
+                         || r.Status == ReservationStatus.Paid,
+            });
+
+            // One list, both kinds: to the desk this is a set of conversations,
+            // not two inboxes. Concat renders as UNION ALL, so the ordering and
+            // the paging below still happen in the database.
+            return await rentingThreads
+                .Concat(reservationThreads)
+                // Most recent conversation first; bookings with nothing said yet
                 // (NULL last message) fall to the end of the list.
-                .OrderByDescending(r => r.ChatMessages!.Max(m => (DateTime?)m.SentAt))
-                .ThenByDescending(r => r.StartDate)
-                .Select(r => new ChatThreadDto
-                {
-                    RentingId = r.Id,
-                    CarId = r.CarId,
-                    CarMatricule = r.Car != null ? r.Car.Matricule : null,
-                    ClientId = r.ClientId,
-                    ClientName = r.Client != null
-                        ? ((r.Client.FirstName ?? string.Empty) + " " + (r.Client.LastName ?? string.Empty)).Trim()
-                        : null,
-                    StartDate = r.StartDate,
-                    EndDate = r.EndDate,
-                    RentingState = r.RentingState,
-                    LastMessageAt = r.ChatMessages!.Max(m => (DateTime?)m.SentAt),
-                    LastMessagePreview = r.ChatMessages!
-                        .OrderByDescending(m => m.Id)
-                        .Select(m => m.Body.Length > PreviewLength ? m.Body.Substring(0, PreviewLength) : m.Body)
-                        .FirstOrDefault(),
-                    LastMessageAuthorKind = r.ChatMessages!
-                        .OrderByDescending(m => m.Id)
-                        .Select(m => (ChatAuthorKind?)m.AuthorKind)
-                        .FirstOrDefault(),
-                    UnreadCount = r.ChatMessages!
-                        .Count(m => m.AuthorKind == ChatAuthorKind.Client && m.ReadAt == null),
-                    IsOpen = r.RentingState == RentingState.NotYet
-                             || r.RentingState == RentingState.InProgress,
-                })
+                .OrderByDescending(t => t.LastMessageAt)
+                .ThenByDescending(t => t.StartDate)
                 .PaginatedListAsync(request.PageNumber, request.PageSize);
         }
     }

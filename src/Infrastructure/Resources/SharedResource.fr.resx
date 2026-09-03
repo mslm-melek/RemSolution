@@ -970,6 +970,18 @@
   <data name="Notification.reservationUpcoming.Body" xml:space="preserve">
     <value>{{client}} prend {{car}} le {{startDate}}, dans {{days}} jour(s).</value>
   </data>
+  <data name="Notification.reservationPending.Subject" xml:space="preserve">
+    <value>Nouvelle demande : {{car}}</value>
+  </data>
+  <data name="Notification.reservationPending.Body" xml:space="preserve">
+    <value>{{client}} demande {{car}} à partir du {{startDate}}. À confirmer ou à refuser — la voiture reste proposée tant que vous n'avez pas répondu.</value>
+  </data>
+  <data name="Notification.reservationPendingExpiringSoon.Subject" xml:space="preserve">
+    <value>Demande sur le point d'expirer : {{car}}</value>
+  </data>
+  <data name="Notification.reservationPendingExpiringSoon.Body" xml:space="preserve">
+    <value>La demande de {{client}} pour {{car}} à partir du {{startDate}} expire dans moins d'une heure et n'a pas eu de réponse.</value>
+  </data>
   <data name="Notification.clientRentingStartingSoon.Subject" xml:space="preserve">
     <value>Votre location commence le {{startDate}}</value>
   </data>
@@ -997,4 +1009,13 @@ Merci de restituer le véhicule à temps afin d'éviter des frais supplémentair
     <value>D'après nos informations, {{car}} devait être restituée le {{endDate}}, il y a {{days}} jour(s), et ne l'a pas été.
 Merci de restituer le véhicule ou de nous contacter dans les plus brefs délais.</value>
   </data>
-</root>
+  <data name="Validation.Agency.CancellationFeeValue" xml:space="preserve">
+    <value>Indiquez le montant ou le pourcentage des frais d''annulation.</value>
+  </data>
+  <data name="Validation.Agency.CancellationFeePercent" xml:space="preserve">
+    <value>Les frais d''annulation ne peuvent pas dépasser 100 % du prix.</value>
+  </data>
+  <data name="Validation.Agency.CancellationFreeHours" xml:space="preserve">
+    <value>L''annulation gratuite doit couvrir au moins le délai butoir d''annulation, sinon rien n''est jamais facturé.</value>
+  </data></root>
+

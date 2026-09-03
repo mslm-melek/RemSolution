@@ -75,10 +75,12 @@ namespace RemSolution.Application.Features.MarketplaceSearch
                 && r.StartDate < end
                 && r.EndDate > start));
 
+            // Pending requests are absent on purpose: an unanswered request does
+            // not take a car off the market, or one visitor asking would hide it
+            // from everyone else while the agency thinks about it.
             cars = cars.Where(c => !context.Reservations.IgnoreQueryFilters().Any(r =>
                 r.CarId == c.Id
-                && (r.Status == ReservationStatus.PendingConfirmation
-                    || r.Status == ReservationStatus.Confirmed
+                && (r.Status == ReservationStatus.Confirmed
                     || r.Status == ReservationStatus.Paid)
                 && r.StartDate < end
                 && r.EndDate > start));

@@ -29,6 +29,9 @@ namespace RemSolution.Application.Features.Reservation.DTOs
         public string? RejectedReason { get; init; }
         public string? CancelledReason { get; init; }
         public string? ExpiredReason { get; init; }
+        // Who called it off and what it cost them; see Reservation.Cancel.
+        public bool CancelledByCustomer { get; init; }
+        public MoneyDto? CancellationFee { get; init; }
         // Set once the hold is converted into a renting.
         public int? RentingId { get; init; }
 

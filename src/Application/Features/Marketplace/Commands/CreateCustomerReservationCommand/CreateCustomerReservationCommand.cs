@@ -1,5 +1,6 @@
 using ValidationException = RemSolution.Application.Common.Exceptions.ValidationException;
 using RemSolution.Application.Common.Interfaces;
+using RemSolution.Application.Common.Notifications;
 using RemSolution.Application.Common.Security;
 using RemSolution.Application.Common.Settings;
 using RemSolution.Application.Common.Tenancy;
@@ -35,10 +36,12 @@ namespace RemSolution.Application.Features.Marketplace.Commands.CreateCustomerRe
         private readonly IPricingService _pricing;
         private readonly IAvailabilityChecker _availability;
         private readonly TimeProvider _dateTime;
+        private readonly INotificationService _notifications;
 
         public CreateCustomerReservationCommandHandler(
             IApplicationDbContext context, IUser user, IAgencySettingsProvider settings,
-            IPricingService pricing, IAvailabilityChecker availability, TimeProvider dateTime)
+            IPricingService pricing, IAvailabilityChecker availability, TimeProvider dateTime,
+            INotificationService notifications)
         {
             _context = context;
             _user = user;
@@ -46,6 +49,7 @@ namespace RemSolution.Application.Features.Marketplace.Commands.CreateCustomerRe
             _pricing = pricing;
             _availability = availability;
             _dateTime = dateTime;
+            _notifications = notifications;
         }
 
         public async Task<int> Handle(CreateCustomerReservationCommand request, CancellationToken cancellationToken)
@@ -114,6 +118,21 @@ namespace RemSolution.Application.Features.Marketplace.Commands.CreateCustomerRe
             await _context.SaveChangesAsync(cancellationToken);
 
             await transaction.CommitAsync(cancellationToken);
+
+            // The request the agency has to answer. Raised inside the ambient
+            // tenant pushed above — notifications are agency-scoped — and after
+            // the commit, so a mail failure cannot undo the booking.
+            var modelName = await _context.ModelCars
+                .AsNoTracking()
+                .Where(m => m.Id == car.ModelId)
+                .Select(m => m.Name)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            await ReservationAlerts.RaiseRequestedAsync(
+                _notifications, reservation.Id, client.Id,
+                client.FirstName, client.LastName,
+                car.Matricule, modelName,
+                request.StartDate, cancellationToken);
 
             return reservation.Id;
         }

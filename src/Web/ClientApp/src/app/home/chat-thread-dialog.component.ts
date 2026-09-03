@@ -1,4 +1,4 @@
-import { AfterViewChecked, Component, ElementRef, Inject, OnInit, ViewChild, inject } from '@angular/core';
+﻿import { AfterViewChecked, Component, ElementRef, Inject, OnInit, ViewChild, inject } from '@angular/core';
 import { MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { TranslocoService } from '@jsverse/transloco';
 import { extractValidationErrors } from '../shared/form-utils';
@@ -17,7 +17,7 @@ export interface ChatThreadDialogData {
  *
  * Deliberately the whole thread and not a preview: answering "can I add a child
  * seat?" needs the question in front of you, and a dialog that only showed the
- * last line would send everybody to the chat screen anyway. No polling — this is
+ * last line would send everybody to the chat screen anyway. No polling â€” this is
  * opened to deal with something and closed again, and the strip re-reads itself
  * when it closes; the chat screen is where a conversation is kept open.
  */
@@ -41,7 +41,7 @@ export class ChatThreadDialogComponent implements OnInit, AfterViewChecked {
   readonly ChatAuthorKind = ChatAuthorKind;
 
   // Scrolls to the newest message once, after each load or send, rather than on
-  // every change-detection pass — otherwise the reader could never scroll up.
+  // every change-detection pass â€” otherwise the reader could never scroll up.
   private scrollPending = true;
 
   constructor(@Inject(MAT_DIALOG_DATA) public data: ChatThreadDialogData) { }
@@ -51,16 +51,16 @@ export class ChatThreadDialogComponent implements OnInit, AfterViewChecked {
   }
 
   /**
-   * What the conversation is about — the dialog's subtitle. The client is the
+   * What the conversation is about â€” the dialog's subtitle. The client is the
    * heading, so this is the booking: which car, and when it runs.
    */
   get context(): string {
     const period = [this.thread.startDate, this.thread.endDate]
       .filter((date): date is Date => !!date)
       .map(date => formatUtcDay(date))
-      .join(' → ');
+      .join(' â†’ ');
 
-    return [this.thread.carMatricule, period].filter(Boolean).join(' · ');
+    return [this.thread.carMatricule, period].filter(Boolean).join(' Â· ');
   }
 
   get initials(): string {
@@ -92,8 +92,9 @@ export class ChatThreadDialogComponent implements OnInit, AfterViewChecked {
     this.sending = true;
     this.errorMessage = '';
 
-    this.chat.sendMessage(this.thread.rentingId!, new SendChatMessageCommand({
-      rentingId: this.thread.rentingId,
+    this.chat.sendMessage(this.thread.subject!, this.thread.subjectId!, new SendChatMessageCommand({
+      subject: this.thread.subject,
+      id: this.thread.subjectId,
       body
     })).subscribe({
       next: () => {
@@ -110,7 +111,7 @@ export class ChatThreadDialogComponent implements OnInit, AfterViewChecked {
   }
 
   private load() {
-    this.chat.getMessages(this.thread.rentingId!, null).subscribe({
+    this.chat.getMessages(this.thread.subject!, this.thread.subjectId!, null).subscribe({
       next: messages => {
         this.loading = false;
         this.messages = messages ?? [];
@@ -131,7 +132,7 @@ export class ChatThreadDialogComponent implements OnInit, AfterViewChecked {
   private markRead() {
     if (!this.thread.unreadCount) return;
 
-    this.chat.markRead(this.thread.rentingId!).subscribe({
+    this.chat.markRead(this.thread.subject!, this.thread.subjectId!).subscribe({
       next: () => { },
       error: err => console.error(err)
     });
@@ -147,3 +148,4 @@ function formatUtcDay(date: Date): string {
   const pad = (value: number) => String(value).padStart(2, '0');
   return `${pad(date.getUTCDate())}/${pad(date.getUTCMonth() + 1)}/${date.getUTCFullYear()}`;
 }
+

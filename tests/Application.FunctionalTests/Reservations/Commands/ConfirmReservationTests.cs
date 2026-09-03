@@ -1,4 +1,5 @@
 using RemSolution.Application.Common.Exceptions;
+using RemSolution.Application.Features.Reservation.Commands.CancelReservationCommand;
 using RemSolution.Application.Features.Reservation.Commands.ConfirmReservationCommand;
 using RemSolution.Application.Features.Reservation.Commands.ConvertReservationCommand;
 using RemSolution.Application.Features.Reservation.Commands.CreateReservationCommand;
@@ -103,7 +104,7 @@ public class ConfirmReservationTests : BaseTestFixture
     }
 
     [Test]
-    public async Task ShouldBlockRentingThatOverlapsAnActiveReservation()
+    public async Task ShouldBlockRentingThatOverlapsAConfirmedReservation()
     {
         await RunAsAgencyAdministratorAsync();
         await AddTestAgencyAsync();
@@ -115,15 +116,113 @@ public class ConfirmReservationTests : BaseTestFixture
         var client = new Client { FirstName = "Test", LastName = "Client" };
         await AddAsync(client);
 
+        var held = await SendAsync(new CreateReservationCommand
+        {
+            CarId = car.Id, ClientId = client.Id, StartDate = Start, EndDate = End
+        });
+        await SendAsync(new ConfirmReservationCommand(held));
+
+        await FluentActions.Invoking(() => SendAsync(new CreateRentingCommand
+        {
+            CarId = car.Id, ClientId = client.Id, StartDate = Start.AddDays(1), EndDate = End.AddDays(1)
+        })).Should().ThrowAsync<BookingConflictException>();
+    }
+
+    // A request is a question, not a claim: it must not take the car off the
+    // counter while the agency is still thinking about it.
+    [Test]
+    public async Task APendingRequestShouldNotBlockAnything()
+    {
+        await RunAsAgencyAdministratorAsync();
+        await AddTestAgencyAsync();
+        await AddAsync(new AgencyFeature { Feature = FeatureFlags.Reservations, Enabled = true });
+        await AddAsync(new AgencyFeature { Feature = FeatureFlags.Rentings, Enabled = true });
+
+        var car = new Car { Matricule = "RES-3", Status = CarStatus.Active, DailyRate = Money.Of(30m, "TND") };
+        await AddAsync(car);
+        var client = new Client { FirstName = "Test", LastName = "Client" };
+        await AddAsync(client);
+
         await SendAsync(new CreateReservationCommand
         {
             CarId = car.Id, ClientId = client.Id, StartDate = Start, EndDate = End
         });
 
-        // A direct renting overlapping the pending hold must be rejected.
-        await FluentActions.Invoking(() => SendAsync(new CreateRentingCommand
+        // A second customer may ask for the same car and the same days.
+        var second = await SendAsync(new CreateReservationCommand
+        {
+            CarId = car.Id, ClientId = client.Id, StartDate = Start, EndDate = End
+        });
+        second.Should().BeGreaterThan(0);
+
+        // And a walk-in hire still goes through.
+        var rentingId = await SendAsync(new CreateRentingCommand
+        {
+            CarId = car.Id, ClientId = client.Id, StartDate = Start, EndDate = End
+        });
+        rentingId.Should().BeGreaterThan(0);
+    }
+
+    [Test]
+    public async Task ConfirmShouldRefuseWhileAnotherBookingHoldsThePeriod()
+    {
+        await RunAsAgencyAdministratorAsync();
+        await AddTestAgencyAsync();
+        await AddAsync(new AgencyFeature { Feature = FeatureFlags.Reservations, Enabled = true });
+
+        var car = new Car { Matricule = "RES-4", Status = CarStatus.Active, DailyRate = Money.Of(30m, "TND") };
+        await AddAsync(car);
+        var client = new Client { FirstName = "Test", LastName = "Client" };
+        await AddAsync(client);
+
+        var first = await SendAsync(new CreateReservationCommand
+        {
+            CarId = car.Id, ClientId = client.Id, StartDate = Start, EndDate = End
+        });
+        var second = await SendAsync(new CreateReservationCommand
         {
             CarId = car.Id, ClientId = client.Id, StartDate = Start.AddDays(1), EndDate = End.AddDays(1)
-        })).Should().ThrowAsync<BookingConflictException>();
+        });
+
+        await SendAsync(new ConfirmReservationCommand(first));
+
+        var conflict = await FluentActions.Invoking(() => SendAsync(new ConfirmReservationCommand(second)))
+            .Should().ThrowAsync<BookingConflictException>();
+        // The agency is told which hold to clear, not just that it cannot proceed.
+        conflict.Which.Kind.Should().Be(BookingConflictKind.Reservation);
+        conflict.Which.ConflictingId.Should().Be(first);
+
+        (await FindAsync<Reservation>(second))!.Status
+            .Should().Be(ReservationStatus.PendingConfirmation);
+    }
+
+    [Test]
+    public async Task ConfirmShouldSucceedOnceTheOtherHoldIsCleared()
+    {
+        await RunAsAgencyAdministratorAsync();
+        await AddTestAgencyAsync();
+        await AddAsync(new AgencyFeature { Feature = FeatureFlags.Reservations, Enabled = true });
+
+        var car = new Car { Matricule = "RES-5", Status = CarStatus.Active, DailyRate = Money.Of(30m, "TND") };
+        await AddAsync(car);
+        var client = new Client { FirstName = "Test", LastName = "Client" };
+        await AddAsync(client);
+
+        var first = await SendAsync(new CreateReservationCommand
+        {
+            CarId = car.Id, ClientId = client.Id, StartDate = Start, EndDate = End
+        });
+        var second = await SendAsync(new CreateReservationCommand
+        {
+            CarId = car.Id, ClientId = client.Id, StartDate = Start, EndDate = End
+        });
+
+        await SendAsync(new ConfirmReservationCommand(first));
+        await SendAsync(new CancelReservationCommand(first, "Client changed their mind"));
+
+        await SendAsync(new ConfirmReservationCommand(second));
+
+        (await FindAsync<Reservation>(second))!.Status
+            .Should().Be(ReservationStatus.Confirmed);
     }
 }

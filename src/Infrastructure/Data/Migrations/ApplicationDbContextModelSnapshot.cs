@@ -332,6 +332,18 @@ namespace RemSolution.Infrastructure.Data.Migrations
                     b.Property<int>("AgencyId")
                         .HasColumnType("int");
 
+                    b.Property<int>("CINValidityYears")
+                        .HasColumnType("int");
+
+                    b.Property<int>("CancellationFeeMode")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("CancellationFeeValue")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("CancellationFreeHours")
+                        .HasColumnType("int");
+
                     b.Property<int>("CancellationWindowHours")
                         .HasColumnType("int");
 
@@ -356,6 +368,9 @@ namespace RemSolution.Infrastructure.Data.Migrations
                         .IsUnicode(false)
                         .HasColumnType("varchar(3)");
 
+                    b.Property<int>("DrivingLicenceValidityYears")
+                        .HasColumnType("int");
+
                     b.Property<int>("ExpenseDueLeadDays")
                         .HasColumnType("int");
 
@@ -370,6 +385,9 @@ namespace RemSolution.Infrastructure.Data.Migrations
 
                     b.Property<bool>("NotifyStaffByEmail")
                         .HasColumnType("bit");
+
+                    b.Property<int>("PasseportValidityYears")
+                        .HasColumnType("int");
 
                     b.Property<int>("ReservationExpiryHours")
                         .HasColumnType("int");
@@ -868,7 +886,10 @@ namespace RemSolution.Infrastructure.Data.Migrations
                     b.Property<DateTime?>("ReadAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("RentingId")
+                    b.Property<int?>("RentingId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("ReservationId")
                         .HasColumnType("int");
 
                     b.Property<string>("SenderName")
@@ -892,7 +913,12 @@ namespace RemSolution.Infrastructure.Data.Migrations
 
                     b.HasIndex("RentingId");
 
+                    b.HasIndex("ReservationId");
+
                     b.HasIndex("AgencyId", "RentingId", "SentAt");
+
+                    b.HasIndex("AgencyId", "ReservationId", "SentAt")
+                        .HasDatabaseName("IX_ChatMessages_AgencyId_ReservationId_SentAt");
 
                     b.ToTable("ChatMessages", (string)null);
                 });
@@ -1967,6 +1993,12 @@ namespace RemSolution.Infrastructure.Data.Migrations
                     b.Property<int>("AgencyId")
                         .HasColumnType("int");
 
+                    b.Property<DateTime?>("CancelledAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("CancelledByCustomer")
+                        .HasColumnType("bit");
+
                     b.Property<string>("CancelledReason")
                         .HasMaxLength(1000)
                         .HasColumnType("nvarchar(1000)");
@@ -2035,6 +2067,77 @@ namespace RemSolution.Infrastructure.Data.Migrations
                     SqlServerIndexBuilderExtensions.IncludeProperties(b.HasIndex("CarId", "StartDate", "EndDate"), new[] { "Status", "AgencyId" });
 
                     b.ToTable("Reservations");
+                });
+
+            modelBuilder.Entity("RemSolution.Domain.Entities.ReservationRequirement", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AgencyId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTimeOffset?>("CreatedOn")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<int?>("ExpectedMethod")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Kind")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Label")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<int>("ReservationId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ReviewNote")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<DateTime?>("ReviewedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ReviewedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("SubmittedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("SubmittedFileId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("SubmittedNote")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTimeOffset?>("UpdatedOn")
+                        .HasColumnType("datetimeoffset");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ReservationId");
+
+                    b.HasIndex("SubmittedFileId");
+
+                    b.HasIndex("AgencyId", "ReservationId");
+
+                    b.ToTable("ReservationRequirements");
                 });
 
             modelBuilder.Entity("RemSolution.Domain.Entities.StoredFile", b =>
@@ -2615,12 +2718,18 @@ namespace RemSolution.Infrastructure.Data.Migrations
                     b.HasOne("RemSolution.Domain.Entities.Renting", "Renting")
                         .WithMany("ChatMessages")
                         .HasForeignKey("RentingId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("RemSolution.Domain.Entities.Reservation", "Reservation")
+                        .WithMany("ChatMessages")
+                        .HasForeignKey("ReservationId")
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("Agency");
 
                     b.Navigation("Renting");
+
+                    b.Navigation("Reservation");
                 });
 
             modelBuilder.Entity("RemSolution.Domain.Entities.Client", b =>
@@ -3499,6 +3608,30 @@ namespace RemSolution.Infrastructure.Data.Migrations
                         .HasForeignKey("RentingId")
                         .OnDelete(DeleteBehavior.SetNull);
 
+                    b.OwnsOne("RemSolution.Domain.ValueObjects.Money", "CancellationFee", b1 =>
+                        {
+                            b1.Property<int>("ReservationId")
+                                .HasColumnType("int");
+
+                            b1.Property<decimal>("Amount")
+                                .HasColumnType("decimal(18,2)")
+                                .HasColumnName("CancellationFee");
+
+                            b1.Property<string>("Currency")
+                                .IsRequired()
+                                .HasMaxLength(3)
+                                .IsUnicode(false)
+                                .HasColumnType("varchar(3)")
+                                .HasColumnName("CancellationFeeCurrency");
+
+                            b1.HasKey("ReservationId");
+
+                            b1.ToTable("Reservations");
+
+                            b1.WithOwner()
+                                .HasForeignKey("ReservationId");
+                        });
+
                     b.OwnsOne("RemSolution.Domain.ValueObjects.Money", "DepositAmount", b1 =>
                         {
                             b1.Property<int>("ReservationId")
@@ -3573,6 +3706,8 @@ namespace RemSolution.Infrastructure.Data.Migrations
 
                     b.Navigation("Agency");
 
+                    b.Navigation("CancellationFee");
+
                     b.Navigation("Car");
 
                     b.Navigation("Client");
@@ -3584,6 +3719,58 @@ namespace RemSolution.Infrastructure.Data.Migrations
                     b.Navigation("Price");
 
                     b.Navigation("Renting");
+                });
+
+            modelBuilder.Entity("RemSolution.Domain.Entities.ReservationRequirement", b =>
+                {
+                    b.HasOne("RemSolution.Domain.Entities.Agency", "Agency")
+                        .WithMany()
+                        .HasForeignKey("AgencyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("RemSolution.Domain.Entities.Reservation", "Reservation")
+                        .WithMany("Requirements")
+                        .HasForeignKey("ReservationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("RemSolution.Domain.Entities.StoredFile", "SubmittedFile")
+                        .WithMany()
+                        .HasForeignKey("SubmittedFileId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.OwnsOne("RemSolution.Domain.ValueObjects.Money", "Amount", b1 =>
+                        {
+                            b1.Property<int>("ReservationRequirementId")
+                                .HasColumnType("int");
+
+                            b1.Property<decimal>("Amount")
+                                .HasColumnType("decimal(18,2)")
+                                .HasColumnName("Amount");
+
+                            b1.Property<string>("Currency")
+                                .IsRequired()
+                                .HasMaxLength(3)
+                                .IsUnicode(false)
+                                .HasColumnType("varchar(3)")
+                                .HasColumnName("AmountCurrency");
+
+                            b1.HasKey("ReservationRequirementId");
+
+                            b1.ToTable("ReservationRequirements");
+
+                            b1.WithOwner()
+                                .HasForeignKey("ReservationRequirementId");
+                        });
+
+                    b.Navigation("Agency");
+
+                    b.Navigation("Amount");
+
+                    b.Navigation("Reservation");
+
+                    b.Navigation("SubmittedFile");
                 });
 
             modelBuilder.Entity("RemSolution.Domain.Entities.StoredFile", b =>
@@ -3696,6 +3883,13 @@ namespace RemSolution.Infrastructure.Data.Migrations
                     b.Navigation("RentingHistories");
 
                     b.Navigation("Reservations");
+                });
+
+            modelBuilder.Entity("RemSolution.Domain.Entities.Reservation", b =>
+                {
+                    b.Navigation("ChatMessages");
+
+                    b.Navigation("Requirements");
                 });
 
             modelBuilder.Entity("RemSolution.Domain.Entities.SubscriptionPlan", b =>

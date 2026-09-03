@@ -114,6 +114,7 @@ public sealed class NotificationSweepJob
         if (features.Contains(FeatureFlags.Reservations))
         {
             await SweepUpcomingReservationsAsync(settings, utcNow, cancellationToken);
+            await SweepPendingReservationsAsync(utcNow, cancellationToken);
         }
 
         // Gated on Clients rather than on a booking module: the alert is about a
@@ -366,6 +367,60 @@ public sealed class NotificationSweepJob
                     // booking earns a fresh heads-up for the new date.
                     DedupToken: IsoDate(reservation.StartDate),
                     ClientId: reservation.ClientId),
+                cancellationToken);
+        }
+    }
+
+    // A request still unanswered with its hold about to lapse. The alert on
+    // arrival is raised by the create commands; this is the last call, and it
+    // matters because the car has stayed on offer the whole time — an unanswered
+    // request costs the agency the booking, not just the customer's patience.
+    private async Task SweepPendingReservationsAsync(
+        DateTime now, CancellationToken cancellationToken)
+    {
+        // The window is the sweep's own hour: the job runs hourly, so a hold
+        // lapsing within it gets exactly one warning before the expiry job takes
+        // it. Widening this would nag; narrowing it would miss.
+        var horizon = now.AddHours(1);
+
+        var expiring = await _context.Reservations
+            .AsNoTracking()
+            .Where(r => r.Status == ReservationStatus.PendingConfirmation
+                        && r.ExpiresAt != null
+                        && r.ExpiresAt > now
+                        && r.ExpiresAt <= horizon)
+            .Select(r => new
+            {
+                r.Id,
+                r.ExpiresAt,
+                r.StartDate,
+                r.ClientId,
+                ClientFirstName = r.Client != null ? r.Client.FirstName : null,
+                ClientLastName = r.Client != null ? r.Client.LastName : null,
+                Matricule = r.Car != null ? r.Car.Matricule : null,
+                ModelName = r.Car != null && r.Car.Model != null ? r.Car.Model.Name : null,
+            })
+            .ToListAsync(cancellationToken);
+
+        foreach (var reservation in expiring)
+        {
+            var args = new NotificationArgs()
+                .Set("car", CarLabel(reservation.ModelName, reservation.Matricule))
+                .Set("client", PersonLabel(reservation.ClientFirstName, reservation.ClientLastName))
+                .SetDate("startDate", reservation.StartDate);
+
+            await _notifications.NotifyStaffAsync(
+                new StaffNotification(
+                    NotificationKind.ReservationPending,
+                    NotificationMessages.ReservationPendingExpiringSoon,
+                    Permissions.ReservationUpdate,
+                    NotificationSubject.Reservation,
+                    reservation.Id,
+                    $"/reservation/{reservation.Id}",
+                    args,
+                    // Keyed on the deadline, so extending the hold earns a fresh
+                    // warning for the new one rather than staying silent.
+                    DedupToken: IsoDate(reservation.ExpiresAt)),
                 cancellationToken);
         }
     }

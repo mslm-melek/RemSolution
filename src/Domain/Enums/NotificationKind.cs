@@ -7,10 +7,10 @@ namespace RemSolution.Domain.Enums
     /// composes, so adding a kind means adding those strings — never a new column
     /// here.
     /// <para>
-    /// Kinds split into two audiences, and the split is deliberate: the first
-    /// three are the agency's own work queue (in-app, optionally mailed to
-    /// staff); the last three are messages to a client, which exist only as mail
-    /// plus the row that records having sent it.
+    /// Kinds split into two audiences, and the split is deliberate: most are the
+    /// agency's own work queue (in-app, optionally mailed to staff); kinds 4 to 6
+    /// are messages to a client, which exist only as mail plus the row that
+    /// records having sent it.
     /// </para>
     /// Values are persisted, so they are explicit and never reused.
     /// </summary>
@@ -29,6 +29,14 @@ namespace RemSolution.Domain.Enums
 
         /// <summary>A confirmed hold starts within the agency's lead time.</summary>
         ReservationUpcoming = 3,
+
+        /// <summary>
+        /// A request is waiting for an answer — raised when it arrives, and again
+        /// when its hold is about to run out. Since a pending request blocks
+        /// nothing, the car stays on offer while it waits, so an unanswered one
+        /// costs the agency the booking rather than merely annoying the customer.
+        /// </summary>
+        ReservationPending = 8,
 
         /// <summary>
         /// Client reminder: their booking starts in a few days. Covers a

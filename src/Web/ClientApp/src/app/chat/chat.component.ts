@@ -1,8 +1,8 @@
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+﻿import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { Subscription, timer } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 import {
-  ChatClient, ChatThreadDto, ChatMessageDto, ChatAuthorKind,
+  ChatClient, ChatThreadDto, ChatMessageDto, ChatAuthorKind, ChatSubjectKind,
   SendChatMessageCommand, RentingState
 } from '../web-api-client';
 import { extractValidationErrors } from '../shared/form-utils';
@@ -36,6 +36,7 @@ export class ChatComponent implements OnInit, OnDestroy {
   canSend = false;
 
   ChatAuthorKind = ChatAuthorKind;
+  ChatSubjectKind = ChatSubjectKind;
   RentingState = RentingState;
 
   // At the desk the AGENCY's messages are the ones drawn as mine; the customer's
@@ -74,7 +75,8 @@ export class ChatComponent implements OnInit, OnDestroy {
 
         // Keep the open thread's row in step with the refreshed list.
         if (this.selected) {
-          const refreshed = this.threads.find(x => x.rentingId === this.selected!.rentingId);
+          const refreshed = this.threads.find(x =>
+            x.subject === this.selected!.subject && x.subjectId === this.selected!.subjectId);
           if (refreshed) this.selected = refreshed;
         }
       },
@@ -93,9 +95,9 @@ export class ChatComponent implements OnInit, OnDestroy {
     this.draft = '';
     this.errorMessage = '';
 
-    if (!thread.rentingId) return;
+    if (!thread.subjectId || thread.subject === undefined) return;
 
-    this.client.getMessages(thread.rentingId, null).subscribe({
+    this.client.getMessages(thread.subject, thread.subjectId, null).subscribe({
       next: messages => {
         this.messages = messages || [];
         this.markRead();
@@ -103,7 +105,7 @@ export class ChatComponent implements OnInit, OnDestroy {
       error: err => this.handleError(err)
     });
 
-    this.startPolling(thread.rentingId);
+    this.startPolling(thread.subject, thread.subjectId);
   }
 
   close() {
@@ -114,10 +116,10 @@ export class ChatComponent implements OnInit, OnDestroy {
 
   // Only fetches what arrived after the newest message already held, so an open
   // thread costs one small request per tick.
-  private startPolling(rentingId: number) {
+  private startPolling(subject: ChatSubjectKind, id: number) {
     this.stopPolling();
     this.poll = timer(POLL_INTERVAL_MS, POLL_INTERVAL_MS).pipe(
-      switchMap(() => this.client.getMessages(rentingId, this.lastMessageId()))
+      switchMap(() => this.client.getMessages(subject, id, this.lastMessageId()))
     ).subscribe({
       next: incoming => {
         if (!this.appendMessages(incoming)) return;
@@ -152,10 +154,10 @@ export class ChatComponent implements OnInit, OnDestroy {
   }
 
   private markRead() {
-    if (!this.selected?.rentingId) return;
+    if (!this.selected?.subjectId || this.selected.subject === undefined) return;
     if (!this.messages.some(m => m.authorKind === ChatAuthorKind.Client && !m.readAt)) return;
 
-    this.client.markRead(this.selected.rentingId).subscribe({
+    this.client.markRead(this.selected.subject, this.selected.subjectId).subscribe({
       next: () => this.loadThreads(),
       error: err => console.error(err)
     });
@@ -168,20 +170,21 @@ export class ChatComponent implements OnInit, OnDestroy {
     event?.preventDefault();
 
     const body = this.draft.trim();
-    if (!body || !this.selected?.rentingId) return;
+    if (!body || !this.selected?.subjectId || this.selected.subject === undefined) return;
 
     this.sending = true;
     this.errorMessage = '';
-    const rentingId = this.selected.rentingId;
-    const command = new SendChatMessageCommand({ rentingId, body });
+    const subject = this.selected.subject;
+    const id = this.selected.subjectId;
+    const command = new SendChatMessageCommand({ subject, id, body });
 
-    this.client.sendMessage(rentingId, command).subscribe({
+    this.client.sendMessage(subject, id, command).subscribe({
       next: () => {
         this.sending = false;
         this.draft = '';
         // Re-read from the cursor so the stored message (with its server
         // timestamp and id) is what lands in the thread, not a local echo.
-        this.client.getMessages(rentingId, this.lastMessageId()).subscribe({
+        this.client.getMessages(subject, id, this.lastMessageId()).subscribe({
           next: incoming => {
             this.appendMessages(incoming);
             this.loadThreads();
@@ -202,3 +205,4 @@ export class ChatComponent implements OnInit, OnDestroy {
     if (!validationErrors) console.error(err);
   }
 }
+

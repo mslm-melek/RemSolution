@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Http.HttpResults;
 using RemSolution.Application.Common.Models;
 using RemSolution.Domain.Constants;
+using RemSolution.Domain.Enums;
 using RemSolution.Application.Features.Chat.Commands.MarkChatReadCommand;
 using RemSolution.Application.Features.Chat.Commands.SendChatMessageCommand;
 using RemSolution.Application.Features.Chat.DTOs;
@@ -9,10 +10,14 @@ using RemSolution.Application.Features.Chat.Queries.GetChatThreadsQuery;
 
 namespace RemSolution.Web.Endpoints;
 
-// The agency side of the renting conversations. The customer side lives on the
+// The agency side of the booking conversations. The customer side lives on the
 // Marketplace group, which authorises by marketplace account rather than by
 // agency permission. Delivery is by polling: the SPA re-reads a thread with
 // ?afterId= while it is open, so no socket transport is involved.
+//
+// A thread is addressed by the booking it hangs off — {subject}/{id}, where the
+// subject is a hire or a confirmed hold (see ChatSubjectKind). One route pair
+// rather than two parallel sets: to the desk these are the same conversations.
 public class Chat : EndpointGroupBase
 {
     public override void Map(WebApplication app)
@@ -22,9 +27,9 @@ public class Chat : EndpointGroupBase
 
         group
             .MapGet(GetThreads, "threads", Permissions.ChatView)
-            .MapGet(GetMessages, "threads/{rentingId}", Permissions.ChatView)
-            .MapPost(SendMessage, "threads/{rentingId}/messages", Permissions.ChatSend)
-            .MapPost(MarkRead, "threads/{rentingId}/read", Permissions.ChatView);
+            .MapGet(GetMessages, "threads/{subject}/{id}", Permissions.ChatView)
+            .MapPost(SendMessage, "threads/{subject}/{id}/messages", Permissions.ChatSend)
+            .MapPost(MarkRead, "threads/{subject}/{id}/read", Permissions.ChatView);
     }
 
     public async Task<Ok<PaginatedList<ChatThreadDto>>> GetThreads(
@@ -35,25 +40,25 @@ public class Chat : EndpointGroupBase
     }
 
     public async Task<Ok<IList<ChatMessageDto>>> GetMessages(
-        ISender sender, int rentingId, int? afterId)
+        ISender sender, ChatSubjectKind subject, int id, int? afterId)
     {
-        var result = await sender.Send(new GetChatMessagesQuery(rentingId, afterId));
+        var result = await sender.Send(new GetChatMessagesQuery(subject, id, afterId));
         return TypedResults.Ok(result);
     }
 
     public async Task<Results<Created<int>, BadRequest>> SendMessage(
-        ISender sender, int rentingId, SendChatMessageCommand command)
+        ISender sender, ChatSubjectKind subject, int id, SendChatMessageCommand command)
     {
-        if (rentingId != command.RentingId)
+        if (id != command.Id || subject != command.Subject)
             return TypedResults.BadRequest();
 
-        var id = await sender.Send(command);
-        return TypedResults.Created($"/chat/threads/{rentingId}", id);
+        var messageId = await sender.Send(command);
+        return TypedResults.Created($"/chat/threads/{subject}/{id}", messageId);
     }
 
-    public async Task<NoContent> MarkRead(ISender sender, int rentingId)
+    public async Task<NoContent> MarkRead(ISender sender, ChatSubjectKind subject, int id)
     {
-        await sender.Send(new MarkChatReadCommand(rentingId));
+        await sender.Send(new MarkChatReadCommand(subject, id));
         return TypedResults.NoContent();
     }
 }

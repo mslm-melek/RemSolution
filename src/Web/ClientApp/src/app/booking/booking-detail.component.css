@@ -296,3 +296,100 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ---------------------------------------------------------- requirements ---- */
+
+/* One thing the agency asked for. Boxed rather than a plain list row: each is a
+   small conversation — what was asked, what came back, what was said about it. */
+.requirement {
+  padding: var(--sp-3) 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.requirement:last-of-type {
+  border-bottom: none;
+}
+
+.requirement-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+
+.requirement-label {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  color: var(--ink);
+}
+
+.requirement-state {
+  margin: var(--sp-1) 0 0;
+  font-size: var(--fs-micro);
+  color: var(--ink-2);
+}
+
+.requirement-note {
+  margin: var(--sp-1) 0 0;
+  font-size: var(--fs-micro);
+  color: var(--muted);
+  white-space: pre-wrap;
+}
+
+.requirement-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin-top: var(--sp-2);
+}
+
+/* The "ask for something else" line. Wraps on a narrow panel rather than
+   scrolling sideways. */
+.requirement-add {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  margin-top: var(--sp-3);
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--line);
+}
+
+.requirement-add mat-form-field {
+  flex: 1 1 10rem;
+}
+
+/* ----------------------------------------------------------- reliability ---- */
+
+/* The score and what produced it, side by side: the figure alone is not
+   something to refuse a customer on. */
+.reliability {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-3);
+  padding: var(--sp-3);
+  border-radius: var(--r);
+  background: var(--surface-2);
+}
+
+.reliability-score {
+  font-size: var(--fs-section);
+  font-weight: var(--fw-medium);
+}
+
+.reliability-detail {
+  font-size: var(--fs-micro);
+  color: var(--ink-2);
+}
+
+.reliability.ok .reliability-score {
+  color: var(--ok-ink);
+}
+
+.reliability.warn .reliability-score {
+  color: var(--warn-ink);
+}
+
+.reliability.danger .reliability-score {
+  color: var(--danger);
+}

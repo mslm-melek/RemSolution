@@ -53,13 +53,21 @@ public class MarketplaceTests : BaseTestFixture
 
         var booked = new Car { Matricule = "MK-BOOKED", Status = CarStatus.Active, DailyRate = Money.Of(50m, "TND") };
         await AddAsync(booked);
+        // Confirmed, not merely requested: a pending request leaves the car on
+        // the market, which is the point of confirming.
+        var hold = Reservation.Create(booked.Id, Start, End, price: null, expiresAt: Start.AddHours(-1));
+        hold.Confirm();
+        await AddAsync(hold);
+
+        var pendingOnly = new Car { Matricule = "MK-ASKED", Status = CarStatus.Active, DailyRate = Money.Of(50m, "TND") };
+        await AddAsync(pendingOnly);
         await AddAsync(Reservation.Create(
-            booked.Id, Start, End, price: null, expiresAt: Start.AddHours(-1)));
+            pendingOnly.Id, Start, End, price: null, expiresAt: Start.AddHours(-1)));
 
         var result = await SendAsync(new SearchAvailableCarsQuery(Start, End));
 
-        result.TotalCount.Should().Be(1); // only the available, priced, unbooked car
-        result.Items.First().Matricule.Should().Be("MK-OK");
+        result.TotalCount.Should().Be(2); // the free car, and the one only asked about
+        result.Items.Select(i => i.Matricule).Should().BeEquivalentTo("MK-OK", "MK-ASKED");
     }
 
     [Test]
@@ -592,7 +600,9 @@ public class MarketplaceTests : BaseTestFixture
             DailyRate = Money.Of(20m, "TND"), BranchId = branch.Id
         };
         await AddAsync(booked);
-        await AddAsync(Reservation.Create(booked.Id, Start, End, price: null, expiresAt: Start.AddHours(-1)));
+        var hold = Reservation.Create(booked.Id, Start, End, price: null, expiresAt: Start.AddHours(-1));
+        hold.Confirm();
+        await AddAsync(hold);
 
         var points = await SendAsync(new SearchCarsMapQuery(Start, End));
 

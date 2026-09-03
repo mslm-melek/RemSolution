@@ -1,13 +1,18 @@
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Mvc;
 using RemSolution.Application.Common.Models;
 using RemSolution.Domain.Constants;
+using RemSolution.Domain.Enums;
 using RemSolution.Application.Features.Chat.DTOs;
 using RemSolution.Application.Features.Marketplace.Commands.CancelMyReservationCommand;
 using RemSolution.Application.Features.Marketplace.Commands.CreateCustomerReservationCommand;
 using RemSolution.Application.Features.Marketplace.Commands.CreateMyReviewCommand;
 using RemSolution.Application.Features.Marketplace.Commands.MarkMyChatReadCommand;
 using RemSolution.Application.Features.Marketplace.Commands.SendCustomerChatMessageCommand;
+using RemSolution.Application.Features.Marketplace.Commands.SubmitMyReservationRequirementCommand;
 using RemSolution.Application.Features.MarketplaceSearch.DTOs;
+using RemSolution.Application.Features.MarketplaceSearch.Queries.GetMyReservationRequirementsQuery;
+using RemSolution.Application.Features.Reservation.DTOs;
 using RemSolution.Application.Features.MarketplaceSearch.Queries.GetAgencyReviewsQuery;
 using RemSolution.Application.Features.MarketplaceSearch.Queries.GetMarketplaceAgencyQuery;
 using RemSolution.Application.Features.MarketplaceSearch.Queries.GetMarketplaceCarQuery;
@@ -54,9 +59,20 @@ public class Marketplace : EndpointGroupBase
             // The customer half of the renting conversations (the agency half is
             // the Chat group). Same polling contract: re-read with ?afterId=.
             .MapGet(GetMyChatThreads, "my-chats", Policies.CustomerOnly)
-            .MapGet(GetMyChatMessages, "my-chats/{rentingId}", Policies.CustomerOnly)
-            .MapPost(SendMyChatMessage, "my-chats/{rentingId}/messages", Policies.CustomerOnly)
-            .MapPost(MarkMyChatRead, "my-chats/{rentingId}/read", Policies.CustomerOnly);
+            .MapGet(GetMyChatMessages, "my-chats/{subject}/{id}", Policies.CustomerOnly)
+            .MapPost(SendMyChatMessage, "my-chats/{subject}/{id}/messages", Policies.CustomerOnly)
+            .MapPost(MarkMyChatRead, "my-chats/{subject}/{id}/read", Policies.CustomerOnly)
+            // What the agency asked for before pickup, and the customer's answers.
+            .MapGet(GetMyReservationRequirements,
+                "my-reservations/{id}/requirements", Policies.CustomerOnly);
+
+        // Answering an ask carries a file (a transfer slip, a scan), so it binds
+        // a form — and antiforgery middleware is not configured, so form binding
+        // has to opt out explicitly, exactly as the other upload endpoints do.
+        group.MapPost("my-reservations/requirements/{id}/submit", SubmitMyReservationRequirement)
+            .WithName(nameof(SubmitMyReservationRequirement))
+            .RequireAuthorization(Policies.CustomerOnly)
+            .DisableAntiforgery();
     }
 
     public async Task<Ok<PaginatedList<MarketplaceCarDto>>> SearchCars(
@@ -135,9 +151,36 @@ public class Marketplace : EndpointGroupBase
         return TypedResults.Ok(result);
     }
 
-    public async Task<NoContent> CancelMyReservation(ISender sender, int id)
+    // The reason is optional but asked for: a customer who says why is telling
+    // the agency something it can act on, and it is shown on the hold.
+    public async Task<NoContent> CancelMyReservation(ISender sender, int id, string? reason)
     {
-        await sender.Send(new CancelMyReservationCommand(id));
+        await sender.Send(new CancelMyReservationCommand(id, reason));
+        return TypedResults.NoContent();
+    }
+
+    public async Task<Ok<IList<ReservationRequirementDto>>> GetMyReservationRequirements(
+        ISender sender, int id)
+    {
+        var result = await sender.Send(new GetMyReservationRequirementsQuery(id));
+        return TypedResults.Ok(result);
+    }
+
+    // The file is optional: accepting terms is an answer with nothing attached.
+    public async Task<NoContent> SubmitMyReservationRequirement(
+        ISender sender, int id, IFormFile? file, [FromForm] string? note)
+    {
+        await using var content = file?.OpenReadStream();
+
+        await sender.Send(new SubmitMyReservationRequirementCommand
+        {
+            Id = id,
+            Note = note,
+            FileName = file?.FileName,
+            ContentType = file?.ContentType,
+            Content = content
+        });
+
         return TypedResults.NoContent();
     }
 
@@ -164,25 +207,25 @@ public class Marketplace : EndpointGroupBase
     }
 
     public async Task<Ok<IList<ChatMessageDto>>> GetMyChatMessages(
-        ISender sender, int rentingId, int? afterId)
+        ISender sender, ChatSubjectKind subject, int id, int? afterId)
     {
-        var result = await sender.Send(new GetMyChatMessagesQuery(rentingId, afterId));
+        var result = await sender.Send(new GetMyChatMessagesQuery(subject, id, afterId));
         return TypedResults.Ok(result);
     }
 
     public async Task<Results<Created<int>, BadRequest>> SendMyChatMessage(
-        ISender sender, int rentingId, SendCustomerChatMessageCommand command)
+        ISender sender, ChatSubjectKind subject, int id, SendCustomerChatMessageCommand command)
     {
-        if (rentingId != command.RentingId)
+        if (id != command.Id || subject != command.Subject)
             return TypedResults.BadRequest();
 
-        var id = await sender.Send(command);
-        return TypedResults.Created($"/marketplace/my-chats/{rentingId}", id);
+        var messageId = await sender.Send(command);
+        return TypedResults.Created($"/marketplace/my-chats/{subject}/{id}", messageId);
     }
 
-    public async Task<NoContent> MarkMyChatRead(ISender sender, int rentingId)
+    public async Task<NoContent> MarkMyChatRead(ISender sender, ChatSubjectKind subject, int id)
     {
-        await sender.Send(new MarkMyChatReadCommand(rentingId));
+        await sender.Send(new MarkMyChatReadCommand(subject, id));
         return TypedResults.NoContent();
     }
 }

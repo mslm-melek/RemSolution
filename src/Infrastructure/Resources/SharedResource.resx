@@ -970,6 +970,18 @@
   <data name="Notification.reservationUpcoming.Body" xml:space="preserve">
     <value>{{client}} picks up {{car}} on {{startDate}}, in {{days}} day(s).</value>
   </data>
+  <data name="Notification.reservationPending.Subject" xml:space="preserve">
+    <value>New request: {{car}}</value>
+  </data>
+  <data name="Notification.reservationPending.Body" xml:space="preserve">
+    <value>{{client}} has asked for {{car}} from {{startDate}}. Confirm or decline it — the car stays on offer until you do.</value>
+  </data>
+  <data name="Notification.reservationPendingExpiringSoon.Subject" xml:space="preserve">
+    <value>Request about to lapse: {{car}}</value>
+  </data>
+  <data name="Notification.reservationPendingExpiringSoon.Body" xml:space="preserve">
+    <value>{{client}}'s request for {{car}} from {{startDate}} runs out within the hour and has had no answer.</value>
+  </data>
   <data name="Notification.clientRentingStartingSoon.Subject" xml:space="preserve">
     <value>Your rental starts on {{startDate}}</value>
   </data>
@@ -997,4 +1009,13 @@ Please return the vehicle on time to avoid additional charges.</value>
     <value>Our records show that {{car}} was due back on {{endDate}}, {{days}} day(s) ago, and has not been returned.
 Please return the vehicle or contact us as soon as possible.</value>
   </data>
-</root>
+  <data name="Validation.Agency.CancellationFeeValue" xml:space="preserve">
+    <value>Set the amount or percentage the cancellation fee charges.</value>
+  </data>
+  <data name="Validation.Agency.CancellationFeePercent" xml:space="preserve">
+    <value>A cancellation fee cannot be more than 100% of the price.</value>
+  </data>
+  <data name="Validation.Agency.CancellationFreeHours" xml:space="preserve">
+    <value>Free cancellation must reach at least as far ahead as the cancellation cutoff, or nothing is ever charged.</value>
+  </data></root>
+

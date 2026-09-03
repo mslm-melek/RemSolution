@@ -62,4 +62,69 @@ public class ClientDocumentExpiryTests
         AClient(expiry).IsDrivingLicenceExpiredOn(earlyInTheDay).Should().BeFalse();
         AClient(expiry).IsDrivingLicenceExpiredOn(Today).Should().BeFalse();
     }
+
+    // --- Derived expiry dates -------------------------------------------------
+
+    private static readonly DateTime Issued = new(2020, 3, 10, 0, 0, 0, DateTimeKind.Utc);
+
+    private static Client AClientWithIssueDates() => new()
+    {
+        CINDeliveranceDate = Issued,
+        PasseportDeliveranceDate = Issued,
+        DrivingLicenceDeliveranceDate = Issued,
+    };
+
+    [Test]
+    public void AMissingExpiry_ShouldBeDerivedFromTheIssueDate()
+    {
+        var client = AClientWithIssueDates();
+
+        client.ApplyDefaultDocumentExpiries(10, 5, 10);
+
+        client.CINExpiryDate.Should().Be(Issued.AddYears(10));
+        client.PasseportExpiryDate.Should().Be(Issued.AddYears(5));
+        client.DrivingLicenceExpiryDate.Should().Be(Issued.AddYears(10));
+    }
+
+    /// <summary>A date read off the document itself always beats a derived one.</summary>
+    [Test]
+    public void ARecordedExpiry_ShouldNeverBeOverwritten()
+    {
+        var onTheDocument = new DateTime(2027, 1, 2, 0, 0, 0, DateTimeKind.Utc);
+        var client = AClientWithIssueDates();
+        client.DrivingLicenceExpiryDate = onTheDocument;
+
+        client.ApplyDefaultDocumentExpiries(10, 5, 10);
+
+        client.DrivingLicenceExpiryDate.Should().Be(onTheDocument);
+    }
+
+    /// <summary>
+    /// Zero years is how an agency says the document does not expire in its
+    /// jurisdiction — it must derive nothing rather than expire it on the day of
+    /// issue.
+    /// </summary>
+    [Test]
+    public void AValidityOfZero_ShouldDeriveNothing()
+    {
+        var client = AClientWithIssueDates();
+
+        client.ApplyDefaultDocumentExpiries(0, 0, 0);
+
+        client.CINExpiryDate.Should().BeNull();
+        client.PasseportExpiryDate.Should().BeNull();
+        client.DrivingLicenceExpiryDate.Should().BeNull();
+    }
+
+    [Test]
+    public void NoIssueDate_ShouldDeriveNothing()
+    {
+        var client = new Client();
+
+        client.ApplyDefaultDocumentExpiries(10, 5, 10);
+
+        client.CINExpiryDate.Should().BeNull();
+        client.PasseportExpiryDate.Should().BeNull();
+        client.DrivingLicenceExpiryDate.Should().BeNull();
+    }
 }

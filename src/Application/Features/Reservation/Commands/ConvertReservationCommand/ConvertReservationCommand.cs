@@ -29,6 +29,11 @@ namespace RemSolution.Application.Features.Reservation.Commands.ConvertReservati
         // Optional identity captured at pickup, used for dedup + enrichment.
         public string? CIN { get; init; }
         public string? PasseportNumber { get; init; }
+
+        // Hands the keys over anyway, with something the agency asked for still
+        // outstanding. Deliberately a conscious act rather than a silent one —
+        // the same shape as AcknowledgeExpiredDocuments on the renting command.
+        public bool AcknowledgeUnmetRequirements { get; init; }
     }
 
     public class ConvertReservationCommandHandler : IRequestHandler<ConvertReservationCommand, int>
@@ -68,6 +73,30 @@ namespace RemSolution.Application.Features.Reservation.Commands.ConvertReservati
                     new ValidationFailure(nameof(request.Id),
                         "The reservation has no client and cannot be converted.")
                 });
+            }
+
+            // What the agency itself said it needed before the keys change hands.
+            // Refused rather than warned, because the agent converting is often
+            // not the one who set the conditions — and it can be overridden in
+            // one field when the customer is standing at the counter with it.
+            if (!request.AcknowledgeUnmetRequirements)
+            {
+                var outstanding = await _context.ReservationRequirements
+                    .AsNoTracking()
+                    .Where(r => r.ReservationId == entity.Id
+                                && r.Status != ReservationRequirementStatus.Accepted
+                                && r.Status != ReservationRequirementStatus.Waived)
+                    .Select(r => r.Label)
+                    .ToListAsync(cancellationToken);
+
+                if (outstanding.Count > 0)
+                {
+                    throw new ValidationException(new[]
+                    {
+                        new ValidationFailure(nameof(request.AcknowledgeUnmetRequirements),
+                            "Still outstanding: " + string.Join(", ", outstanding))
+                    });
+                }
             }
 
             _context.SetOriginalRowVersion(entity, request.RowVersion);

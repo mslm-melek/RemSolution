@@ -9,6 +9,7 @@ using RemSolution.Application.Features.Client.Commands.UpdateClientCommand;
 using RemSolution.Application.Features.Client.DTOs;
 using RemSolution.Application.Features.Client.Commands.UploadClientDocumentCommand;
 using RemSolution.Application.Features.Client.Queries.GetClientByIdQuery;
+using RemSolution.Application.Features.Client.Queries.GetClientReliabilityQuery;
 using RemSolution.Application.Features.Client.Queries.GetClientsWithPaginationQuery;
 using RemSolution.Domain.Constants;
 using RemSolution.Domain.Enums;
@@ -28,6 +29,9 @@ public class Clients : EndpointGroupBase
         group
             .MapGet(GetClients, policy: Permissions.ClientRead)
             .MapGet(GetClientById, "{id}", Permissions.ClientRead)
+            // Read on Reservation.Read, not Client.Read: it is shown at the
+            // moment a hold is answered (see the query).
+            .MapGet(GetClientReliability, "{id}/reliability", Permissions.ReservationRead)
             .MapPost(CreateClient, policy: Permissions.ClientCreate)
             .MapPut(UpdateClient, "{id}", Permissions.ClientUpdate)
             // Raising/clearing the bad-client flag is an edit of the client
@@ -64,6 +68,12 @@ public class Clients : EndpointGroupBase
         // exception handler turns it into the 404 response.
         var result = await sender.Send(new GetClientByIdQuery(id));
 
+        return TypedResults.Ok(result);
+    }
+
+    public async Task<Ok<ClientReliabilityDto>> GetClientReliability(ISender sender, int id)
+    {
+        var result = await sender.Send(new GetClientReliabilityQuery(id));
         return TypedResults.Ok(result);
     }
 

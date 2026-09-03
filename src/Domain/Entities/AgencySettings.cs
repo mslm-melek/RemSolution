@@ -1,3 +1,5 @@
+using RemSolution.Domain.Enums;
+
 namespace RemSolution.Domain.Entities
 {
     // Per-agency configuration in one dependent table (1:1 with Agency), so
@@ -14,8 +16,28 @@ namespace RemSolution.Domain.Entities
         // it. Single-currency per tenant.
         public string CurrencyCode { get; set; } = "TND";
 
-        // Hours from a booking's start within which a cancellation is allowed.
+        // The hard cutoff: once a booking is within this many hours of its start
+        // it can no longer be cancelled at all (see the cancel commands).
         public int CancellationWindowHours { get; set; } = 24;
+
+        // ---------------------------------------------------------------------
+        // Cancellation fees. Distinct from the cutoff above: that one says when
+        // cancelling stops being possible, these say when it stops being free.
+        // Cancelling earlier than CancellationFreeHours before the start costs
+        // nothing; between there and the cutoff it costs the fee. See
+        // CancellationPolicy, which owns the arithmetic.
+        // ---------------------------------------------------------------------
+
+        // Off by default: an agency opts into charging its customers.
+        public CancellationFeeMode CancellationFeeMode { get; set; } = CancellationFeeMode.None;
+
+        // A flat amount in the agency's currency, or a percentage — the mode says
+        // which. Meaningless while the mode is None.
+        public decimal CancellationFeeValue { get; set; }
+
+        // How far ahead a customer can call a booking off for free. Should sit at
+        // or above CancellationWindowHours, or the band that charges is empty.
+        public int CancellationFreeHours { get; set; } = 48;
 
         // Hours a pending reservation is held before it is considered expired.
         public int ReservationExpiryHours { get; set; } = 48;
@@ -65,6 +87,15 @@ namespace RemSolution.Domain.Entities
 
         // Days of warning before a confirmed reservation starts.
         public int ReservationUpcomingLeadDays { get; set; } = 3;
+
+        // How long each identity document stays valid, in years, used to fill in
+        // an expiry date the agent did not type (see
+        // Client.ApplyDefaultDocumentExpiries). Per agency because the answer is
+        // the issuing country's, not ours, and the defaults below are Tunisia's.
+        // Zero means "does not expire here", and derives nothing.
+        public int CINValidityYears { get; set; } = 10;
+        public int PasseportValidityYears { get; set; } = 5;
+        public int DrivingLicenceValidityYears { get; set; } = 10;
 
         // Days of warning before a client's CIN, passport or driving licence
         // expires. A month by default, and deliberately longer than the other

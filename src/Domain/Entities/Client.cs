@@ -114,6 +114,23 @@
         public bool IsDrivingLicenceExpiredOn(DateTime on) =>
             DrivingLicenceExpiryDate is DateTime expiry && expiry.Date < on.Date;
 
+        /// <summary>
+        /// Fills in an expiry nobody typed from the issue date plus the agency's
+        /// default validity (see AgencySettings). Only ever fills a blank — a date
+        /// read off the document itself always wins — and a validity of zero means
+        /// the document does not expire in that jurisdiction, so nothing is derived.
+        /// </summary>
+        public void ApplyDefaultDocumentExpiries(
+            int cinValidityYears, int passeportValidityYears, int drivingLicenceValidityYears)
+        {
+            CINExpiryDate ??= Derive(CINDeliveranceDate, cinValidityYears);
+            PasseportExpiryDate ??= Derive(PasseportDeliveranceDate, passeportValidityYears);
+            DrivingLicenceExpiryDate ??= Derive(DrivingLicenceDeliveranceDate, drivingLicenceValidityYears);
+
+            static DateTime? Derive(DateTime? issued, int years) =>
+                issued is DateTime date && years > 0 ? date.AddYears(years) : null;
+        }
+
         public virtual ICollection<Renting>? Rentings { get; set; }
         public virtual ICollection<Renting>? SecondRentings { get; set; }
         public virtual ICollection<Reservation>? Reservations { get; set; }

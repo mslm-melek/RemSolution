@@ -11,7 +11,7 @@ namespace RemSolution.Application.Features.Chat.Commands.MarkChatReadCommand
     // Idempotent: re-opening a thread with nothing new is a no-op.
     [Authorize(Policy = Permissions.ChatView)]
     [RequiresFeature(FeatureFlags.Chat)]
-    public record MarkChatReadCommand(int RentingId) : IRequest;
+    public record MarkChatReadCommand(ChatSubjectKind Subject, int Id) : IRequest;
 
     public class MarkChatReadCommandHandler : IRequestHandler<MarkChatReadCommand>
     {
@@ -28,9 +28,8 @@ namespace RemSolution.Application.Features.Chat.Commands.MarkChatReadCommand
         {
             // Tenant-filtered, so another agency's thread yields nothing to mark.
             var unread = await _context.ChatMessages
-                .Where(m => m.RentingId == request.RentingId
-                            && m.AuthorKind == ChatAuthorKind.Client
-                            && m.ReadAt == null)
+                .InThread(request.Subject, request.Id)
+                .Where(m => m.AuthorKind == ChatAuthorKind.Client && m.ReadAt == null)
                 .ToListAsync(cancellationToken);
 
             if (unread.Count == 0)

@@ -24,5 +24,10 @@ public enum DocumentType
     // shown beside their name in lists. DERIVED, not received: it is generated
     // from the CIN file (see IPortraitCropper) and regenerated whenever that
     // file is replaced, so it is never the only copy of anything.
-    ClientPortrait = 8
+    ClientPortrait = 8,
+    // What a customer sends in to answer a booking requirement that is not about
+    // money — a licence scan, a signed agreement, a utility bill. A transfer slip
+    // is tagged PaymentProof instead: it is proof of a movement, whichever screen
+    // it arrived through.
+    BookingRequirement = 9
 }

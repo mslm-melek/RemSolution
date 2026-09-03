@@ -159,7 +159,7 @@ namespace RemSolution.Application.Features.Renting.Commands.UpdateRentingCommand
             Guard.Against.NotFound(request.ClientId, renter);
 
             var secondDriver = await RentingClients.ResolveSecondDriverAsync(
-                new RentingClientContext(_context, _user, _identityService, _tenant, _dateTime),
+                new RentingClientContext(_context, _user, _identityService, _tenant, _dateTime, _settings),
                 renter, request.SecondClientId, request.SecondNewClient, cancellationToken);
 
             // The typed figure, the re-quote, or the original snapshot.

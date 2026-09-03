@@ -4,6 +4,7 @@ using RemSolution.Application.Common.Geo;
 using RemSolution.Application.Common.Interfaces;
 using RemSolution.Application.Common.Security;
 using RemSolution.Application.Common.Settings;
+using RemSolution.Domain.Enums;
 using RemSolution.Domain.Constants;
 
 namespace RemSolution.Application.Features.Agency.Commands.UpdateMyAgencyCommand
@@ -57,6 +58,20 @@ namespace RemSolution.Application.Features.Agency.Commands.UpdateMyAgencyCommand
         public string? TaxIdentifier { get; init; }
         public decimal VatRatePercent { get; init; } = 19m;
         public decimal FiscalStampAmount { get; init; } = 1m;
+
+        // How long each document stays valid where this agency trades, used to
+        // fill in an expiry date the agent did not type. Zero for a document that
+        // does not expire there.
+        public int CINValidityYears { get; init; } = 10;
+        public int PasseportValidityYears { get; init; } = 5;
+        public int DrivingLicenceValidityYears { get; init; } = 10;
+
+        // Cancellation policy. Off by default, and deliberately separate from
+        // CancellationWindowHours above: that one says when cancelling stops
+        // being possible, these say when it stops being free.
+        public CancellationFeeMode CancellationFeeMode { get; init; } = CancellationFeeMode.None;
+        public decimal CancellationFeeValue { get; init; }
+        public int CancellationFreeHours { get; init; } = 48;
     }
 
     public class UpdateMyAgencyCommandHandler : IRequestHandler<UpdateMyAgencyCommand>
@@ -117,6 +132,14 @@ namespace RemSolution.Application.Features.Agency.Commands.UpdateMyAgencyCommand
                 : request.TaxIdentifier.Trim();
             settings.VatRatePercent = request.VatRatePercent;
             settings.FiscalStampAmount = request.FiscalStampAmount;
+
+            settings.CINValidityYears = request.CINValidityYears;
+            settings.PasseportValidityYears = request.PasseportValidityYears;
+            settings.DrivingLicenceValidityYears = request.DrivingLicenceValidityYears;
+
+            settings.CancellationFeeMode = request.CancellationFeeMode;
+            settings.CancellationFeeValue = request.CancellationFeeValue;
+            settings.CancellationFreeHours = request.CancellationFreeHours;
 
             await _context.SaveChangesAsync(cancellationToken);
 

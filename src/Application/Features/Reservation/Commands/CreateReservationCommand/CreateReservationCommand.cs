@@ -1,5 +1,6 @@
 using ValidationException = RemSolution.Application.Common.Exceptions.ValidationException;
 using RemSolution.Application.Common.Interfaces;
+using RemSolution.Application.Common.Notifications;
 using RemSolution.Application.Common.Security;
 using RemSolution.Application.Common.Settings;
 using RemSolution.Domain.Constants;
@@ -31,16 +32,19 @@ namespace RemSolution.Application.Features.Reservation.Commands.CreateReservatio
         private readonly IPricingService _pricing;
         private readonly IAvailabilityChecker _availability;
         private readonly TimeProvider _dateTime;
+        private readonly INotificationService _notifications;
 
         public CreateReservationCommandHandler(
             IApplicationDbContext context, IAgencySettingsProvider settings,
-            IPricingService pricing, IAvailabilityChecker availability, TimeProvider dateTime)
+            IPricingService pricing, IAvailabilityChecker availability, TimeProvider dateTime,
+            INotificationService notifications)
         {
             _context = context;
             _settings = settings;
             _pricing = pricing;
             _availability = availability;
             _dateTime = dateTime;
+            _notifications = notifications;
         }
 
         public async Task<int> Handle(CreateReservationCommand request, CancellationToken cancellationToken)
@@ -96,6 +100,26 @@ namespace RemSolution.Application.Features.Reservation.Commands.CreateReservatio
             await _context.SaveChangesAsync(cancellationToken);
 
             await transaction.CommitAsync(cancellationToken);
+
+            // After the commit: the alert writes its own rows, and a mail server
+            // being down must not undo a booking that was accepted.
+            var labels = await _context.Reservations
+                .AsNoTracking()
+                .Where(r => r.Id == entity.Id)
+                .Select(r => new
+                {
+                    FirstName = r.Client != null ? r.Client.FirstName : null,
+                    LastName = r.Client != null ? r.Client.LastName : null,
+                    Matricule = r.Car != null ? r.Car.Matricule : null,
+                    ModelName = r.Car != null && r.Car.Model != null ? r.Car.Model.Name : null,
+                })
+                .FirstOrDefaultAsync(cancellationToken);
+
+            await ReservationAlerts.RaiseRequestedAsync(
+                _notifications, entity.Id, request.ClientId,
+                labels?.FirstName, labels?.LastName,
+                labels?.Matricule, labels?.ModelName,
+                request.StartDate, cancellationToken);
 
             return entity.Id;
         }

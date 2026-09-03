@@ -11,10 +11,14 @@ namespace RemSolution.Domain.Enums;
 /// hold lapsed past its <c>ExpiresAt</c>, swept by a background job), and
 /// <see cref="Cancelled"/> (cancelled within the agency's cancellation window).
 ///
-/// Only <see cref="PendingConfirmation"/>, <see cref="Confirmed"/> and
-/// <see cref="Paid"/> are "active" holds that block a car's availability;
-/// <see cref="Converted"/> (the renting now blocks instead), <see cref="Rejected"/>,
-/// <see cref="Expired"/> and <see cref="Cancelled"/> do not.
+/// Only <see cref="Confirmed"/> and <see cref="Paid"/> block a car's
+/// availability. <see cref="PendingConfirmation"/> deliberately does NOT: a
+/// request is a question, not a claim, so several customers may ask for the same
+/// car and the same dates and the agency decides between them. The conflict is
+/// enforced at confirmation instead — see the confirm command, which refuses
+/// while another booking holds the period. <see cref="Converted"/> (the renting
+/// now blocks instead), <see cref="Rejected"/>, <see cref="Expired"/> and
+/// <see cref="Cancelled"/> do not block either.
 ///
 /// Underlying values 0–3 are unchanged from the original hold model so persisted
 /// rows keep their meaning (the old <c>Pending</c> is now

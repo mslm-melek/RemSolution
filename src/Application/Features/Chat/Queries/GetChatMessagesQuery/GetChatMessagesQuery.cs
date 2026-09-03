@@ -2,6 +2,7 @@ using RemSolution.Application.Common.Interfaces;
 using RemSolution.Application.Common.Security;
 using RemSolution.Application.Features.Chat.DTOs;
 using RemSolution.Domain.Constants;
+using RemSolution.Domain.Enums;
 
 namespace RemSolution.Application.Features.Chat.Queries.GetChatMessagesQuery
 {
@@ -11,7 +12,7 @@ namespace RemSolution.Application.Features.Chat.Queries.GetChatMessagesQuery
     // share a clock tick.
     [Authorize(Policy = Permissions.ChatView)]
     [RequiresFeature(FeatureFlags.Chat)]
-    public record GetChatMessagesQuery(int RentingId, int? AfterId = null)
+    public record GetChatMessagesQuery(ChatSubjectKind Subject, int Id, int? AfterId = null)
         : IRequest<IList<ChatMessageDto>>;
 
     public class GetChatMessagesQueryHandler : IRequestHandler<GetChatMessagesQuery, IList<ChatMessageDto>>
@@ -29,7 +30,7 @@ namespace RemSolution.Application.Features.Chat.Queries.GetChatMessagesQuery
             // Tenant-filtered: another agency's thread comes back empty.
             var query = _context.ChatMessages
                 .AsNoTracking()
-                .Where(m => m.RentingId == request.RentingId);
+                .InThread(request.Subject, request.Id);
 
             if (request.AfterId.HasValue)
             {

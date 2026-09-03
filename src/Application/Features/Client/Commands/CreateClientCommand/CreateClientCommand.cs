@@ -1,6 +1,8 @@
+using RemSolution.Application.Common.Clients;
 using RemSolution.Application.Common.Interfaces;
 using RemSolution.Application.Common.Models;
 using RemSolution.Application.Common.Security;
+using RemSolution.Application.Common.Settings;
 using RemSolution.Application.Common.Subscriptions;
 using RemSolution.Application.Features.Client.Validation;
 using RemSolution.Domain.Constants;
@@ -51,17 +53,20 @@ namespace RemSolution.Application.Features.Client.Commands.CreateClientCommand
         private readonly IClientAccountService _accounts;
         private readonly ITenantProvider _tenant;
         private readonly TimeProvider _dateTime;
+        private readonly IAgencySettingsProvider _settings;
 
         public CreateClientCommandHandler(
             IApplicationDbContext context,
             IClientAccountService accounts,
             ITenantProvider tenant,
-            TimeProvider dateTime)
+            TimeProvider dateTime,
+            IAgencySettingsProvider settings)
         {
             _context = context;
             _accounts = accounts;
             _tenant = tenant;
             _dateTime = dateTime;
+            _settings = settings;
         }
 
         public async Task<int> Handle(CreateClientCommand request, CancellationToken cancellationToken)
@@ -91,6 +96,8 @@ namespace RemSolution.Application.Features.Client.Commands.CreateClientCommand
                 DrivingLicenceExpiryDate = request.DrivingLicenceExpiryDate,
                 Description = request.Description
             };
+
+            await ClientDocumentDefaults.ApplyAsync(entity, _settings, _tenant, cancellationToken);
 
             // Quota check and insert are atomic under the per-agency write
             // lock; disposing without commit rolls back.

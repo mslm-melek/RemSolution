@@ -760,9 +760,49 @@
     "confirmReverse": "Contrepasser ce paiement ? Une écriture inverse sera enregistrée.",
     "concurrency": "Cette réservation a été modifiée par un autre utilisateur depuis son ouverture. Rechargez la page pour obtenir la dernière version, puis réappliquez vos modifications.",
     "staleState": "Cette réservation a changé depuis le chargement de la liste — elle a été actualisée.",
-    "heldUntil": "La voiture est bloquée jusqu'à {{time}}",
-    "heldUntilNote": "Sans réponse, la réservation expire et le véhicule redevient disponible.",
-    "awaitingYou": "Cette réservation attend votre réponse"
+    "heldUntil": "À répondre avant le {{time}}",
+    "heldUntilNote": "La voiture reste proposée tant que vous n'avez pas confirmé : sans réponse, la demande expire d'elle-même.",
+    "awaitingYou": "Cette réservation attend votre réponse",
+    "reliability": {
+      "title": "Historique du client",
+      "summary": "{{cancellations}} annulation(s) sur {{bookings}} réservation(s)",
+      "late": "{{count}} tardive(s), avec frais",
+      "scope": "Uniquement ce qui s'est passé avec votre agence."
+    },
+    "requirements": {
+      "title": "À fournir avant le départ",
+      "empty": "Rien n'est demandé au client pour l'instant.",
+      "kind": "Type",
+      "label": "Ce que vous demandez",
+      "amount": "Montant (facultatif)",
+      "amountHint": "Dans la devise de l'agence, TTC.",
+      "add": "Ajouter",
+      "accept": "Accepter",
+      "reject": "Refuser",
+      "waive": "Ne plus exiger",
+      "openFile": "Ouvrir le fichier envoyé",
+      "answeredOn": "répondu le",
+      "promptRejectReason": "Pourquoi refusez-vous ? Le client verra ce motif :",
+      "kinds": {
+        "payment": "Paiement",
+        "deposit": "Caution",
+        "document": "Document",
+        "conditions": "Conditions à accepter",
+        "contract": "Contrat à signer"
+      },
+      "states": {
+        "requested": "Demandé",
+        "submitted": "Réponse reçue, à vérifier",
+        "accepted": "Accepté",
+        "rejected": "Refusé",
+        "waived": "Plus exigé"
+      }
+    },
+    "conflict": {
+      "reservation": "La voiture est déjà prise sur cette période par la réservation n° {{id}}. Annulez-la ou refusez-la avant de confirmer celle-ci.",
+      "renting": "La voiture est déjà louée sur cette période (location n° {{id}}). Il faut annuler cette location avant de confirmer la réservation.",
+      "unavailability": "La voiture est déclarée indisponible sur cette période (immobilisation n° {{id}}). Supprimez l'immobilisation avant de confirmer."
+    }
   },
   "marketplace": {
     "myTrips": "Mes voyages",
@@ -800,10 +840,21 @@
     "myReservations": "Mes réservations",
     "loadFailed": "Impossible de charger vos réservations.",
     "cancelFailed": "Impossible d'annuler la réservation.",
-    "confirmCancel": "Annuler cette demande de réservation ?",
+    "confirmCancel": "Annuler cette réservation ?",
+    "confirmCancelWithFee": "Annuler cette réservation ? Des frais d'annulation de {{amount}} {{currency}} vous seront facturés.",
+    "promptCancelReason": "Pourquoi annulez-vous ? (facultatif, mais utile à l'agence)",
+    "cancelCosts": "Annuler maintenant coûte {{amount}} {{currency}}",
+    "cancelCharged": "Frais d'annulation : {{amount}} {{currency}}",
     "noReservations": "Vous n'avez encore aucune réservation.",
     "findACar": "Trouvez une voiture à réserver.",
     "holdsUntil": "Valable jusqu'au {{ date }}",
+    "requirements": {
+      "title": "À fournir avant le départ",
+      "accept": "J'accepte",
+      "accepted": "Accepté",
+      "send": "Envoyer un fichier",
+      "submitFailed": "Impossible d'envoyer votre réponse. Réessayez."
+    },
     "resultCount": "{{ count }} voitures disponibles",
     "viewMode": "Affichage des résultats",
     "viewList": "Liste",
@@ -1357,6 +1408,7 @@
     "noThreads": "Aucune conversation.",
     "noMyThreads": "Aucune conversation. Elles s’ouvrent avec vos locations.",
     "openRenting": "Ouvrir la location",
+    "openReservation": "Ouvrir la réservation",
     "read": "Lu",
     "startConversation": "Écrivez le premier message.",
     "yourMessage": "Votre message",
@@ -1415,6 +1467,28 @@
       "beforeEnd": "Jours avant la fin",
       "zeroIsOff": "0 désactive ce rappel.",
       "lateNoticeNote": "Les avis de retard ne sont jamais automatiques : vous les envoyez depuis les écrans clients."
+    },
+    "cancellation": {
+      "title": "Frais d'annulation",
+      "intro": "Ce qu'une annulation coûte au client. À ne pas confondre avec le délai butoir ci-dessus : celui-ci dit à partir de quand on ne peut plus annuler du tout, ceux-ci à partir de quand ce n'est plus gratuit.",
+      "mode": "Type de frais",
+      "value": "Montant ou pourcentage",
+      "valueHint": "Dans votre devise, ou en % du prix de la réservation.",
+      "freeHours": "Annulation gratuite (heures avant le départ)",
+      "freeHoursHint": "Au-delà de ce délai, l'annulation est gratuite. Doit couvrir au moins le délai butoir.",
+      "modes": {
+        "none": "Aucun frais",
+        "fixed": "Montant fixe",
+        "percent": "Pourcentage du prix"
+      }
+    },
+    "documents": {
+      "title": "Validité des papiers clients",
+      "intro": "Durée de validité par défaut de chaque document, dans le pays où vous exercez. Quand la date d'expiration n'est pas saisie, elle est calculée depuis la date de délivrance — et reste modifiable à la main sur la fiche client.",
+      "cinYears": "CIN (années)",
+      "passeportYears": "Passeport (années)",
+      "licenceYears": "Permis de conduire (années)",
+      "zeroIsNoExpiry": "0 si ce document n'expire pas ici."
     },
     "tax": {
       "title": "Fiscalité",
@@ -1495,6 +1569,8 @@
       "carExpenseOverdueByDistance": "{{type}} était à échéance pour {{car}} à {{dueKm}} km — {{km}} km de dépassement ({{mileage}} km actuellement).",
       "rentingOverdue": "{{car}} devait être rendue le {{endDate}} et ne l'a pas été — {{days}} jour(s) de retard. Locataire : {{client}}.",
       "reservationUpcoming": "{{client}} prend {{car}} le {{startDate}} — dans {{days}} jour(s).",
+      "reservationPending": "Nouvelle demande de {{client}} pour {{car}}, à partir du {{startDate}}. À confirmer ou à refuser.",
+      "reservationPendingExpiringSoon": "La demande de {{client}} pour {{car}} ({{startDate}}) expire dans moins d'une heure et n'a pas eu de réponse.",
       "clientRentingStartingSoon": "Rappel envoyé au client : sa location de {{car}} commence le {{startDate}}.",
       "clientRentingEndingSoon": "Rappel envoyé au client : sa location de {{car}} se termine le {{endDate}}.",
       "clientReservationStartingSoon": "Rappel envoyé au client : sa réservation de {{car}} commence le {{startDate}}.",

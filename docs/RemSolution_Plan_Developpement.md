@@ -1,6 +1,12 @@
 # RemSolution — Plan de développement
 
-*État réel du code au commit `139750e` · confronté à votre liste de points · ce qui reste, ce qui doit être amélioré, les problèmes, et les estimations.*
+*Rédigé contre le commit `139750e` · confronté à votre liste de points · ce qui reste, ce qui doit être amélioré, les problèmes, et les estimations.*
+
+> **Mise à jour du 2026-09-02 — relecture du code, pas des tableaux.**
+> Les lots 1, 2 et 3 sont livrés, ainsi que la sécurité, la CI et une grande
+> partie de l'addendum. Les statuts d'origine sont conservés tels quels ci-dessous
+> pour garder la trace de ce qui a été décidé et pourquoi ; **l'état courant est
+> celui du §0.1**, et c'est le seul tableau à lire pour savoir ce qu'il reste.
 
 ---
 
@@ -18,6 +24,63 @@
 **Reste à faire, hors mobile et GPS : 38,5 jours ≈ 8 semaines** (détail chiffré en §5). Avec le mobile (deux applications) et le GPS : ~20 semaines.
 
 **Trois points bloquent la mise en production et doivent passer en premier** (détaillés en §4) : la création automatique de l'administrateur d'agence, les sauvegardes, et le déploiement des migrations. Aucun des trois n'est gros — environ 4 jours au total — mais aucun ne peut être différé.
+
+---
+
+## 0.1 État vérifié au 2026-09-02
+
+Chaque ligne a été vérifiée dans le code, pas dans un tableau de suivi.
+
+### Livré depuis la rédaction du plan
+
+| Réf | Point | Où le voir |
+|---|---|---|
+| 4.1 | Administrateur d'agence créé avec l'agence | `CreateAgencyCommand.cs` (`AdminTemporaryPassword`, mot de passe temporaire + `PasswordChangeRequiredMiddleware`) |
+| 4.2 | Migrations appliquées au déploiement, plus au démarrage | `.github/workflows/azure-dev.yml` (`dotnet ef migrations bundle` puis `efbundle`) ; le démarrage ne migre plus qu'en dev (`Database:MigrateOnStartup`) |
+| 4.3 | Sauvegardes | `infra/core/database/sqlserver/sqlserver.bicep` : point-in-time 35 j + LTR hebdo/mensuelle/annuelle ; `scripts/restore-drill.ps1` pour la restauration |
+| 4.4 | `Renting` en agrégat riche | `Renting.Create/Start/Complete/Cancel`, setters privés, événements |
+| 4.5 | Verrou par véhicule | `AcquireCarWriteLockAsync`, le verrou agence restant pour les quotas |
+| 4.7 | Nettoyage | `cookies_*.txt`, `info.docx`, `Colour.cs`, `UnsupportedColourException.cs` supprimés |
+| 2.1 | Tests | 829 tests : 111 domaine, 159 application, 24 infrastructure, 535 fonctionnels ; `Web.AcceptanceTests` a Login + Cars |
+| 2.2 | Assistant de création de location | `renting-form.component.ts` — stepper 3 étapes (véhicule et dates → client → paperasse) |
+| 2.5 | CI | `.github/workflows/ci.yml` : build, tests unitaires, build Angular, conventions front, fonctionnels + intégration |
+| 2.6 | Durcissement sécurité | limitation de débit (`src/Web/Infrastructure/RateLimiting.cs`), durcissement des téléversements, fichiers de débogage supprimés |
+| 3.1 | Seuils de dépense par voiture | `CarExpenseSchedule` |
+| 3.2 | Frais supplémentaires au retour | `RentingFee` |
+
+L'addendum est livré à l'exception de A.6 et A.7 — voir son propre encadré.
+
+### Ce qu'il reste
+
+| Réf | Point | État | Effort |
+|---|---|---|---|
+| 2.9 / 3.6 | Export des statistiques | ❌ rien dans `Features/Statistics`, aucune bibliothèque tableur référencée | 1 j |
+| 3.6 | Purge des données personnelles / droit à l'effacement | ❌ aucun job de purge, aucune anonymisation | 1,5 j |
+| A.6 | Alertes de supervision | ❌ aucune règle d'alerte dans `infra/` | 1,5 j |
+| 3.6 | Signalements (réclamations) + triage plateforme | ❌ absent | 1 j |
+| 3.6 | Test de charge du chemin de recherche | ❌ `loadtesting.bicep` existe (gabarit) mais n'est pas référencé par `main.bicep` | 1 j |
+| 2.7 | Signature : libellé à corriger ou vraie signature | ❌ `fr.json` annonce toujours « Contrats + signature électronique » alors que le code ne pose que des lignes manuscrites | 0,5 j ou 6 j |
+| 2.4 | Hébergement réellement déployé et vérifié | 🟡 le Bicep est complet (Key Vault, sauvegardes) ; le déploiement effectué ne se lit pas dans le dépôt | 3 j |
+| 4.3 | Restauration réellement exécutée et chronométrée | 🟡 le script existe, l'exécution documentée non | 0,5 j |
+| 2.8 | Inscription libre-service des agences | ❌ la création d'agence reste réservée à l'administrateur plateforme | hors dév. + 3 j |
+
+**Et dix points ajoutés le 2026-09-02** — papiers, devises, parcours de
+réservation, fiabilité, assistant d'ouverture d'agence : voir **§8**. Cinq sont
+livrés (N.9, N.1, N.5, N.6, N.7) ; il en reste ≈ 6,5 j.
+
+À noter : les **signalements** de la ligne §3.6 ci-dessus sont désormais liés à
+N.8 — c'est la même fonctionnalité vue des deux côtés, et le plan est de les
+construire ensemble.
+
+### Écarté volontairement, avec la raison
+
+| Réf | Point | Pourquoi |
+|---|---|---|
+| 4.6 | Outbox transactionnel | Sa justification est l'atomicité du paiement en ligne et des notifications push, tous deux hors périmètre. Y faire passer le courriel a été envisagé puis écarté : toute file durable persiste le corps du message, or le courriel d'accueil porte un mot de passe temporaire. À revoir le jour où un prestataire de paiement ou un webhook a réellement besoin de cette atomicité. |
+| 2.3 | Paiement en ligne | Hors périmètre : demande un prestataire (Paymee / Konnect / Flouci), un compte marchand et des identifiants de bac à sable. |
+| A.7 | Prestataire d'envoi de courriels | Demande un compte chez un prestataire ; `SmtpEmailSender` reste en place d'ici là. |
+| 3.3–3.5 | Mobile agence, mobile client, GPS | Décision produit non prise (voir §6). |
+| A.10 | Second conducteur / assurance | **Tranché et implémenté** : le contrôle de permis périmé s'applique au locataire *et* au second conducteur, bloquant sauf acquittement explicite (`CreateRentingCommand`). |
 
 ---
 
@@ -68,7 +131,7 @@
 
 ## 2. Partiel — la base existe, il manque une partie
 
-### 2.1 Tests — 🟡 (déséquilibrés, pas absents) · **5 j**
+### 2.1 Tests — ✅ **livré (2026-09-02)** · *diagnostic d'origine ci-dessous*
 619 tests existent : 479 fonctionnels, 119 applicatifs, **21 seulement au niveau domaine**. Les projets `Infrastructure.IntegrationTests` et `Web.AcceptanceTests` sont des coquilles vides (9 fichiers, 0 test).
 
 Le déséquilibre n'est pas un oubli de rigueur : il n'y a presque rien à tester au niveau domaine parce que `Renting` est une entité anémique (voir §4.4). Rendre `Renting` riche fait apparaître les tests domaine naturellement.
@@ -277,6 +340,17 @@ Cinq points ne sont pas des tâches mais des choix qui déterminent le travail :
 4. **Mobile : une application ou deux ?** Votre liste en prévoit deux. Une seule application multi-rôles coûte moins cher mais mélange deux publics très différents dans les magasins d'applications.
 5. **GPS : volumétrie et stockage** — à décider avant la première position écrite, pas après. Une base transactionnelle multi-locataire n'est pas l'endroit pour un flux de télémétrie.
 
+### Tranché le 2026-09-02
+
+| Question | Décision |
+|---|---|
+| Tarif journalier HT ou TTC ? | **TTC**, sans interrupteur. La facture redescend au HT. |
+| Paiement en ligne | **Hors périmètre.** Les exigences de paiement sont déclarées et réglées hors ligne, justificatif à l'appui (N.6). |
+| Devises | **Conversion à l'affichage seulement** (N.4). Une seule devise de facturation par agence. |
+| Frais d'annulation dus par une agence | **Pas de flux d'argent** : pénalité sur la note de fiabilité + signalement (N.8). |
+| Expiration des papiers | **Calculée depuis la date de délivrance**, durées réglables par agence (N.1). |
+| Second conducteur / assurance (A.10) | **Tranché** : le contrôle de permis périmé s'applique aux deux conducteurs, bloquant sauf acquittement. |
+
 ---
 
 ## 7. Ce que je recommande de faire cette semaine
@@ -284,3 +358,213 @@ Cinq points ne sont pas des tâches mais des choix qui déterminent le travail :
 Le Lot 1 en entier, dans l'ordre : administrateur d'agence automatique (1 j), migrations au déploiement (1 j), sauvegardes et restauration répétée (2 j).
 
 Ces quatre jours transforment un projet « presque fini mais non livrable » en projet livrable. Tout le reste peut attendre ; ces trois-là, non.
+
+*(Lot 1 livré le 2026-09-02 — voir §0.1.)*
+
+---
+
+## 8. Nouveaux points demandés — 2026-09-02
+
+Dix points ajoutés après relecture du produit. Le tableau donne l'état **vérifié
+dans le code**, pas l'intention.
+
+| Réf | Point | État | Effort |
+|---|---|---|---|
+| N.9 | Chevauchement bloquant à la confirmation | ✅ **livré** — voir ci-dessous | — |
+| N.1 | Expiration par défaut des papiers | ✅ **livré** | — |
+| N.5 | Réservation en attente + notification | ✅ **livré** | — |
+| N.7 | Fiabilité client + frais d'annulation | ✅ **livré** | — |
+| N.8 | Annulation par l'agence : note + signalement | ❌ absent, dépend des signalements (§3.6) | 1,5 j |
+| N.6 | Exigences sur réservation confirmée + chat | ✅ **livré** | — |
+| N.4 | Devises EUR/TND + taux | ❌ absent | 2 j |
+| N.10 | Assistant d'ouverture d'agence | ❌ absent | 3 j |
+| N.2 | Montants TTC (location, tarif journalier) | ✅ livré — décision TTC, `TaxBreakdown.FromGross` ; reste à écrire « TTC » dans l'interface | 0,2 j |
+| N.3 | Paramètre TVA | ✅ livré — `VatRatePercent`, `TaxIdentifier`, `FiscalStampAmount` dans `AgencySettings`, exposés dans l'écran Mon agence | — |
+| | **Reste** | | **≈ 6,5 j** |
+
+### Ce qui a été livré le 2026-09-02
+
+**N.9 — la règle de disponibilité a changé.** Une demande `PendingConfirmation`
+ne bloque plus la voiture ; seules `Confirmed` et `Paid` le font. Le prédicat a
+donc bougé aux deux endroits qui le portent (`AvailabilityChecker` et
+`MarketplaceCars.AvailableBetween`), et `ConfirmReservationCommand` prend
+désormais le verrou par voiture et vérifie la disponibilité avant de confirmer.
+`BookingConflictException` transporte le type et l'identifiant de ce qui occupe
+la période, l'API les expose (`conflictKind` / `conflictId` sur le 409
+`booking_conflict`), et le SPA affiche « occupée par la réservation n° 12 ».
+Conséquences voulues : plusieurs clients peuvent demander la même voiture aux
+mêmes dates, une location au comptoir reste possible pendant qu'une demande
+attend, et le marketplace ne cache plus une voiture simplement parce que
+quelqu'un a posé une question dessus.
+
+**N.1 — expiration par défaut.** `AgencySettings` porte
+`CINValidityYears` (10), `PasseportValidityYears` (5) et
+`DrivingLicenceValidityYears` (10), réglables dans l'écran Mon agence ; 0 = ne
+se périme pas ici. `Client.ApplyDefaultDocumentExpiries` remplit une date
+d'expiration absente depuis la date de délivrance, et les trois chemins qui
+écrivent les papiers d'un client passent par le même point
+(`ClientDocumentDefaults`). Une date saisie n'est jamais écrasée. Migration
+`AddClientDocumentValidityYears`, avec backfill explicite — sans lui, les agences
+existantes seraient tombées sur 0.
+
+**N.5 — la demande entrante est signalée.** Nouveau
+`NotificationKind.ReservationPending`, émis à la création d'une demande (écran
+agence *et* marketplace) vers les utilisateurs qui détiennent
+`Reservation.Update` — ceux qui peuvent y répondre — puis une seconde fois par
+le balayage horaire quand le délai de garde est sur le point d'expirer.
+
+**N.7 — fiabilité et frais d'annulation.** Note calculée par agence, affichée
+là où une demande se décide ; seule une annulation faite par le client compte.
+Politique d'annulation réglable (`CancellationPolicy` : aucun frais / montant
+fixe / pourcentage, avec une fenêtre de gratuité distincte du butoir existant),
+montant annoncé au client avant sa décision puis figé sur la réservation. Le
+client peut enfin annuler une réservation confirmée, avec motif.
+
+**N.6 — exigences et chat sur la réservation confirmée.** Nouvelle entité
+`ReservationRequirement` (agrégat gardé : demander → répondre → accepter /
+refuser avec motif / lever), écran agence dans le panneau de réservation,
+checklist avec dépôt de fichier dans l'espace client, et refus de conversion tant
+qu'il reste une exigence en attente. En parallèle, le fil de discussion n'est
+plus attaché à la seule location : `ChatMessage` porte désormais l'un ou l'autre
+des deux identifiants et les deux boîtes de réception listent les deux sortes de
+fils. Détail en N.6 ci-dessous.
+
+### N.1 — Expiration par défaut des papiers · ✅ livré
+
+`Client` portait déjà `CINExpiryDate`, `PasseportExpiryDate` et
+`DrivingLicenceExpiryDate` (addendum A.2), et un permis périmé bloquait déjà la
+location. Ce qui manquait — le calcul depuis la date de délivrance — est en
+place, avec les durées réglables par agence.
+
+À savoir : un permis délivré il y a douze ans dans une agence qui déclare dix ans
+de validité devient **périmé** et bloque la location, sauf acquittement explicite
+(`AcknowledgeExpiredDocuments`). C'est l'effet voulu — c'est précisément le
+dossier que l'assurance refuserait — mais il apparaîtra sur des fiches clients
+anciennes dès la première modification.
+
+### N.2 / N.3 — TTC et TVA
+
+Déjà en place et volontairement sans interrupteur : le tarif journalier saisi est
+TTC, la facture redescend au HT (`TaxBreakdown.FromGross`), et le taux, le timbre
+et le matricule fiscal sont figés sur chaque facture à l'émission. Reste un point
+d'interface : les libellés de prix ne disent pas « TTC », ce qui est la seule
+raison pour laquelle un gérant peut croire l'inverse.
+
+### N.4 — Devises et taux · **décidé : conversion à l'affichage uniquement**
+
+L'agence conserve **une** devise de facturation. Le marketplace affiche les prix
+convertis dans la devise choisie par le visiteur, via une table de taux
+(`ExchangeRate(From, To, Rate, AsOf)`) tenue à la plateforme. Factures, paiements,
+crédits et statistiques restent intégralement dans la devise de l'agence, et
+aucun montant stocké ne change de sens.
+
+Écarté : la facturation multi-devise réelle (taux figé par document, écarts de
+change). Elle toucherait `Money`, les factures, les paiements et les statistiques
+pour un besoin qui est, à ce stade, un besoin d'affichage.
+
+### N.5 — Demande de réservation en attente + notification · ✅ livré
+
+`NotificationKind.ReservationPending` rejoint la file de travail de l'agence,
+émis à la création d'une demande (agence et marketplace) et de nouveau par le
+balayage horaire à l'approche de l'expiration du délai de garde
+(`ReservationExpiryHours`). Côté client, la confirmation et le refus donnaient
+déjà lieu à un message ; c'était le signal **entrant** qui manquait.
+
+### N.6 — Réservation confirmée : exigences, paiement, chat · ✅ livré
+
+**Les exigences.** Sur une réservation confirmée, l'agence déclare ce qu'elle
+attend avant la remise des clés — règlement (avec montant et mode attendu),
+caution, pièces à fournir, conditions à accepter, contrat à signer — sous forme
+de lignes `ReservationRequirement`. Le client répond depuis son espace (dépôt
+d'un fichier, ou acceptation), l'agence accepte, refuse **avec un motif que le
+client voit**, ou lève l'exigence. Renvoyer la liste la remplace : une exigence
+sans réponse est supprimée, une exigence déjà répondue est *levée* — le fichier
+du client et la trace de ce qui a été demandé ne disparaissent jamais.
+
+La conversion est refusée tant qu'il reste quelque chose en attente, sauf
+`AcknowledgeUnmetRequirements` — même forme que l'acquittement des papiers
+périmés, parce que l'agent qui convertit n'est souvent pas celui qui a posé les
+conditions.
+
+L'argent reste un `Payment` : une exigence est la *demande*, jamais le grand
+livre. Le paiement demeure hors ligne, donc le §2.3 et l'Outbox (§4.6) restent
+hors périmètre.
+
+**Le chat.** Un fil est désormais attaché à une **réservation confirmée** aussi
+bien qu'à une location : `ChatMessage` porte `RentingId` *ou* `ReservationId`,
+`ChatSubjectKind` dit lequel, et `CanPostTo` a une surcharge par type
+(`NotYet`/`InProgress` d'un côté, `Confirmed`/`Paid` de l'autre). Une demande
+encore en attente ne s'ouvre pas aux messages : la réponse à une demande est
+« confirmer » ou « refuser », pas un message. Les deux boîtes de réception —
+celle de l'agence et celle du client — listent les deux sortes de fils ensemble,
+et la conversation d'une réservation **reste sur la réservation** après
+conversion.
+
+### N.7 — Fiabilité du client et frais d'annulation · ✅ livré
+
+Un client qui annule souvent perd des points : 100 au départ, −15 par annulation
+et −15 de plus si elle était tardive. La note est **affichée à l'agence au moment
+de répondre à une demande**, avec les annulations qui l'ont produite — une note
+sans son motif ne se décide pas — et seulement quand il y a quelque chose à dire.
+
+Deux principes d'équité y sont câblés :
+
+- seule une annulation **faite par le client** compte. Une réservation annulée
+  par l'agence, refusée, ou expirée faute de réponse ne lui coûte rien
+  (`Reservation.CancelledByCustomer`) ;
+- la note est **strictement par agence**. Ce qu'un client a fait ailleurs ne
+  regarde pas cette agence — le même raisonnement qui garde `Client.IsFlagged`
+  hors du marketplace. *Décision à arbitrer si vous voulez une réputation
+  inter-agences : c'est un autre sujet, et il touche la vie privée d'une personne
+  physique, pas la vitrine d'une entreprise.*
+
+**Les frais.** Le `CancellationWindowHours` existant est un **butoir** : passé
+lui, on ne peut plus annuler du tout. Les frais avaient donc besoin d'une seconde
+borne, `CancellationFreeHours` : au-delà, l'annulation est gratuite ; entre les
+deux, elle est possible et coûte les frais (montant fixe ou pourcentage du prix,
+plafonné au prix). L'arithmétique vit dans un seul objet, `CancellationPolicy`,
+pour que le montant annoncé au client avant sa décision soit exactement celui qui
+lui est facturé.
+
+Le client peut désormais annuler une réservation **confirmée**, avec motif — il ne
+le pouvait pas avant, alors que c'est précisément le cas où l'annulation coûte
+quelque chose. Le montant est figé sur la réservation à l'annulation.
+
+### N.8 — Annulation par l'agence · **décidé : pénalité de note, sans argent**
+
+Une agence qui annule sans motif voit sa note de fiabilité baisser, et cette note
+est visible sur le marketplace. Le client peut ouvrir un **signalement**, arbitré
+par l'administrateur plateforme — ce qui rejoint le point « Signalements » déjà
+au §3.6 et le rend prioritaire.
+
+Écarté : des frais d'annulation réellement payés par l'agence au client. Tant
+qu'aucun flux d'argent ne passe par la plateforme, une dette qu'aucun mécanisme
+ne recouvre est une ligne dans une table, pas une sanction.
+
+### N.9 — Chevauchement bloquant à la confirmation · ✅ livré
+
+Le diagnostic d'origine était incomplet : une demande en attente **bloquait**
+déjà la voiture, si bien qu'une deuxième demande sur la même période était
+refusée dès la création — et la situation décrite (deux demandes, l'agence en
+annule une) ne pouvait pas se produire.
+
+Arbitrage retenu : une demande en attente ne bloque plus rien, et c'est la
+confirmation qui tranche. Voir l'encadré « Ce qui a été livré » ci-dessus pour
+ce que cela a changé dans le code.
+
+### N.10 — Assistant d'ouverture d'agence
+
+Un parcours en cinq étapes pour l'administrateur plateforme comme pour une
+future inscription en libre-service (§2.8) : détails de l'agence → modules
+activés → paramètres (facture, contrat, TVA) → voitures (saisie ou import) →
+publication sur le marketplace. La publication devient explicite : une agence en
+cours de configuration n'apparaît pas dans la recherche publique.
+
+### Ordre d'exécution retenu
+
+~~N.9~~ → ~~N.1~~ → ~~N.5~~ → ~~N.6~~ → ~~N.7~~ → **N.8** (avec les signalements
+du §3.6) → N.4 → N.10, puis les libellés « TTC » de N.2.
+
+N.6 est passé devant N.7 sur votre demande. Cinq points sont livrés
+(2026-09-02) ; la prochaine étape est N.8 — l'annulation par l'agence et les
+signalements, qui réutilisent la mécanique de note posée par N.7.

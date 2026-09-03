@@ -2,7 +2,7 @@ import { Component, OnInit, ViewChild, inject } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { TranslocoService } from '@jsverse/transloco';
 import {
-  AgenciesClient, AgencyDto, BranchesClient, CountriesClient, CountryDto,
+  AgenciesClient, AgencyDto, BranchesClient, CancellationFeeMode, CountriesClient, CountryDto,
   CreateBranchCommand, UpdateBranchCommand, UpdateMyAgencyCommand
 } from '../web-api-client';
 import { AuthService } from '../shared/auth.service';
@@ -32,6 +32,13 @@ export class MyAgencyComponent implements OnInit {
   countries: CountryDto[] = [];
   saving = false;
   errorMessage = '';
+
+  CancellationFeeMode = CancellationFeeMode;
+
+  /** The fee fields are meaningless while the agency charges nothing. */
+  get chargesForCancellation(): boolean {
+    return this.form.value.cancellationFeeMode !== CancellationFeeMode.None;
+  }
 
   // The saved name, not the field's, so the head does not change as a rename is typed.
   agencyName = '';
@@ -82,7 +89,18 @@ export class MyAgencyComponent implements OnInit {
       // affects the next one and never the ones already out.
       taxIdentifier: ['', Validators.maxLength(40)],
       vatRatePercent: [19, [Validators.required, Validators.min(0), Validators.max(100)]],
-      fiscalStampAmount: [1, [Validators.required, Validators.min(0)]]
+      fiscalStampAmount: [1, [Validators.required, Validators.min(0)]],
+      // How long each document is valid where this agency trades. Used to fill
+      // in an expiry the agent did not type; zero means it does not expire here.
+      cinValidityYears: [10, [Validators.required, Validators.min(0), Validators.max(50)]],
+      passeportValidityYears: [5, [Validators.required, Validators.min(0), Validators.max(50)]],
+      drivingLicenceValidityYears: [10, [Validators.required, Validators.min(0), Validators.max(50)]],
+      // What calling a booking off costs. Off by default; the free window has to
+      // reach at least as far as the cutoff above, or nothing is ever charged
+      // (the server refuses that combination too).
+      cancellationFeeMode: [CancellationFeeMode.None],
+      cancellationFeeValue: [0, [Validators.required, Validators.min(0)]],
+      cancellationFreeHours: [48, [Validators.required, Validators.min(0), Validators.max(8760)]]
     });
   }
 
@@ -129,7 +147,13 @@ export class MyAgencyComponent implements OnInit {
       clientDocumentExpiryLeadDays: dto.clientDocumentExpiryLeadDays ?? 30,
       taxIdentifier: dto.taxIdentifier ?? '',
       vatRatePercent: dto.vatRatePercent ?? 19,
-      fiscalStampAmount: dto.fiscalStampAmount ?? 1
+      fiscalStampAmount: dto.fiscalStampAmount ?? 1,
+      cinValidityYears: dto.cinValidityYears ?? 10,
+      passeportValidityYears: dto.passeportValidityYears ?? 5,
+      drivingLicenceValidityYears: dto.drivingLicenceValidityYears ?? 10,
+      cancellationFeeMode: dto.cancellationFeeMode ?? CancellationFeeMode.None,
+      cancellationFeeValue: dto.cancellationFeeValue ?? 0,
+      cancellationFreeHours: dto.cancellationFreeHours ?? 48
     });
 
     this.agencyName = dto.name ?? '';
@@ -201,7 +225,13 @@ export class MyAgencyComponent implements OnInit {
       clientDocumentExpiryLeadDays: v.clientDocumentExpiryLeadDays,
       taxIdentifier: v.taxIdentifier || undefined,
       vatRatePercent: v.vatRatePercent,
-      fiscalStampAmount: v.fiscalStampAmount
+      fiscalStampAmount: v.fiscalStampAmount,
+      cinValidityYears: v.cinValidityYears,
+      passeportValidityYears: v.passeportValidityYears,
+      drivingLicenceValidityYears: v.drivingLicenceValidityYears,
+      cancellationFeeMode: v.cancellationFeeMode,
+      cancellationFeeValue: v.cancellationFeeValue,
+      cancellationFreeHours: v.cancellationFreeHours
     });
 
     this.client.updateMyAgency(command).subscribe({

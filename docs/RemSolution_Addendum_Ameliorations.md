@@ -4,6 +4,24 @@
 
 Avertissement de lecture : je n'ai listé que ce que j'ai vérifié dans le code. Plusieurs choses que j'aurais soupçonnées sont en réalité bien faites (arabe + RTL complets, numérotation légale des factures, cache des réglages d'agence, remboursements) et n'apparaissent donc pas ici.
 
+> **Mise à jour du 2026-09-02 — huit points sur dix sont livrés.**
+> Le diagnostic d'origine est conservé tel quel : c'est lui qui explique
+> *pourquoi* chaque correction a la forme qu'elle a. L'état courant est
+> celui du tableau ci-dessous.
+>
+> | | Point | État |
+> |---|---|---|
+> | A.1 | TVA / mentions légales | ✅ `TaxBreakdown.FromGross`, `VatRatePercent` / `TaxIdentifier` / `FiscalStampAmount` sur `AgencySettings`, **figés sur chaque facture** à l'émission. Décision prise : le tarif saisi est **TTC**. |
+> | A.2 | Expiration des documents clients | ✅ `CINExpiryDate`, `PasseportExpiryDate`, `DrivingLicenceExpiryDate` + `NotificationKind.ClientDocumentExpiring` ; `CreateRentingCommand` refuse un permis périmé sauf acquittement explicite. Reste le calcul par défaut depuis la délivrance — voir plan §8, N.1. |
+> | A.3 | Index de disponibilité | ✅ posés par migration |
+> | A.4 | Fusion des requêtes de disponibilité | ✅ un seul aller-retour dans `AvailabilityChecker`, prédicat repris à l'identique dans `MarketplaceCars.AvailableBetween` |
+> | A.5 | Limitation de débit | ✅ `src/Web/Infrastructure/RateLimiting.cs` |
+> | A.8 | Périodes d'immobilisation | ✅ `CarUnavailability`, troisième source de la disponibilité |
+> | A.9 | Sort de la caution au retour | ✅ `DepositRetainedAmount`, `DepositSettledAt`, `HasUnsettledDeposit` ; le retour de caution passe par un `Payment` de remboursement |
+> | A.10 | Second conducteur / assurance | ✅ **tranché** : la validation des papiers s'applique au locataire *et* au second conducteur |
+> | A.6 | Alertes de supervision | ❌ toujours rien — aucune règle d'alerte dans `infra/` |
+> | A.7 | Prestataire d'envoi de courriels | ❌ toujours `SmtpEmailSender` ; demande un compte chez un prestataire |
+
 ---
 
 ## Bloquants métier ou légaux

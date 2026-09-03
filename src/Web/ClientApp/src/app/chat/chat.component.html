@@ -9,10 +9,12 @@
   <div *ngIf="errorMessage" class="error-banner">{{ errorMessage }}</div>
 
   <div class="chat-layout">
-    <!-- Thread list: every renting the desk can talk on, most recent first. -->
+    <!-- Thread list: every booking the desk can talk on — hires and confirmed
+         holds alike — most recent first. -->
     <div class="thread-list">
       <div class="thread" *ngFor="let thread of threads"
-           [class.active]="selected?.rentingId === thread.rentingId"
+           [class.active]="selected?.subject === thread.subject
+                           && selected?.subjectId === thread.subjectId"
            (click)="open(thread)">
         <div class="thread-head">
           <span class="thread-client">{{ thread.clientName || t('chat.noClient') }}</span>
@@ -52,8 +54,14 @@
           </div>
         </div>
         <div class="pane-actions">
-          <a mat-stroked-button [routerLink]="['/renting', selected.rentingId]">
-            <mat-icon>open_in_new</mat-icon> {{ t('chat.openRenting') }}
+          <!-- The record this conversation is about — a hire or the hold it is
+               still held on. -->
+          <a mat-stroked-button
+             [routerLink]="[selected.subject === ChatSubjectKind.Reservation ? '/reservation' : '/renting',
+                            selected.subjectId]">
+            <mat-icon>open_in_new</mat-icon>
+            {{ t(selected.subject === ChatSubjectKind.Reservation
+                  ? 'chat.openReservation' : 'chat.openRenting') }}
           </a>
           <button mat-icon-button (click)="close()" [attr.aria-label]="t('common.dismiss')">
             <mat-icon>close</mat-icon>

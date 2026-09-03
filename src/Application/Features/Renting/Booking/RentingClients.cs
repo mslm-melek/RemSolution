@@ -1,6 +1,8 @@
 using ValidationException = RemSolution.Application.Common.Exceptions.ValidationException;
+using RemSolution.Application.Common.Clients;
 using RemSolution.Application.Common.Interfaces;
 using RemSolution.Application.Common.Security;
+using RemSolution.Application.Common.Settings;
 using RemSolution.Application.Common.Subscriptions;
 using RemSolution.Domain.Constants;
 using FluentValidation.Results;
@@ -19,7 +21,8 @@ namespace RemSolution.Application.Features.Renting.Booking
         IUser User,
         IIdentityService IdentityService,
         ITenantProvider Tenant,
-        TimeProvider DateTime);
+        TimeProvider DateTime,
+        IAgencySettingsProvider Settings);
 
     /// <summary>
     /// Turns "who is on this booking" into <see cref="ClientEntity"/> rows: a picked
@@ -127,6 +130,8 @@ namespace RemSolution.Application.Features.Renting.Booking
                 Description = payload.Description
                 // AgencyId is stamped by TenantEntityInterceptor on insert.
             };
+
+            await ClientDocumentDefaults.ApplyAsync(client, ctx.Settings, ctx.Tenant, cancellationToken);
 
             ctx.Context.Clients.Add(client);
 

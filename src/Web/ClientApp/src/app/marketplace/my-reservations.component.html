@@ -34,9 +34,63 @@
         <span class="expires" *ngIf="isPending(r) && r.expiresAt">
           {{ t('marketplace.holdsUntil', { date: (r.expiresAt | date:'dd MMM HH:mm') }) }}
         </span>
-        <button mat-stroked-button class="cancel-btn" *ngIf="isPending(r)" (click)="cancel(r)">
+        <!-- What cancelling costs, said before the decision rather than after
+             it. The server answers this with the same policy it charges by. -->
+        <span class="cancel-fee" *ngIf="r.canCancel && r.cancellationFeeIfCancelledNow">
+          {{ t('marketplace.cancelCosts', {
+               amount: (r.cancellationFeeIfCancelledNow.amount | number:'1.2-2'),
+               currency: r.cancellationFeeIfCancelledNow.currency
+             }) }}
+        </span>
+        <span class="cancel-fee" *ngIf="r.cancellationFee">
+          {{ t('marketplace.cancelCharged', {
+               amount: (r.cancellationFee.amount | number:'1.2-2'),
+               currency: r.cancellationFee.currency
+             }) }}
+        </span>
+
+        <button mat-stroked-button class="cancel-btn" *ngIf="r.canCancel" (click)="cancel(r)">
           {{ t('common.cancel') }}
         </button>
+      </div>
+
+      <!-- What the agency needs before it hands the keys over. Inside the card,
+           not a separate screen: it is part of this booking and nothing else. -->
+      <div class="asks" *ngIf="asksFor(r).length">
+        <div class="asks-title">{{ t('marketplace.requirements.title') }}</div>
+
+        <div class="ask" *ngFor="let ask of asksFor(r)">
+          <div class="ask-main">
+            <div class="ask-label">
+              {{ ask.label }}
+              <span class="money" *ngIf="ask.amount">
+                — {{ ask.amount.amount | number:'1.2-2' }} {{ ask.amount.currency }}
+              </span>
+            </div>
+            <div class="ask-state">{{ t(requirementStatusLabelKey(ask.status)) }}</div>
+            <div class="ask-note" *ngIf="ask.reviewNote">{{ ask.reviewNote }}</div>
+          </div>
+
+          <div class="ask-action" *ngIf="!isRequirementSettled(ask.status)">
+            <span *ngIf="submitting === ask.id">{{ t('common.loading') }}</span>
+
+            <ng-container *ngIf="submitting !== ask.id">
+              <button mat-stroked-button type="button"
+                      *ngIf="ask.kind === ReservationRequirementKind.Conditions"
+                      (click)="accept(ask)">
+                {{ t('marketplace.requirements.accept') }}
+              </button>
+
+              <!-- A label wrapping a hidden input: a file picker styled like the
+                   buttons beside it, without a second control to keep in step. -->
+              <label class="upload"
+                     *ngIf="ask.kind !== ReservationRequirementKind.Conditions">
+                {{ t('marketplace.requirements.send') }}
+                <input type="file" hidden (change)="chooseFile(ask, $event)" />
+              </label>
+            </ng-container>
+          </div>
+        </div>
       </div>
     </div>
   </div>

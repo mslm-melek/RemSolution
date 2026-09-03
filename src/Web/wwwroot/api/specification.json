@@ -1913,7 +1913,7 @@
         }
       }
     },
-    "/api/Chat/threads/{rentingId}": {
+    "/api/Chat/threads/{subject}/{id}": {
       "get": {
         "tags": [
           "Chat"
@@ -1921,14 +1921,23 @@
         "operationId": "GetMessages",
         "parameters": [
           {
-            "name": "rentingId",
+            "name": "subject",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/ChatSubjectKind"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "id",
             "in": "path",
             "required": true,
             "schema": {
               "type": "integer",
               "format": "int32"
             },
-            "x-position": 1
+            "x-position": 2
           },
           {
             "name": "afterId",
@@ -1938,7 +1947,7 @@
               "format": "int32",
               "nullable": true
             },
-            "x-position": 2
+            "x-position": 3
           }
         ],
         "responses": {
@@ -1958,7 +1967,7 @@
         }
       }
     },
-    "/api/Chat/threads/{rentingId}/messages": {
+    "/api/Chat/threads/{subject}/{id}/messages": {
       "post": {
         "tags": [
           "Chat"
@@ -1966,14 +1975,23 @@
         "operationId": "SendMessage",
         "parameters": [
           {
-            "name": "rentingId",
+            "name": "subject",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/ChatSubjectKind"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "id",
             "in": "path",
             "required": true,
             "schema": {
               "type": "integer",
               "format": "int32"
             },
-            "x-position": 1
+            "x-position": 2
           }
         ],
         "requestBody": {
@@ -1986,7 +2004,7 @@
             }
           },
           "required": true,
-          "x-position": 2
+          "x-position": 3
         },
         "responses": {
           "201": {
@@ -2006,7 +2024,7 @@
         }
       }
     },
-    "/api/Chat/threads/{rentingId}/read": {
+    "/api/Chat/threads/{subject}/{id}/read": {
       "post": {
         "tags": [
           "Chat"
@@ -2014,14 +2032,23 @@
         "operationId": "MarkRead",
         "parameters": [
           {
-            "name": "rentingId",
+            "name": "subject",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/ChatSubjectKind"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "id",
             "in": "path",
             "required": true,
             "schema": {
               "type": "integer",
               "format": "int32"
             },
-            "x-position": 1
+            "x-position": 2
           }
         ],
         "responses": {
@@ -2264,6 +2291,38 @@
         "responses": {
           "204": {
             "description": ""
+          }
+        }
+      }
+    },
+    "/api/Clients/{id}/reliability": {
+      "get": {
+        "tags": [
+          "Clients"
+        ],
+        "operationId": "GetClientReliability",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientReliabilityDto"
+                }
+              }
+            }
           }
         }
       }
@@ -4750,6 +4809,15 @@
               "format": "int32"
             },
             "x-position": 1
+          },
+          {
+            "name": "reason",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "nullable": true
+            },
+            "x-position": 2
           }
         ],
         "responses": {
@@ -4853,7 +4921,7 @@
         }
       }
     },
-    "/api/Marketplace/my-chats/{rentingId}": {
+    "/api/Marketplace/my-chats/{subject}/{id}": {
       "get": {
         "tags": [
           "Marketplace"
@@ -4861,14 +4929,23 @@
         "operationId": "GetMyChatMessages",
         "parameters": [
           {
-            "name": "rentingId",
+            "name": "subject",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/ChatSubjectKind"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "id",
             "in": "path",
             "required": true,
             "schema": {
               "type": "integer",
               "format": "int32"
             },
-            "x-position": 1
+            "x-position": 2
           },
           {
             "name": "afterId",
@@ -4878,7 +4955,7 @@
               "format": "int32",
               "nullable": true
             },
-            "x-position": 2
+            "x-position": 3
           }
         ],
         "responses": {
@@ -4898,7 +4975,7 @@
         }
       }
     },
-    "/api/Marketplace/my-chats/{rentingId}/messages": {
+    "/api/Marketplace/my-chats/{subject}/{id}/messages": {
       "post": {
         "tags": [
           "Marketplace"
@@ -4906,14 +4983,23 @@
         "operationId": "SendMyChatMessage",
         "parameters": [
           {
-            "name": "rentingId",
+            "name": "subject",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/ChatSubjectKind"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "id",
             "in": "path",
             "required": true,
             "schema": {
               "type": "integer",
               "format": "int32"
             },
-            "x-position": 1
+            "x-position": 2
           }
         ],
         "requestBody": {
@@ -4926,7 +5012,7 @@
             }
           },
           "required": true,
-          "x-position": 2
+          "x-position": 3
         },
         "responses": {
           "201": {
@@ -4946,7 +5032,7 @@
         }
       }
     },
-    "/api/Marketplace/my-chats/{rentingId}/read": {
+    "/api/Marketplace/my-chats/{subject}/{id}/read": {
       "post": {
         "tags": [
           "Marketplace"
@@ -4954,7 +5040,41 @@
         "operationId": "MarkMyChatRead",
         "parameters": [
           {
-            "name": "rentingId",
+            "name": "subject",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/ChatSubjectKind"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 2
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/Marketplace/my-reservations/{id}/requirements": {
+      "get": {
+        "tags": [
+          "Marketplace"
+        ],
+        "operationId": "GetMyReservationRequirements",
+        "parameters": [
+          {
+            "name": "id",
             "in": "path",
             "required": true,
             "schema": {
@@ -4964,6 +5084,66 @@
             "x-position": 1
           }
         ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ReservationRequirementDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Marketplace/my-reservations/requirements/{id}/submit": {
+      "post": {
+        "tags": [
+          "Marketplace"
+        ],
+        "operationId": "SubmitMyReservationRequirement",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "note",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "nullable": true
+            },
+            "x-position": 2
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "nullable": true
+                  }
+                }
+              }
+            }
+          }
+        },
         "responses": {
           "204": {
             "description": ""
@@ -6635,6 +6815,129 @@
         }
       }
     },
+    "/api/Reservations/{id}/requirements": {
+      "get": {
+        "tags": [
+          "Reservations"
+        ],
+        "operationId": "GetReservationRequirements",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ReservationRequirementDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Reservations"
+        ],
+        "operationId": "SetReservationRequirements",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          }
+        ],
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetReservationRequirementsCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 2
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "400": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/Reservations/{id}/requirements/{requirementId}/review": {
+      "post": {
+        "tags": [
+          "Reservations"
+        ],
+        "operationId": "ReviewReservationRequirement",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "requirementId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 2
+          }
+        ],
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReviewReservationRequirementCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 3
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "400": {
+            "description": ""
+          }
+        }
+      }
+    },
     "/api/Statistics": {
       "get": {
         "tags": [
@@ -7448,8 +7751,45 @@
           "fiscalStampAmount": {
             "type": "number",
             "format": "decimal"
+          },
+          "cinValidityYears": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "passeportValidityYears": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "drivingLicenceValidityYears": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "cancellationFeeMode": {
+            "$ref": "#/components/schemas/CancellationFeeMode"
+          },
+          "cancellationFeeValue": {
+            "type": "number",
+            "format": "decimal"
+          },
+          "cancellationFreeHours": {
+            "type": "integer",
+            "format": "int32"
           }
         }
+      },
+      "CancellationFeeMode": {
+        "type": "integer",
+        "description": "",
+        "x-enumNames": [
+          "None",
+          "FixedAmount",
+          "PercentOfPrice"
+        ],
+        "enum": [
+          0,
+          1,
+          2
+        ]
       },
       "UpdateMyAgencyCommand": {
         "type": "object",
@@ -7538,6 +7878,29 @@
           "fiscalStampAmount": {
             "type": "number",
             "format": "decimal"
+          },
+          "cinValidityYears": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "passeportValidityYears": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "drivingLicenceValidityYears": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "cancellationFeeMode": {
+            "$ref": "#/components/schemas/CancellationFeeMode"
+          },
+          "cancellationFeeValue": {
+            "type": "number",
+            "format": "decimal"
+          },
+          "cancellationFreeHours": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },
@@ -9094,9 +9457,18 @@
         "type": "object",
         "additionalProperties": false,
         "properties": {
+          "subject": {
+            "$ref": "#/components/schemas/ChatSubjectKind"
+          },
           "rentingId": {
             "type": "integer",
-            "format": "int32"
+            "format": "int32",
+            "nullable": true
+          },
+          "reservationId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
           },
           "carId": {
             "type": "integer",
@@ -9127,7 +9499,20 @@
             "nullable": true
           },
           "rentingState": {
-            "$ref": "#/components/schemas/RentingState"
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/RentingState"
+              }
+            ]
+          },
+          "reservationStatus": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ReservationStatus"
+              }
+            ]
           },
           "lastMessagePreview": {
             "type": "string",
@@ -9152,8 +9537,46 @@
           },
           "isOpen": {
             "type": "boolean"
+          },
+          "subjectId": {
+            "type": "integer",
+            "format": "int32"
           }
         }
+      },
+      "ChatSubjectKind": {
+        "type": "integer",
+        "description": "",
+        "x-enumNames": [
+          "Renting",
+          "Reservation"
+        ],
+        "enum": [
+          1,
+          2
+        ]
+      },
+      "ReservationStatus": {
+        "type": "integer",
+        "description": "",
+        "x-enumNames": [
+          "PendingConfirmation",
+          "Confirmed",
+          "Cancelled",
+          "Expired",
+          "Rejected",
+          "Paid",
+          "Converted"
+        ],
+        "enum": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ]
       },
       "ChatAuthorKind": {
         "type": "integer",
@@ -9177,7 +9600,16 @@
           },
           "rentingId": {
             "type": "integer",
-            "format": "int32"
+            "format": "int32",
+            "nullable": true
+          },
+          "reservationId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "subject": {
+            "$ref": "#/components/schemas/ChatSubjectKind"
           },
           "authorKind": {
             "$ref": "#/components/schemas/ChatAuthorKind"
@@ -9205,7 +9637,10 @@
         "type": "object",
         "additionalProperties": false,
         "properties": {
-          "rentingId": {
+          "subject": {
+            "$ref": "#/components/schemas/ChatSubjectKind"
+          },
+          "id": {
             "type": "integer",
             "format": "int32"
           },
@@ -9409,6 +9844,36 @@
             "format": "int32"
           },
           "overdueRentingCount": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "ClientReliabilityDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "clientId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "bookings": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "cancellations": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "lateCancellations": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "completed": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "score": {
             "type": "integer",
             "format": "int32"
           }
@@ -10705,28 +11170,6 @@
           4
         ]
       },
-      "ReservationStatus": {
-        "type": "integer",
-        "description": "",
-        "x-enumNames": [
-          "PendingConfirmation",
-          "Confirmed",
-          "Cancelled",
-          "Expired",
-          "Rejected",
-          "Paid",
-          "Converted"
-        ],
-        "enum": [
-          0,
-          1,
-          2,
-          3,
-          4,
-          5,
-          6
-        ]
-      },
       "DocumentTemplateDto": {
         "type": "object",
         "additionalProperties": false,
@@ -12009,6 +12452,10 @@
             "type": "integer",
             "format": "int32"
           },
+          "agencyId": {
+            "type": "integer",
+            "format": "int32"
+          },
           "agencyName": {
             "type": "string",
             "nullable": true
@@ -12050,6 +12497,25 @@
           "rejectedReason": {
             "type": "string",
             "nullable": true
+          },
+          "cancellationFee": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/MoneyDto"
+              }
+            ]
+          },
+          "canCancel": {
+            "type": "boolean"
+          },
+          "cancellationFeeIfCancelledNow": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/MoneyDto"
+              }
+            ]
           }
         }
       },
@@ -12143,9 +12609,18 @@
         "type": "object",
         "additionalProperties": false,
         "properties": {
+          "subject": {
+            "$ref": "#/components/schemas/ChatSubjectKind"
+          },
           "rentingId": {
             "type": "integer",
-            "format": "int32"
+            "format": "int32",
+            "nullable": true
+          },
+          "reservationId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
           },
           "agencyId": {
             "type": "integer",
@@ -12178,7 +12653,20 @@
             "nullable": true
           },
           "rentingState": {
-            "$ref": "#/components/schemas/RentingState"
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/RentingState"
+              }
+            ]
+          },
+          "reservationStatus": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ReservationStatus"
+              }
+            ]
           },
           "lastMessagePreview": {
             "type": "string",
@@ -12203,6 +12691,10 @@
           },
           "isOpen": {
             "type": "boolean"
+          },
+          "subjectId": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },
@@ -12210,7 +12702,10 @@
         "type": "object",
         "additionalProperties": false,
         "properties": {
-          "rentingId": {
+          "subject": {
+            "$ref": "#/components/schemas/ChatSubjectKind"
+          },
+          "id": {
             "type": "integer",
             "format": "int32"
           },
@@ -12218,6 +12713,119 @@
             "type": "string"
           }
         }
+      },
+      "ReservationRequirementDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "reservationId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/ReservationRequirementKind"
+          },
+          "label": {
+            "type": "string"
+          },
+          "amount": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/MoneyDto"
+              }
+            ]
+          },
+          "expectedMethod": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/PaymentMethod"
+              }
+            ]
+          },
+          "status": {
+            "$ref": "#/components/schemas/ReservationRequirementStatus"
+          },
+          "submittedFileUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "submittedNote": {
+            "type": "string",
+            "nullable": true
+          },
+          "submittedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "reviewedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "reviewNote": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "ReservationRequirementKind": {
+        "type": "integer",
+        "description": "",
+        "x-enumNames": [
+          "Payment",
+          "Deposit",
+          "Document",
+          "Conditions",
+          "Contract"
+        ],
+        "enum": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "PaymentMethod": {
+        "type": "integer",
+        "description": "",
+        "x-enumNames": [
+          "Cash",
+          "Card",
+          "Transfer",
+          "Cheque"
+        ],
+        "enum": [
+          0,
+          1,
+          2,
+          3
+        ]
+      },
+      "ReservationRequirementStatus": {
+        "type": "integer",
+        "description": "",
+        "x-enumNames": [
+          "Requested",
+          "Submitted",
+          "Accepted",
+          "Rejected",
+          "Waived"
+        ],
+        "enum": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ]
       },
       "PaginatedListOfModelCarDto": {
         "type": "object",
@@ -12389,7 +12997,8 @@
           "RentingStartingSoon",
           "RentingEndingSoon",
           "RentingLateNotice",
-          "ClientDocumentExpiring"
+          "ClientDocumentExpiring",
+          "ReservationPending"
         ],
         "enum": [
           1,
@@ -12398,7 +13007,8 @@
           4,
           5,
           6,
-          7
+          7,
+          8
         ]
       },
       "NotificationSubject": {
@@ -12578,22 +13188,6 @@
             "nullable": true
           }
         }
-      },
-      "PaymentMethod": {
-        "type": "integer",
-        "description": "",
-        "x-enumNames": [
-          "Cash",
-          "Card",
-          "Transfer",
-          "Cheque"
-        ],
-        "enum": [
-          0,
-          1,
-          2,
-          3
-        ]
       },
       "ClientBalanceDto": {
         "type": "object",
@@ -13799,6 +14393,17 @@
             "type": "string",
             "nullable": true
           },
+          "cancelledByCustomer": {
+            "type": "boolean"
+          },
+          "cancellationFee": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/MoneyDto"
+              }
+            ]
+          },
           "rentingId": {
             "type": "integer",
             "format": "int32",
@@ -13875,8 +14480,87 @@
           "passeportNumber": {
             "type": "string",
             "nullable": true
+          },
+          "acknowledgeUnmetRequirements": {
+            "type": "boolean"
           }
         }
+      },
+      "SetReservationRequirementsCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReservationRequirementItem"
+            }
+          }
+        }
+      },
+      "ReservationRequirementItem": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/ReservationRequirementKind"
+          },
+          "label": {
+            "type": "string"
+          },
+          "amount": {
+            "type": "number",
+            "format": "decimal",
+            "nullable": true
+          },
+          "expectedMethod": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/PaymentMethod"
+              }
+            ]
+          }
+        }
+      },
+      "ReviewReservationRequirementCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "decision": {
+            "$ref": "#/components/schemas/ReservationRequirementDecision"
+          },
+          "note": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "ReservationRequirementDecision": {
+        "type": "integer",
+        "description": "",
+        "x-enumNames": [
+          "Accept",
+          "Reject",
+          "Waive"
+        ],
+        "enum": [
+          1,
+          2,
+          3
+        ]
       },
       "UpdateReservationCommand": {
         "type": "object",

@@ -19,6 +19,9 @@ const LOOKS: Record<NotificationKind, NotificationLook> = {
   [NotificationKind.CarExpenseDue]: { icon: 'build', severity: 'warn' },
   [NotificationKind.RentingOverdue]: { icon: 'running_with_errors', severity: 'danger' },
   [NotificationKind.ReservationUpcoming]: { icon: 'event_available', severity: 'info' },
+  // A request waiting on the agency: a decision to take, not news to read, and
+  // the car is still on offer while it waits.
+  [NotificationKind.ReservationPending]: { icon: 'pending_actions', severity: 'warn' },
   [NotificationKind.RentingStartingSoon]: { icon: 'outgoing_mail', severity: 'info' },
   [NotificationKind.RentingEndingSoon]: { icon: 'outgoing_mail', severity: 'info' },
   [NotificationKind.RentingLateNotice]: { icon: 'outgoing_mail', severity: 'warn' },

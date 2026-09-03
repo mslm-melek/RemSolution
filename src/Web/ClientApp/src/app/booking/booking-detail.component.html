@@ -54,8 +54,8 @@
           </p>
         </div>
 
-        <!-- A hold nobody answers expires and the car comes free again, so the
-             deadline is part of its status rather than a date beside it. -->
+        <!-- A request nobody answers expires on its own, so the deadline is part
+             of its status rather than a date beside it. -->
         <p class="status-note" *ngIf="isPending && reservation?.expiresAt">
           <mat-icon>schedule</mat-icon>
           {{ t('reservation.heldUntil', { time: (reservation!.expiresAt | date:'yyyy-MM-dd HH:mm') }) }}
@@ -197,6 +197,121 @@
           <span class="num money">{{ extrasTotal | number:'1.2-2' }} {{ extrasCurrency }}</span>
         </div>
         <p class="section-note">{{ t('booking.extrasBilledApart') }}</p>
+      </section>
+
+      <!-- ============================= RELIABILITY =============================== -->
+      <!-- Shown only where it can still change a decision — a request waiting for
+           an answer — and only when there is something to say. The counts are
+           beside the score on purpose: a number nobody can account for is not
+           something to refuse a customer on. -->
+      <section class="section" *ngIf="showReliability">
+        <h3 class="section-title">{{ t('reservation.reliability.title') }}</h3>
+
+        <div class="reliability" [ngClass]="reliabilityTone">
+          <span class="reliability-score num">{{ reliability?.score }}</span>
+          <span class="reliability-detail">
+            {{ t('reservation.reliability.summary', {
+                 cancellations: reliability?.cancellations,
+                 bookings: reliability?.bookings
+               }) }}
+            <span *ngIf="reliability?.lateCancellations">
+              · {{ t('reservation.reliability.late', { count: reliability?.lateCancellations }) }}
+            </span>
+          </span>
+        </div>
+
+        <p class="section-note">{{ t('reservation.reliability.scope') }}</p>
+      </section>
+
+      <!-- ============================= REQUIREMENTS ============================== -->
+      <!-- What the agency wants before the keys change hands. Shown once there is
+           something to show, or once the hold is confirmed and something can be
+           asked for. The customer answers these from their own space. -->
+      <section class="section" *ngIf="requirements.length || canAskForThings">
+        <h3 class="section-title">{{ t('reservation.requirements.title') }}</h3>
+
+        <p class="section-note" *ngIf="!requirements.length">
+          {{ t('reservation.requirements.empty') }}
+        </p>
+
+        <div class="requirement" *ngFor="let requirement of requirements">
+          <div class="requirement-head">
+            <span class="requirement-label">{{ requirement.label }}</span>
+            <span class="num money" *ngIf="requirement.amount">
+              {{ requirement.amount.amount | number:'1.2-2' }} {{ requirement.amount.currency }}
+            </span>
+          </div>
+
+          <p class="requirement-state">
+            {{ t(requirementStatusLabelKey(requirement.status)) }}
+            <!-- Instants, so local time (see the UTC note in CLAUDE.md). -->
+            <span class="muted" *ngIf="requirement.submittedAt">
+              · {{ t('reservation.requirements.answeredOn') }}
+              {{ requirement.submittedAt | date:'short' }}
+            </span>
+          </p>
+
+          <p class="requirement-note" *ngIf="requirement.submittedNote">{{ requirement.submittedNote }}</p>
+          <p class="requirement-note" *ngIf="requirement.reviewNote">{{ requirement.reviewNote }}</p>
+
+          <p class="section-link" *ngIf="requirement.submittedFileUrl">
+            <a [href]="requirement.submittedFileUrl" target="_blank" rel="noopener">
+              {{ t('reservation.requirements.openFile') }} →
+            </a>
+          </p>
+
+          <div class="requirement-actions" *ngIf="canAskForThings">
+            <button mat-stroked-button type="button"
+                    *ngIf="requirement.status !== ReservationRequirementStatus.Accepted"
+                    (click)="acceptRequirement(requirement)">
+              {{ t('reservation.requirements.accept') }}
+            </button>
+            <button mat-stroked-button type="button" color="warn"
+                    *ngIf="requirement.status !== ReservationRequirementStatus.Rejected"
+                    (click)="rejectRequirement(requirement)">
+              {{ t('reservation.requirements.reject') }}
+            </button>
+            <button mat-button type="button"
+                    *ngIf="requirement.status !== ReservationRequirementStatus.Waived"
+                    (click)="waiveRequirement(requirement)">
+              {{ t('reservation.requirements.waive') }}
+            </button>
+            <button mat-button type="button"
+                    *ngIf="requirement.status === ReservationRequirementStatus.Requested"
+                    (click)="removeRequirement(requirement)">
+              {{ t('common.delete') }}
+            </button>
+          </div>
+        </div>
+
+        <div class="requirement-add" *ngIf="canAskForThings">
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-label>{{ t('reservation.requirements.kind') }}</mat-label>
+            <mat-select [(ngModel)]="newRequirement.kind" name="requirementKind">
+              <mat-option *ngFor="let kind of requirementKinds" [value]="kind">
+                {{ t(requirementKindLabelKey(kind)) }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-label>{{ t('reservation.requirements.label') }}</mat-label>
+            <input matInput [(ngModel)]="newRequirement.label" name="requirementLabel" maxlength="200" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-label>{{ t('reservation.requirements.amount') }}</mat-label>
+            <input matInput type="number" min="0" step="0.01"
+                   [(ngModel)]="newRequirement.amount" name="requirementAmount" />
+            <mat-hint>{{ t('reservation.requirements.amountHint') }}</mat-hint>
+          </mat-form-field>
+
+          <button mat-raised-button color="primary" type="button"
+                  [disabled]="!newRequirement.label || savingRequirements"
+                  (click)="addRequirement()">
+            {{ t('reservation.requirements.add') }}
+          </button>
+        </div>
       </section>
 
       <!-- ================================= NOTES ================================= -->

@@ -52,7 +52,10 @@ Lifecycles (the enums carry the full doc comments — read them, don't guess):
 
 - `ReservationStatus`: `PendingConfirmation → Confirmed → (Paid) → Converted`;
   off-ramps `Rejected` (reason mandatory, shown to the client), `Expired`
-  (hourly Hangfire sweep), `Cancelled`. Only Pending/Confirmed/Paid block a car.
+  (hourly Hangfire sweep), `Cancelled`. **Only Confirmed/Paid block a car** — a
+  pending request does not, so several customers can ask for the same car and
+  the same days; `ConfirmReservationCommand` is where the car is claimed and
+  where a conflict is refused (naming what holds the period).
 - `RentingState`: `NotYet → InProgress → Done`, plus `Cancelled`. Never
   physically deleted — financial record. `Done`/`Cancelled` don't block a car.
 - `CarStatus`: only `Active` is bookable.
@@ -74,7 +77,10 @@ Web  ──►  Application  ──►  Domain
 - **Application** — CQRS vertical slices under
   `Features/<Aggregate>/{Commands,Queries,DTOs,EventHandlers}`, one folder per
   use case. MediatR 12, FluentValidation 11, Mapster 10 (**not** AutoMapper —
-  migrated away for a CVE + licence).
+  migrated away for a CVE + licence). Map a query with `ProjectToType<T>()` on
+  the queryable; `x.Adapt<T>()` *inside* an EF projection compiles and runs but
+  silently drops the DTO's `IRegister` mapping, so computed members come back
+  null.
 - **Infrastructure** — EF Core 10 / SQL Server, Identity, interceptors,
   Hangfire jobs, SkiaSharp imaging, QuestPDF documents, SMTP mail, file storage.
 - **Web** — Minimal APIs grouped by `EndpointGroupBase` + reflection
@@ -152,12 +158,36 @@ must still say what was charged. `Net + Vat == Gross` exactly: the net is
 rounded and the tax is the remainder, never rounded twice.
 
 **Availability has three sources, not two.** A car is free for `[start, end)`
-only if no non-terminal `Renting`, no active `Reservation`, and no
+only if no non-terminal `Renting`, no **confirmed or paid** `Reservation`, and no
 `CarUnavailability` overlaps it. All three are one round trip in
 `AvailabilityChecker` and the same predicate is repeated in
 `MarketplaceCars.AvailableBetween` — if you change one, change both, or the
 marketplace offers a car the booking command will refuse. `Car.Status` answers
 "available now"; `CarUnavailability` answers "available on the 20th".
+
+**Cancelling has two boundaries, not one.** `CancellationWindowHours` is the hard
+cutoff — inside it neither side can cancel at all. `CancellationFreeHours` is
+where it stops being *free*: between the two, a customer cancelling pays the fee
+`CancellationPolicy` computes (none / fixed / percent of price, capped at the
+price). That one object is the only place the arithmetic lives, so the figure
+quoted before the decision is the figure charged. Only a cancellation the
+customer made (`Reservation.CancelledByCustomer`) counts against their
+reliability score, which is computed per agency and never across them.
+
+**A booking can be asked for things.** On a *confirmed* hold the agency declares
+what it needs before the keys change hands — money, the deposit, papers, terms,
+the signed agreement — as `ReservationRequirement` rows. The customer answers each
+from their own space (a file or an acceptance), the agency accepts, refuses (with
+a reason the customer is shown) or waives, and `ConvertReservationCommand` refuses
+while anything is outstanding unless `AcknowledgeUnmetRequirements` is set. The
+money itself is still a `Payment` — a requirement is the ask, never the ledger.
+
+**A chat thread hangs off a booking, and the booking is a hire OR a confirmed
+hold.** `ChatMessage` carries a nullable `RentingId` *and* `ReservationId`;
+exactly one is set and `ChatSubjectKind` says which. `ChatMessage.CanPostTo` has
+one overload per kind (`NotYet`/`InProgress`, `Confirmed`/`Paid`), and the thread
+lists repeat the same states inline because EF cannot translate the call. A
+hold's conversation stays on the hold when it converts.
 
 **Deposits.** A deposit's fate is recorded on the hire
 (`DepositRetainedAmount` + `DepositSettledAt`, `HasUnsettledDeposit`), and the

@@ -152,6 +152,14 @@ public class CustomExceptionHandler : IExceptionHandler
         // this code to show the "car not available" message specifically.
         problemDetails.Extensions["code"] = "booking_conflict";
 
+        // What holds the period, so the confirm screen can say "reservation #12"
+        // and link to it rather than leaving the agent to go looking.
+        if (ex is BookingConflictException conflict)
+        {
+            problemDetails.Extensions["conflictKind"] = conflict.Kind.ToString();
+            problemDetails.Extensions["conflictId"] = conflict.ConflictingId;
+        }
+
         await httpContext.Response.WriteAsJsonAsync(problemDetails);
     }
 

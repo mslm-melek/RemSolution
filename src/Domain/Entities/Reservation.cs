@@ -47,9 +47,26 @@ namespace RemSolution.Domain.Entities
         public string? CancelledReason { get; private set; }
         public string? ExpiredReason { get; private set; }
 
+        // Who called it off, when, and what it cost. Instant (recorded from the
+        // clock), not a wall-clock date. CancelledByCustomer is the fair half of
+        // the reliability score: an agency cancelling its own booking must not
+        // cost the customer points.
+        public DateTime? CancelledAt { get; private set; }
+        public bool CancelledByCustomer { get; private set; }
+        public Money? CancellationFee { get; private set; }
+
         // Set when the hold is converted into an actual renting.
         public int? RentingId { get; private set; }
         public virtual Renting? Renting { get; private set; }
+
+        // What the agency asks for before the keys change hands — money, papers,
+        // terms, the signed agreement. Only ever set on a confirmed hold; see
+        // ReservationRequirement.
+        public virtual ICollection<ReservationRequirement>? Requirements { get; private set; }
+
+        // The conversation held on this booking — opened once the agency confirms
+        // (see ChatMessage.CanPostTo) and left here when the hold becomes a hire.
+        public virtual ICollection<ChatMessage>? ChatMessages { get; private set; }
 
         // EF materialisation constructor.
         private Reservation() { }
@@ -96,8 +113,22 @@ namespace RemSolution.Domain.Entities
             AddDomainEvent(new ReservationRejectedEvent(this, reason));
         }
 
-        /// <summary>Cancel an active hold. Allowed while Pending/Confirmed/Paid.</summary>
-        public void Cancel(string? reason)
+        /// <summary>
+        /// Cancel an active hold. Allowed while Pending/Confirmed/Paid.
+        /// <para>
+        /// <paramref name="byCustomer"/> is not bookkeeping: it is the difference
+        /// between a customer who changes their mind and an agency that lets one
+        /// down, and only the first counts against the customer's reliability
+        /// (see the reliability query). <paramref name="fee"/> is what they owe
+        /// for it, frozen here — the policy that produced it can change, but what
+        /// was charged cannot.
+        /// </para>
+        /// </summary>
+        public void Cancel(
+            string? reason,
+            DateTime? at = null,
+            bool byCustomer = false,
+            Money? fee = null)
         {
             if (Status is not (ReservationStatus.PendingConfirmation
                 or ReservationStatus.Confirmed or ReservationStatus.Paid))
@@ -107,6 +138,9 @@ namespace RemSolution.Domain.Entities
 
             Status = ReservationStatus.Cancelled;
             CancelledReason = reason;
+            CancelledAt = at;
+            CancelledByCustomer = byCustomer;
+            CancellationFee = fee;
             AddDomainEvent(new ReservationCancelledEvent(this, reason));
         }
 

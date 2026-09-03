@@ -1,6 +1,8 @@
 using RemSolution.Application.Common.Audit;
+using RemSolution.Application.Common.Clients;
 using RemSolution.Application.Common.Interfaces;
 using RemSolution.Application.Common.Security;
+using RemSolution.Application.Common.Settings;
 using RemSolution.Application.Features.Client.Validation;
 using RemSolution.Domain.Constants;
 
@@ -51,11 +53,16 @@ namespace RemSolution.Application.Features.Client.Commands.UpdateClientCommand
     {
         private readonly IApplicationDbContext _context;
         private readonly IClientAccountService _accounts;
+        private readonly IAgencySettingsProvider _settings;
 
-        public UpdateClientCommandHandler(IApplicationDbContext context, IClientAccountService accounts)
+        public UpdateClientCommandHandler(
+            IApplicationDbContext context,
+            IClientAccountService accounts,
+            IAgencySettingsProvider settings)
         {
             _context = context;
             _accounts = accounts;
+            _settings = settings;
         }
 
         public async Task Handle(UpdateClientCommand request, CancellationToken cancellationToken)
@@ -89,6 +96,12 @@ namespace RemSolution.Application.Features.Client.Commands.UpdateClientCommand
             entity.PasseportExpiryDate = request.PasseportExpiryDate;
             entity.DrivingLicenceExpiryDate = request.DrivingLicenceExpiryDate;
             entity.Description = request.Description;
+
+            // Re-derived after the assignments above, not before: an agent who
+            // clears an expiry and saves gets it filled back in from the issue
+            // date, which is the behaviour asked for.
+            await ClientDocumentDefaults.ApplyAsync(
+                entity, _settings, entity.AgencyId, cancellationToken);
 
             // Adding an email to a client who never had one gives them a login;
             // this is the same provisioning the create path does, so an agency
