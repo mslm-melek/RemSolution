@@ -64,9 +64,10 @@ L'addendum est livré à l'exception de A.6 et A.7 — voir son propre encadré.
 | 2.8 | Inscription libre-service des agences | ❌ la création d'agence reste réservée à l'administrateur plateforme | hors dév. + 3 j |
 
 **Et dix points ajoutés le 2026-09-02** — papiers, devises, parcours de
-réservation, fiabilité, assistant d'ouverture d'agence : voir **§8**. Huit sont
-livrés (N.9, N.1, N.5, N.6, N.7, N.8, N.4, N.10) ; ne restent que les libellés
-« TTC » de N.2 (≈ 0,2 j).
+réservation, fiabilité, assistant d'ouverture d'agence : voir **§8**. **Les dix
+sont livrés** (N.9, N.1, N.5, N.6, N.7, N.8, N.4, N.10, puis N.2/N.3 le
+2026-09-08). Reste optionnel : l'import de véhicules par fichier de N.10 (1 j),
+écarté à dessein.
 
 Les **signalements** du §3.6 ont été livrés avec N.8 le 2026-09-08 : c'est la
 même fonctionnalité vue des deux côtés, et elle a été construite d'un bloc.
@@ -377,9 +378,9 @@ dans le code**, pas l'intention.
 | N.6 | Exigences sur réservation confirmée + chat | ✅ **livré** | — |
 | N.4 | Devises EUR/TND + taux | ✅ **livré (2026-09-08)** — conversion à l'affichage | — |
 | N.10 | Assistant d'ouverture d'agence | ✅ **livré (2026-09-08)** — sauf l'import de véhicules par fichier | — |
-| N.2 | Montants TTC (location, tarif journalier) | ✅ livré — décision TTC, `TaxBreakdown.FromGross` ; reste à écrire « TTC » dans l'interface | 0,2 j |
+| N.2 | Montants TTC (location, tarif journalier) | ✅ **livré (2026-09-08)** — décision TTC, `TaxBreakdown.FromGross`, et l'interface le dit désormais | — |
 | N.3 | Paramètre TVA | ✅ livré — `VatRatePercent`, `TaxIdentifier`, `FiscalStampAmount` dans `AgencySettings`, exposés dans l'écran Mon agence | — |
-| | **Reste** | | **≈ 0,2 j** (libellés « TTC ») + 1 j si l'import de véhicules est voulu |
+| | **Reste** | | 1 j si l'import de véhicules de N.10 est voulu |
 
 ### Ce qui a été livré le 2026-09-02
 
@@ -441,13 +442,52 @@ de validité devient **périmé** et bloque la location, sauf acquittement expli
 dossier que l'assurance refuserait — mais il apparaîtra sur des fiches clients
 anciennes dès la première modification.
 
-### N.2 / N.3 — TTC et TVA
+### N.2 / N.3 — TTC et TVA · ✅ livré (2026-09-08)
 
-Déjà en place et volontairement sans interrupteur : le tarif journalier saisi est
-TTC, la facture redescend au HT (`TaxBreakdown.FromGross`), et le taux, le timbre
-et le matricule fiscal sont figés sur chaque facture à l'émission. Reste un point
-d'interface : les libellés de prix ne disent pas « TTC », ce qui est la seule
-raison pour laquelle un gérant peut croire l'inverse.
+Le calcul était déjà en place et volontairement sans interrupteur : le tarif
+journalier saisi est TTC, la facture redescend au HT (`TaxBreakdown.FromGross`),
+et le taux, le timbre et le matricule fiscal sont figés sur chaque facture à
+l'émission. Ce qui manquait était l'interface : les libellés de prix ne disaient
+pas « TTC », ce qui était la seule raison pour laquelle un gérant pouvait croire
+l'inverse.
+
+**La règle appliquée : un libellé dit « TTC » quand — et seulement quand — le
+montant qu'il désigne est une base taxable.** Le tarif journalier, le prix
+convenu d'une location, les frais de retour, les services additionnels et leur
+montant par défaut le sont ; un **paiement**, une **caution**, une **dépense** de
+l'agence et le **prix d'une formule d'abonnement** ne le sont pas et gardent leur
+libellé nu. Sans cette ligne, « TTC » finit partout où il y a un chiffre et ne
+veut plus rien dire.
+
+Deux mécanismes, selon que le montant porte un libellé à lui ou non :
+
+- Les clés qui ne désignent **que** du brut le disent dans leur texte
+  (`car.dailyRate`, `renting.priceSection`, `renting.agreedPrice`,
+  `renting.amountOverride`, `extraServiceType.defaultAmount`,
+  `marketplace.fromPerDay`) — aucun template à toucher, et le libellé reste juste
+  partout où la clé est réutilisée.
+- Là où le brut empruntait une clé générique (`common.price`, `common.amount`,
+  qui servent aussi aux paiements), deux clés nouvelles —
+  `common.priceTaxInclusive` / `common.amountTaxInclusive` — sont posées **au cas
+  par cas** dans les écrans concernés. La clé générique n'a pas bougé : la
+  changer aurait étiqueté « TTC » les paiements et les dépenses.
+- Un seul champ prend la mention en `mat-hint` plutôt qu'en libellé :
+  « Nouveau total pour toute la période », où « pour toute la période » est ce qui
+  empêche de le lire comme la différence — les deux ensemble débordaient le champ.
+
+Deux largeurs ont dû suivre, parce qu'un libellé Material est **rogné** sans
+prévenir : le montant des frais au retour (120 → 150 px) et le tarif de
+l'assistant d'ouverture (140 → 190 px). C'est l'anglais et l'arabe qui fixent la
+largeur, pas le français — « Amount (incl. tax) » est deux fois « Montant TTC ».
+
+Côté marketplace, le prix n'a pas de libellé — c'est le chiffre lui-même. Une
+mention discrète `common.taxInclusive` s'ajoute à côté, classe globale
+`.tax-note` : sans poids ni casse du prix, sinon elle se lit comme un code
+devise. Elle voisine la deuxième ligne de conversion de N.4 sans la remplacer —
+l'une dit dans quelle devise, l'autre dit taxes comprises.
+
+En arabe la mention est « شامل الضريبة », pas « TTC » : le sigle est français, il
+ne se translittère pas.
 
 ### N.4 — Devises et taux · ✅ livré (2026-09-08)
 
@@ -673,8 +713,8 @@ moitié fait il produit des flottes fausses.
 ### Ordre d'exécution retenu
 
 ~~N.9~~ → ~~N.1~~ → ~~N.5~~ → ~~N.6~~ → ~~N.7~~ → ~~N.8~~ (avec les signalements
-du §3.6) → ~~N.4~~ → ~~N.10~~, puis **les libellés « TTC » de N.2**.
+du §3.6) → ~~N.4~~ → ~~N.10~~ → ~~les libellés « TTC » de N.2~~.
 
-N.6 est passé devant N.7 sur votre demande. Les neuf points livrables le sont
-(cinq le 2026-09-02, N.8, N.4 et N.10 le 2026-09-08) ; ne restent que les
-libellés « TTC » de N.2, et l'import de véhicules de N.10 si vous le voulez.
+N.6 est passé devant N.7 sur votre demande. **Les dix points sont livrés** (cinq
+le 2026-09-02 ; N.8, N.4, N.10 puis N.2 le 2026-09-08). Ne reste, si vous le
+voulez, que l'import de véhicules par fichier de N.10 — écarté à dessein, 1 j.

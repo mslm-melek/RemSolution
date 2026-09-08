@@ -169,6 +169,18 @@ rate, the duty stamp and the agency's tax number live on `AgencySettings` and ar
 must still say what was charged. `Net + Vat == Gross` exactly: the net is
 rounded and the tax is the remainder, never rounded twice.
 
+The SPA says so, and only where it is true: a label reads "TTC" **when the amount
+it names is a taxable base** — daily rate, agreed price, return fees, extra
+services — and stays bare for a payment, a deposit, an agency expense or a
+subscription-plan price. Keys that can only ever be gross carry it in their own
+text (`car.dailyRate`, `renting.agreedPrice`, …); where a gross amount borrowed
+`common.price` / `common.amount`, the screen switches to
+`common.priceTaxInclusive` / `common.amountTaxInclusive` rather than the generic
+key changing under the payments that share it. The marketplace price has no
+label, so it gets the `.tax-note` marker (`common.taxInclusive`) beside the
+figure — next to N.4's conversion line, never instead of it. Arabic says
+« شامل الضريبة »; "TTC" is a French abbreviation and is not transliterated.
+
 **An agency reaches the marketplace only when published.** `Agency.PublishedAt`
 is null while it is being set up; nothing of it is public until somebody says so.
 The gate lives in `MarketplaceCars.Offered` — every search, map, showcase and
@@ -352,10 +364,10 @@ agency), §4.2 (migration bundle) and §4.5 (per-car lock) shipped, and on
 indexes), A.4 (one round trip), A.5 (rate limiting), A.8
 (`CarUnavailability`) and A.9 (deposit settlement). Check the code, not the
 tables. **§0.1 and §8 of the plan are the exception — they were rewritten
-2026-09-02 and again 2026-09-08, and are current.** The N.x series is done bar
-N.2's "TTC" labels: N.8 (agency cancellation + reports), N.4 (display-only
-currency conversion) and N.10 (agency-opening wizard + explicit marketplace
-publication) all shipped 2026-09-08. N.10's file import of vehicles was left
+2026-09-02 and again 2026-09-08, and are current.** The N.x series is **done**:
+N.8 (agency cancellation + reports), N.4 (display-only currency conversion),
+N.10 (agency-opening wizard + explicit marketplace publication) and N.2 (the
+"TTC" labels) all shipped 2026-09-08. N.10's file import of vehicles was left
 out deliberately — see plan §8.
 
 **Still open** (and why): a transactional Outbox (§4.6) — its stated purpose is

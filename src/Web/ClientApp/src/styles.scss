@@ -824,6 +824,18 @@ td.empty-row {
   font-size: var(--fs-label);
 }
 
+/* "TTC" beside a price. It qualifies the figure without being part of it, so it
+   drops out of the price's own weight and face (DESIGN_SYSTEM rule 3) — every
+   `.price` container it lands in is bold, and it would read as a currency code
+   otherwise. */
+.tax-note {
+  font-family: var(--font-body);
+  font-size: var(--fs-micro);
+  font-weight: var(--fw-normal);
+  color: var(--muted);
+  white-space: nowrap;
+}
+
 /* The identifying value of a row — the one a reader scans the column for. */
 .cell-main {
   font-weight: var(--fw-medium);

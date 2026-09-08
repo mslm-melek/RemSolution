@@ -733,6 +733,9 @@
   <data name="Document.Price" xml:space="preserve">
     <value>Montant de la location</value>
   </data>
+  <data name="Document.PriceTaxInclusive" xml:space="preserve">
+    <value>Montant de la location TTC</value>
+  </data>
   <data name="Document.Deposit" xml:space="preserve">
     <value>Caution</value>
   </data>

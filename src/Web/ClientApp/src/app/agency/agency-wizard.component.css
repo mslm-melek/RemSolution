@@ -63,8 +63,10 @@
   width: 170px;
 }
 
+/* Wide enough for "Tarif journalier TTC" and its longer English and Arabic
+   forms — the label, not the figure, is what sets this width. */
 .car-row .rate {
-  width: 140px;
+  width: 190px;
 }
 
 .car-row button {

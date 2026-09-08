@@ -132,7 +132,9 @@ public class DocumentTemplateExamples
             Title = _localizer["Document.Price"],
             Fields = new List<DocumentBlockField>
             {
-                Field(_localizer["Document.Price"], DocumentPlaceholders.RentingPrice),
+                // "TTC" on the line, not on the block title above it: the rental
+                // charge is gross, the deposit beside it is not a taxable base.
+                Field(_localizer["Document.PriceTaxInclusive"], DocumentPlaceholders.RentingPrice),
                 Field(_localizer["Document.Deposit"], DocumentPlaceholders.RentingDeposit, hideWhenEmpty: true),
             }
         },

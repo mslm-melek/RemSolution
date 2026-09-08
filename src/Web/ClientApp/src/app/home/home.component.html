@@ -71,6 +71,7 @@
             </span>
             <span class="slide-price" *ngIf="car.dailyRate">
               <span class="money">{{ car.dailyRate.amount | number:'1.2-2' }} {{ car.dailyRate.currency }}</span>{{ t('marketplace.perDaySpaced') }}
+              <span class="tax-note">{{ t('common.taxInclusive') }}</span>
               <app-converted-price [value]="car.dailyRate"></app-converted-price>
             </span>
           </div>

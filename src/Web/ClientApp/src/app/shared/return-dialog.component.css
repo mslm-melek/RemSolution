@@ -73,8 +73,10 @@
   flex: none;
 }
 
+/* 150px, not 120: the label carries "TTC" and its English and Arabic forms are
+   a good deal longer than the French. The note beside it absorbs the width. */
 .fee-line .fee-amount {
-  width: 120px;
+  width: 150px;
   flex: none;
 }
 

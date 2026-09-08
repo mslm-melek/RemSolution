@@ -36,6 +36,7 @@
         </span>
         <span class="price" *ngIf="r.price">
           <span class="money">{{ r.price.amount | number:'1.2-2' }} {{ r.price.currency }}</span>
+          <span class="tax-note">{{ t('common.taxInclusive') }}</span>
           <app-converted-price [value]="r.price"></app-converted-price>
         </span>
         <!-- The hold's deadline is an instant we recorded, so it reads local. -->

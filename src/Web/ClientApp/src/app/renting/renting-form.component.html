@@ -679,7 +679,7 @@
           </div>
         </div>
         <div class="tile">
-          <div class="tile-label">{{ t('common.price') }}</div>
+          <div class="tile-label">{{ t('common.priceTaxInclusive') }}</div>
           <div class="tile-value num" *ngIf="renting.price">
             {{ renting.price.amount | number:'1.2-2' }} {{ renting.price.currency }}
           </div>
@@ -749,6 +749,10 @@
         <input matInput type="number" min="0" step="0.01"
                [(ngModel)]="endDatePrice" [ngModelOptions]="{ standalone: true }" />
         <span matSuffix *ngIf="priceCurrency">&nbsp;{{ priceCurrency }}</span>
+        <!-- A hint, not a longer label: "for the whole period" is the part that
+             stops this being read as the difference, and the two together
+             overflow the field. -->
+        <mat-hint>{{ t('common.taxInclusiveHint') }}</mat-hint>
       </mat-form-field>
 
       <!-- What happens to the paperwork is the agent's call, not a side effect. -->
@@ -1021,7 +1025,7 @@
                 <td mat-cell *matCellDef="let f" class="muted">{{ f.note }}</td>
               </ng-container>
               <ng-container matColumnDef="amount">
-                <th mat-header-cell *matHeaderCellDef class="num-cell">{{ t('common.amount') }}</th>
+                <th mat-header-cell *matHeaderCellDef class="num-cell">{{ t('common.amountTaxInclusive') }}</th>
                 <td mat-cell *matCellDef="let f" class="num-cell">
                   <span *ngIf="f.amount">{{ f.amount.amount | number:'1.2-2' }} {{ f.amount.currency }}</span>
                 </td>
@@ -1053,7 +1057,7 @@
                 </mat-select>
               </mat-form-field>
               <mat-form-field appearance="outline">
-                <mat-label>{{ t('common.amount') }}</mat-label>
+                <mat-label>{{ t('common.amountTaxInclusive') }}</mat-label>
                 <input matInput type="number" min="0.01" step="0.01" [(ngModel)]="newFeeAmount" />
                 <span matSuffix *ngIf="currency">&nbsp;{{ currency }}</span>
               </mat-form-field>
@@ -1078,7 +1082,7 @@
                 <td mat-cell *matCellDef="let e">{{ e.extraServicesTypeName }}</td>
               </ng-container>
               <ng-container matColumnDef="amount">
-                <th mat-header-cell *matHeaderCellDef class="num-cell">{{ t('common.amount') }}</th>
+                <th mat-header-cell *matHeaderCellDef class="num-cell">{{ t('common.amountTaxInclusive') }}</th>
                 <td mat-cell *matCellDef="let e" class="num-cell">
                   <span *ngIf="e.totalAmount">{{ e.totalAmount.amount | number:'1.2-2' }} {{ e.totalAmount.currency }}</span>
                 </td>
@@ -1209,7 +1213,7 @@
               <td mat-cell *matCellDef="let h" class="num">{{ h.startMileage }} → {{ h.endMileage }}</td>
             </ng-container>
             <ng-container matColumnDef="price">
-              <th mat-header-cell *matHeaderCellDef class="num-cell">{{ t('common.price') }}</th>
+              <th mat-header-cell *matHeaderCellDef class="num-cell">{{ t('common.priceTaxInclusive') }}</th>
               <td mat-cell *matCellDef="let h" class="num-cell">
                 <span *ngIf="h.price">{{ h.price.amount | number:'1.2-2' }} {{ h.price.currency }}</span>
               </td>

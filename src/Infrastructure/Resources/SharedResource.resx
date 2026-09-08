@@ -733,6 +733,9 @@
   <data name="Document.Price" xml:space="preserve">
     <value>Rental charge</value>
   </data>
+  <data name="Document.PriceTaxInclusive" xml:space="preserve">
+    <value>Rental charge (incl. tax)</value>
+  </data>
   <data name="Document.Deposit" xml:space="preserve">
     <value>Security deposit</value>
   </data>

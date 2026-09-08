@@ -60,7 +60,7 @@
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="fee-amount">
-            <mat-label>{{ t('common.amount') }}</mat-label>
+            <mat-label>{{ t('common.amountTaxInclusive') }}</mat-label>
             <input matInput type="number" min="0.01" step="0.01" formControlName="amount" />
             <span matSuffix *ngIf="currency">&nbsp;{{ currency }}</span>
             <!-- Otherwise a half-filled line blocks the return with nothing on
