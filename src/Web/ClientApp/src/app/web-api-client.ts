@@ -86,6 +86,8 @@ export class Client implements IClient {
 export interface IAgenciesClient {
     getMyAgency(): Observable<AgencyDto>;
     updateMyAgency(command: UpdateMyAgencyCommand): Observable<void>;
+    getMyAgencyReliability(): Observable<AgencyReliabilityDto>;
+    getMyAgencyReports(status: AgencyReportStatus | null | undefined, pageNumber: number | undefined, pageSize: number | undefined): Observable<PaginatedListOfAgencyReportDto>;
     getAgencies(): Observable<AgencyDto[]>;
     createAgency(command: CreateAgencyCommand): Observable<AgencyCreatedDto>;
     getAgencyById(id: number): Observable<AgencyDto>;
@@ -199,6 +201,112 @@ export class AgenciesClient implements IAgenciesClient {
         if (status === 204) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
             return _observableOf(null as any);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getMyAgencyReliability(): Observable<AgencyReliabilityDto> {
+        let url_ = this.baseUrl + "/api/Agencies/me/reliability";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetMyAgencyReliability(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetMyAgencyReliability(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<AgencyReliabilityDto>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<AgencyReliabilityDto>;
+        }));
+    }
+
+    protected processGetMyAgencyReliability(response: HttpResponseBase): Observable<AgencyReliabilityDto> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = AgencyReliabilityDto.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getMyAgencyReports(status: AgencyReportStatus | null | undefined, pageNumber: number | undefined, pageSize: number | undefined): Observable<PaginatedListOfAgencyReportDto> {
+        let url_ = this.baseUrl + "/api/Agencies/me/reports?";
+        if (status !== undefined && status !== null)
+            url_ += "Status=" + encodeURIComponent("" + status) + "&";
+        if (pageNumber === null)
+            throw new Error("The parameter 'pageNumber' cannot be null.");
+        else if (pageNumber !== undefined)
+            url_ += "PageNumber=" + encodeURIComponent("" + pageNumber) + "&";
+        if (pageSize === null)
+            throw new Error("The parameter 'pageSize' cannot be null.");
+        else if (pageSize !== undefined)
+            url_ += "PageSize=" + encodeURIComponent("" + pageSize) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetMyAgencyReports(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetMyAgencyReports(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<PaginatedListOfAgencyReportDto>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<PaginatedListOfAgencyReportDto>;
+        }));
+    }
+
+    protected processGetMyAgencyReports(response: HttpResponseBase): Observable<PaginatedListOfAgencyReportDto> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = PaginatedListOfAgencyReportDto.fromJS(resultData200);
+            return _observableOf(result200);
             }));
         } else if (status !== 200 && status !== 204) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
@@ -802,6 +910,140 @@ export class AgenciesClient implements IAgenciesClient {
         if (status === 204) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
             return _observableOf(null as any);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+}
+
+export interface IAgencyReportsClient {
+    getAgencyReports(status: AgencyReportStatus | null | undefined, agencyId: number | null | undefined, pageNumber: number | undefined, pageSize: number | undefined): Observable<PaginatedListOfAgencyReportDto>;
+    resolveAgencyReport(id: number, command: ResolveAgencyReportCommand): Observable<void>;
+}
+
+@Injectable({
+    providedIn: 'root'
+})
+export class AgencyReportsClient implements IAgencyReportsClient {
+    private http: HttpClient;
+    private baseUrl: string;
+    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
+
+    constructor(@Inject(HttpClient) http: HttpClient, @Optional() @Inject(API_BASE_URL) baseUrl?: string) {
+        this.http = http;
+        this.baseUrl = baseUrl ?? "";
+    }
+
+    getAgencyReports(status: AgencyReportStatus | null | undefined, agencyId: number | null | undefined, pageNumber: number | undefined, pageSize: number | undefined): Observable<PaginatedListOfAgencyReportDto> {
+        let url_ = this.baseUrl + "/api/AgencyReports?";
+        if (status !== undefined && status !== null)
+            url_ += "Status=" + encodeURIComponent("" + status) + "&";
+        if (agencyId !== undefined && agencyId !== null)
+            url_ += "AgencyId=" + encodeURIComponent("" + agencyId) + "&";
+        if (pageNumber === null)
+            throw new Error("The parameter 'pageNumber' cannot be null.");
+        else if (pageNumber !== undefined)
+            url_ += "PageNumber=" + encodeURIComponent("" + pageNumber) + "&";
+        if (pageSize === null)
+            throw new Error("The parameter 'pageSize' cannot be null.");
+        else if (pageSize !== undefined)
+            url_ += "PageSize=" + encodeURIComponent("" + pageSize) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetAgencyReports(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetAgencyReports(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<PaginatedListOfAgencyReportDto>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<PaginatedListOfAgencyReportDto>;
+        }));
+    }
+
+    protected processGetAgencyReports(response: HttpResponseBase): Observable<PaginatedListOfAgencyReportDto> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = PaginatedListOfAgencyReportDto.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    resolveAgencyReport(id: number, command: ResolveAgencyReportCommand): Observable<void> {
+        let url_ = this.baseUrl + "/api/AgencyReports/{id}/resolve";
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(command);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processResolveAgencyReport(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processResolveAgencyReport(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processResolveAgencyReport(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return _observableOf(null as any);
+            }));
+        } else if (status === 400) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("A server side error occurred.", status, _responseText, _headers);
             }));
         } else if (status !== 200 && status !== 204) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
@@ -5176,6 +5418,181 @@ export class DocumentTemplatesClient implements IDocumentTemplatesClient {
     }
 }
 
+export interface IExchangeRatesClient {
+    getExchangeRates(): Observable<ExchangeRateDto[]>;
+    setExchangeRate(command: SetExchangeRateCommand): Observable<number>;
+    deleteExchangeRate(id: number): Observable<void>;
+}
+
+@Injectable({
+    providedIn: 'root'
+})
+export class ExchangeRatesClient implements IExchangeRatesClient {
+    private http: HttpClient;
+    private baseUrl: string;
+    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
+
+    constructor(@Inject(HttpClient) http: HttpClient, @Optional() @Inject(API_BASE_URL) baseUrl?: string) {
+        this.http = http;
+        this.baseUrl = baseUrl ?? "";
+    }
+
+    getExchangeRates(): Observable<ExchangeRateDto[]> {
+        let url_ = this.baseUrl + "/api/ExchangeRates";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetExchangeRates(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetExchangeRates(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<ExchangeRateDto[]>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<ExchangeRateDto[]>;
+        }));
+    }
+
+    protected processGetExchangeRates(response: HttpResponseBase): Observable<ExchangeRateDto[]> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            if (Array.isArray(resultData200)) {
+                result200 = [] as any;
+                for (let item of resultData200)
+                    result200!.push(ExchangeRateDto.fromJS(item));
+            }
+            else {
+                result200 = <any>null;
+            }
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    setExchangeRate(command: SetExchangeRateCommand): Observable<number> {
+        let url_ = this.baseUrl + "/api/ExchangeRates";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(command);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("put", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processSetExchangeRate(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processSetExchangeRate(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<number>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<number>;
+        }));
+    }
+
+    protected processSetExchangeRate(response: HttpResponseBase): Observable<number> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+                result200 = resultData200 !== undefined ? resultData200 : <any>null;
+    
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    deleteExchangeRate(id: number): Observable<void> {
+        let url_ = this.baseUrl + "/api/ExchangeRates/{id}";
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+            })
+        };
+
+        return this.http.request("delete", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processDeleteExchangeRate(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processDeleteExchangeRate(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processDeleteExchangeRate(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return _observableOf(null as any);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+}
+
 export interface IExpensesClient {
     getExpenses(pageNumber: number | undefined, pageSize: number | undefined, carId: number | null | undefined, expenseTypeId: number | null | undefined, from: Date | null | undefined, to: Date | null | undefined, onlyUnpaid: boolean | undefined, sortBy: string | null | undefined, sortDescending: boolean | undefined): Observable<PaginatedListOfExpenseDto>;
     createExpense(command: CreateExpenseCommand): Observable<number>;
@@ -6488,6 +6905,7 @@ export interface IMarketplaceClient {
     getDestinations(): Observable<MarketplaceDestinationDto[]>;
     getAgency(id: number): Observable<MarketplaceAgencyDto>;
     getAgencyReviews(id: number, pageNumber: number | null | undefined, pageSize: number | null | undefined): Observable<PaginatedListOfAgencyReviewDto>;
+    getMarketplaceExchangeRates(): Observable<DisplayRateDto[]>;
     bookCar(command: CreateCustomerReservationCommand): Observable<number>;
     getMyReservations(): Observable<MyReservationDto[]>;
     cancelMyReservation(id: number, reason: string | null | undefined): Observable<void>;
@@ -6498,6 +6916,8 @@ export interface IMarketplaceClient {
     sendMyChatMessage(subject: ChatSubjectKind, id: number, command: SendCustomerChatMessageCommand): Observable<number>;
     markMyChatRead(subject: ChatSubjectKind, id: number): Observable<void>;
     getMyReservationRequirements(id: number): Observable<ReservationRequirementDto[]>;
+    reportAgency(command: CreateMyReportCommand): Observable<number>;
+    getMyReports(): Observable<MyReportDto[]>;
     submitMyReservationRequirement(id: number, note: string | null | undefined, file: FileParameter | null | undefined): Observable<void>;
 }
 
@@ -6942,6 +7362,61 @@ export class MarketplaceClient implements IMarketplaceClient {
             let result200: any = null;
             let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
             result200 = PaginatedListOfAgencyReviewDto.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getMarketplaceExchangeRates(): Observable<DisplayRateDto[]> {
+        let url_ = this.baseUrl + "/api/Marketplace/exchange-rates";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetMarketplaceExchangeRates(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetMarketplaceExchangeRates(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<DisplayRateDto[]>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<DisplayRateDto[]>;
+        }));
+    }
+
+    protected processGetMarketplaceExchangeRates(response: HttpResponseBase): Observable<DisplayRateDto[]> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            if (Array.isArray(resultData200)) {
+                result200 = [] as any;
+                for (let item of resultData200)
+                    result200!.push(DisplayRateDto.fromJS(item));
+            }
+            else {
+                result200 = <any>null;
+            }
             return _observableOf(result200);
             }));
         } else if (status !== 200 && status !== 204) {
@@ -7499,6 +7974,114 @@ export class MarketplaceClient implements IMarketplaceClient {
                 result200 = [] as any;
                 for (let item of resultData200)
                     result200!.push(ReservationRequirementDto.fromJS(item));
+            }
+            else {
+                result200 = <any>null;
+            }
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    reportAgency(command: CreateMyReportCommand): Observable<number> {
+        let url_ = this.baseUrl + "/api/Marketplace/reports";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(command);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processReportAgency(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processReportAgency(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<number>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<number>;
+        }));
+    }
+
+    protected processReportAgency(response: HttpResponseBase): Observable<number> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 201) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result201: any = null;
+            let resultData201 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+                result201 = resultData201 !== undefined ? resultData201 : <any>null;
+    
+            return _observableOf(result201);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getMyReports(): Observable<MyReportDto[]> {
+        let url_ = this.baseUrl + "/api/Marketplace/my-reports";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetMyReports(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetMyReports(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<MyReportDto[]>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<MyReportDto[]>;
+        }));
+    }
+
+    protected processGetMyReports(response: HttpResponseBase): Observable<MyReportDto[]> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            if (Array.isArray(resultData200)) {
+                result200 = [] as any;
+                for (let item of resultData200)
+                    result200!.push(MyReportDto.fromJS(item));
             }
             else {
                 result200 = <any>null;
@@ -11666,6 +12249,224 @@ export interface IUpdateMyAgencyCommand {
     cancellationFreeHours?: number;
 }
 
+export class AgencyReliabilityDto implements IAgencyReliabilityDto {
+    confirmedBookings?: number;
+    cancelledByAgency?: number;
+    upheldReports?: number;
+    honoured?: number;
+    score?: number | undefined;
+
+    constructor(data?: IAgencyReliabilityDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.confirmedBookings = _data["confirmedBookings"];
+            this.cancelledByAgency = _data["cancelledByAgency"];
+            this.upheldReports = _data["upheldReports"];
+            this.honoured = _data["honoured"];
+            this.score = _data["score"];
+        }
+    }
+
+    static fromJS(data: any): AgencyReliabilityDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new AgencyReliabilityDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["confirmedBookings"] = this.confirmedBookings;
+        data["cancelledByAgency"] = this.cancelledByAgency;
+        data["upheldReports"] = this.upheldReports;
+        data["honoured"] = this.honoured;
+        data["score"] = this.score;
+        return data;
+    }
+}
+
+export interface IAgencyReliabilityDto {
+    confirmedBookings?: number;
+    cancelledByAgency?: number;
+    upheldReports?: number;
+    honoured?: number;
+    score?: number | undefined;
+}
+
+export class PaginatedListOfAgencyReportDto implements IPaginatedListOfAgencyReportDto {
+    items?: AgencyReportDto[];
+    pageNumber?: number;
+    totalPages?: number;
+    totalCount?: number;
+    hasPreviousPage?: boolean;
+    hasNextPage?: boolean;
+
+    constructor(data?: IPaginatedListOfAgencyReportDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["items"])) {
+                this.items = [] as any;
+                for (let item of _data["items"])
+                    this.items!.push(AgencyReportDto.fromJS(item));
+            }
+            this.pageNumber = _data["pageNumber"];
+            this.totalPages = _data["totalPages"];
+            this.totalCount = _data["totalCount"];
+            this.hasPreviousPage = _data["hasPreviousPage"];
+            this.hasNextPage = _data["hasNextPage"];
+        }
+    }
+
+    static fromJS(data: any): PaginatedListOfAgencyReportDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new PaginatedListOfAgencyReportDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.items)) {
+            data["items"] = [];
+            for (let item of this.items)
+                data["items"].push(item.toJSON());
+        }
+        data["pageNumber"] = this.pageNumber;
+        data["totalPages"] = this.totalPages;
+        data["totalCount"] = this.totalCount;
+        data["hasPreviousPage"] = this.hasPreviousPage;
+        data["hasNextPage"] = this.hasNextPage;
+        return data;
+    }
+}
+
+export interface IPaginatedListOfAgencyReportDto {
+    items?: AgencyReportDto[];
+    pageNumber?: number;
+    totalPages?: number;
+    totalCount?: number;
+    hasPreviousPage?: boolean;
+    hasNextPage?: boolean;
+}
+
+export class AgencyReportDto implements IAgencyReportDto {
+    id?: number;
+    agencyId?: number;
+    agencyName?: string | undefined;
+    reservationId?: number | undefined;
+    rentingId?: number | undefined;
+    reporterName?: string | undefined;
+    bookingSummary?: string | undefined;
+    agencyCancellationReason?: string | undefined;
+    kind?: AgencyReportKind;
+    message?: string | undefined;
+    status?: AgencyReportStatus;
+    submittedAt?: Date;
+    resolvedAt?: Date | undefined;
+    resolutionNote?: string | undefined;
+
+    constructor(data?: IAgencyReportDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.agencyId = _data["agencyId"];
+            this.agencyName = _data["agencyName"];
+            this.reservationId = _data["reservationId"];
+            this.rentingId = _data["rentingId"];
+            this.reporterName = _data["reporterName"];
+            this.bookingSummary = _data["bookingSummary"];
+            this.agencyCancellationReason = _data["agencyCancellationReason"];
+            this.kind = _data["kind"];
+            this.message = _data["message"];
+            this.status = _data["status"];
+            this.submittedAt = _data["submittedAt"] ? new Date(_data["submittedAt"].toString()) : <any>undefined;
+            this.resolvedAt = _data["resolvedAt"] ? new Date(_data["resolvedAt"].toString()) : <any>undefined;
+            this.resolutionNote = _data["resolutionNote"];
+        }
+    }
+
+    static fromJS(data: any): AgencyReportDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new AgencyReportDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["agencyId"] = this.agencyId;
+        data["agencyName"] = this.agencyName;
+        data["reservationId"] = this.reservationId;
+        data["rentingId"] = this.rentingId;
+        data["reporterName"] = this.reporterName;
+        data["bookingSummary"] = this.bookingSummary;
+        data["agencyCancellationReason"] = this.agencyCancellationReason;
+        data["kind"] = this.kind;
+        data["message"] = this.message;
+        data["status"] = this.status;
+        data["submittedAt"] = this.submittedAt ? this.submittedAt.toISOString() : <any>undefined;
+        data["resolvedAt"] = this.resolvedAt ? this.resolvedAt.toISOString() : <any>undefined;
+        data["resolutionNote"] = this.resolutionNote;
+        return data;
+    }
+}
+
+export interface IAgencyReportDto {
+    id?: number;
+    agencyId?: number;
+    agencyName?: string | undefined;
+    reservationId?: number | undefined;
+    rentingId?: number | undefined;
+    reporterName?: string | undefined;
+    bookingSummary?: string | undefined;
+    agencyCancellationReason?: string | undefined;
+    kind?: AgencyReportKind;
+    message?: string | undefined;
+    status?: AgencyReportStatus;
+    submittedAt?: Date;
+    resolvedAt?: Date | undefined;
+    resolutionNote?: string | undefined;
+}
+
+export enum AgencyReportKind {
+    CancelledBooking = 1,
+    ServiceQuality = 2,
+    Billing = 3,
+    Vehicle = 4,
+    Other = 5,
+}
+
+export enum AgencyReportStatus {
+    Open = 1,
+    Upheld = 2,
+    Dismissed = 3,
+}
+
 export class AgencyCreatedDto implements IAgencyCreatedDto {
     id?: number;
     adminUserName?: string | undefined;
@@ -12196,6 +12997,50 @@ export interface IUpdateAgencyBranchCommand {
     address?: string | undefined;
     latitude?: number | undefined;
     longitude?: number | undefined;
+}
+
+export class ResolveAgencyReportCommand implements IResolveAgencyReportCommand {
+    id?: number;
+    upheld?: boolean;
+    note?: string;
+
+    constructor(data?: IResolveAgencyReportCommand) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.upheld = _data["upheld"];
+            this.note = _data["note"];
+        }
+    }
+
+    static fromJS(data: any): ResolveAgencyReportCommand {
+        data = typeof data === 'object' ? data : {};
+        let result = new ResolveAgencyReportCommand();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["upheld"] = this.upheld;
+        data["note"] = this.note;
+        return data;
+    }
+}
+
+export interface IResolveAgencyReportCommand {
+    id?: number;
+    upheld?: boolean;
+    note?: string;
 }
 
 export class AgencySubscriptionDto implements IAgencySubscriptionDto {
@@ -17461,6 +18306,106 @@ export interface IDocumentTemplateDraftDto {
     fields?: DocumentTemplateFieldDto[];
 }
 
+export class ExchangeRateDto implements IExchangeRateDto {
+    id?: number;
+    fromCurrency?: string | undefined;
+    toCurrency?: string | undefined;
+    rate?: number;
+    asOf?: Date;
+
+    constructor(data?: IExchangeRateDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.fromCurrency = _data["fromCurrency"];
+            this.toCurrency = _data["toCurrency"];
+            this.rate = _data["rate"];
+            this.asOf = _data["asOf"] ? new Date(_data["asOf"].toString()) : <any>undefined;
+        }
+    }
+
+    static fromJS(data: any): ExchangeRateDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new ExchangeRateDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["fromCurrency"] = this.fromCurrency;
+        data["toCurrency"] = this.toCurrency;
+        data["rate"] = this.rate;
+        data["asOf"] = this.asOf ? this.asOf.toISOString() : <any>undefined;
+        return data;
+    }
+}
+
+export interface IExchangeRateDto {
+    id?: number;
+    fromCurrency?: string | undefined;
+    toCurrency?: string | undefined;
+    rate?: number;
+    asOf?: Date;
+}
+
+export class SetExchangeRateCommand implements ISetExchangeRateCommand {
+    fromCurrency?: string;
+    toCurrency?: string;
+    rate?: number;
+    asOf?: Date | undefined;
+
+    constructor(data?: ISetExchangeRateCommand) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.fromCurrency = _data["fromCurrency"];
+            this.toCurrency = _data["toCurrency"];
+            this.rate = _data["rate"];
+            this.asOf = _data["asOf"] ? new Date(_data["asOf"].toString()) : <any>undefined;
+        }
+    }
+
+    static fromJS(data: any): SetExchangeRateCommand {
+        data = typeof data === 'object' ? data : {};
+        let result = new SetExchangeRateCommand();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["fromCurrency"] = this.fromCurrency;
+        data["toCurrency"] = this.toCurrency;
+        data["rate"] = this.rate;
+        data["asOf"] = this.asOf ? this.asOf.toISOString() : <any>undefined;
+        return data;
+    }
+}
+
+export interface ISetExchangeRateCommand {
+    fromCurrency?: string;
+    toCurrency?: string;
+    rate?: number;
+    asOf?: Date | undefined;
+}
+
 export class PaginatedListOfExpenseDto implements IPaginatedListOfExpenseDto {
     items?: ExpenseDto[];
     pageNumber?: number;
@@ -18743,6 +19688,7 @@ export class MarketplaceAgencyDto implements IMarketplaceAgencyDto {
     carCount?: number;
     fromDailyRate?: MoneyDto | undefined;
     rating?: AgencyRatingSummaryDto;
+    reliability?: AgencyReliabilityDto;
     places?: MarketplacePlaceDto[];
 
     constructor(data?: IMarketplaceAgencyDto) {
@@ -18765,6 +19711,7 @@ export class MarketplaceAgencyDto implements IMarketplaceAgencyDto {
             this.carCount = _data["carCount"];
             this.fromDailyRate = _data["fromDailyRate"] ? MoneyDto.fromJS(_data["fromDailyRate"]) : <any>undefined;
             this.rating = _data["rating"] ? AgencyRatingSummaryDto.fromJS(_data["rating"]) : <any>undefined;
+            this.reliability = _data["reliability"] ? AgencyReliabilityDto.fromJS(_data["reliability"]) : <any>undefined;
             if (Array.isArray(_data["places"])) {
                 this.places = [] as any;
                 for (let item of _data["places"])
@@ -18791,6 +19738,7 @@ export class MarketplaceAgencyDto implements IMarketplaceAgencyDto {
         data["carCount"] = this.carCount;
         data["fromDailyRate"] = this.fromDailyRate ? this.fromDailyRate.toJSON() : <any>undefined;
         data["rating"] = this.rating ? this.rating.toJSON() : <any>undefined;
+        data["reliability"] = this.reliability ? this.reliability.toJSON() : <any>undefined;
         if (Array.isArray(this.places)) {
             data["places"] = [];
             for (let item of this.places)
@@ -18810,6 +19758,7 @@ export interface IMarketplaceAgencyDto {
     carCount?: number;
     fromDailyRate?: MoneyDto | undefined;
     rating?: AgencyRatingSummaryDto;
+    reliability?: AgencyReliabilityDto;
     places?: MarketplacePlaceDto[];
 }
 
@@ -18985,6 +19934,54 @@ export interface IAgencyReviewDto {
     carName?: string | undefined;
 }
 
+export class DisplayRateDto implements IDisplayRateDto {
+    from?: string | undefined;
+    to?: string | undefined;
+    rate?: number;
+    asOf?: Date;
+
+    constructor(data?: IDisplayRateDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.from = _data["from"];
+            this.to = _data["to"];
+            this.rate = _data["rate"];
+            this.asOf = _data["asOf"] ? new Date(_data["asOf"].toString()) : <any>undefined;
+        }
+    }
+
+    static fromJS(data: any): DisplayRateDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new DisplayRateDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["from"] = this.from;
+        data["to"] = this.to;
+        data["rate"] = this.rate;
+        data["asOf"] = this.asOf ? this.asOf.toISOString() : <any>undefined;
+        return data;
+    }
+}
+
+export interface IDisplayRateDto {
+    from?: string | undefined;
+    to?: string | undefined;
+    rate?: number;
+    asOf?: Date;
+}
+
 export class CreateCustomerReservationCommand implements ICreateCustomerReservationCommand {
     carId?: number;
     startDate?: Date;
@@ -19053,6 +20050,13 @@ export class MyReservationDto implements IMyReservationDto {
     status?: ReservationStatus;
     expiresAt?: Date | undefined;
     rejectedReason?: string | undefined;
+    cancelledReason?: string | undefined;
+    cancelledByAgency?: boolean;
+    cancelledAt?: Date | undefined;
+    wasConfirmed?: boolean;
+    myReportId?: number | undefined;
+    myReportStatus?: AgencyReportStatus | undefined;
+    canReport?: boolean;
     cancellationFee?: MoneyDto | undefined;
     canCancel?: boolean;
     cancellationFeeIfCancelledNow?: MoneyDto | undefined;
@@ -19079,6 +20083,13 @@ export class MyReservationDto implements IMyReservationDto {
             this.status = _data["status"];
             this.expiresAt = _data["expiresAt"] ? new Date(_data["expiresAt"].toString()) : <any>undefined;
             this.rejectedReason = _data["rejectedReason"];
+            this.cancelledReason = _data["cancelledReason"];
+            this.cancelledByAgency = _data["cancelledByAgency"];
+            this.cancelledAt = _data["cancelledAt"] ? new Date(_data["cancelledAt"].toString()) : <any>undefined;
+            this.wasConfirmed = _data["wasConfirmed"];
+            this.myReportId = _data["myReportId"];
+            this.myReportStatus = _data["myReportStatus"];
+            this.canReport = _data["canReport"];
             this.cancellationFee = _data["cancellationFee"] ? MoneyDto.fromJS(_data["cancellationFee"]) : <any>undefined;
             this.canCancel = _data["canCancel"];
             this.cancellationFeeIfCancelledNow = _data["cancellationFeeIfCancelledNow"] ? MoneyDto.fromJS(_data["cancellationFeeIfCancelledNow"]) : <any>undefined;
@@ -19105,6 +20116,13 @@ export class MyReservationDto implements IMyReservationDto {
         data["status"] = this.status;
         data["expiresAt"] = this.expiresAt ? this.expiresAt.toISOString() : <any>undefined;
         data["rejectedReason"] = this.rejectedReason;
+        data["cancelledReason"] = this.cancelledReason;
+        data["cancelledByAgency"] = this.cancelledByAgency;
+        data["cancelledAt"] = this.cancelledAt ? this.cancelledAt.toISOString() : <any>undefined;
+        data["wasConfirmed"] = this.wasConfirmed;
+        data["myReportId"] = this.myReportId;
+        data["myReportStatus"] = this.myReportStatus;
+        data["canReport"] = this.canReport;
         data["cancellationFee"] = this.cancellationFee ? this.cancellationFee.toJSON() : <any>undefined;
         data["canCancel"] = this.canCancel;
         data["cancellationFeeIfCancelledNow"] = this.cancellationFeeIfCancelledNow ? this.cancellationFeeIfCancelledNow.toJSON() : <any>undefined;
@@ -19124,6 +20142,13 @@ export interface IMyReservationDto {
     status?: ReservationStatus;
     expiresAt?: Date | undefined;
     rejectedReason?: string | undefined;
+    cancelledReason?: string | undefined;
+    cancelledByAgency?: boolean;
+    cancelledAt?: Date | undefined;
+    wasConfirmed?: boolean;
+    myReportId?: number | undefined;
+    myReportStatus?: AgencyReportStatus | undefined;
+    canReport?: boolean;
     cancellationFee?: MoneyDto | undefined;
     canCancel?: boolean;
     cancellationFeeIfCancelledNow?: MoneyDto | undefined;
@@ -19144,6 +20169,9 @@ export class MyRentingDto implements IMyRentingDto {
     myRating?: number | undefined;
     myComment?: string | undefined;
     reviewedAt?: Date | undefined;
+    canReport?: boolean;
+    myReportId?: number | undefined;
+    myReportStatus?: AgencyReportStatus | undefined;
 
     constructor(data?: IMyRentingDto) {
         if (data) {
@@ -19170,6 +20198,9 @@ export class MyRentingDto implements IMyRentingDto {
             this.myRating = _data["myRating"];
             this.myComment = _data["myComment"];
             this.reviewedAt = _data["reviewedAt"] ? new Date(_data["reviewedAt"].toString()) : <any>undefined;
+            this.canReport = _data["canReport"];
+            this.myReportId = _data["myReportId"];
+            this.myReportStatus = _data["myReportStatus"];
         }
     }
 
@@ -19196,6 +20227,9 @@ export class MyRentingDto implements IMyRentingDto {
         data["myRating"] = this.myRating;
         data["myComment"] = this.myComment;
         data["reviewedAt"] = this.reviewedAt ? this.reviewedAt.toISOString() : <any>undefined;
+        data["canReport"] = this.canReport;
+        data["myReportId"] = this.myReportId;
+        data["myReportStatus"] = this.myReportStatus;
         return data;
     }
 }
@@ -19215,6 +20249,9 @@ export interface IMyRentingDto {
     myRating?: number | undefined;
     myComment?: string | undefined;
     reviewedAt?: Date | undefined;
+    canReport?: boolean;
+    myReportId?: number | undefined;
+    myReportStatus?: AgencyReportStatus | undefined;
 }
 
 export class CreateMyReviewCommand implements ICreateMyReviewCommand {
@@ -19510,6 +20547,134 @@ export enum ReservationRequirementStatus {
     Accepted = 2,
     Rejected = 3,
     Waived = 4,
+}
+
+export class CreateMyReportCommand implements ICreateMyReportCommand {
+    reservationId?: number | undefined;
+    rentingId?: number | undefined;
+    kind?: AgencyReportKind;
+    message?: string;
+
+    constructor(data?: ICreateMyReportCommand) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.reservationId = _data["reservationId"];
+            this.rentingId = _data["rentingId"];
+            this.kind = _data["kind"];
+            this.message = _data["message"];
+        }
+    }
+
+    static fromJS(data: any): CreateMyReportCommand {
+        data = typeof data === 'object' ? data : {};
+        let result = new CreateMyReportCommand();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["reservationId"] = this.reservationId;
+        data["rentingId"] = this.rentingId;
+        data["kind"] = this.kind;
+        data["message"] = this.message;
+        return data;
+    }
+}
+
+export interface ICreateMyReportCommand {
+    reservationId?: number | undefined;
+    rentingId?: number | undefined;
+    kind?: AgencyReportKind;
+    message?: string;
+}
+
+export class MyReportDto implements IMyReportDto {
+    id?: number;
+    agencyId?: number;
+    agencyName?: string | undefined;
+    reservationId?: number | undefined;
+    rentingId?: number | undefined;
+    bookingSummary?: string | undefined;
+    kind?: AgencyReportKind;
+    message?: string | undefined;
+    status?: AgencyReportStatus;
+    submittedAt?: Date;
+    resolvedAt?: Date | undefined;
+    resolutionNote?: string | undefined;
+
+    constructor(data?: IMyReportDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.agencyId = _data["agencyId"];
+            this.agencyName = _data["agencyName"];
+            this.reservationId = _data["reservationId"];
+            this.rentingId = _data["rentingId"];
+            this.bookingSummary = _data["bookingSummary"];
+            this.kind = _data["kind"];
+            this.message = _data["message"];
+            this.status = _data["status"];
+            this.submittedAt = _data["submittedAt"] ? new Date(_data["submittedAt"].toString()) : <any>undefined;
+            this.resolvedAt = _data["resolvedAt"] ? new Date(_data["resolvedAt"].toString()) : <any>undefined;
+            this.resolutionNote = _data["resolutionNote"];
+        }
+    }
+
+    static fromJS(data: any): MyReportDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new MyReportDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["agencyId"] = this.agencyId;
+        data["agencyName"] = this.agencyName;
+        data["reservationId"] = this.reservationId;
+        data["rentingId"] = this.rentingId;
+        data["bookingSummary"] = this.bookingSummary;
+        data["kind"] = this.kind;
+        data["message"] = this.message;
+        data["status"] = this.status;
+        data["submittedAt"] = this.submittedAt ? this.submittedAt.toISOString() : <any>undefined;
+        data["resolvedAt"] = this.resolvedAt ? this.resolvedAt.toISOString() : <any>undefined;
+        data["resolutionNote"] = this.resolutionNote;
+        return data;
+    }
+}
+
+export interface IMyReportDto {
+    id?: number;
+    agencyId?: number;
+    agencyName?: string | undefined;
+    reservationId?: number | undefined;
+    rentingId?: number | undefined;
+    bookingSummary?: string | undefined;
+    kind?: AgencyReportKind;
+    message?: string | undefined;
+    status?: AgencyReportStatus;
+    submittedAt?: Date;
+    resolvedAt?: Date | undefined;
+    resolutionNote?: string | undefined;
 }
 
 export class PaginatedListOfModelCarDto implements IPaginatedListOfModelCarDto {
@@ -19865,6 +21030,7 @@ export enum NotificationKind {
     RentingLateNotice = 6,
     ClientDocumentExpiring = 7,
     ReservationPending = 8,
+    AgencyReport = 9,
 }
 
 export enum NotificationSubject {
@@ -19872,6 +21038,7 @@ export enum NotificationSubject {
     Renting = 2,
     Reservation = 3,
     Client = 4,
+    AgencyReport = 5,
 }
 
 export class MarkNotificationsReadCommand implements IMarkNotificationsReadCommand {

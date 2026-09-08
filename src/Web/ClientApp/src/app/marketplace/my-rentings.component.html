@@ -34,6 +34,7 @@
           </span>
           <span class="price" *ngIf="r.price">
             <span class="money">{{ r.price.amount | number:'1.2-2' }} {{ r.price.currency }}</span>
+            <app-converted-price [value]="r.price"></app-converted-price>
           </span>
 
           <!-- Three mutually exclusive states, decided by the server: already
@@ -46,6 +47,14 @@
           <button mat-flat-button color="primary" *ngIf="r.canReview && ratingFor !== r"
                   (click)="openRating(r)">
             <mat-icon aria-hidden="true">star</mat-icon> {{ t('reviews.rateThisRental') }}
+          </button>
+
+          <!-- One report per rental: once raised, the outcome replaces the button. -->
+          <span class="chip" *ngIf="r.myReportId" [ngClass]="reportStatusTone(r.myReportStatus)">
+            {{ t(reportStatusLabelKey(r.myReportStatus)) }}
+          </span>
+          <button mat-stroked-button *ngIf="!r.myReportId && r.canReport" (click)="report(r)">
+            <mat-icon aria-hidden="true">gavel</mat-icon> {{ t('reports.customer.report') }}
           </button>
         </div>
       </div>

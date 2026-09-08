@@ -1,0 +1,77 @@
+<ng-container *transloco="let t">
+  <div *ngIf="error" class="error-banner">{{ error }}</div>
+
+  <section class="settings-section">
+    <h3 class="section-title">{{ t('reports.reliability') }}</h3>
+    <p class="section-hint">{{ t('reports.reliabilityHint') }}</p>
+
+    <!-- Null score = nothing on record yet, which the page says in words rather
+         than rendering as a perfect hundred (see AgencyReliability). -->
+    <p class="state" *ngIf="reliability && reliability.score == null">
+      {{ t('reports.noRecord') }}
+    </p>
+
+    <div class="figures" *ngIf="reliability && reliability.score != null">
+      <div class="figure">
+        <span class="figure-value">{{ t('reports.outOf', { value: reliability.score }) }}</span>
+        <span class="figure-label">{{ t('reports.score') }}</span>
+      </div>
+      <div class="figure">
+        <span class="figure-value">{{ reliability.confirmedBookings }}</span>
+        <span class="figure-label">{{ t('reports.confirmedBookings') }}</span>
+      </div>
+      <div class="figure">
+        <span class="figure-value">{{ reliability.honoured }}</span>
+        <span class="figure-label">{{ t('reports.honoured') }}</span>
+      </div>
+      <div class="figure" [class.bad]="reliability.cancelledByAgency > 0">
+        <span class="figure-value">{{ reliability.cancelledByAgency }}</span>
+        <span class="figure-label">{{ t('reports.cancelledByAgency') }}</span>
+      </div>
+      <div class="figure" [class.bad]="reliability.upheldReports > 0">
+        <span class="figure-value">{{ reliability.upheldReports }}</span>
+        <span class="figure-label">{{ t('reports.upheldReports') }}</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="settings-section">
+    <h3 class="section-title">{{ t('reports.title') }}</h3>
+
+    <div *ngIf="loading" class="state">{{ t('common.loading') }}</div>
+    <div *ngIf="!loading && reports.length === 0" class="state">{{ t('reports.none') }}</div>
+
+    <div class="list" *ngIf="!loading && reports.length">
+      <div class="report-card" *ngFor="let r of reports">
+        <div class="head">
+          <div class="who">
+            <div class="what">{{ t(kindLabelKey(r.kind)) }}</div>
+            <div class="booking" *ngIf="r.bookingSummary">
+              {{ t('reports.booking') }} — <span class="num">{{ r.bookingSummary }}</span>
+            </div>
+            <div class="reporter">{{ r.reporterName }}</div>
+          </div>
+          <div class="side">
+            <span class="chip" [ngClass]="statusTone(r.status)">{{ t(statusLabelKey(r.status)) }}</span>
+            <!-- An instant, recorded from the clock, so it reads local. -->
+            <span class="when">{{ t('reports.submittedOn', { date: (r.submittedAt | date:'dd MMM yyyy') }) }}</span>
+          </div>
+        </div>
+
+        <div class="account">
+          <div class="account-label">{{ t('reports.customerAccount') }}</div>
+          <p>{{ r.message }}</p>
+        </div>
+
+        <div class="verdict" *ngIf="r.resolutionNote">
+          <div class="verdict-head">
+            <mat-icon aria-hidden="true">gavel</mat-icon>
+            {{ t('reports.verdict') }} —
+            {{ t('reports.resolvedOn', { date: (r.resolvedAt | date:'dd MMM yyyy') }) }}
+          </div>
+          <p>{{ r.resolutionNote }}</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</ng-container>

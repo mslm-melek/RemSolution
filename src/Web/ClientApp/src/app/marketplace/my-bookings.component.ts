@@ -1,8 +1,8 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 
-/** Which half is showing. Lives in the URL as `?tab=`. */
-export type MyBookingTab = 'reservations' | 'rentings';
+/** Which part is showing. Lives in the URL as `?tab=`. */
+export type MyBookingTab = 'reservations' | 'rentings' | 'reports';
 
 /**
  * "Mes voyages": the customer's holds and their rentals on one screen.
@@ -33,7 +33,8 @@ export class MyBookingsComponent implements OnInit {
     // Read from the URL rather than held only in the field, so the back button
     // and a link that names a tab both land on it.
     this.route.queryParamMap.subscribe(params => {
-      this.tab = params.get('tab') === 'rentings' ? 'rentings' : 'reservations';
+      const tab = params.get('tab');
+      this.tab = tab === 'rentings' || tab === 'reports' ? tab : 'reservations';
     });
   }
 

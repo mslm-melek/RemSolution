@@ -79,6 +79,79 @@
         }
       }
     },
+    "/api/Agencies/me/reliability": {
+      "get": {
+        "tags": [
+          "Agencies"
+        ],
+        "operationId": "GetMyAgencyReliability",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgencyReliabilityDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Agencies/me/reports": {
+      "get": {
+        "tags": [
+          "Agencies"
+        ],
+        "operationId": "GetMyAgencyReports",
+        "parameters": [
+          {
+            "name": "Status",
+            "in": "query",
+            "schema": {
+              "nullable": true,
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/AgencyReportStatus"
+                }
+              ]
+            },
+            "x-position": 1
+          },
+          {
+            "name": "PageNumber",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 2
+          },
+          {
+            "name": "PageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 3
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedListOfAgencyReportDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/Agencies": {
       "get": {
         "tags": [
@@ -460,6 +533,109 @@
         ],
         "responses": {
           "204": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/AgencyReports": {
+      "get": {
+        "tags": [
+          "AgencyReports"
+        ],
+        "operationId": "GetAgencyReports",
+        "parameters": [
+          {
+            "name": "Status",
+            "in": "query",
+            "schema": {
+              "nullable": true,
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/AgencyReportStatus"
+                }
+              ]
+            },
+            "x-position": 1
+          },
+          {
+            "name": "AgencyId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "nullable": true
+            },
+            "x-position": 2
+          },
+          {
+            "name": "PageNumber",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 3
+          },
+          {
+            "name": "PageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 4
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedListOfAgencyReportDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/AgencyReports/{id}/resolve": {
+      "post": {
+        "tags": [
+          "AgencyReports"
+        ],
+        "operationId": "ResolveAgencyReport",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          }
+        ],
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResolveAgencyReportCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 2
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "400": {
             "description": ""
           }
         }
@@ -3487,6 +3663,85 @@
         }
       }
     },
+    "/api/ExchangeRates": {
+      "get": {
+        "tags": [
+          "ExchangeRates"
+        ],
+        "operationId": "GetExchangeRates",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ExchangeRateDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "ExchangeRates"
+        ],
+        "operationId": "SetExchangeRate",
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetExchangeRateCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/ExchangeRates/{id}": {
+      "delete": {
+        "tags": [
+          "ExchangeRates"
+        ],
+        "operationId": "DeleteExchangeRate",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        }
+      }
+    },
     "/api/Expenses": {
       "get": {
         "tags": [
@@ -4737,6 +4992,29 @@
         }
       }
     },
+    "/api/Marketplace/exchange-rates": {
+      "get": {
+        "tags": [
+          "Marketplace"
+        ],
+        "operationId": "GetMarketplaceExchangeRates",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DisplayRateDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/Marketplace/reservations": {
       "post": {
         "tags": [
@@ -5093,6 +5371,62 @@
                   "type": "array",
                   "items": {
                     "$ref": "#/components/schemas/ReservationRequirementDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Marketplace/reports": {
+      "post": {
+        "tags": [
+          "Marketplace"
+        ],
+        "operationId": "ReportAgency",
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateMyReportCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Marketplace/my-reports": {
+      "get": {
+        "tags": [
+          "Marketplace"
+        ],
+        "operationId": "GetMyReports",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MyReportDto"
                   }
                 }
               }
@@ -7904,6 +8238,158 @@
           }
         }
       },
+      "AgencyReliabilityDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "confirmedBookings": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "cancelledByAgency": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "upheldReports": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "honoured": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "score": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          }
+        }
+      },
+      "PaginatedListOfAgencyReportDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AgencyReportDto"
+            }
+          },
+          "pageNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "hasPreviousPage": {
+            "type": "boolean"
+          },
+          "hasNextPage": {
+            "type": "boolean"
+          }
+        }
+      },
+      "AgencyReportDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "agencyId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "agencyName": {
+            "type": "string",
+            "nullable": true
+          },
+          "reservationId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "rentingId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "reporterName": {
+            "type": "string",
+            "nullable": true
+          },
+          "bookingSummary": {
+            "type": "string",
+            "nullable": true
+          },
+          "agencyCancellationReason": {
+            "type": "string",
+            "nullable": true
+          },
+          "kind": {
+            "$ref": "#/components/schemas/AgencyReportKind"
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "$ref": "#/components/schemas/AgencyReportStatus"
+          },
+          "submittedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "resolvedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "resolutionNote": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "AgencyReportKind": {
+        "type": "integer",
+        "description": "",
+        "x-enumNames": [
+          "CancelledBooking",
+          "ServiceQuality",
+          "Billing",
+          "Vehicle",
+          "Other"
+        ],
+        "enum": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "AgencyReportStatus": {
+        "type": "integer",
+        "description": "",
+        "x-enumNames": [
+          "Open",
+          "Upheld",
+          "Dismissed"
+        ],
+        "enum": [
+          1,
+          2,
+          3
+        ]
+      },
       "AgencyCreatedDto": {
         "type": "object",
         "additionalProperties": false,
@@ -8193,6 +8679,22 @@
             "type": "number",
             "format": "double",
             "nullable": true
+          }
+        }
+      },
+      "ResolveAgencyReportCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "upheld": {
+            "type": "boolean"
+          },
+          "note": {
+            "type": "string"
           }
         }
       },
@@ -11515,6 +12017,53 @@
           }
         }
       },
+      "ExchangeRateDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "fromCurrency": {
+            "type": "string",
+            "nullable": true
+          },
+          "toCurrency": {
+            "type": "string",
+            "nullable": true
+          },
+          "rate": {
+            "type": "number",
+            "format": "decimal"
+          },
+          "asOf": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "SetExchangeRateCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "fromCurrency": {
+            "type": "string"
+          },
+          "toCurrency": {
+            "type": "string"
+          },
+          "rate": {
+            "type": "number",
+            "format": "decimal"
+          },
+          "asOf": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        }
+      },
       "PaginatedListOfExpenseDto": {
         "type": "object",
         "additionalProperties": false,
@@ -12326,6 +12875,9 @@
           "rating": {
             "$ref": "#/components/schemas/AgencyRatingSummaryDto"
           },
+          "reliability": {
+            "$ref": "#/components/schemas/AgencyReliabilityDto"
+          },
           "places": {
             "type": "array",
             "items": {
@@ -12416,6 +12968,28 @@
           }
         }
       },
+      "DisplayRateDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "from": {
+            "type": "string",
+            "nullable": true
+          },
+          "to": {
+            "type": "string",
+            "nullable": true
+          },
+          "rate": {
+            "type": "number",
+            "format": "decimal"
+          },
+          "asOf": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
       "CreateCustomerReservationCommand": {
         "type": "object",
         "additionalProperties": false,
@@ -12497,6 +13071,37 @@
           "rejectedReason": {
             "type": "string",
             "nullable": true
+          },
+          "cancelledReason": {
+            "type": "string",
+            "nullable": true
+          },
+          "cancelledByAgency": {
+            "type": "boolean"
+          },
+          "cancelledAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "wasConfirmed": {
+            "type": "boolean"
+          },
+          "myReportId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "myReportStatus": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/AgencyReportStatus"
+              }
+            ]
+          },
+          "canReport": {
+            "type": "boolean"
           },
           "cancellationFee": {
             "nullable": true,
@@ -12584,6 +13189,22 @@
             "type": "string",
             "format": "date-time",
             "nullable": true
+          },
+          "canReport": {
+            "type": "boolean"
+          },
+          "myReportId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "myReportStatus": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/AgencyReportStatus"
+              }
+            ]
           }
         }
       },
@@ -12827,6 +13448,83 @@
           4
         ]
       },
+      "CreateMyReportCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "reservationId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "rentingId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "kind": {
+            "$ref": "#/components/schemas/AgencyReportKind"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "MyReportDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "agencyId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "agencyName": {
+            "type": "string",
+            "nullable": true
+          },
+          "reservationId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "rentingId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "bookingSummary": {
+            "type": "string",
+            "nullable": true
+          },
+          "kind": {
+            "$ref": "#/components/schemas/AgencyReportKind"
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "$ref": "#/components/schemas/AgencyReportStatus"
+          },
+          "submittedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "resolvedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "resolutionNote": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
       "PaginatedListOfModelCarDto": {
         "type": "object",
         "additionalProperties": false,
@@ -12998,7 +13696,8 @@
           "RentingEndingSoon",
           "RentingLateNotice",
           "ClientDocumentExpiring",
-          "ReservationPending"
+          "ReservationPending",
+          "AgencyReport"
         ],
         "enum": [
           1,
@@ -13008,7 +13707,8 @@
           5,
           6,
           7,
-          8
+          8,
+          9
         ]
       },
       "NotificationSubject": {
@@ -13018,13 +13718,15 @@
           "Car",
           "Renting",
           "Reservation",
-          "Client"
+          "Client",
+          "AgencyReport"
         ],
         "enum": [
           1,
           2,
           3,
-          4
+          4,
+          5
         ]
       },
       "MarkNotificationsReadCommand": {

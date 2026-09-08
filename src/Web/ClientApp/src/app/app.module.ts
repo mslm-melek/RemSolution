@@ -35,9 +35,12 @@ import { AgencyFormComponent } from './agency/agency-form.component';
 import { AgencyDetailComponent } from './agency/agency-detail.component';
 import { UserFormComponent } from './user/user-form.component';
 import { SubscriptionPlanComponent } from './subscription-plan/subscription-plan.component';
+import { ExchangeRateComponent } from './exchange-rate/exchange-rate.component';
 import { SubscriptionPlanFormComponent } from './subscription-plan/subscription-plan-form.component';
 import { TeamComponent } from './team/team.component';
 import { MyAgencyComponent } from './my-agency/my-agency.component';
+import { AgencyReputationComponent } from './my-agency/agency-reputation.component';
+import { AgencyReportsComponent } from './agency-report/agency-reports.component';
 import { BookingComponent } from './booking/booking.component';
 import { BookingDetailComponent } from './booking/booking-detail.component';
 import { RentingFormComponent } from './renting/renting-form.component';
@@ -62,7 +65,10 @@ import { MyBookingsComponent } from './marketplace/my-bookings.component';
 import { MyReservationsComponent } from './marketplace/my-reservations.component';
 import { MyRentingsComponent } from './marketplace/my-rentings.component';
 import { MyChatsComponent } from './marketplace/my-chats.component';
+import { MyReportsComponent } from './marketplace/my-reports.component';
+import { ReportDialogComponent } from './marketplace/report-dialog.component';
 import { RatingStarsComponent } from './shared/rating-stars.component';
+import { ConvertedPriceComponent } from './shared/converted-price.component';
 import { ClientAvatarComponent } from './shared/client-avatar.component';
 import { QuickActionsComponent } from './shared/quick-actions.component';
 
@@ -165,8 +171,11 @@ function toMyBookings(tab: 'rentings' | null): RedirectFunction {
     UserFormComponent,
     SubscriptionPlanComponent,
     SubscriptionPlanFormComponent,
+    ExchangeRateComponent,
     TeamComponent,
     MyAgencyComponent,
+    AgencyReputationComponent,
+    AgencyReportsComponent,
     BookingComponent,
     BookingDetailComponent,
     RentingFormComponent,
@@ -191,7 +200,10 @@ function toMyBookings(tab: 'rentings' | null): RedirectFunction {
     MyReservationsComponent,
     MyRentingsComponent,
     MyChatsComponent,
+    MyReportsComponent,
+    ReportDialogComponent,
     RatingStarsComponent,
+    ConvertedPriceComponent,
     ClientAvatarComponent,
     QuickActionsComponent,
 
@@ -310,6 +322,12 @@ function toMyBookings(tab: 'rentings' | null): RedirectFunction {
       { path: 'agency/:id/edit', component: AgencyFormComponent },
       { path: 'agency/:id/user/new', component: UserFormComponent },
       { path: 'agency/:id/user/:userId', component: UserFormComponent },
+      // The platform's arbitration queue: complaints customers raised against
+      // an agency (see AgencyReportsComponent).
+      { path: 'agency-reports', component: AgencyReportsComponent },
+      // Display rates for the marketplace. Nothing stored is converted — see
+      // ExchangeRateComponent.
+      { path: 'exchange-rate', component: ExchangeRateComponent },
       { path: 'subscription-plan', component: SubscriptionPlanComponent },
       { path: 'subscription-plan/new', component: SubscriptionPlanFormComponent },
       { path: 'subscription-plan/:id', component: SubscriptionPlanFormComponent },
@@ -318,6 +336,9 @@ function toMyBookings(tab: 'rentings' | null): RedirectFunction {
       // rather than a page of its own now; its old route survives to keep
       // bookmarks and any links to it working.
       { path: 'my-agency', component: MyAgencyComponent },
+      // The reputation tab has a route of its own so the report notification can
+      // link straight at it; it is the same screen (see selectedTab).
+      { path: 'my-agency/reports', component: MyAgencyComponent },
       { path: 'team', redirectTo: 'my-agency', pathMatch: 'full' }
     ])),
     TranslocoModule,

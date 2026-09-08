@@ -13,6 +13,12 @@ namespace RemSolution.Application.Common.Notifications;
 /// notifications: an alert about a late hire goes to the people who can see
 /// hires, so the inbox can never leak a booking to someone who could not open it
 /// anyway. Agency administrators hold every permission, so they always qualify.
+/// <para>
+/// Null for an alert that belongs to no module and so has no permission to key
+/// on — a complaint raised against the agency itself. It goes to the agency's
+/// administrators, which is the same rule applied to the only screen that can
+/// open it.
+/// </para>
 /// </param>
 /// <param name="SubjectType">What the alert is about.</param>
 /// <param name="SubjectId">Id of that record.</param>
@@ -28,7 +34,7 @@ namespace RemSolution.Application.Common.Notifications;
 public sealed record StaffNotification(
     NotificationKind Kind,
     string MessageKey,
-    string Permission,
+    string? Permission,
     NotificationSubject SubjectType,
     int? SubjectId,
     string? Link,

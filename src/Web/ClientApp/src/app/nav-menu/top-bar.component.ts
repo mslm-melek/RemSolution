@@ -3,6 +3,8 @@ import { NavigationEnd, Router } from '@angular/router';
 import { filter } from 'rxjs/operators';
 import { AuthService } from '../shared/auth.service';
 import { BranchScopeService } from '../shared/branch-scope.service';
+import { CurrencyService } from '../shared/currency.service';
+import { DisplayCurrency } from '../shared/currency';
 import { ImpersonationService, ImpersonatedAgency } from '../shared/impersonation.service';
 import { LanguageService } from '../shared/language.service';
 import { AppLanguage } from '../shared/language';
@@ -64,10 +66,17 @@ export class TopBarComponent implements OnInit {
 
   readonly languages: AppLanguage[];
 
+  // --- Display currency -----------------------------------------------------
+  // Offered to the marketplace audience only. Agency screens are the agency's
+  // own books — every figure there is in its billing currency, and a second
+  // number beside an invoice total would be a figure nobody is charged.
+  currencies: string[] = [];
+
   constructor(
     private auth: AuthService,
     private impersonation: ImpersonationService,
     private language: LanguageService,
+    private currency: CurrencyService,
     private theme: ThemeService,
     private badge: NotificationBadgeService,
     private branchScope: BranchScopeService,
@@ -98,6 +107,12 @@ export class TopBarComponent implements OnInit {
 
       this.canNotifications =
         !this.isCustomer && (user.features?.includes('Notifications') ?? false);
+
+      // Signed out or a customer: the marketplace audience. The rates are public
+      // and small, and the picker hides itself when none are quoted.
+      if (!this.isAuthenticated || this.isCustomer) {
+        this.currency.load().subscribe(() => this.currencies = this.currency.available);
+      }
 
       // Only the lists this user can actually open. Each one reads `?search=`
       // from the URL, so the bar hands the term over by linking to it — there is
@@ -179,6 +194,20 @@ export class TopBarComponent implements OnInit {
   // Persists the choice and reloads — see LanguageService.use for why.
   setLanguage(language: AppLanguage) {
     this.language.use(language);
+  }
+
+  get showCurrencyPicker(): boolean {
+    return (!this.isAuthenticated || this.isCustomer) && this.currencies.length > 0;
+  }
+
+  get currentCurrency(): DisplayCurrency {
+    return this.currency.current;
+  }
+
+  // No reload: nothing about the currency is baked in at bootstrap, so the
+  // converted lines simply recompute (see ConvertedPriceComponent).
+  setCurrency(currency: DisplayCurrency) {
+    this.currency.use(currency);
   }
 
   exitWorkspace() {

@@ -18,8 +18,15 @@
             [attr.aria-selected]="tab === 'rentings'" (click)="switchTab('rentings')">
       <mat-icon aria-hidden="true">vpn_key</mat-icon> {{ t('marketplace.myRentings') }}
     </button>
+    <!-- Complaints live here rather than on their own screen: a report is about
+         a booking, and this is where the customer's bookings are. -->
+    <button type="button" role="tab" class="tab" [class.active]="tab === 'reports'"
+            [attr.aria-selected]="tab === 'reports'" (click)="switchTab('reports')">
+      <mat-icon aria-hidden="true">gavel</mat-icon> {{ t('reports.customer.myReports') }}
+    </button>
   </div>
 
   <app-my-reservations *ngIf="tab === 'reservations'"></app-my-reservations>
   <app-my-rentings *ngIf="tab === 'rentings'"></app-my-rentings>
+  <app-my-reports *ngIf="tab === 'reports'"></app-my-reports>
 </div>

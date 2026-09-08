@@ -49,11 +49,25 @@
           {{ agency.fromDailyRate.amount | number:'1.2-2' }} {{ agency.fromDailyRate.currency }}
         </span>
         <span class="figure-label">{{ t('marketplace.fromPerDay') }}</span>
+        <app-converted-price [value]="agency.fromDailyRate"></app-converted-price>
       </div>
       <div class="figure" *ngIf="agency.places.length">
         <span class="figure-value">{{ agency.places.length }}</span>
         <span class="figure-label">
           {{ t(agency.places.length === 1 ? 'marketplace.pickupPlace' : 'marketplace.pickupPlaces') }}
+        </span>
+      </div>
+      <!-- How often the agency kept its side. A rating is an opinion; this is a
+           count, so it sits with the figures and not with the stars. Absent
+           entirely for an agency with no record — see AgencyReliability. -->
+      <div class="figure" *ngIf="agency.reliability.score != null">
+        <span class="figure-value">{{ agency.reliability.score }}<span class="of">/100</span></span>
+        <span class="figure-label">{{ t('marketplace.reliability') }}</span>
+        <span class="figure-note">
+          {{ t('marketplace.reliabilityHonoured', {
+               honoured: agency.reliability.honoured,
+               total: agency.reliability.confirmedBookings
+             }) }}
         </span>
       </div>
     </div>
@@ -110,6 +124,7 @@
           <div class="foot">
             <span class="price" *ngIf="car.dailyRate">
               <span class="money">{{ car.dailyRate.amount | number:'1.2-2' }} {{ car.dailyRate.currency }}</span><span class="per">{{ t('marketplace.perDay') }}</span>
+              <app-converted-price [value]="car.dailyRate"></app-converted-price>
             </span>
             <span class="book">{{ t('marketplace.viewAndBook') }} <mat-icon>arrow_forward</mat-icon></span>
           </div>

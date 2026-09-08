@@ -41,7 +41,9 @@ public class DemoDataSeederTests : BaseTestFixture
             (await CountAsync<Car>()).Should().Be(12);
             (await CountAsync<Client>()).Should().Be(15);
             (await CountAsync<Renting>()).Should().Be(20);
-            (await CountAsync<Reservation>()).Should().Be(6);
+            // One per reservation status, plus the confirmed hold the agency
+            // then cancelled — the fixture the reputation screens read.
+            (await CountAsync<Reservation>()).Should().Be(7);
             (await CountAsync<Branch>()).Should().Be(2);
             (await CountAsync<DocumentTemplate>()).Should().Be(2);
 
@@ -240,6 +242,40 @@ public class DemoDataSeederTests : BaseTestFixture
         clients.Should().Contain(c => c.IsFlagged, "a flagged client makes the risk signal visible");
         clients.Should().Contain(c => c.CIN == null && c.PasseportNumber != null,
             "a passport-only renter exercises the foreign-client path");
+    }
+
+    /// <summary>
+    /// The two fixtures that are platform-level rather than an agency's, and so
+    /// easy to lose when the seeder is reorganised: the complaints the reputation
+    /// screens read, and the rates the marketplace converts with.
+    /// </summary>
+    [Test]
+    public async Task ShouldSeedTheReputationAndCurrencyFixtures()
+    {
+        await SeedDemoDataAsync();
+
+        var carthage = await FindAgencyAsync(PrimaryAgency);
+
+        // No tenant push: neither table is tenant data (see AgencyReport).
+        var reports = (await AllAsync<AgencyReport>())
+            .Where(r => r.AgencyId == carthage!.Id)
+            .ToList();
+
+        reports.Should().HaveCount(2);
+        reports.Should().Contain(r => r.Status == AgencyReportStatus.Open,
+            "the platform's triage queue needs something waiting in it");
+        reports.Should().Contain(r => r.Status == AgencyReportStatus.Dismissed,
+            "and something already settled, so both outcomes are visible");
+
+        // Every pair between the four currencies the demo agencies bill in, so a
+        // visitor can read any of them in any of the others.
+        (await AllAsync<ExchangeRate>()).Should().HaveCount(6);
+
+        using var _ = AmbientTenant.Push(carthage!.Id);
+
+        (await AllAsync<Reservation>())
+            .Should().Contain(r => r.CancelledAfterConfirmation && !r.CancelledByCustomer,
+                "the reliability score is only interesting with a broken booking behind it");
     }
 
     private static Task SeedDemoDataAsync() =>

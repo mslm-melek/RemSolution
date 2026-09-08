@@ -131,7 +131,12 @@ export class SideNavComponent implements OnInit {
       // No dashboard entry: the Home item already leads to the console dashboard.
       return [
         { labelKey: 'nav.agencies', icon: 'business', link: '/agency' },
-        { labelKey: 'nav.subscriptionPlans', icon: 'workspace_premium', link: '/subscription-plan' }
+        // Complaints customers raised against an agency; only the platform
+        // settles them (see ResolveAgencyReportCommand).
+        { labelKey: 'nav.reports', icon: 'gavel', link: '/agency-reports' },
+        { labelKey: 'nav.subscriptionPlans', icon: 'workspace_premium', link: '/subscription-plan' },
+        // Display rates for the marketplace; they convert nothing that is stored.
+        { labelKey: 'nav.exchangeRates', icon: 'currency_exchange', link: '/exchange-rate' }
       ];
     }
 

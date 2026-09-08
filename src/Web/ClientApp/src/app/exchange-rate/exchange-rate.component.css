@@ -1,0 +1,37 @@
+/* The frame comes from styles.scss; this only lays the quote row out. */
+
+.quote-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--sp-3);
+}
+
+.quote-row .code {
+  width: 110px;
+}
+
+.quote-row .rate {
+  width: 160px;
+}
+
+.quote-row .date {
+  width: 190px;
+}
+
+.quote-row button {
+  margin-top: var(--sp-2);
+}
+
+.quote-hint {
+  margin: 0 0 var(--sp-4);
+  font-size: var(--fs-sm);
+  color: var(--muted);
+}
+
+.state {
+  text-align: center;
+  color: var(--muted);
+  padding: 40px var(--sp-4);
+  font-size: var(--fs-sm);
+}

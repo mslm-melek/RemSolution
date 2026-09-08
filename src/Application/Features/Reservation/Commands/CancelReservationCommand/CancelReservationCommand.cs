@@ -4,6 +4,7 @@ using RemSolution.Application.Common.Interfaces;
 using RemSolution.Application.Common.Security;
 using RemSolution.Application.Common.Settings;
 using RemSolution.Domain.Constants;
+using RemSolution.Domain.Enums;
 using FluentValidation.Results;
 
 namespace RemSolution.Application.Features.Reservation.Commands.CancelReservationCommand
@@ -57,6 +58,22 @@ namespace RemSolution.Application.Features.Reservation.Commands.CancelReservatio
                 }
             }
 
+            // Calling off a hold the agency had already CONFIRMED is a promise
+            // broken, and it costs the agency reliability points customers can
+            // see (see AgencyReliability). The least it owes them is a reason —
+            // which is also what the customer's report will be arbitrated
+            // against. A pending request being dropped is not that, and stays
+            // reason-optional.
+            if (entity.Status is ReservationStatus.Confirmed or ReservationStatus.Paid
+                && string.IsNullOrWhiteSpace(request.Reason))
+            {
+                throw new ValidationException(new[]
+                {
+                    new ValidationFailure(nameof(request.Reason),
+                        "Say why this confirmed booking is being cancelled — the customer is told.")
+                });
+            }
+
             _context.SetOriginalRowVersion(entity, request.RowVersion);
 
             // Throws InvalidReservationTransitionException (→ 409) if the hold is
@@ -64,7 +81,9 @@ namespace RemSolution.Application.Features.Reservation.Commands.CancelReservatio
             //
             // No fee and not counted against the customer: this is the AGENCY
             // calling its own booking off, and charging someone for a decision
-            // they did not take would be the wrong way round.
+            // they did not take would be the wrong way round. It is counted
+            // against the AGENCY instead — Cancel() records that the hold had
+            // been confirmed, and the reliability score reads it.
             entity.Cancel(request.Reason, at: _dateTime.GetUtcNow().UtcDateTime);
 
             await _context.SaveChangesAsync(cancellationToken);

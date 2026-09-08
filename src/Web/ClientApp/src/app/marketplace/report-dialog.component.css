@@ -1,0 +1,28 @@
+/* Same narrow single-column shape as the other dialogs; tokens from styles.scss. */
+.dialog-subtitle {
+  margin: 0 0 4px;
+  font-weight: 600;
+  color: var(--ink-2);
+}
+
+.dialog-hint {
+  margin: 0 0 8px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.dialog-form {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 340px;
+  padding-top: 8px;
+}
+
+.dialog-form mat-form-field {
+  width: 100%;
+}
+
+.error-banner {
+  margin-bottom: 8px;
+}

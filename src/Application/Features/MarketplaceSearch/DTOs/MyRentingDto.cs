@@ -28,5 +28,12 @@ namespace RemSolution.Application.Features.MarketplaceSearch.DTOs
         public int? MyRating { get; init; }
         public string? MyComment { get; init; }
         public DateTime? ReviewedAt { get; init; }
+
+        // A rating is an opinion; a report is a complaint the platform
+        // arbitrates. One per rental, and only while the reporting window is
+        // open — both decided by the server.
+        public bool CanReport { get; init; }
+        public int? MyReportId { get; init; }
+        public AgencyReportStatus? MyReportStatus { get; init; }
     }
 }

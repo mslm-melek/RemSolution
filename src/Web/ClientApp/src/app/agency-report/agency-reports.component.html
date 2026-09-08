@@ -1,0 +1,119 @@
+<div class="page" *transloco="let t">
+  <div class="header-row">
+    <div>
+      <p class="page-eyebrow">{{ t('nav.reports') }}</p>
+      <h2 class="title">{{ t('reports.title') }}</h2>
+      <p class="page-subtitle">{{ t('reports.subtitle') }}</p>
+    </div>
+  </div>
+
+  <div class="filters">
+    <button mat-stroked-button [class.active]="filter === AgencyReportStatus.Open"
+            (click)="onFilter(AgencyReportStatus.Open)">
+      {{ t('reports.statuses.1') }}
+    </button>
+    <button mat-stroked-button [class.active]="filter === AgencyReportStatus.Upheld"
+            (click)="onFilter(AgencyReportStatus.Upheld)">
+      {{ t('reports.statuses.2') }}
+    </button>
+    <button mat-stroked-button [class.active]="filter === AgencyReportStatus.Dismissed"
+            (click)="onFilter(AgencyReportStatus.Dismissed)">
+      {{ t('reports.statuses.3') }}
+    </button>
+    <button mat-stroked-button [class.active]="filter === null" (click)="onFilter(null)">
+      {{ t('reports.filterAll') }}
+    </button>
+  </div>
+
+  <div *ngIf="error" class="error-banner">{{ error }}</div>
+  <div *ngIf="loading" class="state">{{ t('common.loading') }}</div>
+
+  <div *ngIf="!loading && reports.length === 0" class="state">
+    {{ filter === AgencyReportStatus.Open ? t('reports.noneOpen') : t('reports.none') }}
+  </div>
+
+  <div class="list" *ngIf="!loading && reports.length">
+    <div class="report-card" *ngFor="let r of reports">
+      <div class="head">
+        <div class="who">
+          <a class="agency" [routerLink]="['/agency', r.agencyId]">
+            <mat-icon aria-hidden="true">business</mat-icon>{{ r.agencyName }}
+          </a>
+          <div class="what">{{ t(kindLabelKey(r.kind)) }}</div>
+          <div class="booking" *ngIf="r.bookingSummary">
+            {{ t('reports.booking') }} — <span class="num">{{ r.bookingSummary }}</span>
+          </div>
+          <div class="reporter">{{ r.reporterName }}</div>
+        </div>
+        <div class="side">
+          <span class="chip" [ngClass]="statusTone(r.status)">{{ t(statusLabelKey(r.status)) }}</span>
+          <!-- An instant, recorded from the clock, so it reads local. -->
+          <span class="when">{{ t('reports.submittedOn', { date: (r.submittedAt | date:'dd MMM yyyy HH:mm') }) }}</span>
+        </div>
+      </div>
+
+      <!-- Both accounts side by side: the agency's reason was copied onto the
+           report when it was raised, so neither side has to be asked again. -->
+      <div class="accounts">
+        <div class="account" *ngIf="r.agencyCancellationReason">
+          <div class="account-label">{{ t('reports.agencyReason') }}</div>
+          <p>{{ r.agencyCancellationReason }}</p>
+        </div>
+        <div class="account">
+          <div class="account-label">{{ t('reports.customerAccount') }}</div>
+          <p>{{ r.message }}</p>
+        </div>
+      </div>
+
+      <div class="verdict" *ngIf="r.resolutionNote">
+        <div class="verdict-head">
+          <mat-icon aria-hidden="true">gavel</mat-icon>
+          {{ t('reports.verdict') }} —
+          {{ t('reports.resolvedOn', { date: (r.resolvedAt | date:'dd MMM yyyy') }) }}
+        </div>
+        <p>{{ r.resolutionNote }}</p>
+      </div>
+
+      <div class="actions" *ngIf="r.status === AgencyReportStatus.Open && resolving !== r">
+        <button mat-flat-button color="primary" (click)="open(r)">
+          <mat-icon aria-hidden="true">gavel</mat-icon> {{ t('reports.verdict') }}
+        </button>
+      </div>
+
+      <!-- Inline rather than a dialog: the decision belongs to the two accounts
+           above it, and keeping it in place keeps that obvious. -->
+      <div class="resolve-form" *ngIf="resolving === r">
+        <mat-form-field appearance="outline">
+          <mat-label>{{ t('reports.resolutionNote') }}</mat-label>
+          <textarea matInput rows="3" maxlength="2000" [(ngModel)]="note"
+                    [placeholder]="t('reports.notePlaceholder')"></textarea>
+        </mat-form-field>
+
+        <p class="hint">{{ t('reports.upholdHint') }}</p>
+        <p class="hint">{{ t('reports.dismissHint') }}</p>
+
+        <div class="form-error" *ngIf="formError">{{ formError }}</div>
+
+        <div class="buttons">
+          <button mat-stroked-button (click)="close()" [disabled]="saving">
+            {{ t('common.cancel') }}
+          </button>
+          <button mat-stroked-button (click)="resolve(false)" [disabled]="saving">
+            {{ t('reports.dismiss') }}
+          </button>
+          <button mat-flat-button color="warn" (click)="resolve(true)" [disabled]="saving">
+            {{ saving ? t('common.saving') : t('reports.uphold') }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <mat-paginator *ngIf="!loading && totalCount > pageSize"
+                 [length]="totalCount"
+                 [pageIndex]="pageNumber - 1"
+                 [pageSize]="pageSize"
+                 [pageSizeOptions]="[20, 50]"
+                 (page)="onPage($event)">
+  </mat-paginator>
+</div>

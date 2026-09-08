@@ -1,4 +1,5 @@
 import { Component, OnInit, inject } from '@angular/core';
+import { MatDialog } from '@angular/material/dialog';
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import {
@@ -10,6 +11,8 @@ import { reservationStatusLabelKey, reservationStatusTone } from '../shared/rese
 import {
   isRequirementSettled, requirementKindLabelKey, requirementStatusLabelKey
 } from '../shared/reservation-requirements';
+import { reportStatusLabelKey, reportStatusTone } from '../shared/agency-reports';
+import { ReportDialogComponent, ReportDialogData } from './report-dialog.component';
 
 @Component({
   selector: 'app-my-reservations',
@@ -35,8 +38,10 @@ export class MyReservationsComponent implements OnInit {
   readonly requirementKindLabelKey = requirementKindLabelKey;
   readonly requirementStatusLabelKey = requirementStatusLabelKey;
   readonly isRequirementSettled = isRequirementSettled;
+  readonly reportStatusLabelKey = reportStatusLabelKey;
+  readonly reportStatusTone = reportStatusTone;
 
-  constructor(private client: MarketplaceClient) { }
+  constructor(private client: MarketplaceClient, private dialog: MatDialog) { }
 
   ngOnInit() {
     this.load();
@@ -156,5 +161,22 @@ export class MyReservationsComponent implements OnInit {
       next: () => this.load(),
       error: () => this.error = this.transloco.translate('marketplace.cancelFailed')
     });
+  }
+
+  /**
+   * Taking a booking to the platform. Whether it may be reported at all is the
+   * server's answer (`canReport`), so the button and the command cannot disagree.
+   */
+  report(r: MyReservationDto) {
+    if (!r.id) return;
+
+    this.dialog.open(ReportDialogComponent, {
+      data: {
+        reservationId: r.id,
+        agencyName: r.agencyName,
+        bookingLabel: `${r.carBrandName ?? ''} ${r.carModelName ?? ''}`.trim(),
+        cancelledByAgency: r.cancelledByAgency
+      } as ReportDialogData
+    }).afterClosed().subscribe(sent => { if (sent) this.load(); });
   }
 }

@@ -982,6 +982,24 @@
   <data name="Notification.reservationPendingExpiringSoon.Body" xml:space="preserve">
     <value>{{client}}'s request for {{car}} from {{startDate}} runs out within the hour and has had no answer.</value>
   </data>
+  <data name="Notification.agencyReportOpened.Subject" xml:space="preserve">
+    <value>A customer has reported your agency ({{reference}})</value>
+  </data>
+  <data name="Notification.agencyReportOpened.Body" xml:space="preserve">
+    <value>{{client}} has taken a complaint about your agency to the platform ({{reference}}). The platform will look at it and tell you what it decides.</value>
+  </data>
+  <data name="Notification.agencyReportUpheld.Subject" xml:space="preserve">
+    <value>Report {{reference}} was upheld</value>
+  </data>
+  <data name="Notification.agencyReportUpheld.Body" xml:space="preserve">
+    <value>The platform found for the customer on report {{reference}}. It counts against your reliability score, which customers see on your shopfront.</value>
+  </data>
+  <data name="Notification.agencyReportDismissed.Subject" xml:space="preserve">
+    <value>Report {{reference}} was dismissed</value>
+  </data>
+  <data name="Notification.agencyReportDismissed.Body" xml:space="preserve">
+    <value>The platform found for you on report {{reference}}. Your reliability score is untouched.</value>
+  </data>
   <data name="Notification.clientRentingStartingSoon.Subject" xml:space="preserve">
     <value>Your rental starts on {{startDate}}</value>
   </data>

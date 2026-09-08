@@ -21,6 +21,13 @@
         <div class="rejected" *ngIf="r.rejectedReason">
           <mat-icon aria-hidden="true">info</mat-icon>{{ r.rejectedReason }}
         </div>
+        <!-- Why it was called off. Loudest when the agency is the one who did:
+             that is the case the customer can take to the platform. -->
+        <div class="rejected" *ngIf="r.cancelledReason">
+          <mat-icon aria-hidden="true">event_busy</mat-icon>
+          <span *ngIf="r.cancelledByAgency">{{ t('reports.customer.cancelledByAgency') }} — </span>
+          {{ r.cancelledReason }}
+        </div>
       </div>
 
       <div class="side">
@@ -29,6 +36,7 @@
         </span>
         <span class="price" *ngIf="r.price">
           <span class="money">{{ r.price.amount | number:'1.2-2' }} {{ r.price.currency }}</span>
+          <app-converted-price [value]="r.price"></app-converted-price>
         </span>
         <!-- The hold's deadline is an instant we recorded, so it reads local. -->
         <span class="expires" *ngIf="isPending(r) && r.expiresAt">
@@ -52,6 +60,16 @@
         <button mat-stroked-button class="cancel-btn" *ngIf="r.canCancel" (click)="cancel(r)">
           {{ t('common.cancel') }}
         </button>
+
+        <!-- One report per booking: once raised, the outcome replaces the button. -->
+        <span class="chip" *ngIf="r.myReportId" [ngClass]="reportStatusTone(r.myReportStatus)">
+          {{ t(reportStatusLabelKey(r.myReportStatus)) }}
+        </span>
+        <button mat-stroked-button class="report-btn" *ngIf="!r.myReportId && r.canReport"
+                (click)="report(r)">
+          <mat-icon aria-hidden="true">gavel</mat-icon>
+          {{ t('reports.customer.report') }}
+        </button>
       </div>
 
       <!-- What the agency needs before it hands the keys over. Inside the card,
@@ -66,6 +84,7 @@
               <span class="money" *ngIf="ask.amount">
                 — {{ ask.amount.amount | number:'1.2-2' }} {{ ask.amount.currency }}
               </span>
+              <app-converted-price *ngIf="ask.amount" [value]="ask.amount"></app-converted-price>
             </div>
             <div class="ask-state">{{ t(requirementStatusLabelKey(ask.status)) }}</div>
             <div class="ask-note" *ngIf="ask.reviewNote">{{ ask.reviewNote }}</div>

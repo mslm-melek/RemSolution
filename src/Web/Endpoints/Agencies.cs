@@ -1,4 +1,7 @@
 using Microsoft.AspNetCore.Http.HttpResults;
+using RemSolution.Application.Common.Models;
+using RemSolution.Application.Features.AgencyReport.DTOs;
+using RemSolution.Application.Features.AgencyReport.Queries.GetMyAgencyReportsQuery;
 using RemSolution.Application.Features.Agency.Commands.CreateAgencyBranchCommand;
 using RemSolution.Application.Features.Agency.Commands.CreateAgencyCommand;
 using RemSolution.Application.Features.Agency.Commands.DeleteAgencyBranchCommand;
@@ -13,6 +16,7 @@ using RemSolution.Application.Features.Agency.Queries.GetAgencyBranchesQuery;
 using RemSolution.Application.Features.Agency.Queries.GetAgencyByIdQuery;
 using RemSolution.Application.Features.Agency.Queries.GetAgencyFeaturesQuery;
 using RemSolution.Application.Features.Agency.Queries.GetMyAgencyQuery;
+using RemSolution.Application.Features.Agency.Queries.GetMyAgencyReliabilityQuery;
 using RemSolution.Application.Features.Branch.DTOs;
 using RemSolution.Domain.Constants;
 
@@ -28,7 +32,11 @@ public class Agencies : EndpointGroupBase
         app.MapGroup(this)
             .RequireAuthorization(Policies.AgencyAdminOnly)
             .MapGet(GetMyAgency, "me")
-            .MapPut(UpdateMyAgency, "me");
+            .MapPut(UpdateMyAgency, "me")
+            // The public reliability figure, shown back to the agency it is
+            // about, and the complaints behind it.
+            .MapGet(GetMyAgencyReliability, "me/reliability")
+            .MapGet(GetMyAgencyReports, "me/reports");
 
         app.MapGroup(this)
             .RequireAuthorization(Policies.PlatformAdminOnly)
@@ -58,6 +66,19 @@ public class Agencies : EndpointGroupBase
     {
         await sender.Send(command);
         return TypedResults.NoContent();
+    }
+
+    public async Task<Ok<AgencyReliabilityDto>> GetMyAgencyReliability(ISender sender)
+    {
+        var result = await sender.Send(new GetMyAgencyReliabilityQuery());
+        return TypedResults.Ok(result);
+    }
+
+    public async Task<Ok<PaginatedList<AgencyReportDto>>> GetMyAgencyReports(
+        ISender sender, [AsParameters] GetMyAgencyReportsQuery query)
+    {
+        var result = await sender.Send(query);
+        return TypedResults.Ok(result);
     }
 
     public async Task<Ok<IList<BranchDto>>> GetAgencyBranches(ISender sender, int id)

@@ -104,6 +104,29 @@
       </button>
     </mat-menu>
 
+    <!-- What currency to READ prices in. Only for the marketplace audience, and
+         only when the platform has quoted a rate: every price stays the
+         agency's, with the conversion as a second line beside it. -->
+    <button type="button" mat-button class="bar-language" *ngIf="showCurrencyPicker"
+            [matMenuTriggerFor]="currencyMenu" [attr.aria-label]="t('currency.label')">
+      <mat-icon>currency_exchange</mat-icon>
+      <!-- The code only once one is chosen: with no preference the icon alone
+           says what the button is for, and a placeholder would not. -->
+      <span class="bar-language-code num" *ngIf="currentCurrency">{{ currentCurrency }}</span>
+    </button>
+    <mat-menu #currencyMenu="matMenu">
+      <button mat-menu-item [disabled]="!currentCurrency" (click)="setCurrency(null)">
+        <mat-icon>{{ !currentCurrency ? 'check' : 'money_off' }}</mat-icon>
+        {{ t('currency.asQuoted') }}
+      </button>
+      <button mat-menu-item *ngFor="let code of currencies"
+              [disabled]="code === currentCurrency"
+              (click)="setCurrency(code)">
+        <mat-icon>{{ code === currentCurrency ? 'check' : 'payments' }}</mat-icon>
+        <span class="num">{{ code }}</span>
+      </button>
+    </mat-menu>
+
     <!-- Signed out: the way in stays in the bar, since there is no rail. -->
     <ng-container *ngIf="!isAuthenticated">
       <a mat-button href="/Identity/Account/Login">

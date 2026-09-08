@@ -22,6 +22,11 @@ namespace RemSolution.Application.Features.MarketplaceSearch.DTOs
         // Public reputation. Null average = never reviewed, which the page says
         // in words rather than rendering as zero stars.
         public AgencyRatingSummaryDto Rating { get; init; } = new();
+        // How often the agency has kept its side. Deliberately on the shopfront
+        // only and not on every car card: the denominator is a count over the
+        // agency's bookings, which as a correlated sub-query per card would make
+        // a page of search results pay for it.
+        public AgencyReliabilityDto Reliability { get; init; } = new();
         public IList<MarketplacePlaceDto> Places { get; init; } = new List<MarketplacePlaceDto>();
     }
 }

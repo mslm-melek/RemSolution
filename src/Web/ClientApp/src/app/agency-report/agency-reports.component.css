@@ -1,0 +1,189 @@
+/* The platform's arbitration queue. Card per report rather than a table: a
+   decision is taken by reading two accounts, not by scanning a column. */
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-4);
+}
+
+.filters .active {
+  border-color: var(--brand-600);
+  color: var(--brand-600);
+}
+
+.state {
+  text-align: center;
+  color: var(--muted);
+  padding: 40px var(--sp-4);
+  font-size: var(--fs-sm);
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.report-card {
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  padding: var(--sp-4) var(--sp-5);
+}
+
+.head {
+  display: flex;
+  gap: var(--sp-4);
+  justify-content: space-between;
+}
+
+.who {
+  min-width: 0;
+}
+
+.agency {
+  display: flex;
+  width: fit-content;
+  align-items: center;
+  gap: var(--sp-1);
+  color: var(--muted);
+  font-size: var(--fs-sm);
+  text-decoration: none;
+}
+
+.agency:hover {
+  color: var(--brand-600);
+  text-decoration: underline;
+}
+
+.agency mat-icon {
+  flex: none;
+  font-size: 15px;
+  width: 15px;
+  height: 15px;
+}
+
+.what {
+  font-family: var(--font-display);
+  font-size: var(--fs-section);
+  font-weight: var(--fw-medium);
+}
+
+.booking,
+.reporter {
+  color: var(--ink-2);
+  font-size: var(--fs-sm);
+}
+
+.side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--sp-2);
+  text-align: end;
+}
+
+.when {
+  font-size: var(--fs-micro);
+  color: var(--muted);
+}
+
+/* Two columns so the accounts read as claim and answer, not as one story. */
+.accounts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--sp-4);
+  margin-top: var(--sp-3);
+}
+
+.account-label {
+  font-size: var(--fs-micro);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+
+.account p {
+  margin: var(--sp-1) 0 0;
+  white-space: pre-wrap;
+}
+
+.verdict {
+  margin-top: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+}
+
+.verdict-head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  color: var(--ink-2);
+}
+
+.verdict-head mat-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+}
+
+.verdict p {
+  margin: var(--sp-2) 0 0;
+  white-space: pre-wrap;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: var(--sp-3);
+}
+
+/* Reads as a continuation of the card above it, not a second card. */
+.resolve-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin-top: var(--sp-3);
+  padding-top: var(--sp-4);
+  border-top: 1px solid var(--line);
+}
+
+.resolve-form mat-form-field {
+  width: 100%;
+}
+
+.resolve-form .hint {
+  margin: 0;
+  font-size: var(--fs-sm);
+  color: var(--muted);
+}
+
+.resolve-form .form-error {
+  background: var(--danger-bg);
+  color: var(--danger-ink);
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--r-sm);
+}
+
+.resolve-form .buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--sp-2);
+}
+
+@media (max-width: 620px) {
+  .head {
+    flex-wrap: wrap;
+  }
+
+  .side {
+    align-items: flex-start;
+    text-align: start;
+    width: 100%;
+  }
+}

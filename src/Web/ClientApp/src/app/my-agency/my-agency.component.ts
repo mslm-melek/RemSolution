@@ -1,5 +1,6 @@
 import { Component, OnInit, ViewChild, inject } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { TranslocoService } from '@jsverse/transloco';
 import {
   AgenciesClient, AgencyDto, BranchesClient, CancellationFeeMode, CountriesClient, CountryDto,
@@ -24,6 +25,14 @@ export class MyAgencyComponent implements OnInit {
   // Error banners are plain strings, so they are translated imperatively.
   private readonly transloco = inject(TranslocoService);
   private readonly auth = inject(AuthService);
+  private readonly route = inject(ActivatedRoute);
+
+  /**
+   * Which tab opens. Only ever 0 or 1: /my-agency/reports lands on Reputation,
+   * which the report notification links at, and everything else opens on
+   * Details. A one-way binding, so the user can still move off it.
+   */
+  selectedTab = 0;
 
   @ViewChild(MapPickerComponent) private picker?: MapPickerComponent;
   @ViewChild(BranchesEditorComponent) private editor?: BranchesEditorComponent;
@@ -105,6 +114,10 @@ export class MyAgencyComponent implements OnInit {
   }
 
   ngOnInit() {
+    // The reputation tab has a route of its own so a notification can point at
+    // it; the rest of the screen is one page with tabs.
+    this.selectedTab = this.route.snapshot.url.some(segment => segment.path === 'reports') ? 1 : 0;
+
     this.countriesClient.getCountries().subscribe({
       next: countries => this.countries = countries || [],
       error: err => console.error(err)

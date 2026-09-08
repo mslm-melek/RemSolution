@@ -39,6 +39,14 @@ namespace RemSolution.Domain.Enums
         ReservationPending = 8,
 
         /// <summary>
+        /// A customer has complained about the agency to the platform, or the
+        /// platform has settled that complaint. The agency's queue: it is the
+        /// side that has to answer for it, and an upheld report moves a figure
+        /// customers can see (see AgencyReliability).
+        /// </summary>
+        AgencyReport = 9,
+
+        /// <summary>
         /// Client reminder: their booking starts in a few days. Covers a
         /// confirmed reservation as well as a hire — the message key says which
         /// (see NotificationMessages), because to the customer it is the same

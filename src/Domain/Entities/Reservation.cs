@@ -55,6 +55,12 @@ namespace RemSolution.Domain.Entities
         public bool CancelledByCustomer { get; private set; }
         public Money? CancellationFee { get; private set; }
 
+        // Whether the hold had been confirmed when it was called off. Status is
+        // gone by then — Cancelled overwrites it — so the answer is recorded as
+        // the transition happens, and it is what separates a broken promise from
+        // a request nobody had answered yet. Both reliability scores read it.
+        public bool CancelledAfterConfirmation { get; private set; }
+
         // Set when the hold is converted into an actual renting.
         public int? RentingId { get; private set; }
         public virtual Renting? Renting { get; private set; }
@@ -135,6 +141,11 @@ namespace RemSolution.Domain.Entities
             {
                 throw new InvalidReservationTransitionException(Status, "cancelled");
             }
+
+            // Read before the status is overwritten, and derived here rather than
+            // passed in so no caller can record it wrongly.
+            CancelledAfterConfirmation = Status
+                is ReservationStatus.Confirmed or ReservationStatus.Paid;
 
             Status = ReservationStatus.Cancelled;
             CancelledReason = reason;

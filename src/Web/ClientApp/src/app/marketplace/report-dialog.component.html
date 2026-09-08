@@ -1,0 +1,43 @@
+<ng-container *transloco="let t">
+  <h2 mat-dialog-title>{{ t('reports.customer.title') }}</h2>
+
+  <mat-dialog-content>
+    <p class="dialog-subtitle" *ngIf="data.agencyName">{{ data.agencyName }}</p>
+    <p class="dialog-hint" *ngIf="data.bookingLabel">{{ data.bookingLabel }}</p>
+
+    <p class="dialog-hint">{{ t('reports.customer.intro') }}</p>
+    <p class="dialog-hint">{{ t('reports.customer.noMoney') }}</p>
+
+    <div *ngIf="errorMessage" class="error-banner">
+      <mat-icon>error_outline</mat-icon> {{ errorMessage }}
+    </div>
+
+    <form [formGroup]="form" class="dialog-form" (ngSubmit)="submit()">
+      <mat-form-field appearance="outline">
+        <mat-label>{{ t('reports.customer.kind') }}</mat-label>
+        <mat-select formControlName="kind">
+          <ng-container *ngFor="let kind of kinds">
+            <mat-option *ngIf="offers(kind)" [value]="kind">{{ t(kindLabelKey(kind)) }}</mat-option>
+          </ng-container>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>{{ t('reports.customer.message') }}</mat-label>
+        <textarea matInput rows="5" formControlName="message"
+                  [placeholder]="t('reports.customer.messagePlaceholder')"></textarea>
+        <mat-error *ngIf="form.get('message')?.hasError('required')">
+          {{ t('common.required') }}
+        </mat-error>
+      </mat-form-field>
+    </form>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-button type="button" (click)="close()">{{ t('common.back') }}</button>
+    <button mat-raised-button color="warn" type="button" (click)="submit()" [disabled]="saving">
+      <mat-icon>gavel</mat-icon>
+      {{ saving ? t('common.saving') : t('reports.customer.send') }}
+    </button>
+  </mat-dialog-actions>
+</ng-container>

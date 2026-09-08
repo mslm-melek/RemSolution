@@ -25,7 +25,10 @@
 
   <div *ngIf="errorMessage" class="error-banner">{{ errorMessage }}</div>
 
-  <mat-tab-group (selectedTabChange)="onTabChange()">
+  <!-- Reputation is second and unconditional on purpose: the tabs after it are
+       feature-gated, so its index is the one thing that cannot move, and the
+       report notification links straight at it. -->
+  <mat-tab-group [selectedIndex]="selectedTab" (selectedTabChange)="onTabChange()">
     <!-- DETAILS -->
     <mat-tab [label]="t('myAgency.tabs.details')">
       <div class="tab-body">
@@ -116,6 +119,16 @@
             </button>
           </div>
         </form>
+      </div>
+    </mat-tab>
+
+    <!-- REPUTATION -->
+    <!-- Second and unconditional: every tab after it is feature-gated, so this
+         is the one index that cannot move, and the report notification links
+         straight at it (see selectedTab). -->
+    <mat-tab [label]="t('myAgency.tabs.reputation')">
+      <div class="tab-body">
+        <app-agency-reputation></app-agency-reputation>
       </div>
     </mat-tab>
 

@@ -982,6 +982,24 @@
   <data name="Notification.reservationPendingExpiringSoon.Body" xml:space="preserve">
     <value>La demande de {{client}} pour {{car}} à partir du {{startDate}} expire dans moins d'une heure et n'a pas eu de réponse.</value>
   </data>
+  <data name="Notification.agencyReportOpened.Subject" xml:space="preserve">
+    <value>Un client a signalé votre agence ({{reference}})</value>
+  </data>
+  <data name="Notification.agencyReportOpened.Body" xml:space="preserve">
+    <value>{{client}} a adressé une réclamation concernant votre agence à la plateforme ({{reference}}). La plateforme va l'examiner et vous dira ce qu'elle décide.</value>
+  </data>
+  <data name="Notification.agencyReportUpheld.Subject" xml:space="preserve">
+    <value>Le signalement {{reference}} a été retenu</value>
+  </data>
+  <data name="Notification.agencyReportUpheld.Body" xml:space="preserve">
+    <value>La plateforme a donné raison au client sur le signalement {{reference}}. Il pèse sur votre note de fiabilité, que les clients voient sur votre vitrine.</value>
+  </data>
+  <data name="Notification.agencyReportDismissed.Subject" xml:space="preserve">
+    <value>Le signalement {{reference}} a été écarté</value>
+  </data>
+  <data name="Notification.agencyReportDismissed.Body" xml:space="preserve">
+    <value>La plateforme vous a donné raison sur le signalement {{reference}}. Votre note de fiabilité n'est pas touchée.</value>
+  </data>
   <data name="Notification.clientRentingStartingSoon.Subject" xml:space="preserve">
     <value>Votre location commence le {{startDate}}</value>
   </data>

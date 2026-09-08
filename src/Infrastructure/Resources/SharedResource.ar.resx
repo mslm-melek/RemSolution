@@ -982,6 +982,24 @@
   <data name="Notification.reservationPendingExpiringSoon.Body" xml:space="preserve">
     <value>طلب {{client}} على {{car}} انطلاقا من {{startDate}} تنتهي مدته في أقل من ساعة ولم يتلقّ ردّا.</value>
   </data>
+  <data name="Notification.agencyReportOpened.Subject" xml:space="preserve">
+    <value>أبلغ حريف عن وكالتك ({{reference}})</value>
+  </data>
+  <data name="Notification.agencyReportOpened.Body" xml:space="preserve">
+    <value>رفع {{client}} شكوى بشأن وكالتك إلى المنصة ({{reference}}). ستنظر المنصة في الشكوى وتُعلمك بقرارها.</value>
+  </data>
+  <data name="Notification.agencyReportUpheld.Subject" xml:space="preserve">
+    <value>قُبل البلاغ {{reference}}</value>
+  </data>
+  <data name="Notification.agencyReportUpheld.Body" xml:space="preserve">
+    <value>حكمت المنصة لصالح الحريف في البلاغ {{reference}}. يؤثر ذلك على نتيجة موثوقيتك التي يراها الحرفاء في واجهة وكالتك.</value>
+  </data>
+  <data name="Notification.agencyReportDismissed.Subject" xml:space="preserve">
+    <value>رُفض البلاغ {{reference}}</value>
+  </data>
+  <data name="Notification.agencyReportDismissed.Body" xml:space="preserve">
+    <value>حكمت المنصة لصالحك في البلاغ {{reference}}. لم تتأثر نتيجة موثوقيتك.</value>
+  </data>
   <data name="Notification.clientRentingStartingSoon.Subject" xml:space="preserve">
     <value>تبدأ فترة الإيجار في {{startDate}}</value>
   </data>

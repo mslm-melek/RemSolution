@@ -1,7 +1,10 @@
 import { Component, OnInit, inject } from '@angular/core';
+import { MatDialog } from '@angular/material/dialog';
 import { TranslocoService } from '@jsverse/transloco';
 import { CreateMyReviewCommand, MarketplaceClient, MyRentingDto, RentingState } from '../web-api-client';
 import { extractValidationErrors } from '../shared/form-utils';
+import { reportStatusLabelKey, reportStatusTone } from '../shared/agency-reports';
+import { ReportDialogComponent, ReportDialogData } from './report-dialog.component';
 
 // The rentals half of "Mes voyages" (see MyBookingsComponent): the customer's
 // rentals across every agency, and the only place a rating starts from — you
@@ -38,10 +41,27 @@ export class MyRentingsComponent implements OnInit {
     [RentingState.Cancelled]: 'enums.rentingState.cancelled'
   };
 
-  constructor(private client: MarketplaceClient) { }
+  readonly reportStatusLabelKey = reportStatusLabelKey;
+  readonly reportStatusTone = reportStatusTone;
+
+  constructor(private client: MarketplaceClient, private dialog: MatDialog) { }
 
   ngOnInit() {
     this.load();
+  }
+
+  // A rating is an opinion the agency lives with; a report is a complaint the
+  // platform settles. Whether one may still be raised is the server's answer.
+  report(r: MyRentingDto) {
+    if (!r.rentingId) return;
+
+    this.dialog.open(ReportDialogComponent, {
+      data: {
+        rentingId: r.rentingId,
+        agencyName: r.agencyName,
+        bookingLabel: `${r.carBrandName ?? ''} ${r.carModelName ?? ''}`.trim()
+      } as ReportDialogData
+    }).afterClosed().subscribe(sent => { if (sent) this.load(); });
   }
 
   load() {

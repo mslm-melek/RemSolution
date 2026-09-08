@@ -1,4 +1,4 @@
-﻿{
+{
   "language": {
     "label": "Langue",
     "en": "English",
@@ -124,7 +124,28 @@
     "finance": "Finances",
     "clientsList": "Tous les clients",
     "myAgency": "Mon agence",
+    "reports": "Signalements",
+    "myReports": "Mes signalements",
+    "exchangeRates": "Taux de change",
     "mainLabel": "Navigation principale"
+  },
+  "currency": {
+    "label": "Devise d'affichage",
+    "asQuoted": "Devise de l'agence",
+    "note": "Conversion indicative. Vous êtes facturé dans la devise de l'agence."
+  },
+  "exchangeRate": {
+    "title": "Taux de change",
+    "subtitle": "Uniquement pour l'affichage sur le marketplace : aucun montant enregistré n'est converti.",
+    "from": "De",
+    "to": "Vers",
+    "rate": "Taux",
+    "asOf": "Cours du",
+    "pair": "Taux",
+    "hint": "Un taux se lit « 1 De = Taux Vers ». Le sens inverse est déduit : coter TND → EUR suffit pour afficher les prix aux deux.",
+    "none": "Aucun taux coté. Le marketplace affiche alors chaque prix dans la devise de son agence.",
+    "loadFailed": "Impossible de charger les taux.",
+    "confirmDelete": "Retirer le taux {{ from }} → {{ to }} ?"
   },
   "home": {
     "welcomeTitle": "Bienvenue sur RemSolution",
@@ -864,7 +885,10 @@
     "noPlacesOnMap": "Aucun lieu de prise en charge à afficher sur la carte pour cette recherche.",
     "whereToFindUs": "Où nous trouver",
     "myRentings": "Mes locations",
-    "noRentings": "Vous n’avez encore aucune location."
+    "noRentings": "Vous n’avez encore aucune location.",
+    "reliability": "Fiabilité",
+    "reliabilityHonoured": "{{ honoured }} réservations honorées sur {{ total }}",
+    "reliabilityNew": "Nouvelle agence — aucune réservation confirmée pour l'instant."
   },
   "profile": {
     "title": "Votre profil",
@@ -1435,6 +1459,67 @@
     "showMore": "Voir plus d’avis",
     "anonymous": "Un client"
   },
+  "reports": {
+    "title": "Signalements",
+    "subtitle": "Les réclamations que des clients ont adressées à la plateforme, et l'arbitrage rendu.",
+    "reputation": "Réputation",
+    "reliability": "Fiabilité",
+    "reliabilityHint": "Les clients voient cette note sur votre vitrine. Elle baisse quand vous annulez une réservation que vous aviez confirmée, et quand la plateforme retient un signalement.",
+    "score": "Note de fiabilité",
+    "noRecord": "Pas encore d'historique — la note apparaîtra après votre première réservation confirmée.",
+    "confirmedBookings": "Réservations confirmées",
+    "honoured": "Honorées",
+    "cancelledByAgency": "Annulées par l'agence",
+    "upheldReports": "Signalements retenus",
+    "outOf": "{{ value }} / 100",
+    "none": "Aucun signalement.",
+    "noneOpen": "Aucun signalement en attente.",
+    "openCount": "{{ count }} en attente",
+    "booking": "Réservation",
+    "agencyReason": "Motif donné par l'agence",
+    "customerAccount": "Ce que dit le client",
+    "submittedOn": "Signalé le {{ date }}",
+    "resolvedOn": "Arbitré le {{ date }}",
+    "verdict": "Décision",
+    "resolutionNote": "Motivation",
+    "uphold": "Retenir",
+    "dismiss": "Écarter",
+    "upholdHint": "Le client a raison : la note de fiabilité de l'agence baisse.",
+    "dismissHint": "L'agence n'est pas en tort : rien ne change.",
+    "notePlaceholder": "Expliquez la décision — les deux parties la lisent.",
+    "noteRequired": "Une motivation est nécessaire : les deux parties voient la décision.",
+    "resolveFailed": "L'arbitrage n'a pas pu être enregistré. Réessayez.",
+    "filterAll": "Tous",
+    "loadFailed": "Impossible de charger les signalements.",
+    "kinds": {
+      "1": "Réservation annulée",
+      "2": "Qualité de service",
+      "3": "Facturation",
+      "4": "Véhicule",
+      "5": "Autre"
+    },
+    "statuses": {
+      "1": "En attente",
+      "2": "Retenu",
+      "3": "Écarté"
+    },
+    "customer": {
+      "report": "Signaler à la plateforme",
+      "title": "Signaler cette agence",
+      "intro": "Votre signalement est lu par la plateforme, pas par l'agence seule. Elle tranche et vous répond.",
+      "noMoney": "Aucun remboursement n'est traité ici : la plateforme arbitre, elle ne détient pas votre argent.",
+      "kind": "Motif",
+      "message": "Ce qui s'est passé",
+      "messagePlaceholder": "Décrivez ce qui s'est passé, avec des dates si possible.",
+      "send": "Envoyer le signalement",
+      "sendFailed": "Votre signalement n'a pas pu être envoyé. Réessayez.",
+      "sent": "Signalement envoyé",
+      "myReports": "Mes signalements",
+      "pending": "En attente d'arbitrage",
+      "cancelledByAgency": "Annulée par l'agence",
+      "windowClosed": "Le délai de signalement est passé."
+    }
+  },
   "myAgency": {
     "title": "Mon agence",
     "subtitle": "Les informations que voient les clients, vos lieux de travail et les personnes qui vous accompagnent.",
@@ -1443,6 +1528,7 @@
     "currencyLocked": "La devise est fixée par l'administrateur de la plateforme.",
     "tabs": {
       "details": "Détails",
+      "reputation": "Réputation",
       "branches": "Succursales",
       "team": "Équipe",
       "notifications": "Notifications"
@@ -1560,9 +1646,13 @@
       "4": "Rappels aux clients",
       "5": "Rappels aux clients",
       "6": "Avis de retard",
-      "7": "Documents des clients"
+      "7": "Documents des clients",
+      "9": "Signalements"
     },
     "message": {
+      "agencyReportOpened": "{{client}} a signalé votre agence à la plateforme ({{reference}}). La plateforme va l'examiner.",
+      "agencyReportUpheld": "Le signalement {{reference}} a été retenu par la plateforme. Il pèse sur votre note de fiabilité, visible par les clients.",
+      "agencyReportDismissed": "Le signalement {{reference}} a été écarté par la plateforme. Votre note n'est pas touchée.",
       "carExpenseDueByDate": "{{type}} arrive à échéance pour {{car}} le {{dueDate}} — dans {{days}} jour(s).",
       "carExpenseOverdueByDate": "{{type}} était à échéance pour {{car}} le {{dueDate}} — il y a {{days}} jour(s).",
       "carExpenseDueByDistance": "{{type}} arrive à échéance pour {{car}} à {{dueKm}} km — encore {{km}} km ({{mileage}} km actuellement).",

@@ -110,6 +110,18 @@ Currency), never bare decimals. Currency is tenant-scoped: each `Agency` has one
 as EF optional owned types via `OwnsMoney(...)`. Exposed as `MoneyDto`.
 Subscription-plan prices stay decimal (platform-level, no agency).
 
+**Currency conversion is display-only, and never touches a stored amount.** An
+agency bills in one currency and its invoices, payments, credits and statistics
+stay in it. `ExchangeRate` is a platform-level table of quoted pairs
+(`1 From = Rate To`), one row per ordered pair — the reciprocal is **derived,
+never stored**, because two rows that must agree eventually will not.
+`GetDisplayRatesQuery` expands each quote into both directions for the
+(anonymous) marketplace, so the browser only multiplies; chains are deliberately
+not built. The SPA shows the converted figure as a **second line** beside the
+agency's own price (`<app-converted-price>`), never instead of it, and no
+endpoint accepts or returns a converted amount — which is what stops one being
+posted back.
+
 **Time.** All domain `DateTime` values are UTC; `UtcDateTimeConverter` (a global
 convention) normalises on write and stamps `Kind = Utc` on read. Use
 `TimeProvider.GetUtcNow()`, never `DateTime.Now`. Two kinds, and the SPA renders
@@ -174,6 +186,33 @@ quoted before the decision is the figure charged. Only a cancellation the
 customer made (`Reservation.CancelledByCustomer`) counts against their
 reliability score, which is computed per agency and never across them.
 
+**An agency that breaks a confirmed booking is scored for it — publicly.**
+`Reservation.Cancel()` records `CancelledAfterConfirmation` (derived from the
+status it is overwriting, so no caller can get it wrong), and
+`CancelReservationCommand` refuses a confirmed hold with no reason: the customer
+is shown it, and it is what the arbitrator reads later. `AgencyReliability` owns
+the arithmetic for both readers — 100 less 15 per broken booking and 15 per
+upheld report, **null** (not 100) for an agency with nothing on record. The
+counts come from `AgencyReliabilityCounts`, whose predicates the shopfront reads
+cross-tenant and the agency's own screen reads filtered; the *reportable* twin of
+`WasConfirmed` is `AgencyReport.CanReport`, repeated inline wherever EF has to
+translate it. The score is on the agency page only — as a correlated sub-query
+per search card it would cost a page of results.
+
+**A complaint is arbitrated by the platform, and no money moves.** An
+`AgencyReport` hangs off exactly one booking the customer had (a reservation or a
+renting, check-constrained), one per booking, within
+`AgencyReport.ReportingWindowDays` of it ending. Like `AgencyReview` it is
+**platform-level, not `ITenantEntity`** — and for a stronger reason: neither the
+customer who raises it nor the platform administrator who settles it carries a
+tenant claim, so agency-facing code filters on `AgencyId` by hand. What the
+triage screen shows about the booking is **snapshotted onto the row**
+(`BookingSummary`, `AgencyCancellationReason`), because the arbitrator cannot
+read tenant data. `Uphold`/`Dismiss` happen once and both require a note shown to
+both sides. Upholding costs reliability points; nothing else changes hands, which
+is Malek's decision: until the platform holds the money, a debt no mechanism
+collects is a row in a table, not a sanction.
+
 **A booking can be asked for things.** On a *confirmed* hold the agency declares
 what it needs before the keys change hands — money, the deposit, papers, terms,
 the signed agreement — as `ReservationRequirement` rows. The customer answers each
@@ -237,10 +276,10 @@ Then everything else works:
 
 ```powershell
 dotnet build RemSolution.sln            # Debug build also regenerates the NSwag client
-dotnet test tests\Domain.UnitTests\Domain.UnitTests.csproj            # 111 tests
+dotnet test tests\Domain.UnitTests\Domain.UnitTests.csproj            # 156 tests
 dotnet test tests\Application.UnitTests\Application.UnitTests.csproj  # 159 tests
 dotnet test tests\Infrastructure.IntegrationTests\...csproj           #  24 tests (disk + SkiaSharp)
-dotnet test tests\Application.FunctionalTests\...csproj               # 535 tests (needs SQL Server)
+dotnet test tests\Application.FunctionalTests\...csproj               # 591 tests (needs SQL Server)
 cd src\Web; dotnet watch run                                          # https://localhost:5001
 
 cd src\Web\ClientApp; npx ng build --configuration production
@@ -298,7 +337,11 @@ agency), §4.2 (migration bundle) and §4.5 (per-car lock) shipped, and on
 (integration tests), A.1 (VAT), A.2 (document expiry), A.3 (availability
 indexes), A.4 (one round trip), A.5 (rate limiting), A.8
 (`CarUnavailability`) and A.9 (deposit settlement). Check the code, not the
-tables.
+tables. **§0.1 and §8 of the plan are the exception — they were rewritten
+2026-09-02 and again 2026-09-08, and are current.** The N.x series is at N.4
+(display-only currency conversion) and N.8 (agency cancellation + reports), both
+shipped 2026-09-08; what is left is N.10 (agency-opening wizard) and N.2's "TTC"
+labels.
 
 **Still open** (and why): a transactional Outbox (§4.6) — its stated purpose is
 atomicity for online payment and push, both out of scope, and durable mail would

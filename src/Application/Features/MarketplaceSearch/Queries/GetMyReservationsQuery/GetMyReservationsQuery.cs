@@ -44,8 +44,49 @@ namespace RemSolution.Application.Features.MarketplaceSearch.Queries.GetMyReserv
                 .ToListAsync(cancellationToken);
 
             await FillCancellationTermsAsync(rows, cancellationToken);
+            await FillReportsAsync(rows, userId, cancellationToken);
 
             return rows;
+        }
+
+        /// <summary>
+        /// The complaint already raised about each booking, and whether one may
+        /// still be. One query for the lot rather than a correlated sub-query per
+        /// row: reports are platform-level, so this reads them straight.
+        /// </summary>
+        private async Task FillReportsAsync(
+            IList<MyReservationDto> rows, string userId, CancellationToken cancellationToken)
+        {
+            var ids = rows.Select(r => r.Id).ToList();
+
+            var mine = await _context.AgencyReports
+                .AsNoTracking()
+                .Where(r => r.ReporterUserId == userId
+                            && r.ReservationId != null
+                            && ids.Contains(r.ReservationId.Value))
+                .Select(r => new { ReservationId = r.ReservationId!.Value, r.Id, r.Status })
+                .ToListAsync(cancellationToken);
+
+            var byReservation = mine.ToDictionary(r => r.ReservationId);
+            var now = _dateTime.GetUtcNow().UtcDateTime;
+
+            foreach (var dto in rows)
+            {
+                if (byReservation.TryGetValue(dto.Id, out var report))
+                {
+                    dto.MyReportId = report.Id;
+                    dto.MyReportStatus = report.Status;
+                    continue;
+                }
+
+                // The same two rules the command applies, from the same place, so
+                // the button is never offered for a report it would refuse. The
+                // window runs from the cancellation when there was one — that is
+                // when the customer learnt they had something to complain about.
+                dto.CanReport = dto.WasConfirmed
+                                && Domain.Entities.AgencyReport.IsWithinReportingWindow(
+                                    dto.CancelledAt ?? dto.EndDate, now);
+            }
         }
 
         /// <summary>

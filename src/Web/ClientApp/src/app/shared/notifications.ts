@@ -28,7 +28,10 @@ const LOOKS: Record<NotificationKind, NotificationLook> = {
   // A lapsed licence stops a booking outright, so it is the loud one; the
   // wording (see NotificationMessages) is what distinguishes "expires soon"
   // from "has expired".
-  [NotificationKind.ClientDocumentExpiring]: { icon: 'badge', severity: 'warn' }
+  [NotificationKind.ClientDocumentExpiring]: { icon: 'badge', severity: 'warn' },
+  // A customer has taken a complaint to the platform. Loud: it is the only
+  // alert that can move a figure customers see (see AgencyReliability).
+  [NotificationKind.AgencyReport]: { icon: 'gavel', severity: 'danger' }
 };
 
 const FALLBACK: NotificationLook = { icon: 'notifications', severity: 'info' };

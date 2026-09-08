@@ -255,6 +255,101 @@ namespace RemSolution.Infrastructure.Data.Migrations
                     b.ToTable("AgencyFeatures");
                 });
 
+            modelBuilder.Entity("RemSolution.Domain.Entities.AgencyReport", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AgencyCancellationReason")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<int>("AgencyId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("BookingSummary")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<int?>("ClientId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTimeOffset?>("CreatedOn")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<int>("Kind")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<int?>("RentingId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ReporterName")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("ReporterUserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int?>("ReservationId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ResolutionNote")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<DateTime?>("ResolvedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ResolvedByUserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("SubmittedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTimeOffset?>("UpdatedOn")
+                        .HasColumnType("datetimeoffset");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ClientId");
+
+                    b.HasIndex("RentingId")
+                        .IsUnique()
+                        .HasFilter("[RentingId] IS NOT NULL");
+
+                    b.HasIndex("ReservationId")
+                        .IsUnique()
+                        .HasFilter("[ReservationId] IS NOT NULL");
+
+                    b.HasIndex("AgencyId", "SubmittedAt");
+
+                    b.HasIndex("Status", "SubmittedAt");
+
+                    b.ToTable("AgencyReports", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_AgencyReports_OneBooking", "(CASE WHEN [ReservationId] IS NULL THEN 0 ELSE 1 END + CASE WHEN [RentingId] IS NULL THEN 0 ELSE 1 END) = 1");
+                        });
+                });
+
             modelBuilder.Entity("RemSolution.Domain.Entities.AgencyReview", b =>
                 {
                     b.Property<int>("Id")
@@ -1326,6 +1421,56 @@ namespace RemSolution.Infrastructure.Data.Migrations
                     b.ToTable("DocumentTemplateFields");
                 });
 
+            modelBuilder.Entity("RemSolution.Domain.Entities.ExchangeRate", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("AsOf")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTimeOffset?>("CreatedOn")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("FromCurrency")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("nchar(3)")
+                        .IsFixedLength();
+
+                    b.Property<decimal>("Rate")
+                        .HasPrecision(18, 6)
+                        .HasColumnType("decimal(18,6)");
+
+                    b.Property<string>("ToCurrency")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("nchar(3)")
+                        .IsFixedLength();
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTimeOffset?>("UpdatedOn")
+                        .HasColumnType("datetimeoffset");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FromCurrency", "ToCurrency")
+                        .IsUnique();
+
+                    b.ToTable("ExchangeRates", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_ExchangeRates_Rate", "[Rate] > 0");
+                        });
+                });
+
             modelBuilder.Entity("RemSolution.Domain.Entities.Expense", b =>
                 {
                     b.Property<int>("Id")
@@ -1993,6 +2138,9 @@ namespace RemSolution.Infrastructure.Data.Migrations
                     b.Property<int>("AgencyId")
                         .HasColumnType("int");
 
+                    b.Property<bool>("CancelledAfterConfirmation")
+                        .HasColumnType("bit");
+
                     b.Property<DateTime?>("CancelledAt")
                         .HasColumnType("datetime2");
 
@@ -2485,6 +2633,34 @@ namespace RemSolution.Infrastructure.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("Agency");
+                });
+
+            modelBuilder.Entity("RemSolution.Domain.Entities.AgencyReport", b =>
+                {
+                    b.HasOne("RemSolution.Domain.Entities.Agency", "Agency")
+                        .WithMany("Reports")
+                        .HasForeignKey("AgencyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("RemSolution.Domain.Entities.Client", "Client")
+                        .WithMany()
+                        .HasForeignKey("ClientId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("RemSolution.Domain.Entities.Renting", null)
+                        .WithMany()
+                        .HasForeignKey("RentingId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("RemSolution.Domain.Entities.Reservation", null)
+                        .WithMany()
+                        .HasForeignKey("ReservationId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Agency");
+
+                    b.Navigation("Client");
                 });
 
             modelBuilder.Entity("RemSolution.Domain.Entities.AgencyReview", b =>
@@ -3812,6 +3988,8 @@ namespace RemSolution.Infrastructure.Data.Migrations
 
             modelBuilder.Entity("RemSolution.Domain.Entities.Agency", b =>
                 {
+                    b.Navigation("Reports");
+
                     b.Navigation("Reviews");
 
                     b.Navigation("Settings");

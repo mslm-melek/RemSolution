@@ -1,3 +1,4 @@
+using RemSolution.Application.Common.Agencies;
 using RemSolution.Application.Common.Interfaces;
 using RemSolution.Application.Common.Models;
 using RemSolution.Application.Features.MarketplaceSearch.DTOs;
@@ -79,6 +80,15 @@ namespace RemSolution.Application.Features.MarketplaceSearch.Queries.GetMarketpl
 
             var reviewCount = byStar.Sum(s => s.Count);
 
+            // Reservations are tenant data and the visitor has no tenant, so the
+            // count goes through the filter bypass this folder is allowed (see
+            // TenantEnforcementTests). Reports need none — they are platform-level.
+            var reliability = await AgencyReliabilityCounts.ComputeAsync(
+                _context.Reservations.IgnoreQueryFilters().AsNoTracking(),
+                _context.AgencyReports.AsNoTracking(),
+                request.Id,
+                cancellationToken);
+
             return new MarketplaceAgencyDto
             {
                 Id = agency.Id,
@@ -105,6 +115,7 @@ namespace RemSolution.Application.Features.MarketplaceSearch.Queries.GetMarketpl
                         .Select(star => byStar.FirstOrDefault(s => s.Rating == star)?.Count ?? 0)
                         .ToList(),
                 },
+                Reliability = AgencyReliabilityDto.From(reliability),
                 Places = places
                     .Select(p => new MarketplacePlaceDto
                     {

@@ -1,0 +1,44 @@
+<!-- The page shell belongs to MyBookingsComponent, which renders this as one of
+     its three parts. -->
+<ng-container *transloco="let t">
+  <div *ngIf="error" class="error">{{ error }}</div>
+  <div *ngIf="loading" class="state">{{ t('common.loading') }}</div>
+
+  <div *ngIf="!loading && reports.length === 0" class="state">
+    {{ t('reports.none') }}
+  </div>
+
+  <div class="list" *ngIf="!loading && reports.length">
+    <div class="report-card" *ngFor="let r of reports">
+      <div class="head">
+        <div class="who">
+          <a class="agency" [routerLink]="['/browse/agency', r.agencyId]">
+            <mat-icon aria-hidden="true">place</mat-icon>{{ r.agencyName }}
+          </a>
+          <div class="what">{{ t(kindLabelKey(r.kind)) }}</div>
+          <div class="booking num" *ngIf="r.bookingSummary">{{ r.bookingSummary }}</div>
+        </div>
+        <div class="side">
+          <span class="chip" [ngClass]="statusTone(r.status)">{{ t(statusLabelKey(r.status)) }}</span>
+          <!-- Instants, recorded from the clock, so they read local. -->
+          <span class="when">{{ t('reports.submittedOn', { date: (r.submittedAt | date:'dd MMM yyyy') }) }}</span>
+        </div>
+      </div>
+
+      <p class="message">{{ r.message }}</p>
+
+      <!-- The platform's answer, in its own words. Shown to the customer as it
+           is shown to the agency: one decision, one wording. -->
+      <div class="verdict" *ngIf="r.resolutionNote">
+        <div class="verdict-head">
+          <mat-icon aria-hidden="true">gavel</mat-icon>
+          {{ t('reports.verdict') }} —
+          {{ t('reports.resolvedOn', { date: (r.resolvedAt | date:'dd MMM yyyy') }) }}
+        </div>
+        <p>{{ r.resolutionNote }}</p>
+      </div>
+
+      <div class="pending" *ngIf="!r.resolutionNote">{{ t('reports.customer.pending') }}</div>
+    </div>
+  </div>
+</ng-container>

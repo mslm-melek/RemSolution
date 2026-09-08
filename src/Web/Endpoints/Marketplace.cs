@@ -4,8 +4,11 @@ using RemSolution.Application.Common.Models;
 using RemSolution.Domain.Constants;
 using RemSolution.Domain.Enums;
 using RemSolution.Application.Features.Chat.DTOs;
+using RemSolution.Application.Features.ExchangeRate.DTOs;
+using RemSolution.Application.Features.ExchangeRate.Queries.GetDisplayRatesQuery;
 using RemSolution.Application.Features.Marketplace.Commands.CancelMyReservationCommand;
 using RemSolution.Application.Features.Marketplace.Commands.CreateCustomerReservationCommand;
+using RemSolution.Application.Features.Marketplace.Commands.CreateMyReportCommand;
 using RemSolution.Application.Features.Marketplace.Commands.CreateMyReviewCommand;
 using RemSolution.Application.Features.Marketplace.Commands.MarkMyChatReadCommand;
 using RemSolution.Application.Features.Marketplace.Commands.SendCustomerChatMessageCommand;
@@ -20,6 +23,7 @@ using RemSolution.Application.Features.MarketplaceSearch.Queries.GetMarketplaceD
 using RemSolution.Application.Features.MarketplaceSearch.Queries.GetMyChatMessagesQuery;
 using RemSolution.Application.Features.MarketplaceSearch.Queries.GetMyChatThreadsQuery;
 using RemSolution.Application.Features.MarketplaceSearch.Queries.GetMyRentingsQuery;
+using RemSolution.Application.Features.MarketplaceSearch.Queries.GetMyReportsQuery;
 using RemSolution.Application.Features.MarketplaceSearch.Queries.GetMyReservationsQuery;
 using RemSolution.Application.Features.MarketplaceSearch.Queries.GetShowcaseCarsQuery;
 using RemSolution.Application.Features.MarketplaceSearch.Queries.SearchAvailableCarsQuery;
@@ -49,6 +53,11 @@ public class Marketplace : EndpointGroupBase
             .MapGet(GetDestinations, "destinations")
             .MapGet(GetAgency, "agencies/{id}")
             .MapGet(GetAgencyReviews, "agencies/{id}/reviews")
+            // The display rates, read anonymously: a visitor sees prices in a
+            // currency they think in before they have an account. Conversion
+            // happens in the browser — no amount the server sends is converted,
+            // so none can be posted back (see the SPA's currency service).
+            .MapGet(GetMarketplaceExchangeRates, "exchange-rates")
             // Customer actions require a signed-in Customer.
             .MapPost(BookCar, "reservations", Policies.CustomerOnly)
             .MapGet(GetMyReservations, "my-reservations", Policies.CustomerOnly)
@@ -64,7 +73,10 @@ public class Marketplace : EndpointGroupBase
             .MapPost(MarkMyChatRead, "my-chats/{subject}/{id}/read", Policies.CustomerOnly)
             // What the agency asked for before pickup, and the customer's answers.
             .MapGet(GetMyReservationRequirements,
-                "my-reservations/{id}/requirements", Policies.CustomerOnly);
+                "my-reservations/{id}/requirements", Policies.CustomerOnly)
+            // Complaining to the platform about an agency, and what came of it.
+            .MapPost(ReportAgency, "reports", Policies.CustomerOnly)
+            .MapGet(GetMyReports, "my-reports", Policies.CustomerOnly);
 
         // Answering an ask carries a file (a transfer slip, a scan), so it binds
         // a form — and antiforgery middleware is not configured, so form binding
@@ -139,6 +151,14 @@ public class Marketplace : EndpointGroupBase
         return TypedResults.Ok(result);
     }
 
+    // Not the platform's list: this one carries both directions of every quoted
+    // pair, worked out server-side, so the browser only multiplies.
+    public async Task<Ok<IList<DisplayRateDto>>> GetMarketplaceExchangeRates(ISender sender)
+    {
+        var result = await sender.Send(new GetDisplayRatesQuery());
+        return TypedResults.Ok(result);
+    }
+
     public async Task<Created<int>> BookCar(ISender sender, CreateCustomerReservationCommand command)
     {
         var id = await sender.Send(command);
@@ -182,6 +202,18 @@ public class Marketplace : EndpointGroupBase
         });
 
         return TypedResults.NoContent();
+    }
+
+    public async Task<Created<int>> ReportAgency(ISender sender, CreateMyReportCommand command)
+    {
+        var id = await sender.Send(command);
+        return TypedResults.Created($"/marketplace/my-reports/{id}", id);
+    }
+
+    public async Task<Ok<IList<MyReportDto>>> GetMyReports(ISender sender)
+    {
+        var result = await sender.Send(new GetMyReportsQuery());
+        return TypedResults.Ok(result);
     }
 
     public async Task<Ok<IList<MyRentingDto>>> GetMyRentings(ISender sender)

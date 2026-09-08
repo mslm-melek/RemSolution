@@ -37,6 +37,10 @@ public class AmbientTenantUsageTests
         // Reading one agency's branches (an ITenantEntity) while the platform
         // administrator edits that agency.
         Normalize("Features/Agency/Queries/GetAgencyBranchesQuery/"),
+        // Settling a complaint tells the agency the outcome, and a notification
+        // is a tenant row — the platform administrator who took the decision
+        // carries no agency claim of their own.
+        Normalize("Features/AgencyReport/Commands/ResolveAgencyReportCommand/"),
     };
 
     // The administrative push additionally exempts its writes from subscription

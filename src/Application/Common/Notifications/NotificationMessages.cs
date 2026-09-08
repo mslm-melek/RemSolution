@@ -30,6 +30,13 @@ public static class NotificationMessages
     public const string ReservationPending = "reservationPending";
     public const string ReservationPendingExpiringSoon = "reservationPendingExpiringSoon";
 
+    // ---- A customer has complained to the platform --------------------------
+    // Three wordings for one alert: a complaint arriving is a thing to answer,
+    // and the two verdicts are the opposite of each other.
+    public const string AgencyReportOpened = "agencyReportOpened";
+    public const string AgencyReportUpheld = "agencyReportUpheld";
+    public const string AgencyReportDismissed = "agencyReportDismissed";
+
     // ---- Client paperwork running out ---------------------------------------
     // Six wordings for one alert, for the same reason the car-expense alert has
     // four: "expires in 12 days" and "expired on the 3rd" are a reminder and a

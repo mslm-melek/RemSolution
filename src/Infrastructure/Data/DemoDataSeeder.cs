@@ -123,6 +123,7 @@ public class DemoDataSeeder
         var models = await SeedCarCatalogAsync(cancellationToken);
         var extras = await SeedExtraServiceTypesAsync(cancellationToken);
         await SeedExpenseTypesAsync(cancellationToken);
+        await SeedExchangeRatesAsync(cancellationToken);
 
         var tunisia = await CountryAsync("Tunisie", cancellationToken);
 
@@ -320,7 +321,8 @@ public class DemoDataSeeder
 
         await SeedExtraServicesAsync(rentings, extras, cancellationToken);
         await SeedPaymentsAsync(rentings, cancellationToken);
-        await SeedReservationsAsync(cars, clients, cancellationToken);
+        var brokenPromise = await SeedReservationsAsync(cars, clients, cancellationToken);
+        await SeedReportsAsync(agency, brokenPromise, rentings, clients, cancellationToken);
         await SeedExpensesAsync(cars, cancellationToken);
         await SeedTemplatesAndDocumentsAsync(rentings, cancellationToken);
     }
@@ -417,13 +419,15 @@ public class DemoDataSeeder
         await _context.SaveChangesAsync(cancellationToken);
     }
 
-    private async Task SeedReservationsAsync(
+    /// <summary>Seeds the holds and returns the one the agency broke.</summary>
+    private async Task<Reservation> SeedReservationsAsync(
         IReadOnlyList<Car> cars, IReadOnlyList<Client> clients, CancellationToken cancellationToken)
     {
         // One hold per status, so every branch of the reservation state machine has
         // something behind it. Transitions go through the aggregate's own methods —
         // Status has a private setter precisely so nothing sets it directly.
         var expiryHours = 48;
+        var now = _dateTime.GetUtcNow().UtcDateTime;
 
         var pending = Hold(cars[6], clients[2], +12, +15, expiryHours);
         var confirmed = Hold(cars[7], clients[3], +14, +18, expiryHours);
@@ -431,6 +435,10 @@ public class DemoDataSeeder
         var rejected = Hold(cars[4], clients[5], +13, +16, expiryHours);
         var cancelled = Hold(cars[8], clients[6], +18, +22, expiryHours);
         var lapsed = Hold(cars[9], clients[7], +20, +24, -72);
+        // A promise broken: confirmed, then called off by the agency. It is the
+        // only cancellation that costs reliability points, so the reputation
+        // screens have something other than a perfect record to show.
+        var broken = Hold(cars[5], clients[8], -6, -2, expiryHours);
 
         confirmed.Confirm();
 
@@ -441,7 +449,61 @@ public class DemoDataSeeder
         cancelled.Cancel("Annulée à la demande du client.");
         lapsed.Expire();
 
-        _context.Reservations.AddRange(pending, confirmed, paid, rejected, cancelled, lapsed);
+        broken.Confirm();
+        broken.Cancel("Véhicule immobilisé après un accrochage la veille.", at: now.AddDays(-8));
+
+        _context.Reservations.AddRange(
+            pending, confirmed, paid, rejected, cancelled, lapsed, broken);
+        await _context.SaveChangesAsync(cancellationToken);
+
+        return broken;
+    }
+
+    // Two complaints against this agency: one waiting for the platform, one it
+    // already settled. Enough for the triage queue and the agency's Reputation
+    // tab to have content on a fresh checkout.
+    //
+    // No ReporterUserId: the demo marketplace customer is not linked to any
+    // Client row (no booking of theirs exists), and inventing the link here would
+    // show them a complaint about a booking they never made.
+    private async Task SeedReportsAsync(
+        Agency agency, Reservation broken, IReadOnlyList<Renting> rentings,
+        IReadOnlyList<Client> clients, CancellationToken cancellationToken)
+    {
+        var now = _dateTime.GetUtcNow().UtcDateTime;
+        var complainant = clients[8];
+
+        var open = AgencyReport.Create(
+            agency.Id,
+            AgencyReportKind.CancelledBooking,
+            "Annulation la veille du départ, sans solution de remplacement. "
+            + "J'ai dû louer ailleurs au double du prix.",
+            now.AddDays(-7),
+            reservationId: broken.Id,
+            clientId: complainant.Id,
+            reporterName: $"{complainant.FirstName} {complainant.LastName}",
+            bookingSummary: "Peugeot 208 · "
+                + broken.StartDate!.Value.ToString("yyyy-MM-dd") + " → "
+                + broken.EndDate!.Value.ToString("yyyy-MM-dd"),
+            agencyCancellationReason: broken.CancelledReason);
+
+        var settled = AgencyReport.Create(
+            agency.Id,
+            AgencyReportKind.Vehicle,
+            "La voiture livrée n'était pas le modèle réservé.",
+            now.AddDays(-45),
+            rentingId: rentings[2].Id,
+            clientId: clients[2].Id,
+            reporterName: $"{clients[2].FirstName} {clients[2].LastName}",
+            bookingSummary: "Volkswagen Polo");
+
+        settled.Dismiss(
+            "Le modèle réservé était en panne ; l'agence a fourni une catégorie "
+            + "supérieure au même prix, ce que les conditions prévoient.",
+            now.AddDays(-40),
+            byUserId: null);
+
+        _context.AgencyReports.AddRange(open, settled);
         await _context.SaveChangesAsync(cancellationToken);
     }
 
@@ -1101,6 +1163,34 @@ public class DemoDataSeeder
             Address = address,
             Location = GeoPoint.ToPoint(latitude, longitude)
         };
+
+    // Display rates between the four currencies the demo agencies bill in, so a
+    // visitor can read any agency's prices in any of them. Every pair is quoted
+    // rather than relying on chains: the marketplace only ever applies a quoted
+    // pair or its reciprocal (see GetDisplayRatesQuery).
+    //
+    // Illustrative figures, not a market feed — nothing stored is converted by
+    // them, and no invoice, payment or statistic uses one.
+    private async Task SeedExchangeRatesAsync(CancellationToken cancellationToken)
+    {
+        var quotes = new (string From, string To, decimal Rate)[]
+        {
+            (TunisianDinar, Euro, 0.294118m),
+            (TunisianDinar, MoroccanDirham, 3.05m),
+            (TunisianDinar, UaeDirham, 1.18m),
+            (Euro, MoroccanDirham, 10.55m),
+            (Euro, UaeDirham, 4.07m),
+            (MoroccanDirham, UaeDirham, 0.39m),
+        };
+
+        foreach (var quote in quotes)
+        {
+            _context.ExchangeRates.Add(
+                ExchangeRate.Create(quote.From, quote.To, quote.Rate, Today.Date));
+        }
+
+        await _context.SaveChangesAsync(cancellationToken);
+    }
 
     private async Task<Country> CountryAsync(string name, CancellationToken cancellationToken)
     {

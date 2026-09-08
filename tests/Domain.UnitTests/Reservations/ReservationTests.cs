@@ -102,6 +102,30 @@ public class ReservationTests
         paid.Status.Should().Be(ReservationStatus.Cancelled);
     }
 
+    /// <summary>
+    /// The flag both reliability scores read. Status is gone by the time anyone
+    /// looks, so getting this wrong is the difference between "the agency broke
+    /// a promise" and "a request went unanswered".
+    /// </summary>
+    [Test]
+    public void Cancel_ShouldRecordWhetherTheHoldHadBeenConfirmed()
+    {
+        var pending = AHold();
+        pending.Cancel(null);
+        pending.CancelledAfterConfirmation.Should().BeFalse();
+
+        var confirmed = AHold();
+        confirmed.Confirm();
+        confirmed.Cancel("The car was written off.");
+        confirmed.CancelledAfterConfirmation.Should().BeTrue();
+
+        var paid = AHold();
+        paid.Confirm();
+        paid.MarkPaid();
+        paid.Cancel(null);
+        paid.CancelledAfterConfirmation.Should().BeTrue();
+    }
+
     [Test]
     public void Cancel_ShouldRefuseAHoldThatIsAlreadyAHire()
     {

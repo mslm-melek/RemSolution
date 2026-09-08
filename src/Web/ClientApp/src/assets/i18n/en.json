@@ -1,4 +1,4 @@
-﻿{
+{
   "language": {
     "label": "Language",
     "en": "English",
@@ -124,7 +124,28 @@
     "finance": "Finance",
     "clientsList": "All clients",
     "myAgency": "My agency",
+    "reports": "Reports",
+    "myReports": "My reports",
+    "exchangeRates": "Exchange rates",
     "mainLabel": "Main navigation"
+  },
+  "currency": {
+    "label": "Display currency",
+    "asQuoted": "The agency's currency",
+    "note": "Indicative conversion. You are charged in the agency's currency."
+  },
+  "exchangeRate": {
+    "title": "Exchange rates",
+    "subtitle": "For display on the marketplace only: no stored amount is converted.",
+    "from": "From",
+    "to": "To",
+    "rate": "Rate",
+    "asOf": "As of",
+    "pair": "Rate",
+    "hint": "A rate reads \"1 From = Rate To\". The other direction is derived: quoting TND → EUR is enough to price for both.",
+    "none": "No rate quoted. The marketplace then shows every price in its agency's own currency.",
+    "loadFailed": "The rates could not be loaded.",
+    "confirmDelete": "Withdraw the {{ from }} → {{ to }} rate?"
   },
   "home": {
     "welcomeTitle": "Welcome to RemSolution",
@@ -864,7 +885,10 @@
     "noPlacesOnMap": "No pick-up place to show on the map for this search.",
     "whereToFindUs": "Where to find us",
     "myRentings": "My rentals",
-    "noRentings": "You have no rentals yet."
+    "noRentings": "You have no rentals yet.",
+    "reliability": "Reliability",
+    "reliabilityHonoured": "{{ honoured }} of {{ total }} confirmed bookings honoured",
+    "reliabilityNew": "New agency — no confirmed booking yet."
   },
   "profile": {
     "title": "Your profile",
@@ -1435,6 +1459,67 @@
     "showMore": "Show more reviews",
     "anonymous": "A customer"
   },
+  "reports": {
+    "title": "Reports",
+    "subtitle": "Complaints customers took to the platform, and how they were settled.",
+    "reputation": "Reputation",
+    "reliability": "Reliability",
+    "reliabilityHint": "Customers see this on your shopfront. It drops when you cancel a booking you had confirmed, and when the platform upholds a report.",
+    "score": "Reliability score",
+    "noRecord": "Nothing on record yet — the score appears after your first confirmed booking.",
+    "confirmedBookings": "Confirmed bookings",
+    "honoured": "Honoured",
+    "cancelledByAgency": "Cancelled by the agency",
+    "upheldReports": "Reports upheld",
+    "outOf": "{{ value }} / 100",
+    "none": "No reports.",
+    "noneOpen": "Nothing waiting to be settled.",
+    "openCount": "{{ count }} waiting",
+    "booking": "Booking",
+    "agencyReason": "Reason the agency gave",
+    "customerAccount": "What the customer says",
+    "submittedOn": "Reported on {{ date }}",
+    "resolvedOn": "Settled on {{ date }}",
+    "verdict": "Decision",
+    "resolutionNote": "Reasoning",
+    "uphold": "Uphold",
+    "dismiss": "Dismiss",
+    "upholdHint": "The customer is right: the agency's reliability score drops.",
+    "dismissHint": "The agency is not at fault: nothing changes.",
+    "notePlaceholder": "Explain the decision — both sides read it.",
+    "noteRequired": "A reason is required: both sides are shown the decision.",
+    "resolveFailed": "The decision could not be saved. Please try again.",
+    "filterAll": "All",
+    "loadFailed": "The reports could not be loaded.",
+    "kinds": {
+      "1": "Cancelled booking",
+      "2": "Service quality",
+      "3": "Billing",
+      "4": "Vehicle",
+      "5": "Other"
+    },
+    "statuses": {
+      "1": "Waiting",
+      "2": "Upheld",
+      "3": "Dismissed"
+    },
+    "customer": {
+      "report": "Report to the platform",
+      "title": "Report this agency",
+      "intro": "Your report is read by the platform, not by the agency alone. It decides, and answers you.",
+      "noMoney": "No refund is handled here: the platform arbitrates, it does not hold your money.",
+      "kind": "Reason",
+      "message": "What happened",
+      "messagePlaceholder": "Describe what happened, with dates if you can.",
+      "send": "Send the report",
+      "sendFailed": "Your report could not be sent. Please try again.",
+      "sent": "Report sent",
+      "myReports": "My reports",
+      "pending": "Waiting to be settled",
+      "cancelledByAgency": "Cancelled by the agency",
+      "windowClosed": "The reporting window has closed."
+    }
+  },
   "myAgency": {
     "title": "My agency",
     "subtitle": "The details customers see, where you work from, and who works with you.",
@@ -1443,6 +1528,7 @@
     "currencyLocked": "The currency is set by the platform administrator.",
     "tabs": {
       "details": "Details",
+      "reputation": "Reputation",
       "branches": "Branches",
       "team": "Team",
       "notifications": "Notifications"
@@ -1560,9 +1646,13 @@
       "4": "Client reminders",
       "5": "Client reminders",
       "6": "Late-return notices",
-      "7": "Client documents"
+      "7": "Client documents",
+      "9": "Reports"
     },
     "message": {
+      "agencyReportOpened": "{{client}} has reported your agency to the platform ({{reference}}). The platform will look at it.",
+      "agencyReportUpheld": "Report {{reference}} was upheld by the platform. It counts against your reliability score, which customers can see.",
+      "agencyReportDismissed": "Report {{reference}} was dismissed by the platform. Your score is untouched.",
       "carExpenseDueByDate": "{{type}} is due for {{car}} on {{dueDate}} — in {{days}} day(s).",
       "carExpenseOverdueByDate": "{{type}} was due for {{car}} on {{dueDate}} — {{days}} day(s) ago.",
       "carExpenseDueByDistance": "{{type}} is due for {{car}} at {{dueKm}} km — {{km}} km to go ({{mileage}} km now).",

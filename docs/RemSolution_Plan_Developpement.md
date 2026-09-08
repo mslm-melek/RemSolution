@@ -41,7 +41,7 @@ Chaque ligne a été vérifiée dans le code, pas dans un tableau de suivi.
 | 4.4 | `Renting` en agrégat riche | `Renting.Create/Start/Complete/Cancel`, setters privés, événements |
 | 4.5 | Verrou par véhicule | `AcquireCarWriteLockAsync`, le verrou agence restant pour les quotas |
 | 4.7 | Nettoyage | `cookies_*.txt`, `info.docx`, `Colour.cs`, `UnsupportedColourException.cs` supprimés |
-| 2.1 | Tests | 829 tests : 111 domaine, 159 application, 24 infrastructure, 535 fonctionnels ; `Web.AcceptanceTests` a Login + Cars |
+| 2.1 | Tests | 930 tests : 156 domaine, 159 application, 24 infrastructure, 591 fonctionnels ; `Web.AcceptanceTests` a Login + Cars |
 | 2.2 | Assistant de création de location | `renting-form.component.ts` — stepper 3 étapes (véhicule et dates → client → paperasse) |
 | 2.5 | CI | `.github/workflows/ci.yml` : build, tests unitaires, build Angular, conventions front, fonctionnels + intégration |
 | 2.6 | Durcissement sécurité | limitation de débit (`src/Web/Infrastructure/RateLimiting.cs`), durcissement des téléversements, fichiers de débogage supprimés |
@@ -57,7 +57,6 @@ L'addendum est livré à l'exception de A.6 et A.7 — voir son propre encadré.
 | 2.9 / 3.6 | Export des statistiques | ❌ rien dans `Features/Statistics`, aucune bibliothèque tableur référencée | 1 j |
 | 3.6 | Purge des données personnelles / droit à l'effacement | ❌ aucun job de purge, aucune anonymisation | 1,5 j |
 | A.6 | Alertes de supervision | ❌ aucune règle d'alerte dans `infra/` | 1,5 j |
-| 3.6 | Signalements (réclamations) + triage plateforme | ❌ absent | 1 j |
 | 3.6 | Test de charge du chemin de recherche | ❌ `loadtesting.bicep` existe (gabarit) mais n'est pas référencé par `main.bicep` | 1 j |
 | 2.7 | Signature : libellé à corriger ou vraie signature | ❌ `fr.json` annonce toujours « Contrats + signature électronique » alors que le code ne pose que des lignes manuscrites | 0,5 j ou 6 j |
 | 2.4 | Hébergement réellement déployé et vérifié | 🟡 le Bicep est complet (Key Vault, sauvegardes) ; le déploiement effectué ne se lit pas dans le dépôt | 3 j |
@@ -65,12 +64,11 @@ L'addendum est livré à l'exception de A.6 et A.7 — voir son propre encadré.
 | 2.8 | Inscription libre-service des agences | ❌ la création d'agence reste réservée à l'administrateur plateforme | hors dév. + 3 j |
 
 **Et dix points ajoutés le 2026-09-02** — papiers, devises, parcours de
-réservation, fiabilité, assistant d'ouverture d'agence : voir **§8**. Cinq sont
-livrés (N.9, N.1, N.5, N.6, N.7) ; il en reste ≈ 6,5 j.
+réservation, fiabilité, assistant d'ouverture d'agence : voir **§8**. Sept sont
+livrés (N.9, N.1, N.5, N.6, N.7, N.8, N.4) ; il en reste ≈ 3,2 j.
 
-À noter : les **signalements** de la ligne §3.6 ci-dessus sont désormais liés à
-N.8 — c'est la même fonctionnalité vue des deux côtés, et le plan est de les
-construire ensemble.
+Les **signalements** du §3.6 ont été livrés avec N.8 le 2026-09-08 : c'est la
+même fonctionnalité vue des deux côtés, et elle a été construite d'un bloc.
 
 ### Écarté volontairement, avec la raison
 
@@ -201,7 +199,7 @@ Rien n'existe côté suivi. `NetTopologySuite` est déjà en place pour la géog
 ### 3.6 Divers — ❌
 - **Purge des données personnelles et droit à l'effacement** (obligation légale dès qu'on détient des passeports) : politique de rétention, job Hangfire de purge, anonymisation du client en conservant les lignes financières — **1,5 j**
 - **Test de charge du chemin de recherche** au volume cible (2 000 agences / 100 000 voitures) pour valider les plans d'exécution des anti-jointures et de la recherche spatiale — **1 j**
-- **Signalements (réclamations)** avec écran de triage pour l'administrateur plateforme — **1 j**
+- ~~**Signalements (réclamations)** avec écran de triage pour l'administrateur plateforme~~ — ✅ **livré (2026-09-08)**, avec N.8 (voir §8)
 - **Export des statistiques** (voir §2.9) — **1 j**
 
 ---
@@ -374,13 +372,13 @@ dans le code**, pas l'intention.
 | N.1 | Expiration par défaut des papiers | ✅ **livré** | — |
 | N.5 | Réservation en attente + notification | ✅ **livré** | — |
 | N.7 | Fiabilité client + frais d'annulation | ✅ **livré** | — |
-| N.8 | Annulation par l'agence : note + signalement | ❌ absent, dépend des signalements (§3.6) | 1,5 j |
+| N.8 | Annulation par l'agence : note + signalement | ✅ **livré (2026-09-08)** — avec les signalements du §3.6 | — |
 | N.6 | Exigences sur réservation confirmée + chat | ✅ **livré** | — |
-| N.4 | Devises EUR/TND + taux | ❌ absent | 2 j |
+| N.4 | Devises EUR/TND + taux | ✅ **livré (2026-09-08)** — conversion à l'affichage | — |
 | N.10 | Assistant d'ouverture d'agence | ❌ absent | 3 j |
 | N.2 | Montants TTC (location, tarif journalier) | ✅ livré — décision TTC, `TaxBreakdown.FromGross` ; reste à écrire « TTC » dans l'interface | 0,2 j |
 | N.3 | Paramètre TVA | ✅ livré — `VatRatePercent`, `TaxIdentifier`, `FiscalStampAmount` dans `AgencySettings`, exposés dans l'écran Mon agence | — |
-| | **Reste** | | **≈ 6,5 j** |
+| | **Reste** | | **≈ 3,2 j** |
 
 ### Ce qui a été livré le 2026-09-02
 
@@ -450,17 +448,48 @@ et le matricule fiscal sont figés sur chaque facture à l'émission. Reste un p
 d'interface : les libellés de prix ne disent pas « TTC », ce qui est la seule
 raison pour laquelle un gérant peut croire l'inverse.
 
-### N.4 — Devises et taux · **décidé : conversion à l'affichage uniquement**
+### N.4 — Devises et taux · ✅ livré (2026-09-08)
 
-L'agence conserve **une** devise de facturation. Le marketplace affiche les prix
-convertis dans la devise choisie par le visiteur, via une table de taux
-(`ExchangeRate(From, To, Rate, AsOf)`) tenue à la plateforme. Factures, paiements,
-crédits et statistiques restent intégralement dans la devise de l'agence, et
-aucun montant stocké ne change de sens.
+**Décision appliquée : conversion à l'affichage uniquement.** Écarté : la
+facturation multi-devise réelle (taux figé par document, écarts de change). Elle
+toucherait `Money`, les factures, les paiements et les statistiques pour un
+besoin qui est, à ce stade, un besoin d'affichage.
 
-Écarté : la facturation multi-devise réelle (taux figé par document, écarts de
-change). Elle toucherait `Money`, les factures, les paiements et les statistiques
-pour un besoin qui est, à ce stade, un besoin d'affichage.
+**Ce qui est en place.**
+
+*La table de taux.* `ExchangeRate(FromCurrency, ToCurrency, Rate, AsOf)` est de
+niveau plateforme, comme les formules d'abonnement : un taux appartient au
+marketplace, aucune agence n'en possède un, et un visiteur anonyme le lit. Une
+seule ligne par couple ordonné — **le sens inverse n'est pas stocké**, il est
+déduit : deux lignes qui doivent être réciproques finissent par diverger. Le taux
+se lit « 1 De = Taux Vers », il porte la date pour laquelle il est coté, et il
+doit être strictement positif (règle du domaine *et* contrainte CHECK).
+
+*Ce que reçoit le marketplace.* `GetDisplayRatesQuery` renvoie, anonymement, les
+deux sens de chaque couple coté — la réciproque arrondie à six décimales. Le
+navigateur n'a donc plus qu'à trouver la ligne et multiplier : **le seul vrai
+arbitrage de la conversion, le choix du sens, reste côté serveur, là où la suite
+de tests passe.** Les chaînes ne sont volontairement pas construites : EUR → TND
+→ MAD cumulerait deux arrondis dans un chiffre qu'un visiteur pourrait lire comme
+un prix ; la plateforme cote le couple qu'elle veut proposer.
+
+*Ce que voit le client.* Un sélecteur de devise dans la barre du haut, offert au
+seul public du marketplace (visiteur ou client) et masqué tant qu'aucun taux
+n'est coté. Le choix est **par appareil**, comme le thème, et ne recharge pas la
+page. Sous chaque prix, `<app-converted-price>` ajoute une **deuxième ligne**
+« ≈ 28,50 EUR », jamais un remplacement : ce qui sera facturé reste le montant de
+l'agence, et un montant converti qui aurait l'air du prix serait un devis que la
+plateforme ne peut pas honorer. Aucun point d'entrée n'accepte ni ne renvoie un
+montant converti — c'est ce qui empêche qu'il soit un jour renvoyé au serveur.
+
+*Ce que voit l'administrateur plateforme.* L'écran `/exchange-rate` : une ligne
+de saisie « 1 De = Taux Vers, coté le … », la liste des couples et leur retrait.
+Coter deux fois le même couple **remplace** la cotation (le couple est
+l'identité), et un retrait est une suppression franche — un taux n'est la trace
+de rien, aucune facture ni aucun paiement n'y renvoie.
+
+**Migration** `AddExchangeRates` : une table nouvelle, rien à rétro-remplir. Le
+jeu de démonstration cote les six couples entre TND, EUR, MAD et AED.
 
 ### N.5 — Demande de réservation en attente + notification · ✅ livré
 
@@ -530,16 +559,61 @@ Le client peut désormais annuler une réservation **confirmée**, avec motif �
 le pouvait pas avant, alors que c'est précisément le cas où l'annulation coûte
 quelque chose. Le montant est figé sur la réservation à l'annulation.
 
-### N.8 — Annulation par l'agence · **décidé : pénalité de note, sans argent**
+### N.8 — Annulation par l'agence · ✅ livré (2026-09-08)
 
-Une agence qui annule sans motif voit sa note de fiabilité baisser, et cette note
-est visible sur le marketplace. Le client peut ouvrir un **signalement**, arbitré
-par l'administrateur plateforme — ce qui rejoint le point « Signalements » déjà
-au §3.6 et le rend prioritaire.
+**Décision appliquée : pénalité de note, sans argent.** Écarté : des frais
+d'annulation réellement payés par l'agence au client. Tant qu'aucun flux d'argent
+ne passe par la plateforme, une dette qu'aucun mécanisme ne recouvre est une
+ligne dans une table, pas une sanction.
 
-Écarté : des frais d'annulation réellement payés par l'agence au client. Tant
-qu'aucun flux d'argent ne passe par la plateforme, une dette qu'aucun mécanisme
-ne recouvre est une ligne dans une table, pas une sanction.
+**Ce qui est en place.**
+
+*Annuler une réservation confirmée engage l'agence.* `Reservation.Cancel()`
+enregistre `CancelledAfterConfirmation` — déduit du statut qu'il écrase, donc
+aucun appelant ne peut se tromper — et `CancelReservationCommand` refuse
+désormais une annulation sans motif dès lors que la réservation était confirmée
+ou payée : le client le lit, et c'est aussi ce que l'arbitre lira. Une demande
+encore en attente reste annulable sans motif : rien n'avait été promis.
+
+*La note de fiabilité de l'agence.* `AgencyReliability` (domaine) détient seule
+le calcul : 100, moins 15 par réservation confirmée puis annulée par l'agence,
+moins 15 par signalement retenu, plancher à 0. **Null** — et non 100 — pour une
+agence sans historique : une agence qui vient d'ouvrir n'a pas mérité un sans
+faute, et la vitrine écrit « nouvelle agence » plutôt qu'une note parfaite.
+`AgencyReliabilityCounts` compte à partir des lignes existantes ; rien n'est
+stocké, pour la même raison que la note client. Les mêmes prédicats servent aux
+deux lecteurs : la vitrine publique lit hors filtre de tenant (le visiteur n'en a
+pas), l'écran de l'agence lit filtré. La note est affichée sur la **page de
+l'agence** du marketplace, pas sur chaque carte de voiture : le dénominateur est
+un décompte sur les réservations, et en sous-requête par carte il ferait payer
+une page entière de résultats.
+
+*Les signalements (§3.6).* `AgencyReport` est rattaché à **exactement une**
+réservation ou location du client (contrainte CHECK), un seul par réservation, et
+seulement dans les 60 jours qui suivent (`ReportingWindowDays`). Comme
+`AgencyReview`, l'entité est **de niveau plateforme et non `ITenantEntity`** — et
+pour une raison plus forte : ni le client qui signale ni l'administrateur
+plateforme qui arbitre ne portent de revendication de tenant. Ce que l'écran de
+triage doit lire de la réservation est donc **figé sur la ligne**
+(`BookingSummary`, `AgencyCancellationReason`), puisque l'arbitre ne peut pas
+lire les données du tenant. L'administrateur **retient** ou **écarte**, une seule
+fois, avec une motivation obligatoire montrée aux deux parties. Retenir coûte 15
+points de plus ; rien d'autre ne change de mains.
+
+*Écrans.* Client : bouton « Signaler à la plateforme » sur la réservation ou la
+location concernée, et un onglet « Mes signalements » dans Mes voyages où il lit
+la décision. Agence : onglet **Réputation** dans Mon agence — sa note publique et
+les signalements la concernant, en lecture seule. Plateforme : file d'arbitrage
+`/agency-reports`, en attente d'abord et les plus anciens en premier, avec les
+deux versions côte à côte. Notification `AgencyReport` à l'arrivée du signalement
+et à la décision, adressée aux **administrateurs** de l'agence : un signalement
+n'appartient à aucun module, donc `StaffNotification.Permission` vaut `null` et
+la diffusion passe par `INotificationRecipients.ForAdministratorsAsync`.
+
+**Migration** `AddAgencyReports` : la table plus la colonne
+`Reservations.CancelledAfterConfirmation`, **volontairement non rétro-remplie** —
+rien sur une réservation déjà annulée ne dit si elle avait été confirmée, donc 0
+est la seule réponse honnête, et c'est aussi la clémente.
 
 ### N.9 — Chevauchement bloquant à la confirmation · ✅ livré
 
@@ -562,9 +636,9 @@ cours de configuration n'apparaît pas dans la recherche publique.
 
 ### Ordre d'exécution retenu
 
-~~N.9~~ → ~~N.1~~ → ~~N.5~~ → ~~N.6~~ → ~~N.7~~ → **N.8** (avec les signalements
-du §3.6) → N.4 → N.10, puis les libellés « TTC » de N.2.
+~~N.9~~ → ~~N.1~~ → ~~N.5~~ → ~~N.6~~ → ~~N.7~~ → ~~N.8~~ (avec les signalements
+du §3.6) → ~~N.4~~ → **N.10**, puis les libellés « TTC » de N.2.
 
-N.6 est passé devant N.7 sur votre demande. Cinq points sont livrés
-(2026-09-02) ; la prochaine étape est N.8 — l'annulation par l'agence et les
-signalements, qui réutilisent la mécanique de note posée par N.7.
+N.6 est passé devant N.7 sur votre demande. Sept points sont livrés (cinq le
+2026-09-02, N.8 et N.4 le 2026-09-08) ; la prochaine étape est N.10 —
+l'assistant d'ouverture d'agence.

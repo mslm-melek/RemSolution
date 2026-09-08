@@ -60,8 +60,11 @@ public class NotificationService : INotificationService
     {
         var agencyId = RequireTenant();
 
-        var recipients = await _recipients.ForPermissionAsync(
-            agencyId, notification.Permission, cancellationToken);
+        // No permission means the alert belongs to no module, so it goes to the
+        // people who answer for the agency itself (see StaffNotification).
+        var recipients = notification.Permission is string permission
+            ? await _recipients.ForPermissionAsync(agencyId, permission, cancellationToken)
+            : await _recipients.ForAdministratorsAsync(agencyId, cancellationToken);
 
         if (recipients.Count == 0)
         {

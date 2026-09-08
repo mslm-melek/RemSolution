@@ -20,6 +20,8 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>, IApplica
 
     public DbSet<Agency> Agencies => Set<Agency>();
     public DbSet<AgencyFeature> AgencyFeatures => Set<AgencyFeature>();
+    public DbSet<AgencyReport> AgencyReports => Set<AgencyReport>();
+    public DbSet<ExchangeRate> ExchangeRates => Set<ExchangeRate>();
     public DbSet<AgencyReview> AgencyReviews => Set<AgencyReview>();
     public DbSet<AgencySubscription> AgencySubscriptions => Set<AgencySubscription>();
     public DbSet<AgencySettings> AgencySettings => Set<AgencySettings>();

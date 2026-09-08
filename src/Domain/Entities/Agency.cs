@@ -26,5 +26,9 @@ namespace RemSolution.Domain.Entities
         // AgencyReview), so this navigation is safe to project from anonymous
         // marketplace queries without any query-filter bypass.
         public virtual ICollection<AgencyReview>? Reviews { get; set; }
+        // Complaints customers raised against this agency. Platform-level too,
+        // and for a stronger reason than the reviews (see AgencyReport): nobody
+        // who touches one carries a tenant claim.
+        public virtual ICollection<AgencyReport>? Reports { get; set; }
     }
 }

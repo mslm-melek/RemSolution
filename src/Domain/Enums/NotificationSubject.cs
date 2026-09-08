@@ -13,5 +13,6 @@ namespace RemSolution.Domain.Enums
         Renting = 2,
         Reservation = 3,
         Client = 4,
+        AgencyReport = 5,
     }
 }

@@ -18,17 +18,21 @@ namespace RemSolution.Application.Features.MarketplaceSearch.Queries.GetMyRentin
     {
         private readonly IApplicationDbContext _context;
         private readonly IUser _user;
+        private readonly TimeProvider _dateTime;
 
-        public GetMyRentingsQueryHandler(IApplicationDbContext context, IUser user)
+        public GetMyRentingsQueryHandler(
+            IApplicationDbContext context, IUser user, TimeProvider dateTime)
         {
             _context = context;
             _user = user;
+            _dateTime = dateTime;
         }
 
         public async Task<IList<MyRentingDto>> Handle(
             GetMyRentingsQuery request, CancellationToken cancellationToken)
         {
             var userId = _user.Id ?? throw new UnauthorizedAccessException();
+            var now = _dateTime.GetUtcNow().UtcDateTime;
 
             return await _context.Rentings
                 .IgnoreQueryFilters()
@@ -71,6 +75,23 @@ namespace RemSolution.Application.Features.MarketplaceSearch.Queries.GetMyRentin
                     ReviewedAt = _context.AgencyReviews
                         .Where(v => v.RentingId == r.Id)
                         .Select(v => (DateTime?)v.SubmittedAt)
+                        .FirstOrDefault(),
+
+                    // Repeats AgencyReport.IsWithinReportingWindow inline, for
+                    // the same reason CanReview above repeats its rule: EF has to
+                    // translate it. Reports are platform-level rows, so these
+                    // sub-queries need no filter bypass.
+                    CanReport = !_context.AgencyReports.Any(p => p.RentingId == r.Id)
+                                && (r.EndDate == null
+                                    || r.EndDate.Value.AddDays(Domain.Entities.AgencyReport.ReportingWindowDays) >= now),
+
+                    MyReportId = _context.AgencyReports
+                        .Where(p => p.RentingId == r.Id)
+                        .Select(p => (int?)p.Id)
+                        .FirstOrDefault(),
+                    MyReportStatus = _context.AgencyReports
+                        .Where(p => p.RentingId == r.Id)
+                        .Select(p => (AgencyReportStatus?)p.Status)
                         .FirstOrDefault(),
                 })
                 .ToListAsync(cancellationToken);

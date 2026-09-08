@@ -37,6 +37,7 @@
 
       <div class="price" *ngIf="car.dailyRate">
         <span class="money">{{ car.dailyRate.amount | number:'1.2-2' }} {{ car.dailyRate.currency }}</span><span class="per">{{ t('marketplace.perDaySpaced') }}</span>
+        <app-converted-price [value]="car.dailyRate"></app-converted-price>
       </div>
 
       <div class="cta">

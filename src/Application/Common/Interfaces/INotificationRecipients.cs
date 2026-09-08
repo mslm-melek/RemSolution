@@ -34,4 +34,12 @@ public interface INotificationRecipients
     /// </summary>
     Task<IReadOnlyList<NotificationRecipient>> ForPermissionAsync(
         int agencyId, string permission, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// The agency's active administrators, for an alert that belongs to no
+    /// module and so has no permission to key on — a complaint raised against
+    /// the agency itself. Same lockout rule as above.
+    /// </summary>
+    Task<IReadOnlyList<NotificationRecipient>> ForAdministratorsAsync(
+        int agencyId, CancellationToken cancellationToken);
 }
