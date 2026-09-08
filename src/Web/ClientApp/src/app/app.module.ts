@@ -33,6 +33,7 @@ import { ClientQuickViewComponent } from './client/client-quick-view.component';
 import { AgencyComponent } from './agency/agency.component';
 import { AgencyFormComponent } from './agency/agency-form.component';
 import { AgencyDetailComponent } from './agency/agency-detail.component';
+import { AgencyWizardComponent } from './agency/agency-wizard.component';
 import { UserFormComponent } from './user/user-form.component';
 import { SubscriptionPlanComponent } from './subscription-plan/subscription-plan.component';
 import { ExchangeRateComponent } from './exchange-rate/exchange-rate.component';
@@ -168,6 +169,7 @@ function toMyBookings(tab: 'rentings' | null): RedirectFunction {
     AgencyComponent,
     AgencyFormComponent,
     AgencyDetailComponent,
+    AgencyWizardComponent,
     UserFormComponent,
     SubscriptionPlanComponent,
     SubscriptionPlanFormComponent,
@@ -317,7 +319,9 @@ function toMyBookings(tab: 'rentings' | null): RedirectFunction {
       // links inside the console working.
       { path: 'platform-dashboard', redirectTo: '', pathMatch: 'full' },
       { path: 'agency', component: AgencyComponent },
-      { path: 'agency/new', component: AgencyFormComponent },
+      // Opening an agency is a five-step job, not a form (see
+      // AgencyWizardComponent); the plain form stays for editing one.
+      { path: 'agency/new', component: AgencyWizardComponent },
       { path: 'agency/:id', component: AgencyDetailComponent },
       { path: 'agency/:id/edit', component: AgencyFormComponent },
       { path: 'agency/:id/user/new', component: UserFormComponent },

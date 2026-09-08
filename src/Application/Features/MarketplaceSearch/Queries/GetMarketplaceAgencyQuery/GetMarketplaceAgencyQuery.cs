@@ -25,10 +25,13 @@ namespace RemSolution.Application.Features.MarketplaceSearch.Queries.GetMarketpl
             GetMarketplaceAgencyQuery request, CancellationToken cancellationToken)
         {
             // Agency is platform-level (not ITenantEntity), so no filter bypass is
-            // needed to read one as an anonymous visitor.
+            // needed to read one as an anonymous visitor. Unpublished ones read as
+            // missing rather than empty: an agency still being set up is not a
+            // shopfront with nothing in it, it is not a shopfront (see
+            // Agency.PublishedAt).
             var agency = await _context.Agencies
                 .AsNoTracking()
-                .Where(a => a.Id == request.Id)
+                .Where(a => a.Id == request.Id && a.PublishedAt != null)
                 .Select(a => new
                 {
                     a.Id,

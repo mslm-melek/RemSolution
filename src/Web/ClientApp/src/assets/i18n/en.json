@@ -134,6 +134,35 @@
     "asQuoted": "The agency's currency",
     "note": "Indicative conversion. You are charged in the agency's currency."
   },
+  "agencyWizard": {
+    "title": "Open an agency",
+    "subtitle": "Five steps, in the order the work happens. The agency exists from the first one, so nothing is lost if you come back later.",
+    "steps": {
+      "details": "The agency",
+      "plan": "Plan and modules",
+      "invoice": "Invoicing",
+      "fleet": "Vehicles",
+      "publish": "Going live"
+    },
+    "currencyFixed": "Fixed at creation: every amount the agency stores will be in this currency.",
+    "createAgency": "Create the agency",
+    "planNote": "The plan decides which modules exist and the quotas. It is needed before any vehicle can be added.",
+    "plan": "Plan",
+    "assignPlan": "Assign the plan",
+    "modules": "Enabled modules",
+    "invoiceNote": "What makes an invoice a legal document. Each one issued freezes its own copy, so these are best right before the first rental.",
+    "fleetNote": "Something to put in the window. The essentials here; the agency completes each record from its own screen.",
+    "publishNote": "Until the agency is live no customer sees it: not in the search, not on the map, not through a direct link.",
+    "carsOnOffer": "Vehicles on offer",
+    "carsTotal": "Vehicles on the books",
+    "nothingToOffer": "Nothing on offer yet — an empty shopfront is worse than none. At least one active, priced vehicle is needed.",
+    "liveSince": "Live since {{ date }}",
+    "publish": "Go live",
+    "unpublish": "Take off the marketplace",
+    "finish": "Finish",
+    "live": "Live",
+    "notLive": "Not live yet"
+  },
   "exchangeRate": {
     "title": "Exchange rates",
     "subtitle": "For display on the marketplace only: no stored amount is converted.",

@@ -3,10 +3,13 @@ using RemSolution.Application.Common.Models;
 using RemSolution.Application.Features.AgencyReport.DTOs;
 using RemSolution.Application.Features.AgencyReport.Queries.GetMyAgencyReportsQuery;
 using RemSolution.Application.Features.Agency.Commands.CreateAgencyBranchCommand;
+using RemSolution.Application.Features.Agency.Commands.CreateAgencyCarCommand;
 using RemSolution.Application.Features.Agency.Commands.CreateAgencyCommand;
+using RemSolution.Application.Features.Agency.Commands.SetAgencyInvoiceSettingsCommand;
 using RemSolution.Application.Features.Agency.Commands.DeleteAgencyBranchCommand;
 using RemSolution.Application.Features.Agency.Commands.DeleteAgencyCommand;
 using RemSolution.Application.Features.Agency.Commands.SetAgencyFeatureCommand;
+using RemSolution.Application.Features.Agency.Commands.SetAgencyPublicationCommand;
 using RemSolution.Application.Features.Agency.Commands.UpdateAgencyBranchCommand;
 using RemSolution.Application.Features.Agency.Commands.UpdateAgencyCommand;
 using RemSolution.Application.Features.Agency.Commands.UpdateMyAgencyCommand;
@@ -15,6 +18,7 @@ using RemSolution.Application.Features.Agency.Queries.GetAgenciesQuery;
 using RemSolution.Application.Features.Agency.Queries.GetAgencyBranchesQuery;
 using RemSolution.Application.Features.Agency.Queries.GetAgencyByIdQuery;
 using RemSolution.Application.Features.Agency.Queries.GetAgencyFeaturesQuery;
+using RemSolution.Application.Features.Agency.Queries.GetAgencyPublicationQuery;
 using RemSolution.Application.Features.Agency.Queries.GetMyAgencyQuery;
 using RemSolution.Application.Features.Agency.Queries.GetMyAgencyReliabilityQuery;
 using RemSolution.Application.Features.Branch.DTOs;
@@ -47,6 +51,14 @@ public class Agencies : EndpointGroupBase
             .MapDelete(DeleteAgency, "{id}")
             .MapGet(GetAgencyFeatures, "{id}/features")
             .MapPut(SetAgencyFeature, "{id}/features")
+            // Going live on the marketplace, and what the agency has to show if
+            // it does (see Agency.PublishedAt).
+            .MapGet(GetAgencyPublication, "{id}/publication")
+            .MapPut(SetAgencyPublication, "{id}/publication")
+            // The two setup steps the agency cannot do for itself yet, because
+            // nobody has signed in to it: its invoice settings and its first cars.
+            .MapPut(SetAgencyInvoiceSettings, "{id}/invoice-settings")
+            .MapPost(CreateAgencyCar, "{id}/cars")
             // An agency's locations, edited alongside the agency itself. The
             // agency's own administrator manages the same rows through the
             // Branches group, which takes its tenant from their claim.
@@ -127,6 +139,45 @@ public class Agencies : EndpointGroupBase
         await sender.Send(command);
 
         return TypedResults.NoContent();
+    }
+
+    public async Task<Ok<AgencyPublicationDto>> GetAgencyPublication(ISender sender, int id)
+    {
+        var result = await sender.Send(new GetAgencyPublicationQuery(id));
+        return TypedResults.Ok(result);
+    }
+
+    public async Task<Results<NoContent, BadRequest>> SetAgencyPublication(
+        ISender sender, int id, SetAgencyPublicationCommand command)
+    {
+        if (id != command.Id)
+            return TypedResults.BadRequest();
+
+        await sender.Send(command);
+
+        return TypedResults.NoContent();
+    }
+
+    public async Task<Results<NoContent, BadRequest>> SetAgencyInvoiceSettings(
+        ISender sender, int id, SetAgencyInvoiceSettingsCommand command)
+    {
+        if (id != command.AgencyId)
+            return TypedResults.BadRequest();
+
+        await sender.Send(command);
+
+        return TypedResults.NoContent();
+    }
+
+    public async Task<Results<Created<int>, BadRequest>> CreateAgencyCar(
+        ISender sender, int id, CreateAgencyCarCommand command)
+    {
+        if (id != command.AgencyId)
+            return TypedResults.BadRequest();
+
+        var carId = await sender.Send(command);
+
+        return TypedResults.Created($"/api/Agencies/{id}/cars/{carId}", carId);
     }
 
     public async Task<Ok<IList<AgencyDto>>> GetAgencies(ISender sender, [AsParameters] GetAgenciesQuery query)

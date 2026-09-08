@@ -8,15 +8,21 @@ namespace RemSolution.Application.Features.MarketplaceSearch
     // home-page showcase so they can never disagree about what is on offer.
     internal static class MarketplaceCars
     {
-        // Offered = not archived, bookable and priced. IgnoreQueryFilters drops
-        // BOTH the AgencyId and the !IsDeleted global filters (the visitor has no
+        // Offered = its agency is live on the marketplace, and the car is not
+        // archived, bookable and priced. IgnoreQueryFilters drops BOTH the
+        // AgencyId and the !IsDeleted global filters (the visitor has no
         // tenant), so soft-delete is re-applied explicitly. This is one of the two
         // sanctioned bypass locations — see TenantEnforcementTests.
+        //
+        // The agency gate is first because it is the coarsest: an agency still
+        // being set up has no business in the public search, however good its
+        // fleet looks (see Agency.PublishedAt).
         public static IQueryable<Domain.Entities.Car> Offered(IApplicationDbContext context) =>
             context.Cars
                 .IgnoreQueryFilters()
                 .AsNoTracking()
-                .Where(c => !c.IsDeleted
+                .Where(c => c.Agency != null && c.Agency.PublishedAt != null
+                            && !c.IsDeleted
                             && c.Status == CarStatus.Active
                             && c.DailyRate != null);
 

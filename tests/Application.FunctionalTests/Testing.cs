@@ -245,7 +245,14 @@ public partial class Testing
     // Tenant writes require an active subscription, so one is provisioned by
     // default (generous limits keep unrelated tests unaffected); pass
     // withSubscription: false to test the unsubscribed state.
-    public static async Task<int> AddTestAgencyAsync(int maxCars = 100, int maxClients = 100, int maxUsers = 100, bool withSubscription = true)
+    //
+    // The agency is LIVE on the marketplace by default: an agency in a test is a
+    // working agency, and leaving it unpublished would silently empty every
+    // public search a test makes. Pass published: false to test the gate itself
+    // (see Agency.PublishedAt).
+    public static async Task<int> AddTestAgencyAsync(
+        int maxCars = 100, int maxClients = 100, int maxUsers = 100,
+        bool withSubscription = true, bool published = true)
     {
         var country = new Country { Name = "Testland" };
         await AddAsync(country);
@@ -257,6 +264,12 @@ public partial class Testing
             // Settings row (currency etc.) is required now that it lives off-Agency.
             Settings = new AgencySettings { CurrencyCode = "TND" }
         };
+
+        if (published)
+        {
+            agency.Publish(DateTime.UtcNow);
+        }
+
         await AddAsync(agency);
 
         if (withSubscription)

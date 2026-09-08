@@ -37,6 +37,13 @@ public class AmbientTenantUsageTests
         // Reading one agency's branches (an ITenantEntity) while the platform
         // administrator edits that agency.
         Normalize("Features/Agency/Queries/GetAgencyBranchesQuery/"),
+        // Counting one agency's cars and branches to decide whether it has a
+        // shop window worth opening, and again when it is opened.
+        Normalize("Features/Agency/Queries/GetAgencyPublicationQuery/"),
+        Normalize("Features/Agency/Commands/SetAgencyPublicationCommand/"),
+        // Putting the first cars into an agency being opened. The ordinary push,
+        // not the administrative one: the fleet counts against the plan.
+        Normalize("Features/Agency/Commands/CreateAgencyCarCommand/"),
         // Settling a complaint tells the agency the outcome, and a notification
         // is a tenant row — the platform administrator who took the decision
         // carries no agency claim of their own.

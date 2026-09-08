@@ -134,6 +134,35 @@
     "asQuoted": "Devise de l'agence",
     "note": "Conversion indicative. Vous êtes facturé dans la devise de l'agence."
   },
+  "agencyWizard": {
+    "title": "Ouvrir une agence",
+    "subtitle": "Cinq étapes, dans l'ordre où le travail se fait. L'agence existe dès la première : rien n'est perdu si vous revenez plus tard.",
+    "steps": {
+      "details": "L'agence",
+      "plan": "Formule et modules",
+      "invoice": "Facturation",
+      "fleet": "Véhicules",
+      "publish": "Mise en ligne"
+    },
+    "currencyFixed": "Fixée à la création : tous les montants de l'agence seront dans cette devise.",
+    "createAgency": "Créer l'agence",
+    "planNote": "La formule décide des modules disponibles et des quotas. Elle est nécessaire avant d'ajouter des véhicules.",
+    "plan": "Formule",
+    "assignPlan": "Attribuer la formule",
+    "modules": "Modules activés",
+    "invoiceNote": "Ce qui fait d'une facture un document légal. Chaque facture émise en fige sa propre copie : mieux vaut que ce soit juste avant la première location.",
+    "fleetNote": "De quoi remplir la vitrine. L'essentiel ici ; l'agence complètera chaque fiche depuis son propre écran.",
+    "publishNote": "Tant que l'agence n'est pas en ligne, aucun client ne la voit : ni dans la recherche, ni sur la carte, ni par un lien direct.",
+    "carsOnOffer": "Véhicules proposés",
+    "carsTotal": "Véhicules enregistrés",
+    "nothingToOffer": "Aucun véhicule proposable pour l'instant — une vitrine vide est pire que pas de vitrine. Il faut au moins un véhicule actif et tarifé.",
+    "liveSince": "En ligne depuis le {{ date }}",
+    "publish": "Mettre en ligne",
+    "unpublish": "Retirer du marketplace",
+    "finish": "Terminer",
+    "live": "En ligne",
+    "notLive": "Pas encore en ligne"
+  },
   "exchangeRate": {
     "title": "Taux de change",
     "subtitle": "Uniquement pour l'affichage sur le marketplace : aucun montant enregistré n'est converti.",

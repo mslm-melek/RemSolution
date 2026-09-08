@@ -169,6 +169,20 @@ rate, the duty stamp and the agency's tax number live on `AgencySettings` and ar
 must still say what was charged. `Net + Vat == Gross` exactly: the net is
 rounded and the tax is the remainder, never rounded twice.
 
+**An agency reaches the marketplace only when published.** `Agency.PublishedAt`
+is null while it is being set up; nothing of it is public until somebody says so.
+The gate lives in `MarketplaceCars.Offered` — every search, map, showcase and
+destination read goes through it — plus the two places that answer for ONE car
+and so repeat the rule: `GetMarketplaceCarQuery` (which now calls `Offered`
+rather than restating it) and `CreateCustomerReservationCommand`, which needs a
+tracked car and therefore checks `car.Agency.PublishedAt` by hand.
+`GetMarketplaceAgencyQuery` returns null for an unpublished agency — missing, not
+empty. Adding a public surface means adding the gate to it. Publishing requires
+at least one car on offer (`SetAgencyPublicationCommand`); unpublishing is always
+allowed and cancels nothing. **The migration backfills every existing agency as
+published** — the mirror of the usual trap: a new nullable column would otherwise
+take the whole marketplace down on deploy.
+
 **Availability has three sources, not two.** A car is free for `[start, end)`
 only if no non-terminal `Renting`, no **confirmed or paid** `Reservation`, and no
 `CarUnavailability` overlaps it. All three are one round trip in
@@ -279,7 +293,7 @@ dotnet build RemSolution.sln            # Debug build also regenerates the NSwag
 dotnet test tests\Domain.UnitTests\Domain.UnitTests.csproj            # 156 tests
 dotnet test tests\Application.UnitTests\Application.UnitTests.csproj  # 159 tests
 dotnet test tests\Infrastructure.IntegrationTests\...csproj           #  24 tests (disk + SkiaSharp)
-dotnet test tests\Application.FunctionalTests\...csproj               # 591 tests (needs SQL Server)
+dotnet test tests\Application.FunctionalTests\...csproj               # 606 tests (needs SQL Server)
 cd src\Web; dotnet watch run                                          # https://localhost:5001
 
 cd src\Web\ClientApp; npx ng build --configuration production
@@ -338,10 +352,11 @@ agency), §4.2 (migration bundle) and §4.5 (per-car lock) shipped, and on
 indexes), A.4 (one round trip), A.5 (rate limiting), A.8
 (`CarUnavailability`) and A.9 (deposit settlement). Check the code, not the
 tables. **§0.1 and §8 of the plan are the exception — they were rewritten
-2026-09-02 and again 2026-09-08, and are current.** The N.x series is at N.4
-(display-only currency conversion) and N.8 (agency cancellation + reports), both
-shipped 2026-09-08; what is left is N.10 (agency-opening wizard) and N.2's "TTC"
-labels.
+2026-09-02 and again 2026-09-08, and are current.** The N.x series is done bar
+N.2's "TTC" labels: N.8 (agency cancellation + reports), N.4 (display-only
+currency conversion) and N.10 (agency-opening wizard + explicit marketplace
+publication) all shipped 2026-09-08. N.10's file import of vehicles was left
+out deliberately — see plan §8.
 
 **Still open** (and why): a transactional Outbox (§4.6) — its stated purpose is
 atomicity for online payment and push, both out of scope, and durable mail would

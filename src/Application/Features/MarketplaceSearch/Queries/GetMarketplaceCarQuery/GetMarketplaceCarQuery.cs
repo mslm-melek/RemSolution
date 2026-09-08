@@ -1,6 +1,5 @@
 using RemSolution.Application.Common.Interfaces;
 using RemSolution.Application.Features.MarketplaceSearch.DTOs;
-using RemSolution.Domain.Enums;
 
 namespace RemSolution.Application.Features.MarketplaceSearch.Queries.GetMarketplaceCarQuery
 {
@@ -18,13 +17,11 @@ namespace RemSolution.Application.Features.MarketplaceSearch.Queries.GetMarketpl
 
         public async Task<MarketplaceCarDto?> Handle(GetMarketplaceCarQuery request, CancellationToken cancellationToken)
         {
-            return await _context.Cars
-                .IgnoreQueryFilters()
-                .AsNoTracking()
-                .Where(c => c.Id == request.Id
-                            && !c.IsDeleted
-                            && c.Status == CarStatus.Active
-                            && c.DailyRate != null)
+            // Through Offered rather than repeating its predicate: a car reachable
+            // by id but absent from the search is exactly the hole a duplicated
+            // rule leaves — an unpublished agency's page, linked to directly.
+            return await MarketplaceCars.Offered(_context)
+                .Where(c => c.Id == request.Id)
                 .ProjectToType<MarketplaceCarDto>()
                 .FirstOrDefaultAsync(cancellationToken);
         }

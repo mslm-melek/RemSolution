@@ -60,11 +60,17 @@ namespace RemSolution.Application.Features.Marketplace.Commands.CreateCustomerRe
             // discover which agency owns it.
             var car = await _context.Cars
                 .IgnoreQueryFilters()
+                .Include(c => c.Agency)
                 .FirstOrDefaultAsync(c => c.Id == request.CarId && !c.IsDeleted, cancellationToken);
 
             Guard.Against.NotFound(request.CarId, car);
 
-            if (car.Status != CarStatus.Active || car.DailyRate is null)
+            // Repeats the agency half of MarketplaceCars.Offered: this path needs
+            // a TRACKED car, so it cannot go through that queryable — and without
+            // the gate an unpublished agency's car would still take bookings by
+            // id. Change the rule there and change it here.
+            if (car.Status != CarStatus.Active || car.DailyRate is null
+                || car.Agency?.PublishedAt is null)
             {
                 throw new ValidationException(new[]
                 {

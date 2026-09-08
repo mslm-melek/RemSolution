@@ -374,6 +374,164 @@
         }
       }
     },
+    "/api/Agencies/{id}/publication": {
+      "get": {
+        "tags": [
+          "Agencies"
+        ],
+        "operationId": "GetAgencyPublication",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgencyPublicationDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Agencies"
+        ],
+        "operationId": "SetAgencyPublication",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          }
+        ],
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetAgencyPublicationCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 2
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "400": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/Agencies/{id}/invoice-settings": {
+      "put": {
+        "tags": [
+          "Agencies"
+        ],
+        "operationId": "SetAgencyInvoiceSettings",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          }
+        ],
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetAgencyInvoiceSettingsCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 2
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "400": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/Agencies/{id}/cars": {
+      "post": {
+        "tags": [
+          "Agencies"
+        ],
+        "operationId": "CreateAgencyCar",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          }
+        ],
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAgencyCarCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 2
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": ""
+          }
+        }
+      }
+    },
     "/api/Agencies/{id}/branches": {
       "get": {
         "tags": [
@@ -8033,6 +8191,11 @@
             "type": "string",
             "nullable": true
           },
+          "publishedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
           "currency": {
             "type": "string"
           },
@@ -8578,6 +8741,102 @@
           },
           "enabled": {
             "type": "boolean"
+          }
+        }
+      },
+      "AgencyPublicationDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "agencyId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "publishedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "isPublished": {
+            "type": "boolean"
+          },
+          "offeredCars": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalCars": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "branches": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "canPublish": {
+            "type": "boolean"
+          }
+        }
+      },
+      "SetAgencyPublicationCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "published": {
+            "type": "boolean"
+          }
+        }
+      },
+      "SetAgencyInvoiceSettingsCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "agencyId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "taxIdentifier": {
+            "type": "string",
+            "nullable": true
+          },
+          "vatRatePercent": {
+            "type": "number",
+            "format": "decimal"
+          },
+          "fiscalStampAmount": {
+            "type": "number",
+            "format": "decimal"
+          }
+        }
+      },
+      "CreateAgencyCarCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "agencyId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "matricule": {
+            "type": "string"
+          },
+          "modelId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "branchId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "dailyRate": {
+            "type": "number",
+            "format": "decimal",
+            "nullable": true
           }
         }
       },

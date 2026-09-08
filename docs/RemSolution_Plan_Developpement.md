@@ -41,7 +41,7 @@ Chaque ligne a été vérifiée dans le code, pas dans un tableau de suivi.
 | 4.4 | `Renting` en agrégat riche | `Renting.Create/Start/Complete/Cancel`, setters privés, événements |
 | 4.5 | Verrou par véhicule | `AcquireCarWriteLockAsync`, le verrou agence restant pour les quotas |
 | 4.7 | Nettoyage | `cookies_*.txt`, `info.docx`, `Colour.cs`, `UnsupportedColourException.cs` supprimés |
-| 2.1 | Tests | 930 tests : 156 domaine, 159 application, 24 infrastructure, 591 fonctionnels ; `Web.AcceptanceTests` a Login + Cars |
+| 2.1 | Tests | 945 tests : 156 domaine, 159 application, 24 infrastructure, 606 fonctionnels ; `Web.AcceptanceTests` a Login + Cars |
 | 2.2 | Assistant de création de location | `renting-form.component.ts` — stepper 3 étapes (véhicule et dates → client → paperasse) |
 | 2.5 | CI | `.github/workflows/ci.yml` : build, tests unitaires, build Angular, conventions front, fonctionnels + intégration |
 | 2.6 | Durcissement sécurité | limitation de débit (`src/Web/Infrastructure/RateLimiting.cs`), durcissement des téléversements, fichiers de débogage supprimés |
@@ -64,8 +64,9 @@ L'addendum est livré à l'exception de A.6 et A.7 — voir son propre encadré.
 | 2.8 | Inscription libre-service des agences | ❌ la création d'agence reste réservée à l'administrateur plateforme | hors dév. + 3 j |
 
 **Et dix points ajoutés le 2026-09-02** — papiers, devises, parcours de
-réservation, fiabilité, assistant d'ouverture d'agence : voir **§8**. Sept sont
-livrés (N.9, N.1, N.5, N.6, N.7, N.8, N.4) ; il en reste ≈ 3,2 j.
+réservation, fiabilité, assistant d'ouverture d'agence : voir **§8**. Huit sont
+livrés (N.9, N.1, N.5, N.6, N.7, N.8, N.4, N.10) ; ne restent que les libellés
+« TTC » de N.2 (≈ 0,2 j).
 
 Les **signalements** du §3.6 ont été livrés avec N.8 le 2026-09-08 : c'est la
 même fonctionnalité vue des deux côtés, et elle a été construite d'un bloc.
@@ -375,10 +376,10 @@ dans le code**, pas l'intention.
 | N.8 | Annulation par l'agence : note + signalement | ✅ **livré (2026-09-08)** — avec les signalements du §3.6 | — |
 | N.6 | Exigences sur réservation confirmée + chat | ✅ **livré** | — |
 | N.4 | Devises EUR/TND + taux | ✅ **livré (2026-09-08)** — conversion à l'affichage | — |
-| N.10 | Assistant d'ouverture d'agence | ❌ absent | 3 j |
+| N.10 | Assistant d'ouverture d'agence | ✅ **livré (2026-09-08)** — sauf l'import de véhicules par fichier | — |
 | N.2 | Montants TTC (location, tarif journalier) | ✅ livré — décision TTC, `TaxBreakdown.FromGross` ; reste à écrire « TTC » dans l'interface | 0,2 j |
 | N.3 | Paramètre TVA | ✅ livré — `VatRatePercent`, `TaxIdentifier`, `FiscalStampAmount` dans `AgencySettings`, exposés dans l'écran Mon agence | — |
-| | **Reste** | | **≈ 3,2 j** |
+| | **Reste** | | **≈ 0,2 j** (libellés « TTC ») + 1 j si l'import de véhicules est voulu |
 
 ### Ce qui a été livré le 2026-09-02
 
@@ -626,19 +627,54 @@ Arbitrage retenu : une demande en attente ne bloque plus rien, et c'est la
 confirmation qui tranche. Voir l'encadré « Ce qui a été livré » ci-dessus pour
 ce que cela a changé dans le code.
 
-### N.10 — Assistant d'ouverture d'agence
+### N.10 — Assistant d'ouverture d'agence · ✅ livré (2026-09-08)
 
-Un parcours en cinq étapes pour l'administrateur plateforme comme pour une
-future inscription en libre-service (§2.8) : détails de l'agence → modules
-activés → paramètres (facture, contrat, TVA) → voitures (saisie ou import) →
-publication sur le marketplace. La publication devient explicite : une agence en
-cours de configuration n'apparaît pas dans la recherche publique.
+**La publication devient explicite.** `Agency.PublishedAt` est nul tant que
+l'agence se met en place, et rien d'elle n'est public avant que quelqu'un ne le
+décide. Le filtre vit dans `MarketplaceCars.Offered` — recherche, carte, vitrine
+d'accueil et sélecteur de destinations y passent tous — plus les deux endroits
+qui répondent pour **une** voiture et redisent donc la règle :
+`GetMarketplaceCarQuery`, qui appelle désormais `Offered` au lieu de la
+reformuler, et `CreateCustomerReservationCommand`, qui a besoin d'une entité
+suivie et vérifie donc `car.Agency.PublishedAt` à la main. La vitrine d'une
+agence non publiée répond **absente**, pas vide. Mettre en ligne exige au moins
+une voiture proposable ; retirer est toujours possible et **n'annule rien** — les
+réservations déjà prises lient le client et l'agence, pas la plateforme.
+
+**L'assistant**, cinq étapes dans l'ordre où le travail se fait : l'agence (avec
+son administrateur et ses succursales) → formule et modules → facturation (TVA,
+matricule fiscal, timbre) → véhicules → mise en ligne. **L'agence existe dès la
+première étape** : tout ce qui suit écrit dans une vraie ligne, rien n'est gardé
+dans le navigateur en attendant une validation finale. C'est voulu — une agence à
+moitié configurée est un état normal du monde, on y revient par sa fiche, et un
+assistant qui perdrait quatre étapes sur un rafraîchissement serait pire que
+quatre écrans.
+
+Deux commandes nouvelles pour les étapes que l'agence ne peut pas encore faire
+elle-même, faute de quelqu'un pour s'y connecter : `SetAgencyInvoiceSettings`
+(étroite à dessein — l'élargissement d'`UpdateAgencyCommand` aurait fait vider ces
+trois champs à chaque enregistrement du formulaire d'édition) et
+`CreateAgencyCarCommand`. Cette dernière pousse le tenant **ordinaire** et non
+l'administratif : une flotte compte dans le quota de la formule qu'on vient
+d'attribuer, d'où l'ordre des étapes.
+
+**Migration** `AddAgencyPublication` : la colonne, et surtout **le
+rétro-remplissage de toutes les agences existantes en « publiées »**. C'est le
+piège habituel à l'envers — une colonne nullable laissée à NULL aurait retiré
+tout le marketplace au moment du déploiement. Vérifié sur la base de
+développement : les cinq agences déjà là sont restées en ligne, datées de leur
+création.
+
+**Non fait, et assumé :** l'import de véhicules par fichier. La saisie est dans
+l'assistant ; un importeur CSV demande un analyseur, la résolution des marques et
+modèles par nom et un rapport d'erreur par ligne — une journée à lui seul, et à
+moitié fait il produit des flottes fausses.
 
 ### Ordre d'exécution retenu
 
 ~~N.9~~ → ~~N.1~~ → ~~N.5~~ → ~~N.6~~ → ~~N.7~~ → ~~N.8~~ (avec les signalements
-du §3.6) → ~~N.4~~ → **N.10**, puis les libellés « TTC » de N.2.
+du §3.6) → ~~N.4~~ → ~~N.10~~, puis **les libellés « TTC » de N.2**.
 
-N.6 est passé devant N.7 sur votre demande. Sept points sont livrés (cinq le
-2026-09-02, N.8 et N.4 le 2026-09-08) ; la prochaine étape est N.10 —
-l'assistant d'ouverture d'agence.
+N.6 est passé devant N.7 sur votre demande. Les neuf points livrables le sont
+(cinq le 2026-09-02, N.8, N.4 et N.10 le 2026-09-08) ; ne restent que les
+libellés « TTC » de N.2, et l'import de véhicules de N.10 si vous le voulez.

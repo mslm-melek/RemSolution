@@ -95,6 +95,10 @@ export interface IAgenciesClient {
     deleteAgency(id: number): Observable<void>;
     getAgencyFeatures(id: number): Observable<AgencyFeatureDto[]>;
     setAgencyFeature(id: number, command: SetAgencyFeatureCommand): Observable<void>;
+    getAgencyPublication(id: number): Observable<AgencyPublicationDto>;
+    setAgencyPublication(id: number, command: SetAgencyPublicationCommand): Observable<void>;
+    setAgencyInvoiceSettings(id: number, command: SetAgencyInvoiceSettingsCommand): Observable<void>;
+    createAgencyCar(id: number, command: CreateAgencyCarCommand): Observable<number>;
     getAgencyBranches(id: number): Observable<BranchDto[]>;
     createAgencyBranch(id: number, command: CreateAgencyBranchCommand): Observable<number>;
     updateAgencyBranch(id: number, branchId: number, command: UpdateAgencyBranchCommand): Observable<void>;
@@ -680,6 +684,227 @@ export class AgenciesClient implements IAgenciesClient {
         if (status === 204) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
             return _observableOf(null as any);
+            }));
+        } else if (status === 400) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("A server side error occurred.", status, _responseText, _headers);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getAgencyPublication(id: number): Observable<AgencyPublicationDto> {
+        let url_ = this.baseUrl + "/api/Agencies/{id}/publication";
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetAgencyPublication(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetAgencyPublication(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<AgencyPublicationDto>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<AgencyPublicationDto>;
+        }));
+    }
+
+    protected processGetAgencyPublication(response: HttpResponseBase): Observable<AgencyPublicationDto> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = AgencyPublicationDto.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    setAgencyPublication(id: number, command: SetAgencyPublicationCommand): Observable<void> {
+        let url_ = this.baseUrl + "/api/Agencies/{id}/publication";
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(command);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+            })
+        };
+
+        return this.http.request("put", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processSetAgencyPublication(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processSetAgencyPublication(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processSetAgencyPublication(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return _observableOf(null as any);
+            }));
+        } else if (status === 400) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("A server side error occurred.", status, _responseText, _headers);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    setAgencyInvoiceSettings(id: number, command: SetAgencyInvoiceSettingsCommand): Observable<void> {
+        let url_ = this.baseUrl + "/api/Agencies/{id}/invoice-settings";
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(command);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+            })
+        };
+
+        return this.http.request("put", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processSetAgencyInvoiceSettings(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processSetAgencyInvoiceSettings(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processSetAgencyInvoiceSettings(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return _observableOf(null as any);
+            }));
+        } else if (status === 400) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("A server side error occurred.", status, _responseText, _headers);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    createAgencyCar(id: number, command: CreateAgencyCarCommand): Observable<number> {
+        let url_ = this.baseUrl + "/api/Agencies/{id}/cars";
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(command);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processCreateAgencyCar(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processCreateAgencyCar(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<number>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<number>;
+        }));
+    }
+
+    protected processCreateAgencyCar(response: HttpResponseBase): Observable<number> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 201) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result201: any = null;
+            let resultData201 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+                result201 = resultData201 !== undefined ? resultData201 : <any>null;
+    
+            return _observableOf(result201);
             }));
         } else if (status === 400) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
@@ -11962,6 +12187,7 @@ export class AgencyDto implements IAgencyDto {
     longitude?: number | undefined;
     countryId?: number;
     countryName?: string | undefined;
+    publishedAt?: Date | undefined;
     currency?: string;
     cancellationWindowHours?: number;
     reservationExpiryHours?: number;
@@ -12004,6 +12230,7 @@ export class AgencyDto implements IAgencyDto {
             this.longitude = _data["longitude"];
             this.countryId = _data["countryId"];
             this.countryName = _data["countryName"];
+            this.publishedAt = _data["publishedAt"] ? new Date(_data["publishedAt"].toString()) : <any>undefined;
             this.currency = _data["currency"];
             this.cancellationWindowHours = _data["cancellationWindowHours"];
             this.reservationExpiryHours = _data["reservationExpiryHours"];
@@ -12046,6 +12273,7 @@ export class AgencyDto implements IAgencyDto {
         data["longitude"] = this.longitude;
         data["countryId"] = this.countryId;
         data["countryName"] = this.countryName;
+        data["publishedAt"] = this.publishedAt ? this.publishedAt.toISOString() : <any>undefined;
         data["currency"] = this.currency;
         data["cancellationWindowHours"] = this.cancellationWindowHours;
         data["reservationExpiryHours"] = this.reservationExpiryHours;
@@ -12081,6 +12309,7 @@ export interface IAgencyDto {
     longitude?: number | undefined;
     countryId?: number;
     countryName?: string | undefined;
+    publishedAt?: Date | undefined;
     currency?: string;
     cancellationWindowHours?: number;
     reservationExpiryHours?: number;
@@ -12821,6 +13050,206 @@ export interface ISetAgencyFeatureCommand {
     agencyId?: number;
     feature?: string;
     enabled?: boolean;
+}
+
+export class AgencyPublicationDto implements IAgencyPublicationDto {
+    agencyId?: number;
+    publishedAt?: Date | undefined;
+    isPublished?: boolean;
+    offeredCars?: number;
+    totalCars?: number;
+    branches?: number;
+    canPublish?: boolean;
+
+    constructor(data?: IAgencyPublicationDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.agencyId = _data["agencyId"];
+            this.publishedAt = _data["publishedAt"] ? new Date(_data["publishedAt"].toString()) : <any>undefined;
+            this.isPublished = _data["isPublished"];
+            this.offeredCars = _data["offeredCars"];
+            this.totalCars = _data["totalCars"];
+            this.branches = _data["branches"];
+            this.canPublish = _data["canPublish"];
+        }
+    }
+
+    static fromJS(data: any): AgencyPublicationDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new AgencyPublicationDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["agencyId"] = this.agencyId;
+        data["publishedAt"] = this.publishedAt ? this.publishedAt.toISOString() : <any>undefined;
+        data["isPublished"] = this.isPublished;
+        data["offeredCars"] = this.offeredCars;
+        data["totalCars"] = this.totalCars;
+        data["branches"] = this.branches;
+        data["canPublish"] = this.canPublish;
+        return data;
+    }
+}
+
+export interface IAgencyPublicationDto {
+    agencyId?: number;
+    publishedAt?: Date | undefined;
+    isPublished?: boolean;
+    offeredCars?: number;
+    totalCars?: number;
+    branches?: number;
+    canPublish?: boolean;
+}
+
+export class SetAgencyPublicationCommand implements ISetAgencyPublicationCommand {
+    id?: number;
+    published?: boolean;
+
+    constructor(data?: ISetAgencyPublicationCommand) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.published = _data["published"];
+        }
+    }
+
+    static fromJS(data: any): SetAgencyPublicationCommand {
+        data = typeof data === 'object' ? data : {};
+        let result = new SetAgencyPublicationCommand();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["published"] = this.published;
+        return data;
+    }
+}
+
+export interface ISetAgencyPublicationCommand {
+    id?: number;
+    published?: boolean;
+}
+
+export class SetAgencyInvoiceSettingsCommand implements ISetAgencyInvoiceSettingsCommand {
+    agencyId?: number;
+    taxIdentifier?: string | undefined;
+    vatRatePercent?: number;
+    fiscalStampAmount?: number;
+
+    constructor(data?: ISetAgencyInvoiceSettingsCommand) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.agencyId = _data["agencyId"];
+            this.taxIdentifier = _data["taxIdentifier"];
+            this.vatRatePercent = _data["vatRatePercent"];
+            this.fiscalStampAmount = _data["fiscalStampAmount"];
+        }
+    }
+
+    static fromJS(data: any): SetAgencyInvoiceSettingsCommand {
+        data = typeof data === 'object' ? data : {};
+        let result = new SetAgencyInvoiceSettingsCommand();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["agencyId"] = this.agencyId;
+        data["taxIdentifier"] = this.taxIdentifier;
+        data["vatRatePercent"] = this.vatRatePercent;
+        data["fiscalStampAmount"] = this.fiscalStampAmount;
+        return data;
+    }
+}
+
+export interface ISetAgencyInvoiceSettingsCommand {
+    agencyId?: number;
+    taxIdentifier?: string | undefined;
+    vatRatePercent?: number;
+    fiscalStampAmount?: number;
+}
+
+export class CreateAgencyCarCommand implements ICreateAgencyCarCommand {
+    agencyId?: number;
+    matricule?: string;
+    modelId?: number | undefined;
+    branchId?: number | undefined;
+    dailyRate?: number | undefined;
+
+    constructor(data?: ICreateAgencyCarCommand) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.agencyId = _data["agencyId"];
+            this.matricule = _data["matricule"];
+            this.modelId = _data["modelId"];
+            this.branchId = _data["branchId"];
+            this.dailyRate = _data["dailyRate"];
+        }
+    }
+
+    static fromJS(data: any): CreateAgencyCarCommand {
+        data = typeof data === 'object' ? data : {};
+        let result = new CreateAgencyCarCommand();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["agencyId"] = this.agencyId;
+        data["matricule"] = this.matricule;
+        data["modelId"] = this.modelId;
+        data["branchId"] = this.branchId;
+        data["dailyRate"] = this.dailyRate;
+        return data;
+    }
+}
+
+export interface ICreateAgencyCarCommand {
+    agencyId?: number;
+    matricule?: string;
+    modelId?: number | undefined;
+    branchId?: number | undefined;
+    dailyRate?: number | undefined;
 }
 
 export class BranchDto implements IBranchDto {

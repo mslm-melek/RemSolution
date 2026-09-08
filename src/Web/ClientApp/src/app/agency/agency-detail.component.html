@@ -3,10 +3,24 @@
     <div>
       <h2 class="title">{{ agency?.name || t('agency.fallbackName') }}</h2>
       <p class="subtitle" *ngIf="agency">{{ agency.countryName }} · {{ agency.currency }}</p>
+      <!-- Whether customers can see this agency at all. Beside the name because
+           it is the first thing to know about it (see Agency.PublishedAt). -->
+      <span class="chip" *ngIf="publication"
+            [ngClass]="publication.isPublished ? 'ok' : 'warn'">
+        {{ publication.isPublished ? t('agencyWizard.live') : t('agencyWizard.notLive') }}
+      </span>
     </div>
     <div class="header-actions">
       <button mat-raised-button color="primary" [disabled]="!agency" (click)="openWorkspace()">
         <mat-icon>admin_panel_settings</mat-icon> {{ t('agency.openWorkspace') }}
+      </button>
+      <!-- Taking an agency off the marketplace cancels nothing: the bookings
+           already made stand. -->
+      <button mat-button *ngIf="publication"
+              [disabled]="publishing || (!publication.isPublished && !publication.canPublish)"
+              (click)="togglePublication()">
+        <mat-icon>{{ publication.isPublished ? 'public_off' : 'public' }}</mat-icon>
+        {{ publication.isPublished ? t('agencyWizard.unpublish') : t('agencyWizard.publish') }}
       </button>
       <a mat-button [routerLink]="['/agency', agencyId, 'edit']">
         <mat-icon>edit</mat-icon> {{ t('agency.editDetails') }}

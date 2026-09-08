@@ -4,10 +4,11 @@ import { MatTableDataSource } from '@angular/material/table';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import {
-  AgenciesClient, AgencyDto, AgencyFeatureDto,
+  AgenciesClient, AgencyDto, AgencyFeatureDto, AgencyPublicationDto,
   UsersClient, AgencyUserDto,
   AgencySubscriptionsClient, AgencySubscriptionDto, AgencyUsageDto,
-  AssignAgencySubscriptionCommand, UpdateAgencySubscriptionCommand, SetAgencyUserActiveCommand,
+  AssignAgencySubscriptionCommand, UpdateAgencySubscriptionCommand,
+  SetAgencyPublicationCommand, SetAgencyUserActiveCommand,
   SubscriptionPlansClient, SubscriptionPlanDto, SubscriptionStatus
 } from '../web-api-client';
 import { fromDateInput, extractValidationErrors } from '../shared/form-utils';
@@ -67,6 +68,11 @@ export class AgencyDetailComponent implements OnInit {
 
   features: AgencyFeatureDto[] = [];
 
+  // Whether the agency is on the marketplace, and what it has to show if it
+  // goes. Undefined until the read lands, which is why the panel is guarded.
+  publication?: AgencyPublicationDto;
+  publishing = false;
+
   // One-time credentials shown when assigning the first plan bootstraps an admin.
   createdAdmin: { userName?: string; password?: string } | null = null;
 
@@ -96,6 +102,7 @@ export class AgencyDetailComponent implements OnInit {
     this.loadUsers();
     this.loadSubscription();
     this.loadFeatures();
+    this.loadPublication();
     this.plansClient.getSubscriptionPlans().subscribe({
       next: p => this.plans = p || [],
       error: err => console.error(err)
@@ -106,6 +113,39 @@ export class AgencyDetailComponent implements OnInit {
     this.agenciesClient.getAgencyById(this.agencyId).subscribe({
       next: a => this.agency = a,
       error: err => console.error(err)
+    });
+  }
+
+  // --- Marketplace publication ---
+  // Whether customers can see this agency, and what it would show them.
+
+  loadPublication() {
+    this.agenciesClient.getAgencyPublication(this.agencyId).subscribe({
+      next: p => this.publication = p,
+      error: err => console.error(err)
+    });
+  }
+
+  togglePublication() {
+    if (!this.publication || this.publishing) return;
+
+    this.publishing = true;
+    this.errorMessage = '';
+
+    const published = !this.publication.isPublished;
+
+    this.agenciesClient.setAgencyPublication(this.agencyId,
+      new SetAgencyPublicationCommand({ id: this.agencyId, published })).subscribe({
+      next: () => {
+        this.publishing = false;
+        // Re-read: going live also fixes the date the panel shows.
+        this.loadPublication();
+      },
+      error: err => {
+        this.publishing = false;
+        this.errorMessage = extractValidationErrors(err)
+          ?? this.transloco.translate('common.unexpectedError');
+      }
     });
   }
 

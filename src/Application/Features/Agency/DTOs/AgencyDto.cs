@@ -17,6 +17,9 @@ namespace RemSolution.Application.Features.Agency.DTOs
         public double? Longitude { get; init; }
         public int CountryId { get; init; }
         public string? CountryName { get; init; }
+        // When the agency went live on the marketplace; null while it is still
+        // being set up (see Agency.PublishedAt). An instant, rendered local.
+        public DateTime? PublishedAt { get; init; }
         // Settings surfaced from the agency's AgencySettings row (see P.9).
         public string Currency { get; init; } = string.Empty;
         public int CancellationWindowHours { get; init; }

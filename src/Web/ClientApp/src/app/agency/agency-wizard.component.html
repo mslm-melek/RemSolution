@@ -1,0 +1,294 @@
+<div class="page agency-card" *transloco="let t">
+  <div class="header-row">
+    <div>
+      <p class="page-eyebrow">{{ t('nav.agencies') }}</p>
+      <h2 class="title">{{ t('agencyWizard.title') }}</h2>
+      <p class="page-subtitle">{{ t('agencyWizard.subtitle') }}</p>
+    </div>
+    <a mat-button [routerLink]="['/agency']">
+      <mat-icon>arrow_back</mat-icon> {{ t('common.backToList') }}
+    </a>
+  </div>
+
+  <div *ngIf="errorMessage" class="error-banner">{{ errorMessage }}</div>
+
+  <mat-stepper orientation="vertical" linear (selectionChange)="loadPublication()">
+
+    <!-- 1. THE AGENCY ITSELF ------------------------------------------------ -->
+    <mat-step [completed]="!!agencyId" [editable]="false">
+      <ng-template matStepLabel>{{ t('agencyWizard.steps.details') }}</ng-template>
+
+      <form [formGroup]="detailsForm" class="step-body">
+        <div class="field-grid">
+          <mat-form-field appearance="outline" class="span-2">
+            <mat-label>{{ t('common.name') }}</mat-label>
+            <input matInput formControlName="name" required />
+            <mat-error *ngIf="detailsForm.get('name')?.hasError('required')">{{ t('agency.nameRequired') }}</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>{{ t('agency.email') }}</mat-label>
+            <input matInput formControlName="email" type="email" />
+            <mat-error *ngIf="detailsForm.get('email')?.hasError('email')">{{ t('agency.emailInvalid') }}</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>{{ t('agency.phoneNumber') }}</mat-label>
+            <input matInput formControlName="phoneNumber" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>{{ t('agency.country') }}</mat-label>
+            <mat-select formControlName="countryId" required>
+              <mat-option *ngFor="let country of countries" [value]="country.id">{{ country.name }}</mat-option>
+            </mat-select>
+            <mat-error *ngIf="detailsForm.get('countryId')?.hasError('required')">{{ t('agency.countryRequired') }}</mat-error>
+          </mat-form-field>
+
+          <!-- Fixed at creation: every amount the agency stores is in this code,
+               so changing it later would reinterpret all of them. -->
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-label>{{ t('agency.currencyIso') }}</mat-label>
+            <input matInput formControlName="currency" maxlength="3" class="upper" />
+            <mat-hint>{{ t('agencyWizard.currencyFixed') }}</mat-hint>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="span-2" subscriptSizing="dynamic">
+            <mat-label>{{ t('agency.address') }}</mat-label>
+            <input matInput formControlName="address" />
+            <mat-hint>{{ t('agency.addressHint') }}</mat-hint>
+          </mat-form-field>
+        </div>
+
+        <app-map-picker [latitude]="latitude" [longitude]="longitude"
+                        (picked)="onPicked($event)"></app-map-picker>
+
+        <h3 class="section-title">{{ t('agency.adminSection') }}</h3>
+        <p class="section-note">{{ t('agency.adminNote') }}</p>
+        <div class="field-grid">
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-label>{{ t('agency.adminEmail') }}</mat-label>
+            <input matInput formControlName="adminEmail" type="email" />
+            <mat-hint>{{ t('agency.adminEmailHint') }}</mat-hint>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>{{ t('agency.adminFullName') }}</mat-label>
+            <input matInput formControlName="adminFullName" />
+          </mat-form-field>
+        </div>
+      </form>
+
+      <!-- Outside the form: nesting forms is invalid HTML. Created with the
+           agency in one call, so these stay drafts until then. -->
+      <app-branches-editor *ngIf="!agencyId"
+                           [branches]="branchDrafts" [countries]="countries"
+                           [defaultCountryId]="detailsForm.value.countryId"
+                           (added)="onBranchAdded($event)"
+                           (removed)="onBranchRemoved($event)"></app-branches-editor>
+      <p class="section-note" *ngIf="!agencyId">{{ t('branch.savedWithAgency') }}</p>
+
+      <div class="actions-row">
+        <button mat-flat-button color="primary" type="button"
+                [disabled]="saving || !!agencyId" (click)="createAgency()">
+          <mat-icon>add_business</mat-icon>
+          {{ saving ? t('common.saving') : t('agencyWizard.createAgency') }}
+        </button>
+        <button mat-button matStepperNext type="button" *ngIf="agencyId">
+          {{ t('common.continue') }}
+        </button>
+      </div>
+
+      <!-- The only moment the temporary password is readable. -->
+      <div *ngIf="createdAdmin" class="admin-handover">
+        <h3>{{ t('agency.adminCreatedTitle') }}</h3>
+        <p class="handover-line">
+          <span class="handover-label">{{ t('agency.adminLogin') }}</span>
+          <code>{{ createdAdmin.userName }}</code>
+        </p>
+        <p class="handover-line" *ngIf="createdAdmin.password">
+          <span class="handover-label">{{ t('agency.adminPassword') }}</span>
+          <code>{{ createdAdmin.password }}</code>
+        </p>
+        <p class="handover-note">
+          {{ createdAdmin.emailSent ? t('agency.adminMailSent') : t('agency.adminMailNotSent') }}
+        </p>
+        <p class="handover-note">{{ t('agency.adminMustChange') }}</p>
+      </div>
+    </mat-step>
+
+    <!-- 2. WHAT THEY ARE PAYING FOR ---------------------------------------- -->
+    <mat-step [completed]="hasPlan" [editable]="false">
+      <ng-template matStepLabel>{{ t('agencyWizard.steps.plan') }}</ng-template>
+
+      <p class="section-note">{{ t('agencyWizard.planNote') }}</p>
+
+      <form [formGroup]="planForm" class="step-body">
+        <div class="field-grid">
+          <mat-form-field appearance="outline">
+            <mat-label>{{ t('agencyWizard.plan') }}</mat-label>
+            <mat-select formControlName="planId" required>
+              <mat-option *ngFor="let plan of plans" [value]="plan.id">{{ plan.name }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <app-date-field [label]="t('common.startDate')" formControlName="startDate"></app-date-field>
+          <app-date-field [label]="t('common.endDate')" formControlName="endDate"></app-date-field>
+        </div>
+      </form>
+
+      <div class="actions-row">
+        <button mat-flat-button color="primary" type="button"
+                [disabled]="saving || hasPlan" (click)="assignPlan()">
+          <mat-icon>workspace_premium</mat-icon>
+          {{ saving ? t('common.saving') : t('agencyWizard.assignPlan') }}
+        </button>
+      </div>
+
+      <!-- The plan decides which modules exist; an override switches one off for
+           this agency alone. -->
+      <ng-container *ngIf="features.length">
+        <h3 class="section-title">{{ t('agencyWizard.modules') }}</h3>
+        <div class="module-grid">
+          <mat-checkbox *ngFor="let feature of features" [checked]="feature.enabled"
+                        (change)="toggleFeature(feature, $event.checked)">
+            {{ t('features.' + feature.feature) }}
+          </mat-checkbox>
+        </div>
+      </ng-container>
+
+      <div class="actions-row">
+        <button mat-button matStepperNext type="button" *ngIf="hasPlan">{{ t('common.continue') }}</button>
+      </div>
+    </mat-step>
+
+    <!-- 3. WHAT THE INVOICES MUST SAY -------------------------------------- -->
+    <mat-step [editable]="false">
+      <ng-template matStepLabel>{{ t('agencyWizard.steps.invoice') }}</ng-template>
+
+      <p class="section-note">{{ t('agencyWizard.invoiceNote') }}</p>
+
+      <form [formGroup]="invoiceForm" class="step-body">
+        <div class="field-grid">
+          <mat-form-field appearance="outline">
+            <mat-label>{{ t('myAgency.tax.identifier') }}</mat-label>
+            <input matInput formControlName="taxIdentifier" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>{{ t('myAgency.tax.vatRate') }}</mat-label>
+            <input matInput type="number" min="0" max="100" step="0.1" formControlName="vatRatePercent" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>{{ t('myAgency.tax.fiscalStamp') }}</mat-label>
+            <input matInput type="number" min="0" step="0.001" formControlName="fiscalStampAmount" />
+          </mat-form-field>
+        </div>
+      </form>
+
+      <div class="actions-row">
+        <button mat-flat-button color="primary" type="button"
+                [disabled]="saving" (click)="saveInvoiceSettings()">
+          <mat-icon>save</mat-icon> {{ saving ? t('common.saving') : t('common.save') }}
+        </button>
+        <button mat-button matStepperNext type="button">{{ t('common.continue') }}</button>
+      </div>
+    </mat-step>
+
+    <!-- 4. SOMETHING TO RENT ------------------------------------------------ -->
+    <mat-step [completed]="addedCars.length > 0" [editable]="false">
+      <ng-template matStepLabel>{{ t('agencyWizard.steps.fleet') }}</ng-template>
+
+      <p class="section-note">{{ t('agencyWizard.fleetNote') }}</p>
+
+      <form [formGroup]="carForm" class="step-body car-row">
+        <mat-form-field appearance="outline" class="plate">
+          <mat-label>{{ t('car.matricule') }}</mat-label>
+          <input matInput formControlName="matricule" required />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>{{ t('car.model') }}</mat-label>
+          <mat-select formControlName="modelId">
+            <mat-option *ngFor="let model of models" [value]="model.id">
+              {{ model.brandName }} {{ model.name }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" *ngIf="branches.length">
+          <mat-label>{{ t('car.branch') }}</mat-label>
+          <mat-select formControlName="branchId">
+            <mat-option *ngFor="let branch of branches" [value]="branch.id">{{ branch.name }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="rate">
+          <mat-label>{{ t('car.dailyRate') }}</mat-label>
+          <input matInput type="number" min="0" step="0.01" formControlName="dailyRate" />
+        </mat-form-field>
+
+        <button mat-flat-button color="primary" type="button" [disabled]="saving" (click)="addCar()">
+          <mat-icon>add</mat-icon> {{ t('common.add') }}
+        </button>
+      </form>
+
+      <ul class="added-cars" *ngIf="addedCars.length">
+        <li *ngFor="let car of addedCars">
+          <span class="num">{{ car.matricule }}</span>
+          <span *ngIf="car.modelName"> — {{ car.modelName }}</span>
+          <span class="money" *ngIf="car.dailyRate"> — {{ car.dailyRate | number:'1.2-2' }}</span>
+        </li>
+      </ul>
+
+      <div class="actions-row">
+        <button mat-button matStepperNext type="button">{{ t('common.continue') }}</button>
+      </div>
+    </mat-step>
+
+    <!-- 5. THE MARKETPLACE -------------------------------------------------- -->
+    <mat-step>
+      <ng-template matStepLabel>{{ t('agencyWizard.steps.publish') }}</ng-template>
+
+      <p class="section-note">{{ t('agencyWizard.publishNote') }}</p>
+
+      <div class="figures" *ngIf="publication">
+        <div class="figure">
+          <span class="figure-value">{{ publication.offeredCars }}</span>
+          <span class="figure-label">{{ t('agencyWizard.carsOnOffer') }}</span>
+        </div>
+        <div class="figure">
+          <span class="figure-value">{{ publication.totalCars }}</span>
+          <span class="figure-label">{{ t('agencyWizard.carsTotal') }}</span>
+        </div>
+        <div class="figure">
+          <span class="figure-value">{{ publication.branches }}</span>
+          <span class="figure-label">{{ t('branch.title') }}</span>
+        </div>
+      </div>
+
+      <p class="section-note warn" *ngIf="publication && !publication.canPublish && !publication.isPublished">
+        {{ t('agencyWizard.nothingToOffer') }}
+      </p>
+
+      <p class="published" *ngIf="publication?.isPublished">
+        <mat-icon aria-hidden="true">public</mat-icon>
+        <!-- An instant, recorded from the clock, so it reads local. -->
+        {{ t('agencyWizard.liveSince', { date: (publication!.publishedAt | date:'dd MMM yyyy HH:mm') }) }}
+      </p>
+
+      <div class="actions-row">
+        <button mat-flat-button color="primary" type="button"
+                *ngIf="publication && !publication.isPublished"
+                [disabled]="saving || !publication.canPublish" (click)="publish()">
+          <mat-icon>public</mat-icon>
+          {{ saving ? t('common.saving') : t('agencyWizard.publish') }}
+        </button>
+        <button mat-raised-button color="primary" type="button" (click)="finish()">
+          {{ t('agencyWizard.finish') }}
+        </button>
+      </div>
+    </mat-step>
+  </mat-stepper>
+</div>

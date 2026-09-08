@@ -1285,6 +1285,12 @@ public class DemoDataSeeder
             }
         };
 
+        // Live on the marketplace: every demo agency has a fleet to show, and an
+        // unpublished one would read as a broken search rather than as a feature
+        // (see Agency.PublishedAt). The unpublished state is what the opening
+        // wizard demonstrates on a NEW agency.
+        agency.Publish(now.UtcDateTime);
+
         _context.Agencies.Add(agency);
         await _context.SaveChangesAsync(cancellationToken);
 
