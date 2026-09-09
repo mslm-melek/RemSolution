@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Http.HttpResults;
 using RemSolution.Application.Features.Statistics.DTOs;
+using RemSolution.Application.Features.Statistics.Queries.ExportStatisticsQuery;
 using RemSolution.Application.Features.Statistics.Queries.GetStatisticsQuery;
 using RemSolution.Domain.Constants;
 
@@ -13,7 +14,8 @@ public class Statistics : EndpointGroupBase
             .RequireAuthorization();
 
         group
-            .MapGet(GetStatistics, policy: Permissions.DashboardView);
+            .MapGet(GetStatistics, policy: Permissions.DashboardView)
+            .MapGet(ExportStatistics, "export", Permissions.DashboardView);
     }
 
     // Rentings and money per month or per year, for the fleet or for one car.
@@ -23,5 +25,13 @@ public class Statistics : EndpointGroupBase
     {
         var result = await sender.Send(query);
         return TypedResults.Ok(result);
+    }
+
+    // The same report as a file. Same filters, same gate — see the query.
+    public async Task<FileStreamHttpResult> ExportStatistics(
+        ISender sender, [AsParameters] ExportStatisticsQuery query)
+    {
+        var download = await sender.Send(query);
+        return TypedResults.File(download.Content, download.ContentType, download.FileName);
     }
 }

@@ -66,6 +66,50 @@ public class MyAgencyTests : BaseTestFixture
         settings.ReservationExpiryHours.Should().Be(72);
     }
 
+    // A retention window that did not survive the save would mean the nightly
+    // purge silently never runs — so it is checked in both directions.
+    [Test]
+    public async Task ShouldRoundTripThePersonalDataRetentionWindow()
+    {
+        await RunAsAgencyAdministratorAsync();
+        var agencyId = await AddTestAgencyAsync();
+
+        var before = await SendAsync(new GetMyAgencyQuery());
+        before.PersonalDataRetentionMonths.Should().Be(0, "no automatic purge by default");
+
+        await SendAsync(new UpdateMyAgencyCommand
+        {
+            RowVersion = before.RowVersion,
+            Name = before.Name,
+            CountryId = before.CountryId,
+            PersonalDataRetentionMonths = 36
+        });
+
+        var settings = (await AllAsync<AgencySettings>()).Single(s => s.AgencyId == agencyId);
+        settings.PersonalDataRetentionMonths.Should().Be(36);
+
+        (await SendAsync(new GetMyAgencyQuery())).PersonalDataRetentionMonths.Should().Be(36);
+    }
+
+    [Test]
+    public async Task ShouldRejectARetentionWindowLongerThanTheCeiling()
+    {
+        await RunAsAgencyAdministratorAsync();
+        await AddTestAgencyAsync();
+
+        var before = await SendAsync(new GetMyAgencyQuery());
+
+        // Ten years is longer than any retention rule; the ceiling is what
+        // catches a number of days, or a year, typed into a months field.
+        await FluentActions.Invoking(() => SendAsync(new UpdateMyAgencyCommand
+        {
+            RowVersion = before.RowVersion,
+            Name = before.Name,
+            CountryId = before.CountryId,
+            PersonalDataRetentionMonths = 2026
+        })).Should().ThrowAsync<ValidationException>();
+    }
+
     // The currency is not on the command at all, so a self-service save must
     // leave it exactly as the platform administrator set it.
     [Test]

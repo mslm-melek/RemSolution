@@ -6,8 +6,10 @@ namespace RemSolution.Application.UnitTests.Common;
 /// <summary>
 /// Convention test for the multi-tenancy rule: cross-tenant reads via
 /// IgnoreQueryFilters() are allowed only in the marketplace search feature
-/// (cross-agency by design) and inside CrossTenantAccess — the dedicated,
-/// audited platform-admin bypass — never in agency-facing handlers.
+/// (cross-agency by design), inside CrossTenantAccess — the dedicated, audited
+/// platform-admin bypass — and inside PersonalDataErasureStore, which needs the
+/// soft-delete half of the filter lifted and keeps the tenant half by hand.
+/// Never in agency-facing handlers.
 /// </summary>
 public class TenantEnforcementTests
 {
@@ -18,6 +20,12 @@ public class TenantEnforcementTests
         // any agency). Covers Features/MarketplaceSearch/ and Features/Marketplace/.
         Normalize("Features/Marketplace"),
         Normalize("Infrastructure/Data/CrossTenantAccess.cs"),
+        // Erasure, and only for the SOFT-DELETE half of the filter: an archived
+        // client is precisely the one whose passport scan nobody will ever look
+        // at again, so an erasure that could not see them would leave behind
+        // exactly the data it exists to destroy. The tenant boundary still
+        // holds — both reads re-state AgencyId by hand.
+        Normalize("Infrastructure/Data/PersonalDataErasureStore.cs"),
     };
 
     [Test]
@@ -38,7 +46,7 @@ public class TenantEnforcementTests
             .ToList();
 
         offenders.Should().BeEmpty(
-            "IgnoreQueryFilters() bypasses tenant isolation and is only allowed in MarketplaceSearch and the audited CrossTenantAccess path");
+            "IgnoreQueryFilters() bypasses tenant isolation and is only allowed in MarketplaceSearch, the audited CrossTenantAccess path, and PersonalDataErasureStore (which re-states AgencyId by hand)");
     }
 
     private static string Normalize(string path) =>

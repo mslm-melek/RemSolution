@@ -25,6 +25,8 @@
     <!-- PDF rendering for generated rental contracts / invoices. Licence type is
          set once at startup in AddInfrastructureServices. -->
     <PackageReference Include="QuestPDF" />
+    <!-- .xlsx export of the statistics report (the .pdf one uses QuestPDF above). -->
+    <PackageReference Include="ClosedXML" />
     <!-- Single background-job infrastructure (P.10): SQL Server-backed Hangfire
          for thumbnails today, reservation expiry / emails / PII purge next. -->
     <PackageReference Include="Hangfire.AspNetCore" />

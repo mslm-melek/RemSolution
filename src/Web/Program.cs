@@ -176,6 +176,12 @@ try
         // passes cost a few queries and send nothing twice.
         RecurringJob.AddOrUpdate<NotificationSweepJob>(
             "notification-sweep", job => job.RunAsync(), Cron.Hourly());
+
+        // Apply each agency's personal-data retention rule. Daily, not hourly:
+        // the window is measured in months, and this is the one sweep that
+        // destroys data rather than reporting on it.
+        RecurringJob.AddOrUpdate<PersonalDataPurgeJob>(
+            "personal-data-purge", job => job.RunAsync(), Cron.Daily());
     }
 
     app.MapRazorPages();

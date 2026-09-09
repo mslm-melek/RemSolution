@@ -1038,5 +1038,58 @@ Please return the vehicle or contact us as soon as possible.</value>
   </data>
   <data name="Validation.Agency.CancellationFreeHours" xml:space="preserve">
     <value>Free cancellation must reach at least as far ahead as the cancellation cutoff, or nothing is ever charged.</value>
+  </data>
+  <data name="Validation.Client.EraseLiveBooking" xml:space="preserve">
+    <value>This client has a booking in progress. Close or cancel it before erasing their personal data.</value>
+  </data>
+  <!-- Exported statistics report. Same wording as the screen's own labels
+       (statistics.* in the SPA's i18n files) — the file is that screen. -->
+  <data name="Statistics.Title" xml:space="preserve">
+    <value>Statistics</value>
+  </data>
+  <data name="Statistics.ByMonth" xml:space="preserve">
+    <value>Month by month</value>
+  </data>
+  <data name="Statistics.ByYear" xml:space="preserve">
+    <value>Year by year</value>
+  </data>
+  <data name="Statistics.ByCar" xml:space="preserve">
+    <value>Vehicle by vehicle</value>
+  </data>
+  <data name="Statistics.Period" xml:space="preserve">
+    <value>Period</value>
+  </data>
+  <data name="Statistics.Car" xml:space="preserve">
+    <value>Vehicle</value>
+  </data>
+  <data name="Statistics.AllCars" xml:space="preserve">
+    <value>All vehicles</value>
+  </data>
+  <data name="Statistics.OtherCars" xml:space="preserve">
+    <value>Vehicles no longer in the fleet</value>
+  </data>
+  <data name="Statistics.Total" xml:space="preserve">
+    <value>Total</value>
+  </data>
+  <data name="Statistics.Rentings" xml:space="preserve">
+    <value>Rentings</value>
+  </data>
+  <data name="Statistics.Days" xml:space="preserve">
+    <value>Days rented</value>
+  </data>
+  <data name="Statistics.Charged" xml:space="preserve">
+    <value>Billed</value>
+  </data>
+  <data name="Statistics.Collected" xml:space="preserve">
+    <value>Collected</value>
+  </data>
+  <data name="Statistics.Expenses" xml:space="preserve">
+    <value>Expenses</value>
+  </data>
+  <data name="Statistics.Net" xml:space="preserve">
+    <value>Result</value>
+  </data>
+  <data name="Statistics.Truncated" xml:space="preserve">
+    <value>The period was longer than this report shows; only the most recent rows are listed.</value>
   </data></root>
 

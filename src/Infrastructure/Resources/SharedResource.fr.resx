@@ -1031,12 +1031,65 @@ Merci de restituer le véhicule à temps afin d'éviter des frais supplémentair
 Merci de restituer le véhicule ou de nous contacter dans les plus brefs délais.</value>
   </data>
   <data name="Validation.Agency.CancellationFeeValue" xml:space="preserve">
-    <value>Indiquez le montant ou le pourcentage des frais d''annulation.</value>
+    <value>Indiquez le montant ou le pourcentage des frais d'annulation.</value>
   </data>
   <data name="Validation.Agency.CancellationFeePercent" xml:space="preserve">
-    <value>Les frais d''annulation ne peuvent pas dépasser 100 % du prix.</value>
+    <value>Les frais d'annulation ne peuvent pas dépasser 100 % du prix.</value>
   </data>
   <data name="Validation.Agency.CancellationFreeHours" xml:space="preserve">
-    <value>L''annulation gratuite doit couvrir au moins le délai butoir d''annulation, sinon rien n''est jamais facturé.</value>
+    <value>L'annulation gratuite doit couvrir au moins le délai butoir d'annulation, sinon rien n'est jamais facturé.</value>
+  </data>
+  <data name="Validation.Client.EraseLiveBooking" xml:space="preserve">
+    <value>Ce client a une réservation ou une location en cours. Clôturez-la ou annulez-la avant d'effacer ses données personnelles.</value>
+  </data>
+  <!-- Rapport de statistiques exporté. Mêmes libellés que l'écran
+       (statistics.* dans les fichiers i18n du SPA) — le fichier EST cet écran. -->
+  <data name="Statistics.Title" xml:space="preserve">
+    <value>Statistiques</value>
+  </data>
+  <data name="Statistics.ByMonth" xml:space="preserve">
+    <value>Mois par mois</value>
+  </data>
+  <data name="Statistics.ByYear" xml:space="preserve">
+    <value>Année par année</value>
+  </data>
+  <data name="Statistics.ByCar" xml:space="preserve">
+    <value>Véhicule par véhicule</value>
+  </data>
+  <data name="Statistics.Period" xml:space="preserve">
+    <value>Période</value>
+  </data>
+  <data name="Statistics.Car" xml:space="preserve">
+    <value>Véhicule</value>
+  </data>
+  <data name="Statistics.AllCars" xml:space="preserve">
+    <value>Tous les véhicules</value>
+  </data>
+  <data name="Statistics.OtherCars" xml:space="preserve">
+    <value>Véhicules retirés du parc</value>
+  </data>
+  <data name="Statistics.Total" xml:space="preserve">
+    <value>Total</value>
+  </data>
+  <data name="Statistics.Rentings" xml:space="preserve">
+    <value>Locations</value>
+  </data>
+  <data name="Statistics.Days" xml:space="preserve">
+    <value>Jours loués</value>
+  </data>
+  <data name="Statistics.Charged" xml:space="preserve">
+    <value>Facturé</value>
+  </data>
+  <data name="Statistics.Collected" xml:space="preserve">
+    <value>Encaissé</value>
+  </data>
+  <data name="Statistics.Expenses" xml:space="preserve">
+    <value>Dépenses</value>
+  </data>
+  <data name="Statistics.Net" xml:space="preserve">
+    <value>Résultat</value>
+  </data>
+  <data name="Statistics.Truncated" xml:space="preserve">
+    <value>La période demandée est plus longue que ce rapport ; seules les lignes les plus récentes sont affichées.</value>
   </data></root>
 

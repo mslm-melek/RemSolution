@@ -47,6 +47,8 @@ Chaque ligne a été vérifiée dans le code, pas dans un tableau de suivi.
 | 2.6 | Durcissement sécurité | limitation de débit (`src/Web/Infrastructure/RateLimiting.cs`), durcissement des téléversements, fichiers de débogage supprimés |
 | 3.1 | Seuils de dépense par voiture | `CarExpenseSchedule` |
 | 3.2 | Frais supplémentaires au retour | `RentingFee` |
+| 2.9 / 3.6 | Export des statistiques (2026-09-09) | `ExportStatisticsQuery` + `IStatisticsExportRenderer` (`ClosedXmlStatisticsExportRenderer`, `QuestPdfStatisticsExportRenderer`) ; `GET /api/Statistics/export` ; deux boutons sur l'écran |
+| 3.6 | Purge des données personnelles / droit à l'effacement (2026-09-09) | `Client.ErasePersonalData`, `EraseClientPersonalDataCommand` (autorisation `Client.Erase`), `PersonalDataPurgeJob` (quotidien) + `AgencySettings.PersonalDataRetentionMonths`, `IPersonalDataErasureStore` |
 
 L'addendum est livré à l'exception de A.6 et A.7 — voir son propre encadré.
 
@@ -54,8 +56,6 @@ L'addendum est livré à l'exception de A.6 et A.7 — voir son propre encadré.
 
 | Réf | Point | État | Effort |
 |---|---|---|---|
-| 2.9 / 3.6 | Export des statistiques | ❌ rien dans `Features/Statistics`, aucune bibliothèque tableur référencée | 1 j |
-| 3.6 | Purge des données personnelles / droit à l'effacement | ❌ aucun job de purge, aucune anonymisation | 1,5 j |
 | A.6 | Alertes de supervision | ❌ aucune règle d'alerte dans `infra/` | 1,5 j |
 | 3.6 | Test de charge du chemin de recherche | ❌ `loadtesting.bicep` existe (gabarit) mais n'est pas référencé par `main.bicep` | 1 j |
 | 2.7 | Signature : libellé à corriger ou vraie signature | ❌ `fr.json` annonce toujours « Contrats + signature électronique » alors que le code ne pose que des lignes manuscrites | 0,5 j ou 6 j |
@@ -168,8 +168,29 @@ Le libellé français du module dit « Contrats + signature électronique », ma
 ### 2.8 Commercialisation — 🟡 · **hors développement**
 Rien dans le code, et c'est normal : site vitrine, tarification publique, inscription des agences en libre-service, facturation des abonnements. À noter : **l'inscription en libre-service d'une agence est impossible tant que §4.1 n'est pas corrigé.**
 
-### 2.9 Statistiques — 🟡 (l'essentiel est là) · **1 j**
-Il manque l'export (Excel/PDF), régulièrement demandé dès qu'un gérant veut transmettre ses chiffres à son comptable.
+### 2.9 Statistiques — ✅ **livré (2026-09-09)** · *diagnostic d'origine ci-dessous*
+Il manquait l'export (Excel/PDF), régulièrement demandé dès qu'un gérant veut transmettre ses chiffres à son comptable.
+
+**Livré.** Deux formats, un pour chaque lecteur : un **classeur** (`.xlsx`, une
+feuille par tableau) pour le comptable qui va retravailler les chiffres, un
+**PDF** paysage pour celui qui n'a qu'à les lire. Les deux passent par le même
+modèle rendu (`StatisticsExport`), donc le classeur et le PDF ne peuvent pas dire
+deux choses différentes ; et le calcul lui-même a été sorti du gestionnaire de
+requête dans `StatisticsReport`, d'où **l'écran et le fichier lisent la même
+addition** — un export qui recalculerait aurait été un deuxième endroit où les
+règles d'imputation peuvent divaguer.
+
+Dans le classeur les six colonnes sont des **nombres**, pas du texte : c'est toute
+la raison d'être de ce format à côté du PDF, le comptable doit pouvoir sommer une
+colonne. Les libellés, eux, sont déjà traduits côté serveur (`Statistics.*` dans
+les `.resx`, mêmes mots que l'écran) — le rendu ne décide d'aucune formulation.
+
+L'export prend **les quatre mêmes filtres** que l'écran et la même autorisation :
+le SPA renvoie ce qui est affiché, donc le fichier téléchargé est le rapport
+qu'on regardait. Le nom du fichier est ASCII et daté
+(`statistics-2030-01-2030-12.xlsx`), parce qu'il traverse un en-tête
+`Content-Disposition` et atterrit dans la boîte du comptable à côté de onze
+autres mois ; le nom de l'agence est **dans** le fichier.
 
 ---
 
@@ -199,10 +220,66 @@ Recherche, réservation, téléversement des documents, messagerie, notification
 Rien n'existe côté suivi. `NetTopologySuite` est déjà en place pour la géographie (succursales, recherche par distance), ce qui aide, mais le suivi de véhicule est un autre métier : choix du boîtier, ingestion des positions, historique des trajets, géorepérage, et une décision de volumétrie (une position par minute et par véhicule, c'est des millions de lignes — cela ne va pas dans la base transactionnelle sans réflexion).
 
 ### 3.6 Divers — ❌
-- **Purge des données personnelles et droit à l'effacement** (obligation légale dès qu'on détient des passeports) : politique de rétention, job Hangfire de purge, anonymisation du client en conservant les lignes financières — **1,5 j**
+- ~~**Purge des données personnelles et droit à l'effacement**~~ — ✅ **livré (2026-09-09)**
+
+  **Ce qui est effacé.** `Client.ErasePersonalData` vide tous les champs
+  d'identité, supprime les **scans** (lignes `StoredFile` *et* les octets, via le
+  contrôle d'orphelin de `StoredFileService`), coupe le lien vers le compte de
+  l'espace client, et retire le signalement — un drapeau dont le motif a été
+  effacé n'accuse plus personne de rien. Le nom devient `#{Id}` et non du vide :
+  chaque liste, tableau de crédits et ligne de statistiques compose un libellé à
+  partir de ces deux champs, et une ligne sans libellé se lit comme un défaut ;
+  l'identifiant de fiche figure déjà sur les enregistrements financiers, il ne
+  révèle donc rien de neuf.
+
+  **Deux endroits qu'on oublie, et qui vidaient l'effacement de son sens.**
+  D'abord le **journal d'audit** : toute commande `[Auditable]` ayant touché un
+  client y a écrit son état avant/après en JSON, donc la dernière modification
+  d'un client portait une copie complète de son numéro de passeport. Les charges
+  utiles de ces lignes sont **blanchies** (`ExecuteUpdate`, sans passer par le
+  suivi de modifications — sinon l'intercepteur d'audit recopierait ce qu'on
+  vient de détruire), la piste elle-même — qui, quoi, quand — est conservée.
+  Ensuite les **notifications** : leur texte n'est pas stocké, mais les valeurs
+  interpolées le sont, et elles contiennent le nom du client ; l'adresse à
+  laquelle on a écrit est juste à côté. `ArgsJson` et `RecipientEmail` sont
+  vidés, la ligne reste — c'est la trace que l'agence a bien écrit, et cette
+  trace concerne la conduite de l'agence, pas la personne.
+
+  **Ce qui survit, à dessein** : locations, paiements, factures et contrats, y
+  compris les PDF émis, qui portent les identités imprimées dessus. Une agence
+  doit tenir ses comptes et une facture réimprimée doit toujours dire ce qui a
+  été facturé et à qui — obligation légale de conservation qui survit à une
+  demande d'effacement, et c'est exactement le « en conservant les lignes
+  financières » demandé.
+
+  **Deux déclencheurs, une seule mécanique** (`ClientPersonalDataErasure`) : la
+  commande `EraseClientPersonalDataCommand`, sous une autorisation **à elle**
+  (`Client.Erase`, distincte de `Client.Delete` qui ne fait qu'archiver et se
+  défait), et le balayage quotidien `PersonalDataPurgeJob` appliquant
+  `AgencySettings.PersonalDataRetentionMonths`. Les deux refusent un client dont
+  une réservation ou une location est **en cours** — effacer le locataire d'une
+  voiture encore dehors ne laisse personne à qui la rendre.
+
+  **Zéro mois = pas de purge automatique, et c'est la valeur par défaut.**
+  Combien de temps une agence de location doit garder une copie de passeport est
+  une question pour sa juridiction et son avocat ; un chiffre inventé ici serait
+  pire que d'obliger l'agence à en choisir un. L'effacement sur demande
+  fonctionne sans ce réglage.
+
+  **Un client archivé est justement celui dont plus personne ne regardera le
+  scan** — or le filtre global cache les lignes `IsDeleted`. `IPersonalDataErasureStore`
+  est le seul endroit de l'application qui lève cette moitié du filtre (et le seul
+  qui écrit dans `AuditLog` hors intercepteur) ; il redit `AgencyId` à la main,
+  donc la frontière de tenant tient. Ajouté à la liste sanctionnée de
+  `TenantEnforcementTests`, avec la raison.
+
+  **Reste ouvert, et assumé** : la **messagerie**. Un fil de discussion est
+  rattaché à une réservation et peut contenir tout ce que le client a tapé — mais
+  c'est aussi le compte rendu de ce qui a été convenu, et l'agence a un intérêt
+  légitime à le garder. Arbitrage produit, pas décision technique.
 - **Test de charge du chemin de recherche** au volume cible (2 000 agences / 100 000 voitures) pour valider les plans d'exécution des anti-jointures et de la recherche spatiale — **1 j**
 - ~~**Signalements (réclamations)** avec écran de triage pour l'administrateur plateforme~~ — ✅ **livré (2026-09-08)**, avec N.8 (voir §8)
-- **Export des statistiques** (voir §2.9) — **1 j**
+- ~~**Export des statistiques**~~ — ✅ **livré (2026-09-09)**, voir §2.9
 
 ---
 
@@ -292,7 +369,7 @@ Les vrais trous de votre liste.
 | 2.6 | Durcissement sécurité + nettoyage (avec 4.7) | 2,5 j |
 | 2.5 | CI/CD complet | 1,5 j |
 | 2.4 | Hébergement déployé et vérifié | 3 j |
-| 3.6 | Purge données personnelles (légal) | 1,5 j |
+| ~~3.6~~ | ~~Purge données personnelles (légal)~~ — livré le 2026-09-09 | ~~1,5 j~~ |
 
 ### Lot 5 — Monétisation (**8 j**)
 
@@ -300,7 +377,7 @@ Les vrais trous de votre liste.
 |---|---|---|
 | 4.6 | Outbox (prérequis) | 2 j |
 | 2.3 | Paiement en ligne (prestataire tunisien) | 5 j |
-| 2.9 | Export des statistiques | 1 j |
+| ~~2.9~~ | ~~Export des statistiques~~ — livré le 2026-09-09 | ~~1 j~~ |
 
 ### Lot 6 — Finitions (**4,5 j**)
 

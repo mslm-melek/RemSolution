@@ -28,6 +28,7 @@ import { AuthService } from '../shared/auth.service';
 import { ReturnDialogComponent } from '../shared/return-dialog.component';
 import { CancelDialogComponent } from '../shared/cancel-dialog.component';
 import { RENTING_FEE_KINDS, feeKindLabelKey, feesTotal } from '../shared/renting-fees';
+import { downloadFile } from '../shared/file-download';
 import { TranslocoService } from '@jsverse/transloco';
 
 // One of the selected client's identity papers, as shown in the renting form.
@@ -1324,22 +1325,9 @@ export class RentingFormComponent implements OnInit {
     if (facture.id) this.openPdf(`/api/Factures/${facture.id}/download`, `${facture.number}.pdf`);
   }
 
-  // Fetched as a blob rather than linked to directly: the download route is
-  // permission-checked, and going through HttpClient keeps the auth / language /
-  // impersonation interceptors on the request. The generated NSwag method
-  // discards the body (the endpoint has no JSON schema), hence the raw call.
   private openPdf(url: string, fileName: string) {
     this.errorMessage = '';
-    this.http.get(url, { responseType: 'blob' }).subscribe({
-      next: blob => {
-        const objectUrl = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = objectUrl;
-        link.download = fileName;
-        link.click();
-        // Revoking immediately would race the click on some browsers.
-        setTimeout(() => URL.revokeObjectURL(objectUrl), 10000);
-      },
+    downloadFile(this.http, url, fileName).subscribe({
       error: err => this.handleError(err)
     });
   }

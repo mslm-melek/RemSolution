@@ -100,8 +100,10 @@ Breaking one of these is a bug even when it compiles and the tests pass.
 `TenantEntityInterceptor` stamps `AgencyId` on insert, never on update, and
 throws `ForbiddenAccessException` on a cross-agency write. No tenant claim ⇒
 tenant data matches nothing. `IgnoreQueryFilters()` is allowed **only** in the
-`MarketplaceSearch` feature folder and the platform-admin referential check in
-`DeleteAgencyCommand` — enforced by `TenantEnforcementTests`. Background jobs
+`MarketplaceSearch` feature folder, the platform-admin referential check in
+`DeleteAgencyCommand`, and `PersonalDataErasureStore` (which needs the
+*soft-delete* half of the filter lifted and re-states `AgencyId` by hand) —
+enforced by `TenantEnforcementTests`. Background jobs
 have no HTTP context and push `AmbientTenant` instead.
 
 **Money.** Monetary amounts are the `Money` value object (Amount + ISO-4217
@@ -265,9 +267,40 @@ whose renter or second driver has a lapsed `DrivingLicenceExpiryDate`, unless
 `AcknowledgeExpiredDocuments` is set. Expiry is exclusive of the day itself, and
 no recorded expiry never blocks.
 
+**Erasing a client empties the row, and two places nobody expects.** The
+financial records are the point of keeping the row: `Client.ErasePersonalData`
+clears every identity field (name becomes `#{Id}`, never blank — every list
+composes a label from those two fields), deletes the document scans through
+`StoredFileService`'s orphan check, and unlinks the portal account, while
+`Renting`/`Payment`/`Facture`/`Contract` and the issued PDFs stay — a legal
+retention basis outliving an erasure request. The two easily-missed stores are
+the **audit trail** (every `[Auditable]` command wrote the whole client row as
+JSON, so the last edit carries the passport number — payloads are blanked, the
+who/what/when kept) and **notifications** (`ArgsJson` holds the client's name,
+`RecipientEmail` the address — both cleared, the row kept as the record that
+mail went out). `ClientPersonalDataErasure` is the one mechanism;
+`EraseClientPersonalDataCommand` (its own `Client.Erase` permission — `Client.Delete`
+only archives) and the daily `PersonalDataPurgeJob` are its two triggers, and
+both refuse a client with a live booking. `PersonalDataRetentionMonths` = 0 means
+no automatic purge and is the default on purpose. `IPersonalDataErasureStore` is
+the only reader of an archived client and the only writer of `AuditLog` outside
+the interceptor — an archived client is exactly the one whose scan nobody will
+look at again. **Chat is deliberately untouched** (see plan §3.6).
+
+**A figure is folded once.** `StatisticsReport` owns the statistics arithmetic —
+the window rules, the attribution note, the six numbers — and both
+`GetStatisticsQuery` (the screen) and `ExportStatisticsQuery` (the download) call
+it. The export takes the same four filters and the same permission, so the file
+is the report that was on screen. Its two renderers
+(`IStatisticsExportRenderer`: `.xlsx` via ClosedXML, `.pdf` via QuestPDF) both
+read one `StatisticsExport`, which carries **localized labels but raw numbers** —
+a spreadsheet whose figures were strings would defeat the format's only purpose.
+
 **Background jobs.** Hangfire on SQL Server storage. Registered only when a real
 database is present (skipped for the NSwag build-time host and functional
-tests). Recurring: `reservation-expiry` and `notification-sweep`, both hourly.
+tests). Recurring: `reservation-expiry` and `notification-sweep`, both hourly, plus
+`personal-data-purge` **daily** — a retention window is measured in months, so
+the hour carries no meaning, and it is the one sweep that destroys data.
 Dashboard at `/hangfire`, platform admins only.
 
 **Images.** `UploadCarImageCommand` stores the original synchronously (status
@@ -373,6 +406,13 @@ out deliberately — see plan §8.
 **Still open** (and why): a transactional Outbox (§4.6) — its stated purpose is
 atomicity for online payment and push, both out of scope, and durable mail would
 mean persisting temporary passwords; online payment (§2.3) needs a provider and
-credentials; statistics export (§2.9); monitoring alerts (A.6); an email
+credentials; monitoring alerts (A.6); an email
 provider (A.7); the second-driver insurance decision (A.10); the restore drill
-and uploads backup (runbook §2–3); mobile and GPS (§3.3–3.5).
+and uploads backup (runbook §2–3); mobile and GPS (§3.3–3.5); the search-path
+load test (§3.6); the e-signature label decision (§2.7 — the module label still
+promises what the code does not do); whether an erasure should also clear a
+booking's chat thread (plan §3.6 — a product call, not a technical one).
+
+**Shipped 2026-09-09**: statistics export (§2.9) — see "A figure is folded
+once" — and the personal-data purge / right to erasure (§3.6) — see "Erasing a
+client empties the row", both in §3.

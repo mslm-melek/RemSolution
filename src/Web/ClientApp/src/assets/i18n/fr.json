@@ -573,6 +573,15 @@
     "flagReason": "Pourquoi ce client est-il signalé ?",
     "flagReasonPlaceholder": "ex. voiture rendue avec trois jours de retard, deux fois",
     "flagNoReason": "Aucun motif n'a été enregistré.",
+    "erased": "Données personnelles effacées",
+    "erasedOn": "Effacées le {{ date }}. Les locations, paiements et factures sont conservés.",
+    "eraseAction": "Effacer les données personnelles",
+    "eraseHint": "Droit à l'effacement : supprime définitivement l'identité et les scans.",
+    "eraseWarningTitle": "Cette action est irréversible",
+    "eraseWarning": "L'identité du client, ses numéros de papiers et les scans téléversés sont supprimés définitivement, et son accès à l'espace client est retiré. Les locations, paiements, factures et contrats sont conservés : l'agence doit tenir ses comptes.",
+    "eraseReason": "Motif (facultatif)",
+    "eraseReasonPlaceholder": "ex. demande du client du 9 septembre",
+    "confirmErase": "Effacer définitivement les données personnelles de « {{ name }} » ? Cette action est irréversible.",
     "standing": {
       "label": "Situation",
       "verified": "Vérifié",
@@ -1392,7 +1401,12 @@
     "netHint": "Facturé moins les dépenses.",
     "truncated": "La période demandée est plus longue que ce rapport ; seules les lignes les plus récentes sont affichées.",
     "noActivity": "Aucune location et aucune dépense dans cette période.",
-    "loadFailed": "Les statistiques n'ont pas pu être chargées."
+    "loadFailed": "Les statistiques n'ont pas pu être chargées.",
+    "exportExcel": "Excel",
+    "exportExcelHint": "Télécharger ce rapport en tableur, chiffres modifiables.",
+    "exportPdf": "PDF",
+    "exportPdfHint": "Télécharger ce rapport en PDF, prêt à transmettre.",
+    "exportFailed": "L'export n'a pas pu être généré."
   },
   "platformDashboard": {
     "title": "Vue d'ensemble de la plateforme",
@@ -1608,6 +1622,13 @@
       "passeportYears": "Passeport (années)",
       "licenceYears": "Permis de conduire (années)",
       "zeroIsNoExpiry": "0 si ce document n'expire pas ici."
+    },
+    "retention": {
+      "title": "Conservation des données personnelles",
+      "intro": "Combien de mois après la dernière location, réservation ou paiement d'un client son identité et ses scans de papiers sont conservés. Passé ce délai, ils sont effacés automatiquement chaque nuit.",
+      "months": "Conservation (mois)",
+      "zeroIsOff": "0 désactive l'effacement automatique.",
+      "keepsFinancials": "Les locations, paiements, factures et contrats sont toujours conservés — c'est votre comptabilité. Un client dont les données sont effacées reste identifié par son numéro de fiche."
     },
     "tax": {
       "title": "Fiscalité",

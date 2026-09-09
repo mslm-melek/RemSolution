@@ -1038,5 +1038,57 @@
   </data>
   <data name="Validation.Agency.CancellationFreeHours" xml:space="preserve">
     <value>يجب أن تغطّي فترة الإلغاء المجاني على الأقل المهلة القصوى للإلغاء، وإلا لن يُحتسب أي مبلغ أبدا.</value>
+  </data>
+  <data name="Validation.Client.EraseLiveBooking" xml:space="preserve">
+    <value>لهذا العميل حجز أو إيجار جار. أغلقوه أو ألغوه قبل محو بياناته الشخصية.</value>
+  </data>
+  <!-- تقرير الإحصائيات المُصدَّر. نفس عبارات الشاشة (statistics.* في ملفات i18n). -->
+  <data name="Statistics.Title" xml:space="preserve">
+    <value>الإحصائيات</value>
+  </data>
+  <data name="Statistics.ByMonth" xml:space="preserve">
+    <value>شهرًا بشهر</value>
+  </data>
+  <data name="Statistics.ByYear" xml:space="preserve">
+    <value>سنة بسنة</value>
+  </data>
+  <data name="Statistics.ByCar" xml:space="preserve">
+    <value>سيارة بسيارة</value>
+  </data>
+  <data name="Statistics.Period" xml:space="preserve">
+    <value>الفترة</value>
+  </data>
+  <data name="Statistics.Car" xml:space="preserve">
+    <value>السيارة</value>
+  </data>
+  <data name="Statistics.AllCars" xml:space="preserve">
+    <value>كل السيارات</value>
+  </data>
+  <data name="Statistics.OtherCars" xml:space="preserve">
+    <value>سيارات لم تعد في الأسطول</value>
+  </data>
+  <data name="Statistics.Total" xml:space="preserve">
+    <value>المجموع</value>
+  </data>
+  <data name="Statistics.Rentings" xml:space="preserve">
+    <value>الإيجارات</value>
+  </data>
+  <data name="Statistics.Days" xml:space="preserve">
+    <value>أيام الإيجار</value>
+  </data>
+  <data name="Statistics.Charged" xml:space="preserve">
+    <value>المفوتر</value>
+  </data>
+  <data name="Statistics.Collected" xml:space="preserve">
+    <value>المحصّل</value>
+  </data>
+  <data name="Statistics.Expenses" xml:space="preserve">
+    <value>المصاريف</value>
+  </data>
+  <data name="Statistics.Net" xml:space="preserve">
+    <value>النتيجة</value>
+  </data>
+  <data name="Statistics.Truncated" xml:space="preserve">
+    <value>الفترة المطلوبة أطول من هذا التقرير؛ تُعرض الأسطر الأحدث فقط.</value>
   </data></root>
 

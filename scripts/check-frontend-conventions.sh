@@ -23,7 +23,7 @@ WALL_CLOCK="startDate|endDate|firstCirculationDate|birthDate|expenseDate|payemen
 
 # Fields recorded from GetUtcNow(). They MUST NOT carry it — "when did this
 # happen" means local time to the person reading it.
-INSTANTS="expiresAt|sentAt|submittedAt|reviewedAt|issuedAt|createdAt|generatedAt"
+INSTANTS="expiresAt|sentAt|submittedAt|reviewedAt|issuedAt|createdAt|generatedAt|personalDataErasedAt"
 
 # These two templates render DateTimeOffset properties (AgencySubscriptionDto,
 # PlatformDashboardDto). An offset is already an unambiguous instant, so the

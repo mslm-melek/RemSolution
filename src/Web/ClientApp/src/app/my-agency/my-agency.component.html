@@ -271,6 +271,25 @@
           </div>
         </section>
 
+        <!-- How long the agency keeps a client's identity details and scans.
+             One field, because the answer is one number — but it is the field
+             that decides when a passport copy stops existing here. -->
+        <section class="settings-section">
+          <h3 class="section-title">{{ t('myAgency.retention.title') }}</h3>
+          <p class="settings-hint">{{ t('myAgency.retention.intro') }}</p>
+
+          <div class="field-grid">
+            <mat-form-field appearance="outline" subscriptSizing="dynamic">
+              <mat-label>{{ t('myAgency.retention.months') }}</mat-label>
+              <input matInput type="number" formControlName="personalDataRetentionMonths"
+                     min="0" max="120" />
+              <mat-hint>{{ t('myAgency.retention.zeroIsOff') }}</mat-hint>
+            </mat-form-field>
+          </div>
+
+          <p class="settings-hint">{{ t('myAgency.retention.keepsFinancials') }}</p>
+        </section>
+
         <!-- Tax. What turns a generated PDF into an invoice an accountant can
              file and a professional client can deduct. -->
         <section class="settings-section">

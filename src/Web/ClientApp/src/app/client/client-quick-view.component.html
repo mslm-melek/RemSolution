@@ -34,6 +34,18 @@
           <span class="chip danger" *ngIf="isLate">{{ t('client.overdueCar') }}</span>
         </div>
 
+        <!-- Their details are gone on purpose. Said plainly, because every field
+             below is empty and that would otherwise read as a broken record. -->
+        <div class="action-banner" *ngIf="isErased">
+          <mat-icon>lock</mat-icon>
+          <div class="action-banner-text">
+            <div class="action-banner-title">{{ t('client.erased') }}</div>
+            <div class="action-banner-note">
+              {{ t('client.erasedOn', { date: client.personalDataErasedAt | date:'medium' }) }}
+            </div>
+          </div>
+        </div>
+
         <!-- Rule 1's bar in red: a deadline already missed, and something to read
              before handing over another car. -->
         <div class="action-banner is-overdue" *ngIf="client.isFlagged">
@@ -57,6 +69,30 @@
               {{ t('client.flagAction') }}
             </button>
             <button mat-button type="button" [disabled]="saving" (click)="cancelFlagging()">
+              {{ t('common.cancel') }}
+            </button>
+          </div>
+        </div>
+
+        <!-- The same box for an erasure, with what it destroys spelled out: it
+             cannot be undone, and the note is what the audit trail keeps. -->
+        <div class="flag-form" *ngIf="erasing">
+          <div class="action-banner is-overdue">
+            <mat-icon>warning</mat-icon>
+            <div class="action-banner-text">
+              <div class="action-banner-title">{{ t('client.eraseWarningTitle') }}</div>
+              <div class="action-banner-note">{{ t('client.eraseWarning') }}</div>
+            </div>
+          </div>
+          <label class="flag-label" for="erase-reason">{{ t('client.eraseReason') }}</label>
+          <textarea id="erase-reason" rows="2" [(ngModel)]="eraseReason"
+                    [placeholder]="t('client.eraseReasonPlaceholder')"></textarea>
+          <div class="flag-form-actions">
+            <button mat-raised-button color="warn" type="button"
+                    [disabled]="saving" (click)="eraseClient()">
+              {{ t('client.eraseAction') }}
+            </button>
+            <button mat-button type="button" [disabled]="saving" (click)="cancelErasing()">
               {{ t('common.cancel') }}
             </button>
           </div>
@@ -201,6 +237,14 @@
     <button mat-button color="warn" type="button" *ngIf="canDelete"
             [disabled]="saving" (click)="deleteClient()">
       {{ t('common.delete') }}
+    </button>
+    <!-- Beside the archive action on purpose: whoever comes looking for "remove
+         this client" should see both, and which one is the one you cannot undo. -->
+    <button mat-button color="warn" type="button"
+            *ngIf="canErase && !isErased && !erasing"
+            [disabled]="saving" (click)="startErasing()"
+            [matTooltip]="t('client.eraseHint')">
+      <mat-icon>lock</mat-icon> {{ t('client.eraseAction') }}
     </button>
   </div>
 </ng-container>

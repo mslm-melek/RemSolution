@@ -4,7 +4,8 @@ import { of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { TranslocoService } from '@jsverse/transloco';
 import {
-  ClientsClient, ClientDto, ClientCreditDto, CreditsClient, FlagClientCommand,
+  ClientsClient, ClientDto, ClientCreditDto, CreditsClient,
+  EraseClientPersonalDataCommand, FlagClientCommand,
   RentingDto, RentingState, RentingsClient
 } from '../web-api-client';
 import { AuthService } from '../shared/auth.service';
@@ -92,8 +93,16 @@ export class ClientQuickViewComponent implements OnInit {
   flagging = false;
   flagReason = '';
 
+  // The reason box for an erasure, open only while one is being confirmed. Same
+  // shape as the flag box above, and for a stronger version of the same reason:
+  // this one cannot be undone, so the note beside it is what the audit trail will
+  // have to answer with later.
+  erasing = false;
+  eraseReason = '';
+
   canEdit = false;
   canDelete = false;
+  canErase = false;
   canRent = false;
   canRemind = false;
   private canSeeCredit = false;
@@ -124,6 +133,7 @@ export class ClientQuickViewComponent implements OnInit {
     this.auth.currentUser$.subscribe(user => {
       this.canEdit = AuthService.canAccessModule(user, 'Clients', 'Client.Update');
       this.canDelete = AuthService.canAccessModule(user, 'Clients', 'Client.Delete');
+      this.canErase = AuthService.canAccessModule(user, 'Clients', 'Client.Erase');
       this.canRent = AuthService.canAccessModule(user, 'Rentings', 'Renting.Create');
       this.canRemind = AuthService.canAccessModule(user, 'Notifications', 'Notification.Send');
       this.canSeeCredit = AuthService.canAccessModule(user, 'Credits', 'Credit.Read');
@@ -207,6 +217,11 @@ export class ClientQuickViewComponent implements OnInit {
     return (this.client?.overdueRentingCount ?? 0) > 0;
   }
 
+  /** Their details are gone, so the panel says so instead of looking broken. */
+  get isErased(): boolean {
+    return !!this.client?.personalDataErasedAt;
+  }
+
   get owes(): boolean {
     return (this.credit?.outstanding?.amount ?? 0) > 0;
   }
@@ -281,6 +296,51 @@ export class ClientQuickViewComponent implements OnInit {
       if (message) {
         this.noticeMessage = message;
         this.changed = true;
+      }
+    });
+  }
+
+  /** Opens the reason box; nothing is erased until it is confirmed. */
+  startErasing() {
+    this.erasing = true;
+    this.eraseReason = '';
+  }
+
+  cancelErasing() {
+    this.erasing = false;
+    this.eraseReason = '';
+  }
+
+  // Irreversible, and it deletes the identity scans from storage — so it asks
+  // twice: the reason box, then the confirm. The archive action beside it is the
+  // reversible one, and the copy is what tells them apart.
+  eraseClient() {
+    if (!this.client?.id || this.saving) return;
+
+    if (!confirm(this.transloco.translate('client.confirmErase', { name: this.name }))) return;
+
+    this.saving = true;
+    this.errorMessage = '';
+
+    const reason = this.eraseReason.trim();
+
+    this.clients.eraseClientPersonalData(
+      this.client.id,
+      new EraseClientPersonalDataCommand({ id: this.client.id, reason: reason || undefined })
+    ).subscribe({
+      next: () => {
+        this.saving = false;
+        this.erasing = false;
+        this.eraseReason = '';
+        this.changed = true;
+        // Re-read rather than close: what is left of the record is the answer,
+        // and seeing it is how the operator knows the erasure landed.
+        this.reload();
+      },
+      error: err => {
+        this.saving = false;
+        this.errorMessage = extractProblemDetail(err)
+          ?? this.transloco.translate('common.unexpectedError');
       }
     });
   }

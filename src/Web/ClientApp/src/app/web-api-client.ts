@@ -3574,6 +3574,7 @@ export interface IClientsClient {
     flagClient(id: number, command: FlagClientCommand): Observable<void>;
     inviteClient(id: number): Observable<ClientInvitationDto>;
     regenerateClientPortrait(id: number): Observable<ClientPortraitDto>;
+    eraseClientPersonalData(id: number, command: EraseClientPersonalDataCommand | undefined): Observable<void>;
     uploadClientDocument(id: number, documentType: ClientDocumentType, file: FileParameter | null | undefined): Observable<string>;
 }
 
@@ -4069,6 +4070,57 @@ export class ClientsClient implements IClientsClient {
             let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
             result200 = ClientPortraitDto.fromJS(resultData200);
             return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    eraseClientPersonalData(id: number, command: EraseClientPersonalDataCommand | undefined): Observable<void> {
+        let url_ = this.baseUrl + "/api/Clients/{id}/erase-personal-data";
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(command);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processEraseClientPersonalData(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processEraseClientPersonalData(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processEraseClientPersonalData(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return _observableOf(null as any);
             }));
         } else if (status !== 200 && status !== 204) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
@@ -10882,6 +10934,7 @@ export class ReservationsClient implements IReservationsClient {
 
 export interface IStatisticsClient {
     getStatistics(carId: number | null | undefined, granularity: StatisticsGranularity | undefined, from: Date | null | undefined, to: Date | null | undefined): Observable<StatisticsDto>;
+    exportStatistics(carId: number | null | undefined, granularity: StatisticsGranularity | undefined, from: Date | null | undefined, to: Date | null | undefined, format: StatisticsExportFormat | undefined): Observable<void>;
 }
 
 @Injectable({
@@ -10946,6 +10999,64 @@ export class StatisticsClient implements IStatisticsClient {
             let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
             result200 = StatisticsDto.fromJS(resultData200);
             return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    exportStatistics(carId: number | null | undefined, granularity: StatisticsGranularity | undefined, from: Date | null | undefined, to: Date | null | undefined, format: StatisticsExportFormat | undefined): Observable<void> {
+        let url_ = this.baseUrl + "/api/Statistics/export?";
+        if (carId !== undefined && carId !== null)
+            url_ += "CarId=" + encodeURIComponent("" + carId) + "&";
+        if (granularity === null)
+            throw new Error("The parameter 'granularity' cannot be null.");
+        else if (granularity !== undefined)
+            url_ += "Granularity=" + encodeURIComponent("" + granularity) + "&";
+        if (from !== undefined && from !== null)
+            url_ += "From=" + encodeURIComponent(from ? "" + from.toISOString() : "") + "&";
+        if (to !== undefined && to !== null)
+            url_ += "To=" + encodeURIComponent(to ? "" + to.toISOString() : "") + "&";
+        if (format === null)
+            throw new Error("The parameter 'format' cannot be null.");
+        else if (format !== undefined)
+            url_ += "Format=" + encodeURIComponent("" + format) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processExportStatistics(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processExportStatistics(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processExportStatistics(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return _observableOf(null as any);
             }));
         } else if (status !== 200 && status !== 204) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
@@ -12208,6 +12319,7 @@ export class AgencyDto implements IAgencyDto {
     cancellationFeeMode?: CancellationFeeMode;
     cancellationFeeValue?: number;
     cancellationFreeHours?: number;
+    personalDataRetentionMonths?: number;
 
     constructor(data?: IAgencyDto) {
         if (data) {
@@ -12251,6 +12363,7 @@ export class AgencyDto implements IAgencyDto {
             this.cancellationFeeMode = _data["cancellationFeeMode"];
             this.cancellationFeeValue = _data["cancellationFeeValue"];
             this.cancellationFreeHours = _data["cancellationFreeHours"];
+            this.personalDataRetentionMonths = _data["personalDataRetentionMonths"];
         }
     }
 
@@ -12294,6 +12407,7 @@ export class AgencyDto implements IAgencyDto {
         data["cancellationFeeMode"] = this.cancellationFeeMode;
         data["cancellationFeeValue"] = this.cancellationFeeValue;
         data["cancellationFreeHours"] = this.cancellationFreeHours;
+        data["personalDataRetentionMonths"] = this.personalDataRetentionMonths;
         return data;
     }
 }
@@ -12330,6 +12444,7 @@ export interface IAgencyDto {
     cancellationFeeMode?: CancellationFeeMode;
     cancellationFeeValue?: number;
     cancellationFreeHours?: number;
+    personalDataRetentionMonths?: number;
 }
 
 export enum CancellationFeeMode {
@@ -12366,6 +12481,7 @@ export class UpdateMyAgencyCommand implements IUpdateMyAgencyCommand {
     cancellationFeeMode?: CancellationFeeMode;
     cancellationFeeValue?: number;
     cancellationFreeHours?: number;
+    personalDataRetentionMonths?: number;
 
     constructor(data?: IUpdateMyAgencyCommand) {
         if (data) {
@@ -12405,6 +12521,7 @@ export class UpdateMyAgencyCommand implements IUpdateMyAgencyCommand {
             this.cancellationFeeMode = _data["cancellationFeeMode"];
             this.cancellationFeeValue = _data["cancellationFeeValue"];
             this.cancellationFreeHours = _data["cancellationFreeHours"];
+            this.personalDataRetentionMonths = _data["personalDataRetentionMonths"];
         }
     }
 
@@ -12444,6 +12561,7 @@ export class UpdateMyAgencyCommand implements IUpdateMyAgencyCommand {
         data["cancellationFeeMode"] = this.cancellationFeeMode;
         data["cancellationFeeValue"] = this.cancellationFeeValue;
         data["cancellationFreeHours"] = this.cancellationFreeHours;
+        data["personalDataRetentionMonths"] = this.personalDataRetentionMonths;
         return data;
     }
 }
@@ -12476,6 +12594,7 @@ export interface IUpdateMyAgencyCommand {
     cancellationFeeMode?: CancellationFeeMode;
     cancellationFeeValue?: number;
     cancellationFreeHours?: number;
+    personalDataRetentionMonths?: number;
 }
 
 export class AgencyReliabilityDto implements IAgencyReliabilityDto {
@@ -15919,6 +16038,7 @@ export class ClientDto implements IClientDto {
     isFlagged?: boolean;
     notes?: string | undefined;
     marketplaceUserId?: string | undefined;
+    personalDataErasedAt?: Date | undefined;
     hasPortalAccount?: boolean;
     rentingCount?: number;
     openRentingCount?: number;
@@ -15970,6 +16090,7 @@ export class ClientDto implements IClientDto {
             this.isFlagged = _data["isFlagged"];
             this.notes = _data["notes"];
             this.marketplaceUserId = _data["marketplaceUserId"];
+            this.personalDataErasedAt = _data["personalDataErasedAt"] ? new Date(_data["personalDataErasedAt"].toString()) : <any>undefined;
             this.hasPortalAccount = _data["hasPortalAccount"];
             this.rentingCount = _data["rentingCount"];
             this.openRentingCount = _data["openRentingCount"];
@@ -16021,6 +16142,7 @@ export class ClientDto implements IClientDto {
         data["isFlagged"] = this.isFlagged;
         data["notes"] = this.notes;
         data["marketplaceUserId"] = this.marketplaceUserId;
+        data["personalDataErasedAt"] = this.personalDataErasedAt ? this.personalDataErasedAt.toISOString() : <any>undefined;
         data["hasPortalAccount"] = this.hasPortalAccount;
         data["rentingCount"] = this.rentingCount;
         data["openRentingCount"] = this.openRentingCount;
@@ -16065,6 +16187,7 @@ export interface IClientDto {
     isFlagged?: boolean;
     notes?: string | undefined;
     marketplaceUserId?: string | undefined;
+    personalDataErasedAt?: Date | undefined;
     hasPortalAccount?: boolean;
     rentingCount?: number;
     openRentingCount?: number;
@@ -16511,6 +16634,46 @@ export class ClientPortraitDto implements IClientPortraitDto {
 export interface IClientPortraitDto {
     portraitUrl?: string | undefined;
     hasCinImage?: boolean;
+}
+
+export class EraseClientPersonalDataCommand implements IEraseClientPersonalDataCommand {
+    id?: number;
+    reason?: string | undefined;
+
+    constructor(data?: IEraseClientPersonalDataCommand) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.reason = _data["reason"];
+        }
+    }
+
+    static fromJS(data: any): EraseClientPersonalDataCommand {
+        data = typeof data === 'object' ? data : {};
+        let result = new EraseClientPersonalDataCommand();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["reason"] = this.reason;
+        return data;
+    }
+}
+
+export interface IEraseClientPersonalDataCommand {
+    id?: number;
+    reason?: string | undefined;
 }
 
 export enum ClientDocumentType {
@@ -24107,6 +24270,11 @@ export interface IStatisticsCarOptionDto {
     id?: number;
     matricule?: string | undefined;
     modelName?: string | undefined;
+}
+
+export enum StatisticsExportFormat {
+    Xlsx = 1,
+    Pdf = 2,
 }
 
 export class SubscriptionPlanDto implements ISubscriptionPlanDto {

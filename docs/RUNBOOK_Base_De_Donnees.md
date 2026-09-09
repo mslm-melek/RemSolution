@@ -104,6 +104,26 @@ Ils sont écrits sur disque par `LocalFileStorage`, sous le chemin `FileStorage:
 
    Tant que ni l'une ni l'autre n'est en place, **les documents téléversés ne sont pas sauvegardés** — la base l'est, les pièces jointes non.
 
+### Sauvegardes et droit à l'effacement — ce qu'il faut savoir dire
+
+Depuis le 2026-09-09 l'application efface les données personnelles d'un client
+sur demande, et automatiquement passé le délai de rétention de l'agence (voir
+plan §3.6). **Les sauvegardes déjà prises contiennent toujours ces données** :
+point-in-time sur 35 jours, plus les rétentions longues hebdomadaire, mensuelle
+et annuelle. C'est normal et c'est la pratique admise — on ne réécrit pas une
+sauvegarde — mais deux conséquences sont à tenir :
+
+- **Après une restauration, l'effacement doit être rejoué.** Une base restaurée
+  ramène les identités effacées entre la sauvegarde et l'incident. Le balayage
+  quotidien les reprendra si l'agence a un délai de rétention configuré ; les
+  effacements *sur demande*, non — ils n'ont laissé qu'une ligne d'audit
+  (action `ErasePersonalData`, entité `Client`), et **c'est cette liste qu'il
+  faut relire pour les rejouer**. À faire figurer dans le journal des
+  restaurations ci-dessous.
+- **Si un client demande la preuve de l'effacement**, la réponse honnête est :
+  effacé de la base active immédiatement, et des sauvegardes à mesure qu'elles
+  expirent — au plus tard à la fin de la rétention annuelle.
+
 ---
 
 ## 3. Restauration — l'exercice

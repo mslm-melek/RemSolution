@@ -17,7 +17,7 @@ public static class FeatureCatalog
         new Dictionary<string, string[]>
         {
             [FeatureFlags.Cars] = new[] { Permissions.CarCreate, Permissions.CarRead, Permissions.CarUpdate, Permissions.CarDelete },
-            [FeatureFlags.Clients] = new[] { Permissions.ClientCreate, Permissions.ClientRead, Permissions.ClientUpdate, Permissions.ClientDelete },
+            [FeatureFlags.Clients] = new[] { Permissions.ClientCreate, Permissions.ClientRead, Permissions.ClientUpdate, Permissions.ClientDelete, Permissions.ClientErase },
             [FeatureFlags.Branches] = new[] { Permissions.BranchCreate, Permissions.BranchRead, Permissions.BranchUpdate, Permissions.BranchDelete },
             [FeatureFlags.Rentings] = new[] { Permissions.RentingCreate, Permissions.RentingRead, Permissions.RentingUpdate, Permissions.RentingDelete },
             [FeatureFlags.Reservations] = new[] { Permissions.ReservationCreate, Permissions.ReservationRead, Permissions.ReservationUpdate, Permissions.ReservationDelete },

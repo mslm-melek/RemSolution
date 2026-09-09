@@ -62,6 +62,14 @@ namespace RemSolution.Application.Features.Client.DTOs
         public string? MarketplaceUserId { get; init; }
 
         /// <summary>
+        /// When this client's personal data was erased, and null for every
+        /// ordinary client. Set, it is why the name reads <c>#42</c> and every
+        /// identity field is empty — so a screen can say so rather than look
+        /// broken. See <c>Client.ErasePersonalData</c>.
+        /// </summary>
+        public DateTimeOffset? PersonalDataErasedAt { get; init; }
+
+        /// <summary>
         /// Whether this client can sign in to the customer portal. The raw
         /// MarketplaceUserId above is an Identity key the UI has no use for;
         /// this is the question the client screen actually asks, and what the

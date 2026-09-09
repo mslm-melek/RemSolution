@@ -573,6 +573,15 @@
     "flagReason": "Why is this client flagged?",
     "flagReasonPlaceholder": "e.g. brought the car back three days late, twice",
     "flagNoReason": "No reason was recorded.",
+    "erased": "Personal data erased",
+    "erasedOn": "Erased on {{ date }}. Rentings, payments and invoices are kept.",
+    "eraseAction": "Erase personal data",
+    "eraseHint": "Right to erasure: permanently removes the identity details and the scans.",
+    "eraseWarningTitle": "This cannot be undone",
+    "eraseWarning": "The client's identity, their document numbers and the uploaded scans are permanently deleted, and their portal access is removed. Rentings, payments, invoices and contracts are kept: the agency has to keep its books.",
+    "eraseReason": "Reason (optional)",
+    "eraseReasonPlaceholder": "e.g. client's request of 9 September",
+    "confirmErase": "Permanently erase the personal data of \"{{ name }}\"? This cannot be undone.",
     "standing": {
       "label": "Standing",
       "verified": "Verified",
@@ -1392,7 +1401,12 @@
     "netHint": "Billed minus expenses.",
     "truncated": "The period was longer than this report shows; only the most recent rows are listed.",
     "noActivity": "No rentings and no expenses in this period.",
-    "loadFailed": "The statistics could not be loaded."
+    "loadFailed": "The statistics could not be loaded.",
+    "exportExcel": "Excel",
+    "exportExcelHint": "Download this report as a spreadsheet, figures still editable.",
+    "exportPdf": "PDF",
+    "exportPdfHint": "Download this report as a PDF, ready to send on.",
+    "exportFailed": "The export could not be produced."
   },
   "platformDashboard": {
     "title": "Platform overview",
@@ -1608,6 +1622,13 @@
       "passeportYears": "Passport (years)",
       "licenceYears": "Driving licence (years)",
       "zeroIsNoExpiry": "0 if this document does not expire here."
+    },
+    "retention": {
+      "title": "Personal-data retention",
+      "intro": "How many months after a client's last renting, reservation or payment their identity details and document scans are kept. Past that, they are erased automatically each night.",
+      "months": "Retention (months)",
+      "zeroIsOff": "0 switches automatic erasure off.",
+      "keepsFinancials": "Rentings, payments, invoices and contracts are always kept — those are your books. A client whose data has been erased is still identified by their record number."
     },
     "tax": {
       "title": "Tax",

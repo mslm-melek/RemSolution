@@ -2765,6 +2765,42 @@
         }
       }
     },
+    "/api/Clients/{id}/erase-personal-data": {
+      "post": {
+        "tags": [
+          "Clients"
+        ],
+        "operationId": "EraseClientPersonalData",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          }
+        ],
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EraseClientPersonalDataCommand"
+              }
+            }
+          },
+          "x-position": 2
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        }
+      }
+    },
     "/api/Clients/{id}/documents/{documentType}": {
       "post": {
         "tags": [
@@ -7490,6 +7526,67 @@
         }
       }
     },
+    "/api/Statistics/export": {
+      "get": {
+        "tags": [
+          "Statistics"
+        ],
+        "operationId": "ExportStatistics",
+        "parameters": [
+          {
+            "name": "CarId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "nullable": true
+            },
+            "x-position": 1
+          },
+          {
+            "name": "Granularity",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/StatisticsGranularity"
+            },
+            "x-position": 2
+          },
+          {
+            "name": "From",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "nullable": true
+            },
+            "x-position": 3
+          },
+          {
+            "name": "To",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "nullable": true
+            },
+            "x-position": 4
+          },
+          {
+            "name": "Format",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/StatisticsExportFormat"
+            },
+            "x-position": 5
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        }
+      }
+    },
     "/api/SubscriptionPlans": {
       "get": {
         "tags": [
@@ -8271,6 +8368,10 @@
           "cancellationFreeHours": {
             "type": "integer",
             "format": "int32"
+          },
+          "personalDataRetentionMonths": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },
@@ -8396,6 +8497,10 @@
             "format": "decimal"
           },
           "cancellationFreeHours": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "personalDataRetentionMonths": {
             "type": "integer",
             "format": "int32"
           }
@@ -10593,6 +10698,11 @@
             "type": "string",
             "nullable": true
           },
+          "personalDataErasedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
           "hasPortalAccount": {
             "type": "boolean"
           },
@@ -10920,6 +11030,20 @@
           },
           "hasCinImage": {
             "type": "boolean"
+          }
+        }
+      },
+      "EraseClientPersonalDataCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "reason": {
+            "type": "string",
+            "nullable": true
           }
         }
       },
@@ -15714,6 +15838,18 @@
             "nullable": true
           }
         }
+      },
+      "StatisticsExportFormat": {
+        "type": "integer",
+        "description": "",
+        "x-enumNames": [
+          "Xlsx",
+          "Pdf"
+        ],
+        "enum": [
+          1,
+          2
+        ]
       },
       "SubscriptionPlanDto": {
         "type": "object",

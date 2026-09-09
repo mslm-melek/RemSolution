@@ -101,6 +101,12 @@ namespace RemSolution.Application.Features.Agency.Commands.UpdateMyAgencyCommand
                 .GreaterThanOrEqualTo(v => v.CancellationWindowHours)
                 .When(v => v.CancellationFeeMode != CancellationFeeMode.None)
                 .WithMessage(_ => localizer["Validation.Agency.CancellationFreeHours"]);
+
+            // Zero switches the purge off; the window is in months, so the
+            // shortest rule anyone can set still leaves a month. Ten years is
+            // longer than any retention rule and catches a year typed in here.
+            RuleFor(v => v.PersonalDataRetentionMonths)
+                .InclusiveBetween(0, 120);
         }
     }
 }

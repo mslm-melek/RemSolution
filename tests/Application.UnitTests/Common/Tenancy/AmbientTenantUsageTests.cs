@@ -23,6 +23,9 @@ public class AmbientTenantUsageTests
         // and bookings, and does it one tenant at a time under a push rather than
         // by bypassing the query filter.
         Normalize("Infrastructure/Jobs/NotificationSweepJob.cs"),
+        // And again for the retention sweep, which erases one agency's expired
+        // client data at a time.
+        Normalize("Infrastructure/Jobs/PersonalDataPurgeJob.cs"),
         // The demo seeder writes each sample agency's data in turn, so it acts
         // as every tenant by design.
         Normalize("Infrastructure/Data/DemoDataSeeder.cs"),

@@ -1,9 +1,11 @@
+import { HttpClient } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, ParamMap, Params, Router } from '@angular/router';
 import {
-  StatisticsClient, StatisticsDto, StatisticsGranularity, StatisticsRowDto
+  StatisticsClient, StatisticsDto, StatisticsExportFormat, StatisticsGranularity, StatisticsRowDto
 } from '../web-api-client';
 import { applyListFilters, enumName, enumParam, idParam } from '../shared/list-filters';
+import { downloadFile } from '../shared/file-download';
 import { fromDateInput } from '../shared/form-utils';
 
 // How many years back the year picker offers. Five plus the current one covers
@@ -19,6 +21,11 @@ export class StatisticsComponent implements OnInit {
   data?: StatisticsDto;
   loading = true;
   errorMessage = '';
+
+  // Which format is being fetched, so the button that was pressed is the one
+  // that shows it. Null when idle.
+  exporting: StatisticsExportFormat | null = null;
+  readonly formats = StatisticsExportFormat;
 
   // Both filters live in the URL (see list-filters): the car list and a car's own
   // page link straight here with ?car=, and a report kept in the URL survives a
@@ -51,6 +58,7 @@ export class StatisticsComponent implements OnInit {
 
   constructor(
     private statistics: StatisticsClient,
+    private http: HttpClient,
     private route: ActivatedRoute,
     private router: Router
   ) {
@@ -85,15 +93,23 @@ export class StatisticsComponent implements OnInit {
     }
   }
 
+  // A month-by-month table is one calendar year; a year-by-year table is the
+  // trailing years the API defaults to, so it sends no window at all. The export
+  // asks for the same one, which is what keeps the file and the screen equal.
+  private window(): { from: Date | null, to: Date | null } {
+    if (this.granularity !== StatisticsGranularity.Month) return { from: null, to: null };
+
+    return {
+      from: fromDateInput(`${this.year}-01-01`) ?? null,
+      to: fromDateInput(`${this.year + 1}-01-01`) ?? null
+    };
+  }
+
   private load() {
     this.loading = true;
     this.errorMessage = '';
 
-    // A month-by-month table is one calendar year; a year-by-year table is the
-    // trailing years the API defaults to, so it sends no window at all.
-    const monthly = this.granularity === StatisticsGranularity.Month;
-    const from = monthly ? fromDateInput(`${this.year}-01-01`) ?? null : null;
-    const to = monthly ? fromDateInput(`${this.year + 1}-01-01`) ?? null : null;
+    const { from, to } = this.window();
 
     this.statistics.getStatistics(this.carId, this.granularity, from, to).subscribe({
       next: data => {
@@ -106,6 +122,38 @@ export class StatisticsComponent implements OnInit {
         console.error(err);
         this.errorMessage = 'statistics.loadFailed';
         this.loading = false;
+      }
+    });
+  }
+
+  // --- Export ----------------------------------------------------------------
+
+  exportReport(format: StatisticsExportFormat) {
+    if (this.exporting !== null) return;
+
+    this.exporting = format;
+    this.errorMessage = '';
+
+    const { from, to } = this.window();
+
+    const params = new URLSearchParams({
+      Granularity: String(this.granularity),
+      Format: String(format)
+    });
+    if (this.carId !== null) params.set('CarId', String(this.carId));
+    if (from) params.set('From', from.toISOString());
+    if (to) params.set('To', to.toISOString());
+
+    // The server names the file (it knows the window and the extension); the
+    // fallback only matters if the header does not survive a proxy.
+    const fallback = `statistics.${format === StatisticsExportFormat.Pdf ? 'pdf' : 'xlsx'}`;
+
+    downloadFile(this.http, `/api/Statistics/export?${params}`, fallback).subscribe({
+      next: () => this.exporting = null,
+      error: err => {
+        console.error(err);
+        this.errorMessage = 'statistics.exportFailed';
+        this.exporting = null;
       }
     });
   }

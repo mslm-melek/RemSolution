@@ -11,7 +11,7 @@ import { TranslocoService } from '@jsverse/transloco';
 // Must match the Domain Permissions constants; the API rejects anything else.
 const ALL_PERMISSIONS = [
   'Car.Create', 'Car.Read', 'Car.Update', 'Car.Delete',
-  'Client.Create', 'Client.Read', 'Client.Update', 'Client.Delete'
+  'Client.Create', 'Client.Read', 'Client.Update', 'Client.Delete', 'Client.Erase'
 ];
 
 @Component({

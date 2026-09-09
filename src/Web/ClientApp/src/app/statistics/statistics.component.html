@@ -19,6 +19,19 @@
       <a *ngIf="carId !== null" mat-button [routerLink]="['/car', carId]">
         <mat-icon>directions_car</mat-icon> {{ t('statistics.openCar') }}
       </a>
+
+      <!-- Whatever the screen is showing, as a file to send to the accountant.
+           Hidden until the figures are in: there is nothing to export yet. -->
+      <button *ngIf="data" mat-stroked-button [disabled]="exporting !== null"
+              (click)="exportReport(formats.Xlsx)"
+              [matTooltip]="t('statistics.exportExcelHint')">
+        <mat-icon>table_view</mat-icon> {{ t('statistics.exportExcel') }}
+      </button>
+      <button *ngIf="data" mat-stroked-button [disabled]="exporting !== null"
+              (click)="exportReport(formats.Pdf)"
+              [matTooltip]="t('statistics.exportPdfHint')">
+        <mat-icon>picture_as_pdf</mat-icon> {{ t('statistics.exportPdf') }}
+      </button>
     </div>
   </div>
 

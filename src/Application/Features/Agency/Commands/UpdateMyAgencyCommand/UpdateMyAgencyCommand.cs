@@ -72,6 +72,12 @@ namespace RemSolution.Application.Features.Agency.Commands.UpdateMyAgencyCommand
         public CancellationFeeMode CancellationFeeMode { get; init; } = CancellationFeeMode.None;
         public decimal CancellationFeeValue { get; init; }
         public int CancellationFreeHours { get; init; } = 48;
+
+        // Months after a client's last dealing with the agency before the daily
+        // sweep erases their identity details and document scans. Zero — the
+        // default — means no automatic purge; how long a passport copy must be
+        // kept is the agency's jurisdiction's answer, not ours.
+        public int PersonalDataRetentionMonths { get; init; }
     }
 
     public class UpdateMyAgencyCommandHandler : IRequestHandler<UpdateMyAgencyCommand>
@@ -140,6 +146,8 @@ namespace RemSolution.Application.Features.Agency.Commands.UpdateMyAgencyCommand
             settings.CancellationFeeMode = request.CancellationFeeMode;
             settings.CancellationFeeValue = request.CancellationFeeValue;
             settings.CancellationFreeHours = request.CancellationFreeHours;
+
+            settings.PersonalDataRetentionMonths = request.PersonalDataRetentionMonths;
 
             await _context.SaveChangesAsync(cancellationToken);
 

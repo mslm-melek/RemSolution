@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using RemSolution.Application.Common.Models;
 using RemSolution.Application.Features.Client.Commands.CreateClientCommand;
 using RemSolution.Application.Features.Client.Commands.DeleteClientCommand;
+using RemSolution.Application.Features.Client.Commands.EraseClientPersonalDataCommand;
 using RemSolution.Application.Features.Client.Commands.FlagClientCommand;
 using RemSolution.Application.Features.Client.Commands.InviteClientCommand;
 using RemSolution.Application.Features.Client.Commands.RegenerateClientPortraitCommand;
@@ -44,7 +45,10 @@ public class Clients : EndpointGroupBase
             // stored file on the client record: Client.Update, like the upload
             // that normally produces it.
             .MapPost(RegenerateClientPortrait, "{id}/portrait", Permissions.ClientUpdate)
-            .MapDelete(DeleteClient, "{id}", Permissions.ClientDelete);
+            .MapDelete(DeleteClient, "{id}", Permissions.ClientDelete)
+            // Its own permission, not Client.Delete: that one archives and can be
+            // undone, this one destroys identity documents for good.
+            .MapPost(EraseClientPersonalData, "{id}/erase-personal-data", Permissions.ClientErase);
 
         // The only form-binding endpoint in the API; antiforgery middleware is
         // not configured, so form binding must opt out explicitly. The route
@@ -126,6 +130,15 @@ public class Clients : EndpointGroupBase
     public async Task<NoContent> DeleteClient(ISender sender, int id)
     {
         await sender.Send(new DeleteClientCommand(id));
+        return TypedResults.NoContent();
+    }
+
+    // Irreversible. The reason is the operator's own note, kept beside the
+    // erasure in the audit trail — see the command.
+    public async Task<NoContent> EraseClientPersonalData(
+        ISender sender, int id, EraseClientPersonalDataCommand? command)
+    {
+        await sender.Send(new EraseClientPersonalDataCommand(id, command?.Reason));
         return TypedResults.NoContent();
     }
 

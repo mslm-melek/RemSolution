@@ -33,7 +33,7 @@ export const FEATURES: FeatureMeta[] = [
 // Permissions grouped by their feature (empty for capability-only features).
 export const PERMISSIONS_BY_FEATURE: Record<string, string[]> = {
   Cars: ['Car.Create', 'Car.Read', 'Car.Update', 'Car.Delete'],
-  Clients: ['Client.Create', 'Client.Read', 'Client.Update', 'Client.Delete'],
+  Clients: ['Client.Create', 'Client.Read', 'Client.Update', 'Client.Delete', 'Client.Erase'],
   Branches: ['Branch.Create', 'Branch.Read', 'Branch.Update', 'Branch.Delete'],
   Rentings: ['Renting.Create', 'Renting.Read', 'Renting.Update', 'Renting.Delete'],
   Reservations: ['Reservation.Create', 'Reservation.Read', 'Reservation.Update', 'Reservation.Delete'],

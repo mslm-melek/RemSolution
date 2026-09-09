@@ -93,6 +93,9 @@ export class MyAgencyComponent implements OnInit {
       clientReminderDaysBeforeStart: [2, [Validators.required, Validators.min(0), Validators.max(90)]],
       clientReminderDaysBeforeEnd: [1, [Validators.required, Validators.min(0), Validators.max(90)]],
       clientDocumentExpiryLeadDays: [30, [Validators.required, Validators.min(0), Validators.max(365)]],
+      // Zero — the default — means no automatic purge. How long a passport copy
+      // must be kept is the agency's jurisdiction's answer, not ours.
+      personalDataRetentionMonths: [0, [Validators.required, Validators.min(0), Validators.max(120)]],
       // Tax. These three are what make a generated invoice a legal document;
       // each issued invoice keeps its own frozen copy, so changing them here
       // affects the next one and never the ones already out.
@@ -158,6 +161,7 @@ export class MyAgencyComponent implements OnInit {
       clientReminderDaysBeforeStart: dto.clientReminderDaysBeforeStart ?? 2,
       clientReminderDaysBeforeEnd: dto.clientReminderDaysBeforeEnd ?? 1,
       clientDocumentExpiryLeadDays: dto.clientDocumentExpiryLeadDays ?? 30,
+      personalDataRetentionMonths: dto.personalDataRetentionMonths ?? 0,
       taxIdentifier: dto.taxIdentifier ?? '',
       vatRatePercent: dto.vatRatePercent ?? 19,
       fiscalStampAmount: dto.fiscalStampAmount ?? 1,
@@ -236,6 +240,7 @@ export class MyAgencyComponent implements OnInit {
       clientReminderDaysBeforeStart: v.clientReminderDaysBeforeStart,
       clientReminderDaysBeforeEnd: v.clientReminderDaysBeforeEnd,
       clientDocumentExpiryLeadDays: v.clientDocumentExpiryLeadDays,
+      personalDataRetentionMonths: v.personalDataRetentionMonths,
       taxIdentifier: v.taxIdentifier || undefined,
       vatRatePercent: v.vatRatePercent,
       fiscalStampAmount: v.fiscalStampAmount,

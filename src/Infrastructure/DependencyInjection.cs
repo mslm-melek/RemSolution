@@ -19,6 +19,7 @@ using RemSolution.Infrastructure.Notifications;
 using RemSolution.Application.Common.Settings;
 using RemSolution.Infrastructure.Imaging;
 using RemSolution.Infrastructure.Pricing;
+using RemSolution.Infrastructure.Reporting;
 using RemSolution.Infrastructure.Settings;
 using RemSolution.Infrastructure.Storage;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -247,6 +248,13 @@ public static class DependencyInjection
         // Recurring reservation-expiry sweep (registered as a job below).
         builder.Services.AddScoped<ReservationExpiryJob>();
 
+        // Right to erasure. The store needs the concrete context: it is the one
+        // reader of an archived client and the one writer of AuditLog outside the
+        // interceptor (see the interface). The daily retention sweep that uses it
+        // is registered as a job below.
+        builder.Services.AddScoped<IPersonalDataErasureStore, PersonalDataErasureStore>();
+        builder.Services.AddScoped<PersonalDataPurgeJob>();
+
         // Notifications. The renderer is scoped because it localizes through the
         // request's ILocalizer; the recipient resolver reads the Identity store;
         // the sweep is the recurring job registered in Program.
@@ -283,6 +291,11 @@ public static class DependencyInjection
         builder.Services.AddScoped<IRentalDocumentRenderer, QuestPdfRentalDocumentRenderer>();
         builder.Services.AddScoped<IRentalDocumentService, RentalDocumentService>();
         builder.Services.AddScoped<IDocumentTemplateImporter, DocumentTemplateImporter>();
+
+        // Statistics export. Both formats are registered; the handler picks by the
+        // format asked for, so adding a third means adding it here and nowhere else.
+        builder.Services.AddScoped<IStatisticsExportRenderer, ClosedXmlStatisticsExportRenderer>();
+        builder.Services.AddScoped<IStatisticsExportRenderer, QuestPdfStatisticsExportRenderer>();
         // The platform's shipped example templates. A concrete class rather than an
         // interface: it has one implementation by definition (see the type).
         builder.Services.AddScoped<DocumentTemplateExamples>();

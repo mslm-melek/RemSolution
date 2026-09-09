@@ -118,5 +118,19 @@ namespace RemSolution.Domain.Entities
         // not one window.
         public int ClientReminderDaysBeforeStart { get; set; } = 2;
         public int ClientReminderDaysBeforeEnd { get; set; } = 1;
+
+        // ---------------------------------------------------------------------
+        // Personal-data retention. How many months after a client's last dealing
+        // with the agency their identity details and document scans are kept
+        // before the purge job erases them (see PersonalDataPurgeJob and
+        // Client.ErasePersonalData). The financial records stay either way.
+        //
+        // ZERO MEANS NO AUTOMATIC PURGE, and it is the default deliberately: how
+        // long a rental agency must keep a passport copy is a question for its
+        // own jurisdiction and its own lawyer, and a number invented here would
+        // be worse than an agency having to choose one. Erasing on request works
+        // without it (see EraseClientPersonalDataCommand).
+        // ---------------------------------------------------------------------
+        public int PersonalDataRetentionMonths { get; set; }
     }
 }

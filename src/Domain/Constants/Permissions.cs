@@ -20,6 +20,13 @@ public abstract class Permissions
     public const string ClientRead = "Client.Read";
     public const string ClientUpdate = "Client.Update";
     public const string ClientDelete = "Client.Delete";
+    /// <summary>
+    /// Erase a client's personal data for good. Separate from
+    /// <see cref="ClientDelete"/>, which only archives: this one is irreversible
+    /// and destroys identity documents, so it is not something every clerk who
+    /// may tidy the client list should also be able to do.
+    /// </summary>
+    public const string ClientErase = "Client.Erase";
 
     public const string BranchCreate = "Branch.Create";
     public const string BranchRead = "Branch.Read";
@@ -77,7 +84,7 @@ public abstract class Permissions
     public static readonly string[] All =
     {
         CarCreate, CarRead, CarUpdate, CarDelete,
-        ClientCreate, ClientRead, ClientUpdate, ClientDelete,
+        ClientCreate, ClientRead, ClientUpdate, ClientDelete, ClientErase,
         BranchCreate, BranchRead, BranchUpdate, BranchDelete,
         RentingCreate, RentingRead, RentingUpdate, RentingDelete,
         ReservationCreate, ReservationRead, ReservationUpdate, ReservationDelete,

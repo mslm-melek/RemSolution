@@ -56,6 +56,10 @@
          native renderer (no SkiaSharp dependency since 2024.3), so it does not
          collide with the SkiaSharp version the image pipeline pins below. -->
     <PackageVersion Include="QuestPDF" Version="2026.7.1" />
+    <!-- Spreadsheet export of the statistics screen. MIT, and its transitive
+         deps (DocumentFormat.OpenXml, ClosedXML.Parser, ExcelNumberFormat,
+         RBush.Signed, SixLabors.Fonts) are MIT/Apache-2.0. -->
+    <PackageVersion Include="ClosedXML" Version="0.105.1" />
     <PackageVersion Include="SkiaSharp" Version="3.116.1" />
     <PackageVersion Include="SkiaSharp.NativeAssets.Linux" Version="3.116.1" />
     <PackageVersion Include="Hangfire.AspNetCore" Version="1.8.17" />

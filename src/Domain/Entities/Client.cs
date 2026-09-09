@@ -93,6 +93,94 @@
         // every "my …" marketplace query filters on, so it is the single
         // answer to "which portal user is this client?".
         public string? MarketplaceUserId { get; set; }
+
+        /// <summary>
+        /// When this client's personal data was erased — by request, or by the
+        /// agency's retention rule. Null for every ordinary client.
+        /// <para>
+        /// Set once and never cleared: it is what stops the purge job coming back
+        /// to a row it has already emptied, and what lets a screen say "erased"
+        /// rather than showing a client whose details mysteriously vanished.
+        /// </para>
+        /// </summary>
+        public DateTimeOffset? PersonalDataErasedAt { get; set; }
+
+        /// <summary>
+        /// Empties every personal field, keeping the row so the hires, payments
+        /// and invoices that reference it still have a counterparty.
+        /// <para>
+        /// The name becomes <c>#{Id}</c> — not blank. Every list, credit table and
+        /// statistics row composes a client label from these two fields, and a row
+        /// labelled with nothing reads as a defect; the row id is already on the
+        /// financial records, so it discloses nothing new. The portal link goes
+        /// too: an erased client is not somebody who should still be able to sign
+        /// in and see this agency's bookings.
+        /// </para>
+        /// <para>
+        /// Returns the ids of the identity-document files it detached, for the
+        /// caller to remove and delete the bytes of — this method cannot, and the
+        /// scans are the most sensitive thing here.
+        /// </para>
+        /// </summary>
+        public IReadOnlyList<int> ErasePersonalData(DateTimeOffset erasedAt)
+        {
+            var files = new List<int>(4);
+
+            foreach (var id in new[] { CINFileId, PasseportFileId, DrivingLicenceFileId, CINPortraitFileId })
+            {
+                if (id is int fileId) files.Add(fileId);
+            }
+
+            FirstName = null;
+            LastName = $"#{Id}";
+
+            BirthDate = null;
+            BirthPlace = null;
+            BirthCountryId = null;
+
+            CIN = null;
+            CINDeliveranceDate = null;
+            CINDeliverancePlace = null;
+            CINDeliveranceCountryId = null;
+            CINExpiryDate = null;
+
+            PasseportNumber = null;
+            PasseportDeliveranceDate = null;
+            PasseportDeliverancePlace = null;
+            PasseportDeliveranceCountryId = null;
+            PasseportExpiryDate = null;
+
+            DrivingLicenceNumber = null;
+            DrivingLicenceDeliveranceDate = null;
+            DrivingLicenceDeliverancePlace = null;
+            DrivingLicenceDeliveranceCountryId = null;
+            DrivingLicenceExpiryDate = null;
+
+            // Both the navigation and the FK: EF cannot tell a reference nulled
+            // out from one never loaded, so the FK is what actually detaches.
+            CINFile = null;
+            CINFileId = null;
+            PasseportFile = null;
+            PasseportFileId = null;
+            DrivingLicenceFile = null;
+            DrivingLicenceFileId = null;
+            CINPortraitFile = null;
+            CINPortraitFileId = null;
+
+            Email = null;
+            Description = null;
+            MarketplaceUserId = null;
+
+            // A risk flag whose reason has been erased accuses somebody of
+            // nothing in particular, and the person it accused is gone.
+            IsFlagged = false;
+            Notes = null;
+
+            PersonalDataErasedAt = erasedAt;
+
+            return files;
+        }
+
         /// <summary>
         /// Whether the driving licence is known to have lapsed by
         /// <paramref name="on"/>. An expiry date is exclusive of the day itself —

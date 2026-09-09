@@ -48,6 +48,9 @@ namespace RemSolution.Application.Features.Agency.DTOs
         public CancellationFeeMode CancellationFeeMode { get; init; }
         public decimal CancellationFeeValue { get; init; }
         public int CancellationFreeHours { get; init; }
+        // Months after a client's last dealing before their personal data is
+        // erased; zero means no automatic purge. See AgencySettings.
+        public int PersonalDataRetentionMonths { get; init; }
 
         public class Mapping : IRegister
         {
@@ -78,7 +81,9 @@ namespace RemSolution.Application.Features.Agency.DTOs
                     .Map(d => d.CancellationFeeMode,
                          s => s.Settings != null ? s.Settings.CancellationFeeMode : CancellationFeeMode.None)
                     .Map(d => d.CancellationFeeValue, s => s.Settings != null ? s.Settings.CancellationFeeValue : 0m)
-                    .Map(d => d.CancellationFreeHours, s => s.Settings != null ? s.Settings.CancellationFreeHours : 0);
+                    .Map(d => d.CancellationFreeHours, s => s.Settings != null ? s.Settings.CancellationFreeHours : 0)
+                    .Map(d => d.PersonalDataRetentionMonths,
+                         s => s.Settings != null ? s.Settings.PersonalDataRetentionMonths : 0);
             }
         }
     }
