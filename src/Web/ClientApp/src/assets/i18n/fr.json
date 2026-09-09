@@ -73,6 +73,7 @@
     "next": "Suivant",
     "previous": "Précédent",
     "optional": "Facultatif",
+    "required": "Obligatoire",
     "unexpectedError": "Une erreur inattendue s'est produite. Veuillez réessayer.",
     "actionFailed": "L'action n'a pas pu être effectuée.",
     "resultCount": "{{ count }} enregistrements",
@@ -823,6 +824,7 @@
     "clientListFailed": "La liste des clients n'a pas pu être chargée.",
     "promptRejectReason": "Motif du refus de cette réservation (communiqué au client) :",
     "promptCancelReason": "Motif de l'annulation (facultatif) :",
+    "promptCancelReasonRequired": "Motif de l'annulation (obligatoire — il est communiqué au client) :",
     "promptDriverCin": "CIN du conducteur (facultatif — sert à retrouver un client existant) :",
     "promptDriverPassport": "Numéro de passeport du conducteur (facultatif) :",
     "confirmConvert": "Convertir cette réservation en location ?",
@@ -1516,6 +1518,7 @@
   "reports": {
     "title": "Signalements",
     "subtitle": "Les réclamations que des clients ont adressées à la plateforme, et l'arbitrage rendu.",
+    "anonymousReporter": "Un client",
     "reputation": "Réputation",
     "reliability": "Fiabilité",
     "reliabilityHint": "Les clients voient cette note sur votre vitrine. Elle baisse quand vous annulez une réservation que vous aviez confirmée, et quand la plateforme retient un signalement.",

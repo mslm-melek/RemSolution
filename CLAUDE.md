@@ -116,7 +116,9 @@ Subscription-plan prices stay decimal (platform-level, no agency).
 agency bills in one currency and its invoices, payments, credits and statistics
 stay in it. `ExchangeRate` is a platform-level table of quoted pairs
 (`1 From = Rate To`), one row per ordered pair — the reciprocal is **derived,
-never stored**, because two rows that must agree eventually will not.
+never stored**, because two rows that must agree eventually will not, and
+`SetExchangeRateCommand` refuses the reverse row to keep it that way (the unique
+index is on the *ordered* pair and cannot say it).
 `exchange-rate-refresh` (daily, 03:00 UTC — the feed publishes just after
 midnight) keeps their values current from open.er-api.com, the app's **only
 outbound HTTP call**: it refreshes pairs and never creates them (which
@@ -257,7 +259,12 @@ per search card it would cost a page of results.
 **A complaint is arbitrated by the platform, and no money moves.** An
 `AgencyReport` hangs off exactly one booking the customer had (a reservation or a
 renting, check-constrained), one per booking, within
-`AgencyReport.ReportingWindowDays` of it ending. Like `AgencyReview` it is
+`AgencyReport.ReportingWindowDays` of it ending. *One* per booking is why
+`AgencyReport.CanReport` excludes `Converted`: the hold became a hire, the hire
+carries the report, and a hold left reportable after conversion is one rental
+complained about twice. `AgencyReliabilityCounts.WasConfirmed` deliberately keeps
+`Converted` — a hire that went ahead is a promise kept and belongs in the score's
+denominator — so those two predicates no longer match, on purpose. Like `AgencyReview` it is
 **platform-level, not `ITenantEntity`** — and for a stronger reason: neither the
 customer who raises it nor the platform administrator who settles it carries a
 tenant claim, so agency-facing code filters on `AgencyId` by hand. What the
@@ -294,18 +301,24 @@ whose renter or second driver has a lapsed `DrivingLicenceExpiryDate`, unless
 `AcknowledgeExpiredDocuments` is set. Expiry is exclusive of the day itself, and
 no recorded expiry never blocks.
 
-**Erasing a client empties the row, and two places nobody expects.** The
+**Erasing a client empties the row, and four places nobody expects.** The
 financial records are the point of keeping the row: `Client.ErasePersonalData`
 clears every identity field (name becomes `#{Id}`, never blank — every list
 composes a label from those two fields), deletes the document scans through
 `StoredFileService`'s orphan check, and unlinks the portal account, while
 `Renting`/`Payment`/`Facture`/`Contract` and the issued PDFs stay — a legal
-retention basis outliving an erasure request. The two easily-missed stores are
-the **audit trail** (every `[Auditable]` command wrote the whole client row as
+retention basis outliving an erasure request. The easily-missed stores are the
+**audit trail** (every `[Auditable]` command wrote the whole client row as
 JSON, so the last edit carries the passport number — payloads are blanked, the
-who/what/when kept) and **notifications** (`ArgsJson` holds the client's name,
+who/what/when kept), **notifications** (`ArgsJson` holds the client's name,
 `RecipientEmail` the address — both cleared, the row kept as the record that
-mail went out). `ClientPersonalDataErasure` is the one mechanism;
+mail went out) and the two **platform-level** rows that snapshot the customer's
+name precisely so it survives a rename: `AgencyReview.AuthorName` and
+`AgencyReport.ReporterName`/`ReporterUserId` are cleared, while the rating, the
+complaint and its arbitration stay — those are records of the *agency's*
+conduct. `AgencyReport.BookingSummary` stays too: it names a car and two dates,
+never a person, and it is all the arbitrator can see of a booking they cannot
+read. `ClientPersonalDataErasure` is the one mechanism;
 `EraseClientPersonalDataCommand` (its own `Client.Erase` permission — `Client.Delete`
 only archives) and the daily `PersonalDataPurgeJob` are its two triggers, and
 both refuse a client with a live booking. `PersonalDataRetentionMonths` = 0 means

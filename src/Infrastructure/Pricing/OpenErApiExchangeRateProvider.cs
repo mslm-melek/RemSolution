@@ -77,8 +77,12 @@ public sealed class OpenErApiExchangeRateProvider : IExchangeRateProvider
 
             return new ExchangeRateQuote(code, AsOf(payload.LastUpdateUnix), payload.Rates);
         }
+        // NotSupportedException is the one that does not look like a network
+        // failure: GetFromJsonAsync throws it when the body is not JSON at all,
+        // which is what a proxy or a WAF block page answers with.
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException
-                                      or System.Text.Json.JsonException)
+                                      or System.Text.Json.JsonException
+                                      or NotSupportedException)
         {
             // The feed being unreachable, slow or malformed is an ordinary
             // Tuesday; the job keeps yesterday's rate. See the interface.

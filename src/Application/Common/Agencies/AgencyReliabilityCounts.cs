@@ -24,9 +24,10 @@ public static class AgencyReliabilityCounts
     /// if it had been confirmed first — a request nobody answered was never a
     /// promise (see <c>Reservation.CancelledAfterConfirmation</c>).
     /// <para>
-    /// The same test as <c>AgencyReport.CanReport</c>, written as an expression
-    /// because EF has to translate this one into SQL: a booking worth scoring is
-    /// a booking worth complaining about.
+    /// Nearly <c>AgencyReport.CanReport</c>, and deliberately not exactly: a
+    /// CONVERTED hold counts here but cannot be reported here. It went ahead as a
+    /// hire, so it is a promise the agency kept and belongs in this denominator —
+    /// while the complaint about it belongs to the hire, which carries its own.
     /// </para>
     /// </summary>
     public static readonly Expression<Func<Reservation, bool>> WasConfirmed = r =>

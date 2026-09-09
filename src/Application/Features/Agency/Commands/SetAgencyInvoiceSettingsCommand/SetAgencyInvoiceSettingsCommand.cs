@@ -1,6 +1,7 @@
 using RemSolution.Application.Common.Audit;
 using RemSolution.Application.Common.Interfaces;
 using RemSolution.Application.Common.Security;
+using RemSolution.Application.Common.Settings;
 using RemSolution.Domain.Constants;
 
 namespace RemSolution.Application.Features.Agency.Commands.SetAgencyInvoiceSettingsCommand
@@ -35,10 +36,13 @@ namespace RemSolution.Application.Features.Agency.Commands.SetAgencyInvoiceSetti
         : IRequestHandler<SetAgencyInvoiceSettingsCommand>
     {
         private readonly IApplicationDbContext _context;
+        private readonly IAgencySettingsProvider _settings;
 
-        public SetAgencyInvoiceSettingsCommandHandler(IApplicationDbContext context)
+        public SetAgencyInvoiceSettingsCommandHandler(
+            IApplicationDbContext context, IAgencySettingsProvider settings)
         {
             _context = context;
+            _settings = settings;
         }
 
         public async Task Handle(
@@ -56,6 +60,11 @@ namespace RemSolution.Application.Features.Agency.Commands.SetAgencyInvoiceSetti
             settings.FiscalStampAmount = request.FiscalStampAmount;
 
             await _context.SaveChangesAsync(cancellationToken);
+
+            // The snapshot is cached for ten minutes, and each Facture freezes a
+            // copy of the rate at issue — an invoice issued on the stale figure
+            // says 19% for good, and a reprint has to say what was charged.
+            _settings.Invalidate(request.AgencyId);
         }
     }
 }

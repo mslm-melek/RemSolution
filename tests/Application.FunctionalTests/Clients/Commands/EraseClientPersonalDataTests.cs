@@ -186,6 +186,75 @@ public class EraseClientPersonalDataTests : BaseTestFixture
     }
 
     [Test]
+    public async Task ClearsTheNameLeftOnReviewsAndReportsButKeepsWhatTheySay()
+    {
+        await RunAsAgencyAdministratorAsync();
+        var agencyId = await AddTestAgencyAsync();
+
+        var clientId = await AddClientAsync();
+
+        var car = new Car { Matricule = "ER-2", Status = CarStatus.Active };
+        await AddAsync(car);
+
+        var hire = RentingFixture.Hire(
+            car.Id, clientId,
+            new DateTime(2020, 5, 1, 0, 0, 0, DateTimeKind.Utc),
+            new DateTime(2020, 5, 4, 0, 0, 0, DateTimeKind.Utc),
+            RentingState.Done, price: Money.Of(300m, "TND"));
+        await AddAsync(hire);
+
+        // Both snapshot the customer's name at submit time so the row stays
+        // readable after a rename — which is also what would carry the name past
+        // an erasure. Neither is an ITenantEntity, so no tenant read finds them.
+        await AddAsync(new AgencyReview
+        {
+            AgencyId = agencyId,
+            RentingId = hire.Id,
+            ClientId = clientId,
+            AuthorUserId = "portal-user-1",
+            AuthorName = "Nadia Ben Salah",
+            CarName = "Renault Clio",
+            Rating = 2,
+            Comment = "The car turned up late.",
+            SubmittedAt = DateTime.UtcNow
+        });
+
+        await AddAsync(AgencyReport.Create(
+            agencyId,
+            AgencyReportKind.ServiceQuality,
+            "Nobody was at the counter.",
+            DateTime.UtcNow,
+            rentingId: hire.Id,
+            clientId: clientId,
+            reporterUserId: "portal-user-1",
+            reporterName: "Nadia Ben Salah",
+            bookingSummary: "Renault Clio, 1-4 May"));
+
+        await SendAsync(new EraseClientPersonalDataCommand(clientId));
+
+        var review = (await AllAsync<AgencyReview>()).Single(v => v.ClientId == clientId);
+
+        review.AuthorName.Should().BeNull("the marketplace shows it beside the rating");
+        review.AuthorUserId.Should().BeNull();
+
+        // A rating and a complaint are records of the AGENCY's conduct, not of
+        // the person, so what they say survives — the same reasoning that keeps
+        // the notification rows.
+        review.Rating.Should().Be(2);
+        review.Comment.Should().Be("The car turned up late.");
+
+        var report = (await AllAsync<AgencyReport>()).Single(r => r.ClientId == clientId);
+
+        report.ReporterName.Should().BeNull();
+        report.ReporterUserId.Should().BeNull();
+        report.Message.Should().Be("Nobody was at the counter.");
+
+        // Kept on purpose: it names a car and two dates, never a person, and it
+        // is all the arbitrator can see of a booking they cannot read.
+        report.BookingSummary.Should().Be("Renault Clio, 1-4 May");
+    }
+
+    [Test]
     public async Task KeepsTheFinancialRecords()
     {
         await RunAsAgencyAdministratorAsync();

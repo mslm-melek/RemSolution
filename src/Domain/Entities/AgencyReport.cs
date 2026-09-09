@@ -101,16 +101,24 @@ namespace RemSolution.Domain.Entities
         /// Whether a hold in this state can be complained about: only one the
         /// agency actually confirmed. A request it never answered, refused or let
         /// lapse is a disappointment, not a promise broken.
+        /// <para>
+        /// A CONVERTED hold is excluded, and that is the "one per booking" rule
+        /// rather than a gap: it became a hire, the hire carries its own report,
+        /// and the unique indexes are per-anchor — so a hold left reportable after
+        /// conversion is one rental that can be complained about twice and cost
+        /// the agency two upheld reports.
+        /// </para>
         /// </summary>
         /// <remarks>
         /// The "my reservations" projection cannot call this — EF has to
         /// translate the test into SQL — so it repeats the same states inline as
         /// <c>CanReport</c>. Change this rule and that projection changes with it.
+        /// <c>AgencyReliabilityCounts.WasConfirmed</c> deliberately does NOT match
+        /// this any more: it keeps Converted, because a hire that went ahead is
+        /// still a promise the agency kept and belongs in the score's denominator.
         /// </remarks>
         public static bool CanReport(ReservationStatus status, bool cancelledAfterConfirmation) =>
-            status is ReservationStatus.Confirmed
-                or ReservationStatus.Paid
-                or ReservationStatus.Converted
+            status is ReservationStatus.Confirmed or ReservationStatus.Paid
             || (status == ReservationStatus.Cancelled && cancelledAfterConfirmation);
 
         /// <summary>
@@ -172,6 +180,19 @@ namespace RemSolution.Domain.Entities
                 Status = AgencyReportStatus.Open,
                 SubmittedAt = at,
             };
+        }
+
+        /// <summary>
+        /// Drops who raised it, keeping the complaint itself. The report survives
+        /// an erasure because it is a record of the AGENCY's conduct — and
+        /// <see cref="BookingSummary"/> stays for the same reason: it names a car
+        /// and two dates, never a person, and it is all the arbitrator can see of
+        /// a booking they cannot read.
+        /// </summary>
+        public void ErasePersonalData()
+        {
+            ReporterName = null;
+            ReporterUserId = null;
         }
 
         /// <summary>The platform finds for the customer. Open → Upheld.</summary>

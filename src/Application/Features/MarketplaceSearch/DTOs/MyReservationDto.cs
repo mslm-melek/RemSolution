@@ -27,9 +27,11 @@ namespace RemSolution.Application.Features.MarketplaceSearch.DTOs
         public bool CancelledByAgency { get; init; }
         // Instant (recorded from the clock) — the SPA renders it local.
         public DateTime? CancelledAt { get; init; }
-        // Whether the agency ever said yes to this booking. What separates a
-        // promise from a request nobody answered, and so what decides both the
-        // agency's reliability and whether this can be reported.
+        // Whether the agency ever said yes to this booking AND the hold is still
+        // what a complaint would be about — a converted one is reported through
+        // the hire it became. What separates a promise from a request nobody
+        // answered; the agency's own score counts a wider set (see
+        // AgencyReliabilityCounts).
         public bool WasConfirmed { get; init; }
 
         // The complaint the customer already raised about this booking, if any,
@@ -60,11 +62,12 @@ namespace RemSolution.Application.Features.MarketplaceSearch.DTOs
                                   && !src.CancelledByCustomer)
                       // Repeats AgencyReport.CanReport inline, because EF has to
                       // translate the test into SQL. Change the rule there and
-                      // this changes with it.
+                      // this changes with it — including the absent Converted: a
+                      // hold that became a hire is complained about through the
+                      // hire, or one rental gets reported twice.
                       .Map(d => d.WasConfirmed,
                            src => src.Status == ReservationStatus.Confirmed
                                   || src.Status == ReservationStatus.Paid
-                                  || src.Status == ReservationStatus.Converted
                                   || (src.Status == ReservationStatus.Cancelled
                                       && src.CancelledAfterConfirmation))
                       .Map(d => d.CarModelName,

@@ -1,7 +1,9 @@
 using RemSolution.Application.Common.Audit;
+using ValidationException = RemSolution.Application.Common.Exceptions.ValidationException;
 using RemSolution.Application.Common.Interfaces;
 using RemSolution.Application.Common.Security;
 using RemSolution.Domain.Constants;
+using FluentValidation.Results;
 
 namespace RemSolution.Application.Features.ExchangeRate.Commands.SetExchangeRateCommand
 {
@@ -61,6 +63,25 @@ namespace RemSolution.Application.Features.ExchangeRate.Commands.SetExchangeRate
                 await _context.SaveChangesAsync(cancellationToken);
 
                 return existing.Id;
+            }
+
+            // The pair is quoted in ONE direction only — the reciprocal is
+            // derived, never stored (see the entity). Two rows that must agree
+            // eventually will not, and each reader picks a different one: the
+            // marketplace expands both quotes, the invoice takes whichever the
+            // database hands back first. So the reverse row is refused rather
+            // than silently made the second version of the same rate.
+            var reverse = await _context.ExchangeRates
+                .AnyAsync(r => r.FromCurrency == to && r.ToCurrency == from, cancellationToken);
+
+            if (reverse)
+            {
+                throw new ValidationException(new[]
+                {
+                    new ValidationFailure(nameof(request.FromCurrency),
+                        $"{to} → {from} is already quoted, and the reciprocal is derived from it. " +
+                        $"Re-quote that pair instead of quoting {from} → {to}.")
+                });
             }
 
             var rate = Domain.Entities.ExchangeRate.Create(from, to, request.Rate, asOf);

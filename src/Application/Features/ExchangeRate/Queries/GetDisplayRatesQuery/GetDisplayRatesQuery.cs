@@ -19,11 +19,6 @@ namespace RemSolution.Application.Features.ExchangeRate.Queries.GetDisplayRatesQ
     public class GetDisplayRatesQueryHandler
         : IRequestHandler<GetDisplayRatesQuery, IList<DisplayRateDto>>
     {
-        // What a reciprocal is rounded to. Six places, like the quoted rate: this
-        // multiplies an amount that is itself rounded to two, so the error stays
-        // far below the last figure anybody reads.
-        private const int RateDecimals = 6;
-
         private readonly IApplicationDbContext _context;
 
         public GetDisplayRatesQueryHandler(IApplicationDbContext context)
@@ -57,7 +52,10 @@ namespace RemSolution.Application.Features.ExchangeRate.Queries.GetDisplayRatesQ
                 {
                     From = rate.ToCurrency,
                     To = rate.FromCurrency,
-                    Rate = Math.Round(1m / rate.Rate, RateDecimals, MidpointRounding.AwayFromZero),
+                    Rate = Math.Round(
+                        1m / rate.Rate,
+                        Domain.Entities.ExchangeRate.RateDecimals,
+                        MidpointRounding.AwayFromZero),
                     AsOf = rate.AsOf,
                 });
             }

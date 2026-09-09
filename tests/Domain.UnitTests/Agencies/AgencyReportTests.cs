@@ -104,7 +104,6 @@ public class AgencyReportTests
     {
         AgencyReport.CanReport(ReservationStatus.Confirmed, false).Should().BeTrue();
         AgencyReport.CanReport(ReservationStatus.Paid, false).Should().BeTrue();
-        AgencyReport.CanReport(ReservationStatus.Converted, false).Should().BeTrue();
         AgencyReport.CanReport(ReservationStatus.Cancelled, true).Should().BeTrue();
 
         // Never confirmed: nothing was promised, so there is nothing to answer for.
@@ -112,6 +111,11 @@ public class AgencyReportTests
         AgencyReport.CanReport(ReservationStatus.Rejected, false).Should().BeFalse();
         AgencyReport.CanReport(ReservationStatus.Expired, false).Should().BeFalse();
         AgencyReport.CanReport(ReservationStatus.Cancelled, false).Should().BeFalse();
+
+        // Converted: it became a hire, and the hire carries the report. Leaving it
+        // reportable here would let one rental be complained about twice — once on
+        // the hold, once on the hire — and cost two upheld reports.
+        AgencyReport.CanReport(ReservationStatus.Converted, false).Should().BeFalse();
     }
 
     [Test]

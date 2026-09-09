@@ -43,7 +43,7 @@
           <div class="booking" *ngIf="r.bookingSummary">
             {{ t('reports.booking') }} — <span class="num">{{ r.bookingSummary }}</span>
           </div>
-          <div class="reporter">{{ r.reporterName }}</div>
+          <div class="reporter">{{ r.reporterName || t('reports.anonymousReporter') }}</div>
         </div>
         <div class="side">
           <span class="chip" [ngClass]="statusTone(r.status)">{{ t(statusLabelKey(r.status)) }}</span>

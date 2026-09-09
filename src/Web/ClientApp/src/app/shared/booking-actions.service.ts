@@ -5,7 +5,7 @@ import { catchError } from 'rxjs/operators';
 import { TranslocoService } from '@jsverse/transloco';
 import {
   ChangeRentingStateCommand, ConvertReservationCommand, RejectReservationCommand,
-  RentingDto, RentingState, ReservationDto, ReservationsClient, RentingsClient
+  RentingDto, RentingState, ReservationDto, ReservationStatus, ReservationsClient, RentingsClient
 } from '../web-api-client';
 import {
   bookingConflict, extractProblemDetail, extractValidationErrors, isInvalidTransition
@@ -69,6 +69,38 @@ export class BookingActionsService {
       map(() => ({ changed: true, error: '' })),
       catchError(err => of(this.failed(err)))
     );
+  }
+
+  /**
+   * Asks the agent why the hold is being called off, and answers `false` when
+   * they backed out — the caller must not send anything then.
+   *
+   * A reason is MANDATORY once the agency has confirmed the hold: the customer
+   * is shown it, the arbitrator reads it later, and CancelReservationCommand
+   * refuses the call without one. Dismissing that prompt therefore has to abandon
+   * the cancellation rather than send undefined and come back with a 400 the
+   * agent cannot act on. A pending request stays reason-optional, and dropping
+   * one only asks for confirmation.
+   *
+   * The three screens that offer the action call this rather than prompting
+   * themselves, so the rule matches the server's in one place.
+   */
+  askCancelReason(reservation: ReservationDto): string | undefined | false {
+    const confirmed = reservation.status === ReservationStatus.Confirmed
+      || reservation.status === ReservationStatus.Paid;
+
+    const entered = prompt(this.transloco.translate(
+      confirmed ? 'reservation.promptCancelReasonRequired' : 'reservation.promptCancelReason'));
+
+    if (confirmed) {
+      return entered?.trim() ? entered.trim() : false;
+    }
+
+    if (entered === null) {
+      return confirm(this.transloco.translate('reservation.confirmCancel')) ? undefined : false;
+    }
+
+    return entered.trim() || undefined;
   }
 
   /**

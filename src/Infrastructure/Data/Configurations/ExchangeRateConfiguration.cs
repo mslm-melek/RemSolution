@@ -22,7 +22,7 @@ public class ExchangeRateConfiguration : IEntityTypeConfiguration<ExchangeRate>
         // A rate is a ratio, not money: it needs places, and the amounts it is
         // applied to are already rounded to two. Six is enough for a weak
         // currency against a strong one (1 TND = 0.294118 EUR).
-        builder.Property(r => r.Rate).HasPrecision(18, 6);
+        builder.Property(r => r.Rate).HasPrecision(18, ExchangeRate.RateDecimals);
 
         builder.ToTable(t => t.HasCheckConstraint("CK_ExchangeRates_Rate", "[Rate] > 0"));
     }

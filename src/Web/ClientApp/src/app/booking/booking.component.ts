@@ -706,8 +706,8 @@ export class BookingComponent implements OnInit {
   private cancelReservation(reservation: ReservationDto) {
     if (!reservation.id) return;
 
-    const reason = prompt(this.transloco.translate('reservation.promptCancelReason')) ?? undefined;
-    if (reason === undefined && !confirm(this.transloco.translate('reservation.confirmCancel'))) return;
+    const reason = this.actions.askCancelReason(reservation);
+    if (reason === false) return;
 
     this.errorMessage = '';
 

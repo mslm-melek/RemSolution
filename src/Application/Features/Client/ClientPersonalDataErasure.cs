@@ -45,9 +45,10 @@ namespace RemSolution.Application.Features.Client
         }
 
         /// <summary>
-        /// Empties the client, its document scans, its notification history and
-        /// the audit payloads about it. The client must be TRACKED by the given
-        /// context, and its tenant must be the ambient one.
+        /// Empties the client, its document scans, its notification history, the
+        /// audit payloads about it and the name it left on its reviews and
+        /// reports. The client must be TRACKED by the given context, and its
+        /// tenant must be the ambient one.
         /// </summary>
         public static async Task EraseAsync(
             IApplicationDbContext context,
@@ -84,6 +85,33 @@ namespace RemSolution.Application.Features.Client
             {
                 notification.ArgsJson = null;
                 notification.RecipientEmail = null;
+            }
+
+            // The two platform-level stores. Neither is an ITenantEntity, so no
+            // filter hides them and none of the tenant reads above would have
+            // found them — but both snapshot the customer's name at submit time
+            // precisely so it outlives a rename, which is also what would make it
+            // outlive an erasure. What they say about the agency stays: a rating,
+            // a complaint and its arbitration are records of the agency's
+            // conduct, not of the person, and the same reasoning keeps the
+            // notification rows above.
+            var reports = await context.AgencyReports
+                .Where(r => r.ClientId == client.Id)
+                .ToListAsync(cancellationToken);
+
+            foreach (var report in reports)
+            {
+                report.ErasePersonalData();
+            }
+
+            var reviews = await context.AgencyReviews
+                .Where(v => v.ClientId == client.Id)
+                .ToListAsync(cancellationToken);
+
+            foreach (var review in reviews)
+            {
+                review.AuthorName = null;
+                review.AuthorUserId = null;
             }
 
             await context.SaveChangesAsync(cancellationToken);

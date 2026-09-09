@@ -91,6 +91,47 @@ public class ExchangeRateTests : BaseTestFixture
     }
 
     [Test]
+    public async Task TheReciprocalPairCannotBeQuotedAsWell()
+    {
+        await RunAsPlatformAdministratorAsync();
+
+        await SendAsync(new SetExchangeRateCommand
+        {
+            FromCurrency = "TND", ToCurrency = "EUR", Rate = 0.29m
+        });
+
+        // The reverse direction is DERIVED from that row. Storing it too would
+        // give every reader two answers for the same conversion — the shop
+        // window expands both quotes, the invoice takes whichever comes back
+        // first — and the ordered-pair unique index cannot say so.
+        await FluentActions.Invoking(() => SendAsync(new SetExchangeRateCommand
+        {
+            FromCurrency = "EUR", ToCurrency = "TND", Rate = 3.5m
+        })).Should().ThrowAsync<ValidationException>();
+
+        (await SendAsync(new GetExchangeRatesQuery())).Should().ContainSingle();
+    }
+
+    [Test]
+    public async Task TheRatesScreenSaysWhetherAFigureIsMaintainedOrDecided()
+    {
+        await RunAsPlatformAdministratorAsync();
+
+        await SendAsync(new SetExchangeRateCommand
+        {
+            FromCurrency = "TND", ToCurrency = "EUR", Rate = 0.29m, IsPinned = true
+        });
+
+        var rates = await SendAsync(new GetExchangeRatesQuery());
+
+        // Both columns reach the screen, or the edit form prefills a pinned pair
+        // as unpinned and saving it hands the pair back to the refresh.
+        rates.Should().ContainSingle();
+        rates[0].IsPinned.Should().BeTrue();
+        rates[0].RefreshedAt.Should().BeNull("a person quoted it, not the feed");
+    }
+
+    [Test]
     public async Task ARateMustBePositive()
     {
         await RunAsPlatformAdministratorAsync();

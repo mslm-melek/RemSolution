@@ -340,12 +340,22 @@ public class RentalDocumentService : IRentalDocumentService
             .AsNoTracking()
             .Where(r => (r.FromCurrency == from && r.ToCurrency == to)
                         || (r.FromCurrency == to && r.ToCurrency == from))
+            // The quote in the direction asked for wins over the one that has to
+            // be inverted. Only one of the two is ever stored (SetExchangeRateCommand
+            // refuses the other), so this decides nothing today — it stops the
+            // figure depending on row order if one ever slips in.
+            .OrderByDescending(r => r.FromCurrency == from)
             .Select(r => new { r.FromCurrency, r.Rate, r.AsOf })
             .FirstOrDefaultAsync(cancellationToken);
 
         if (quote is null || quote.Rate <= 0m) return null;
 
-        var rate = quote.FromCurrency == from ? quote.Rate : 1m / quote.Rate;
+        // Rounded to the scale Facture.DisplayExchangeRate stores, because the
+        // frozen copy is what a reprint recomputes the courtesy total from: an
+        // unrounded reciprocal prints a figure the freeze cannot reproduce.
+        var rate = quote.FromCurrency == from
+            ? quote.Rate
+            : Math.Round(1m / quote.Rate, ExchangeRate.RateDecimals, MidpointRounding.AwayFromZero);
 
         return new DisplayRate(to, rate, quote.AsOf);
     }

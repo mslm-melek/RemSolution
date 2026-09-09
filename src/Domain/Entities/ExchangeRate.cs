@@ -23,10 +23,21 @@ namespace RemSolution.Domain.Entities
     /// One row per ordered pair. The other direction is NOT stored — it is
     /// derived when needed (see the SPA's <c>currency.ts</c>), because two rows
     /// that must be reciprocals are two rows that will eventually disagree.
+    /// <c>SetExchangeRateCommand</c> refuses the reverse row for that reason; the
+    /// unique index is on the ordered pair and cannot say it.
     /// </para>
     /// </remarks>
     public class ExchangeRate : BaseAuditableEntity
     {
+        /// <summary>
+        /// The scale a rate is kept and derived at — the stored column's, so a
+        /// reciprocal computed for display rounds to what a frozen copy of it
+        /// would hold. Six places multiply an amount already rounded to two, so
+        /// the error stays far below the last figure anybody reads.
+        /// </summary>
+        public const int RateDecimals = 6;
+
+
         public string FromCurrency { get; private set; } = string.Empty;
         public string ToCurrency { get; private set; } = string.Empty;
 

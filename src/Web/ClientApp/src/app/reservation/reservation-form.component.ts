@@ -8,6 +8,7 @@ import {
   PaymentsClient, PaymentDto, CreatePaymentCommand, PaymentMethod, ClientBalanceDto
 } from '../web-api-client';
 import { toDateInput, fromDateInput, extractValidationErrors, isConcurrencyConflict } from '../shared/form-utils';
+import { BookingActionsService } from '../shared/booking-actions.service';
 import { TranslocoService } from '@jsverse/transloco';
 
 @Component({
@@ -19,6 +20,9 @@ export class ReservationFormComponent implements OnInit {
   // Confirm/prompt dialogs and error banners are plain strings, so they are
   // translated imperatively rather than through the template pipe.
   private readonly transloco = inject(TranslocoService);
+  // Only for the cancellation prompt: whether a reason is required depends on
+  // the hold's state, and that rule is the service's (see askCancelReason).
+  private readonly actions = inject(BookingActionsService);
   form: FormGroup;
   reservationId?: number;
   saving = false;
@@ -216,9 +220,9 @@ export class ReservationFormComponent implements OnInit {
   }
 
   cancel() {
-    if (!this.reservationId) return;
-    const reason = prompt(this.transloco.translate('reservation.promptCancelReason')) ?? undefined;
-    if (reason === undefined && !confirm(this.transloco.translate('reservation.confirmCancel'))) return;
+    if (!this.reservationId || !this.reservation) return;
+    const reason = this.actions.askCancelReason(this.reservation);
+    if (reason === false) return;
     this.client.cancelReservation(this.reservationId, reason).subscribe({
       next: () => this.router.navigate(['/reservation']),
       error: err => this.handleError(err)

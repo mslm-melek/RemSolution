@@ -85,7 +85,11 @@ public class FactureDisplayCurrencyTests : BaseTestFixture
         var facture = await FindAsync<Facture>(dto.Id);
 
         facture!.DisplayCurrency.Should().Be("EUR");
-        facture.DisplayExchangeRate.Should().BeApproximately(1m / 3.375m, 0.000001m);
+
+        // EXACTLY the six-place figure, not approximately it: the frozen rate is
+        // what a reprint recomputes the courtesy total from, so the inversion has
+        // to round to the scale the column holds (1 / 3.375 = 0.296296296…).
+        facture.DisplayExchangeRate.Should().Be(0.296296m);
     }
 
     [Test]

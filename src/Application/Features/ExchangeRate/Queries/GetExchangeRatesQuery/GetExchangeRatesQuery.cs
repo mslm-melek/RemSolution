@@ -36,6 +36,11 @@ namespace RemSolution.Application.Features.ExchangeRate.Queries.GetExchangeRates
                     ToCurrency = r.ToCurrency,
                     Rate = r.Rate,
                     AsOf = r.AsOf,
+                    // Both of them, or the screen re-quotes a pinned pair as
+                    // unpinned: the edit form prefills from this row, and the
+                    // refresh would take the pair back the next morning.
+                    RefreshedAt = r.RefreshedAt,
+                    IsPinned = r.IsPinned,
                 })
                 .ToListAsync(cancellationToken);
         }

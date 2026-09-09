@@ -73,6 +73,7 @@
     "next": "Next",
     "previous": "Previous",
     "optional": "Optional",
+    "required": "Required",
     "unexpectedError": "An unexpected error occurred. Please try again.",
     "actionFailed": "The action could not be completed.",
     "resultCount": "{{ count }} records",
@@ -823,6 +824,7 @@
     "clientListFailed": "The client list could not be loaded.",
     "promptRejectReason": "Reason for rejecting this reservation (shown to the client):",
     "promptCancelReason": "Reason for cancelling (optional):",
+    "promptCancelReasonRequired": "Reason for cancelling (required — the customer is told):",
     "promptDriverCin": "Driver CIN (optional — used to match an existing client):",
     "promptDriverPassport": "Driver passport number (optional):",
     "confirmConvert": "Convert this reservation into a renting?",
@@ -1516,6 +1518,7 @@
   "reports": {
     "title": "Reports",
     "subtitle": "Complaints customers took to the platform, and how they were settled.",
+    "anonymousReporter": "A customer",
     "reputation": "Reputation",
     "reliability": "Reliability",
     "reliabilityHint": "Customers see this on your shopfront. It drops when you cancel a booking you had confirmed, and when the platform upholds a report.",

@@ -31,7 +31,7 @@ public class FactureConfiguration : IEntityTypeConfiguration<Facture>
         // The frozen courtesy rate must match the precision of the row it was
         // copied from — ExchangeRate.Rate is 18,6. The default 18,2 would round
         // 0.296247 to 0.30 and the freeze would reproduce nothing.
-        builder.Property(f => f.DisplayExchangeRate).HasPrecision(18, 6);
+        builder.Property(f => f.DisplayExchangeRate).HasPrecision(18, ExchangeRate.RateDecimals);
         builder.Property(f => f.DisplayCurrency).HasMaxLength(3);
 
         // See ContractConfiguration: the database owns the numbering invariant.
