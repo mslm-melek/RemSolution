@@ -178,7 +178,14 @@
     "hint": "Un taux se lit « 1 De = Taux Vers ». Le sens inverse est déduit : coter TND → EUR suffit pour afficher les prix aux deux.",
     "none": "Aucun taux coté. Le marketplace affiche alors chaque prix dans la devise de son agence.",
     "loadFailed": "Impossible de charger les taux.",
-    "confirmDelete": "Retirer le taux {{ from }} → {{ to }} ?"
+    "confirmDelete": "Retirer le taux {{ from }} → {{ to }} ?",
+    "refreshHint": "Les taux cotés sont rafraîchis automatiquement chaque nuit depuis un flux public. Ce sont des taux indicatifs de marché, pas le taux officiel de la BCT — acceptable ici puisque rien n'est facturé dessus. Un taux que vous voulez garder tel quel doit être épinglé.",
+    "pinned": "Épingler",
+    "pinnedHint": "Le rafraîchissement automatique laissera ce taux tranquille.",
+    "origin": "Origine",
+    "originPinned": "Épinglé",
+    "originAutomatic": "Automatique",
+    "originManual": "Manuel"
   },
   "home": {
     "welcomeTitle": "Bienvenue sur RemSolution",
@@ -1639,7 +1646,10 @@
       "vatRateHint": "0 pour une agence exonérée.",
       "fiscalStamp": "Timbre fiscal",
       "fiscalStampHint": "Montant fixe ajouté au total. 0 s'il n'y en a pas.",
-      "inclusiveNote": "Les tarifs journaliers et les frais que vous saisissez sont TTC. La facture recalcule le montant HT."
+      "inclusiveNote": "Les tarifs journaliers et les frais que vous saisissez sont TTC. La facture recalcule le montant HT.",
+      "displayCurrency": "Devise d'affichage",
+      "displayCurrencyHint": "Code ISO à 3 lettres, ou vide pour n'afficher que la vôtre.",
+      "displayCurrencyNote": "Ajoute sous le total une ligne « Total indicatif en EUR (cours du …) », pour le client qui compte dans une autre devise. La facture reste libellée dans votre devise et c'est ce montant qui est dû : rien de fiscal ne s'appuie sur cette ligne. Le cours est figé sur chaque facture à l'émission, donc une réimpression affichera toujours le même chiffre. Si aucun taux n'est coté pour la paire, la ligne ne s'imprime pas."
     }
   },
   "branch": {

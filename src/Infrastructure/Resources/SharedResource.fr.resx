@@ -790,6 +790,9 @@
   <data name="Document.BalanceDue" xml:space="preserve">
     <value>Reste à payer</value>
   </data>
+  <data name="Document.ConvertedTotal" xml:space="preserve">
+    <value>Total indicatif en {0} (cours du {1})</value>
+  </data>
   <data name="Document.SignatureLessor" xml:space="preserve">
     <value>Signature du loueur</value>
   </data>

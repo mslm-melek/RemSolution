@@ -117,12 +117,39 @@ agency bills in one currency and its invoices, payments, credits and statistics
 stay in it. `ExchangeRate` is a platform-level table of quoted pairs
 (`1 From = Rate To`), one row per ordered pair — the reciprocal is **derived,
 never stored**, because two rows that must agree eventually will not.
+`exchange-rate-refresh` (daily, 03:00 UTC — the feed publishes just after
+midnight) keeps their values current from open.er-api.com, the app's **only
+outbound HTTP call**: it refreshes pairs and never creates them (which
+currencies the marketplace offers stays a product decision), reads `base=From`
+directly so no cross-rate is chained, keeps the stored rate when the feed is
+silent, and refuses a move beyond `ExchangeRateRefresh.MaxChangePercent` — a
+feed that changed its base answers a plausible-looking figure for the wrong
+pair. These are **indicative market rates, not the BCT's official ones**, which
+is tolerable only because the conversion is display-only. `IsPinned` keeps the
+refresh off a pair somebody arbitrated by hand; `RefreshedAt` is null once a
+person re-quotes, so one column says whether a figure is maintained or decided.
 `GetDisplayRatesQuery` expands each quote into both directions for the
 (anonymous) marketplace, so the browser only multiplies; chains are deliberately
 not built. The SPA shows the converted figure as a **second line** beside the
 agency's own price (`<app-converted-price>`), never instead of it, and no
 endpoint accepts or returns a converted amount — which is what stops one being
 posted back.
+
+**One converted figure does reach a document, and only as a courtesy.** With
+`AgencySettings.InvoiceDisplayCurrency` set, the invoice prints an extra totals
+row — "Indicative total in EUR (rate of …)" — under the real figures. The
+invoice stays denominated in the agency's currency, that is still the amount
+owed, and nothing fiscal rests on the line. Three rules make it safe: the rate
+is **frozen onto the `Facture`** at issue exactly like the VAT rate (at
+`decimal(18,6)`, matching `ExchangeRate.Rate` — an 18,2 copy would round
+0.296247 to 0.30 and reproduce nothing); the **converted amount is not stored**,
+only derived from the frozen rate (`DisplayConversion`); and **only `TotalDue`
+is ever converted**, because converting the net and tax lines too would either
+break `Net + Vat == Gross` in the target currency or imply the tax was charged
+there. A missing quote costs one line, never the invoice.
+`CurrencyDecimals` rounds to the target's own minor unit — **TND has three**
+(millimes), JPY none; that governs printing, not storage, where every `Money`
+column stays `decimal(18,2)`.
 
 **Time.** All domain `DateTime` values are UTC; `UtcDateTimeConverter` (a global
 convention) normalises on write and stamps `Kind = Utc` on read. Use
@@ -298,9 +325,10 @@ a spreadsheet whose figures were strings would defeat the format's only purpose.
 
 **Background jobs.** Hangfire on SQL Server storage. Registered only when a real
 database is present (skipped for the NSwag build-time host and functional
-tests). Recurring: `reservation-expiry` and `notification-sweep`, both hourly, plus
+tests). Recurring: `reservation-expiry` and `notification-sweep`, both hourly;
 `personal-data-purge` **daily** — a retention window is measured in months, so
-the hour carries no meaning, and it is the one sweep that destroys data.
+the hour carries no meaning, and it is the one sweep that destroys data; and
+`exchange-rate-refresh` daily at 03:00 UTC (see the currency section).
 Dashboard at `/hangfire`, platform admins only.
 
 **Images.** `UploadCarImageCommand` stores the original synchronously (status

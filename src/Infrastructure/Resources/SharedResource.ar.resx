@@ -790,6 +790,9 @@
   <data name="Document.BalanceDue" xml:space="preserve">
     <value>المبلغ المتبقي</value>
   </data>
+  <data name="Document.ConvertedTotal" xml:space="preserve">
+    <value>المجموع الاسترشادي بـ {0} (سعر يوم {1})</value>
+  </data>
   <data name="Document.SignatureLessor" xml:space="preserve">
     <value>توقيع المؤجر</value>
   </data>

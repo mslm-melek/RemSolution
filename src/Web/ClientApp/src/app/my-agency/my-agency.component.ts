@@ -102,6 +102,9 @@ export class MyAgencyComponent implements OnInit {
       taxIdentifier: ['', Validators.maxLength(40)],
       vatRatePercent: [19, [Validators.required, Validators.min(0), Validators.max(100)]],
       fiscalStampAmount: [1, [Validators.required, Validators.min(0)]],
+      // Empty prints nothing. Informational only — the invoice stays denominated
+      // in the agency's own currency (see AgencySettings).
+      invoiceDisplayCurrency: ['', Validators.pattern(/^[A-Za-z]{3}$/)],
       // How long each document is valid where this agency trades. Used to fill
       // in an expiry the agent did not type; zero means it does not expire here.
       cinValidityYears: [10, [Validators.required, Validators.min(0), Validators.max(50)]],
@@ -165,6 +168,7 @@ export class MyAgencyComponent implements OnInit {
       taxIdentifier: dto.taxIdentifier ?? '',
       vatRatePercent: dto.vatRatePercent ?? 19,
       fiscalStampAmount: dto.fiscalStampAmount ?? 1,
+      invoiceDisplayCurrency: dto.invoiceDisplayCurrency ?? '',
       cinValidityYears: dto.cinValidityYears ?? 10,
       passeportValidityYears: dto.passeportValidityYears ?? 5,
       drivingLicenceValidityYears: dto.drivingLicenceValidityYears ?? 10,
@@ -244,6 +248,7 @@ export class MyAgencyComponent implements OnInit {
       taxIdentifier: v.taxIdentifier || undefined,
       vatRatePercent: v.vatRatePercent,
       fiscalStampAmount: v.fiscalStampAmount,
+      invoiceDisplayCurrency: (v.invoiceDisplayCurrency as string)?.toUpperCase() || undefined,
       cinValidityYears: v.cinValidityYears,
       passeportValidityYears: v.passeportValidityYears,
       drivingLicenceValidityYears: v.drivingLicenceValidityYears,

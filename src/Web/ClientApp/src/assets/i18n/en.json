@@ -178,7 +178,14 @@
     "hint": "A rate reads \"1 From = Rate To\". The other direction is derived: quoting TND → EUR is enough to price for both.",
     "none": "No rate quoted. The marketplace then shows every price in its agency's own currency.",
     "loadFailed": "The rates could not be loaded.",
-    "confirmDelete": "Withdraw the {{ from }} → {{ to }} rate?"
+    "confirmDelete": "Withdraw the {{ from }} → {{ to }} rate?",
+    "refreshHint": "Quoted rates are refreshed automatically every night from a public feed. These are indicative market rates, not the Tunisian central bank's official one — acceptable here because nothing is billed on them. Pin a rate you want left exactly as you set it.",
+    "pinned": "Pin",
+    "pinnedHint": "The automatic refresh will leave this rate alone.",
+    "origin": "Origin",
+    "originPinned": "Pinned",
+    "originAutomatic": "Automatic",
+    "originManual": "Manual"
   },
   "home": {
     "welcomeTitle": "Welcome to RemSolution",
@@ -1639,7 +1646,10 @@
       "vatRateHint": "0 for an exempt agency.",
       "fiscalStamp": "Duty stamp",
       "fiscalStampHint": "A flat amount added to the total. 0 where none applies.",
-      "inclusiveNote": "Daily rates and fees you enter are tax-inclusive. The invoice works backwards to the net amount."
+      "inclusiveNote": "Daily rates and fees you enter are tax-inclusive. The invoice works backwards to the net amount.",
+      "displayCurrency": "Display currency",
+      "displayCurrencyHint": "3-letter ISO code, or empty to show only your own.",
+      "displayCurrencyNote": "Adds a line under the total — \"Indicative total in EUR (rate of …)\" — for the client who counts in another currency. The invoice stays denominated in yours and that is the amount owed: nothing fiscal rests on this line. The rate is frozen on each invoice at issue, so a reprint always shows the same figure. With no rate quoted for the pair, the line is simply not printed."
     }
   },
   "branch": {

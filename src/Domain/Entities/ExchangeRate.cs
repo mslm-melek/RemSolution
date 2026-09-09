@@ -40,6 +40,22 @@ namespace RemSolution.Domain.Entities
         /// </summary>
         public DateTime AsOf { get; private set; }
 
+        /// <summary>
+        /// When the automatic refresh last wrote this row, and null when a person
+        /// last did — so one column answers "is this figure being maintained, or
+        /// is it somebody's decision?". <see cref="Amend"/> clears it for exactly
+        /// that reason.
+        /// </summary>
+        public DateTimeOffset? RefreshedAt { get; private set; }
+
+        /// <summary>
+        /// Keeps the daily refresh off this pair. The rate an administrator
+        /// arbitrated by hand would otherwise be overwritten by the provider the
+        /// next morning, which is the one thing that would make the manual screen
+        /// pointless.
+        /// </summary>
+        public bool IsPinned { get; private set; }
+
         // EF materialisation; stored rows bypass the checks below.
         private ExchangeRate() { }
 
@@ -59,14 +75,36 @@ namespace RemSolution.Domain.Entities
             return new ExchangeRate { FromCurrency = from, ToCurrency = to, Rate = rate, AsOf = asOf };
         }
 
-        /// <summary>Re-quotes an existing pair. The pair itself never changes.</summary>
+        /// <summary>
+        /// Re-quotes an existing pair by hand. The pair itself never changes.
+        /// Clears <see cref="RefreshedAt"/>: from here on this figure is a
+        /// person's, not the provider's.
+        /// </summary>
         public void Amend(decimal rate, DateTime asOf)
         {
             RequireRate(rate);
 
             Rate = rate;
             AsOf = asOf;
+            RefreshedAt = null;
         }
+
+        /// <summary>
+        /// Re-quotes the pair from the automatic feed. Separate from
+        /// <see cref="Amend"/> so the two origins stay distinguishable — the
+        /// screen says which, and a pinned pair never reaches this at all
+        /// (see <c>ExchangeRateRefreshJob</c>).
+        /// </summary>
+        public void Refresh(decimal rate, DateTime asOf, DateTimeOffset refreshedAt)
+        {
+            RequireRate(rate);
+
+            Rate = rate;
+            AsOf = asOf;
+            RefreshedAt = refreshedAt;
+        }
+
+        public void SetPinned(bool pinned) => IsPinned = pinned;
 
         private static string Normalise(string currency, string field)
         {

@@ -82,6 +82,35 @@ namespace RemSolution.Domain.Entities
         /// </summary>
         public string? TaxIdentifier { get; set; }
 
+        // ------------------------------------------------------------------
+        // The courtesy conversion. All three null unless the agency asked for a
+        // second currency on its invoices (AgencySettings.InvoiceDisplayCurrency)
+        // AND a rate was quoted for the pair at issue.
+        //
+        // Frozen for the same reason as the tax rate above, only more so: a rate
+        // changes every night, so a reprint that looked the rate up again would
+        // show a different figure every time it was opened. The CONVERTED AMOUNT
+        // is deliberately not stored — it is derived from these three whenever
+        // the document is drawn (see DisplayConversion), which is one fewer
+        // number that can disagree with the others.
+        //
+        // Informational only. The invoice is denominated in the agency's
+        // currency, the amount owed is in that currency, and nothing here is ever
+        // a base for tax.
+        // ------------------------------------------------------------------
+
+        /// <summary>ISO 4217 code the total is also shown in.</summary>
+        public string? DisplayCurrency { get; set; }
+
+        /// <summary><c>1 {agency currency} = {rate} {DisplayCurrency}</c>.</summary>
+        public decimal? DisplayExchangeRate { get; set; }
+
+        /// <summary>
+        /// The day that rate was quoted for — printed beside the figure, because
+        /// a converted amount is only as honest as its date. A wall-clock date.
+        /// </summary>
+        public DateTime? DisplayRateAsOf { get; set; }
+
         public int DocumentFileId { get; set; }
         public virtual StoredFile? DocumentFile { get; set; }
 

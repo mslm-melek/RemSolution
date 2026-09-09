@@ -8372,6 +8372,10 @@
           "personalDataRetentionMonths": {
             "type": "integer",
             "format": "int32"
+          },
+          "invoiceDisplayCurrency": {
+            "type": "string",
+            "nullable": true
           }
         }
       },
@@ -8476,6 +8480,10 @@
           "fiscalStampAmount": {
             "type": "number",
             "format": "decimal"
+          },
+          "invoiceDisplayCurrency": {
+            "type": "string",
+            "nullable": true
           },
           "cinValidityYears": {
             "type": "integer",
@@ -12423,6 +12431,14 @@
           "asOf": {
             "type": "string",
             "format": "date-time"
+          },
+          "refreshedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "isPinned": {
+            "type": "boolean"
           }
         }
       },
@@ -12444,6 +12460,9 @@
             "type": "string",
             "format": "date-time",
             "nullable": true
+          },
+          "isPinned": {
+            "type": "boolean"
           }
         }
       },

@@ -17,5 +17,14 @@ namespace RemSolution.Application.Features.ExchangeRate.DTOs
         /// the same day everywhere (`| date:'…':'UTC'`).
         /// </summary>
         public DateTime AsOf { get; init; }
+
+        /// <summary>
+        /// When the automatic refresh last wrote this rate; null when a person
+        /// last did. An instant, so it renders in local time.
+        /// </summary>
+        public DateTimeOffset? RefreshedAt { get; init; }
+
+        /// <summary>Whether the daily refresh leaves this pair alone.</summary>
+        public bool IsPinned { get; init; }
     }
 }

@@ -20,6 +20,13 @@ namespace RemSolution.Application.Features.ExchangeRate.Commands.SetExchangeRate
 
         /// <summary>The day the rate is quoted for; today when the caller says nothing.</summary>
         public DateTime? AsOf { get; init; }
+
+        /// <summary>
+        /// Keeps the daily automatic refresh off this pair. False by default:
+        /// quoting a pair by hand does not, on its own, mean the administrator
+        /// wants to keep maintaining it by hand.
+        /// </summary>
+        public bool IsPinned { get; init; }
     }
 
     public class SetExchangeRateCommandHandler : IRequestHandler<SetExchangeRateCommand, int>
@@ -47,13 +54,17 @@ namespace RemSolution.Application.Features.ExchangeRate.Commands.SetExchangeRate
 
             if (existing is not null)
             {
+                // Amend, not Refresh: this figure is now a person's, so it stops
+                // being reported as automatically maintained.
                 existing.Amend(request.Rate, asOf);
+                existing.SetPinned(request.IsPinned);
                 await _context.SaveChangesAsync(cancellationToken);
 
                 return existing.Id;
             }
 
             var rate = Domain.Entities.ExchangeRate.Create(from, to, request.Rate, asOf);
+            rate.SetPinned(request.IsPinned);
 
             _context.ExchangeRates.Add(rate);
             await _context.SaveChangesAsync(cancellationToken);

@@ -39,7 +39,10 @@ export class ExchangeRateComponent implements OnInit {
       toCurrency: ['', [Validators.required, Validators.pattern(/^[A-Za-z]{3}$/)]],
       rate: [null, [Validators.required, Validators.min(0.000001)]],
       // DateFieldComponent's value is a `yyyy-MM-dd` string, not a Date.
-      asOf: [today()]
+      asOf: [today()],
+      // Off by default: quoting a pair by hand does not, on its own, mean the
+      // administrator wants to keep maintaining it by hand.
+      isPinned: [false]
     });
   }
 
@@ -64,8 +67,19 @@ export class ExchangeRateComponent implements OnInit {
       fromCurrency: rate.fromCurrency,
       toCurrency: rate.toCurrency,
       rate: rate.rate,
-      asOf: rate.asOf ? rate.asOf.toISOString().slice(0, 10) : today()
+      asOf: rate.asOf ? rate.asOf.toISOString().slice(0, 10) : today(),
+      isPinned: rate.isPinned ?? false
     });
+  }
+
+  /**
+   * Where a row's figure comes from, as one of three words. Pinned wins: it is
+   * the fact that decides whether tomorrow's refresh will touch it, which is
+   * what the reader of this column actually wants to know.
+   */
+  origin(rate: ExchangeRateDto): 'pinned' | 'automatic' | 'manual' {
+    if (rate.isPinned) return 'pinned';
+    return rate.refreshedAt ? 'automatic' : 'manual';
   }
 
   save() {
@@ -87,11 +101,12 @@ export class ExchangeRateComponent implements OnInit {
       rate: Number(v.rate),
       // The picked day, read as that day rather than as a local midnight that
       // slips west of UTC.
-      asOf: v.asOf ? new Date(`${v.asOf}T00:00:00Z`) : undefined
+      asOf: v.asOf ? new Date(`${v.asOf}T00:00:00Z`) : undefined,
+      isPinned: !!v.isPinned
     })).subscribe({
       next: () => {
         this.saving = false;
-        this.form.reset({ asOf: today() });
+        this.form.reset({ asOf: today(), isPinned: false });
         this.load();
       },
       error: err => {

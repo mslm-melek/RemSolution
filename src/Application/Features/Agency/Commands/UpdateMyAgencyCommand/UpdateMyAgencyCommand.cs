@@ -59,6 +59,11 @@ namespace RemSolution.Application.Features.Agency.Commands.UpdateMyAgencyCommand
         public decimal VatRatePercent { get; init; } = 19m;
         public decimal FiscalStampAmount { get; init; } = 1m;
 
+        // A second currency to show the invoice total in, informationally. Empty
+        // prints nothing. NOT a billing currency: the invoice stays denominated
+        // in the agency's own, which is why this is editable here at all.
+        public string? InvoiceDisplayCurrency { get; init; }
+
         // How long each document stays valid where this agency trades, used to
         // fill in an expiry date the agent did not type. Zero for a document that
         // does not expire there.
@@ -138,6 +143,10 @@ namespace RemSolution.Application.Features.Agency.Commands.UpdateMyAgencyCommand
                 : request.TaxIdentifier.Trim();
             settings.VatRatePercent = request.VatRatePercent;
             settings.FiscalStampAmount = request.FiscalStampAmount;
+
+            settings.InvoiceDisplayCurrency = string.IsNullOrWhiteSpace(request.InvoiceDisplayCurrency)
+                ? null
+                : request.InvoiceDisplayCurrency.Trim().ToUpperInvariant();
 
             settings.CINValidityYears = request.CINValidityYears;
             settings.PasseportValidityYears = request.PasseportValidityYears;

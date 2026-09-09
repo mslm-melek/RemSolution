@@ -40,7 +40,11 @@ public sealed record AgencySettingsSnapshot(
     // still free. The arithmetic lives in CancellationPolicy, not here.
     CancellationFeeMode CancellationFeeMode = CancellationFeeMode.None,
     decimal CancellationFeeValue = 0m,
-    int CancellationFreeHours = 48)
+    int CancellationFreeHours = 48,
+    // A second currency the invoice total is also shown in, informationally.
+    // Null prints nothing. See AgencySettings for why this is not a billing
+    // currency.
+    string? InvoiceDisplayCurrency = null)
 {
     /// <summary>The cancellation rules as the one object that applies them.</summary>
     public CancellationPolicy CancellationPolicy => new(

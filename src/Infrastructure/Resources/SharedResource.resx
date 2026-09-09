@@ -790,6 +790,11 @@
   <data name="Document.BalanceDue" xml:space="preserve">
     <value>Balance due</value>
   </data>
+  <!-- {0} the currency, {1} the day the rate was quoted for. "Indicative" is
+       load-bearing: the amount owed is the one above, in the agency's currency. -->
+  <data name="Document.ConvertedTotal" xml:space="preserve">
+    <value>Indicative total in {0} (rate of {1})</value>
+  </data>
   <data name="Document.SignatureLessor" xml:space="preserve">
     <value>Signature of the lessor</value>
   </data>

@@ -12320,6 +12320,7 @@ export class AgencyDto implements IAgencyDto {
     cancellationFeeValue?: number;
     cancellationFreeHours?: number;
     personalDataRetentionMonths?: number;
+    invoiceDisplayCurrency?: string | undefined;
 
     constructor(data?: IAgencyDto) {
         if (data) {
@@ -12364,6 +12365,7 @@ export class AgencyDto implements IAgencyDto {
             this.cancellationFeeValue = _data["cancellationFeeValue"];
             this.cancellationFreeHours = _data["cancellationFreeHours"];
             this.personalDataRetentionMonths = _data["personalDataRetentionMonths"];
+            this.invoiceDisplayCurrency = _data["invoiceDisplayCurrency"];
         }
     }
 
@@ -12408,6 +12410,7 @@ export class AgencyDto implements IAgencyDto {
         data["cancellationFeeValue"] = this.cancellationFeeValue;
         data["cancellationFreeHours"] = this.cancellationFreeHours;
         data["personalDataRetentionMonths"] = this.personalDataRetentionMonths;
+        data["invoiceDisplayCurrency"] = this.invoiceDisplayCurrency;
         return data;
     }
 }
@@ -12445,6 +12448,7 @@ export interface IAgencyDto {
     cancellationFeeValue?: number;
     cancellationFreeHours?: number;
     personalDataRetentionMonths?: number;
+    invoiceDisplayCurrency?: string | undefined;
 }
 
 export enum CancellationFeeMode {
@@ -12475,6 +12479,7 @@ export class UpdateMyAgencyCommand implements IUpdateMyAgencyCommand {
     taxIdentifier?: string | undefined;
     vatRatePercent?: number;
     fiscalStampAmount?: number;
+    invoiceDisplayCurrency?: string | undefined;
     cinValidityYears?: number;
     passeportValidityYears?: number;
     drivingLicenceValidityYears?: number;
@@ -12515,6 +12520,7 @@ export class UpdateMyAgencyCommand implements IUpdateMyAgencyCommand {
             this.taxIdentifier = _data["taxIdentifier"];
             this.vatRatePercent = _data["vatRatePercent"];
             this.fiscalStampAmount = _data["fiscalStampAmount"];
+            this.invoiceDisplayCurrency = _data["invoiceDisplayCurrency"];
             this.cinValidityYears = _data["cinValidityYears"];
             this.passeportValidityYears = _data["passeportValidityYears"];
             this.drivingLicenceValidityYears = _data["drivingLicenceValidityYears"];
@@ -12555,6 +12561,7 @@ export class UpdateMyAgencyCommand implements IUpdateMyAgencyCommand {
         data["taxIdentifier"] = this.taxIdentifier;
         data["vatRatePercent"] = this.vatRatePercent;
         data["fiscalStampAmount"] = this.fiscalStampAmount;
+        data["invoiceDisplayCurrency"] = this.invoiceDisplayCurrency;
         data["cinValidityYears"] = this.cinValidityYears;
         data["passeportValidityYears"] = this.passeportValidityYears;
         data["drivingLicenceValidityYears"] = this.drivingLicenceValidityYears;
@@ -12588,6 +12595,7 @@ export interface IUpdateMyAgencyCommand {
     taxIdentifier?: string | undefined;
     vatRatePercent?: number;
     fiscalStampAmount?: number;
+    invoiceDisplayCurrency?: string | undefined;
     cinValidityYears?: number;
     passeportValidityYears?: number;
     drivingLicenceValidityYears?: number;
@@ -18904,6 +18912,8 @@ export class ExchangeRateDto implements IExchangeRateDto {
     toCurrency?: string | undefined;
     rate?: number;
     asOf?: Date;
+    refreshedAt?: Date | undefined;
+    isPinned?: boolean;
 
     constructor(data?: IExchangeRateDto) {
         if (data) {
@@ -18921,6 +18931,8 @@ export class ExchangeRateDto implements IExchangeRateDto {
             this.toCurrency = _data["toCurrency"];
             this.rate = _data["rate"];
             this.asOf = _data["asOf"] ? new Date(_data["asOf"].toString()) : <any>undefined;
+            this.refreshedAt = _data["refreshedAt"] ? new Date(_data["refreshedAt"].toString()) : <any>undefined;
+            this.isPinned = _data["isPinned"];
         }
     }
 
@@ -18938,6 +18950,8 @@ export class ExchangeRateDto implements IExchangeRateDto {
         data["toCurrency"] = this.toCurrency;
         data["rate"] = this.rate;
         data["asOf"] = this.asOf ? this.asOf.toISOString() : <any>undefined;
+        data["refreshedAt"] = this.refreshedAt ? this.refreshedAt.toISOString() : <any>undefined;
+        data["isPinned"] = this.isPinned;
         return data;
     }
 }
@@ -18948,6 +18962,8 @@ export interface IExchangeRateDto {
     toCurrency?: string | undefined;
     rate?: number;
     asOf?: Date;
+    refreshedAt?: Date | undefined;
+    isPinned?: boolean;
 }
 
 export class SetExchangeRateCommand implements ISetExchangeRateCommand {
@@ -18955,6 +18971,7 @@ export class SetExchangeRateCommand implements ISetExchangeRateCommand {
     toCurrency?: string;
     rate?: number;
     asOf?: Date | undefined;
+    isPinned?: boolean;
 
     constructor(data?: ISetExchangeRateCommand) {
         if (data) {
@@ -18971,6 +18988,7 @@ export class SetExchangeRateCommand implements ISetExchangeRateCommand {
             this.toCurrency = _data["toCurrency"];
             this.rate = _data["rate"];
             this.asOf = _data["asOf"] ? new Date(_data["asOf"].toString()) : <any>undefined;
+            this.isPinned = _data["isPinned"];
         }
     }
 
@@ -18987,6 +19005,7 @@ export class SetExchangeRateCommand implements ISetExchangeRateCommand {
         data["toCurrency"] = this.toCurrency;
         data["rate"] = this.rate;
         data["asOf"] = this.asOf ? this.asOf.toISOString() : <any>undefined;
+        data["isPinned"] = this.isPinned;
         return data;
     }
 }
@@ -18996,6 +19015,7 @@ export interface ISetExchangeRateCommand {
     toCurrency?: string;
     rate?: number;
     asOf?: Date | undefined;
+    isPinned?: boolean;
 }
 
 export class PaginatedListOfExpenseDto implements IPaginatedListOfExpenseDto {

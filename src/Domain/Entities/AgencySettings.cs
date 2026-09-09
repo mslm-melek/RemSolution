@@ -70,6 +70,18 @@ namespace RemSolution.Domain.Entities
         // jurisdiction that has no such thing.
         public decimal FiscalStampAmount { get; set; } = 1m;
 
+        // A second currency to show the invoice total in, for the client who
+        // thinks in euros. Null — the default — prints nothing.
+        //
+        // INFORMATIONAL ONLY, and that is the whole design: the invoice stays
+        // denominated in CurrencyCode, the amount owed stays in CurrencyCode, and
+        // the converted figure is a courtesy line carrying its own rate and date.
+        // That is what keeps this out of the questions a billing currency would
+        // raise — which rate is legally admissible, what the payment ledger does
+        // with a foreign-currency payment, how the tax lines still balance. The
+        // rate is frozen onto each Facture at issue (see that entity).
+        public string? InvoiceDisplayCurrency { get; set; }
+
         // ---------------------------------------------------------------------
         // Notifications. The lead times below are how far ahead the agency wants
         // to be warned; they are per-agency because a two-car outfit and a fifty-

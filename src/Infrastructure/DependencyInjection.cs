@@ -241,6 +241,26 @@ public static class DependencyInjection
         // car's DailyRate into a booking's snapshot price.
         builder.Services.AddSingleton<IPricingService, PricingService>();
 
+        // Automatic display-rate refresh — the app's ONLY outbound HTTP call.
+        // A named typed client so the timeout is explicit: this is a background
+        // courtesy, and a slow feed must leave yesterday's rate alone rather than
+        // hold the job (see ExchangeRateProviderOptions).
+        builder.Services.Configure<ExchangeRateProviderOptions>(
+            builder.Configuration.GetSection(ExchangeRateProviderOptions.SectionName));
+
+        var exchangeRateOptions = builder.Configuration
+            .GetSection(ExchangeRateProviderOptions.SectionName)
+            .Get<ExchangeRateProviderOptions>() ?? new ExchangeRateProviderOptions();
+
+        builder.Services
+            .AddHttpClient<IExchangeRateProvider, OpenErApiExchangeRateProvider>(client =>
+            {
+                client.BaseAddress = new Uri(exchangeRateOptions.BaseUrl);
+                client.Timeout = TimeSpan.FromSeconds(exchangeRateOptions.TimeoutSeconds);
+            });
+
+        builder.Services.AddScoped<ExchangeRateRefreshJob>();
+
         // Car-availability overlap check shared by the renting/reservation flows
         // (queries the tenant-scoped booking sets, so it is DbContext-scoped).
         builder.Services.AddScoped<IAvailabilityChecker, AvailabilityChecker>();

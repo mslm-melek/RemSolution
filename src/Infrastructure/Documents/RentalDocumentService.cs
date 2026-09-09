@@ -157,6 +157,13 @@ public class RentalDocumentService : IRentalDocumentService
             FiscalStampAmount = tax.FiscalStamp,
             TotalDue = tax.TotalDue,
             TaxIdentifier = context.Agency.TaxIdentifier,
+            // The courtesy conversion, frozen like the rate above it. All three
+            // stay null when nothing was printed, so the row says exactly what
+            // the PDF says. The converted amount itself is not stored — it is
+            // derived from these whenever the figure is wanted again.
+            DisplayCurrency = context.DisplayRate?.Currency,
+            DisplayExchangeRate = context.DisplayRate?.Rate,
+            DisplayRateAsOf = context.DisplayRate?.AsOf,
             DocumentFile = file,
             Language = context.Language,
             DocumentTemplateId = template.Id,
@@ -298,7 +305,49 @@ public class RentalDocumentService : IRentalDocumentService
             _dateTime.GetUtcNow().UtcDateTime,
             CurrentLanguage(),
             settings.VatRatePercent,
-            settings.FiscalStampAmount);
+            settings.FiscalStampAmount,
+            await ResolveDisplayRateAsync(
+                settings.CurrencyCode, settings.InvoiceDisplayCurrency, cancellationToken));
+    }
+
+    /// <summary>
+    /// The rate for the agency's courtesy second currency, or null when there is
+    /// nothing to print.
+    /// <para>
+    /// Null rather than an error at every step — no second currency configured,
+    /// the same currency as the agency's own, no rate quoted for the pair. An
+    /// invoice must never fail to issue because a display nicety is unavailable;
+    /// it simply prints one line fewer.
+    /// </para>
+    /// <para>
+    /// Both directions are looked for. Only one row per ordered pair is stored
+    /// and the reciprocal is derived (see the ExchangeRate entity), so an agency
+    /// whose platform only quoted EUR → TND still gets its TND → EUR figure —
+    /// the same inversion GetDisplayRatesQuery does for the marketplace.
+    /// </para>
+    /// </summary>
+    private async Task<DisplayRate?> ResolveDisplayRateAsync(
+        string agencyCurrency, string? displayCurrency, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(displayCurrency)) return null;
+
+        var to = displayCurrency.Trim().ToUpperInvariant();
+        var from = agencyCurrency.Trim().ToUpperInvariant();
+
+        if (to == from) return null;
+
+        var quote = await _context.ExchangeRates
+            .AsNoTracking()
+            .Where(r => (r.FromCurrency == from && r.ToCurrency == to)
+                        || (r.FromCurrency == to && r.ToCurrency == from))
+            .Select(r => new { r.FromCurrency, r.Rate, r.AsOf })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (quote is null || quote.Rate <= 0m) return null;
+
+        var rate = quote.FromCurrency == from ? quote.Rate : 1m / quote.Rate;
+
+        return new DisplayRate(to, rate, quote.AsOf);
     }
 
     // The language of the request that asked for the document; a background caller
@@ -441,7 +490,17 @@ public class RentalDocumentService : IRentalDocumentService
         // the two figures a legal document must carry are decided once per
         // document rather than looked up again by every reader.
         decimal VatRatePercent,
-        decimal FiscalStampAmount);
+        decimal FiscalStampAmount,
+        // The courtesy second currency, or null when the agency asked for none or
+        // no rate is quoted for the pair. Resolved once, here, for the same
+        // reason as the tax figures above.
+        DisplayRate? DisplayRate = null);
+
+    /// <summary>
+    /// A quote resolved for one document: <c>1 {agency currency} = Rate
+    /// {Currency}</c>, as of <see cref="AsOf"/>.
+    /// </summary>
+    private sealed record DisplayRate(string Currency, decimal Rate, DateTime AsOf);
 
     private sealed record ExtraLine(string? Label, decimal? Amount);
 
@@ -522,8 +581,28 @@ public class RentalDocumentService : IRentalDocumentService
             totals.Add(new(localizer["Document.AmountPaid"], Amount(Paid)));
             totals.Add(new(localizer["Document.BalanceDue"], Amount(tax.TotalDue.Amount - Paid)));
 
+            // Last, and only what is owed. It sits under the real figures because
+            // that is what it is — a reading aid, not a second bill — and the
+            // label carries the rate's date so nobody mistakes it for today's.
+            if (context.DisplayRate is { } display)
+            {
+                var converted = DisplayConversion.Apply(
+                    tax.TotalDue, display.Rate, display.Currency);
+
+                totals.Add(new(
+                    localizer["Document.ConvertedTotal",
+                        display.Currency, FormatDate(display.AsOf, context.Language)],
+                    DocumentPlaceholderResolver.FormatAmount(
+                        converted.Amount, converted.Currency, context.Language)));
+            }
+
             return totals;
         }
+
+        // The rate's own quote day, in the document's culture. A wall-clock date,
+        // printed as that day rather than shifted into any zone.
+        private static string FormatDate(DateTime asOf, string language) =>
+            asOf.ToString("d", DocumentPlaceholderResolver.CultureFor(language));
 
         // "19" / "19,25", in the document's own culture. The label carries the
         // per-cent sign, so this is the number alone.

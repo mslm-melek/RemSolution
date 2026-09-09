@@ -107,6 +107,15 @@ namespace RemSolution.Application.Features.Agency.Commands.UpdateMyAgencyCommand
             // longer than any retention rule and catches a year typed in here.
             RuleFor(v => v.PersonalDataRetentionMonths)
                 .InclusiveBetween(0, 120);
+
+            // Empty switches the courtesy line off; anything else is an ISO 4217
+            // code. Whether a rate is actually quoted for the pair is not checked
+            // here — the invoice simply prints one line fewer, and refusing the
+            // save would make the setting unreachable until somebody quoted one.
+            RuleFor(v => v.InvoiceDisplayCurrency)
+                .Length(3)
+                .Matches("^[A-Za-z]{3}$")
+                .When(v => !string.IsNullOrWhiteSpace(v.InvoiceDisplayCurrency));
         }
     }
 }

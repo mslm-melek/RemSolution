@@ -32,12 +32,20 @@
     <app-date-field class="date" [label]="t('exchangeRate.asOf')"
                     formControlName="asOf"></app-date-field>
 
+    <!-- Without this, tomorrow's refresh overwrites the figure just typed —
+         which would make this whole form pointless for a rate somebody
+         arbitrated on purpose. -->
+    <mat-checkbox formControlName="isPinned" [matTooltip]="t('exchangeRate.pinnedHint')">
+      {{ t('exchangeRate.pinned') }}
+    </mat-checkbox>
+
     <button mat-flat-button color="primary" type="submit" [disabled]="saving">
       <mat-icon>save</mat-icon> {{ saving ? t('common.saving') : t('common.save') }}
     </button>
   </form>
 
   <p class="quote-hint">{{ t('exchangeRate.hint') }}</p>
+  <p class="quote-hint">{{ t('exchangeRate.refreshHint') }}</p>
 
   <div *ngIf="loading" class="state">{{ t('common.loading') }}</div>
   <div *ngIf="!loading && rates.length === 0" class="state">{{ t('exchangeRate.none') }}</div>
@@ -60,6 +68,24 @@
       <td mat-cell *matCellDef="let rate" class="num">{{ rate.asOf | date:'yyyy-MM-dd':'UTC' }}</td>
     </ng-container>
 
+    <!-- Where the figure comes from, and whether tomorrow's refresh will touch
+         it — the first thing to check when a rate looks wrong or stale. -->
+    <ng-container matColumnDef="origin">
+      <th mat-header-cell *matHeaderCellDef>{{ t('exchangeRate.origin') }}</th>
+      <td mat-cell *matCellDef="let rate">
+        <span class="chip" *ngIf="origin(rate) === 'pinned'">
+          <mat-icon inline>push_pin</mat-icon> {{ t('exchangeRate.originPinned') }}
+        </span>
+        <span class="chip" *ngIf="origin(rate) === 'automatic'"
+              [matTooltip]="rate.refreshedAt | date:'medium'">
+          <mat-icon inline>sync</mat-icon> {{ t('exchangeRate.originAutomatic') }}
+        </span>
+        <span class="muted" *ngIf="origin(rate) === 'manual'">
+          {{ t('exchangeRate.originManual') }}
+        </span>
+      </td>
+    </ng-container>
+
     <ng-container matColumnDef="actions">
       <th mat-header-cell *matHeaderCellDef class="actions-cell">{{ t('common.actions') }}</th>
       <td mat-cell *matCellDef="let rate" class="actions-cell row-actions">
@@ -73,7 +99,7 @@
       </td>
     </ng-container>
 
-    <tr mat-header-row *matHeaderRowDef="['pair', 'asOf', 'actions']"></tr>
-    <tr mat-row *matRowDef="let row; columns: ['pair', 'asOf', 'actions']"></tr>
+    <tr mat-header-row *matHeaderRowDef="['pair', 'asOf', 'origin', 'actions']"></tr>
+    <tr mat-row *matRowDef="let row; columns: ['pair', 'asOf', 'origin', 'actions']"></tr>
   </table>
 </div>

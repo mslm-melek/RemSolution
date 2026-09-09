@@ -9,6 +9,7 @@ using RemSolution.Infrastructure;
 using RemSolution.Infrastructure.Localization;
 using RemSolution.Infrastructure.Data;
 using RemSolution.Infrastructure.Jobs;
+using RemSolution.Infrastructure.Pricing;
 using RemSolution.Web.Infrastructure;
 using RemSolution.Web.Middleware;
 using Serilog;
@@ -182,6 +183,21 @@ try
         // destroys data rather than reporting on it.
         RecurringJob.AddOrUpdate<PersonalDataPurgeJob>(
             "personal-data-purge", job => job.RunAsync(), Cron.Daily());
+
+        // Refresh the marketplace's display rates. At 03:00 UTC, not midnight:
+        // the feed publishes its own daily update just after 00:00 UTC, so a job
+        // at midnight would faithfully fetch yesterday's figures.
+        if (app.Services.GetRequiredService<IOptions<ExchangeRateProviderOptions>>().Value.Enabled)
+        {
+            RecurringJob.AddOrUpdate<ExchangeRateRefreshJob>(
+                "exchange-rate-refresh", job => job.RunAsync(), Cron.Daily(3));
+        }
+        else
+        {
+            // Registered before and switched off since: leave nothing behind for
+            // Hangfire to keep firing.
+            RecurringJob.RemoveIfExists("exchange-rate-refresh");
+        }
     }
 
     app.MapRazorPages();

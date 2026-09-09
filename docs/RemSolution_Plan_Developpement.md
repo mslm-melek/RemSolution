@@ -49,6 +49,8 @@ Chaque ligne a été vérifiée dans le code, pas dans un tableau de suivi.
 | 3.2 | Frais supplémentaires au retour | `RentingFee` |
 | 2.9 / 3.6 | Export des statistiques (2026-09-09) | `ExportStatisticsQuery` + `IStatisticsExportRenderer` (`ClosedXmlStatisticsExportRenderer`, `QuestPdfStatisticsExportRenderer`) ; `GET /api/Statistics/export` ; deux boutons sur l'écran |
 | 3.6 | Purge des données personnelles / droit à l'effacement (2026-09-09) | `Client.ErasePersonalData`, `EraseClientPersonalDataCommand` (autorisation `Client.Erase`), `PersonalDataPurgeJob` (quotidien) + `AgencySettings.PersonalDataRetentionMonths`, `IPersonalDataErasureStore` |
+| N.11 | Taux de change automatiques (2026-09-09) | `IExchangeRateProvider` + `OpenErApiExchangeRateProvider`, `ExchangeRateRefreshJob` (quotidien 3 h UTC), `ExchangeRate.IsPinned`/`RefreshedAt`, `ExchangeRateRefresh` (plausibilité) |
+| N.12 | Total indicatif en devise sur la facture (2026-09-09) | `AgencySettings.InvoiceDisplayCurrency`, `Facture.Display*` (taux figé), `DisplayConversion`, `CurrencyDecimals` |
 
 L'addendum est livré à l'exception de A.6 et A.7 — voir son propre encadré.
 
@@ -795,3 +797,85 @@ du §3.6) → ~~N.4~~ → ~~N.10~~ → ~~les libellés « TTC » de N.2~~.
 N.6 est passé devant N.7 sur votre demande. **Les dix points sont livrés** (cinq
 le 2026-09-02 ; N.8, N.4, N.10 puis N.2 le 2026-09-08). Ne reste, si vous le
 voulez, que l'import de véhicules par fichier de N.10 — écarté à dessein, 1 j.
+
+---
+
+## 9. Nouveaux points demandés — 2026-09-09
+
+### N.11 — Taux de change récupérés automatiquement · ✅ livré
+
+**Le flux.** `open.er-api.com` (palier gratuit sans clé d'exchangerate-api.com),
+choisi pour une seule raison : il cote le TND, le MAD et l'AED. L'alternative
+évidente — le flux BCE via Frankfurter — est mieux sourcée mais n'en publie
+aucun, et la devise principale du produit est le dinar. Il accepte une base
+arbitraire, donc une paire se lit directement `base=De`, `rates[Vers]` : **aucun
+cross-rate par l'USD, donc aucune chaîne**, ce qui était la règle à respecter.
+
+**Ce sont des taux indicatifs de marché, pas le taux officiel BCT.** Tolérable
+uniquement parce que la conversion est display-only. C'est écrit dans le
+fournisseur, et l'écran des taux le dit à l'administrateur.
+
+**Le job** (`exchange-rate-refresh`, quotidien à 3 h UTC — le flux publie sa mise
+à jour juste après minuit, un job à minuit récupérerait la veille) **rafraîchit
+les paires existantes et n'en crée jamais** : quelles devises le marketplace
+propose reste une décision produit, et le sélecteur du SPA dérive ses options des
+paires cotées. Un appel par base et non par paire.
+
+**Quatre garde-fous**, parce qu'un mauvais taux atterrit sans surveillance sur la
+vitrine publique : flux muet → on garde le taux stocké, qui porte sa propre date
+et se lit donc comme périmé ; devise non cotée → idem ; taux nul ou négatif →
+refusé par l'entité ; **saut au-delà de 25 %** → refusé et journalisé en `Error`
+(`ExchangeRateRefresh`). Ce dernier est le vrai : un flux qui change de base
+répond un chiffre plausible pour la mauvaise paire — 0,296 qui devient 3,23,
+c'est le taux MAD, pas une dévaluation.
+
+**`IsPinned`** garde le rafraîchissement à l'écart d'un taux arbitré à la main,
+sinon l'écran manuel n'aurait plus de sens. **`RefreshedAt`** est nul dès qu'une
+personne recote : une seule colonne dit si un chiffre est entretenu ou décidé, et
+l'écran affiche Automatique / Manuel / Épinglé.
+
+C'est le **premier appel HTTP sortant de l'application** — il n'y en avait aucun.
+Client typé nommé, délai de 10 s, `ExchangeRates:Enabled` pour le couper, et le
+job n'est enregistré que là où Hangfire a un vrai stockage : ni les tests ni
+l'hôte NSwag ne touchent le réseau. Les tests fonctionnels construisent le job à
+la main avec un faux fournisseur, pour cette raison précise.
+
+### N.12 — Total indicatif en devise sur la facture · ✅ livré
+
+**Le besoin :** un client européen veut savoir ce qu'il a payé dans sa monnaie.
+**Ce qui a été fait, et pas plus :** une ligne sous les totaux, « Total indicatif
+en EUR (cours du …) », quand l'agence a rempli
+`AgencySettings.InvoiceDisplayCurrency`. La facture **reste libellée dans la
+devise de l'agence**, c'est toujours ce montant qui est dû, et rien de fiscal ne
+s'appuie sur cette ligne.
+
+C'est le choix (a) parmi trois, et l'arbitrage vaut d'être gardé. (b) facturer en
+devise et (c) comptabilité multidevises exigeraient une source officielle, un
+historique de taux, des décimales par devise et surtout la reprise du registre :
+un `Payment` en EUR contre une location en TND casse la somme de
+`ClientCreditRows`, et c'est ce chiffre qui s'affiche en « reste à payer ». À ne
+faire que si un vrai client le demande.
+
+**Trois règles rendent (a) sûr.**
+
+1. **Le taux est figé sur la `Facture`** à l'émission, exactement comme le taux de
+   TVA — en `decimal(18,6)` pour correspondre à `ExchangeRate.Rate` : une copie en
+   18,2 arrondirait 0,296247 à 0,30 et ne reproduirait rien. Un taux bouge chaque
+   nuit ; une réimpression qui le relirait afficherait un chiffre différent à
+   chaque ouverture.
+2. **Le montant converti n'est pas stocké**, seulement déduit du taux figé
+   (`DisplayConversion`) — un chiffre de moins qui puisse contredire les autres.
+3. **Seul `TotalDue` est converti.** Convertir aussi le HT et la TVA casserait
+   `Net + TVA == Total` dans la devise cible, ou laisserait croire que la taxe a
+   été perçue dans cette devise. Un seul chiffre n'a rien à faire équilibrer.
+
+**Dégradations, toutes silencieuses et voulues :** pas de devise demandée, la même
+devise que celle de l'agence, ou aucun taux coté pour la paire → la ligne ne
+s'imprime pas. Une facture ne doit jamais échouer à s'émettre pour une commodité
+d'affichage.
+
+**`CurrencyDecimals`** arrondit à l'unité mineure de la devise cible. Le **TND a
+trois décimales** (les millimes) et le JPY aucune — imprimer « 1 250,00 TND »
+sous-estime l'unité, « 1 250,00 JPY » en invente une. Cela ne gouverne que
+l'impression : les colonnes `Money` restent en `decimal(18,2)`, les élargir est une
+autre décision avec une migration de données derrière.

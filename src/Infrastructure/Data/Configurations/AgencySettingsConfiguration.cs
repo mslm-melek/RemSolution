@@ -15,6 +15,11 @@ public class AgencySettingsConfiguration : IEntityTypeConfiguration<AgencySettin
 
         builder.Property(s => s.TaxIdentifier).HasMaxLength(40);
 
+        // Same shape as CurrencyCode above: an ISO 4217 code, never Unicode.
+        builder.Property(s => s.InvoiceDisplayCurrency)
+               .HasMaxLength(3)
+               .IsUnicode(false);
+
         // Same shapes as the frozen copies on Facture, so a value cannot round
         // differently on its way from the setting to the invoice.
         builder.Property(s => s.VatRatePercent).HasColumnType("decimal(5,2)");

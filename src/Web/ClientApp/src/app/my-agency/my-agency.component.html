@@ -314,7 +314,18 @@
               <input matInput type="number" formControlName="fiscalStampAmount" min="0" step="0.01" />
               <mat-hint>{{ t('myAgency.tax.fiscalStampHint') }}</mat-hint>
             </mat-form-field>
+
+            <!-- A reading aid, not a billing currency: the amount owed stays in
+                 the agency's own. -->
+            <mat-form-field appearance="outline" subscriptSizing="dynamic">
+              <mat-label>{{ t('myAgency.tax.displayCurrency') }}</mat-label>
+              <input matInput formControlName="invoiceDisplayCurrency" maxlength="3"
+                     class="num" placeholder="EUR" />
+              <mat-hint>{{ t('myAgency.tax.displayCurrencyHint') }}</mat-hint>
+            </mat-form-field>
           </div>
+
+          <p class="settings-hint">{{ t('myAgency.tax.displayCurrencyNote') }}</p>
 
           <!-- The decision behind every stored amount, said out loud where it is
                relevant: an agency that read this as net would price everything
