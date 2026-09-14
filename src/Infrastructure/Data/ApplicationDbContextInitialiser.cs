@@ -333,6 +333,9 @@ IF @result < 0 THROW 51000, 'Failed to acquire the reference-data seed lock.', 1
                 MaxClients = 50,
                 MaxUsers = 3,
                 Price = 0m,
+                // No OnlineReservations: the reference Starter is a back-office
+                // plan, and marketplace presence is what Full sells. Changing that
+                // is a pricing decision, not a seeding one.
                 Features = new[]
                     {
                         FeatureFlags.Cars, FeatureFlags.Clients, FeatureFlags.Branches,

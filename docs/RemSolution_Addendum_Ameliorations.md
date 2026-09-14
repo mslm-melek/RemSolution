@@ -110,7 +110,18 @@ Ni `AddRateLimiter` ni `UseRateLimiter` dans tout le projet Web. La recherche ma
 
 Ce point figurait dans la feuille de route (6.5) et n'a pas été fait. Il est peu coûteux et devrait accompagner la mise en ligne du marketplace, pas la suivre.
 
-### A.6 🟠 Supervision : les briques sont là, rien ne surveille — **1,5 j**
+### A.6 ✅ **livré (2026-09-14)** — Supervision : les briques sont là, rien ne surveille · *diagnostic d'origine ci-dessous*
+
+`infra/core/monitor/alerts.bicep` pose le groupe d'action et sept règles : sonde
+`/health` (gravité 0, évaluée chaque minute), 5xx, temps de réponse, DTU et
+stockage de la base, plus deux règles de journal — les erreurs applicatives, et
+**les échecs de tâches de fond isolés des autres** : personne n'attend devant
+`reservation-expiry`, donc un job qui échoue chaque nuit reste muet jusqu'à ce
+qu'une réservation non expirée bloque une voiture. Sans adresse
+(`alertEmailAddress`) les règles se déploient quand même et ne préviennent
+personne — à renseigner avant l'ouverture. Au passage : `main.bicep` ne passait
+pas `logAnalyticsWorkspaceId` à la base, donc ses diagnostics n'étaient collectés
+nulle part.
 
 `Serilog.Sinks.ApplicationInsights` et `Microsoft.ApplicationInsights` sont référencés, les journaux sont structurés et enrichis (agence, utilisateur, corrélation), et un point de santé existe. Ce qui manque : les **alertes**. Personne n'est prévenu si les jobs Hangfire cessent de tourner, si le taux d'erreur monte, si le disque de la base se remplit, ou si les courriels ne partent plus.
 
@@ -153,6 +164,9 @@ Point à arbitrer plus qu'à développer : soit on accepte que le second conduct
 ---
 
 ## Récapitulatif et intégration au plan
+
+> Tableau d'origine, gardé pour les estimations. **Tout est livré sauf A.7** (qui
+> demande un compte chez un prestataire) — l'état à jour est dans le plan, §0.1.
 
 | | Point | Gravité | Effort |
 |---|---|---|---|

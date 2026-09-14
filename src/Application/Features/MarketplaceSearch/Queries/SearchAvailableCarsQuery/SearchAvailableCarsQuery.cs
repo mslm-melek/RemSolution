@@ -31,10 +31,12 @@ namespace RemSolution.Application.Features.MarketplaceSearch.Queries.SearchAvail
         : IRequestHandler<SearchAvailableCarsQuery, PaginatedList<MarketplaceCarDto>>
     {
         private readonly IApplicationDbContext _context;
+        private readonly TimeProvider _dateTime;
 
-        public SearchAvailableCarsQueryHandler(IApplicationDbContext context)
+        public SearchAvailableCarsQueryHandler(IApplicationDbContext context, TimeProvider dateTime)
         {
             _context = context;
+            _dateTime = dateTime;
         }
 
         public async Task<PaginatedList<MarketplaceCarDto>> Handle(
@@ -43,7 +45,7 @@ namespace RemSolution.Application.Features.MarketplaceSearch.Queries.SearchAvail
             // What "on offer", "matches the filters" and "is free for the window"
             // mean all live in MarketplaceCars — the same three steps the map
             // query runs, so a pin and a result card can never disagree.
-            var query = MarketplaceCars.Offered(_context)
+            var query = MarketplaceCars.Offered(_context, _dateTime.GetUtcNow())
                 .Matching(request.CountryId, request.BranchId, request.BrandId, request.AgencyId)
                 .WithinBounds(request.South, request.West, request.North, request.East)
                 .AvailableBetween(_context, request.StartDate, request.EndDate);

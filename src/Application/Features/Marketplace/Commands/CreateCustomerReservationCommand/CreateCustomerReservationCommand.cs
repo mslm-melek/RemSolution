@@ -6,6 +6,7 @@ using RemSolution.Application.Common.Settings;
 using RemSolution.Application.Common.Tenancy;
 using RemSolution.Domain.Constants;
 using RemSolution.Domain.Enums;
+using RemSolution.Application.Features.MarketplaceSearch;
 using FluentValidation.Results;
 using ClientEntity = RemSolution.Domain.Entities.Client;
 using ReservationEntity = RemSolution.Domain.Entities.Reservation;
@@ -65,12 +66,23 @@ namespace RemSolution.Application.Features.Marketplace.Commands.CreateCustomerRe
 
             Guard.Against.NotFound(request.CarId, car);
 
-            // Repeats the agency half of MarketplaceCars.Offered: this path needs
-            // a TRACKED car, so it cannot go through that queryable — and without
-            // the gate an unpublished agency's car would still take bookings by
-            // id. Change the rule there and change it here.
+            // The entitlement half of MarketplaceCars.Offered, borrowed rather than
+            // restated: an agency whose subscription lapsed, or whose plan excludes
+            // online reservations, is not on the marketplace and cannot be booked
+            // by id either. Borrowing it also keeps the customer away from the 402
+            // the save would otherwise throw — SubscriptionEnforcementInterceptor
+            // runs under the tenant pushed below, and "the agency has no active
+            // subscription" is not a sentence a customer should ever be shown.
+            var agencyOffers = await MarketplaceCars
+                .AgenciesOffering(_context, FeatureFlags.OnlineReservations, _dateTime.GetUtcNow())
+                .AnyAsync(id => id == car.AgencyId, cancellationToken);
+
+            // Repeats the published half of Offered: this path needs a TRACKED
+            // car, so it cannot go through that queryable — and without the gate an
+            // unpublished agency's car would still take bookings by id. Change the
+            // rule there and change it here.
             if (car.Status != CarStatus.Active || car.DailyRate is null
-                || car.Agency?.PublishedAt is null)
+                || car.Agency?.PublishedAt is null || !agencyOffers)
             {
                 throw new ValidationException(new[]
                 {

@@ -12,16 +12,18 @@ namespace RemSolution.Application.Features.MarketplaceSearch.Queries.GetMarketpl
         : IRequestHandler<GetMarketplaceDestinationsQuery, IList<MarketplaceDestinationDto>>
     {
         private readonly IApplicationDbContext _context;
+        private readonly TimeProvider _dateTime;
 
-        public GetMarketplaceDestinationsQueryHandler(IApplicationDbContext context)
+        public GetMarketplaceDestinationsQueryHandler(IApplicationDbContext context, TimeProvider dateTime)
         {
             _context = context;
+            _dateTime = dateTime;
         }
 
         public async Task<IList<MarketplaceDestinationDto>> Handle(
             GetMarketplaceDestinationsQuery request, CancellationToken cancellationToken)
         {
-            var offered = MarketplaceCars.Offered(_context);
+            var offered = MarketplaceCars.Offered(_context, _dateTime.GetUtcNow());
 
             // Counted as two aggregates rather than one grouped by a conditional
             // country key: SQL Server groups plain columns, and a CASE over a

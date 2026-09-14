@@ -2,6 +2,7 @@ using RemSolution.Application.Common.Agencies;
 using RemSolution.Application.Common.Interfaces;
 using RemSolution.Application.Common.Models;
 using RemSolution.Application.Features.MarketplaceSearch.DTOs;
+using RemSolution.Domain.Constants;
 using RemSolution.Domain.Entities;
 
 namespace RemSolution.Application.Features.MarketplaceSearch.Queries.GetMarketplaceAgencyQuery
@@ -15,23 +16,33 @@ namespace RemSolution.Application.Features.MarketplaceSearch.Queries.GetMarketpl
         : IRequestHandler<GetMarketplaceAgencyQuery, MarketplaceAgencyDto?>
     {
         private readonly IApplicationDbContext _context;
+        private readonly TimeProvider _dateTime;
 
-        public GetMarketplaceAgencyQueryHandler(IApplicationDbContext context)
+        public GetMarketplaceAgencyQueryHandler(IApplicationDbContext context, TimeProvider dateTime)
         {
             _context = context;
+            _dateTime = dateTime;
         }
 
         public async Task<MarketplaceAgencyDto?> Handle(
             GetMarketplaceAgencyQuery request, CancellationToken cancellationToken)
         {
+            var now = _dateTime.GetUtcNow();
+
+            var entitled = MarketplaceCars.AgenciesOffering(
+                _context, FeatureFlags.OnlineReservations, now);
+
             // Agency is platform-level (not ITenantEntity), so no filter bypass is
             // needed to read one as an anonymous visitor. Unpublished ones read as
             // missing rather than empty: an agency still being set up is not a
             // shopfront with nothing in it, it is not a shopfront (see
-            // Agency.PublishedAt).
+            // Agency.PublishedAt). Same for one that is published but no longer
+            // entitled — a shopfront rendering with nothing in it would read as an
+            // agency with no cars, which is a different and untrue statement.
             var agency = await _context.Agencies
                 .AsNoTracking()
-                .Where(a => a.Id == request.Id && a.PublishedAt != null)
+                .Where(a => a.Id == request.Id && a.PublishedAt != null
+                            && entitled.Contains(a.Id))
                 .Select(a => new
                 {
                     a.Id,
@@ -48,7 +59,7 @@ namespace RemSolution.Application.Features.MarketplaceSearch.Queries.GetMarketpl
                 return null;
             }
 
-            var offered = MarketplaceCars.Offered(_context).Where(c => c.AgencyId == request.Id);
+            var offered = MarketplaceCars.Offered(_context, now).Where(c => c.AgencyId == request.Id);
 
             var carCount = await offered.CountAsync(cancellationToken);
 

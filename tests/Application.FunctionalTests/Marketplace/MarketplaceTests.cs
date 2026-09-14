@@ -381,6 +381,9 @@ public class MarketplaceTests : BaseTestFixture
         })).Should().ThrowAsync<ForbiddenAccessException>();
     }
 
+    // Entitlement — lapsed subscription, missing feature — lives in
+    // MarketplaceEntitlementTests, which asserts the booking refusal too.
+
     // ------------------------------------------------------------- ratings ---
 
     [Test]

@@ -7,9 +7,8 @@ namespace RemSolution.Domain.Constants;
 /// so this map drives: which permissions the SPA offers per module, validation
 /// that a staff grant belongs to an enabled feature, and the SPA menu tree.
 ///
-/// Features not listed here (e.g. OnlineReservations, OnlinePayment) are
-/// capabilities with no per-user permission — they gate a module on/off but
-/// carry no staff actions.
+/// A feature mapped to no permission (OnlineReservations) is a capability with
+/// no staff action behind it — it gates a module on/off and nothing else.
 /// </summary>
 public static class FeatureCatalog
 {
@@ -33,7 +32,6 @@ public static class FeatureCatalog
             // gated by the feature alone (see Permissions.NotificationSend).
             [FeatureFlags.Notifications] = new[] { Permissions.NotificationSend },
             [FeatureFlags.OnlineReservations] = Array.Empty<string>(),
-            [FeatureFlags.OnlinePayment] = Array.Empty<string>(),
         };
 
     private static readonly IReadOnlyDictionary<string, string> FeatureByPermissionMap =

@@ -1235,11 +1235,16 @@ public class DemoDataSeeder
             return plan;
         }
 
+        // The demo's Starter plan keeps OnlineReservations, unlike the reference
+        // one: what it is here to show is the back-office gate hiding whole panels,
+        // and dropping the second agency out of the public search would empty half
+        // the marketplace demo — the map, the destinations — to show nothing extra.
         var features = name == "Starter"
             ? new[]
             {
                 FeatureFlags.Cars, FeatureFlags.Clients, FeatureFlags.Branches,
                 FeatureFlags.Rentings, FeatureFlags.Reservations,
+                FeatureFlags.OnlineReservations,
             }
             : FeatureFlags.All;
 

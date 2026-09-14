@@ -220,7 +220,27 @@ and so repeat the rule: `GetMarketplaceCarQuery` (which now calls `Offered`
 rather than restating it) and `CreateCustomerReservationCommand`, which needs a
 tracked car and therefore checks `car.Agency.PublishedAt` by hand.
 `GetMarketplaceAgencyQuery` returns null for an unpublished agency — missing, not
-empty. Adding a public surface means adding the gate to it. Publishing requires
+empty.
+
+**Published is not the same as entitled, and both gate the marketplace.**
+Publication says "we are ready"; entitlement says "we are paid up and we bought
+this". `MarketplaceCars.AgenciesOffering` is the second gate: an **active
+subscription** (so a lapsed agency drops off the marketplace rather than being
+discovered at the booking step) on a plan that includes
+`FeatureFlags.OnlineReservations`, with an `AgencyFeature` override winning over
+the plan exactly as `AgencyFeatureResolver` decides it — that resolver
+materialises a set for a known agency, this is its translatable twin for a query
+whose agency is a column, so **change one and change the other** or the module an
+agency sees in its own back-office stops matching what the public sees. An
+override can force the *feature* on; it can never restore the *subscription*.
+`OnlineReservations` is the one flag that gates no handler: it is read here and
+nowhere else. The booking command borrows the same helper instead of restating
+it, which is also what keeps a customer from meeting
+`SubscriptionEnforcementInterceptor`'s 402 — its save runs under the car agency's
+tenant, and "the agency has no active subscription" is not a sentence to show
+someone booking a car. The refusal is the same "this car is not available for
+booking" on every path. Cost: one `IN (SELECT …)` on the hottest query in the
+app, which is what `tests/LoadTests/` is for. Adding a public surface means adding the gate to it. Publishing requires
 at least one car on offer (`SetAgencyPublicationCommand`); unpublishing is always
 allowed and cancels nothing. **The migration backfills every existing agency as
 published** — the mirror of the usual trap: a new nullable column would otherwise
@@ -376,10 +396,10 @@ Then everything else works:
 
 ```powershell
 dotnet build RemSolution.sln            # Debug build also regenerates the NSwag client
-dotnet test tests\Domain.UnitTests\Domain.UnitTests.csproj            # 156 tests
+dotnet test tests\Domain.UnitTests\Domain.UnitTests.csproj            # 179 tests
 dotnet test tests\Application.UnitTests\Application.UnitTests.csproj  # 159 tests
 dotnet test tests\Infrastructure.IntegrationTests\...csproj           #  24 tests (disk + SkiaSharp)
-dotnet test tests\Application.FunctionalTests\...csproj               # 606 tests (needs SQL Server)
+dotnet test tests\Application.FunctionalTests\...csproj               # 661 tests (needs SQL Server)
 cd src\Web; dotnet watch run                                          # https://localhost:5001
 
 cd src\Web\ClientApp; npx ng build --configuration production
@@ -447,12 +467,29 @@ out deliberately — see plan §8.
 **Still open** (and why): a transactional Outbox (§4.6) — its stated purpose is
 atomicity for online payment and push, both out of scope, and durable mail would
 mean persisting temporary passwords; online payment (§2.3) needs a provider and
-credentials; monitoring alerts (A.6); an email
-provider (A.7); the second-driver insurance decision (A.10); the restore drill
-and uploads backup (runbook §2–3); mobile and GPS (§3.3–3.5); the search-path
-load test (§3.6); the e-signature label decision (§2.7 — the module label still
-promises what the code does not do); whether an erasure should also clear a
-booking's chat thread (plan §3.6 — a product call, not a technical one).
+credentials; an email provider (A.7); mobile and GPS (§3.3–3.5); self-service
+agency signup (§2.8 — `CreateAgencyCommand` is still platform-admin only, and it
+is a commercial decision before a technical one); real e-signature (§2.7 option
+B — the label no longer promises it either way); whether an erasure should also
+clear a booking's chat thread (plan §3.6 — a product call, not a technical one).
+
+**Open only for want of a real deployment**, not of code: the hosting itself
+(§2.4), the restore drill and uploads backup (runbook §2–3), and the load-test
+run (§3.6). Each has its script, its Bicep and an empty log table waiting for the
+first run — `docs/RUNBOOK_Base_De_Donnees.md` §3 and `tests/LoadTests/README.md`.
+
+**Shipped 2026-09-14**: monitoring alerts (A.6) — `infra/core/monitor/alerts.bicep`,
+seven rules on one action group, and `main.bicep` now passes
+`logAnalyticsWorkspaceId` to the database so its diagnostics land somewhere; the
+search-path load test (§3.6) — `tests/LoadTests/`, wired behind
+`deployLoadTesting` because an idle load-testing resource bills by the hour; and
+the e-signature label (§2.7) — `features.Contracts` is plain "Contrats" now; and
+the marketplace entitlement gate above (`MarketplaceEntitlementTests`, which
+asserts every public surface and the booking path; 661 functional tests green).
+`FeatureFlags.OnlinePayment` was **removed** in the same pass — it was sellable
+on a plan and gated nothing, online payment being out of scope until a provider
+is chosen; `DropOnlinePaymentFeature` deletes the orphaned `PlanFeatures` /
+`AgencyFeatures` rows and has a deliberately empty `Down`.
 
 **Shipped 2026-09-09**: statistics export (§2.9) — see "A figure is folded
 once" — and the personal-data purge / right to erasure (§3.6) — see "Erasing a

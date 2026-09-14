@@ -1,0 +1,38 @@
+version: v0.1
+testId: marketplace-search
+displayName: Marketplace search
+testPlan: marketplace-search.jmx
+description: The anonymous marketplace funnel — destinations, paged search, map, one car.
+
+# One engine is 50 virtual users here. Raise engineInstances to multiply, not the
+# thread count: the threads figure is per engine.
+engineInstances: 1
+
+# The run is worthless once the app is refusing everything; stop rather than pay
+# for five more minutes of 429s or 503s.
+autoStop:
+  errorPercentage: 90
+  timeWindow: 60
+
+# A failed run is the point. The search is a spatial query with three
+# availability anti-joins, so these are the numbers that decide whether it needs
+# an index before the marketplace opens.
+failureCriteria:
+  - avg(response_time_ms) > 1500
+  - p95(response_time_ms) > 3000
+  - percentage(error) > 1
+
+env:
+  - name: protocol
+    value: https
+  # Set to the deployed app's host before running (azd env get-values WEB_BASE_URI).
+  - name: host
+    value: CHANGE-ME.azurewebsites.net
+  - name: port
+    value: "443"
+  - name: threads
+    value: "50"
+  - name: rampUp
+    value: "60"
+  - name: duration
+    value: "300"

@@ -32,14 +32,19 @@ public abstract class FeatureFlags
     // Alerts the agency about its own fleet and bookings (due maintenance and
     // papers, late hires, upcoming holds) and the reminders it mails to clients.
     public const string Notifications = nameof(Notifications);
+    /// <summary>
+    /// Whether the agency is on the public marketplace at all. Unlike the other
+    /// modules this one gates nothing in the back-office: it is read by
+    /// <c>MarketplaceCars.Offered</c>, so a plan without it keeps the agency out
+    /// of the search, the map and every other public surface.
+    /// </summary>
     public const string OnlineReservations = nameof(OnlineReservations);
-    public const string OnlinePayment = nameof(OnlinePayment);
 
     /// <summary>Every known feature — drives plan setup, the resolver and the SPA menu.</summary>
     public static readonly string[] All =
     {
         Cars, Clients, Branches, Rentings, Reservations, Expenses, ExtraServices,
         Payments, Contracts, Factures, Credits, Dashboard, Chat, Notifications,
-        OnlineReservations, OnlinePayment,
+        OnlineReservations,
     };
 }

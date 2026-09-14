@@ -29,5 +29,16 @@ namespace RemSolution.Domain.Entities
                  && s.Status == SubscriptionStatus.Active
                  && s.StartDate <= now
                  && now < s.EndDate;
+
+        /// <summary>
+        /// The same three terms without the agency, for the marketplace: there the
+        /// agency is the correlated column of an enclosing query, which cannot be
+        /// baked into <see cref="IsActiveFor"/>'s parameter. The two must say the
+        /// same thing — change one, change both.
+        /// </summary>
+        public static Expression<Func<AgencySubscription, bool>> IsActiveAt(DateTimeOffset now) =>
+            s => s.Status == SubscriptionStatus.Active
+                 && s.StartDate <= now
+                 && now < s.EndDate;
     }
 }

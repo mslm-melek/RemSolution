@@ -26,8 +26,7 @@ export const FEATURES: FeatureMeta[] = [
   'Dashboard',
   'Chat',
   'Notifications',
-  'OnlineReservations',
-  'OnlinePayment'
+  'OnlineReservations'
 ].map(key => ({ key, labelKey: `features.${key}` }));
 
 // Permissions grouped by their feature (empty for capability-only features).
@@ -47,8 +46,7 @@ export const PERMISSIONS_BY_FEATURE: Record<string, string[]> = {
   Chat: ['Chat.View', 'Chat.Send'],
   // Reading one's own inbox needs no grant; only writing to a customer does.
   Notifications: ['Notification.Send'],
-  OnlineReservations: [],
-  OnlinePayment: []
+  OnlineReservations: []
 };
 
 export function featureLabelKey(key: string): string {

@@ -1156,13 +1156,12 @@
     "Expenses": "Expenses",
     "ExtraServices": "Extra services",
     "Payments": "Payments",
-    "Contracts": "Contracts + e-signature",
+    "Contracts": "Contracts",
     "Factures": "Invoices",
     "Credits": "Credits",
     "Dashboard": "Dashboard",
     "Chat": "Chat",
     "OnlineReservations": "Online reservations",
-    "OnlinePayment": "Online payment",
     "Notifications": "Notifications"
   },
   "documentTemplate": {

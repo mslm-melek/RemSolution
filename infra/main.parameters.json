@@ -16,6 +16,12 @@
       },
       "dbAppUserPassword": {
         "value": "$(secretOrRandomPassword ${AZURE_KEY_VAULT_NAME} dbAppUserPassword)"
+      },
+      "alertEmailAddress": {
+        "value": "${ALERT_EMAIL_ADDRESS}"
+      },
+      "deployLoadTesting": {
+        "value": "${DEPLOY_LOAD_TESTING=false}"
       }
     }
 }

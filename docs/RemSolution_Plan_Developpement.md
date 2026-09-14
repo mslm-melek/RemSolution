@@ -51,19 +51,26 @@ Chaque ligne a été vérifiée dans le code, pas dans un tableau de suivi.
 | 3.6 | Purge des données personnelles / droit à l'effacement (2026-09-09) | `Client.ErasePersonalData`, `EraseClientPersonalDataCommand` (autorisation `Client.Erase`), `PersonalDataPurgeJob` (quotidien) + `AgencySettings.PersonalDataRetentionMonths`, `IPersonalDataErasureStore` |
 | N.11 | Taux de change automatiques (2026-09-09) | `IExchangeRateProvider` + `OpenErApiExchangeRateProvider`, `ExchangeRateRefreshJob` (quotidien 3 h UTC), `ExchangeRate.IsPinned`/`RefreshedAt`, `ExchangeRateRefresh` (plausibilité) |
 | N.12 | Total indicatif en devise sur la facture (2026-09-09) | `AgencySettings.InvoiceDisplayCurrency`, `Facture.Display*` (taux figé), `DisplayConversion`, `CurrencyDecimals` |
+| A.6 | Alertes de supervision (2026-09-14) | `infra/core/monitor/alerts.bicep` : groupe d'action + 5 règles métriques (sonde `/health`, 5xx, temps de réponse, DTU, stockage) et 2 règles de journal (erreurs applicatives, échecs des tâches de fond). `main.bicep` passe enfin `logAnalyticsWorkspaceId` à la base — sans ça ses diagnostics n'allaient nulle part |
+| 3.6 | Test de charge du chemin de recherche (2026-09-14) | `tests/LoadTests/` : plan JMeter de l'entonnoir marketplace, `loadtest.yaml` (seuils d'échec), `README.md` (les deux réglages à faire avant un tir) ; `loadtesting.bicep` est branché dans `main.bicep`, derrière `deployLoadTesting` |
+| — | Droit d'accès au marketplace réellement appliqué (2026-09-14) | `MarketplaceCars.AgenciesOffering` : abonnement actif **et** `OnlineReservations` au plan (surcharge `AgencyFeature` prioritaire) sur toutes les surfaces publiques et à la réservation. Deux trous fermés : une agence en retard de paiement restait vendue sur le marketplace et le client se prenait un 402 « l'agence n'a pas d'abonnement actif » au dernier clic ; et le palier de plan n'était appliqué nulle part. `OnlinePayment`, vendable et sans effet, est supprimé (`DropOnlinePaymentFeature`) |
+| 2.7 | Libellé signature corrigé (2026-09-14) | `features.Contracts` dit « Contrats » dans les trois langues : le module ne pose que des lignes de signature manuscrite, il ne signait rien électroniquement |
 
-L'addendum est livré à l'exception de A.6 et A.7 — voir son propre encadré.
+L'addendum est livré à l'exception de A.7 — voir son propre encadré.
 
 ### Ce qu'il reste
 
 | Réf | Point | État | Effort |
 |---|---|---|---|
-| A.6 | Alertes de supervision | ❌ aucune règle d'alerte dans `infra/` | 1,5 j |
-| 3.6 | Test de charge du chemin de recherche | ❌ `loadtesting.bicep` existe (gabarit) mais n'est pas référencé par `main.bicep` | 1 j |
-| 2.7 | Signature : libellé à corriger ou vraie signature | ❌ `fr.json` annonce toujours « Contrats + signature électronique » alors que le code ne pose que des lignes manuscrites | 0,5 j ou 6 j |
-| 2.4 | Hébergement réellement déployé et vérifié | 🟡 le Bicep est complet (Key Vault, sauvegardes) ; le déploiement effectué ne se lit pas dans le dépôt | 3 j |
+| 2.4 | Hébergement réellement déployé et vérifié | 🟡 le Bicep est complet (Key Vault, sauvegardes, alertes) ; le déploiement effectué ne se lit pas dans le dépôt | 3 j |
 | 4.3 | Restauration réellement exécutée et chronométrée | 🟡 le script existe, l'exécution documentée non | 0,5 j |
+| 3.6 | Tir de charge réellement exécuté | 🟡 le plan et la ressource existent ; le journal de `tests/LoadTests/README.md` est vide | 0,5 j |
 | 2.8 | Inscription libre-service des agences | ❌ la création d'agence reste réservée à l'administrateur plateforme | hors dév. + 3 j |
+| 2.7 | Vraie signature électronique | ❌ option B, si le produit la veut vraiment ; le libellé ne la promet plus | 6 j |
+
+Les trois premières lignes ont la même forme : **il ne manque plus de code, il
+manque une exécution contre du vrai Azure**. Elles se ferment le jour du premier
+déploiement, et pas avant.
 
 **Et dix points ajoutés le 2026-09-02** — papiers, devises, parcours de
 réservation, fiabilité, assistant d'ouverture d'agence : voir **§8**. **Les dix

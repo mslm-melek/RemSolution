@@ -25,6 +25,14 @@ param keyVaultName string = ''
 param appServiceName string = ''
 param dbServerName string = ''
 param dbName string = ''
+param actionGroupName string = ''
+param loadTestingName string = ''
+
+@description('Where fired alerts are emailed. Empty deploys the rules with nobody on the other end — set it before going live.')
+param alertEmailAddress string = ''
+
+@description('Azure Load Testing is billed per engine-hour and is only needed when a test is actually run. Off by default.')
+param deployLoadTesting bool = false
 
 @secure()
 param dbAdminPassword string
@@ -107,9 +115,42 @@ module database 'core/database/sqlserver/sqlserver.bicep' = {
     tags: tags
     databaseName: !empty(dbName) ? dbName : '${abbrs.sqlServersDatabases}${resourceToken}'
     keyVaultName: keyVault.outputs.name
+    // Without this the database's diagnostic settings are skipped and SQL
+    // Insights, the query store and the error log reach no workspace.
+    logAnalyticsWorkspaceId: monitoring.outputs.logAnalyticsWorkspaceId
     connectionStringKey: 'ConnectionStrings--RemSolutionDb'
     sqlAdminPassword: dbAdminPassword
     appUserPassword: dbAppUserPassword
+  }
+  scope: rg
+}
+
+// Takes each name from the module that creates it rather than recomputing the
+// naming expression — which is also what orders the deployment, since a rule
+// cannot attach to a resource that does not exist yet.
+module alerts 'core/monitor/alerts.bicep' = {
+  name: 'alerts'
+  params: {
+    location: location
+    tags: tags
+    actionGroupName: !empty(actionGroupName) ? actionGroupName : '${abbrs.insightsActionGroups}${resourceToken}'
+    appServiceName: web.outputs.name
+    sqlServerName: database.outputs.serverName
+    sqlDatabaseName: database.outputs.databaseName
+    applicationInsightsName: monitoring.outputs.applicationInsightsName
+    alertEmailAddress: alertEmailAddress
+  }
+  scope: rg
+}
+
+// The search-path load test (tests/LoadTests). Provisioned on demand, because an
+// idle load-testing resource is a standing cost for a test run once a quarter.
+module loadTesting 'core/testing/loadtesting.bicep' = if (deployLoadTesting) {
+  name: 'loadtesting'
+  params: {
+    name: !empty(loadTestingName) ? loadTestingName : '${abbrs.loadTesting}${resourceToken}'
+    location: location
+    tags: tags
   }
   scope: rg
 }
@@ -138,3 +179,4 @@ output AZURE_KEY_VAULT_ENDPOINT string = keyVault.outputs.endpoint
 output APPLICATIONINSIGHTS_CONNECTION_STRING string = monitoring.outputs.applicationInsightsConnectionString
 output AZURE_SQL_CONNECTION_STRING_KEY string = database.outputs.connectionStringKey
 output WEB_BASE_URI string = web.outputs.uri
+output AZURE_LOAD_TESTING_NAME string = deployLoadTesting ? loadTesting.outputs.loadTestingName : ''

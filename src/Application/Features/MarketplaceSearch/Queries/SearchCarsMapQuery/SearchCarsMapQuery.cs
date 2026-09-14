@@ -35,10 +35,12 @@ namespace RemSolution.Application.Features.MarketplaceSearch.Queries.SearchCarsM
         private const int MaxPoints = 300;
 
         private readonly IApplicationDbContext _context;
+        private readonly TimeProvider _dateTime;
 
-        public SearchCarsMapQueryHandler(IApplicationDbContext context)
+        public SearchCarsMapQueryHandler(IApplicationDbContext context, TimeProvider dateTime)
         {
             _context = context;
+            _dateTime = dateTime;
         }
 
         public async Task<IList<MarketplaceMapPointDto>> Handle(
@@ -47,7 +49,7 @@ namespace RemSolution.Application.Features.MarketplaceSearch.Queries.SearchCarsM
             // Exactly the pipeline SearchAvailableCarsQuery runs, plus the
             // requirement that the car can actually be placed: a branchless or
             // un-geocoded car is listable but has no pin.
-            var cars = MarketplaceCars.Offered(_context)
+            var cars = MarketplaceCars.Offered(_context, _dateTime.GetUtcNow())
                 .Matching(request.CountryId, request.BranchId, request.BrandId, request.AgencyId)
                 .WithinBounds(request.South, request.West, request.North, request.East)
                 .AvailableBetween(_context, request.StartDate, request.EndDate)

@@ -1156,13 +1156,12 @@
     "Expenses": "Dépenses",
     "ExtraServices": "Services additionnels",
     "Payments": "Paiements",
-    "Contracts": "Contrats + signature électronique",
+    "Contracts": "Contrats",
     "Factures": "Factures",
     "Credits": "Crédits",
     "Dashboard": "Tableau de bord",
     "Chat": "Messagerie",
     "OnlineReservations": "Réservations en ligne",
-    "OnlinePayment": "Paiement en ligne",
     "Notifications": "Notifications"
   },
   "documentTemplate": {

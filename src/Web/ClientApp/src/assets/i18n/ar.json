@@ -1156,13 +1156,12 @@
     "Expenses": "المصاريف",
     "ExtraServices": "الخدمات الإضافية",
     "Payments": "المدفوعات",
-    "Contracts": "العقود + الإمضاء الإلكتروني",
+    "Contracts": "العقود",
     "Factures": "الفواتير",
     "Credits": "الاعتمادات",
     "Dashboard": "لوحة القيادة",
     "Chat": "المحادثة",
     "OnlineReservations": "الحجز عبر الإنترنت",
-    "OnlinePayment": "الدفع عبر الإنترنت",
     "Notifications": "الإشعارات"
   },
   "documentTemplate": {

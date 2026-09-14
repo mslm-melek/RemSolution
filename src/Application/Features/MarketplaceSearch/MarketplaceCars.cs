@@ -1,5 +1,8 @@
 using RemSolution.Application.Common.Interfaces;
+using RemSolution.Domain.Constants;
 using RemSolution.Domain.Enums;
+// Aliased: Features.AgencySubscription is a feature folder, and it shadows the entity.
+using AgencySubscriptionEntity = RemSolution.Domain.Entities.AgencySubscription;
 
 namespace RemSolution.Application.Features.MarketplaceSearch
 {
@@ -8,23 +11,57 @@ namespace RemSolution.Application.Features.MarketplaceSearch
     // home-page showcase so they can never disagree about what is on offer.
     internal static class MarketplaceCars
     {
-        // Offered = its agency is live on the marketplace, and the car is not
-        // archived, bookable and priced. IgnoreQueryFilters drops BOTH the
-        // AgencyId and the !IsDeleted global filters (the visitor has no
+        // Offered = its agency is live on the marketplace AND entitled to be, and
+        // the car is not archived, bookable and priced. IgnoreQueryFilters drops
+        // BOTH the AgencyId and the !IsDeleted global filters (the visitor has no
         // tenant), so soft-delete is re-applied explicitly. This is one of the two
         // sanctioned bypass locations — see TenantEnforcementTests.
         //
-        // The agency gate is first because it is the coarsest: an agency still
-        // being set up has no business in the public search, however good its
-        // fleet looks (see Agency.PublishedAt).
-        public static IQueryable<Domain.Entities.Car> Offered(IApplicationDbContext context) =>
-            context.Cars
+        // The agency gates come first because they are the coarsest: an agency
+        // still being set up (Agency.PublishedAt), or one whose subscription has
+        // lapsed, or one whose plan does not include OnlineReservations, has no
+        // business in the public search however good its fleet looks.
+        public static IQueryable<Domain.Entities.Car> Offered(
+            IApplicationDbContext context, DateTimeOffset now)
+        {
+            var entitled = AgenciesOffering(context, FeatureFlags.OnlineReservations, now);
+
+            return context.Cars
                 .IgnoreQueryFilters()
                 .AsNoTracking()
                 .Where(c => c.Agency != null && c.Agency.PublishedAt != null
+                            && entitled.Contains(c.AgencyId)
                             && !c.IsDeleted
                             && c.Status == CarStatus.Active
                             && c.DailyRate != null);
+        }
+
+        // The translatable twin of AgencyFeatureResolver for ONE feature: the
+        // resolver materialises a set for a known agency, this has to run inside a
+        // query whose agency is a column. Same precedence — an override row wins,
+        // no row inherits the plan — with one addition the resolver leaves to its
+        // callers: an active subscription is required, so a lapsed agency drops off
+        // the marketplace rather than being discovered at the booking step.
+        //
+        // Change this and change AgencyFeatureResolver, or the module an agency
+        // sees in its own back-office stops matching what the public sees.
+        public static IQueryable<int> AgenciesOffering(
+            IApplicationDbContext context, string feature, DateTimeOffset now)
+        {
+            // AgencyFeature IS an ITenantEntity and the visitor has no tenant, so
+            // without this the overrides read as if none existed.
+            var overrides = context.AgencyFeatures
+                .IgnoreQueryFilters()
+                .Where(f => f.Feature == feature);
+
+            return context.AgencySubscriptions
+                .IgnoreQueryFilters()
+                .Where(AgencySubscriptionEntity.IsActiveAt(now))
+                .Where(s => overrides.Any(o => o.AgencyId == s.AgencyId && o.Enabled)
+                            || (!overrides.Any(o => o.AgencyId == s.AgencyId)
+                                && s.Plan!.Features.Any(f => f.Feature == feature)))
+                .Select(s => s.AgencyId);
+        }
 
         // A car's country is its branch's, falling back to its agency's: BranchId
         // is nullable, and a car with no branch would otherwise be unreachable

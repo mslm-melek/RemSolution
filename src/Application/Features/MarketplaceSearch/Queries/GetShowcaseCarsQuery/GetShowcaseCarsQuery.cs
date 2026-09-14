@@ -11,16 +11,18 @@ namespace RemSolution.Application.Features.MarketplaceSearch.Queries.GetShowcase
         : IRequestHandler<GetShowcaseCarsQuery, IList<MarketplaceCarDto>>
     {
         private readonly IApplicationDbContext _context;
+        private readonly TimeProvider _dateTime;
 
-        public GetShowcaseCarsQueryHandler(IApplicationDbContext context)
+        public GetShowcaseCarsQueryHandler(IApplicationDbContext context, TimeProvider dateTime)
         {
             _context = context;
+            _dateTime = dateTime;
         }
 
         public async Task<IList<MarketplaceCarDto>> Handle(
             GetShowcaseCarsQuery request, CancellationToken cancellationToken)
         {
-            return await MarketplaceCars.Offered(_context)
+            return await MarketplaceCars.Offered(_context, _dateTime.GetUtcNow())
                 // Photographed cars first — a slideshow of placeholder icons sells
                 // nothing — then the most recently added.
                 .OrderByDescending(c => c.Images!.Any(i => i.IsPrimary && i.MediumFileId != null)

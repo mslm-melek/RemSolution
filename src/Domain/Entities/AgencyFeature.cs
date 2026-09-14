@@ -1,9 +1,10 @@
 namespace RemSolution.Domain.Entities
 {
     /// <summary>
-    /// Per-agency toggle for one feature module (see Constants.Features).
-    /// No row for a feature means the feature is enabled; rows switch a
-    /// module off or explicitly back on.
+    /// Per-agency override for one feature module (see <c>FeatureFlags</c>).
+    /// No row means the feature follows the active subscription's plan; a row
+    /// forces it on or off regardless of the plan. See
+    /// <c>AgencyFeatureResolver</c>, which owns that precedence.
     /// </summary>
     public class AgencyFeature : BaseAuditableEntity, ITenantEntity
     {
