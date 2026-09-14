@@ -4,7 +4,8 @@
 
 Avertissement de lecture : je n'ai listé que ce que j'ai vérifié dans le code. Plusieurs choses que j'aurais soupçonnées sont en réalité bien faites (arabe + RTL complets, numérotation légale des factures, cache des réglages d'agence, remboursements) et n'apparaissent donc pas ici.
 
-> **Mise à jour du 2026-09-02 — huit points sur dix sont livrés.**
+> **Mise à jour du 2026-09-02, complétée le 2026-09-14 — neuf points sur dix
+> sont livrés.**
 > Le diagnostic d'origine est conservé tel quel : c'est lui qui explique
 > *pourquoi* chaque correction a la forme qu'elle a. L'état courant est
 > celui du tableau ci-dessous.
@@ -19,7 +20,7 @@ Avertissement de lecture : je n'ai listé que ce que j'ai vérifié dans le code
 > | A.8 | Périodes d'immobilisation | ✅ `CarUnavailability`, troisième source de la disponibilité |
 > | A.9 | Sort de la caution au retour | ✅ `DepositRetainedAmount`, `DepositSettledAt`, `HasUnsettledDeposit` ; le retour de caution passe par un `Payment` de remboursement |
 > | A.10 | Second conducteur / assurance | ✅ **tranché** : la validation des papiers s'applique au locataire *et* au second conducteur |
-> | A.6 | Alertes de supervision | ❌ toujours rien — aucune règle d'alerte dans `infra/` |
+> | A.6 | Alertes de supervision | ✅ **livré (2026-09-14)** — `infra/core/monitor/alerts.bicep` : un groupe d'action et sept règles (sonde `/health`, 5xx, temps de réponse, DTU, stockage, erreurs applicatives, échecs des tâches de fond) ; `main.bicep` passe enfin `logAnalyticsWorkspaceId` à la base. Reste à renseigner `alertEmailAddress` avant l'ouverture |
 > | A.7 | Prestataire d'envoi de courriels | ❌ toujours `SmtpEmailSender` ; demande un compte chez un prestataire |
 
 ---
