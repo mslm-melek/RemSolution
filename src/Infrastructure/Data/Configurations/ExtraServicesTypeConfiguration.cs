@@ -1,4 +1,4 @@
-﻿using RemSolution.Domain.Entities;
+using RemSolution.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -8,8 +8,23 @@ public class ExtraServicesTypeConfiguration : IEntityTypeConfiguration<ExtraServ
 {
     public void Configure(EntityTypeBuilder<ExtraServicesType> builder)
     {
-        builder.Property(e => e.Amount)
-             .HasColumnType("decimal(18,2)");
+        // Cascade for the same reason as ExpenseType: configuration, not data.
+        builder.HasOne(e => e.Agency)
+               .WithMany()
+               .HasForeignKey(e => e.AgencyId)
+               .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasIndex(e => new { e.AgencyId, e.TemplateId })
+               .IsUnique()
+               .HasFilter("[TemplateId] IS NOT NULL");
+
+        builder.HasOne(e => e.Template)
+               .WithMany()
+               .HasForeignKey(e => e.TemplateId)
+               .OnDelete(DeleteBehavior.Restrict);
+
+        // Keeps the old "Amount" column; the currency is new.
+        builder.OwnsMoney(e => e.Amount, "Amount", "AmountCurrency");
 
         builder.Property(e => e.Name)
                .HasMaxLength(200)

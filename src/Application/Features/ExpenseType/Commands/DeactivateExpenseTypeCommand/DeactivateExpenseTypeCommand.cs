@@ -5,6 +5,7 @@ using RemSolution.Domain.Constants;
 namespace RemSolution.Application.Features.ExpenseType.Commands.DeactivateExpenseTypeCommand
 {
     // "Delete" is deactivation: kept so historical expenses still resolve their type.
+    // Also how an agency drops a standard type it does not use.
     [Authorize(Policy = Policies.AgencyOrPlatformAdmin)]
     [RequiresFeature(FeatureFlags.Expenses)]
     public record DeactivateExpenseTypeCommand(int Id) : IRequest;

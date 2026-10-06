@@ -12,7 +12,9 @@ import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi } from '@a
 import { AppComponent } from './app.component';
 import { SideNavComponent } from './nav-menu/side-nav.component';
 import { TopBarComponent } from './nav-menu/top-bar.component';
+import { PublicFooterComponent } from './nav-menu/public-footer.component';
 import { HomeComponent } from './home/home.component';
+import { PublicHomeComponent } from './home/public-home.component';
 import { HomeAgendaComponent } from './home/home-agenda.component';
 import { HomeMessagesComponent } from './home/home-messages.component';
 import { ChatThreadDialogComponent } from './home/chat-thread-dialog.component';
@@ -70,6 +72,7 @@ import { MyReportsComponent } from './marketplace/my-reports.component';
 import { ReportDialogComponent } from './marketplace/report-dialog.component';
 import { RatingStarsComponent } from './shared/rating-stars.component';
 import { ConvertedPriceComponent } from './shared/converted-price.component';
+import { CatalogNamePipe } from './shared/catalog-name.pipe';
 import { ClientAvatarComponent } from './shared/client-avatar.component';
 import { QuickActionsComponent } from './shared/quick-actions.component';
 
@@ -152,6 +155,8 @@ function toMyBookings(tab: 'rentings' | null): RedirectFunction {
     SideNavComponent,
     TopBarComponent,
     HomeComponent,
+    PublicHomeComponent,
+    PublicFooterComponent,
     HomeAgendaComponent,
     HomeMessagesComponent,
     ChatThreadDialogComponent,
@@ -206,6 +211,7 @@ function toMyBookings(tab: 'rentings' | null): RedirectFunction {
     ReportDialogComponent,
     RatingStarsComponent,
     ConvertedPriceComponent,
+    CatalogNamePipe,
     ClientAvatarComponent,
     QuickActionsComponent,
 
@@ -344,7 +350,9 @@ function toMyBookings(tab: 'rentings' | null): RedirectFunction {
       // link straight at it; it is the same screen (see selectedTab).
       { path: 'my-agency/reports', component: MyAgencyComponent },
       { path: 'team', redirectTo: 'my-agency', pathMatch: 'full' }
-    ])),
+    // The public home's "how it works" / "for agencies" links are fragments; the
+    // offset clears the sticky app bar.
+    ]), { anchorScrolling: 'enabled', scrollOffset: [0, 76] }),
     TranslocoModule,
     BrowserAnimationsModule],
   providers: [

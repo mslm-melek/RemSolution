@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using RemSolution.Domain.Constants;
 using RemSolution.Application.Features.ExpenseType.Commands.CreateExpenseTypeCommand;
 using RemSolution.Application.Features.ExpenseType.Commands.DeactivateExpenseTypeCommand;
+using RemSolution.Application.Features.ExpenseType.Commands.ResetExpenseTypeCommand;
 using RemSolution.Application.Features.ExpenseType.Commands.UpdateExpenseTypeCommand;
 using RemSolution.Application.Features.ExpenseType.DTOs;
 using RemSolution.Application.Features.ExpenseType.Queries.GetExpenseTypesQuery;
@@ -16,12 +17,21 @@ public class ExpenseTypes : EndpointGroupBase
             .RequireAuthorization();
 
         group
-            // Read is open to any authenticated user (staff pick a type); managing
-            // the catalog is restricted to agency/platform administrators.
+            // The agency's own catalog. Read is open to its users (staff pick a
+            // type); managing it is for its administrator, or the platform
+            // administrator inside its workspace. The platform-wide entries are
+            // ExpenseTypeTemplates.
             .MapGet(GetExpenseTypes)
             .MapPost(CreateExpenseType, policy: Policies.AgencyOrPlatformAdmin)
             .MapPut(UpdateExpenseType, "{id}", Policies.AgencyOrPlatformAdmin)
-            .MapDelete(DeactivateExpenseType, "{id}", Policies.AgencyOrPlatformAdmin);
+            .MapDelete(DeactivateExpenseType, "{id}", Policies.AgencyOrPlatformAdmin)
+            .MapPost(ResetExpenseType, "{id}/reset", Policies.AgencyOrPlatformAdmin);
+    }
+
+    public async Task<NoContent> ResetExpenseType(ISender sender, int id)
+    {
+        await sender.Send(new ResetExpenseTypeCommand(id));
+        return TypedResults.NoContent();
     }
 
     public async Task<Ok<IList<ExpenseTypeDto>>> GetExpenseTypes(

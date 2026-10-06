@@ -93,6 +93,8 @@
   --font-body: 'Inter', system-ui, sans-serif;
   --font-mono: 'Roboto Mono', ui-monospace, 'SFMono-Regular', Consolas, monospace;
   --fs-page: 26px;
+  /* The public home's headline: the one place a page title is too small. */
+  --fs-hero: clamp(28px, 3.4vw, 42px);
   --fs-section: 15px;
   --fs-body: 14px;
   --fs-sm: 13px;

@@ -25,9 +25,11 @@ public interface IApplicationDbContext
     DbSet<DocumentTemplateField> DocumentTemplateFields { get; }
     DbSet<ExtraService> ExtraServices { get; }
     DbSet<ExtraServicesType> ExtraServicesTypes { get; }
+    DbSet<ExtraServicesTypeTemplate> ExtraServicesTypeTemplates { get; }
     DbSet<ExchangeRate> ExchangeRates { get; }
     DbSet<Expense> Expenses { get; }
     DbSet<ExpenseType> ExpenseTypes { get; }
+    DbSet<ExpenseTypeTemplate> ExpenseTypeTemplates { get; }
     DbSet<Facture> Factures { get; }
     DbSet<ModelCar> ModelCars { get; }
     DbSet<Notification> Notifications { get; }

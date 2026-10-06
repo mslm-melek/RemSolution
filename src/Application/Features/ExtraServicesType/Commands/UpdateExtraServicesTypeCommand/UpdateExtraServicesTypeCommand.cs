@@ -1,9 +1,13 @@
 using RemSolution.Application.Common.Interfaces;
 using RemSolution.Application.Common.Security;
+using RemSolution.Application.Common.Settings;
 using RemSolution.Domain.Constants;
+using RemSolution.Domain.ValueObjects;
 
 namespace RemSolution.Application.Features.ExtraServicesType.Commands.UpdateExtraServicesTypeCommand
 {
+    // Renaming a standard type makes it the agency's own version; setting its
+    // price does not, since the template has none (ExtraServicesType.Rename).
     [Authorize(Policy = Policies.AgencyOrPlatformAdmin)]
     [RequiresFeature(FeatureFlags.ExtraServices)]
     public record UpdateExtraServicesTypeCommand : IRequest
@@ -17,10 +21,12 @@ namespace RemSolution.Application.Features.ExtraServicesType.Commands.UpdateExtr
     public class UpdateExtraServicesTypeCommandHandler : IRequestHandler<UpdateExtraServicesTypeCommand>
     {
         private readonly IApplicationDbContext _context;
+        private readonly IAgencySettingsProvider _settings;
 
-        public UpdateExtraServicesTypeCommandHandler(IApplicationDbContext context)
+        public UpdateExtraServicesTypeCommandHandler(IApplicationDbContext context, IAgencySettingsProvider settings)
         {
             _context = context;
+            _settings = settings;
         }
 
         public async Task Handle(UpdateExtraServicesTypeCommand request, CancellationToken cancellationToken)
@@ -30,8 +36,10 @@ namespace RemSolution.Application.Features.ExtraServicesType.Commands.UpdateExtr
 
             Guard.Against.NotFound(request.Id, entity);
 
-            entity.Name = request.Name;
-            entity.Amount = request.Amount;
+            var settings = await _settings.GetAsync(entity.AgencyId, cancellationToken);
+
+            entity.Rename(request.Name.Trim());
+            entity.Amount = request.Amount is decimal amount ? Money.Of(amount, settings.CurrencyCode) : null;
             entity.IsActive = request.IsActive;
 
             await _context.SaveChangesAsync(cancellationToken);

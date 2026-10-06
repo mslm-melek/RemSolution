@@ -478,6 +478,12 @@
   <data name="Identity.Login.CreateOne" xml:space="preserve">
     <value>أنشئ حسابًا</value>
   </data>
+  <data name="Identity.BackToHome" xml:space="preserve">
+    <value>العودة إلى الصفحة الرئيسية</value>
+  </data>
+  <data name="Identity.ToggleTheme" xml:space="preserve">
+    <value>تغيير المظهر</value>
+  </data>
   <data name="Identity.Login.LockedOut" xml:space="preserve">
     <value>هذا الحساب مقفل. يرجى المحاولة لاحقًا.</value>
   </data>
@@ -905,28 +911,28 @@
     <value>لا يزال حسابك يستخدم كلمة المرور المؤقتة التي أُرسلت إليك بالبريد الإلكتروني. اختر كلمة مرور جديدة للمتابعة.</value>
   </data>
   <data name="Notification.carExpenseDueByDate.Subject" xml:space="preserve">
-    <value>{{type}} مستحقة للسيارة {{car}}</value>
+    <value>{{expenseType}} مستحقة للسيارة {{car}}</value>
   </data>
   <data name="Notification.carExpenseDueByDate.Body" xml:space="preserve">
-    <value>{{type}} تستحق للسيارة {{car}} في {{dueDate}}، أي بعد {{days}} يوم.</value>
+    <value>{{expenseType}} تستحق للسيارة {{car}} في {{dueDate}}، أي بعد {{days}} يوم.</value>
   </data>
   <data name="Notification.carExpenseOverdueByDate.Subject" xml:space="preserve">
-    <value>{{type}} متأخرة للسيارة {{car}}</value>
+    <value>{{expenseType}} متأخرة للسيارة {{car}}</value>
   </data>
   <data name="Notification.carExpenseOverdueByDate.Body" xml:space="preserve">
-    <value>{{type}} كانت تستحق للسيارة {{car}} في {{dueDate}}، أي منذ {{days}} يوم.</value>
+    <value>{{expenseType}} كانت تستحق للسيارة {{car}} في {{dueDate}}، أي منذ {{days}} يوم.</value>
   </data>
   <data name="Notification.carExpenseDueByDistance.Subject" xml:space="preserve">
-    <value>{{type}} مستحقة للسيارة {{car}}</value>
+    <value>{{expenseType}} مستحقة للسيارة {{car}}</value>
   </data>
   <data name="Notification.carExpenseDueByDistance.Body" xml:space="preserve">
-    <value>{{type}} تستحق للسيارة {{car}} عند {{dueKm}} كم. عدّاد المسافة يشير إلى {{mileage}} كم — بقي {{km}} كم.</value>
+    <value>{{expenseType}} تستحق للسيارة {{car}} عند {{dueKm}} كم. عدّاد المسافة يشير إلى {{mileage}} كم — بقي {{km}} كم.</value>
   </data>
   <data name="Notification.carExpenseOverdueByDistance.Subject" xml:space="preserve">
-    <value>{{type}} متأخرة للسيارة {{car}}</value>
+    <value>{{expenseType}} متأخرة للسيارة {{car}}</value>
   </data>
   <data name="Notification.carExpenseOverdueByDistance.Body" xml:space="preserve">
-    <value>{{type}} كانت تستحق للسيارة {{car}} عند {{dueKm}} كم. عدّاد المسافة يشير إلى {{mileage}} كم — بتجاوز {{km}} كم.</value>
+    <value>{{expenseType}} كانت تستحق للسيارة {{car}} عند {{dueKm}} كم. عدّاد المسافة يشير إلى {{mileage}} كم — بتجاوز {{km}} كم.</value>
   </data>
   <data name="Notification.rentingOverdue.Subject" xml:space="preserve">
     <value>السيارة {{car}} لم تُرجَع</value>
@@ -1093,5 +1099,38 @@
   </data>
   <data name="Statistics.Truncated" xml:space="preserve">
     <value>الفترة المطلوبة أطول من هذا التقرير؛ تُعرض الأسطر الأحدث فقط.</value>
+  </data>
+  <data name="CatalogItem.oilChange" xml:space="preserve">
+    <value>تغيير الزيت</value>
+  </data>
+  <data name="CatalogItem.insurance" xml:space="preserve">
+    <value>التأمين</value>
+  </data>
+  <data name="CatalogItem.roadTax" xml:space="preserve">
+    <value>معلوم الجولان</value>
+  </data>
+  <data name="CatalogItem.tyres" xml:space="preserve">
+    <value>العجلات</value>
+  </data>
+  <data name="CatalogItem.carWash" xml:space="preserve">
+    <value>الغسيل</value>
+  </data>
+  <data name="CatalogItem.repair" xml:space="preserve">
+    <value>الإصلاح</value>
+  </data>
+  <data name="CatalogItem.gps" xml:space="preserve">
+    <value>جهاز تحديد المواقع</value>
+  </data>
+  <data name="CatalogItem.babySeat" xml:space="preserve">
+    <value>مقعد أطفال</value>
+  </data>
+  <data name="CatalogItem.additionalDriver" xml:space="preserve">
+    <value>سائق إضافي</value>
+  </data>
+  <data name="CatalogItem.comprehensiveInsurance" xml:space="preserve">
+    <value>تأمين شامل</value>
+  </data>
+  <data name="CatalogItem.portableWifi" xml:space="preserve">
+    <value>واي فاي محمول</value>
   </data></root>
 

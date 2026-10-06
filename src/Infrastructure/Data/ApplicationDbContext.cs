@@ -47,9 +47,11 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>, IApplica
     public DbSet<DocumentTemplateField> DocumentTemplateFields => Set<DocumentTemplateField>();
     public DbSet<Expense> Expenses => Set<Expense>();
     public DbSet<ExpenseType> ExpenseTypes => Set<ExpenseType>();
+    public DbSet<ExpenseTypeTemplate> ExpenseTypeTemplates => Set<ExpenseTypeTemplate>();
     public DbSet<Facture> Factures => Set<Facture>();
     public DbSet<ExtraService> ExtraServices => Set<ExtraService>();
     public DbSet<ExtraServicesType> ExtraServicesTypes => Set<ExtraServicesType>();
+    public DbSet<ExtraServicesTypeTemplate> ExtraServicesTypeTemplates => Set<ExtraServicesTypeTemplate>();
     public DbSet<ModelCar> ModelCars => Set<ModelCar>();
     public DbSet<Notification> Notifications => Set<Notification>();
     public DbSet<Payment> Payments => Set<Payment>();

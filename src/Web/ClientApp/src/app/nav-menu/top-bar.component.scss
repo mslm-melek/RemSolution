@@ -62,6 +62,22 @@
   border-radius: var(--r-pill);
 }
 
+.bar-link {
+  display: inline-flex;
+  align-items: center;
+  height: 36px;
+  padding: 0 var(--sp-3);
+  border-radius: var(--r-sm);
+  color: var(--ink-2);
+  font-weight: var(--fw-medium);
+  text-decoration: none;
+
+  &:hover {
+    background: var(--overlay-weak);
+    color: var(--ink);
+  }
+}
+
 /* -------------------------------------------------------- branch picker ---- */
 
 .branch-picker {
@@ -272,6 +288,16 @@
     display: none;
   }
 
+  /* The home page carries both destinations itself. */
+  .bar-link,
+  .bar-login-text {
+    display: none;
+  }
+
+  .bar-login {
+    min-width: 0;
+  }
+
   .workspace-bar {
     padding-inline: var(--sp-3);
   }
@@ -279,5 +305,12 @@
   .workspace-console,
   .workspace-exit {
     margin-inline-start: 0;
+  }
+}
+
+/* Narrow phones: the mark alone carries the brand, or the bar overflows. */
+@media (max-width: 480px) {
+  .bar-brand > span:last-child {
+    display: none;
   }
 }

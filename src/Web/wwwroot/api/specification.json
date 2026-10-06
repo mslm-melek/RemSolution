@@ -4383,6 +4383,148 @@
         }
       }
     },
+    "/api/ExpenseTypes/{id}/reset": {
+      "post": {
+        "tags": [
+          "ExpenseTypes"
+        ],
+        "operationId": "ResetExpenseType",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/ExpenseTypeTemplates": {
+      "get": {
+        "tags": [
+          "ExpenseTypeTemplates"
+        ],
+        "operationId": "GetExpenseTypeTemplates",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ExpenseTypeTemplateDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "ExpenseTypeTemplates"
+        ],
+        "operationId": "CreateExpenseTypeTemplate",
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateExpenseTypeTemplateCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/ExpenseTypeTemplates/{id}": {
+      "put": {
+        "tags": [
+          "ExpenseTypeTemplates"
+        ],
+        "operationId": "UpdateExpenseTypeTemplate",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          }
+        ],
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateExpenseTypeTemplateCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 2
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "400": {
+            "description": ""
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "ExpenseTypeTemplates"
+        ],
+        "operationId": "DeactivateExpenseTypeTemplate",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        }
+      }
+    },
     "/api/ExtraServices/by-renting/{rentingId}": {
       "get": {
         "tags": [
@@ -4622,6 +4764,148 @@
           "ExtraServiceTypes"
         ],
         "operationId": "DeactivateExtraServiceType",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/ExtraServiceTypes/{id}/reset": {
+      "post": {
+        "tags": [
+          "ExtraServiceTypes"
+        ],
+        "operationId": "ResetExtraServiceType",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/ExtraServiceTypeTemplates": {
+      "get": {
+        "tags": [
+          "ExtraServiceTypeTemplates"
+        ],
+        "operationId": "GetExtraServiceTypeTemplates",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ExtraServicesTypeTemplateDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "ExtraServiceTypeTemplates"
+        ],
+        "operationId": "CreateExtraServiceTypeTemplate",
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateExtraServicesTypeTemplateCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/ExtraServiceTypeTemplates/{id}": {
+      "put": {
+        "tags": [
+          "ExtraServiceTypeTemplates"
+        ],
+        "operationId": "UpdateExtraServiceTypeTemplate",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          }
+        ],
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateExtraServicesTypeTemplateCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 2
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "400": {
+            "description": ""
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "ExtraServiceTypeTemplates"
+        ],
+        "operationId": "DeactivateExtraServiceTypeTemplate",
         "parameters": [
           {
             "name": "id",
@@ -12687,6 +12971,12 @@
             "type": "integer",
             "format": "int32",
             "nullable": true
+          },
+          "isStandard": {
+            "type": "boolean"
+          },
+          "isCustomized": {
+            "type": "boolean"
           }
         }
       },
@@ -12713,6 +13003,87 @@
         }
       },
       "UpdateExpenseTypeCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "name": {
+            "type": "string"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "withNotif": {
+            "type": "boolean"
+          },
+          "afterKilometer": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "afterMonth": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          }
+        }
+      },
+      "ExpenseTypeTemplateDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "withNotif": {
+            "type": "boolean"
+          },
+          "afterKilometer": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "afterMonth": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          }
+        }
+      },
+      "CreateExpenseTypeTemplateCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "withNotif": {
+            "type": "boolean"
+          },
+          "afterKilometer": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "afterMonth": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          }
+        }
+      },
+      "UpdateExpenseTypeTemplateCommand": {
         "type": "object",
         "additionalProperties": false,
         "properties": {
@@ -12827,11 +13198,20 @@
             "nullable": true
           },
           "amount": {
-            "type": "number",
-            "format": "decimal",
-            "nullable": true
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/MoneyDto"
+              }
+            ]
           },
           "isActive": {
+            "type": "boolean"
+          },
+          "isStandard": {
+            "type": "boolean"
+          },
+          "isCustomized": {
             "type": "boolean"
           }
         }
@@ -12865,6 +13245,48 @@
             "type": "number",
             "format": "decimal",
             "nullable": true
+          },
+          "isActive": {
+            "type": "boolean"
+          }
+        }
+      },
+      "ExtraServicesTypeTemplateDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "isActive": {
+            "type": "boolean"
+          }
+        }
+      },
+      "CreateExtraServicesTypeTemplateCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "UpdateExtraServicesTypeTemplateCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "name": {
+            "type": "string"
           },
           "isActive": {
             "type": "boolean"

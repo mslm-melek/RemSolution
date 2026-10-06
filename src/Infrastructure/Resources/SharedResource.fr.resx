@@ -478,6 +478,12 @@
   <data name="Identity.Login.CreateOne" xml:space="preserve">
     <value>Créez-en un</value>
   </data>
+  <data name="Identity.BackToHome" xml:space="preserve">
+    <value>Retour à l'accueil</value>
+  </data>
+  <data name="Identity.ToggleTheme" xml:space="preserve">
+    <value>Changer de thème</value>
+  </data>
   <data name="Identity.Login.LockedOut" xml:space="preserve">
     <value>Ce compte est verrouillé. Veuillez réessayer plus tard.</value>
   </data>
@@ -905,28 +911,28 @@
     <value>Votre compte utilise encore le mot de passe temporaire qui vous a été envoyé par e-mail. Choisissez un nouveau mot de passe pour continuer.</value>
   </data>
   <data name="Notification.carExpenseDueByDate.Subject" xml:space="preserve">
-    <value>{{type}} à prévoir pour {{car}}</value>
+    <value>{{expenseType}} à prévoir pour {{car}}</value>
   </data>
   <data name="Notification.carExpenseDueByDate.Body" xml:space="preserve">
-    <value>{{type}} arrive à échéance pour {{car}} le {{dueDate}}, dans {{days}} jour(s).</value>
+    <value>{{expenseType}} arrive à échéance pour {{car}} le {{dueDate}}, dans {{days}} jour(s).</value>
   </data>
   <data name="Notification.carExpenseOverdueByDate.Subject" xml:space="preserve">
-    <value>{{type}} en retard pour {{car}}</value>
+    <value>{{expenseType}} en retard pour {{car}}</value>
   </data>
   <data name="Notification.carExpenseOverdueByDate.Body" xml:space="preserve">
-    <value>{{type}} était à échéance pour {{car}} le {{dueDate}}, il y a {{days}} jour(s).</value>
+    <value>{{expenseType}} était à échéance pour {{car}} le {{dueDate}}, il y a {{days}} jour(s).</value>
   </data>
   <data name="Notification.carExpenseDueByDistance.Subject" xml:space="preserve">
-    <value>{{type}} à prévoir pour {{car}}</value>
+    <value>{{expenseType}} à prévoir pour {{car}}</value>
   </data>
   <data name="Notification.carExpenseDueByDistance.Body" xml:space="preserve">
-    <value>{{type}} arrive à échéance pour {{car}} à {{dueKm}} km. Le compteur affiche {{mileage}} km — encore {{km}} km.</value>
+    <value>{{expenseType}} arrive à échéance pour {{car}} à {{dueKm}} km. Le compteur affiche {{mileage}} km — encore {{km}} km.</value>
   </data>
   <data name="Notification.carExpenseOverdueByDistance.Subject" xml:space="preserve">
-    <value>{{type}} en retard pour {{car}}</value>
+    <value>{{expenseType}} en retard pour {{car}}</value>
   </data>
   <data name="Notification.carExpenseOverdueByDistance.Body" xml:space="preserve">
-    <value>{{type}} était à échéance pour {{car}} à {{dueKm}} km. Le compteur affiche {{mileage}} km — soit {{km}} km de dépassement.</value>
+    <value>{{expenseType}} était à échéance pour {{car}} à {{dueKm}} km. Le compteur affiche {{mileage}} km — soit {{km}} km de dépassement.</value>
   </data>
   <data name="Notification.rentingOverdue.Subject" xml:space="preserve">
     <value>{{car}} n'est pas rentrée</value>
@@ -1094,5 +1100,38 @@ Merci de restituer le véhicule ou de nous contacter dans les plus brefs délais
   </data>
   <data name="Statistics.Truncated" xml:space="preserve">
     <value>La période demandée est plus longue que ce rapport ; seules les lignes les plus récentes sont affichées.</value>
+  </data>
+  <data name="CatalogItem.oilChange" xml:space="preserve">
+    <value>Vidange</value>
+  </data>
+  <data name="CatalogItem.insurance" xml:space="preserve">
+    <value>Assurance</value>
+  </data>
+  <data name="CatalogItem.roadTax" xml:space="preserve">
+    <value>Vignette</value>
+  </data>
+  <data name="CatalogItem.tyres" xml:space="preserve">
+    <value>Pneus</value>
+  </data>
+  <data name="CatalogItem.carWash" xml:space="preserve">
+    <value>Lavage</value>
+  </data>
+  <data name="CatalogItem.repair" xml:space="preserve">
+    <value>Réparation</value>
+  </data>
+  <data name="CatalogItem.gps" xml:space="preserve">
+    <value>GPS</value>
+  </data>
+  <data name="CatalogItem.babySeat" xml:space="preserve">
+    <value>Siège bébé</value>
+  </data>
+  <data name="CatalogItem.additionalDriver" xml:space="preserve">
+    <value>Conducteur additionnel</value>
+  </data>
+  <data name="CatalogItem.comprehensiveInsurance" xml:space="preserve">
+    <value>Assurance tous risques</value>
+  </data>
+  <data name="CatalogItem.portableWifi" xml:space="preserve">
+    <value>Wifi portable</value>
   </data></root>
 

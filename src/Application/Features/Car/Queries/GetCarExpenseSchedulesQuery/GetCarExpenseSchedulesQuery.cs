@@ -4,6 +4,7 @@ using RemSolution.Application.Common.Notifications;
 using RemSolution.Application.Common.Security;
 using RemSolution.Application.Common.Settings;
 using RemSolution.Application.Features.Car.DTOs;
+using RemSolution.Domain.Common;
 using RemSolution.Domain.Constants;
 
 namespace RemSolution.Application.Features.Car.Queries.GetCarExpenseSchedulesQuery
@@ -44,7 +45,13 @@ namespace RemSolution.Application.Features.Car.Queries.GetCarExpenseSchedulesQue
                 .AsNoTracking()
                 .Where(t => t.IsActive && t.WithNotif)
                 .OrderBy(t => t.Name)
-                .Select(t => new { t.Id, t.Name, t.AfterMonth, t.AfterKilometer })
+                .Select(t => new
+                {
+                    t.Id,
+                    t.Name,
+                    t.AfterMonth,
+                    t.AfterKilometer,
+                })
                 .ToListAsync(cancellationToken);
 
             if (types.Count == 0)

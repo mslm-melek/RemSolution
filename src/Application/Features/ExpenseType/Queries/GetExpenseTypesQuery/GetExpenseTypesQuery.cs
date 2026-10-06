@@ -5,9 +5,9 @@ using RemSolution.Domain.Constants;
 
 namespace RemSolution.Application.Features.ExpenseType.Queries.GetExpenseTypesQuery
 {
-    // Readable by any authenticated user whose agency has the Expenses feature;
-    // management is admin-only above. The platform admin has no tenant, so the
-    // gate passes.
+    // The agency's own catalog (its copies of the platform's templates plus what
+    // it added), readable by any of its users with the Expenses feature — staff
+    // pick a type when booking a cost. Management is admin-only.
     [RequiresFeature(FeatureFlags.Expenses)]
     public record GetExpenseTypesQuery(bool OnlyActive = false) : IRequest<IList<ExpenseTypeDto>>;
 

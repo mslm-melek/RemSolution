@@ -14,6 +14,7 @@ import { applyListFilters, boolParam } from '../shared/list-filters';
 import { AuthService } from '../shared/auth.service';
 import { PaymentDialogComponent, PaymentDialogData } from '../shared/payment-dialog.component';
 import { TranslocoService } from '@jsverse/transloco';
+import { catalogName } from '../shared/catalog-name.pipe';
 
 // One expense row as the payable tab renders it. Two queries can fill it (see
 // loadExpenses): the expense register for whoever manages expenses, and the
@@ -367,7 +368,7 @@ export class CreditComponent implements OnInit {
 
     this.openMoneyDialog({
       target: { kind: 'expense', id: row.expenseId },
-      subtitle: [row.carMatricule, row.expenseTypeName].filter(Boolean).join(' — '),
+      subtitle: [row.carMatricule, catalogName(this.transloco, row.expenseTypeName)].filter(Boolean).join(' — '),
       outstanding: row.outstanding?.amount,
       currency: row.outstanding?.currency ?? this.summary?.currency
     }, () => {

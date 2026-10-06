@@ -273,6 +273,10 @@ public static class DependencyInjection
         // interceptor (see the interface). The daily retention sweep that uses it
         // is registered as a job below.
         builder.Services.AddScoped<IPersonalDataErasureStore, PersonalDataErasureStore>();
+
+        // The one writer of catalog copies into agencies other than the caller's
+        // (see the interface).
+        builder.Services.AddScoped<ICatalogTemplateCopier, CatalogTemplateCopier>();
         builder.Services.AddScoped<PersonalDataPurgeJob>();
 
         // Notifications. The renderer is scoped because it localizes through the

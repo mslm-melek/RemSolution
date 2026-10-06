@@ -1,6 +1,9 @@
 <div class="page et-card" *transloco="let t">
   <div class="header-row">
-    <h2 class="title">{{ t('expenseType.title') }}</h2>
+    <div>
+      <h2 class="title">{{ platformMode ? t('expenseType.titlePlatform') : t('expenseType.title') }}</h2>
+      <p class="page-subtitle">{{ platformMode ? t('catalog.platformHint') : t('catalog.agencyHint') }}</p>
+    </div>
   </div>
 
   <div *ngIf="errorMessage" class="error-banner">
@@ -9,8 +12,10 @@
 
   <div class="inline-add">
     <mat-form-field appearance="outline">
-      <mat-label>{{ t('common.name') }}</mat-label>
-      <input matInput [(ngModel)]="name" [placeholder]="t('expenseType.namePlaceholder')" />
+      <mat-label>{{ platformMode ? t('catalog.key') : t('common.name') }}</mat-label>
+      <input matInput [(ngModel)]="name" [dir]="platformMode ? 'ltr' : 'auto'"
+             [placeholder]="platformMode ? t('catalog.keyPlaceholder') : t('expenseType.namePlaceholder')" />
+      <mat-hint *ngIf="platformMode">{{ name ? (name | catalogName) : t('catalog.keyHint') }}</mat-hint>
     </mat-form-field>
     <mat-form-field appearance="outline">
       <mat-label>{{ t('expenseType.afterKm') }}</mat-label>
@@ -28,12 +33,19 @@
     <button mat-stroked-button *ngIf="editingId" (click)="resetForm()">{{ t('common.cancel') }}</button>
   </div>
 
+  <p class="muted edit-note" *ngIf="editingStandard">{{ t('expenseType.customizeNote') }}</p>
+
   <!-- Row variable is `type`, not `t`: `t` is the transloco accessor above. -->
   <!-- The API returns the whole catalog, so the sort runs on the client. -->
   <table mat-table [dataSource]="dataSource" class="data-table full-width" matSort matSortDisableClear>
     <ng-container matColumnDef="name">
       <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ t('common.name') }}</th>
-      <td mat-cell *matCellDef="let type"><span class="cell-main">{{ type.name }}</span></td>
+      <td mat-cell *matCellDef="let type">
+        <span class="cell-main">{{ type.name | catalogName }}</span>
+        <code class="muted catalog-key" *ngIf="platformMode">{{ type.name }}</code>
+        <span class="chip info no-dot origin" *ngIf="isStandard(type) && !isCustomized(type)">{{ t('catalog.standard') }}</span>
+        <span class="chip neutral no-dot origin" *ngIf="isCustomized(type)">{{ t('catalog.customized') }}</span>
+      </td>
     </ng-container>
 
     <ng-container matColumnDef="schedule">
@@ -64,6 +76,10 @@
       <td mat-cell *matCellDef="let type" class="actions-cell row-actions">
         <button mat-icon-button color="primary" (click)="edit(type)" [attr.aria-label]="t('common.edit')">
           <mat-icon>edit</mat-icon>
+        </button>
+        <button mat-icon-button *ngIf="isCustomized(type)" (click)="reset(type)"
+                [attr.aria-label]="t('catalog.reset')" [matTooltip]="t('catalog.reset')">
+          <mat-icon>settings_backup_restore</mat-icon>
         </button>
         <button mat-icon-button color="warn" *ngIf="type.isActive" (click)="deactivate(type)"
                 [attr.aria-label]="t('common.deactivate')">

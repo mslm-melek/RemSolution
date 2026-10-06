@@ -1,4 +1,5 @@
 using RemSolution.Application.Common.Models;
+using RemSolution.Domain.Common;
 
 namespace RemSolution.Application.Features.ExtraService.DTOs
 {

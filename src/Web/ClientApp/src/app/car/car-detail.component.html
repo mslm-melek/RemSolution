@@ -253,7 +253,7 @@
             <span class="expense-ico"><mat-icon>build_circle</mat-icon></span>
             <div class="expense-what">
               <div class="expense-name">
-                {{ row.schedule.expenseTypeName }}
+                {{ row.schedule.expenseTypeName | catalogName }}
                 <span class="chip" *ngIf="row.schedule.hasOwnInterval">{{ t('car.schedule.ownRule') }}</span>
               </div>
               <div class="expense-sub">
@@ -356,7 +356,7 @@
           <div class="expense" *ngFor="let expense of overview?.expenses">
             <span class="expense-ico"><mat-icon>build</mat-icon></span>
             <div class="expense-what">
-              <div class="expense-name">{{ expense.typeName }}</div>
+              <div class="expense-name">{{ expense.typeName | catalogName }}</div>
               <div class="expense-sub">
                 <span *ngIf="expense.description">{{ expense.description }} · </span>
                 {{ expense.expenseDate | date:'dd MMM yyyy':'UTC' }}

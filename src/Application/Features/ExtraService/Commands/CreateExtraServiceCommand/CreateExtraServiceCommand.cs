@@ -42,7 +42,7 @@ namespace RemSolution.Application.Features.ExtraService.Commands.CreateExtraServ
 
             Guard.Against.NotFound(request.ExtraServicesTypeId, type);
 
-            var amount = request.Amount ?? type.Amount;
+            var amount = request.Amount ?? type.Amount?.Amount;
             if (amount is not decimal value)
             {
                 throw new ValidationException(new[]

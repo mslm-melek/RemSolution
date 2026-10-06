@@ -478,6 +478,12 @@
   <data name="Identity.Login.CreateOne" xml:space="preserve">
     <value>Create one</value>
   </data>
+  <data name="Identity.BackToHome" xml:space="preserve">
+    <value>Back to home</value>
+  </data>
+  <data name="Identity.ToggleTheme" xml:space="preserve">
+    <value>Switch theme</value>
+  </data>
   <data name="Identity.Login.LockedOut" xml:space="preserve">
     <value>This account is locked out. Please try again later.</value>
   </data>
@@ -907,28 +913,28 @@
     <value>Your account is still using the temporary password that was emailed to you. Choose a new password to continue.</value>
   </data>
   <data name="Notification.carExpenseDueByDate.Subject" xml:space="preserve">
-    <value>{{type}} due for {{car}}</value>
+    <value>{{expenseType}} due for {{car}}</value>
   </data>
   <data name="Notification.carExpenseDueByDate.Body" xml:space="preserve">
-    <value>{{type}} is due for {{car}} on {{dueDate}}, in {{days}} day(s).</value>
+    <value>{{expenseType}} is due for {{car}} on {{dueDate}}, in {{days}} day(s).</value>
   </data>
   <data name="Notification.carExpenseOverdueByDate.Subject" xml:space="preserve">
-    <value>{{type}} overdue for {{car}}</value>
+    <value>{{expenseType}} overdue for {{car}}</value>
   </data>
   <data name="Notification.carExpenseOverdueByDate.Body" xml:space="preserve">
-    <value>{{type}} was due for {{car}} on {{dueDate}}, {{days}} day(s) ago.</value>
+    <value>{{expenseType}} was due for {{car}} on {{dueDate}}, {{days}} day(s) ago.</value>
   </data>
   <data name="Notification.carExpenseDueByDistance.Subject" xml:space="preserve">
-    <value>{{type}} due for {{car}}</value>
+    <value>{{expenseType}} due for {{car}}</value>
   </data>
   <data name="Notification.carExpenseDueByDistance.Body" xml:space="preserve">
-    <value>{{type}} is due for {{car}} at {{dueKm}} km. The odometer reads {{mileage}} km — {{km}} km to go.</value>
+    <value>{{expenseType}} is due for {{car}} at {{dueKm}} km. The odometer reads {{mileage}} km — {{km}} km to go.</value>
   </data>
   <data name="Notification.carExpenseOverdueByDistance.Subject" xml:space="preserve">
-    <value>{{type}} overdue for {{car}}</value>
+    <value>{{expenseType}} overdue for {{car}}</value>
   </data>
   <data name="Notification.carExpenseOverdueByDistance.Body" xml:space="preserve">
-    <value>{{type}} was due for {{car}} at {{dueKm}} km. The odometer reads {{mileage}} km — {{km}} km past due.</value>
+    <value>{{expenseType}} was due for {{car}} at {{dueKm}} km. The odometer reads {{mileage}} km — {{km}} km past due.</value>
   </data>
   <data name="Notification.rentingOverdue.Subject" xml:space="preserve">
     <value>{{car}} has not come back</value>
@@ -1096,5 +1102,38 @@ Please return the vehicle or contact us as soon as possible.</value>
   </data>
   <data name="Statistics.Truncated" xml:space="preserve">
     <value>The period was longer than this report shows; only the most recent rows are listed.</value>
+  </data>
+  <data name="CatalogItem.oilChange" xml:space="preserve">
+    <value>Oil change</value>
+  </data>
+  <data name="CatalogItem.insurance" xml:space="preserve">
+    <value>Insurance</value>
+  </data>
+  <data name="CatalogItem.roadTax" xml:space="preserve">
+    <value>Road tax</value>
+  </data>
+  <data name="CatalogItem.tyres" xml:space="preserve">
+    <value>Tyres</value>
+  </data>
+  <data name="CatalogItem.carWash" xml:space="preserve">
+    <value>Car wash</value>
+  </data>
+  <data name="CatalogItem.repair" xml:space="preserve">
+    <value>Repair</value>
+  </data>
+  <data name="CatalogItem.gps" xml:space="preserve">
+    <value>GPS</value>
+  </data>
+  <data name="CatalogItem.babySeat" xml:space="preserve">
+    <value>Baby seat</value>
+  </data>
+  <data name="CatalogItem.additionalDriver" xml:space="preserve">
+    <value>Additional driver</value>
+  </data>
+  <data name="CatalogItem.comprehensiveInsurance" xml:space="preserve">
+    <value>Comprehensive insurance</value>
+  </data>
+  <data name="CatalogItem.portableWifi" xml:space="preserve">
+    <value>Portable Wi-Fi</value>
   </data></root>
 

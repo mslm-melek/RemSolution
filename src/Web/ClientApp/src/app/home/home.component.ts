@@ -14,16 +14,10 @@ import { HomeAgendaComponent } from './home-agenda.component';
 import {
   BrandsClient, CarsClient, ChatClient, ClientsClient, CreditsClient,
   CurrentUserDto, DashboardClient, DocumentTemplatesClient, ExpenseDueBasis,
-  ExpenseTypesClient, ExpensesClient, ExtraServiceTypesClient, MarketplaceCarDto,
-  MarketplaceClient, ModelCarsClient, RentingState, RentingsClient, ReservationDto,
+  ExpenseTypesClient, ExpensesClient, ExtraServiceTypesClient, ModelCarsClient, RentingState, RentingsClient, ReservationDto,
   TodayDto, TodayExpenseCarDto, TodayExpenseGroupDto, TodayRequestDto,
   UpdateMyHomeWidgetsCommand, UsersClient
 } from '../web-api-client';
-
-// How long each car stays on screen in the home-page slideshow.
-const SLIDE_INTERVAL_MS = 6_000;
-// Slides in the shop window. More than this and nobody reaches the end.
-const SHOWCASE_SIZE = 8;
 
 // How often the "updated N minutes ago" line is redrawn. The figures on this
 // screen go stale the moment a colleague hands a car over, and a page that
@@ -69,14 +63,6 @@ export class HomeComponent implements OnInit, OnDestroy {
   isPlatformAdmin = false;
   isCustomer = false;
   displayName: string | null | undefined;
-
-  // Shop-window slideshow, shown to visitors and customers (staff get their day
-  // instead). Cars come from the public marketplace, so an anonymous visitor can
-  // see them before signing in.
-  showcase: MarketplaceCarDto[] = [];
-  slide = 0;
-  private autoplay?: Subscription;
-  private showcaseRequested = false;
 
   // --- The customer's home --------------------------------------------------
 
@@ -145,8 +131,7 @@ export class HomeComponent implements OnInit, OnDestroy {
     private chatClient: ChatClient,
     private documentTemplatesClient: DocumentTemplatesClient,
     private modelCarsClient: ModelCarsClient,
-    private brandsClient: BrandsClient,
-    private marketplaceClient: MarketplaceClient
+    private brandsClient: BrandsClient
   ) { }
 
   ngOnInit() {
@@ -159,16 +144,9 @@ export class HomeComponent implements OnInit, OnDestroy {
       this.isCustomer = AuthService.isCustomer(user);
       this.displayName = user.fullName || user.userName;
 
-      // Customers get a shop front, not the desk's day (and none of the staff
-      // calls, which they aren't authorized for).
-      if (!this.isAuthenticated || this.isCustomer) {
-        // A customer has the search itself on the screen and it loads its own
-        // cars, so there is nothing for this component to fetch. The slideshow
-        // is the visitor's, who has no search here — for a customer it would
-        // only be a second, smaller list of the same cars.
-        if (!this.isCustomer) this.loadShowcase();
-        return;
-      }
+      // Visitors get PublicHomeComponent and customers the search, both of which
+      // load their own cars — and neither may call the staff endpoints.
+      if (!this.isAuthenticated || this.isCustomer) return;
 
       // The platform admin's landing screen IS the console dashboard, rendered
       // straight into the home route — so nothing else to set up here.
@@ -179,7 +157,6 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
-    this.autoplay?.unsubscribe();
     this.ticker?.unsubscribe();
     this.branchSubscription?.unsubscribe();
     // The picker in the app bar is drawn from what this screen published, so it
@@ -544,45 +521,6 @@ export class HomeComponent implements OnInit, OnDestroy {
         this.saveError =
           extractValidationErrors(err) ?? this.transloco.translate('home.widgetsSaveFailed');
       }
-    });
-  }
-
-  // --- Slideshow ------------------------------------------------------------
-
-  // Advancing on a click also stops the timer: a card must not slide away from
-  // under someone who has taken control of the slideshow.
-  prevSlide() {
-    this.autoplay?.unsubscribe();
-    this.slide = (this.slide - 1 + this.showcase.length) % this.showcase.length;
-  }
-
-  nextSlide() {
-    this.autoplay?.unsubscribe();
-    this.slide = (this.slide + 1) % this.showcase.length;
-  }
-
-  goToSlide(index: number) {
-    this.autoplay?.unsubscribe();
-    this.slide = index;
-  }
-
-  private loadShowcase() {
-    // currentUser$ can emit more than once; the slideshow is loaded once.
-    if (this.showcaseRequested) {
-      return;
-    }
-    this.showcaseRequested = true;
-
-    this.marketplaceClient.getShowcaseCars(SHOWCASE_SIZE).subscribe({
-      next: cars => {
-        this.showcase = cars || [];
-        if (this.showcase.length > 1) {
-          this.autoplay = timer(SLIDE_INTERVAL_MS, SLIDE_INTERVAL_MS)
-            .subscribe(() => this.slide = (this.slide + 1) % this.showcase.length);
-        }
-      },
-      // An empty shop window is not worth an error banner on the landing page.
-      error: err => console.error(err)
     });
   }
 }

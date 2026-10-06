@@ -67,7 +67,7 @@ public sealed class NotificationTextRenderer
     /// literal braces: a sentence with a gap in it still reads, a sentence with
     /// "{{clientName}}" in the middle looks broken to the customer receiving it.
     /// </remarks>
-    private static string Substitute(
+    private string Substitute(
         string template, IReadOnlyDictionary<string, string> args, CultureInfo culture) =>
         Placeholder.Replace(template, match =>
         {
@@ -78,8 +78,14 @@ public sealed class NotificationTextRenderer
                 return string.Empty;
             }
 
-            return name.EndsWith(NotificationArgs.DateSuffix, StringComparison.Ordinal)
-                ? FormatDate(value, culture)
+            if (name.EndsWith(NotificationArgs.DateSuffix, StringComparison.Ordinal))
+            {
+                return FormatDate(value, culture);
+            }
+
+            // Render has already switched to the reader's culture.
+            return name.EndsWith(NotificationArgs.CatalogNameSuffix, StringComparison.Ordinal)
+                ? _localizer.CatalogName(value) ?? value
                 : value;
         });
 

@@ -107,7 +107,7 @@ export class NotificationComponent implements OnInit {
   text(notification: NotificationDto): string {
     return this.transloco.translate(
       notificationMessageKey(notification),
-      notificationArgs(notification, this.locale));
+      notificationArgs(notification, this.locale, this.transloco));
   }
 
   /**

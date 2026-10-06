@@ -1,5 +1,6 @@
 import { Component, OnInit, ViewChild, inject } from '@angular/core';
 import { PageEvent } from '@angular/material/paginator';
+import { ActivatedRoute } from '@angular/router';
 import {
   MarketplaceClient, MarketplaceCarDto, MarketplaceDestinationDto,
   MarketplaceMapPointDto, MarketplacePlaceDto
@@ -9,6 +10,11 @@ import { TranslocoService } from '@jsverse/transloco';
 import { MapBounds, MarketplaceMapComponent } from './marketplace-map.component';
 
 export type SearchView = 'list' | 'map';
+
+function toId(value: string | null): number | null {
+  const id = Number(value);
+  return value && Number.isInteger(id) && id > 0 ? id : null;
+}
 
 @Component({
   selector: 'app-marketplace-search',
@@ -52,7 +58,7 @@ export class MarketplaceSearchComponent implements OnInit {
   // narrowing their results.
   private bounds: MapBounds | null = null;
 
-  constructor(private client: MarketplaceClient) { }
+  constructor(private client: MarketplaceClient, private route: ActivatedRoute) { }
 
   ngOnInit() {
     // Sensible default window: tomorrow for 3 days.
@@ -63,6 +69,16 @@ export class MarketplaceSearchComponent implements OnInit {
     this.startDate = toDateInput(start);
     this.endDate = toDateInput(end);
 
+    // The public home's search bar and departures board hand their search over
+    // in the URL (see PublicHomeComponent).
+    const params = this.route.snapshot.queryParamMap;
+    this.countryId = toId(params.get('country'));
+    this.branchId = toId(params.get('branch'));
+    if (params.get('from') && params.get('to')) {
+      this.startDate = params.get('from')!;
+      this.endDate = params.get('to')!;
+    }
+
     this.client.getDestinations().subscribe({
       next: destinations => this.destinations = destinations || [],
       // The picker is an aid, not the search: losing it must not block browsing.
@@ -70,6 +86,7 @@ export class MarketplaceSearchComponent implements OnInit {
     });
 
     this.search();
+    if (params.get('view') === 'map') this.setView('map');
   }
 
   // Places offered for the chosen country; with no country chosen, every place,

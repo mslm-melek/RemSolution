@@ -1,5 +1,6 @@
 using RemSolution.Application.Common.Exceptions;
 using RemSolution.Application.Features.ExpenseType.Commands.CreateExpenseTypeCommand;
+using RemSolution.Application.Features.ExpenseTypeTemplate.Commands.CreateExpenseTypeTemplateCommand;
 using RemSolution.Domain.Constants;
 using RemSolution.Domain.Entities;
 
@@ -13,7 +14,7 @@ public class ManageExpenseTypeTests : BaseTestFixture
     public async Task RegularStaffCannotManageTheCatalog()
     {
         // Staff even holding the operational Expense permission may not manage
-        // the global type catalog.
+        // the agency's type catalog.
         await RunAsAgencyStaffAsync(Permissions.ExpenseCreate);
         await AddTestAgencyAsync();
 
@@ -30,7 +31,10 @@ public class ManageExpenseTypeTests : BaseTestFixture
 
         var id = await SendAsync(new CreateExpenseTypeCommand { Name = "Oil change", AfterKilometer = 10000 });
 
-        (await FindAsync<ExpenseType>(id))!.Name.Should().Be("Oil change");
+        var type = await FindAsync<ExpenseType>(id);
+        type!.Name.Should().Be("Oil change");
+        type.AgencyId.Should().Be(GetAgencyId());
+        type.TemplateId.Should().BeNull();
     }
 
     [Test]
@@ -47,13 +51,13 @@ public class ManageExpenseTypeTests : BaseTestFixture
     }
 
     [Test]
-    public async Task PlatformAdministratorCanManageTheCatalog()
+    public async Task PlatformAdministratorManagesTheStandardTypesAsTemplates()
     {
-        // The app admin manages the global catalog directly — no agency/tenant.
+        // The app admin has no agency: what it offers everyone is a template.
         await RunAsPlatformAdministratorAsync();
 
-        var id = await SendAsync(new CreateExpenseTypeCommand { Name = "Insurance", AfterMonth = 12 });
+        var id = await SendAsync(new CreateExpenseTypeTemplateCommand { Name = "Insurance", AfterMonth = 12 });
 
-        (await FindAsync<ExpenseType>(id))!.Name.Should().Be("Insurance");
+        (await FindAsync<ExpenseTypeTemplate>(id))!.Name.Should().Be("Insurance");
     }
 }

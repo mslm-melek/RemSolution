@@ -11,21 +11,25 @@
     <div asp-validation-summary="ModelOnly" class="validation-summary-errors"></div>
 
     <div class="form-group">
-        <label asp-for="Input.Email">@L["Identity.Field.Email"]</label>
-        <input asp-for="Input.Email" autocomplete="username" autofocus placeholder="you@example.com" />
+        <div class="field">
+            <label asp-for="Input.Email">@L["Identity.Field.Email"]</label>
+            <input asp-for="Input.Email" autocomplete="username" autofocus placeholder="you@example.com" />
+        </div>
         <span asp-validation-for="Input.Email" class="field-validation-error"></span>
     </div>
 
     <div class="form-group">
-        <label asp-for="Input.Password">@L["Identity.Field.Password"]</label>
-        <input asp-for="Input.Password" autocomplete="current-password" placeholder="••••••••" />
+        <div class="field">
+            <label asp-for="Input.Password">@L["Identity.Field.Password"]</label>
+            <input asp-for="Input.Password" autocomplete="current-password" placeholder="••••••••" />
+        </div>
         <span asp-validation-for="Input.Password" class="field-validation-error"></span>
     </div>
 
-    <div class="checkbox-row">
+    <label class="check">
         <input asp-for="Input.RememberMe" />
-        <label asp-for="Input.RememberMe" style="margin: 0; font-weight: 400;">@L["Identity.Field.RememberMe"]</label>
-    </div>
+        @L["Identity.Field.RememberMe"]
+    </label>
 
     <button type="submit" class="btn-primary">@L["Identity.Login.Submit"]</button>
 

@@ -1,4 +1,5 @@
 using RemSolution.Application.Common.Models;
+using RemSolution.Domain.Common;
 
 namespace RemSolution.Application.Features.Expense.DTOs
 {
@@ -38,7 +39,8 @@ namespace RemSolution.Application.Features.Expense.DTOs
                            src => src.FactureFile != null ? src.FactureFile.OriginalFileName : null)
                       .Map(dest => dest.CarModelName,
                            src => src.Car != null && src.Car.Model != null ? src.Car.Model.Name : null)
-                      .Map(dest => dest.ExpenseTypeName, src => src.ExpenseType != null ? src.ExpenseType.Name : null)
+                      .Map(dest => dest.ExpenseTypeName,
+                           src => src.ExpenseType != null ? src.ExpenseType.Name : null)
                       // Projected in SQL, so it is expressed over the owned
                       // columns rather than through a Money method call.
                       .Map(dest => dest.Outstanding,

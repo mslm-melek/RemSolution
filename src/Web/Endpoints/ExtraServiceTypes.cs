@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using RemSolution.Domain.Constants;
 using RemSolution.Application.Features.ExtraServicesType.Commands.CreateExtraServicesTypeCommand;
 using RemSolution.Application.Features.ExtraServicesType.Commands.DeactivateExtraServicesTypeCommand;
+using RemSolution.Application.Features.ExtraServicesType.Commands.ResetExtraServicesTypeCommand;
 using RemSolution.Application.Features.ExtraServicesType.Commands.UpdateExtraServicesTypeCommand;
 using RemSolution.Application.Features.ExtraServicesType.DTOs;
 using RemSolution.Application.Features.ExtraServicesType.Queries.GetExtraServicesTypesQuery;
@@ -16,12 +17,21 @@ public class ExtraServiceTypes : EndpointGroupBase
             .RequireAuthorization();
 
         group
-            // Read is open to any authenticated user (staff pick a type); managing
-            // the catalog is restricted to agency/platform administrators.
+            // The agency's own catalog. Read is open to its users (staff pick a
+            // type); managing it is for its administrator, or the platform
+            // administrator inside its workspace. The platform-wide entries are
+            // ExtraServiceTypeTemplates.
             .MapGet(GetExtraServiceTypes)
             .MapPost(CreateExtraServiceType, policy: Policies.AgencyOrPlatformAdmin)
             .MapPut(UpdateExtraServiceType, "{id}", Policies.AgencyOrPlatformAdmin)
-            .MapDelete(DeactivateExtraServiceType, "{id}", Policies.AgencyOrPlatformAdmin);
+            .MapDelete(DeactivateExtraServiceType, "{id}", Policies.AgencyOrPlatformAdmin)
+            .MapPost(ResetExtraServiceType, "{id}/reset", Policies.AgencyOrPlatformAdmin);
+    }
+
+    public async Task<NoContent> ResetExtraServiceType(ISender sender, int id)
+    {
+        await sender.Send(new ResetExtraServicesTypeCommand(id));
+        return TypedResults.NoContent();
     }
 
     public async Task<Ok<IList<ExtraServicesTypeDto>>> GetExtraServiceTypes(

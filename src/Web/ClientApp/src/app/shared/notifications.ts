@@ -1,5 +1,7 @@
 import { formatDate } from '@angular/common';
+import { TranslocoService } from '@jsverse/transloco';
 import { NotificationDto, NotificationKind } from '../web-api-client';
+import { catalogName } from './catalog-name.pipe';
 
 // How a notification looks and reads. Mirrors the server's Domain enums — the
 // kind decides the icon and the colour, and the row's own messageKey decides the
@@ -57,18 +59,25 @@ export function notificationMessageKey(notification: NotificationDto): string {
  * formatting to whoever renders (the mail composer does the same thing on its
  * side). Anything named with a `Date` suffix is therefore formatted here, in the
  * user's locale.
+ *
+ * Likewise, anything named with a `Type` suffix is a catalog name — a translation
+ * key or the agency's own words — and goes through `catalogName`.
  */
 export function notificationArgs(
-  notification: NotificationDto, locale: string): Record<string, string> {
+  notification: NotificationDto, locale: string, transloco: TranslocoService): Record<string, string> {
   const args = notification.args ?? {};
   const formatted: Record<string, string> = {};
 
   for (const name of Object.keys(args)) {
     const value = args[name];
 
-    formatted[name] = name.endsWith('Date') && value
-      ? formatDateArg(value, locale)
-      : value;
+    if (name.endsWith('Date') && value) {
+      formatted[name] = formatDateArg(value, locale);
+    } else if (name.endsWith('Type') && value) {
+      formatted[name] = catalogName(transloco, value);
+    } else {
+      formatted[name] = value;
+    }
   }
 
   return formatted;

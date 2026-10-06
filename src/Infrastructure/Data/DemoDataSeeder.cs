@@ -68,6 +68,7 @@ public class DemoDataSeeder
     private readonly RoleManager<IdentityRole> _roleManager;
     private readonly IPricingService _pricing;
     private readonly IRentalDocumentService _documents;
+    private readonly ICatalogTemplateCopier _catalog;
     private readonly TimeProvider _dateTime;
     private readonly ILogger<DemoDataSeeder> _logger;
 
@@ -77,6 +78,7 @@ public class DemoDataSeeder
         RoleManager<IdentityRole> roleManager,
         IPricingService pricing,
         IRentalDocumentService documents,
+        ICatalogTemplateCopier catalog,
         TimeProvider dateTime,
         ILogger<DemoDataSeeder> logger)
     {
@@ -85,6 +87,7 @@ public class DemoDataSeeder
         _roleManager = roleManager;
         _pricing = pricing;
         _documents = documents;
+        _catalog = catalog;
         _dateTime = dateTime;
         _logger = logger;
     }
@@ -118,11 +121,12 @@ public class DemoDataSeeder
         // empty database (which is also what makes it testable in isolation).
         await EnsureRolesAsync();
 
-        // Global reference data first: brands, models and the type catalogs are
-        // shared by every agency and carry no tenant.
+        // Global reference data first: brands and models are shared by every
+        // agency; the type catalogs are templates each agency gets its own copy
+        // of when it is created (SeedAgencyAsync).
         var models = await SeedCarCatalogAsync(cancellationToken);
-        var extras = await SeedExtraServiceTypesAsync(cancellationToken);
-        await SeedExpenseTypesAsync(cancellationToken);
+        await SeedExtraServiceTypeTemplatesAsync(cancellationToken);
+        await SeedExpenseTypeTemplatesAsync(cancellationToken);
         await SeedExchangeRatesAsync(cancellationToken);
 
         var tunisia = await CountryAsync("Tunisie", cancellationToken);
@@ -153,7 +157,7 @@ public class DemoDataSeeder
 
         using (ActAs(carthage))
         {
-            await SeedCarthageAsync(carthage, tunisia, models, extras, cancellationToken);
+            await SeedCarthageAsync(carthage, tunisia, models, cancellationToken);
         }
 
         // ---- Agency 2: Starter plan, so Payments/ExtraServices/Contracts/Factures
@@ -176,8 +180,8 @@ public class DemoDataSeeder
         // platform dashboard) show prices that must not be added together — and
         // each spreads its branches over more than one city, so the map and the
         // "pick-up place" filters have something to work with. ----
-        await SeedAtlasAsync(models, extras, full, cancellationToken);
-        await SeedRivieraAsync(models, extras, full, cancellationToken);
+        await SeedAtlasAsync(models, full, cancellationToken);
+        await SeedRivieraAsync(models, full, cancellationToken);
         await SeedGulfDriveAsync(models, starter, cancellationToken);
 
         // A marketplace customer: no agency, browses across agencies.
@@ -196,9 +200,19 @@ public class DemoDataSeeder
         Agency agency,
         Country country,
         IReadOnlyDictionary<string, ModelCar> models,
-        IReadOnlyList<ExtraServicesType> extras,
         CancellationToken cancellationToken)
     {
+        var extras = await PriceExtrasAsync(new[] { 25m, 40m, 60m, 90m, 30m }, cancellationToken);
+
+        // One add-on of the agency's own, beside the platform's standard ones. Not
+        // a translation key, so it reads as typed in every language.
+        _context.ExtraServicesTypes.Add(new ExtraServicesType
+        {
+            Name = "Livraison à l'hôtel",
+            Amount = Money.Of(35m, _currency),
+            IsActive = true
+        });
+
         var centre = Branch("Agence Tunis Centre", country,
             "12 avenue Habib Bourguiba, Tunis", 36.7996, 10.1815);
 
@@ -509,7 +523,11 @@ public class DemoDataSeeder
 
     private async Task SeedExpensesAsync(IReadOnlyList<Car> cars, CancellationToken cancellationToken)
     {
-        var types = await _context.ExpenseTypes.OrderBy(t => t.Id).ToListAsync(cancellationToken);
+        // The agency's copies, in the templates' order (SeedExpenseTypeTemplatesAsync).
+        var types = await _context.ExpenseTypes
+            .Where(t => t.TemplateId != null)
+            .OrderBy(t => t.TemplateId)
+            .ToListAsync(cancellationToken);
 
         if (types.Count == 0)
         {
@@ -695,7 +713,6 @@ public class DemoDataSeeder
     /// </summary>
     private async Task SeedAtlasAsync(
         IReadOnlyDictionary<string, ModelCar> models,
-        IReadOnlyList<ExtraServicesType> extras,
         SubscriptionPlan plan,
         CancellationToken cancellationToken)
     {
@@ -710,6 +727,8 @@ public class DemoDataSeeder
 
         // Everything below belongs to this agency and is priced in dirhams.
         using var acting = ActAs(agency);
+
+        var extras = await PriceExtrasAsync(new[] { 90m, 140m, 200m, 320m, 100m }, cancellationToken);
 
         var anfa = Branch("Agence Casablanca Anfa", morocco,
             "45 boulevard d'Anfa, Casablanca", 33.5883, -7.6114);
@@ -776,14 +795,12 @@ public class DemoDataSeeder
 
         await _context.SaveChangesAsync(cancellationToken);
 
-        // Amounts are given explicitly rather than taken from the type's list
-        // price: ExtraServicesType carries a bare number with no currency, and
-        // this agency's dirhams are not the dinars that number was written in.
+        // At the agency's own list prices, in dirhams (PriceExtrasAsync above).
         _context.ExtraServices.AddRange(
-            Extra(rentings[1], extras[0], 90m),
-            Extra(rentings[1], extras[3], 320m),
-            Extra(rentings[3], extras[1], 140m),
-            Extra(rentings[5], extras[2], 200m));
+            Extra(rentings[1], extras[0]),
+            Extra(rentings[1], extras[3]),
+            Extra(rentings[3], extras[1]),
+            Extra(rentings[5], extras[2]));
 
         await _context.SaveChangesAsync(cancellationToken);
 
@@ -817,7 +834,6 @@ public class DemoDataSeeder
     /// </summary>
     private async Task SeedRivieraAsync(
         IReadOnlyDictionary<string, ModelCar> models,
-        IReadOnlyList<ExtraServicesType> extras,
         SubscriptionPlan plan,
         CancellationToken cancellationToken)
     {
@@ -831,6 +847,8 @@ public class DemoDataSeeder
         await SeedUserAsync("admin@riviera.fr", "Camille Rousseau", Roles.AgencyAdministrator, agency.Id);
 
         using var acting = ActAs(agency);
+
+        var extras = await PriceExtrasAsync(new[] { 9m, 14m, 22m, 28m, 10m }, cancellationToken);
 
         var promenade = Branch("Agence Nice Promenade", france,
             "18 promenade des Anglais, Nice", 43.6952, 7.2650);
@@ -895,10 +913,10 @@ public class DemoDataSeeder
         await _context.SaveChangesAsync(cancellationToken);
 
         _context.ExtraServices.AddRange(
-            Extra(rentings[0], extras[3], 28m),
-            Extra(rentings[2], extras[0], 9m),
-            Extra(rentings[2], extras[1], 14m),
-            Extra(rentings[6], extras[2], 22m));
+            Extra(rentings[0], extras[3]),
+            Extra(rentings[2], extras[0]),
+            Extra(rentings[2], extras[1]),
+            Extra(rentings[6], extras[2]));
 
         await _context.SaveChangesAsync(cancellationToken);
 
@@ -1051,57 +1069,48 @@ public class DemoDataSeeder
         return models;
     }
 
-    private async Task<IReadOnlyList<ExtraServicesType>> SeedExtraServiceTypesAsync(
-        CancellationToken cancellationToken)
+    // Saved one at a time so the ids follow this order, which is the order the
+    // agencies' copies are read back in (PriceExtrasAsync, SeedExpensesAsync).
+    private async Task SeedExtraServiceTypeTemplatesAsync(CancellationToken cancellationToken)
     {
-        var wanted = new (string Name, decimal Amount)[]
+        // Translation keys (catalogItems.* in the SPA, CatalogItem.* in the resx).
+        var wanted = new[] { "gps", "babySeat", "additionalDriver", "comprehensiveInsurance", "portableWifi" };
+
+        foreach (var name in wanted)
         {
-            ("GPS", 25m),
-            ("Siège bébé", 40m),
-            ("Conducteur additionnel", 60m),
-            ("Assurance tous risques", 90m),
-            ("Wifi portable", 30m),
-        };
-
-        var types = new List<ExtraServicesType>();
-
-        foreach (var (name, amount) in wanted)
-        {
-            var type = await _context.ExtraServicesTypes.FirstOrDefaultAsync(t => t.Name == name, cancellationToken);
-
-            if (type is null)
-            {
-                type = new ExtraServicesType { Name = name, Amount = amount, IsActive = true };
-                _context.ExtraServicesTypes.Add(type);
-                await _context.SaveChangesAsync(cancellationToken);
-            }
-
-            types.Add(type);
-        }
-
-        return types;
-    }
-
-    private async Task SeedExpenseTypesAsync(CancellationToken cancellationToken)
-    {
-        var wanted = new (string Name, bool Notify, int? Km, int? Months)[]
-        {
-            ("Vidange", true, 10_000, 12),
-            ("Assurance", true, null, 3),
-            ("Vignette", true, null, 12),
-            ("Pneus", true, 40_000, null),
-            ("Lavage", false, null, null),
-            ("Réparation", false, null, null),
-        };
-
-        foreach (var (name, notify, km, months) in wanted)
-        {
-            if (await _context.ExpenseTypes.AnyAsync(t => t.Name == name, cancellationToken))
+            if (await _context.ExtraServicesTypeTemplates.AnyAsync(t => t.Name == name, cancellationToken))
             {
                 continue;
             }
 
-            _context.ExpenseTypes.Add(new ExpenseType
+            _context.ExtraServicesTypeTemplates.Add(new ExtraServicesTypeTemplate
+            {
+                Name = name, IsActive = true
+            });
+            await _context.SaveChangesAsync(cancellationToken);
+        }
+    }
+
+    private async Task SeedExpenseTypeTemplatesAsync(CancellationToken cancellationToken)
+    {
+        var wanted = new (string Name, bool Notify, int? Km, int? Months)[]
+        {
+            ("oilChange", true, 10_000, 12),
+            ("insurance", true, null, 3),
+            ("roadTax", true, null, 12),
+            ("tyres", true, 40_000, null),
+            ("carWash", false, null, null),
+            ("repair", false, null, null),
+        };
+
+        foreach (var (name, notify, km, months) in wanted)
+        {
+            if (await _context.ExpenseTypeTemplates.AnyAsync(t => t.Name == name, cancellationToken))
+            {
+                continue;
+            }
+
+            _context.ExpenseTypeTemplates.Add(new ExpenseTypeTemplate
             {
                 Name = name,
                 IsActive = true,
@@ -1109,9 +1118,32 @@ public class DemoDataSeeder
                 AfterKilometer = km,
                 AfterMonth = months
             });
+            await _context.SaveChangesAsync(cancellationToken);
+        }
+    }
+
+    /// <summary>
+    /// Sets the acting agency's list prices on its copies of the standard add-ons,
+    /// in its own currency, and returns the copies in the templates' order. The
+    /// templates carry no price: a number without a currency is the bug the
+    /// per-agency catalog exists to fix.
+    /// </summary>
+    private async Task<IReadOnlyList<ExtraServicesType>> PriceExtrasAsync(
+        IReadOnlyList<decimal> prices, CancellationToken cancellationToken)
+    {
+        var extras = await _context.ExtraServicesTypes
+            .Where(t => t.TemplateId != null)
+            .OrderBy(t => t.TemplateId)
+            .ToListAsync(cancellationToken);
+
+        foreach (var (extra, price) in extras.Zip(prices))
+        {
+            extra.Amount = Money.Of(price, _currency);
         }
 
         await _context.SaveChangesAsync(cancellationToken);
+
+        return extras;
     }
 
     // ------------------------------------------------------------------ helpers
@@ -1311,6 +1343,9 @@ public class DemoDataSeeder
         });
 
         await _context.SaveChangesAsync(cancellationToken);
+
+        // As CreateAgencyCommand does: the agency starts with the standard types.
+        await _catalog.CopyMissingAsync(agency.Id, cancellationToken);
 
         return agency;
     }
@@ -1526,7 +1561,7 @@ public class DemoDataSeeder
     {
         RentingId = renting.Id,
         ExtraServicesTypeId = type.Id,
-        TotalAmount = Money.Of(overrideAmount ?? type.Amount ?? 0m, _currency)
+        TotalAmount = Money.Of(overrideAmount ?? type.Amount?.Amount ?? 0m, _currency)
     };
 
     private Payment Payment(

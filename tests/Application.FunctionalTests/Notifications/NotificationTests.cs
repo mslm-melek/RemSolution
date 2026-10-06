@@ -262,7 +262,7 @@ public class NotificationTests : BaseTestFixture
         notification.MessageKey.Should().Be(NotificationMessages.CarExpenseDueByDate);
         notification.SubjectType.Should().Be(NotificationSubject.Car);
         notification.SubjectId.Should().Be(carId);
-        notification.Args["type"].Should().Be("Insurance");
+        notification.Args["expenseType"].Should().Be("Insurance");
     }
 
     [Test]

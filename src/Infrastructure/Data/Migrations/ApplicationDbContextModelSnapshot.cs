@@ -1560,6 +1560,65 @@ namespace RemSolution.Infrastructure.Data.Migrations
                     b.Property<int?>("AfterMonth")
                         .HasColumnType("int");
 
+                    b.Property<int>("AgencyId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTimeOffset?>("CreatedOn")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
+
+                    b.Property<bool>("IsCustomized")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)")
+                        .UseCollation("Latin1_General_100_CI_AI");
+
+                    b.Property<int?>("TemplateId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTimeOffset?>("UpdatedOn")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<bool>("WithNotif")
+                        .HasColumnType("bit");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TemplateId");
+
+                    b.HasIndex("AgencyId", "TemplateId")
+                        .IsUnique()
+                        .HasFilter("[TemplateId] IS NOT NULL");
+
+                    b.ToTable("ExpenseTypes");
+                });
+
+            modelBuilder.Entity("RemSolution.Domain.Entities.ExpenseTypeTemplate", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("AfterKilometer")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("AfterMonth")
+                        .HasColumnType("int");
+
                     b.Property<string>("CreatedBy")
                         .HasColumnType("nvarchar(max)");
 
@@ -1572,6 +1631,7 @@ namespace RemSolution.Infrastructure.Data.Migrations
                         .HasDefaultValue(true);
 
                     b.Property<string>("Name")
+                        .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)")
                         .UseCollation("Latin1_General_100_CI_AI");
@@ -1587,7 +1647,7 @@ namespace RemSolution.Infrastructure.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("ExpenseTypes");
+                    b.ToTable("ExpenseTypeTemplates");
                 });
 
             modelBuilder.Entity("RemSolution.Domain.Entities.ExtraService", b =>
@@ -1638,8 +1698,55 @@ namespace RemSolution.Infrastructure.Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<decimal?>("Amount")
-                        .HasColumnType("decimal(18,2)");
+                    b.Property<int>("AgencyId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTimeOffset?>("CreatedOn")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
+
+                    b.Property<bool>("IsCustomized")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)")
+                        .UseCollation("Latin1_General_100_CI_AI");
+
+                    b.Property<int?>("TemplateId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTimeOffset?>("UpdatedOn")
+                        .HasColumnType("datetimeoffset");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TemplateId");
+
+                    b.HasIndex("AgencyId", "TemplateId")
+                        .IsUnique()
+                        .HasFilter("[TemplateId] IS NOT NULL");
+
+                    b.ToTable("ExtraServicesTypes");
+                });
+
+            modelBuilder.Entity("RemSolution.Domain.Entities.ExtraServicesTypeTemplate", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("CreatedBy")
                         .HasColumnType("nvarchar(max)");
@@ -1653,6 +1760,7 @@ namespace RemSolution.Infrastructure.Data.Migrations
                         .HasDefaultValue(true);
 
                     b.Property<string>("Name")
+                        .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)")
                         .UseCollation("Latin1_General_100_CI_AI");
@@ -1665,7 +1773,7 @@ namespace RemSolution.Infrastructure.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("ExtraServicesTypes");
+                    b.ToTable("ExtraServicesTypeTemplates");
                 });
 
             modelBuilder.Entity("RemSolution.Domain.Entities.Facture", b =>
@@ -3156,6 +3264,24 @@ namespace RemSolution.Infrastructure.Data.Migrations
                     b.Navigation("PaidAmount");
                 });
 
+            modelBuilder.Entity("RemSolution.Domain.Entities.ExpenseType", b =>
+                {
+                    b.HasOne("RemSolution.Domain.Entities.Agency", "Agency")
+                        .WithMany()
+                        .HasForeignKey("AgencyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("RemSolution.Domain.Entities.ExpenseTypeTemplate", "Template")
+                        .WithMany()
+                        .HasForeignKey("TemplateId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Agency");
+
+                    b.Navigation("Template");
+                });
+
             modelBuilder.Entity("RemSolution.Domain.Entities.ExtraService", b =>
                 {
                     b.HasOne("RemSolution.Domain.Entities.Agency", "Agency")
@@ -3205,6 +3331,50 @@ namespace RemSolution.Infrastructure.Data.Migrations
                     b.Navigation("Renting");
 
                     b.Navigation("TotalAmount");
+                });
+
+            modelBuilder.Entity("RemSolution.Domain.Entities.ExtraServicesType", b =>
+                {
+                    b.HasOne("RemSolution.Domain.Entities.Agency", "Agency")
+                        .WithMany()
+                        .HasForeignKey("AgencyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("RemSolution.Domain.Entities.ExtraServicesTypeTemplate", "Template")
+                        .WithMany()
+                        .HasForeignKey("TemplateId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.OwnsOne("RemSolution.Domain.ValueObjects.Money", "Amount", b1 =>
+                        {
+                            b1.Property<int>("ExtraServicesTypeId")
+                                .HasColumnType("int");
+
+                            b1.Property<decimal>("Amount")
+                                .HasColumnType("decimal(18,2)")
+                                .HasColumnName("Amount");
+
+                            b1.Property<string>("Currency")
+                                .IsRequired()
+                                .HasMaxLength(3)
+                                .IsUnicode(false)
+                                .HasColumnType("varchar(3)")
+                                .HasColumnName("AmountCurrency");
+
+                            b1.HasKey("ExtraServicesTypeId");
+
+                            b1.ToTable("ExtraServicesTypes");
+
+                            b1.WithOwner()
+                                .HasForeignKey("ExtraServicesTypeId");
+                        });
+
+                    b.Navigation("Agency");
+
+                    b.Navigation("Amount");
+
+                    b.Navigation("Template");
                 });
 
             modelBuilder.Entity("RemSolution.Domain.Entities.Facture", b =>

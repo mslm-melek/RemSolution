@@ -4,6 +4,8 @@ using RemSolution.Domain.Constants;
 
 namespace RemSolution.Application.Features.ExpenseType.Commands.UpdateExpenseTypeCommand
 {
+    // Editing a standard type's name or schedule makes it the agency's own
+    // version: the platform's later edits stop reaching it (ExpenseType.Describe).
     [Authorize(Policy = Policies.AgencyOrPlatformAdmin)]
     [RequiresFeature(FeatureFlags.Expenses)]
     public record UpdateExpenseTypeCommand : IRequest
@@ -32,11 +34,9 @@ namespace RemSolution.Application.Features.ExpenseType.Commands.UpdateExpenseTyp
 
             Guard.Against.NotFound(request.Id, entity);
 
-            entity.Name = request.Name;
+            entity.Describe(
+                request.Name.Trim(), request.WithNotif, request.AfterKilometer, request.AfterMonth);
             entity.IsActive = request.IsActive;
-            entity.WithNotif = request.WithNotif;
-            entity.AfterKilometer = request.AfterKilometer;
-            entity.AfterMonth = request.AfterMonth;
 
             await _context.SaveChangesAsync(cancellationToken);
         }

@@ -3,6 +3,7 @@ using RemSolution.Application.Common.Mappings;
 using RemSolution.Application.Common.Models;
 using RemSolution.Application.Common.Security;
 using RemSolution.Application.Features.Credit.DTOs;
+using RemSolution.Domain.Common;
 using RemSolution.Domain.Constants;
 
 namespace RemSolution.Application.Features.Credit.Queries.GetExpenseCreditsQuery

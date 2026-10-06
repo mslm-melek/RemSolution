@@ -5,9 +5,9 @@ public abstract class Policies
     public const string PlatformAdminOnly = nameof(PlatformAdminOnly);
     public const string AgencyAdminOnly = nameof(AgencyAdminOnly);
 
-    // Either administrator role. Used for managing global reference catalogs
-    // (extra-service types, expense types) — the agency administrator curates
-    // them for day-to-day use, the platform administrator as the app owner.
+    // Either administrator role. Used for reference catalogs: the global ones
+    // (brands, models) and an agency's own (extra-service types, expense types),
+    // which the platform administrator reaches only inside the agency's workspace.
     public const string AgencyOrPlatformAdmin = nameof(AgencyOrPlatformAdmin);
 
     // A self-registered marketplace customer. Gates the customer-only booking

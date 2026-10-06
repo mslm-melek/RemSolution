@@ -6295,6 +6295,7 @@ export interface IExpenseTypesClient {
     createExpenseType(command: CreateExpenseTypeCommand): Observable<number>;
     updateExpenseType(id: number, command: UpdateExpenseTypeCommand): Observable<void>;
     deactivateExpenseType(id: number): Observable<void>;
+    resetExpenseType(id: number): Observable<void>;
 }
 
 @Injectable({
@@ -6506,6 +6507,284 @@ export class ExpenseTypesClient implements IExpenseTypesClient {
     }
 
     protected processDeactivateExpenseType(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return _observableOf(null as any);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    resetExpenseType(id: number): Observable<void> {
+        let url_ = this.baseUrl + "/api/ExpenseTypes/{id}/reset";
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processResetExpenseType(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processResetExpenseType(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processResetExpenseType(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return _observableOf(null as any);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+}
+
+export interface IExpenseTypeTemplatesClient {
+    getExpenseTypeTemplates(): Observable<ExpenseTypeTemplateDto[]>;
+    createExpenseTypeTemplate(command: CreateExpenseTypeTemplateCommand): Observable<number>;
+    updateExpenseTypeTemplate(id: number, command: UpdateExpenseTypeTemplateCommand): Observable<void>;
+    deactivateExpenseTypeTemplate(id: number): Observable<void>;
+}
+
+@Injectable({
+    providedIn: 'root'
+})
+export class ExpenseTypeTemplatesClient implements IExpenseTypeTemplatesClient {
+    private http: HttpClient;
+    private baseUrl: string;
+    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
+
+    constructor(@Inject(HttpClient) http: HttpClient, @Optional() @Inject(API_BASE_URL) baseUrl?: string) {
+        this.http = http;
+        this.baseUrl = baseUrl ?? "";
+    }
+
+    getExpenseTypeTemplates(): Observable<ExpenseTypeTemplateDto[]> {
+        let url_ = this.baseUrl + "/api/ExpenseTypeTemplates";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetExpenseTypeTemplates(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetExpenseTypeTemplates(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<ExpenseTypeTemplateDto[]>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<ExpenseTypeTemplateDto[]>;
+        }));
+    }
+
+    protected processGetExpenseTypeTemplates(response: HttpResponseBase): Observable<ExpenseTypeTemplateDto[]> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            if (Array.isArray(resultData200)) {
+                result200 = [] as any;
+                for (let item of resultData200)
+                    result200!.push(ExpenseTypeTemplateDto.fromJS(item));
+            }
+            else {
+                result200 = <any>null;
+            }
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    createExpenseTypeTemplate(command: CreateExpenseTypeTemplateCommand): Observable<number> {
+        let url_ = this.baseUrl + "/api/ExpenseTypeTemplates";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(command);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processCreateExpenseTypeTemplate(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processCreateExpenseTypeTemplate(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<number>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<number>;
+        }));
+    }
+
+    protected processCreateExpenseTypeTemplate(response: HttpResponseBase): Observable<number> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 201) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result201: any = null;
+            let resultData201 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+                result201 = resultData201 !== undefined ? resultData201 : <any>null;
+    
+            return _observableOf(result201);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    updateExpenseTypeTemplate(id: number, command: UpdateExpenseTypeTemplateCommand): Observable<void> {
+        let url_ = this.baseUrl + "/api/ExpenseTypeTemplates/{id}";
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(command);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+            })
+        };
+
+        return this.http.request("put", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processUpdateExpenseTypeTemplate(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processUpdateExpenseTypeTemplate(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processUpdateExpenseTypeTemplate(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return _observableOf(null as any);
+            }));
+        } else if (status === 400) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("A server side error occurred.", status, _responseText, _headers);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    deactivateExpenseTypeTemplate(id: number): Observable<void> {
+        let url_ = this.baseUrl + "/api/ExpenseTypeTemplates/{id}";
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+            })
+        };
+
+        return this.http.request("delete", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processDeactivateExpenseTypeTemplate(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processDeactivateExpenseTypeTemplate(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processDeactivateExpenseTypeTemplate(response: HttpResponseBase): Observable<void> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -6764,6 +7043,7 @@ export interface IExtraServiceTypesClient {
     createExtraServiceType(command: CreateExtraServicesTypeCommand): Observable<number>;
     updateExtraServiceType(id: number, command: UpdateExtraServicesTypeCommand): Observable<void>;
     deactivateExtraServiceType(id: number): Observable<void>;
+    resetExtraServiceType(id: number): Observable<void>;
 }
 
 @Injectable({
@@ -6975,6 +7255,284 @@ export class ExtraServiceTypesClient implements IExtraServiceTypesClient {
     }
 
     protected processDeactivateExtraServiceType(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return _observableOf(null as any);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    resetExtraServiceType(id: number): Observable<void> {
+        let url_ = this.baseUrl + "/api/ExtraServiceTypes/{id}/reset";
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processResetExtraServiceType(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processResetExtraServiceType(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processResetExtraServiceType(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return _observableOf(null as any);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+}
+
+export interface IExtraServiceTypeTemplatesClient {
+    getExtraServiceTypeTemplates(): Observable<ExtraServicesTypeTemplateDto[]>;
+    createExtraServiceTypeTemplate(command: CreateExtraServicesTypeTemplateCommand): Observable<number>;
+    updateExtraServiceTypeTemplate(id: number, command: UpdateExtraServicesTypeTemplateCommand): Observable<void>;
+    deactivateExtraServiceTypeTemplate(id: number): Observable<void>;
+}
+
+@Injectable({
+    providedIn: 'root'
+})
+export class ExtraServiceTypeTemplatesClient implements IExtraServiceTypeTemplatesClient {
+    private http: HttpClient;
+    private baseUrl: string;
+    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
+
+    constructor(@Inject(HttpClient) http: HttpClient, @Optional() @Inject(API_BASE_URL) baseUrl?: string) {
+        this.http = http;
+        this.baseUrl = baseUrl ?? "";
+    }
+
+    getExtraServiceTypeTemplates(): Observable<ExtraServicesTypeTemplateDto[]> {
+        let url_ = this.baseUrl + "/api/ExtraServiceTypeTemplates";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetExtraServiceTypeTemplates(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetExtraServiceTypeTemplates(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<ExtraServicesTypeTemplateDto[]>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<ExtraServicesTypeTemplateDto[]>;
+        }));
+    }
+
+    protected processGetExtraServiceTypeTemplates(response: HttpResponseBase): Observable<ExtraServicesTypeTemplateDto[]> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            if (Array.isArray(resultData200)) {
+                result200 = [] as any;
+                for (let item of resultData200)
+                    result200!.push(ExtraServicesTypeTemplateDto.fromJS(item));
+            }
+            else {
+                result200 = <any>null;
+            }
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    createExtraServiceTypeTemplate(command: CreateExtraServicesTypeTemplateCommand): Observable<number> {
+        let url_ = this.baseUrl + "/api/ExtraServiceTypeTemplates";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(command);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processCreateExtraServiceTypeTemplate(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processCreateExtraServiceTypeTemplate(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<number>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<number>;
+        }));
+    }
+
+    protected processCreateExtraServiceTypeTemplate(response: HttpResponseBase): Observable<number> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 201) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result201: any = null;
+            let resultData201 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+                result201 = resultData201 !== undefined ? resultData201 : <any>null;
+    
+            return _observableOf(result201);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    updateExtraServiceTypeTemplate(id: number, command: UpdateExtraServicesTypeTemplateCommand): Observable<void> {
+        let url_ = this.baseUrl + "/api/ExtraServiceTypeTemplates/{id}";
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(command);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+            })
+        };
+
+        return this.http.request("put", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processUpdateExtraServiceTypeTemplate(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processUpdateExtraServiceTypeTemplate(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processUpdateExtraServiceTypeTemplate(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return _observableOf(null as any);
+            }));
+        } else if (status === 400) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("A server side error occurred.", status, _responseText, _headers);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    deactivateExtraServiceTypeTemplate(id: number): Observable<void> {
+        let url_ = this.baseUrl + "/api/ExtraServiceTypeTemplates/{id}";
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+            })
+        };
+
+        return this.http.request("delete", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processDeactivateExtraServiceTypeTemplate(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processDeactivateExtraServiceTypeTemplate(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processDeactivateExtraServiceTypeTemplate(response: HttpResponseBase): Observable<void> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -19341,6 +19899,8 @@ export class ExpenseTypeDto implements IExpenseTypeDto {
     withNotif?: boolean;
     afterKilometer?: number | undefined;
     afterMonth?: number | undefined;
+    isStandard?: boolean;
+    isCustomized?: boolean;
 
     constructor(data?: IExpenseTypeDto) {
         if (data) {
@@ -19359,6 +19919,8 @@ export class ExpenseTypeDto implements IExpenseTypeDto {
             this.withNotif = _data["withNotif"];
             this.afterKilometer = _data["afterKilometer"];
             this.afterMonth = _data["afterMonth"];
+            this.isStandard = _data["isStandard"];
+            this.isCustomized = _data["isCustomized"];
         }
     }
 
@@ -19377,6 +19939,8 @@ export class ExpenseTypeDto implements IExpenseTypeDto {
         data["withNotif"] = this.withNotif;
         data["afterKilometer"] = this.afterKilometer;
         data["afterMonth"] = this.afterMonth;
+        data["isStandard"] = this.isStandard;
+        data["isCustomized"] = this.isCustomized;
         return data;
     }
 }
@@ -19388,6 +19952,8 @@ export interface IExpenseTypeDto {
     withNotif?: boolean;
     afterKilometer?: number | undefined;
     afterMonth?: number | undefined;
+    isStandard?: boolean;
+    isCustomized?: boolean;
 }
 
 export class CreateExpenseTypeCommand implements ICreateExpenseTypeCommand {
@@ -19486,6 +20052,166 @@ export class UpdateExpenseTypeCommand implements IUpdateExpenseTypeCommand {
 }
 
 export interface IUpdateExpenseTypeCommand {
+    id?: number;
+    name?: string;
+    isActive?: boolean;
+    withNotif?: boolean;
+    afterKilometer?: number | undefined;
+    afterMonth?: number | undefined;
+}
+
+export class ExpenseTypeTemplateDto implements IExpenseTypeTemplateDto {
+    id?: number;
+    name?: string | undefined;
+    isActive?: boolean;
+    withNotif?: boolean;
+    afterKilometer?: number | undefined;
+    afterMonth?: number | undefined;
+
+    constructor(data?: IExpenseTypeTemplateDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.name = _data["name"];
+            this.isActive = _data["isActive"];
+            this.withNotif = _data["withNotif"];
+            this.afterKilometer = _data["afterKilometer"];
+            this.afterMonth = _data["afterMonth"];
+        }
+    }
+
+    static fromJS(data: any): ExpenseTypeTemplateDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new ExpenseTypeTemplateDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["name"] = this.name;
+        data["isActive"] = this.isActive;
+        data["withNotif"] = this.withNotif;
+        data["afterKilometer"] = this.afterKilometer;
+        data["afterMonth"] = this.afterMonth;
+        return data;
+    }
+}
+
+export interface IExpenseTypeTemplateDto {
+    id?: number;
+    name?: string | undefined;
+    isActive?: boolean;
+    withNotif?: boolean;
+    afterKilometer?: number | undefined;
+    afterMonth?: number | undefined;
+}
+
+export class CreateExpenseTypeTemplateCommand implements ICreateExpenseTypeTemplateCommand {
+    name?: string;
+    withNotif?: boolean;
+    afterKilometer?: number | undefined;
+    afterMonth?: number | undefined;
+
+    constructor(data?: ICreateExpenseTypeTemplateCommand) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.name = _data["name"];
+            this.withNotif = _data["withNotif"];
+            this.afterKilometer = _data["afterKilometer"];
+            this.afterMonth = _data["afterMonth"];
+        }
+    }
+
+    static fromJS(data: any): CreateExpenseTypeTemplateCommand {
+        data = typeof data === 'object' ? data : {};
+        let result = new CreateExpenseTypeTemplateCommand();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["name"] = this.name;
+        data["withNotif"] = this.withNotif;
+        data["afterKilometer"] = this.afterKilometer;
+        data["afterMonth"] = this.afterMonth;
+        return data;
+    }
+}
+
+export interface ICreateExpenseTypeTemplateCommand {
+    name?: string;
+    withNotif?: boolean;
+    afterKilometer?: number | undefined;
+    afterMonth?: number | undefined;
+}
+
+export class UpdateExpenseTypeTemplateCommand implements IUpdateExpenseTypeTemplateCommand {
+    id?: number;
+    name?: string;
+    isActive?: boolean;
+    withNotif?: boolean;
+    afterKilometer?: number | undefined;
+    afterMonth?: number | undefined;
+
+    constructor(data?: IUpdateExpenseTypeTemplateCommand) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.name = _data["name"];
+            this.isActive = _data["isActive"];
+            this.withNotif = _data["withNotif"];
+            this.afterKilometer = _data["afterKilometer"];
+            this.afterMonth = _data["afterMonth"];
+        }
+    }
+
+    static fromJS(data: any): UpdateExpenseTypeTemplateCommand {
+        data = typeof data === 'object' ? data : {};
+        let result = new UpdateExpenseTypeTemplateCommand();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["name"] = this.name;
+        data["isActive"] = this.isActive;
+        data["withNotif"] = this.withNotif;
+        data["afterKilometer"] = this.afterKilometer;
+        data["afterMonth"] = this.afterMonth;
+        return data;
+    }
+}
+
+export interface IUpdateExpenseTypeTemplateCommand {
     id?: number;
     name?: string;
     isActive?: boolean;
@@ -19641,8 +20367,10 @@ export interface IUpdateExtraServiceCommand {
 export class ExtraServicesTypeDto implements IExtraServicesTypeDto {
     id?: number;
     name?: string | undefined;
-    amount?: number | undefined;
+    amount?: MoneyDto | undefined;
     isActive?: boolean;
+    isStandard?: boolean;
+    isCustomized?: boolean;
 
     constructor(data?: IExtraServicesTypeDto) {
         if (data) {
@@ -19657,8 +20385,10 @@ export class ExtraServicesTypeDto implements IExtraServicesTypeDto {
         if (_data) {
             this.id = _data["id"];
             this.name = _data["name"];
-            this.amount = _data["amount"];
+            this.amount = _data["amount"] ? MoneyDto.fromJS(_data["amount"]) : <any>undefined;
             this.isActive = _data["isActive"];
+            this.isStandard = _data["isStandard"];
+            this.isCustomized = _data["isCustomized"];
         }
     }
 
@@ -19673,8 +20403,10 @@ export class ExtraServicesTypeDto implements IExtraServicesTypeDto {
         data = typeof data === 'object' ? data : {};
         data["id"] = this.id;
         data["name"] = this.name;
-        data["amount"] = this.amount;
+        data["amount"] = this.amount ? this.amount.toJSON() : <any>undefined;
         data["isActive"] = this.isActive;
+        data["isStandard"] = this.isStandard;
+        data["isCustomized"] = this.isCustomized;
         return data;
     }
 }
@@ -19682,8 +20414,10 @@ export class ExtraServicesTypeDto implements IExtraServicesTypeDto {
 export interface IExtraServicesTypeDto {
     id?: number;
     name?: string | undefined;
-    amount?: number | undefined;
+    amount?: MoneyDto | undefined;
     isActive?: boolean;
+    isStandard?: boolean;
+    isCustomized?: boolean;
 }
 
 export class CreateExtraServicesTypeCommand implements ICreateExtraServicesTypeCommand {
@@ -19771,6 +20505,130 @@ export interface IUpdateExtraServicesTypeCommand {
     id?: number;
     name?: string;
     amount?: number | undefined;
+    isActive?: boolean;
+}
+
+export class ExtraServicesTypeTemplateDto implements IExtraServicesTypeTemplateDto {
+    id?: number;
+    name?: string | undefined;
+    isActive?: boolean;
+
+    constructor(data?: IExtraServicesTypeTemplateDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.name = _data["name"];
+            this.isActive = _data["isActive"];
+        }
+    }
+
+    static fromJS(data: any): ExtraServicesTypeTemplateDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new ExtraServicesTypeTemplateDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["name"] = this.name;
+        data["isActive"] = this.isActive;
+        return data;
+    }
+}
+
+export interface IExtraServicesTypeTemplateDto {
+    id?: number;
+    name?: string | undefined;
+    isActive?: boolean;
+}
+
+export class CreateExtraServicesTypeTemplateCommand implements ICreateExtraServicesTypeTemplateCommand {
+    name?: string;
+
+    constructor(data?: ICreateExtraServicesTypeTemplateCommand) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.name = _data["name"];
+        }
+    }
+
+    static fromJS(data: any): CreateExtraServicesTypeTemplateCommand {
+        data = typeof data === 'object' ? data : {};
+        let result = new CreateExtraServicesTypeTemplateCommand();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["name"] = this.name;
+        return data;
+    }
+}
+
+export interface ICreateExtraServicesTypeTemplateCommand {
+    name?: string;
+}
+
+export class UpdateExtraServicesTypeTemplateCommand implements IUpdateExtraServicesTypeTemplateCommand {
+    id?: number;
+    name?: string;
+    isActive?: boolean;
+
+    constructor(data?: IUpdateExtraServicesTypeTemplateCommand) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.name = _data["name"];
+            this.isActive = _data["isActive"];
+        }
+    }
+
+    static fromJS(data: any): UpdateExtraServicesTypeTemplateCommand {
+        data = typeof data === 'object' ? data : {};
+        let result = new UpdateExtraServicesTypeTemplateCommand();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["name"] = this.name;
+        data["isActive"] = this.isActive;
+        return data;
+    }
+}
+
+export interface IUpdateExtraServicesTypeTemplateCommand {
+    id?: number;
+    name?: string;
     isActive?: boolean;
 }
 

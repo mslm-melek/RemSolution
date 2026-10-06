@@ -1,5 +1,6 @@
 using RemSolution.Application.Common.Exceptions;
 using RemSolution.Application.Features.ExtraServicesType.Commands.CreateExtraServicesTypeCommand;
+using RemSolution.Application.Features.ExtraServicesTypeTemplate.Commands.CreateExtraServicesTypeTemplateCommand;
 using RemSolution.Domain.Constants;
 using RemSolution.Domain.Entities;
 
@@ -13,7 +14,7 @@ public class ManageExtraServicesTypeTests : BaseTestFixture
     public async Task RegularStaffCannotManageTheCatalog()
     {
         // Staff even holding the operational ExtraService permission may not
-        // manage the global type catalog.
+        // manage the agency's type catalog.
         await RunAsAgencyStaffAsync(Permissions.ExtraServiceCreate);
         await AddTestAgencyAsync();
 
@@ -47,13 +48,14 @@ public class ManageExtraServicesTypeTests : BaseTestFixture
     }
 
     [Test]
-    public async Task PlatformAdministratorCanManageTheCatalog()
+    public async Task PlatformAdministratorManagesTheStandardTypesAsTemplates()
     {
-        // The app admin manages the global catalog directly — no agency/tenant.
+        // The app admin has no agency: what it offers everyone is a template,
+        // and a template has no price because it has no currency.
         await RunAsPlatformAdministratorAsync();
 
-        var id = await SendAsync(new CreateExtraServicesTypeCommand { Name = "Child seat", Amount = 5m });
+        var id = await SendAsync(new CreateExtraServicesTypeTemplateCommand { Name = "Child seat" });
 
-        (await FindAsync<ExtraServicesType>(id))!.Name.Should().Be("Child seat");
+        (await FindAsync<ExtraServicesTypeTemplate>(id))!.Name.Should().Be("Child seat");
     }
 }

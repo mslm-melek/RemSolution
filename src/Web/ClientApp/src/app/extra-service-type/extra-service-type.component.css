@@ -1,6 +1,6 @@
 /* Surface, header, table, banner and empty state come from styles.scss. */
 .est-card {
-  max-width: 880px;
+  max-width: 1080px;
 }
 
 /* The create/edit strip is styled globally (see .inline-add in styles.scss);
@@ -9,4 +9,20 @@
   flex: 1 1 180px;
   min-width: 160px;
   max-width: 280px;
+}
+
+.edit-note {
+  margin: 0 0 var(--sp-3);
+  font-size: var(--fs-sm);
+}
+
+/* Where a type came from, beside its name. */
+.origin {
+  margin-inline-start: var(--sp-2);
+}
+
+/* The translation key beside its wording, for the platform administrator. */
+.catalog-key {
+  margin-inline-start: var(--sp-2);
+  font-size: var(--fs-sm);
 }

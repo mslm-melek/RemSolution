@@ -237,7 +237,8 @@ public sealed class NotificationSweepJob
 
             var args = new NotificationArgs()
                 .Set("car", CarLabel(car.ModelName, car.Matricule))
-                .Set("type", type.Name)
+                // Translated when read: one alert reaches staff reading different languages.
+                .SetCatalogName("expenseType", type.Name)
                 .Set("days", due.Days)
                 .Set("mileage", car.Mileage?.ToString(CultureInfo.InvariantCulture))
                 .SetDate("dueDate", due.DueOn);

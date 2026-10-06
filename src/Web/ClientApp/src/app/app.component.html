@@ -13,5 +13,9 @@
     <main class="app-content" [class.content-container]="signedIn === false">
       <router-outlet></router-outlet>
     </main>
+
+    <!-- Every marketplace page, not only "/": the contact details must be
+         reachable from a car page too. -->
+    <app-public-footer *ngIf="signedIn === false || isCustomer"></app-public-footer>
   </div>
 </div>

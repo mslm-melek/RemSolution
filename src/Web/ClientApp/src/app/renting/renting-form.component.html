@@ -1079,7 +1079,7 @@
                    *ngIf="extraServices.length">
               <ng-container matColumnDef="type">
                 <th mat-header-cell *matHeaderCellDef>{{ t('common.type') }}</th>
-                <td mat-cell *matCellDef="let e">{{ e.extraServicesTypeName }}</td>
+                <td mat-cell *matCellDef="let e">{{ e.extraServicesTypeName | catalogName }}</td>
               </ng-container>
               <ng-container matColumnDef="amount">
                 <th mat-header-cell *matHeaderCellDef class="num-cell">{{ t('common.amountTaxInclusive') }}</th>
@@ -1106,7 +1106,7 @@
                 <mat-label>{{ t('common.type') }}</mat-label>
                 <!-- Row variable is `type`, not `t`: `t` is the transloco accessor. -->
                 <mat-select [(ngModel)]="newExtraTypeId">
-                  <mat-option *ngFor="let type of extraServiceTypes" [value]="type.id">{{ type.name }}</mat-option>
+                  <mat-option *ngFor="let type of extraServiceTypes" [value]="type.id">{{ type.name | catalogName }}</mat-option>
                 </mat-select>
               </mat-form-field>
               <mat-form-field appearance="outline">

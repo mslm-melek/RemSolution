@@ -5,9 +5,9 @@ using RemSolution.Domain.Constants;
 
 namespace RemSolution.Application.Features.ExtraServicesType.Queries.GetExtraServicesTypesQuery
 {
-    // Readable by any authenticated user whose agency has the ExtraServices
-    // feature (staff select types when adding an extra service); management is
-    // admin-only above. The platform admin has no tenant, so the gate passes.
+    // The agency's own catalog (its copies of the platform's templates plus what
+    // it added), readable by any of its users with the ExtraServices feature —
+    // staff pick a type when adding an extra service. Management is admin-only.
     [RequiresFeature(FeatureFlags.ExtraServices)]
     public record GetExtraServicesTypesQuery(bool OnlyActive = false) : IRequest<IList<ExtraServicesTypeDto>>;
 

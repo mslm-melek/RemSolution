@@ -4,6 +4,7 @@ using RemSolution.Application.Common.Models;
 using RemSolution.Application.Common.Security;
 using RemSolution.Application.Common.Settings;
 using RemSolution.Application.Features.Car.DTOs;
+using RemSolution.Domain.Common;
 using RemSolution.Domain.Constants;
 using RemSolution.Domain.Enums;
 

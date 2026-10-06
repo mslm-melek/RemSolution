@@ -1,0 +1,40 @@
+<footer class="footer" id="contact" *transloco="let t">
+  <div class="footer-in">
+    <div>
+      <div class="footer-brand"><span class="footer-mark" aria-hidden="true">R</span>{{ t('nav.brandName') }}</div>
+      <p class="footer-pitch">{{ t('publicHome.footer.pitch') }}</p>
+    </div>
+
+    <div>
+      <h3>{{ t('publicHome.footer.contact') }}</h3>
+      <ul class="contact">
+        <li><mat-icon aria-hidden="true">mail</mat-icon><a [href]="'mailto:' + contact.email">{{ contact.email }}</a></li>
+        <li><mat-icon aria-hidden="true">call</mat-icon><a class="num" dir="ltr" [href]="telHref">{{ contact.phone }}</a></li>
+        <li><mat-icon aria-hidden="true">schedule</mat-icon><span>{{ t('publicHome.footer.hours') }}</span></li>
+        <li><mat-icon aria-hidden="true">location_on</mat-icon><span>{{ t('publicHome.footer.address') }}</span></li>
+      </ul>
+    </div>
+
+    <div>
+      <h3>{{ t('publicHome.footer.travellers') }}</h3>
+      <ul>
+        <li><a [routerLink]="['/browse']">{{ t('publicHome.rentACar') }}</a></li>
+        <li><a href="/Identity/Account/Register">{{ t('home.createAccount') }}</a></li>
+        <li><a [routerLink]="['/']" fragment="how">{{ t('publicHome.howTitle') }}</a></li>
+      </ul>
+    </div>
+
+    <div>
+      <h3>{{ t('publicHome.footer.agencies') }}</h3>
+      <ul>
+        <li><a [routerLink]="['/']" fragment="agences">{{ t('publicHome.forAgencies') }}</a></li>
+        <li><a href="/Identity/Account/Login">{{ t('publicHome.footer.agencySpace') }}</a></li>
+        <li><a [href]="'mailto:' + contact.email">{{ t('publicHome.footer.requestDemo') }}</a></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="footer-bottom">
+    <span>© <span class="num">{{ year }}</span> {{ t('nav.brandName') }}</span>
+  </div>
+</footer>

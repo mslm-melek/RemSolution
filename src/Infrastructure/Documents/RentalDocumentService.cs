@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using RemSolution.Application.Common.Documents;
 using RemSolution.Application.Common.Interfaces;
 using RemSolution.Application.Common.Settings;
+using RemSolution.Domain.Common;
 using RemSolution.Domain.Constants;
 using RemSolution.Domain.Entities;
 using RemSolution.Domain.Enums;
@@ -540,7 +541,7 @@ public class RentalDocumentService : IRentalDocumentService
             };
 
             lines.AddRange(Extras.Select(e => new RenderedLineItem(
-                string.IsNullOrWhiteSpace(e.Label) ? localizer["Document.Description"] : e.Label,
+                string.IsNullOrWhiteSpace(e.Label) ? localizer["Document.Description"] : localizer.CatalogName(e.Label)!,
                 Amount(e.Amount ?? 0m))));
 
             // Charges established at the return come last: the invoice reads as

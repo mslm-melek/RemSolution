@@ -1,3 +1,4 @@
+using RemSolution.Application.Common.Exceptions;
 using RemSolution.Application.Common.Interfaces;
 using RemSolution.Application.Common.Security;
 using RemSolution.Domain.Constants;
@@ -5,9 +6,10 @@ using ExpenseTypeEntity = RemSolution.Domain.Entities.ExpenseType;
 
 namespace RemSolution.Application.Features.ExpenseType.Commands.CreateExpenseTypeCommand
 {
-    // Global reference catalog: only an agency or platform administrator manages
-    // it, and only when the agency has the Expenses feature (platform admin has
-    // no tenant, so the gate passes).
+    // The agency's own catalog: only its administrator manages it (or the
+    // platform administrator inside the agency's workspace), and only when the
+    // agency has the Expenses feature. The platform-wide entries are
+    // ExpenseTypeTemplates, managed through their own commands.
     [Authorize(Policy = Policies.AgencyOrPlatformAdmin)]
     [RequiresFeature(FeatureFlags.Expenses)]
     public record CreateExpenseTypeCommand : IRequest<int>
@@ -21,22 +23,25 @@ namespace RemSolution.Application.Features.ExpenseType.Commands.CreateExpenseTyp
     public class CreateExpenseTypeCommandHandler : IRequestHandler<CreateExpenseTypeCommand, int>
     {
         private readonly IApplicationDbContext _context;
+        private readonly ITenantProvider _tenant;
 
-        public CreateExpenseTypeCommandHandler(IApplicationDbContext context)
+        public CreateExpenseTypeCommandHandler(IApplicationDbContext context, ITenantProvider tenant)
         {
             _context = context;
+            _tenant = tenant;
         }
 
         public async Task<int> Handle(CreateExpenseTypeCommand request, CancellationToken cancellationToken)
         {
-            var entity = new ExpenseTypeEntity
+            // A platform administrator outside any workspace has no agency to add to.
+            if (_tenant.AgencyId is null)
             {
-                Name = request.Name,
-                WithNotif = request.WithNotif,
-                AfterKilometer = request.AfterKilometer,
-                AfterMonth = request.AfterMonth,
-                IsActive = true,
-            };
+                throw new ForbiddenAccessException();
+            }
+
+            var entity = new ExpenseTypeEntity { IsActive = true };
+            entity.Describe(
+                request.Name.Trim(), request.WithNotif, request.AfterKilometer, request.AfterMonth);
 
             _context.ExpenseTypes.Add(entity);
             await _context.SaveChangesAsync(cancellationToken);

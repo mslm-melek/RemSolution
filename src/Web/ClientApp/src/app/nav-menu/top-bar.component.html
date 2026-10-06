@@ -12,6 +12,10 @@
       <span class="bar-brand-mark">R</span>
       <span>{{ t('nav.brandName') }}</span>
     </a>
+    <ng-container *ngIf="!isAuthenticated">
+      <a class="bar-link" [routerLink]="['/browse']">{{ t('publicHome.rentACar') }}</a>
+      <a class="bar-link" [routerLink]="['/']" fragment="agences">{{ t('publicHome.forAgencies') }}</a>
+    </ng-container>
 
     <!-- Where the desk is standing. Only on the screen whose figures are scoped
          by it (see BranchScopeService). -->
@@ -129,8 +133,8 @@
 
     <!-- Signed out: the way in stays in the bar, since there is no rail. -->
     <ng-container *ngIf="!isAuthenticated">
-      <a mat-button href="/Identity/Account/Login">
-        <mat-icon>login</mat-icon> {{ t('nav.login') }}
+      <a mat-button class="bar-login" href="/Identity/Account/Login" [attr.aria-label]="t('nav.login')">
+        <mat-icon>login</mat-icon> <span class="bar-login-text">{{ t('nav.login') }}</span>
       </a>
       <a mat-stroked-button class="bar-register" href="/Identity/Account/Register">
         {{ t('nav.register') }}

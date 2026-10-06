@@ -56,13 +56,18 @@ namespace RemSolution.Application.Features.Agency.Commands.CreateAgencyCommand
         private readonly IApplicationDbContext _context;
         private readonly IAgencyAccountService _accounts;
         private readonly ILocalizer _localizer;
+        private readonly ICatalogTemplateCopier _catalog;
 
         public CreateAgencyCommandHandler(
-            IApplicationDbContext context, IAgencyAccountService accounts, ILocalizer localizer)
+            IApplicationDbContext context,
+            IAgencyAccountService accounts,
+            ILocalizer localizer,
+            ICatalogTemplateCopier catalog)
         {
             _context = context;
             _accounts = accounts;
             _localizer = localizer;
+            _catalog = catalog;
         }
 
         public async Task<AgencyCreatedDto> Handle(CreateAgencyCommand request, CancellationToken cancellationToken)
@@ -119,6 +124,10 @@ namespace RemSolution.Application.Features.Agency.Commands.CreateAgencyCommand
                     await _context.SaveChangesAsync(cancellationToken);
                 }
             }
+
+            // The agency starts with its own copy of the platform's standard expense
+            // and add-on types, to switch off or retune as it sees fit.
+            await _catalog.CopyMissingAsync(entity.Id, cancellationToken);
 
             // Inside the transaction, on the same DbContext.
             var admin = await _accounts.EnsureAdministratorAsync(

@@ -6,6 +6,7 @@ using RemSolution.Application.Common.Security;
 using RemSolution.Application.Common.Settings;
 using RemSolution.Application.Features.Credit.Queries;
 using RemSolution.Application.Features.Dashboard.DTOs;
+using RemSolution.Domain.Common;
 using RemSolution.Domain.Constants;
 using RemSolution.Domain.Enums;
 
@@ -388,7 +389,13 @@ namespace RemSolution.Application.Features.Dashboard.Queries.GetTodayQuery
                 // Types with no interval stay in: a car can supply one, and the
                 // planner drops the pairs left without any.
                 .Where(t => t.IsActive && t.WithNotif)
-                .Select(t => new { t.Id, t.Name, t.AfterMonth, t.AfterKilometer })
+                .Select(t => new
+                {
+                    t.Id,
+                    t.Name,
+                    t.AfterMonth,
+                    t.AfterKilometer,
+                })
                 .ToListAsync(cancellationToken);
 
             if (types.Count == 0)

@@ -187,7 +187,7 @@
         <h3 class="section-title">{{ t('renting.extraServices') }}</h3>
 
         <div class="money-row" *ngFor="let extra of extras">
-          <span>{{ extra.extraServicesTypeName }}</span>
+          <span>{{ extra.extraServicesTypeName | catalogName }}</span>
           <span class="num money">
             {{ extra.totalAmount?.amount | number:'1.2-2' }} {{ extra.totalAmount?.currency }}
           </span>

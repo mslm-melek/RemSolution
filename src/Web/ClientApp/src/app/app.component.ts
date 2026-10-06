@@ -21,6 +21,7 @@ export class AppComponent implements OnInit {
   // null until the auth probe answers. Neither chrome is drawn in the meantime:
   // one request's worth of an empty bar beats flashing the wrong navigation.
   signedIn: boolean | null = null;
+  isCustomer = false;
 
   // The rail is an overlay below the layout breakpoint.
   menuOpen = false;
@@ -28,7 +29,10 @@ export class AppComponent implements OnInit {
   constructor(private auth: AuthService, private router: Router) { }
 
   ngOnInit() {
-    this.auth.currentUser$.subscribe(user => this.signedIn = user.isAuthenticated ?? false);
+    this.auth.currentUser$.subscribe(user => {
+      this.signedIn = user.isAuthenticated ?? false;
+      this.isCustomer = AuthService.isCustomer(user);
+    });
 
     // A route change closes the overlay even when it was not a rail link that
     // caused it (a card on the home screen, the browser's back button).

@@ -104,7 +104,37 @@ tenant data matches nothing. `IgnoreQueryFilters()` is allowed **only** in the
 `DeleteAgencyCommand`, and `PersonalDataErasureStore` (which needs the
 *soft-delete* half of the filter lifted and re-states `AgencyId` by hand) —
 enforced by `TenantEnforcementTests`. Background jobs
-have no HTTP context and push `AmbientTenant` instead.
+have no HTTP context and push `AmbientTenant` instead. The one sanctioned
+*cross-agency write* is `CatalogTemplateCopier` (raw SQL, catalog copies only —
+see "Catalogs are per agency").
+
+**Catalogs are per agency; the platform's are templates.** `ExpenseType` and
+`ExtraServicesType` are `ITenantEntity`. The platform administrator edits
+`ExpenseTypeTemplate` / `ExtraServicesTypeTemplate` (own endpoints, platform-admin
+only), and every agency gets its own copy (`TemplateId` set) — on
+`CreateAgencyCommand`, and to every existing agency when a template is created
+or re-activated (`ICatalogTemplateCopier.CopyMissingAsync`, idempotent through the
+filtered unique `(AgencyId, TemplateId)`). A template edit reaches only copies
+with `IsCustomized = 0`; the agency sets that by changing anything the template
+owns (name, schedule — `ExpenseType.Describe` / `ExtraServicesType.Rename`), not
+by switching the copy on/off or pricing it; `Reset…TypeCommand` (`ResetTo`)
+puts the template's version back and clears the flag, keeping on/off and the
+price. Retiring a template stops new agencies
+receiving it and never touches existing copies. Agencies add their own types
+(`TemplateId` null), seen by nobody else. Templates carry **no price**: an
+add-on's `Amount` is `Money` in the agency's currency, set on its copy. **A type
+has one `Name`, and a template's is a translation key** (`oilChange`), never
+shown raw: the SPA renders it through the `catalogName` pipe (`catalogItems.*` in
+`assets/i18n`), and what the server renders — the invoice line, the mail — through
+`ILocalizer.CatalogName` (`CatalogItem.*` in the resx; **add a key to both
+lists**). A name with no entry (the agency's own type, a renamed copy) shows as
+typed. The API returns the stored name and never translates it. A notification
+argument named `…Type` (`NotificationArgs.SetCatalogName`) is translated by both
+renderers at read time, like the `…Date` ones. The agency's edit form shows the
+translated words and sends the key back when they are left unchanged, so opening
+and saving a standard copy does not customise it. The SPA uses the same two
+screens for both: template mode (the admin edits the key) for a platform admin
+outside a workspace, agency mode otherwise.
 
 **Money.** Monetary amounts are the `Money` value object (Amount + ISO-4217
 Currency), never bare decimals. Currency is tenant-scoped: each `Agency` has one
@@ -172,7 +202,8 @@ touching a template. `agency-detail.component.html` and
 `platform-dashboard.component.html` are expected hits (both `DateTimeOffset`).
 
 **Soft delete is selective.** `Car`/`Client` are `ISoftDeletable`.
-`ExpenseType`/`ExtraServicesType` use an `IsActive` flag. `Renting`/`Payment`/
+`ExpenseType`/`ExtraServicesType` (and their templates) use an `IsActive` flag;
+an agency's catalog cascades with the agency, unlike its data. `Renting`/`Payment`/
 `Reservation` are **never** deleted (financial records; `Client` FKs are
 `Restrict`). Unique indexes are filtered (`… WHERE IsDeleted = 0`) so an
 archived row frees its key.
@@ -397,9 +428,9 @@ Then everything else works:
 ```powershell
 dotnet build RemSolution.sln            # Debug build also regenerates the NSwag client
 dotnet test tests\Domain.UnitTests\Domain.UnitTests.csproj            # 179 tests
-dotnet test tests\Application.UnitTests\Application.UnitTests.csproj  # 159 tests
+dotnet test tests\Application.UnitTests\Application.UnitTests.csproj  # 163 tests
 dotnet test tests\Infrastructure.IntegrationTests\...csproj           #  24 tests (disk + SkiaSharp)
-dotnet test tests\Application.FunctionalTests\...csproj               # 661 tests (needs SQL Server)
+dotnet test tests\Application.FunctionalTests\...csproj               # 673 tests (needs SQL Server)
 cd src\Web; dotnet watch run                                          # https://localhost:5001
 
 cd src\Web\ClientApp; npx ng build --configuration production
@@ -429,6 +460,10 @@ Environment facts that bite:
   Demo logins: `admin@demo.tn` / `staff@demo.tn` / `customer@demo.tn` and the
   other agency admins, password `Demo1234!`; platform admin
   `platformadmin@localhost` / `PlatformAdmin1!`.
+- While the app runs from Visual Studio, `bin\Debug` is locked: build/test with
+  `-c Release`, and `dotnet ef ... --configuration Release`. NSwag then needs a
+  copy of `config.nswag` with `"configuration": "Release"` (it reads `bin\Debug`
+  otherwise and silently regenerates the old client).
 - Migrations are applied by the **deployment** (`dotnet ef migrations bundle`),
   not the app — except on a dev machine. See `docs/RUNBOOK_Base_De_Donnees.md`;
   the additive-migration constraint there is load-bearing. A non-nullable column
@@ -490,6 +525,18 @@ asserts every public surface and the booking path; 661 functional tests green).
 on a plan and gated nothing, online payment being out of scope until a provider
 is chosen; `DropOnlinePaymentFeature` deletes the orphaned `PlanFeatures` /
 `AgencyFeatures` rows and has a deliberately empty `Down`.
+
+**Shipped 2026-10-06**: per-agency expense / add-on catalogs with platform
+templates and translated names — see "Catalogs are per agency" in §3.
+`PerAgencyCatalogs` is **not additive** (AgencyId ends NOT NULL): during the
+deploy window the old version cannot create a type and lists every agency's
+copies. Verified against a copy of the dev database: every expense and extra
+service keeps its type name. The same day `CatalogNameKeys` replaced the typed
+`NameEn`/`NameAr` with translation keys (Malek's call): it renames the eleven
+shipped French template names to their keys, on the templates and on every
+uncustomised copy, drops the two columns everywhere (the typed translations are
+lost, by decision), and rewrites old expense alerts' `type` argument to
+`expenseType`.
 
 **Shipped 2026-09-09**: statistics export (§2.9) — see "A figure is folded
 once" — and the personal-data purge / right to erasure (§3.6) — see "Erasing a

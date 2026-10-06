@@ -99,7 +99,7 @@
           <div class="schedule-head">
             <mat-checkbox formControlName="linked"
                           (change)="onScheduleLinkedChange(i, $event.checked)">
-              {{ scheduleType(i)?.expenseTypeName }}
+              {{ scheduleType(i)?.expenseTypeName | catalogName }}
             </mat-checkbox>
 
             <span class="schedule-default">

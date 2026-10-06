@@ -1,0 +1,203 @@
+<div class="ph" *transloco="let t">
+
+  <section class="ph-hero" aria-labelledby="phHeroTitle">
+    <h1 id="phHeroTitle">{{ t('publicHome.heroTitle') }}</h1>
+    <p class="ph-hero-sub">{{ t('publicHome.heroText') }}</p>
+    <p class="ph-hero-live" *ngIf="carCount">
+      {{ t('publicHome.live', { cars: carCount, agencies: agencyCount, places: placeCount }) }}
+    </p>
+
+    <form class="ph-search" (ngSubmit)="search()">
+      <div class="ph-field ph-field-where">
+        <label for="phWhere">{{ t('publicHome.where') }}</label>
+        <select id="phWhere" name="where" [(ngModel)]="where">
+          <option value="">{{ t('marketplace.anyPlace') }}</option>
+          <optgroup *ngFor="let d of destinations" [label]="d.countryName || ''">
+            <option [value]="'c:' + d.countryId">{{ t('publicHome.allPlacesIn', { country: d.countryName }) }}</option>
+            <option *ngFor="let p of d.places" [value]="'b:' + p.branchId">{{ p.name }} — {{ p.agencyName }}</option>
+          </optgroup>
+        </select>
+      </div>
+      <div class="ph-field">
+        <label for="phStart">{{ t('marketplace.pickupDate') }}</label>
+        <input type="date" id="phStart" name="start" [(ngModel)]="startDate">
+      </div>
+      <div class="ph-field">
+        <label for="phEnd">{{ t('marketplace.returnDate') }}</label>
+        <input type="date" id="phEnd" name="end" [(ngModel)]="endDate" [min]="startDate">
+      </div>
+      <button type="submit" class="ph-btn-primary">
+        <mat-icon aria-hidden="true">search</mat-icon>{{ t('common.search') }}
+      </button>
+    </form>
+
+    <ul class="ph-facts">
+      <li><mat-icon aria-hidden="true">sell</mat-icon>{{ t('publicHome.factTax') }}</li>
+      <li><mat-icon aria-hidden="true">verified</mat-icon>{{ t('publicHome.factConfirmed') }}</li>
+      <li><mat-icon aria-hidden="true">storefront</mat-icon>{{ t('publicHome.factPayAgency') }}</li>
+    </ul>
+  </section>
+
+  <section class="ph-section" *ngIf="featured.length" aria-labelledby="phFeaturedTitle">
+    <div class="ph-section-head">
+      <h2 class="ph-section-title" id="phFeaturedTitle">{{ t('home.showcaseTitle') }}</h2>
+      <a class="ph-link-more" [routerLink]="['/browse']">
+        {{ t('home.showcaseSeeAll') }} <mat-icon class="flip-rtl" aria-hidden="true">arrow_forward</mat-icon>
+      </a>
+    </div>
+
+    <div class="ph-cards">
+      <article class="ph-card" *ngFor="let car of featured">
+        <a class="ph-photo" [class.placeholder]="!car.imageUrl"
+           [style.background-image]="car.imageUrl ? 'url(' + car.imageUrl + ')' : null"
+           [routerLink]="['/browse/car', car.id]" [attr.aria-label]="car.brandName + ' ' + car.modelName">
+          <mat-icon aria-hidden="true" *ngIf="!car.imageUrl">directions_car</mat-icon>
+        </a>
+        <div class="ph-card-body">
+          <a class="ph-card-model" [routerLink]="['/browse/car', car.id]">{{ car.brandName }} {{ car.modelName }}</a>
+          <span class="ph-card-where">
+            <mat-icon aria-hidden="true">location_on</mat-icon>
+            <a [routerLink]="['/browse/agency', car.agencyId]">
+              {{ car.agencyName }}<span *ngIf="car.branchName"> · {{ car.branchName }}</span>
+            </a>
+          </span>
+          <app-rating-stars *ngIf="car.agencyRating != null"
+                            [value]="car.agencyRating" [count]="car.agencyReviewCount"></app-rating-stars>
+          <div class="ph-card-foot" *ngIf="car.dailyRate">
+            <span class="ph-price">
+              <span class="num">{{ car.dailyRate.amount | number:'1.2-2' }}</span>
+              <span class="ph-unit">{{ car.dailyRate.currency }}</span>
+              <span class="ph-per">{{ t('marketplace.perDay') }}</span>
+              <span class="tax-note">{{ t('common.taxInclusive') }}</span>
+            </span>
+            <app-converted-price [value]="car.dailyRate"></app-converted-price>
+          </div>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <!-- The destinations list drawn as a departures board: every row is a way
+       into the search, not decoration. -->
+  <section class="ph-section" *ngIf="placeCount" aria-labelledby="phPlacesTitle">
+    <div class="ph-section-head">
+      <div>
+        <h2 class="ph-section-title" id="phPlacesTitle">{{ t('publicHome.placesTitle') }}</h2>
+        <p class="ph-section-sub">
+          {{ t('publicHome.placesSub', { places: placeCount, countries: destinations.length }) }}
+        </p>
+      </div>
+    </div>
+
+    <div class="ph-board" #board>
+      <div class="ph-board-grid ph-board-head" aria-hidden="true">
+        <span>{{ t('publicHome.where') }}</span>
+        <span class="ph-agency-col">{{ t('publicHome.agency') }}</span>
+        <span class="ph-r">{{ t('publicHome.cars') }}</span>
+        <span></span>
+      </div>
+
+      <ng-container *ngFor="let d of destinations">
+        <div class="ph-board-country">
+          <strong>{{ d.countryName }}</strong>
+          <span>{{ t('publicHome.carCount', { count: d.carCount }) }}</span>
+        </div>
+        <a class="ph-board-grid ph-board-row" *ngFor="let p of d.places; let j = index"
+           [routerLink]="['/browse']" [queryParams]="{ branch: p.branchId }"
+           [attr.aria-label]="p.name + ' — ' + p.agencyName + ', ' + t('publicHome.carCount', { count: p.carCount })">
+          <span class="ph-board-place">
+            <mat-icon aria-hidden="true">storefront</mat-icon>
+            <span class="ph-name">{{ p.name }}<span class="ph-sub">{{ p.agencyName }}</span></span>
+          </span>
+          <span class="ph-board-agency">{{ p.agencyName }}</span>
+          <span class="ph-board-count" aria-hidden="true">
+            <span class="ph-flap" *ngFor="let f of flaps(p.carCount, j)" [style.--i]="f.i">{{ f.digit }}</span>
+          </span>
+          <mat-icon class="ph-board-go flip-rtl" aria-hidden="true">chevron_right</mat-icon>
+        </a>
+      </ng-container>
+
+      <div class="ph-board-foot">
+        <a [routerLink]="['/browse']" [queryParams]="{ view: 'map' }">
+          <mat-icon aria-hidden="true">map</mat-icon>{{ t('publicHome.seeMap') }}
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <section class="ph-section" id="how" aria-labelledby="phHowTitle">
+    <div class="ph-section-head">
+      <h2 class="ph-section-title" id="phHowTitle">{{ t('publicHome.howTitle') }}</h2>
+    </div>
+    <ol class="ph-steps">
+      <li class="ph-step" *ngFor="let step of steps; let i = index">
+        <span class="ph-step-n">
+          <span class="num">{{ i + 1 }}</span><mat-icon aria-hidden="true">{{ step.icon }}</mat-icon>
+        </span>
+        <h3>{{ t('home.steps.' + step.key + 'Title') }}</h3>
+        <p>{{ t('home.steps.' + step.key + 'Text') }}</p>
+      </li>
+    </ol>
+  </section>
+
+  <section class="ph-section" id="agences" aria-labelledby="phProTitle">
+    <div class="ph-pro">
+      <div>
+        <h2 class="ph-section-title" id="phProTitle">{{ t('publicHome.proTitle') }}</h2>
+        <p class="ph-pro-lead">{{ t('publicHome.proLead') }}</p>
+        <ul class="ph-caps">
+          <li class="ph-cap" *ngFor="let cap of caps">
+            <mat-icon aria-hidden="true">{{ cap.icon }}</mat-icon>
+            <div>
+              <strong>{{ t('publicHome.caps.' + cap.key + 'Title') }}</strong>
+              <span>{{ t('publicHome.caps.' + cap.key + 'Text') }}</span>
+            </div>
+          </li>
+        </ul>
+        <div class="ph-pro-actions">
+          <a mat-stroked-button color="primary" [href]="'mailto:' + contactEmail">
+            <mat-icon>mail</mat-icon> {{ t('publicHome.contactUs') }}
+          </a>
+          <span class="ph-alt">
+            {{ t('publicHome.alreadyClient') }} <a href="/Identity/Account/Login">{{ t('publicHome.signInLink') }}</a>
+          </span>
+        </div>
+      </div>
+
+      <!-- The agency's real home screen in miniature, with sample figures. -->
+      <div class="ph-preview" role="img" [attr.aria-label]="t('publicHome.previewLabel')">
+        <div class="ph-pv-top" aria-hidden="true">
+          <div>
+            <p class="ph-pv-greet">{{ t('home.greeting.morningNamed', { name: t('publicHome.sampleName') }) }}</p>
+            <span class="ph-pv-date">{{ today | date:'EEEE d MMMM' }} · {{ t('publicHome.sampleBranch') }}</span>
+          </div>
+          <span class="ph-pv-fleet"><span class="num">18</span>{{ t('home.fleetFreeOf', { total: 24 }) }}</span>
+        </div>
+        <div class="ph-pv-stats" aria-hidden="true">
+          <div class="ph-pv-stat">
+            <span class="num">4</span>
+            <span class="ph-lbl">{{ t('home.stat.bookingsToday') }}</span>
+            <span class="ph-sub">{{ t('home.stat.stillToConfirm', { count: 1 }) }}</span>
+          </div>
+          <div class="ph-pv-stat">
+            <span class="num">3</span>
+            <span class="ph-lbl">{{ t('home.stat.returnsToday') }}</span>
+            <span class="ph-sub">{{ t('home.stat.beforeNoon', { count: 2 }) }}</span>
+          </div>
+          <div class="ph-pv-stat">
+            <span class="num">1 240 <span class="ph-unit">TND</span></span>
+            <span class="ph-lbl">{{ t('home.stat.expectedToday') }}</span>
+            <span class="ph-sub">{{ t('home.stat.outstanding', { amount: 860, currency: 'TND' }) }}</span>
+          </div>
+        </div>
+        <div class="ph-pv-todo" aria-hidden="true">
+          <div>
+            <span class="ph-t">{{ t('home.todo.requests') }}</span>
+            <span class="ph-d">{{ t('home.todo.oldestWaiting', { hours: 3 }) }}</span>
+          </div>
+          <span class="ph-n num">2</span>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>

@@ -30,6 +30,14 @@ public sealed class NotificationArgs
 
     public const string IsoDateFormat = "yyyy-MM-dd";
 
+    /// <summary>
+    /// An argument whose name ends with this holds a catalog name
+    /// (<see cref="Domain.Common.CatalogName"/>) — a translation key, or words
+    /// nobody translated. Like a date, it is translated by each renderer for its
+    /// reader, falling back to the value as stored.
+    /// </summary>
+    public const string CatalogNameSuffix = "Type";
+
     private readonly Dictionary<string, string> _values = new(StringComparer.Ordinal);
 
     public NotificationArgs Set(string name, string? value)
@@ -62,9 +70,33 @@ public sealed class NotificationArgs
         return Set(name, value?.ToString(IsoDateFormat, System.Globalization.CultureInfo.InvariantCulture));
     }
 
+    /// <summary>
+    /// Stores a catalog name under a name ending in <see cref="CatalogNameSuffix"/>,
+    /// so the renderers know to translate it. Guarded for the same reason as
+    /// <see cref="SetDate"/>: misfiled, the reader would get the raw key.
+    /// </summary>
+    public NotificationArgs SetCatalogName(string name, string? value)
+    {
+        if (!name.EndsWith(CatalogNameSuffix, StringComparison.Ordinal))
+        {
+            throw new ArgumentException(
+                $"Catalog-name argument '{name}' must be named with the '{CatalogNameSuffix}' suffix so renderers translate it.",
+                nameof(name));
+        }
+
+        return Set(name, value);
+    }
+
     public IReadOnlyDictionary<string, string> Values => _values;
 
-    public string ToJson() => JsonSerializer.Serialize(_values);
+    // Unescaped: the default writes every Arabic letter as a six-character \uXXXX,
+    // and the column is 2000 long. This is a database value, never markup.
+    private static readonly JsonSerializerOptions StorageOptions = new()
+    {
+        Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+    };
+
+    public string ToJson() => JsonSerializer.Serialize(_values, StorageOptions);
 
     /// <summary>
     /// Reads a stored argument set back. Never throws on bad content: a
