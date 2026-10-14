@@ -17,11 +17,6 @@
   </div>
   <div *ngIf="loading" class="loading">{{ t('common.loading') }}</div>
 
-  <!-- Shortcuts the admin chooses for themselves. Outside the loading guard
-       below: this screen is their landing page, so the actions must be there even
-       while the figures are still coming — or failed to. -->
-  <app-quick-actions scope="platform"></app-quick-actions>
-
   <ng-container *ngIf="data && !loading">
     <!-- The shape of the installation: who is on board, who is paying, how much
          data they hold. -->

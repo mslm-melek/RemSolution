@@ -428,9 +428,9 @@ Then everything else works:
 ```powershell
 dotnet build RemSolution.sln            # Debug build also regenerates the NSwag client
 dotnet test tests\Domain.UnitTests\Domain.UnitTests.csproj            # 179 tests
-dotnet test tests\Application.UnitTests\Application.UnitTests.csproj  # 163 tests
+dotnet test tests\Application.UnitTests\Application.UnitTests.csproj  # 155 tests
 dotnet test tests\Infrastructure.IntegrationTests\...csproj           #  24 tests (disk + SkiaSharp)
-dotnet test tests\Application.FunctionalTests\...csproj               # 673 tests (needs SQL Server)
+dotnet test tests\Application.FunctionalTests\...csproj               # 667 tests (needs SQL Server)
 cd src\Web; dotnet watch run                                          # https://localhost:5001
 
 cd src\Web\ClientApp; npx ng build --configuration production
@@ -537,6 +537,16 @@ shipped French template names to their keys, on the templates and on every
 uncustomised copy, drops the two columns everywhere (the typed translations are
 lost, by decision), and rewrites old expense alerts' `type` argument to
 `expenseType`.
+
+**Shipped 2026-10-06 (later)**: the agency home is the "Home v2" design — three
+tiles, one "Needs you" list, today's comings and goings. The pinned shortcuts
+and the quick actions were **removed** with it (both screens, endpoints, commands,
+constants and tests); the week/month agenda went too. `ApplicationUser.HomeWidgets`
+/ `HomeActions` are still mapped but unused, on purpose (runbook §1: stop using a
+column in one release, drop it in the next) — **the next release's migration drops
+both**. `GetTodayQuery` still computes figures the home no longer shows (money,
+`unconfirmedToday`, `returnsBeforeNoon`, `oldestAskedAt`): kept for a calendar
+page.
 
 **Shipped 2026-09-09**: statistics export (§2.9) — see "A figure is folded
 once" — and the personal-data purge / right to erasure (§3.6) — see "Erasing a

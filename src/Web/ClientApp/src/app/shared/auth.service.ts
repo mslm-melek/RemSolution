@@ -14,13 +14,6 @@ export class AuthService {
   // cached "true" would keep bouncing the user back to the password form.
   private passwordChanged = false;
 
-  // Same for the home tiles, so a fresh choice is not overwritten by the replayed
-  // probe. Null = nothing saved this session.
-  private homeWidgetsOverride: string[] | null = null;
-
-  // Same again for the landing screen's quick actions.
-  private homeActionsOverride: string[] | null = null;
-
   constructor(client: UsersClient, impersonation: ImpersonationService) {
     this.currentUser$ = client.getCurrentUser().pipe(
       // The stored workspace is per tab and survives a sign-out, so it is checked
@@ -62,36 +55,6 @@ export class AuthService {
   /** Called once the user has chosen their own password. */
   markPasswordChanged() {
     this.passwordChanged = true;
-  }
-
-  /**
-   * The tiles pinned to the home screen, in order, or null when never chosen
-   * (defaults then show). An empty array is a deliberate "no tiles".
-   */
-  get homeWidgets$(): Observable<string[] | null> {
-    return this.currentUser$.pipe(
-      map(user => this.homeWidgetsOverride ?? user.homeWidgets ?? null)
-    );
-  }
-
-  /** Called once a new selection has been saved on the account. */
-  markHomeWidgets(widgets: string[]) {
-    this.homeWidgetsOverride = widgets;
-  }
-
-  /**
-   * The landing screen's quick actions, in order, or null when never chosen. An
-   * empty array is a deliberate "no actions".
-   */
-  get homeActions$(): Observable<string[] | null> {
-    return this.currentUser$.pipe(
-      map(user => this.homeActionsOverride ?? user.homeActions ?? null)
-    );
-  }
-
-  /** Called once a new action selection has been saved on the account. */
-  markHomeActions(actions: string[]) {
-    this.homeActionsOverride = actions;
   }
 
   // Feature on AND read permission held. Names must match the Domain constants;

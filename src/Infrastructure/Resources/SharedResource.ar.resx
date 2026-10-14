@@ -193,24 +193,6 @@
   <data name="Validation.Language.Unsupported" xml:space="preserve">
     <value>يجب أن تكون اللغة إحدى التالي: en أو fr أو ar.</value>
   </data>
-  <data name="Validation.HomeWidgets.TooMany" xml:space="preserve">
-    <value>يمكنك تثبيت {0} اختصارات على الأكثر في الصفحة الرئيسية.</value>
-  </data>
-  <data name="Validation.HomeWidgets.Duplicate" xml:space="preserve">
-    <value>لا يمكن تثبيت الاختصار نفسه مرتين.</value>
-  </data>
-  <data name="Validation.HomeWidgets.Unknown" xml:space="preserve">
-    <value>أحد الاختصارات المحددة غير معروف.</value>
-  </data>
-  <data name="Validation.HomeActions.TooMany" xml:space="preserve">
-    <value>يمكنك الاحتفاظ بـ {0} إجراءات سريعة على الأكثر في الصفحة الرئيسية.</value>
-  </data>
-  <data name="Validation.HomeActions.Duplicate" xml:space="preserve">
-    <value>لا يمكن إضافة الإجراء السريع نفسه مرتين.</value>
-  </data>
-  <data name="Validation.HomeActions.Unknown" xml:space="preserve">
-    <value>أحد الإجراءات السريعة المحددة غير معروف.</value>
-  </data>
   <data name="Property.Name" xml:space="preserve">
     <value>الاسم</value>
   </data>

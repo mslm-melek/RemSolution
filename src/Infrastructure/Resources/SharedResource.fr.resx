@@ -193,24 +193,6 @@
   <data name="Validation.Language.Unsupported" xml:space="preserve">
     <value>La langue doit être : en, fr ou ar.</value>
   </data>
-  <data name="Validation.HomeWidgets.TooMany" xml:space="preserve">
-    <value>Vous pouvez épingler au maximum {0} raccourcis sur votre accueil.</value>
-  </data>
-  <data name="Validation.HomeWidgets.Duplicate" xml:space="preserve">
-    <value>Un même raccourci ne peut pas être épinglé deux fois.</value>
-  </data>
-  <data name="Validation.HomeWidgets.Unknown" xml:space="preserve">
-    <value>L'un des raccourcis sélectionnés est inconnu.</value>
-  </data>
-  <data name="Validation.HomeActions.TooMany" xml:space="preserve">
-    <value>Vous pouvez conserver au maximum {0} actions rapides sur votre accueil.</value>
-  </data>
-  <data name="Validation.HomeActions.Duplicate" xml:space="preserve">
-    <value>Une même action rapide ne peut pas être ajoutée deux fois.</value>
-  </data>
-  <data name="Validation.HomeActions.Unknown" xml:space="preserve">
-    <value>L'une des actions rapides sélectionnées est inconnue.</value>
-  </data>
   <data name="Property.Name" xml:space="preserve">
     <value>Nom</value>
   </data>

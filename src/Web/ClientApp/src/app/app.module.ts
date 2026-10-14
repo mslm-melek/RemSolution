@@ -15,9 +15,6 @@ import { TopBarComponent } from './nav-menu/top-bar.component';
 import { PublicFooterComponent } from './nav-menu/public-footer.component';
 import { HomeComponent } from './home/home.component';
 import { PublicHomeComponent } from './home/public-home.component';
-import { HomeAgendaComponent } from './home/home-agenda.component';
-import { HomeMessagesComponent } from './home/home-messages.component';
-import { ChatThreadDialogComponent } from './home/chat-thread-dialog.component';
 import { AuthorizeInterceptor } from 'src/api-authorization/authorize.interceptor';
 import { ImpersonationInterceptor } from './shared/impersonation.interceptor';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
@@ -74,7 +71,6 @@ import { RatingStarsComponent } from './shared/rating-stars.component';
 import { ConvertedPriceComponent } from './shared/converted-price.component';
 import { CatalogNamePipe } from './shared/catalog-name.pipe';
 import { ClientAvatarComponent } from './shared/client-avatar.component';
-import { QuickActionsComponent } from './shared/quick-actions.component';
 
 import { MapPickerComponent } from './shared/map-picker.component';
 import { BranchesEditorComponent } from './shared/branches-editor.component';
@@ -157,9 +153,6 @@ function toMyBookings(tab: 'rentings' | null): RedirectFunction {
     HomeComponent,
     PublicHomeComponent,
     PublicFooterComponent,
-    HomeAgendaComponent,
-    HomeMessagesComponent,
-    ChatThreadDialogComponent,
     CarComponent,
     CarFormComponent,
     CarDetailComponent,
@@ -213,7 +206,6 @@ function toMyBookings(tab: 'rentings' | null): RedirectFunction {
     ConvertedPriceComponent,
     CatalogNamePipe,
     ClientAvatarComponent,
-    QuickActionsComponent,
 
     MapPickerComponent,
     BranchesEditorComponent,

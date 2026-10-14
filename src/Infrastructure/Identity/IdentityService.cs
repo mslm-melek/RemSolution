@@ -223,40 +223,6 @@ public class IdentityService : IIdentityService
         return user?.PreferredLanguage;
     }
 
-    public async Task<Result> SetHomeWidgetsAsync(
-        string userId, IReadOnlyCollection<string> widgets, CancellationToken cancellationToken)
-    {
-        var user = await _userManager.FindByIdAsync(userId);
-
-        if (user is null)
-        {
-            return Result.Failure(new[] { $"User '{userId}' not found." });
-        }
-
-        // Serialize even an empty selection: the stored empty string is what
-        // separates "chose nothing" from the null of "never chose".
-        user.HomeWidgets = Domain.Constants.HomeWidgets.Serialize(widgets);
-
-        return (await _userManager.UpdateAsync(user)).ToApplicationResult();
-    }
-
-    public async Task<Result> SetHomeActionsAsync(
-        string userId, IReadOnlyCollection<string> actions, CancellationToken cancellationToken)
-    {
-        var user = await _userManager.FindByIdAsync(userId);
-
-        if (user is null)
-        {
-            return Result.Failure(new[] { $"User '{userId}' not found." });
-        }
-
-        // Serialize even an empty selection: the stored empty string is what
-        // separates "chose nothing" from the null of "never chose".
-        user.HomeActions = Domain.Constants.HomeActions.Serialize(actions);
-
-        return (await _userManager.UpdateAsync(user)).ToApplicationResult();
-    }
-
     public async Task<Result> UpdateProfileAsync(string userId, string? fullName, string email, CancellationToken cancellationToken)
     {
         var user = await _userManager.FindByIdAsync(userId);

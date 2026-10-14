@@ -8472,56 +8472,6 @@
           }
         }
       }
-    },
-    "/api/Users/me/home-widgets": {
-      "put": {
-        "tags": [
-          "Users"
-        ],
-        "operationId": "UpdateMyHomeWidgets",
-        "requestBody": {
-          "x-name": "command",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateMyHomeWidgetsCommand"
-              }
-            }
-          },
-          "required": true,
-          "x-position": 1
-        },
-        "responses": {
-          "204": {
-            "description": ""
-          }
-        }
-      }
-    },
-    "/api/Users/me/home-actions": {
-      "put": {
-        "tags": [
-          "Users"
-        ],
-        "operationId": "UpdateMyHomeActions",
-        "requestBody": {
-          "x-name": "command",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateMyHomeActionsCommand"
-              }
-            }
-          },
-          "required": true,
-          "x-position": 1
-        },
-        "responses": {
-          "204": {
-            "description": ""
-          }
-        }
-      }
     }
   },
   "components": {
@@ -16489,20 +16439,6 @@
           },
           "mustChangePassword": {
             "type": "boolean"
-          },
-          "homeWidgets": {
-            "type": "array",
-            "nullable": true,
-            "items": {
-              "type": "string"
-            }
-          },
-          "homeActions": {
-            "type": "array",
-            "nullable": true,
-            "items": {
-              "type": "string"
-            }
           }
         }
       },
@@ -16699,30 +16635,6 @@
         "properties": {
           "language": {
             "type": "string"
-          }
-        }
-      },
-      "UpdateMyHomeWidgetsCommand": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "widgets": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          }
-        }
-      },
-      "UpdateMyHomeActionsCommand": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "actions": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
           }
         }
       }

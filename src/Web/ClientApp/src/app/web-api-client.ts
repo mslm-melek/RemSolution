@@ -11942,8 +11942,6 @@ export interface IUsersClient {
     updateMyProfile(command: UpdateMyProfileCommand): Observable<void>;
     changeMyPassword(command: ChangeMyPasswordCommand): Observable<void>;
     updateMyLanguage(command: UpdateMyLanguageCommand): Observable<void>;
-    updateMyHomeWidgets(command: UpdateMyHomeWidgetsCommand): Observable<void>;
-    updateMyHomeActions(command: UpdateMyHomeActionsCommand): Observable<void>;
 }
 
 @Injectable({
@@ -12730,102 +12728,6 @@ export class UsersClient implements IUsersClient {
     }
 
     protected processUpdateMyLanguage(response: HttpResponseBase): Observable<void> {
-        const status = response.status;
-        const responseBlob =
-            response instanceof HttpResponse ? response.body :
-            (response as any).error instanceof Blob ? (response as any).error : undefined;
-
-        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
-        if (status === 204) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return _observableOf(null as any);
-            }));
-        } else if (status !== 200 && status !== 204) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            }));
-        }
-        return _observableOf(null as any);
-    }
-
-    updateMyHomeWidgets(command: UpdateMyHomeWidgetsCommand): Observable<void> {
-        let url_ = this.baseUrl + "/api/Users/me/home-widgets";
-        url_ = url_.replace(/[?&]$/, "");
-
-        const content_ = JSON.stringify(command);
-
-        let options_ : any = {
-            body: content_,
-            observe: "response",
-            responseType: "blob",
-            headers: new HttpHeaders({
-                "Content-Type": "application/json",
-            })
-        };
-
-        return this.http.request("put", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processUpdateMyHomeWidgets(response_);
-        })).pipe(_observableCatch((response_: any) => {
-            if (response_ instanceof HttpResponseBase) {
-                try {
-                    return this.processUpdateMyHomeWidgets(response_ as any);
-                } catch (e) {
-                    return _observableThrow(e) as any as Observable<void>;
-                }
-            } else
-                return _observableThrow(response_) as any as Observable<void>;
-        }));
-    }
-
-    protected processUpdateMyHomeWidgets(response: HttpResponseBase): Observable<void> {
-        const status = response.status;
-        const responseBlob =
-            response instanceof HttpResponse ? response.body :
-            (response as any).error instanceof Blob ? (response as any).error : undefined;
-
-        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
-        if (status === 204) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return _observableOf(null as any);
-            }));
-        } else if (status !== 200 && status !== 204) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            }));
-        }
-        return _observableOf(null as any);
-    }
-
-    updateMyHomeActions(command: UpdateMyHomeActionsCommand): Observable<void> {
-        let url_ = this.baseUrl + "/api/Users/me/home-actions";
-        url_ = url_.replace(/[?&]$/, "");
-
-        const content_ = JSON.stringify(command);
-
-        let options_ : any = {
-            body: content_,
-            observe: "response",
-            responseType: "blob",
-            headers: new HttpHeaders({
-                "Content-Type": "application/json",
-            })
-        };
-
-        return this.http.request("put", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processUpdateMyHomeActions(response_);
-        })).pipe(_observableCatch((response_: any) => {
-            if (response_ instanceof HttpResponseBase) {
-                try {
-                    return this.processUpdateMyHomeActions(response_ as any);
-                } catch (e) {
-                    return _observableThrow(e) as any as Observable<void>;
-                }
-            } else
-                return _observableThrow(response_) as any as Observable<void>;
-        }));
-    }
-
-    protected processUpdateMyHomeActions(response: HttpResponseBase): Observable<void> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -25446,8 +25348,6 @@ export class CurrentUserDto implements ICurrentUserDto {
     features?: string[];
     isImpersonating?: boolean;
     mustChangePassword?: boolean;
-    homeWidgets?: string[] | undefined;
-    homeActions?: string[] | undefined;
 
     constructor(data?: ICurrentUserDto) {
         if (data) {
@@ -25478,16 +25378,6 @@ export class CurrentUserDto implements ICurrentUserDto {
             }
             this.isImpersonating = _data["isImpersonating"];
             this.mustChangePassword = _data["mustChangePassword"];
-            if (Array.isArray(_data["homeWidgets"])) {
-                this.homeWidgets = [] as any;
-                for (let item of _data["homeWidgets"])
-                    this.homeWidgets!.push(item);
-            }
-            if (Array.isArray(_data["homeActions"])) {
-                this.homeActions = [] as any;
-                for (let item of _data["homeActions"])
-                    this.homeActions!.push(item);
-            }
         }
     }
 
@@ -25518,16 +25408,6 @@ export class CurrentUserDto implements ICurrentUserDto {
         }
         data["isImpersonating"] = this.isImpersonating;
         data["mustChangePassword"] = this.mustChangePassword;
-        if (Array.isArray(this.homeWidgets)) {
-            data["homeWidgets"] = [];
-            for (let item of this.homeWidgets)
-                data["homeWidgets"].push(item);
-        }
-        if (Array.isArray(this.homeActions)) {
-            data["homeActions"] = [];
-            for (let item of this.homeActions)
-                data["homeActions"].push(item);
-        }
         return data;
     }
 }
@@ -25543,8 +25423,6 @@ export interface ICurrentUserDto {
     features?: string[];
     isImpersonating?: boolean;
     mustChangePassword?: boolean;
-    homeWidgets?: string[] | undefined;
-    homeActions?: string[] | undefined;
 }
 
 export class CreateAgencyUserCommand implements ICreateAgencyUserCommand {
@@ -26105,94 +25983,6 @@ export class UpdateMyLanguageCommand implements IUpdateMyLanguageCommand {
 
 export interface IUpdateMyLanguageCommand {
     language?: string;
-}
-
-export class UpdateMyHomeWidgetsCommand implements IUpdateMyHomeWidgetsCommand {
-    widgets?: string[];
-
-    constructor(data?: IUpdateMyHomeWidgetsCommand) {
-        if (data) {
-            for (var property in data) {
-                if (data.hasOwnProperty(property))
-                    (<any>this)[property] = (<any>data)[property];
-            }
-        }
-    }
-
-    init(_data?: any) {
-        if (_data) {
-            if (Array.isArray(_data["widgets"])) {
-                this.widgets = [] as any;
-                for (let item of _data["widgets"])
-                    this.widgets!.push(item);
-            }
-        }
-    }
-
-    static fromJS(data: any): UpdateMyHomeWidgetsCommand {
-        data = typeof data === 'object' ? data : {};
-        let result = new UpdateMyHomeWidgetsCommand();
-        result.init(data);
-        return result;
-    }
-
-    toJSON(data?: any) {
-        data = typeof data === 'object' ? data : {};
-        if (Array.isArray(this.widgets)) {
-            data["widgets"] = [];
-            for (let item of this.widgets)
-                data["widgets"].push(item);
-        }
-        return data;
-    }
-}
-
-export interface IUpdateMyHomeWidgetsCommand {
-    widgets?: string[];
-}
-
-export class UpdateMyHomeActionsCommand implements IUpdateMyHomeActionsCommand {
-    actions?: string[];
-
-    constructor(data?: IUpdateMyHomeActionsCommand) {
-        if (data) {
-            for (var property in data) {
-                if (data.hasOwnProperty(property))
-                    (<any>this)[property] = (<any>data)[property];
-            }
-        }
-    }
-
-    init(_data?: any) {
-        if (_data) {
-            if (Array.isArray(_data["actions"])) {
-                this.actions = [] as any;
-                for (let item of _data["actions"])
-                    this.actions!.push(item);
-            }
-        }
-    }
-
-    static fromJS(data: any): UpdateMyHomeActionsCommand {
-        data = typeof data === 'object' ? data : {};
-        let result = new UpdateMyHomeActionsCommand();
-        result.init(data);
-        return result;
-    }
-
-    toJSON(data?: any) {
-        data = typeof data === 'object' ? data : {};
-        if (Array.isArray(this.actions)) {
-            data["actions"] = [];
-            for (let item of this.actions)
-                data["actions"].push(item);
-        }
-        return data;
-    }
-}
-
-export interface IUpdateMyHomeActionsCommand {
-    actions?: string[];
 }
 
 export interface FileParameter {

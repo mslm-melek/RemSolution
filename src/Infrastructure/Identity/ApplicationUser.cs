@@ -15,16 +15,13 @@ public class ApplicationUser : IdentityUser
     // Accept-Language header and finally the default culture.
     public string? PreferredLanguage { get; set; }
 
-    // The home-screen shortcut tiles this user pinned, in the order they chose,
-    // as a comma-separated list of Domain.Constants.HomeWidgets keys. Null means
-    // "never chosen" — the SPA then shows its default set; an empty string is a
-    // deliberate "no tiles", which is why the two are not the same value.
+    // RETIRED 2026-10-06 with the home-screen shortcuts and quick actions: nothing
+    // reads or writes these any more. They stay mapped for one release because
+    // the migration runs before the new code ships, and the version still serving
+    // during that window reads both (docs/RUNBOOK_Base_De_Donnees.md §1). Drop
+    // them in the next release's migration.
     public string? HomeWidgets { get; set; }
 
-    // The quick actions this user keeps on their landing screen, in the order they
-    // chose, as a comma-separated list of Domain.Constants.HomeActions keys. Null
-    // means "never chosen" — the SPA then shows its default set; an empty string
-    // is a deliberate "no actions", which is why the two are not the same value.
     public string? HomeActions { get; set; }
 
     // Set when the account was created with a password somebody else chose —

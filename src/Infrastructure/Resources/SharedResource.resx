@@ -193,24 +193,6 @@
   <data name="Validation.Language.Unsupported" xml:space="preserve">
     <value>Language must be one of: en, fr, ar.</value>
   </data>
-  <data name="Validation.HomeWidgets.TooMany" xml:space="preserve">
-    <value>You can pin at most {0} shortcuts to your home screen.</value>
-  </data>
-  <data name="Validation.HomeWidgets.Duplicate" xml:space="preserve">
-    <value>The same shortcut cannot be pinned twice.</value>
-  </data>
-  <data name="Validation.HomeWidgets.Unknown" xml:space="preserve">
-    <value>One of the selected shortcuts is not recognised.</value>
-  </data>
-  <data name="Validation.HomeActions.TooMany" xml:space="preserve">
-    <value>You can keep at most {0} quick actions on your home screen.</value>
-  </data>
-  <data name="Validation.HomeActions.Duplicate" xml:space="preserve">
-    <value>The same quick action cannot be added twice.</value>
-  </data>
-  <data name="Validation.HomeActions.Unknown" xml:space="preserve">
-    <value>One of the selected quick actions is not recognised.</value>
-  </data>
   <data name="Property.Name" xml:space="preserve">
     <value>Name</value>
   </data>
