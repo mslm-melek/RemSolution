@@ -135,8 +135,7 @@ try
     // limiter, which waves car photos through and counts the rest. Ends in a 404
     // rather than falling through to the SPA, which would answer a missing
     // document with index.html.
-    var uploadsProvider = uploadedFiles.Files;
-
+    //
     // Only the types an upload may be, whatever is on disk: an .svg, .html or
     // .js file served from our own origin would run script with the viewer's
     // session, so anything else is not served at all.
@@ -152,10 +151,10 @@ try
         // counted contract number) belong in the request log.
         uploads.UseMiddleware<RequestContextLoggingMiddleware>();
         uploads.UseSerilogRequestLogging();
-        uploads.UseMiddleware<UploadsAuthorizationMiddleware>(uploadsProvider, uploadsPath);
+        uploads.UseMiddleware<UploadsAuthorizationMiddleware>();
         uploads.UseStaticFiles(new StaticFileOptions
         {
-            FileProvider = uploadsProvider,
+            FileProvider = uploadedFiles.Files,
             ContentTypeProvider = uploadTypes,
         });
         uploads.Run(context =>

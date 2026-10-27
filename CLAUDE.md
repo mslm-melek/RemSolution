@@ -402,7 +402,8 @@ the path by `UploadPath`, so **every stored file must live at
 `agencies/{agencyId}/{area}/…`**: `cars` is public (the marketplace shows it, and
 the rate limiter waves it through); anything else needs a user of that agency who
 is not on a mailed temporary password, a platform admin (each opening of an
-existing file written to the audit trail as an `ImpersonatedRead`), or the
+existing file written to the audit trail as an `ImpersonatedRead`, once per admin
+per file per 10 minutes — a PDF viewer's range requests are one look), or the
 customer who sent it in (`IsMyBookingFileQuery`). `UploadPath` refuses `\`, `:`,
 and any segment ending in a dot or space — Windows reads those differently from
 the gate, and `%5C` once dressed another agency's scan as a car photo. Only

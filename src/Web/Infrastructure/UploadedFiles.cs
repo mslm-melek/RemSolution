@@ -1,5 +1,6 @@
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Options;
+using RemSolution.Application.Common.Files;
 using RemSolution.Infrastructure.Storage;
 
 namespace RemSolution.Web.Infrastructure;

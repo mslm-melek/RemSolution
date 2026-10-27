@@ -1,7 +1,9 @@
 using System.Security.Claims;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.FileProviders;
+using RemSolution.Application.Common.Files;
 using RemSolution.Application.Common.Interfaces;
 using RemSolution.Application.Features.MarketplaceSearch.Queries.IsMyBookingFileQuery;
 using RemSolution.Domain.Constants;
@@ -29,7 +31,8 @@ namespace RemSolution.Web.Middleware;
 /// papers) is already applied by the API that hands the URL out; this gate is
 /// what stops the URL working anywhere else.</item>
 /// <item>A platform administrator may open it, and each opening is written to
-/// the audit trail like any other look inside an agency — an image request
+/// the audit trail (once per <see cref="AuditWindow"/>) like any other look
+/// inside an agency — an image request
 /// carries no workspace header, so it cannot ride on an impersonation.</item>
 /// <item>A customer may open what they sent in against their own booking
 /// (<see cref="IsMyBookingFileQuery"/>).</item>
@@ -43,15 +46,20 @@ namespace RemSolution.Web.Middleware;
 /// </summary>
 public class UploadsAuthorizationMiddleware
 {
+    /// <summary>How long one platform-admin opening of a file covers further requests for it.</summary>
+    public static readonly TimeSpan AuditWindow = TimeSpan.FromMinutes(10);
+
     private readonly RequestDelegate _next;
     private readonly IFileProvider _files;
     private readonly PathString _basePath;
+    private readonly IMemoryCache _recentlyAudited;
 
-    public UploadsAuthorizationMiddleware(RequestDelegate next, IFileProvider files, PathString basePath)
+    public UploadsAuthorizationMiddleware(RequestDelegate next, UploadedFiles uploads, IMemoryCache recentlyAudited)
     {
         _next = next;
-        _files = files;
-        _basePath = basePath;
+        _files = uploads.Files;
+        _basePath = uploads.BasePath;
+        _recentlyAudited = recentlyAudited;
     }
 
     public async Task InvokeAsync(
@@ -113,9 +121,7 @@ public class UploadsAuthorizationMiddleware
 
         if (user.IsInRole(Roles.PlatformAdministrator))
         {
-            await auditor.RecordAsync(
-                path.AgencyId, context.Request.Method, $"{_basePath}/{path.RelativePath}", context.RequestAborted);
-
+            await AuditOpeningAsync(context, auditor, path);
             return UploadAccess.Private;
         }
 
@@ -128,6 +134,23 @@ public class UploadsAuthorizationMiddleware
         }
 
         return UploadAccess.Denied;
+    }
+
+    // A PDF viewer fetches one document in several range requests, so a row per
+    // request would record one look as five. One per admin per file per window
+    // keeps the trail readable. The row is written before the window opens, so
+    // a look is never left out; at worst a race or a second server adds a duplicate.
+    private async Task AuditOpeningAsync(HttpContext context, IImpersonationAuditor auditor, UploadPath path)
+    {
+        var url = $"{_basePath}/{path.RelativePath}";
+        var key = $"uploads-audit:{context.User.FindFirstValue(ClaimTypes.NameIdentifier)}:{url}";
+
+        if (_recentlyAudited.TryGetValue(key, out _))
+            return;
+
+        await auditor.RecordAsync(path.AgencyId, context.Request.Method, url, context.RequestAborted);
+
+        _recentlyAudited.Set(key, true, AuditWindow);
     }
 
     private enum UploadAccess

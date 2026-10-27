@@ -7,6 +7,9 @@ namespace RemSolution.Application.Common.Files;
 /// </summary>
 public static class UploadFileTypes
 {
+    /// <summary>The largest file any upload accepts. Uploads are buffered in memory to be hashed.</summary>
+    public const long MaxSizeBytes = 15 * 1024 * 1024;
+
     public static readonly IReadOnlyDictionary<string, string> All =
         new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {

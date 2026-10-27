@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
 using Microsoft.EntityFrameworkCore;
+using RemSolution.Application.Common.Files;
 using RemSolution.Application.Common.Interfaces;
 using RemSolution.Domain.Entities;
 using RemSolution.Domain.Enums;
@@ -89,14 +90,9 @@ public class StoredFileService : IStoredFileService
             await _fileStorage.DeleteAsync(url, cancellationToken);
     }
 
-    // "agencies/4/cars/12/photo.jpg" → "agencies/4/cars/". A path not shaped like
-    // that is its own area, so it deduplicates only onto itself.
-    private static string AreaPrefix(string relativePath)
-    {
-        var segments = relativePath.Replace('\\', '/').Split('/', StringSplitOptions.RemoveEmptyEntries);
-
-        return segments.Length >= 4 && segments[0] == "agencies"
-            ? $"{segments[0]}/{segments[1]}/{segments[2]}/"
-            : relativePath;
-    }
+    // "agencies/4/cars/12/photo.jpg" → "agencies/4/cars/", read as the gate reads
+    // it. A path the gate would not parse is its own area, so it deduplicates
+    // only onto itself.
+    private static string AreaPrefix(string relativePath) =>
+        UploadPath.TryParse(relativePath, out var path) ? path.AreaPrefix : relativePath;
 }

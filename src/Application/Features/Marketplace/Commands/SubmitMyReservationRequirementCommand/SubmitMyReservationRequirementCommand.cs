@@ -1,4 +1,5 @@
 using ValidationException = RemSolution.Application.Common.Exceptions.ValidationException;
+using RemSolution.Application.Common.Files;
 using RemSolution.Application.Common.Interfaces;
 using RemSolution.Application.Common.Security;
 using RemSolution.Application.Common.Tenancy;
@@ -116,35 +117,29 @@ namespace RemSolution.Application.Features.Marketplace.Commands.SubmitMyReservat
     public class SubmitMyReservationRequirementCommandValidator
         : AbstractValidator<SubmitMyReservationRequirementCommand>
     {
-        private const long MaxSizeBytes = 15 * 1024 * 1024;
-
-        // The same list as every staff upload. It matters more here: this file
-        // comes from outside the agency and is opened by its staff on our own
-        // origin, where an .svg or .html would run script with their session.
-        private static readonly string[] AllowedContentTypes = Common.Files.UploadFileTypes.DocumentContentTypes;
-
-        private static readonly string[] AllowedExtensions = Common.Files.UploadFileTypes.DocumentExtensions;
-
         public SubmitMyReservationRequirementCommandValidator(ILocalizer localizer)
         {
             RuleFor(v => v.Id).GreaterThan(0);
             RuleFor(v => v.Note)
                 .MaximumLength(Domain.Entities.ReservationRequirement.MaxNoteLength);
 
+            // The same list as every staff upload. It matters more here: this file
+            // comes from outside the agency and is opened by its staff on our own
+            // origin, where an .svg or .html would run script with their session.
             When(v => v.Content is not null, () =>
             {
                 RuleFor(v => v.FileName)
                     .NotEmpty()
-                    .Must(name => AllowedExtensions.Contains(Path.GetExtension(name), StringComparer.OrdinalIgnoreCase))
-                    .WithMessage(_ => localizer["Validation.File.Extension", string.Join(", ", AllowedExtensions)]);
+                    .Must(name => UploadFileTypes.DocumentExtensions.Contains(Path.GetExtension(name), StringComparer.OrdinalIgnoreCase))
+                    .WithMessage(_ => localizer["Validation.File.Extension", string.Join(", ", UploadFileTypes.DocumentExtensions)]);
 
                 RuleFor(v => v.ContentType)
-                    .Must(ct => AllowedContentTypes.Contains(ct, StringComparer.OrdinalIgnoreCase))
-                    .WithMessage(_ => localizer["Validation.File.ContentType", string.Join(", ", AllowedContentTypes)]);
+                    .Must(ct => UploadFileTypes.DocumentContentTypes.Contains(ct, StringComparer.OrdinalIgnoreCase))
+                    .WithMessage(_ => localizer["Validation.File.ContentType", string.Join(", ", UploadFileTypes.DocumentContentTypes)]);
 
                 RuleFor(v => v.Length)
                     .GreaterThan(0).WithMessage(_ => localizer["Validation.File.Empty"])
-                    .LessThanOrEqualTo(MaxSizeBytes).WithMessage(_ => localizer["Validation.File.TooLarge"]);
+                    .LessThanOrEqualTo(UploadFileTypes.MaxSizeBytes).WithMessage(_ => localizer["Validation.File.TooLarge"]);
             });
         }
     }

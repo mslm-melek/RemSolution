@@ -94,6 +94,32 @@ public class UploadsAccessTests : BaseTestFixture
         row.After.Should().Contain("FAC-2030-000001.pdf");
     }
 
+    /// <summary>
+    /// A PDF viewer reads one document in several range requests; that is one
+    /// look, not five. A different file is a different look.
+    /// </summary>
+    [Test]
+    public async Task OneOpeningIsOneAuditRowHoweverManyRequestsItTakes()
+    {
+        var adminId = await RunAsPlatformAdministratorAsync();
+        var agencyId = await AddTestAgencyAsync();
+        var invoice = WriteUpload($"agencies/{agencyId}/factures/FAC-2030-000002.pdf");
+        var contract = WriteUpload($"agencies/{agencyId}/contracts/CTR-2030-000002.pdf");
+
+        var client = await SignedInClientAsync(adminId);
+        for (var i = 0; i < 3; i++)
+            (await client.GetAsync(invoice)).StatusCode.Should().Be(HttpStatusCode.OK);
+        (await client.GetAsync(contract)).StatusCode.Should().Be(HttpStatusCode.OK);
+
+        (await AllIgnoringFiltersAsync<AuditLog>())
+            .Where(a => a.Action == ImpersonationAuditor.ImpersonatedReadAction)
+            .OrderBy(a => a.Id)
+            .Select(a => a.After)
+            .Should().SatisfyRespectively(
+                first => first.Should().Contain("FAC-2030-000002.pdf"),
+                second => second.Should().Contain("CTR-2030-000002.pdf"));
+    }
+
     [Test]
     public async Task ACustomerOpensWhatTheySentInAndNothingElse()
     {

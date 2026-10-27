@@ -1,11 +1,11 @@
 ﻿using System.Globalization;
 
-namespace RemSolution.Web.Infrastructure;
+namespace RemSolution.Application.Common.Files;
 
 /// <summary>
-/// A request path under the uploads prefix, read the way the gate reads it:
-/// <c>agencies/{agencyId}/{area}/…</c>. Shared by the gate and the rate limiter
-/// so both agree on what is a public car photo.
+/// A path under the uploads prefix, read the way the gate reads it:
+/// <c>agencies/{agencyId}/{area}/…</c>. Shared by the gate, the rate limiter and
+/// the file store, so all three agree on what an area is and which one is public.
 ///
 /// <para>
 /// Parsing is strict on purpose. The decision is taken on these segments, but
@@ -22,6 +22,9 @@ public readonly record struct UploadPath(int AgencyId, string Area, string Relat
     public const string PublicArea = "cars";
 
     public bool IsPublic => Area.Equals(PublicArea, StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>The folder the area's access rule covers, e.g. "agencies/4/cars/".</summary>
+    public string AreaPrefix => string.Join('/', RelativePath.Split('/').Take(3)) + "/";
 
     /// <param name="remainder">The path after the uploads prefix, e.g. "/agencies/4/cars/12/photo.jpg".</param>
     public static bool TryParse(string? remainder, out UploadPath path)
