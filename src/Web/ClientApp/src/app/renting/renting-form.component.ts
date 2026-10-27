@@ -127,9 +127,6 @@ export class RentingFormComponent implements OnInit {
   newPaymentAmount: number | null = null;
   newPaymentMethod: PaymentMethod = PaymentMethod.Cash;
   newPaymentNotes = '';
-  // The whole panel already requires Payment.Read, so the proof column always
-  // has something to say: the file, a dash, or the button that attaches it.
-  paymentColumns: string[] = ['date', 'amount', 'method', 'proof', 'actions'];
   canAttachProof = false;
   // Payment id whose proof is uploading, so only its own button waits.
   uploadingProofFor: number | null = null;
@@ -175,6 +172,10 @@ export class RentingFormComponent implements OnInit {
   // date moves, whereas this prices only the difference and lets the agent say
   // what should happen to the contract (see ChangeRentingEndDateCommand).
   endDatePanelOpen = false;
+  paymentFormOpen = false;
+  extraFormOpen = false;
+  feeFormOpen = false;
+  bookingFormOpen = false;
   newEndDate = '';
   reissueContract = true;
   changingEndDate = false;
@@ -434,6 +435,14 @@ export class RentingFormComponent implements OnInit {
 
     const v = this.vehicleGroup.getRawValue();
     return daysBetween(v.startDate, v.endDate);
+  }
+
+  // Days of the booking as saved. billedDays follows the open edit form, which
+  // would relabel the stored price with days nobody has agreed to yet.
+  get storedDays(): number | null {
+    return this.renting
+      ? daysBetween(toDateTimeInput(this.renting.startDate), toDateTimeInput(this.renting.endDate))
+      : null;
   }
 
   /** The car's rate, when it has one — the "× N days" part of the quote. */
@@ -1005,30 +1014,7 @@ export class RentingFormComponent implements OnInit {
         this.renting = dto;
         this.rowVersion = dto.rowVersion;
         this.currency = dto.price?.currency;
-        this.form.patchValue({
-          vehicle: {
-            carId: dto.carId ?? null,
-            startDate: toDateTimeInput(dto.startDate),
-            endDate: toDateTimeInput(dto.endDate),
-            startMileage: dto.startMileage ?? null,
-            endMileage: dto.endMileage ?? null,
-            // Reloading discards an unsaved price adjustment along with every
-            // other unsaved edit.
-            overridePrice: false,
-            manualPrice: null
-          },
-          client: {
-            clientMode: 'existing',
-            clientId: dto.clientId ?? null,
-            // A booking that already has a second driver opens on the picker
-            // holding them; one that has none opens on "none".
-            secondMode: dto.secondClientId ? 'existing' : 'none',
-            secondClientId: dto.secondClientId ?? null
-          },
-          paperwork: {
-            notes: dto.notes ?? ''
-          }
-        });
+        this.resetFormTo(dto);
         if (this.isTerminal) {
           this.form.disable();
         }
@@ -1071,6 +1057,40 @@ export class RentingFormComponent implements OnInit {
     });
   }
 
+  // The summary and the Money card read the form (billedDays, the quote), so
+  // folding it away has to put the stored booking back, not just hide the edits.
+  cancelBookingEdit() {
+    if (this.renting) this.resetFormTo(this.renting);
+    this.bookingFormOpen = false;
+  }
+
+  private resetFormTo(dto: RentingDto) {
+    this.form.patchValue({
+      vehicle: {
+        carId: dto.carId ?? null,
+        startDate: toDateTimeInput(dto.startDate),
+        endDate: toDateTimeInput(dto.endDate),
+        startMileage: dto.startMileage ?? null,
+        endMileage: dto.endMileage ?? null,
+        // Discards an unsaved price adjustment along with every other unsaved edit.
+        overridePrice: false,
+        manualPrice: null
+      },
+      client: {
+        clientMode: 'existing',
+        clientId: dto.clientId ?? null,
+        // A booking that already has a second driver opens on the picker
+        // holding them; one that has none opens on "none".
+        secondMode: dto.secondClientId ? 'existing' : 'none',
+        secondClientId: dto.secondClientId ?? null
+      },
+      paperwork: {
+        notes: dto.notes ?? ''
+      }
+    });
+    this.form.markAsPristine();
+  }
+
   save() {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
@@ -1107,6 +1127,7 @@ export class RentingFormComponent implements OnInit {
       this.client.updateRenting(this.rentingId!, command).subscribe({
         next: () => {
           this.saving = false;
+          this.bookingFormOpen = false;
           this.reload();
           // The save may have created a second driver, who has to be in the list
           // before the reloaded picker can show their name rather than a blank.
@@ -1179,6 +1200,18 @@ export class RentingFormComponent implements OnInit {
     this.endDatePrice = null;
     this.errorMessage = '';
     this.endDatePanelOpen = true;
+    this.reveal('renting-end-date');
+  }
+
+  openPaymentForm() {
+    this.paymentFormOpen = true;
+    this.reveal('renting-money');
+  }
+
+  // The sticky bar can be clicked from anywhere on the page, so the panel it
+  // opens is brought into view once Angular has rendered it.
+  private reveal(id: string) {
+    setTimeout(() => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
   }
 
   closeEndDatePanel() {
@@ -1408,6 +1441,7 @@ export class RentingFormComponent implements OnInit {
       next: () => {
         this.newExtraTypeId = null;
         this.newExtraAmount = null;
+        this.extraFormOpen = false;
         this.reload();
       },
       error: err => this.handleError(err)
@@ -1447,6 +1481,7 @@ export class RentingFormComponent implements OnInit {
       next: () => {
         this.newFeeAmount = null;
         this.newFeeNote = '';
+        this.feeFormOpen = false;
         this.reload();
       },
       error: err => this.handleError(err)
@@ -1474,6 +1509,7 @@ export class RentingFormComponent implements OnInit {
       next: () => {
         this.newPaymentAmount = null;
         this.newPaymentNotes = '';
+        this.paymentFormOpen = false;
         this.reload();
       },
       error: err => this.handleError(err)
@@ -1527,8 +1563,7 @@ export class RentingFormComponent implements OnInit {
   get chargeAmount(): number {
     const rental = this.renting?.rentingState === RentingState.Cancelled
       ? this.renting?.cancellationFee?.amount ?? 0
-      : (this.renting?.price?.amount ?? 0)
-        + this.extraServices.reduce((sum, e) => sum + (e.totalAmount?.amount ?? 0), 0);
+      : (this.renting?.price?.amount ?? 0) + this.extrasTotal;
 
     return rental + this.feesTotal;
   }
@@ -1541,6 +1576,18 @@ export class RentingFormComponent implements OnInit {
   /** What the client has paid beyond what the booking charges, as a credit. */
   get creditDue(): number {
     return Math.max(0, -this.balanceDue);
+  }
+
+  get extrasTotal(): number {
+    return this.extraServices.reduce((sum, e) => sum + (e.totalAmount?.amount ?? 0), 0);
+  }
+
+  /** The Money card's chip; null when nothing is charged, so there is nothing to settle. */
+  get paymentStatus(): { key: string; tone: string } | null {
+    if (this.chargeAmount <= 0) return null;
+    if (this.balanceDue <= 0) return { key: 'renting.paymentStatus.paid', tone: 'ok' };
+    if (this.paidAmount > 0) return { key: 'renting.paymentStatus.partlyPaid', tone: 'warn' };
+    return { key: 'renting.paymentStatus.unpaid', tone: 'danger' };
   }
 
   // Returns a transloco key for the state chip; the raw enum name would show

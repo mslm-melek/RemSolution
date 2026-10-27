@@ -246,71 +246,199 @@
   font-weight: 680;
 }
 
-/* ------------------------------------------------------------- summary ----- */
+/* --------------------------------------------------------------- detail ---- */
 
-.summary {
+/* Wider than the mock-up's 760px: the French action bar needs ~810px on one line. */
+.renting-form-card.is-detail {
+  max-width: 880px;
+  margin-inline: auto;
+}
+
+.detail-head {
   display: flex;
   flex-direction: column;
-  gap: var(--gap-4);
+  gap: 6px;
 }
 
-/* One bar: what state the booking is in, and what can be done to it. */
-.summary-head {
+.detail-head .page-subtitle {
+  margin: 0;
+}
+
+.detail-title-row {
   display: flex;
   align-items: center;
-  gap: var(--gap-2);
+  gap: var(--sp-3);
   flex-wrap: wrap;
-  padding: 10px 14px;
-  border: 1px solid var(--line);
-  border-radius: var(--r);
-  background: var(--surface-2);
 }
 
-.state-label {
-  font-size: 11.5px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.07em;
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  align-self: flex-start;
+  color: var(--brand-600);
+  font-size: var(--fs-sm);
+  text-decoration: none;
+}
+
+.back-link:hover {
+  text-decoration: underline;
+}
+
+.back-link mat-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+}
+
+:host-context([dir='rtl']) .back-link mat-icon {
+  transform: scaleX(-1);
+}
+
+.detail-card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  /* Clears the sticky top bar when the dock scrolls a card into view. */
+  scroll-margin-top: 72px;
+}
+
+.card-head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+  min-height: var(--h-control-sm);
+}
+
+.card-head .section-title {
+  margin: 0;
+}
+
+/* Header pickers sit on the title row, so their subscript line would push it taller. */
+.card-head .mat-mdc-form-field {
+  margin-bottom: 0;
+}
+
+.spacer {
+  flex: 1 1 auto;
+}
+
+.card-note,
+.detail-card > .hint,
+.detail-card > .needs-action {
+  margin: 0;
+  font-size: var(--fs-sm);
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: 130px minmax(0, 1fr);
+  gap: var(--sp-1) var(--sp-3);
+  margin: 0;
+  font-size: var(--fs-sm);
+}
+
+.facts dt {
   color: var(--muted);
 }
 
-/* Four facts side by side; the tile itself comes from the design system. */
-.summary .tile-value.small {
-  font-size: 16px;
-  font-weight: 600;
-  letter-spacing: 0;
+.facts dd {
+  margin: 0;
+  color: var(--ink);
 }
 
-/* See the template: flex items so the wrap lands between the two dates. */
-.period-value {
+.facts .notes {
+  white-space: pre-line;
+}
+
+/* Payment rows carry their own proof/reverse buttons after the figure. */
+.money-line > .value {
+  margin-inline-start: auto;
+}
+
+.line-actions {
+  display: inline-flex;
+  align-items: center;
+  margin-block: -8px;
+}
+
+.doc-row,
+.item-row {
   display: flex;
+  align-items: center;
+  gap: var(--sp-4);
   flex-wrap: wrap;
-  align-items: baseline;
-  gap: 0 6px;
+  padding: 6px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  font-size: var(--fs-sm);
 }
 
-.period-value > span {
-  white-space: nowrap;
+.item-row {
+  gap: var(--sp-2);
 }
 
-/* ----------------------------------------------------------------- tabs ---- */
-
-.renting-tabs {
-  margin-top: var(--gap-2);
+.doc-icon {
+  color: var(--brand-600);
 }
 
-.tab-body {
+/* A document number is a download, styled as the link it reads as. */
+.doc-number {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--brand-600);
+  font: inherit;
+  cursor: pointer;
+}
+
+.doc-number:hover {
+  text-decoration: underline;
+}
+
+.doc-meta {
+  font-size: var(--fs-label);
+  color: var(--muted);
+}
+
+.booking-form {
   display: flex;
   flex-direction: column;
-  gap: var(--gap-4);
-  padding: var(--gap-5) 2px 0;
+  gap: var(--sp-4);
+}
+
+/* The page's last child, so at the end of the scroll it rests below the last card
+   instead of covering it. */
+.action-dock {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.action-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+  width: 100%;
+  max-width: 880px;
+  padding: 12px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-3);
+  pointer-events: auto;
 }
 
 /* Two columns rather than as-many-as-fit, so the fields pair up (the two dates on
    one line, the two mileages on the next) instead of leaving the last one alone on
    a row of its own — which is what auto-fit produces at this width. */
 @media (min-width: 768px) {
-  .tab-body .form-section > .form-grid,
+  .booking-form .form-section > .form-grid,
   .step-body .form-section > .form-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -319,19 +447,19 @@
 /* The shared .inline-add strip is a flex row, but every mat-form-field carries
    width:100% from the design system — so without a basis each field claims a
    whole line and the "add" strip becomes a column. */
-.tab-body .inline-add .mat-mdc-form-field {
+.detail-card .inline-add .mat-mdc-form-field {
   flex: 1 1 170px;
   max-width: 240px;
 }
 
 /* Money inputs: no spinners, so the currency suffix is not squeezed out. */
-.tab-body .inline-add input[type='number'] {
+.detail-card .inline-add input[type='number'] {
   appearance: textfield;
   -moz-appearance: textfield;
 }
 
-.tab-body .inline-add input[type='number']::-webkit-outer-spin-button,
-.tab-body .inline-add input[type='number']::-webkit-inner-spin-button {
+.detail-card .inline-add input[type='number']::-webkit-outer-spin-button,
+.detail-card .inline-add input[type='number']::-webkit-inner-spin-button {
   appearance: none;
   margin: 0;
 }
@@ -495,14 +623,14 @@
   flex-wrap: wrap;
 }
 
-/* Same reason as .price-field: this one appears in .template-row and .doc-header
+/* Same reason as .price-field: this one appears in .template-row and .card-head
    (rows) and in the change-end-date panel (a column). */
 .template-picker {
   max-width: 280px;
 }
 
 .template-row .template-picker,
-.doc-header .template-picker {
+.card-head .template-picker {
   flex: 0 1 260px;
   min-width: 220px;
 }
@@ -530,56 +658,17 @@
   gap: 2px;
 }
 
-/* ------------------------------------------------------------ documents ---- */
-
-.doc-group {
-  display: flex;
-  flex-direction: column;
-  gap: var(--gap-2);
-}
-
-.doc-header {
-  display: flex;
-  align-items: center;
-  gap: var(--gap-4);
-  flex-wrap: wrap;
-}
-
-.doc-header .section-label {
-  margin: 0;
-}
-
-/* The pickers sit on a header row, so their subscript line would push it taller. */
-.doc-header .mat-mdc-form-field {
-  margin-bottom: 0;
-}
-
-.doc-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.doc-list li {
-  display: flex;
-  align-items: center;
-  gap: var(--gap-4);
-  flex-wrap: wrap;
-}
-
-.doc-list .muted {
-  font-size: 12.5px;
-}
-
-/* Proof column of the payments table: never wider than its buttons. */
-.proof-cell {
-  white-space: nowrap;
-  width: 1%;
-}
-
 /* --------------------------------------------------------------- narrow ---- */
 
 @media (max-width: 767px) {
+  .facts {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .facts dd + dt {
+    margin-top: var(--sp-2);
+  }
+
   .price-body {
     align-items: flex-start;
   }
