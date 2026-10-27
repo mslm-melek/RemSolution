@@ -40,6 +40,14 @@ param dbAdminPassword string
 @secure()
 param dbAppUserPassword string
 
+// Supplied rather than generated: azd's generator does not promise the 32
+// characters JwtOptions demands, and a short key would only surface as an app
+// that will not start. An unset variable fails here instead, by name.
+@secure()
+@minLength(32)
+@description('Signs the API access tokens. Set once per environment with azd env set JWT_SIGNING_KEY (see docs/RUNBOOK_Base_De_Donnees.md §1).')
+param jwtSigningKey string
+
 var abbrs = loadJsonContent('./abbreviations.json')
 
 // Tags that should be applied to all resources.
@@ -151,6 +159,16 @@ module loadTesting 'core/testing/loadtesting.bicep' = if (deployLoadTesting) {
     name: !empty(loadTestingName) ? loadTestingName : '${abbrs.loadTesting}${resourceToken}'
     location: location
     tags: tags
+  }
+  scope: rg
+}
+
+module jwtSigningKeySecret 'core/security/keyvault-secret.bicep' = {
+  name: 'jwtSigningKey'
+  params: {
+    keyVaultName: keyVault.outputs.name
+    name: 'Jwt--SigningKey'
+    secretValue: jwtSigningKey
   }
   scope: rg
 }

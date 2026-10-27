@@ -68,9 +68,21 @@ L'application démarre en `Production` (et non plus en `Development`, ce qui cha
 | Secret | Pourquoi |
 |---|---|
 | `ConnectionStrings--RemSolutionDb` | créé par le module Bicep de la base |
-| `Jwt--SigningKey` | l'hôte refuse de démarrer sans (une clé de développement publiée permettrait à quiconque d'émettre des jetons) |
+| `Jwt--SigningKey` | l'hôte refuse de démarrer sans (une clé de développement publiée permettrait à quiconque d'émettre des jetons). **Écrit par le Bicep** depuis la variable azd `JWT_SIGNING_KEY` — voir ci-dessous |
 | `Database--PlatformAdminPassword` | uniquement pour le tout premier démarrage : se connecter, changer le mot de passe, retirer le secret |
 | `Email--Password` | si l'envoi de courriels est configuré (sinon les messages sont seulement journalisés) |
+
+**La clé de signature JWT, une fois par environnement**, avant le premier `azd provision` :
+
+```powershell
+# 48 octets aléatoires → 64 caractères (le minimum accepté est 32)
+$bytes = New-Object byte[] 48
+[System.Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($bytes)
+azd env set JWT_SIGNING_KEY ([Convert]::ToBase64String($bytes))
+azd pipeline config   # recopie l'environnement dans le secret AZD_INITIAL_ENVIRONMENT_CONFIG du déploiement
+```
+
+Sans elle, `azd provision` échoue sur le paramètre `jwtSigningKey` (`@minLength(32)`) plutôt que de livrer une application qui ne démarre pas. La changer est sans danger : le SPA s'authentifie par le cookie Identity et n'est pas concerné ; pour un client de l'API, seuls les jetons d'accès en cours (15 min) deviennent invalides, et le jeton de rafraîchissement — opaque, non signé avec cette clé — en obtient un nouveau.
 
 ---
 

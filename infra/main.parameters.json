@@ -17,6 +17,9 @@
       "dbAppUserPassword": {
         "value": "$(secretOrRandomPassword ${AZURE_KEY_VAULT_NAME} dbAppUserPassword)"
       },
+      "jwtSigningKey": {
+        "value": "${JWT_SIGNING_KEY}"
+      },
       "alertEmailAddress": {
         "value": "${ALERT_EMAIL_ADDRESS}"
       },

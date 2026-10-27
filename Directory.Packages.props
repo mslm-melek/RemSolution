@@ -29,6 +29,9 @@
     <PackageVersion Include="Microsoft.AspNetCore.Identity.UI" Version="$(AspnetVersion)" />
     <PackageVersion Include="Microsoft.AspNetCore.SpaProxy" Version="$(AspnetVersion)" />
     <PackageVersion Include="Microsoft.Data.SqlClient" Version="6.1.1" />
+    <!-- Transitively pinned: SqlClient 6.1.1 brings 9.0.4, which has
+         GHSA-846f-f764-76mx (High; fixed in 9.0.21 / 10.0.13). -->
+    <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="10.0.14" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="$(EfcoreVersion)" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.InMemory" Version="$(EfcoreVersion)" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="$(EfcoreVersion)" />

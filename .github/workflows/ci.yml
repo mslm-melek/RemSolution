@@ -87,6 +87,41 @@ jobs:
         # worked on from Windows, where the executable bit is not set.
         run: bash scripts/check-frontend-conventions.sh
 
+  # Known vulnerabilities in what we ship. NuGet's restore-time audit only warns
+  # (NU190x is exempt from TreatWarningsAsErrors), so nothing else stops a
+  # vulnerable package from reaching a deployment.
+  dependency-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: 'global.json'
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: NuGet packages, transitive included
+        run: |
+          dotnet restore RemSolution.sln
+          dotnet list RemSolution.sln package --vulnerable --include-transitive | tee nuget-audit.txt
+          if grep -q "has the following vulnerable packages" nuget-audit.txt; then
+            echo "::error::Vulnerable NuGet packages — pin a patched version in Directory.Packages.props."
+            exit 1
+          fi
+
+      # Report-only until the Angular upgrade: every @angular/* advisory open
+      # today is fixed only in a later major version (18 is out of support).
+      # Make this blocking once that upgrade lands.
+      - name: npm packages shipped to the browser
+        working-directory: src/Web/ClientApp
+        continue-on-error: true
+        run: npm audit --omit=dev --audit-level=high
+
   # Testcontainers spins up real SQL Server, so this is slower and needs Docker.
   # Runs on pull requests too: tenant isolation and the booking rules are only
   # actually proven against a database.
