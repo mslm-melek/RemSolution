@@ -52,6 +52,9 @@ public sealed class RateLimitingOptions
     /// <summary>Catch-all for signed-in callers, keyed on user id. Generous: a busy back-office screen is chatty.</summary>
     public int AuthenticatedPerMinute { get; set; } = 600;
 
+    /// <summary>Uploaded files a signed-in caller opens, counted apart from their API calls.</summary>
+    public int AuthenticatedUploadsPerMinute { get; set; } = 600;
+
     public int PublicBrowsePerMinute { get; set; } = 60;
 
     public int AuthenticationPerMinute { get; set; } = 10;
@@ -72,27 +75,38 @@ public static class RateLimitingExtensions
             .GetSection(RateLimitingOptions.SectionName)
             .Get<RateLimitingOptions>() ?? new RateLimitingOptions();
 
+        // A signed-in caller is limited as a person, not as an address:
+        // otherwise one office behind a single NAT throttles itself while a
+        // botnet with a thousand addresses sails through.
+        builder.Services
+            .AddOptions<RateLimiterOptions>()
+            .Configure<UploadedFiles>((options, uploads) =>
+                options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(context =>
+                {
+                    var upload = uploads.FindExisting(context);
+
+                    // A marketplace page shows a few dozen car photos; counting them
+                    // would throttle the visitor for looking. A made-up path is not
+                    // one, or naming a missing photo would buy unlimited requests.
+                    if (upload is { IsPublic: true })
+                        return RateLimitPartition.GetNoLimiter("public-upload");
+
+                    var userId = context.User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+                    if (string.IsNullOrEmpty(userId))
+                        return FixedWindow($"anon:{ClientKey(context)}", limits.AnonymousPerMinute, TimeSpan.FromMinutes(1));
+
+                    // A client list of portraits, or a PDF read in range requests,
+                    // would otherwise spend the budget the screen's API calls need,
+                    // and a refused image just shows as broken.
+                    return upload is not null
+                        ? FixedWindow($"user-uploads:{userId}", limits.AuthenticatedUploadsPerMinute, TimeSpan.FromMinutes(1))
+                        : FixedWindow($"user:{userId}", limits.AuthenticatedPerMinute, TimeSpan.FromMinutes(1));
+                }));
+
         builder.Services.AddRateLimiter(options =>
         {
             options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
-
-            // A signed-in caller is limited as a person, not as an address:
-            // otherwise one office behind a single NAT throttles itself while a
-            // botnet with a thousand addresses sails through.
-            options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(context =>
-            {
-                // A marketplace page shows a few dozen car photos; counting them
-                // would throttle the visitor for looking. Every other upload
-                // counts, because answering for one can mean a database lookup.
-                if (context.RequestServices.GetRequiredService<UploadedFiles>().IsPublicFile(context.Request.Path))
-                    return RateLimitPartition.GetNoLimiter("public-upload");
-
-                var userId = context.User.FindFirstValue(ClaimTypes.NameIdentifier);
-
-                return string.IsNullOrEmpty(userId)
-                    ? FixedWindow($"anon:{ClientKey(context)}", limits.AnonymousPerMinute, TimeSpan.FromMinutes(1))
-                    : FixedWindow($"user:{userId}", limits.AuthenticatedPerMinute, TimeSpan.FromMinutes(1));
-            });
 
             AddIpPolicy(options, RateLimitPolicies.PublicBrowse, limits.PublicBrowsePerMinute, TimeSpan.FromMinutes(1));
             AddIpPolicy(options, RateLimitPolicies.Authentication, limits.AuthenticationPerMinute, TimeSpan.FromMinutes(1));

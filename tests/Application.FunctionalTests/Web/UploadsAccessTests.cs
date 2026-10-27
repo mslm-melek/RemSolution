@@ -282,6 +282,49 @@ public class UploadsAccessTests : BaseTestFixture
         statuses.Should().Equal(HttpStatusCode.NotFound, HttpStatusCode.NotFound, HttpStatusCode.TooManyRequests);
     }
 
+    /// <summary>
+    /// A client list of portraits must not spend the budget the screen's own API
+    /// calls need: opened files are counted on their own.
+    /// </summary>
+    [Test]
+    public async Task OpeningFilesDoesNotSpendTheApiBudget()
+    {
+        var userId = await RunAsAgencyStaffAsync();
+        var agencyId = await AddTestAgencyAsync();
+        await AttachToAgencyAsync(userId, agencyId);
+        var portrait = WriteUpload($"agencies/{agencyId}/clients/7/portrait-limit.jpg");
+
+        using var factory = WithSetting("RateLimiting:AuthenticatedUploadsPerMinute", "2");
+        var client = factory.CreateClient(new Microsoft.AspNetCore.Mvc.Testing.WebApplicationFactoryClientOptions
+        {
+            BaseAddress = new Uri("https://localhost"),
+        });
+        client.DefaultRequestHeaders.Authorization = (await SignedInClientAsync(userId)).DefaultRequestHeaders.Authorization;
+
+        var statuses = new List<HttpStatusCode>();
+        for (var i = 0; i < 3; i++)
+            statuses.Add((await client.GetAsync(portrait)).StatusCode);
+
+        statuses.Should().Equal(HttpStatusCode.OK, HttpStatusCode.OK, HttpStatusCode.TooManyRequests);
+        (await client.GetAsync("/Identity/Account/Login")).StatusCode.Should().NotBe(HttpStatusCode.TooManyRequests);
+    }
+
+    /// <summary>
+    /// A file left on disk by an agency that no longer exists is refused, not
+    /// written to the trail against an agency nobody can find.
+    /// </summary>
+    [Test]
+    public async Task AFileOfAnAgencyThatNoLongerExistsIsNotAudited()
+    {
+        var adminId = await RunAsPlatformAdministratorAsync();
+        var orphan = WriteUpload("agencies/987654/factures/FAC-2030-000003.pdf");
+
+        var response = await (await SignedInClientAsync(adminId)).GetAsync(orphan);
+
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+        (await AllIgnoringFiltersAsync<AuditLog>()).Should().BeEmpty();
+    }
+
     [Test]
     public void AnEmptyUploadsPrefixIsRefusedAtStartup()
     {

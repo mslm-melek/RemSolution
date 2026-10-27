@@ -1,4 +1,5 @@
 using RemSolution.Application.Common.Audit;
+using RemSolution.Application.Common.Files;
 using RemSolution.Application.Common.Interfaces;
 using RemSolution.Application.Common.Security;
 using RemSolution.Domain.Constants;
@@ -17,7 +18,7 @@ namespace RemSolution.Application.Features.Expense.Commands.UploadExpenseFacture
     [Authorize(Policy = Permissions.ExpenseUpdate)]
     [RequiresFeature(FeatureFlags.Expenses)]
     [Auditable("UploadExpenseFacture", "Expense")]
-    public record UploadExpenseFactureCommand : IRequest<string>, ISensitiveRequest
+    public record UploadExpenseFactureCommand : IRequest<string>, ISensitiveRequest, IFileUpload
     {
         public int ExpenseId { get; init; }
         public string FileName { get; init; } = string.Empty;

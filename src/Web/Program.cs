@@ -104,6 +104,7 @@ try
 
     var uploadedFiles = app.Services.GetRequiredService<UploadedFiles>();
     var uploadsPath = uploadedFiles.BasePath;
+    var serveApiSpec = app.Environment.IsDevelopment();
 
     // wwwroot, minus two folders it happens to contain. The uploads default to
     // wwwroot/uploads, and serving them from here would walk straight past the
@@ -111,7 +112,7 @@ try
     // which outside development is a map of every endpoint for anyone to read.
     app.UseWhen(
         context => !context.Request.Path.StartsWithSegments(uploadsPath) &&
-                   (app.Environment.IsDevelopment() || !context.Request.Path.StartsWithSegments("/api")),
+                   (serveApiSpec || !context.Request.Path.StartsWithSegments("/api")),
         wwwroot => wwwroot.UseStaticFiles());
 
     // Authentication must run before the request-context middleware so the

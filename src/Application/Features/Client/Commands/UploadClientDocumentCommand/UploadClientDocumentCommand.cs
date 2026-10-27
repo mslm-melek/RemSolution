@@ -1,4 +1,5 @@
 using RemSolution.Application.Common.Audit;
+using RemSolution.Application.Common.Files;
 using RemSolution.Application.Common.Imaging;
 using RemSolution.Application.Common.Interfaces;
 using RemSolution.Application.Common.Security;
@@ -18,7 +19,7 @@ namespace RemSolution.Application.Features.Client.Commands.UploadClientDocumentC
     [Authorize(Policy = Permissions.ClientUpdate)]
     [RequiresFeature(FeatureFlags.Clients)]
     [Auditable("UploadClientDocument", "Client")]
-    public record UploadClientDocumentCommand : IRequest<string>, ISensitiveRequest
+    public record UploadClientDocumentCommand : IRequest<string>, ISensitiveRequest, IFileUpload
     {
         public int ClientId { get; init; }
         public ClientDocumentType DocumentType { get; init; }

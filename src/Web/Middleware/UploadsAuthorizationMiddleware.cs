@@ -1,8 +1,8 @@
 using System.Security.Claims;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Extensions.FileProviders;
 using RemSolution.Application.Common.Files;
 using RemSolution.Application.Common.Interfaces;
 using RemSolution.Application.Features.MarketplaceSearch.Queries.IsMyBookingFileQuery;
@@ -50,25 +50,24 @@ public class UploadsAuthorizationMiddleware
     public static readonly TimeSpan AuditWindow = TimeSpan.FromMinutes(10);
 
     private readonly RequestDelegate _next;
-    private readonly IFileProvider _files;
-    private readonly PathString _basePath;
+    private readonly UploadedFiles _uploads;
     private readonly IMemoryCache _recentlyAudited;
 
     public UploadsAuthorizationMiddleware(RequestDelegate next, UploadedFiles uploads, IMemoryCache recentlyAudited)
     {
         _next = next;
-        _files = uploads.Files;
-        _basePath = uploads.BasePath;
+        _uploads = uploads;
         _recentlyAudited = recentlyAudited;
     }
 
     public async Task InvokeAsync(
         HttpContext context,
-        ISender sender,
+        IApplicationDbContext db,
+        IRequestHandler<IsMyBookingFileQuery, bool> isMyBookingFile,
         IImpersonationAuditor auditor,
         UserManager<ApplicationUser> userManager)
     {
-        var access = await DecideAsync(context, sender, auditor, userManager);
+        var access = await DecideAsync(context, db, isMyBookingFile, auditor, userManager);
 
         if (access == UploadAccess.Denied)
         {
@@ -91,19 +90,19 @@ public class UploadsAuthorizationMiddleware
     }
 
     private async Task<UploadAccess> DecideAsync(
-        HttpContext context, ISender sender, IImpersonationAuditor auditor, UserManager<ApplicationUser> userManager)
+        HttpContext context,
+        IApplicationDbContext db,
+        IRequestHandler<IsMyBookingFileQuery, bool> isMyBookingFile,
+        IImpersonationAuditor auditor,
+        UserManager<ApplicationUser> userManager)
     {
         // Static files only ever read. Refused first, so a stray POST from a
         // platform admin is not written to the audit trail as a write.
         if (!HttpMethods.IsGet(context.Request.Method) && !HttpMethods.IsHead(context.Request.Method))
             return UploadAccess.Denied;
 
-        // Inside the Map branch: PathBase is the uploads prefix, Path the rest.
-        if (!UploadPath.TryParse(context.Request.Path.Value, out var path) ||
-            !_files.GetFileInfo(path.RelativePath).Exists)
-        {
+        if (_uploads.FindExisting(context) is not { } path)
             return UploadAccess.Denied;
-        }
 
         if (path.IsPublic)
             return UploadAccess.Public;
@@ -121,14 +120,17 @@ public class UploadsAuthorizationMiddleware
 
         if (user.IsInRole(Roles.PlatformAdministrator))
         {
-            await AuditOpeningAsync(context, auditor, path);
-            return UploadAccess.Private;
+            return await AuditOpeningAsync(context, db, auditor, path)
+                ? UploadAccess.Private
+                : UploadAccess.Denied;
         }
 
-        // Rebuilt from the parsed segments, in the form the storage issued it,
-        // so a doubled slash in the request does not hide the customer's own file.
+        // Called directly, not sent: the role is checked just above, and the
+        // pipeline's authorization would load the user again on every range
+        // request. Rebuilt from the parsed segments, in the form the storage
+        // issued it, so a doubled slash does not hide the customer's own file.
         if (user.IsInRole(Roles.Customer) &&
-            await sender.Send(new IsMyBookingFileQuery($"{_basePath}/{path.RelativePath}"), context.RequestAborted))
+            await isMyBookingFile.Handle(new IsMyBookingFileQuery(UrlOf(path)), context.RequestAborted))
         {
             return UploadAccess.Private;
         }
@@ -140,18 +142,28 @@ public class UploadsAuthorizationMiddleware
     // request would record one look as five. One per admin per file per window
     // keeps the trail readable. The row is written before the window opens, so
     // a look is never left out; at worst a race or a second server adds a duplicate.
-    private async Task AuditOpeningAsync(HttpContext context, IImpersonationAuditor auditor, UploadPath path)
+    // A file left behind by a deleted agency is refused rather than audited
+    // against an agency that no longer exists.
+    private async Task<bool> AuditOpeningAsync(
+        HttpContext context, IApplicationDbContext db, IImpersonationAuditor auditor, UploadPath path)
     {
-        var url = $"{_basePath}/{path.RelativePath}";
+        var url = UrlOf(path);
         var key = $"uploads-audit:{context.User.FindFirstValue(ClaimTypes.NameIdentifier)}:{url}";
 
         if (_recentlyAudited.TryGetValue(key, out _))
-            return;
+            return true;
+
+        // Agency is the tenant root (not ITenantEntity), so this lookup is unfiltered.
+        if (!await db.Agencies.AnyAsync(a => a.Id == path.AgencyId, context.RequestAborted))
+            return false;
 
         await auditor.RecordAsync(path.AgencyId, context.Request.Method, url, context.RequestAborted);
 
         _recentlyAudited.Set(key, true, AuditWindow);
+        return true;
     }
+
+    private string UrlOf(UploadPath path) => $"{_uploads.BasePath}/{path.RelativePath}";
 
     private enum UploadAccess
     {

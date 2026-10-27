@@ -33,17 +33,20 @@ public sealed class SecurityHeadersOptions
 /// is displayed by the browser's own viewer, which a document policy can stop
 /// from loading. The Hangfire dashboard and the development Swagger UI are
 /// third-party pages with their own inline scripts, so they are left out of it
-/// too; both are behind sign-in or absent in production.
+/// too. Swagger UI only exists in Development, so only there is /api exempt.
 /// </para>
 /// </summary>
 public class SecurityHeadersMiddleware
 {
     private readonly RequestDelegate _next;
     private readonly string _contentSecurityPolicy;
+    private readonly bool _swaggerUi;
 
-    public SecurityHeadersMiddleware(RequestDelegate next, IOptions<SecurityHeadersOptions> options)
+    public SecurityHeadersMiddleware(
+        RequestDelegate next, IOptions<SecurityHeadersOptions> options, IWebHostEnvironment environment)
     {
         _next = next;
+        _swaggerUi = environment.IsDevelopment();
 
         var extraImages = string.Join(' ', options.Value.ImageSources);
         var extraConnect = string.Join(' ', options.Value.ConnectSources);
@@ -93,6 +96,6 @@ public class SecurityHeadersMiddleware
     private static bool IsHtml(HttpContext context) =>
         context.Response.ContentType?.StartsWith("text/html", StringComparison.OrdinalIgnoreCase) == true;
 
-    private static bool IsThirdPartyPage(PathString path) =>
-        path.StartsWithSegments("/hangfire") || path.StartsWithSegments("/api");
+    private bool IsThirdPartyPage(PathString path) =>
+        path.StartsWithSegments("/hangfire") || (_swaggerUi && path.StartsWithSegments("/api"));
 }

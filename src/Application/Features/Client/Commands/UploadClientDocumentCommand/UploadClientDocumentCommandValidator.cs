@@ -13,21 +13,7 @@ namespace RemSolution.Application.Features.Client.Commands.UploadClientDocumentC
             RuleFor(c => c.DocumentType)
                 .IsInEnum();
 
-            RuleFor(c => c.FileName)
-                .NotEmpty()
-                .Must(HaveAllowedExtension)
-                .WithMessage(_ => localizer["Validation.File.Extension", string.Join(", ", UploadFileTypes.DocumentExtensions)]);
-
-            RuleFor(c => c.ContentType)
-                .Must(ct => UploadFileTypes.DocumentContentTypes.Contains(ct, StringComparer.OrdinalIgnoreCase))
-                .WithMessage(_ => localizer["Validation.File.ContentType", string.Join(", ", UploadFileTypes.DocumentContentTypes)]);
-
-            RuleFor(c => c.Length)
-                .GreaterThan(0).WithMessage(_ => localizer["Validation.File.Empty"])
-                .LessThanOrEqualTo(UploadFileTypes.MaxSizeBytes).WithMessage(_ => localizer["Validation.File.TooLarge"]);
+            Include(FileUploadValidator.Document(localizer));
         }
-
-        private static bool HaveAllowedExtension(string fileName) =>
-            UploadFileTypes.DocumentExtensions.Contains(Path.GetExtension(fileName), StringComparer.OrdinalIgnoreCase);
     }
 }

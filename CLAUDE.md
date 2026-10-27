@@ -400,7 +400,8 @@ Dashboard at `/hangfire`, platform admins only.
 and the rate limiter, ending in a 404 rather than the SPA). The rule is read off
 the path by `UploadPath`, so **every stored file must live at
 `agencies/{agencyId}/{area}/…`**: `cars` is public (the marketplace shows it, and
-the rate limiter waves it through); anything else needs a user of that agency who
+the rate limiter waves it through; a signed-in user's other files count against a
+budget of their own, not their API calls'); anything else needs a user of that agency who
 is not on a mailed temporary password, a platform admin (each opening of an
 existing file written to the audit trail as an `ImpersonatedRead`, once per admin
 per file per 10 minutes — a PDF viewer's range requests are one look), or the
@@ -422,6 +423,7 @@ are in `wwwroot/Identity/js`), and the production Angular build keeps
 `inlineCritical: false` (it works through an `onload` attribute). The map-tile and
 geocoder hosts are `SecurityHeaders:ImageSources`/`ConnectSources` in
 appsettings — **change them with `environment.prod.ts`** or the map goes blank.
+Only Hangfire, and `/api` in Development (Swagger UI), go without the policy.
 
 **Images.** `UploadCarImageCommand` stores the original synchronously (status
 `Pending`) and enqueues `CarImageProcessingJob`, which generates thumbnail

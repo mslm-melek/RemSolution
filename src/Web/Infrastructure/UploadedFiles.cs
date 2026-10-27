@@ -41,15 +41,30 @@ public sealed class UploadedFiles : IDisposable
     public IFileProvider Files => _provider;
 
     /// <summary>
-    /// A car photo that is actually on disk. The limiter waves these through, so
-    /// a made-up car path must not count as one: otherwise anybody could make
-    /// unlimited requests just by naming a car photo that does not exist.
+    /// The uploaded file this request names, if it names one that is actually on
+    /// disk; null for any other request. Looked up once per request and kept on
+    /// it, so the rate limiter and the gate ask the disk once between them.
     /// </summary>
-    public bool IsPublicFile(PathString requestPath) =>
-        requestPath.StartsWithSegments(BasePath, out var remainder) &&
-        UploadPath.TryParse(remainder.Value, out var path) &&
-        path.IsPublic &&
-        _provider.GetFileInfo(path.RelativePath).Exists;
+    public UploadPath? FindExisting(HttpContext context)
+    {
+        if (context.Items.TryGetValue(LookupKey, out var found))
+            return (UploadPath?)found;
+
+        // Inside the uploads branch PathBase holds the prefix; outside, Path does.
+        var requestPath = context.Request.PathBase.Add(context.Request.Path);
+
+        UploadPath? existing =
+            requestPath.StartsWithSegments(BasePath, out var remainder) &&
+            UploadPath.TryParse(remainder.Value, out var path) &&
+            _provider.GetFileInfo(path.RelativePath).Exists
+                ? path
+                : null;
+
+        context.Items[LookupKey] = existing;
+        return existing;
+    }
+
+    private static readonly object LookupKey = new();
 
     public void Dispose() => _provider.Dispose();
 }

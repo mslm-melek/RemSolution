@@ -1,4 +1,5 @@
 using RemSolution.Application.Common.Audit;
+using RemSolution.Application.Common.Files;
 using RemSolution.Application.Common.Interfaces;
 using RemSolution.Application.Common.Security;
 using RemSolution.Domain.Constants;
@@ -15,7 +16,7 @@ namespace RemSolution.Application.Features.Car.Commands.UploadCarPhotoCommand
     [Authorize(Policy = Permissions.CarUpdate)]
     [RequiresFeature(FeatureFlags.Cars)]
     [Auditable("UploadCarPhoto", "Car")]
-    public record UploadCarPhotoCommand : IRequest<string>, ISensitiveRequest
+    public record UploadCarPhotoCommand : IRequest<string>, ISensitiveRequest, IFileUpload
     {
         public int CarId { get; init; }
         public string FileName { get; init; } = string.Empty;

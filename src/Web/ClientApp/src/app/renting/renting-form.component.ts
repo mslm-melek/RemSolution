@@ -1014,7 +1014,12 @@ export class RentingFormComponent implements OnInit {
         this.renting = dto;
         this.rowVersion = dto.rowVersion;
         this.currency = dto.price?.currency;
-        this.resetFormTo(dto);
+        // The booking form can stay open while a payment, extra or fee is added,
+        // and each of those reloads: resetting then would throw the agent's
+        // unsaved edits away without a word.
+        if (!(this.bookingFormOpen && this.form.dirty)) {
+          this.resetFormTo(dto);
+        }
         if (this.isTerminal) {
           this.form.disable();
         }

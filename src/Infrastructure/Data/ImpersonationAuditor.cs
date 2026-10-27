@@ -1,5 +1,6 @@
 using System.Text.Json;
 using RemSolution.Application.Common.Interfaces;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 
 namespace RemSolution.Infrastructure.Data;
@@ -44,8 +45,7 @@ public class ImpersonationAuditor : IImpersonationAuditor
         // A GET or HEAD only looks; anything else changes the agency's data.
         // Splitting the action makes the mutations findable in a trail that is
         // otherwise dominated by the reads a browsing session generates.
-        var action = string.Equals(method, "GET", StringComparison.OrdinalIgnoreCase) ||
-                     string.Equals(method, "HEAD", StringComparison.OrdinalIgnoreCase)
+        var action = HttpMethods.IsGet(method) || HttpMethods.IsHead(method)
             ? ImpersonatedReadAction
             : ImpersonatedWriteAction;
 

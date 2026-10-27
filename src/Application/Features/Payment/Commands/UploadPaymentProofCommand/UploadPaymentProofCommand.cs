@@ -1,4 +1,5 @@
 using RemSolution.Application.Common.Audit;
+using RemSolution.Application.Common.Files;
 using RemSolution.Application.Common.Interfaces;
 using RemSolution.Application.Common.Security;
 using RemSolution.Domain.Constants;
@@ -17,7 +18,7 @@ namespace RemSolution.Application.Features.Payment.Commands.UploadPaymentProofCo
     [Authorize(Policy = Permissions.PaymentUpdate)]
     [RequiresFeature(FeatureFlags.Payments)]
     [Auditable("UploadPaymentProof", "Payment")]
-    public record UploadPaymentProofCommand : IRequest<string>, ISensitiveRequest
+    public record UploadPaymentProofCommand : IRequest<string>, ISensitiveRequest, IFileUpload
     {
         public int PaymentId { get; init; }
         public string FileName { get; init; } = string.Empty;

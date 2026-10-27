@@ -17,7 +17,7 @@ namespace RemSolution.Application.Features.Marketplace.Commands.SubmitMyReservat
     //
     // ISensitiveRequest: carries an uploaded document stream.
     [Authorize(Policy = Policies.CustomerOnly)]
-    public record SubmitMyReservationRequirementCommand : IRequest, ISensitiveRequest
+    public record SubmitMyReservationRequirementCommand : IRequest, ISensitiveRequest, IFileUpload
     {
         public int Id { get; init; }
         public string? Note { get; init; }
@@ -126,21 +126,7 @@ namespace RemSolution.Application.Features.Marketplace.Commands.SubmitMyReservat
             // The same list as every staff upload. It matters more here: this file
             // comes from outside the agency and is opened by its staff on our own
             // origin, where an .svg or .html would run script with their session.
-            When(v => v.Content is not null, () =>
-            {
-                RuleFor(v => v.FileName)
-                    .NotEmpty()
-                    .Must(name => UploadFileTypes.DocumentExtensions.Contains(Path.GetExtension(name), StringComparer.OrdinalIgnoreCase))
-                    .WithMessage(_ => localizer["Validation.File.Extension", string.Join(", ", UploadFileTypes.DocumentExtensions)]);
-
-                RuleFor(v => v.ContentType)
-                    .Must(ct => UploadFileTypes.DocumentContentTypes.Contains(ct, StringComparer.OrdinalIgnoreCase))
-                    .WithMessage(_ => localizer["Validation.File.ContentType", string.Join(", ", UploadFileTypes.DocumentContentTypes)]);
-
-                RuleFor(v => v.Length)
-                    .GreaterThan(0).WithMessage(_ => localizer["Validation.File.Empty"])
-                    .LessThanOrEqualTo(UploadFileTypes.MaxSizeBytes).WithMessage(_ => localizer["Validation.File.TooLarge"]);
-            });
+            When(v => v.Content is not null, () => Include(FileUploadValidator.Document(localizer)));
         }
     }
 }
