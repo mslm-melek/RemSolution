@@ -198,7 +198,8 @@ public class Marketplace : EndpointGroupBase
             Note = note,
             FileName = file?.FileName,
             ContentType = file?.ContentType,
-            Content = content
+            Content = content,
+            Length = file?.Length ?? 0
         });
 
         return TypedResults.NoContent();

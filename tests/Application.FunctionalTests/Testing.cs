@@ -53,6 +53,25 @@ public partial class Testing
         await mediator.Send(request);
     }
 
+    /// <summary>
+    /// A client for the in-process host, for what only exists at the HTTP layer —
+    /// middleware and response headers. Anonymous unless the test adds a bearer
+    /// token (see ITokenService).
+    /// </summary>
+    public static HttpClient CreateHttpClient() =>
+        _factory.CreateClient(new Microsoft.AspNetCore.Mvc.Testing.WebApplicationFactoryClientOptions
+        {
+            BaseAddress = new Uri("https://localhost"),
+            AllowAutoRedirect = false,
+        });
+
+    /// <summary>
+    /// The same host with one setting changed — for what is decided at startup.
+    /// The caller disposes it.
+    /// </summary>
+    public static Microsoft.AspNetCore.Mvc.Testing.WebApplicationFactory<Program> WithSetting(string key, string value) =>
+        _factory.WithWebHostBuilder(builder => builder.UseSetting(key, value));
+
     public static string? GetUserId()
     {
         return _userId;

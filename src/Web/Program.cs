@@ -1,9 +1,9 @@
 using Hangfire;
 using Microsoft.AspNetCore.HttpOverrides;
-using Microsoft.Extensions.FileProviders;
+using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Options;
-using RemSolution.Infrastructure.Storage;
+using RemSolution.Application.Common.Files;
 using RemSolution.Domain.Constants;
 using RemSolution.Infrastructure;
 using RemSolution.Infrastructure.Localization;
@@ -96,30 +96,28 @@ try
         app.UseForwardedHeaders(forwardedHeaders);
     }
 
+    // Early, so the headers reach every response — static files and refusals too.
+    app.UseMiddleware<SecurityHeadersMiddleware>();
+
     app.UseHealthChecks("/health");
     app.UseHttpsRedirection();
-    app.UseStaticFiles();
 
-    // Uploaded files, from wherever FileStorage:RootPath points — on a deployment
-    // that is a persistent path outside wwwroot, which a zip deploy would replace.
-    // With the default it harmlessly maps the same files twice.
-    var fileStorage = app.Services.GetRequiredService<IOptions<FileStorageOptions>>().Value;
+    var uploadedFiles = app.Services.GetRequiredService<UploadedFiles>();
+    var uploadsPath = uploadedFiles.BasePath;
 
-    var uploadsRoot = Path.IsPathRooted(fileStorage.RootPath)
-        ? Path.GetFullPath(fileStorage.RootPath)
-        : Path.GetFullPath(Path.Combine(app.Environment.ContentRootPath, fileStorage.RootPath));
-
-    Directory.CreateDirectory(uploadsRoot);
-
-    app.UseStaticFiles(new StaticFileOptions
-    {
-        FileProvider = new PhysicalFileProvider(uploadsRoot),
-        RequestPath = fileStorage.PublicBasePath.TrimEnd('/'),
-    });
+    // wwwroot, minus two folders it happens to contain. The uploads default to
+    // wwwroot/uploads, and serving them from here would walk straight past the
+    // gate below. The NSwag build writes the API description to wwwroot/api,
+    // which outside development is a map of every endpoint for anyone to read.
+    app.UseWhen(
+        context => !context.Request.Path.StartsWithSegments(uploadsPath) &&
+                   (app.Environment.IsDevelopment() || !context.Request.Path.StartsWithSegments("/api")),
+        wwwroot => wwwroot.UseStaticFiles());
 
     // Authentication must run before the request-context middleware so the
     // identity claims (UserId, AgencyId) are available to enrich the logs.
     app.UseAuthentication();
+
     // Read-only platform-admin tenant impersonation: must sit after
     // authentication (needs the principal) and before authorization (so the
     // ambient tenant + impersonation flag are live when endpoint policies run).
@@ -129,6 +127,43 @@ try
     // than as an address, and after the static-file/health middleware above so
     // SPA assets and probes never consume a permit.
     app.UseRemSolutionRateLimiter();
+
+    // Uploaded files, from wherever FileStorage:RootPath points — on a deployment
+    // that is a persistent path outside wwwroot, which a zip deploy would replace.
+    // A branch of its own: after authentication, because who is asking decides
+    // what they may open (see UploadsAuthorizationMiddleware), and after the rate
+    // limiter, which waves car photos through and counts the rest. Ends in a 404
+    // rather than falling through to the SPA, which would answer a missing
+    // document with index.html.
+    var uploadsProvider = uploadedFiles.Files;
+
+    // Only the types an upload may be, whatever is on disk: an .svg, .html or
+    // .js file served from our own origin would run script with the viewer's
+    // session, so anything else is not served at all.
+    var uploadTypes = new FileExtensionContentTypeProvider();
+    uploadTypes.Mappings.Clear();
+    foreach (var (extension, contentType) in UploadFileTypes.All)
+        uploadTypes.Mappings[extension] = contentType;
+
+    app.Map(uploadsPath, uploads =>
+    {
+        // The branch ends before the main pipeline's logging, so it gets its own:
+        // the gate's audit rows need the correlation id, and its refusals (a
+        // counted contract number) belong in the request log.
+        uploads.UseMiddleware<RequestContextLoggingMiddleware>();
+        uploads.UseSerilogRequestLogging();
+        uploads.UseMiddleware<UploadsAuthorizationMiddleware>(uploadsProvider, uploadsPath);
+        uploads.UseStaticFiles(new StaticFileOptions
+        {
+            FileProvider = uploadsProvider,
+            ContentTypeProvider = uploadTypes,
+        });
+        uploads.Run(context =>
+        {
+            context.Response.StatusCode = StatusCodes.Status404NotFound;
+            return Task.CompletedTask;
+        });
+    });
 
     // After authentication so the signed-in user's PreferredLanguage claim can
     // outrank the culture cookie, and before anything that produces user-facing
@@ -149,11 +184,17 @@ try
     // request-context scope so it inherits CorrelationId/UserId/AgencyId.
     app.UseSerilogRequestLogging();
 
-    app.UseSwaggerUi(settings =>
+    // Development only. In production it would publish a map of every endpoint,
+    // and nobody outside this team calls the API; the SPA's client is generated
+    // at build time.
+    if (app.Environment.IsDevelopment())
     {
-        settings.Path = "/api";
-        settings.DocumentPath = "/api/specification.json";
-    });
+        app.UseSwaggerUi(settings =>
+        {
+            settings.Path = "/api";
+            settings.DocumentPath = "/api/specification.json";
+        });
+    }
 
     // Hangfire dashboard, platform-admin only. Mapped only when Hangfire is
     // registered (skipped for the NSwag build-time host / tests), so JobStorage

@@ -106,7 +106,7 @@
               <label class="upload"
                      *ngIf="ask.kind !== ReservationRequirementKind.Conditions">
                 {{ t('marketplace.requirements.send') }}
-                <input type="file" hidden (change)="chooseFile(ask, $event)" />
+                <input type="file" hidden accept=".jpg,.jpeg,.png,.webp,.pdf" (change)="chooseFile(ask, $event)" />
               </label>
             </ng-container>
           </div>

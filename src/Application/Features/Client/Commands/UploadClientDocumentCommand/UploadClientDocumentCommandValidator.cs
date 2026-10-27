@@ -1,3 +1,4 @@
+using RemSolution.Application.Common.Files;
 using RemSolution.Application.Common.Interfaces;
 
 namespace RemSolution.Application.Features.Client.Commands.UploadClientDocumentCommand
@@ -6,11 +7,9 @@ namespace RemSolution.Application.Features.Client.Commands.UploadClientDocumentC
     {
         private const long MaxSizeBytes = 15 * 1024 * 1024;
 
-        private static readonly string[] AllowedContentTypes =
-            { "image/jpeg", "image/png", "image/webp", "application/pdf" };
+        private static readonly string[] AllowedContentTypes = UploadFileTypes.DocumentContentTypes;
 
-        private static readonly string[] AllowedExtensions =
-            { ".jpg", ".jpeg", ".png", ".webp", ".pdf" };
+        private static readonly string[] AllowedExtensions = UploadFileTypes.DocumentExtensions;
 
         public UploadClientDocumentCommandValidator(ILocalizer localizer)
         {

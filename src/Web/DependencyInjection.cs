@@ -3,6 +3,7 @@ using RemSolution.Application.Common.Interfaces;
 using RemSolution.Infrastructure;
 using RemSolution.Infrastructure.Data;
 using RemSolution.Web.Infrastructure;
+using RemSolution.Web.Middleware;
 using RemSolution.Web.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
@@ -25,7 +26,12 @@ public static class DependencyInjection
 
         builder.Services.AddExceptionHandler<CustomExceptionHandler>();
 
+        builder.Services.AddSingleton<UploadedFiles>();
+
         builder.AddRemSolutionRateLimiter();
+
+        builder.Services.Configure<SecurityHeadersOptions>(
+            builder.Configuration.GetSection(SecurityHeadersOptions.SectionName));
 
         // The Identity pages are server-rendered, so their text and their
         // DataAnnotations messages resolve through the same shared .resx set the

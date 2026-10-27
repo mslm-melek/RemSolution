@@ -1,3 +1,4 @@
+using RemSolution.Application.Common.Files;
 using RemSolution.Application.Common.Interfaces;
 
 namespace RemSolution.Application.Features.Car.Commands.UploadCarPhotoCommand
@@ -6,12 +7,9 @@ namespace RemSolution.Application.Features.Car.Commands.UploadCarPhotoCommand
     {
         private const long MaxSizeBytes = 15 * 1024 * 1024;
 
-        // A car photo is an image only — no PDF, unlike identity documents.
-        private static readonly string[] AllowedContentTypes =
-            { "image/jpeg", "image/png", "image/webp" };
+        private static readonly string[] AllowedContentTypes = UploadFileTypes.ImageContentTypes;
 
-        private static readonly string[] AllowedExtensions =
-            { ".jpg", ".jpeg", ".png", ".webp" };
+        private static readonly string[] AllowedExtensions = UploadFileTypes.ImageExtensions;
 
         public UploadCarPhotoCommandValidator(ILocalizer localizer)
         {

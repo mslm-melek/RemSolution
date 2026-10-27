@@ -12,17 +12,9 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - RemSolution</title>
-    @* Same storage key and default as the SPA (shared/theme.ts), set before the
-       first paint so a dark-mode user never sees a white flash. *@
-    <script>
-        (function () {
-            var choice = null;
-            try { choice = localStorage.getItem('remsolution.theme'); } catch (e) { }
-            var dark = choice === 'dark' ||
-                ((!choice || choice === 'system') && window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches);
-            if (dark) document.documentElement.setAttribute('data-theme', 'dark');
-        })();
-    </script>
+    @* Set before the first paint so a dark-mode user never sees a white flash.
+       Not inline: the Content-Security-Policy allows scripts from 'self' only. *@
+    <script src="~/Identity/js/auth-theme.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Poppins:wght@500&display=swap" rel="stylesheet">
@@ -325,21 +317,7 @@
         </nav>
     </main>
 
-    <script>
-        (function () {
-            var html = document.documentElement;
-            var icon = document.getElementById('themeIcon');
-            // The icon shows what you would GET, like the SPA's toggle.
-            function paint() { icon.textContent = html.getAttribute('data-theme') === 'dark' ? 'light_mode' : 'dark_mode'; }
-            paint();
-            document.getElementById('themeToggle').addEventListener('click', function () {
-                var dark = html.getAttribute('data-theme') !== 'dark';
-                if (dark) html.setAttribute('data-theme', 'dark'); else html.removeAttribute('data-theme');
-                try { localStorage.setItem('remsolution.theme', dark ? 'dark' : 'light'); } catch (e) { }
-                paint();
-            });
-        })();
-    </script>
+    <script src="~/Identity/js/auth-theme-toggle.js"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

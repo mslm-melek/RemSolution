@@ -16,6 +16,6 @@
 
     <!-- Every marketplace page, not only "/": the contact details must be
          reachable from a car page too. -->
-    <app-public-footer *ngIf="signedIn === false || isCustomer"></app-public-footer>
+    <app-public-footer *ngIf="signedIn === false || isCustomer" [signedIn]="signedIn === true"></app-public-footer>
   </div>
 </div>

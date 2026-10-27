@@ -1,5 +1,5 @@
 <footer class="footer" id="contact" *transloco="let t">
-  <div class="footer-in">
+  <div class="footer-in" [class.signed-in]="signedIn">
     <div>
       <div class="footer-brand"><span class="footer-mark" aria-hidden="true">R</span>{{ t('nav.brandName') }}</div>
       <p class="footer-pitch">{{ t('publicHome.footer.pitch') }}</p>
@@ -15,7 +15,7 @@
       </ul>
     </div>
 
-    <div>
+    <div *ngIf="!signedIn">
       <h3>{{ t('publicHome.footer.travellers') }}</h3>
       <ul>
         <li><a [routerLink]="['/browse']">{{ t('publicHome.rentACar') }}</a></li>
@@ -24,7 +24,7 @@
       </ul>
     </div>
 
-    <div>
+    <div *ngIf="!signedIn">
       <h3>{{ t('publicHome.footer.agencies') }}</h3>
       <ul>
         <li><a [routerLink]="['/']" fragment="agences">{{ t('publicHome.forAgencies') }}</a></li>

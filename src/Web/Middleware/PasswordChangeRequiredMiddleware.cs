@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using RemSolution.Application.Common.Interfaces;
@@ -55,14 +56,26 @@ public class PasswordChangeRequiredMiddleware
 
     private static async Task<bool> IsBlockedAsync(HttpContext context, UserManager<ApplicationUser> userManager)
     {
-        // The overwhelmingly common case, settled without touching the database.
-        if (context.User.Identity?.IsAuthenticated != true ||
-            !context.User.HasClaim(Claims.MustChangePassword, "true"))
+        if (!context.Request.Path.StartsWithSegments("/api") || IsAllowed(context.Request.Path))
         {
             return false;
         }
 
-        if (!context.Request.Path.StartsWithSegments("/api") || IsAllowed(context.Request.Path))
+        return await HoldsTemporaryPasswordAsync(context.User, userManager);
+    }
+
+    /// <summary>
+    /// Whether the caller is still on a password somebody else chose. Also asked
+    /// by the uploads gate: the files are not under /api, and an issued
+    /// contract's path is countable, so the mailbox holder could otherwise read
+    /// them without ever replacing the password.
+    /// </summary>
+    public static async Task<bool> HoldsTemporaryPasswordAsync(
+        ClaimsPrincipal principal, UserManager<ApplicationUser> userManager)
+    {
+        // The overwhelmingly common case, settled without touching the database.
+        if (principal.Identity?.IsAuthenticated != true ||
+            !principal.HasClaim(Claims.MustChangePassword, "true"))
         {
             return false;
         }
@@ -73,7 +86,7 @@ public class PasswordChangeRequiredMiddleware
         // the user row means a customer is working the instant they finish
         // changing it, rather than locked out of the app they just unlocked.
         // Only blocked-looking requests pay for the lookup.
-        var user = await userManager.GetUserAsync(context.User);
+        var user = await userManager.GetUserAsync(principal);
 
         return user is not null && user.MustChangePassword;
     }

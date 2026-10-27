@@ -41,10 +41,11 @@ public class ImpersonationAuditor : IImpersonationAuditor
         var occurredOn = _dateTime.GetUtcNow();
         var payload = JsonSerializer.Serialize(new { Method = method, Path = path });
 
-        // A GET only looks; anything else changes the agency's data. Splitting
-        // the action makes the mutations findable in a trail that is otherwise
-        // dominated by the reads a browsing session generates.
-        var action = string.Equals(method, "GET", StringComparison.OrdinalIgnoreCase)
+        // A GET or HEAD only looks; anything else changes the agency's data.
+        // Splitting the action makes the mutations findable in a trail that is
+        // otherwise dominated by the reads a browsing session generates.
+        var action = string.Equals(method, "GET", StringComparison.OrdinalIgnoreCase) ||
+                     string.Equals(method, "HEAD", StringComparison.OrdinalIgnoreCase)
             ? ImpersonatedReadAction
             : ImpersonatedWriteAction;
 

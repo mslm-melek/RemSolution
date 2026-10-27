@@ -395,6 +395,33 @@ the hour carries no meaning, and it is the one sweep that destroys data; and
 `exchange-rate-refresh` daily at 03:00 UTC (see the currency section).
 Dashboard at `/hangfire`, platform admins only.
 
+**Uploads are not static files.** Everything under `/uploads` goes through
+`UploadsAuthorizationMiddleware` (its own `app.Map` branch, after authentication
+and the rate limiter, ending in a 404 rather than the SPA). The rule is read off
+the path by `UploadPath`, so **every stored file must live at
+`agencies/{agencyId}/{area}/…`**: `cars` is public (the marketplace shows it, and
+the rate limiter waves it through); anything else needs a user of that agency who
+is not on a mailed temporary password, a platform admin (each opening of an
+existing file written to the audit trail as an `ImpersonatedRead`), or the
+customer who sent it in (`IsMyBookingFileQuery`). `UploadPath` refuses `\`, `:`,
+and any segment ending in a dot or space — Windows reads those differently from
+the gate, and `%5C` once dressed another agency's scan as a car photo. Only
+jpg/jpeg/png/webp/pdf are ever served, and every upload command (the customer's
+included) validates that list. Identical bytes are deduplicated **within one
+area** only (`StoredFileService`), or a file would inherit another area's access
+rule. Refusals are 404, never 403 — contracts and invoices are stored under their
+countable numbers. The wwwroot static-file middleware skips `/uploads` (the
+default root is `wwwroot/uploads`) and, outside Development, `/api` (NSwag's
+spec); Swagger UI is Development-only.
+
+**Response headers.** `SecurityHeadersMiddleware` sets nosniff, `DENY` framing, a
+referrer policy and, on HTML only, a CSP whose `script-src` is `'self'`. So: no
+inline `<script>` or `on…=` attributes in a Razor page (the sign-in pages' scripts
+are in `wwwroot/Identity/js`), and the production Angular build keeps
+`inlineCritical: false` (it works through an `onload` attribute). The map-tile and
+geocoder hosts are `SecurityHeaders:ImageSources`/`ConnectSources` in
+appsettings — **change them with `environment.prod.ts`** or the map goes blank.
+
 **Images.** `UploadCarImageCommand` stores the original synchronously (status
 `Pending`) and enqueues `CarImageProcessingJob`, which generates thumbnail
 (200px) and medium (800px) `StoredFile` derivatives out of band. Client
@@ -430,7 +457,7 @@ dotnet build RemSolution.sln            # Debug build also regenerates the NSwag
 dotnet test tests\Domain.UnitTests\Domain.UnitTests.csproj            # 179 tests
 dotnet test tests\Application.UnitTests\Application.UnitTests.csproj  # 155 tests
 dotnet test tests\Infrastructure.IntegrationTests\...csproj           #  24 tests (disk + SkiaSharp)
-dotnet test tests\Application.FunctionalTests\...csproj               # 667 tests (needs SQL Server)
+dotnet test tests\Application.FunctionalTests\...csproj               # 686 tests (needs SQL Server)
 cd src\Web; dotnet watch run                                          # https://localhost:5001
 
 cd src\Web\ClientApp; npx ng build --configuration production

@@ -1,3 +1,4 @@
+using RemSolution.Application.Common.Files;
 using RemSolution.Application.Common.Interfaces;
 
 namespace RemSolution.Application.Features.Car.Commands.UploadCarImageCommand
@@ -6,11 +7,9 @@ namespace RemSolution.Application.Features.Car.Commands.UploadCarImageCommand
     {
         private const long MaxSizeBytes = 15 * 1024 * 1024;
 
-        private static readonly string[] AllowedContentTypes =
-            { "image/jpeg", "image/png", "image/webp" };
+        private static readonly string[] AllowedContentTypes = UploadFileTypes.ImageContentTypes;
 
-        private static readonly string[] AllowedExtensions =
-            { ".jpg", ".jpeg", ".png", ".webp" };
+        private static readonly string[] AllowedExtensions = UploadFileTypes.ImageExtensions;
 
         public UploadCarImageCommandValidator(ILocalizer localizer)
         {

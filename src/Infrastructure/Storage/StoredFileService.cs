@@ -36,10 +36,15 @@ public class StoredFileService : IStoredFileService
 
         // Per-agency dedup: the global query filter already scopes this lookup to
         // the current tenant, so identical bytes are only ever shared within one
-        // agency — never across the tenant boundary.
+        // agency — never across the tenant boundary. And within one area of it
+        // (agencies/{id}/cars/, …/clients/, …): the uploads gate decides who may
+        // open a file from that folder, so a car photo deduplicated onto a
+        // payment proof's path would vanish from the marketplace.
+        var area = AreaPrefix(relativePath);
+
         var existing = await _context.StoredFiles
             .AsNoTracking()
-            .FirstOrDefaultAsync(f => f.Sha256 == hash, cancellationToken);
+            .FirstOrDefaultAsync(f => f.Sha256 == hash && f.Path.StartsWith(area), cancellationToken);
 
         string path;
         string url;
@@ -82,5 +87,16 @@ public class StoredFileService : IStoredFileService
 
         if (!stillReferenced)
             await _fileStorage.DeleteAsync(url, cancellationToken);
+    }
+
+    // "agencies/4/cars/12/photo.jpg" → "agencies/4/cars/". A path not shaped like
+    // that is its own area, so it deduplicates only onto itself.
+    private static string AreaPrefix(string relativePath)
+    {
+        var segments = relativePath.Replace('\\', '/').Split('/', StringSplitOptions.RemoveEmptyEntries);
+
+        return segments.Length >= 4 && segments[0] == "agencies"
+            ? $"{segments[0]}/{segments[1]}/{segments[2]}/"
+            : relativePath;
     }
 }

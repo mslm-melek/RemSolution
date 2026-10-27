@@ -81,6 +81,12 @@ public static class RateLimitingExtensions
             // botnet with a thousand addresses sails through.
             options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(context =>
             {
+                // A marketplace page shows a few dozen car photos; counting them
+                // would throttle the visitor for looking. Every other upload
+                // counts, because answering for one can mean a database lookup.
+                if (context.RequestServices.GetRequiredService<UploadedFiles>().IsPublicFile(context.Request.Path))
+                    return RateLimitPartition.GetNoLimiter("public-upload");
+
                 var userId = context.User.FindFirstValue(ClaimTypes.NameIdentifier);
 
                 return string.IsNullOrEmpty(userId)

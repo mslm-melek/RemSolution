@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { PUBLIC_CONTACT } from '../shared/public-site';
 
 /** The marketplace's footer, drawn by the shell under every page a visitor or customer sees. */
@@ -8,6 +8,8 @@ import { PUBLIC_CONTACT } from '../shared/public-site';
   styleUrls: ['./public-footer.component.css']
 })
 export class PublicFooterComponent {
+  @Input() signedIn = false;
+
   readonly contact = PUBLIC_CONTACT;
   readonly year = new Date().getFullYear();
 
