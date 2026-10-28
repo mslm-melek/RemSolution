@@ -31,11 +31,28 @@ public static class NotificationMessages
     public const string ReservationPendingExpiringSoon = "reservationPendingExpiringSoon";
 
     // ---- A customer has complained to the platform --------------------------
-    // Three wordings for one alert: a complaint arriving is a thing to answer,
-    // and the two verdicts are the opposite of each other.
+    // Five wordings for one alert: a complaint arriving is a thing to answer,
+    // the two verdicts are the opposite of each other, and the customer can
+    // take it back before either — and, once, take that back.
     public const string AgencyReportOpened = "agencyReportOpened";
     public const string AgencyReportUpheld = "agencyReportUpheld";
     public const string AgencyReportDismissed = "agencyReportDismissed";
+    public const string AgencyReportWithdrawn = "agencyReportWithdrawn";
+    public const string AgencyReportReopened = "agencyReportReopened";
+
+    // ---- The same complaint, told to the platform (in-app only) -------------
+    // PlatformNotification rows: rendered by the SPA alone, so these need only
+    // the notifications.message.{key} entry — nothing mails them.
+    public const string PlatformReportOpened = "platformReportOpened";
+    public const string PlatformReportCustomerWrote = "platformReportCustomerWrote";
+    public const string PlatformReportWithdrawn = "platformReportWithdrawn";
+    public const string PlatformReportReopened = "platformReportReopened";
+
+    // ---- The same complaint, mailed to the customer --------------------------
+    // CustomerMail only, never stored: these need the resx Subject/Body alone.
+    public const string CustomerReportAnswered = "customerReportAnswered";
+    public const string CustomerReportUpheld = "customerReportUpheld";
+    public const string CustomerReportDismissed = "customerReportDismissed";
 
     // ---- Client paperwork running out ---------------------------------------
     // Six wordings for one alert, for the same reason the car-expense alert has

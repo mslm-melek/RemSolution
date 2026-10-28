@@ -42,4 +42,17 @@ public interface INotificationService
     /// </summary>
     Task<ClientNotificationResult> NotifyClientAsync(
         ClientNotification notification, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Raises an in-app alert for every active platform administrator. Saves its
+    /// own changes and returns how many were newly created, as above. Needs no
+    /// tenant, and must not run under a pushed one it does not belong to.
+    /// </summary>
+    Task<int> NotifyPlatformAsync(PlatformAlert alert, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Mails a customer. Failure is logged and reported as false, never thrown:
+    /// what the mail announces has already been committed.
+    /// </summary>
+    Task<bool> MailCustomerAsync(CustomerMail mail, CancellationToken cancellationToken);
 }

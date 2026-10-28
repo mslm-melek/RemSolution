@@ -1,0 +1,47 @@
+<ng-container *transloco="let t">
+  <div class="rt" *ngIf="messages.length || writable">
+    <div class="rt-label">{{ t('reports.thread.title') }}</div>
+
+    <div class="rt-thread" *ngIf="messages.length">
+      <ng-container *ngFor="let m of messages">
+        <!-- A withdrawal or a reopening: an event on the report, kept in the
+             thread so it is still readable after the next outcome. -->
+        <div class="rt-event" *ngIf="isEvent(m)">
+          <mat-icon aria-hidden="true">{{ m.kind === AgencyReportMessageKind.Withdrawal ? 'undo' : 'replay' }}</mat-icon>
+          <span>
+            <strong>{{ t(eventKey(m)) }}</strong>
+            <!-- An instant, recorded from the clock, so it reads local. -->
+            · {{ m.sentAt | date:'dd MMM HH:mm' }}
+            <span class="rt-event-body" *ngIf="m.body">— {{ m.body }}</span>
+            <em *ngIf="!m.body">— {{ t('reports.thread.erased') }}</em>
+          </span>
+        </div>
+
+        <div class="rt-msg" *ngIf="!isEvent(m)" [class.mine]="isMine(m)">
+          <span class="rt-bubble" *ngIf="m.body">{{ m.body }}</span>
+          <span class="rt-bubble erased" *ngIf="!m.body">{{ t('reports.thread.erased') }}</span>
+          <span class="rt-when">{{ t(authorKey(m)) }} · {{ m.sentAt | date:'dd MMM HH:mm' }}</span>
+        </div>
+      </ng-container>
+    </div>
+
+    <div class="rt-error" *ngIf="error">{{ error }}</div>
+
+    <form class="rt-foot" *ngIf="writable" (ngSubmit)="send()">
+      <textarea [(ngModel)]="draft" name="body" rows="2" maxlength="2000" [disabled]="sending"
+                [placeholder]="t(viewer === 'platform' ? 'reports.thread.toCustomer' : 'reports.thread.toPlatform')"
+                [attr.aria-label]="t('reports.thread.yourMessage')"></textarea>
+      <button type="submit" mat-icon-button color="primary" [disabled]="sending || !draft.trim()"
+              [attr.aria-label]="t('reports.thread.send')">
+        <mat-icon>send</mat-icon>
+      </button>
+    </form>
+
+    <!-- Said where they type, not in a help page: what a customer writes here
+         is read by the agency they are complaining about. -->
+    <p class="rt-note" *ngIf="writable">
+      <mat-icon aria-hidden="true">visibility</mat-icon>
+      {{ t('reports.thread.agencyReads') }}
+    </p>
+  </div>
+</ng-container>

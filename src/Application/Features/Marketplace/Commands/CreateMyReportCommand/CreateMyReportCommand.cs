@@ -3,6 +3,7 @@ using RemSolution.Application.Common.Interfaces;
 using RemSolution.Application.Common.Notifications;
 using RemSolution.Application.Common.Security;
 using RemSolution.Application.Common.Tenancy;
+using RemSolution.Application.Features.AgencyReport;
 using RemSolution.Domain.Constants;
 using RemSolution.Domain.Entities;
 using RemSolution.Domain.Enums;
@@ -27,6 +28,12 @@ namespace RemSolution.Application.Features.Marketplace.Commands.CreateMyReportCo
         public int? RentingId { get; init; }
         public AgencyReportKind Kind { get; init; }
         public string Message { get; init; } = string.Empty;
+
+        /// <summary>
+        /// Optional: where to write when the platform replies or decides. Not taken
+        /// from the account, so the customer chooses where it lands.
+        /// </summary>
+        public string? NotifyEmail { get; init; }
     }
 
     public class CreateMyReportCommandHandler : IRequestHandler<CreateMyReportCommand, int>
@@ -35,17 +42,20 @@ namespace RemSolution.Application.Features.Marketplace.Commands.CreateMyReportCo
         private readonly INotificationService _notifications;
         private readonly IUser _user;
         private readonly TimeProvider _dateTime;
+        private readonly ILocalizer _localizer;
 
         public CreateMyReportCommandHandler(
             IApplicationDbContext context,
             INotificationService notifications,
             IUser user,
-            TimeProvider dateTime)
+            TimeProvider dateTime,
+            ILocalizer localizer)
         {
             _context = context;
             _notifications = notifications;
             _user = user;
             _dateTime = dateTime;
+            _localizer = localizer;
         }
 
         public async Task<int> Handle(CreateMyReportCommand request, CancellationToken cancellationToken)
@@ -65,7 +75,7 @@ namespace RemSolution.Application.Features.Marketplace.Commands.CreateMyReportCo
                 throw new ValidationException(new[]
                 {
                     new ValidationFailure(nameof(request.ReservationId),
-                        "You can only report a booking the agency had confirmed.")
+                        _localizer["Validation.AgencyReport.NotConfirmed"])
                 });
             }
 
@@ -74,8 +84,8 @@ namespace RemSolution.Application.Features.Marketplace.Commands.CreateMyReportCo
                 throw new ValidationException(new[]
                 {
                     new ValidationFailure(nameof(request.ReservationId),
-                        $"This booking is too old to report — reports close " +
-                        $"{Domain.Entities.AgencyReport.ReportingWindowDays} days after it ends.")
+                        _localizer["Validation.AgencyReport.TooOld",
+                            Domain.Entities.AgencyReport.ReportingWindowDays])
                 });
             }
 
@@ -86,7 +96,7 @@ namespace RemSolution.Application.Features.Marketplace.Commands.CreateMyReportCo
                 throw new ValidationException(new[]
                 {
                     new ValidationFailure(nameof(request.Kind),
-                        "This booking was not cancelled by the agency.")
+                        _localizer["Validation.AgencyReport.NotCancelledByAgency"])
                 });
             }
 
@@ -102,7 +112,7 @@ namespace RemSolution.Application.Features.Marketplace.Commands.CreateMyReportCo
                 throw new ValidationException(new[]
                 {
                     new ValidationFailure(nameof(request.ReservationId),
-                        "You have already reported this booking.")
+                        _localizer["Validation.AgencyReport.AlreadyReported"])
                 });
             }
 
@@ -117,10 +127,15 @@ namespace RemSolution.Application.Features.Marketplace.Commands.CreateMyReportCo
                 reporterUserId: userId,
                 reporterName: booking.ReporterName,
                 bookingSummary: booking.Summary,
-                agencyCancellationReason: booking.CancellationReason);
+                agencyCancellationReason: booking.CancellationReason,
+                notifyEmail: request.NotifyEmail);
 
             _context.AgencyReports.Add(report);
             await _context.SaveChangesAsync(cancellationToken);
+
+            await AgencyReportAlerts.NotifyPlatformAsync(
+                _notifications, _context, report,
+                NotificationMessages.PlatformReportOpened, "opened", cancellationToken);
 
             // After the commit: the agency being told is not worth undoing the
             // report over. The customer has no agency claim, so the tenant the
@@ -267,13 +282,13 @@ namespace RemSolution.Application.Features.Marketplace.Commands.CreateMyReportCo
 {
     public class CreateMyReportCommandValidator : AbstractValidator<CreateMyReportCommand>
     {
-        public CreateMyReportCommandValidator()
+        public CreateMyReportCommandValidator(ILocalizer localizer)
         {
             // Exactly one anchor. The entity enforces it too, and so does a check
             // constraint — this is the one that produces a 400 rather than a 500.
             RuleFor(v => v)
                 .Must(v => (v.ReservationId is null) != (v.RentingId is null))
-                .WithMessage("A report is about exactly one booking.")
+                .WithMessage(_ => localizer["DomainRule.AgencyReport.OneBooking"])
                 .WithName(nameof(CreateMyReportCommand.ReservationId));
 
             RuleFor(v => v.ReservationId).GreaterThan(0).When(v => v.ReservationId is not null);
@@ -282,6 +297,10 @@ namespace RemSolution.Application.Features.Marketplace.Commands.CreateMyReportCo
             RuleFor(v => v.Message)
                 .NotEmpty()
                 .MaximumLength(Domain.Entities.AgencyReport.MaxMessageLength);
+            RuleFor(v => v.NotifyEmail)
+                .EmailAddress()
+                .MaximumLength(Domain.Entities.AgencyReport.MaxEmailLength)
+                .When(v => !string.IsNullOrWhiteSpace(v.NotifyEmail));
         }
     }
 }

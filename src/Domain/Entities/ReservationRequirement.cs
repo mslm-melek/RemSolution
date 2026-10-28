@@ -84,7 +84,7 @@ namespace RemSolution.Domain.Entities
         {
             if (reservationId <= 0)
             {
-                throw new DomainRuleException(nameof(ReservationId),
+                throw new DomainRuleException(nameof(ReservationId), "Requirement.NoReservation",
                     "A requirement belongs to a reservation.");
             }
 
@@ -92,7 +92,7 @@ namespace RemSolution.Domain.Entities
 
             if (amount is not null && amount.Amount < 0)
             {
-                throw new DomainRuleException(nameof(Amount),
+                throw new DomainRuleException(nameof(Amount), "Requirement.NegativeAmount",
                     "A requirement cannot ask for a negative amount.");
             }
 
@@ -124,7 +124,7 @@ namespace RemSolution.Domain.Entities
             if (fileId is null && Kind != ReservationRequirementKind.Conditions
                 && string.IsNullOrWhiteSpace(note))
             {
-                throw new DomainRuleException(nameof(SubmittedFileId),
+                throw new DomainRuleException(nameof(SubmittedFileId), "Requirement.AnswerRequired",
                     "Answer this with a file or a note.");
             }
 
@@ -169,7 +169,7 @@ namespace RemSolution.Domain.Entities
         {
             if (string.IsNullOrWhiteSpace(reason))
             {
-                throw new DomainRuleException(nameof(ReviewNote),
+                throw new DomainRuleException(nameof(ReviewNote), "Requirement.RefusalReasonRequired",
                     "Say why it was refused — the customer has to know what to send instead.");
             }
 
@@ -212,7 +212,8 @@ namespace RemSolution.Domain.Entities
         {
             if (!allowed.Contains(Status))
             {
-                throw new DomainRuleException(nameof(Status),
+                // One key per state: the state's name is not translatable on its own.
+                throw new DomainRuleException(nameof(Status), $"Requirement.Status.{Status}",
                     $"A requirement that is {Status} cannot move on from there.");
             }
         }
@@ -221,14 +222,14 @@ namespace RemSolution.Domain.Entities
         {
             if (string.IsNullOrWhiteSpace(label))
             {
-                throw new DomainRuleException(nameof(Label),
+                throw new DomainRuleException(nameof(Label), "Requirement.LabelRequired",
                     "Say what is being asked for.");
             }
 
             if (label.Length > MaxLabelLength)
             {
-                throw new DomainRuleException(nameof(Label),
-                    $"The label cannot be longer than {MaxLabelLength} characters.");
+                throw new DomainRuleException(nameof(Label), "Requirement.LabelTooLong",
+                    $"The label cannot be longer than {MaxLabelLength} characters.", MaxLabelLength);
             }
         }
 
@@ -236,8 +237,8 @@ namespace RemSolution.Domain.Entities
         {
             if (note?.Length > MaxNoteLength)
             {
-                throw new DomainRuleException(nameof(ReviewNote),
-                    $"The note cannot be longer than {MaxNoteLength} characters.");
+                throw new DomainRuleException(nameof(ReviewNote), "Requirement.NoteTooLong",
+                    $"The note cannot be longer than {MaxNoteLength} characters.", MaxNoteLength);
             }
         }
 

@@ -69,6 +69,7 @@ import { MyReportsComponent } from './marketplace/my-reports.component';
 import { ReportDialogComponent } from './marketplace/report-dialog.component';
 import { RatingStarsComponent } from './shared/rating-stars.component';
 import { ConvertedPriceComponent } from './shared/converted-price.component';
+import { ReportThreadComponent } from './shared/report-thread.component';
 import { CatalogNamePipe } from './shared/catalog-name.pipe';
 import { ClientAvatarComponent } from './shared/client-avatar.component';
 
@@ -204,6 +205,7 @@ function toMyBookings(tab: 'rentings' | null): RedirectFunction {
     ReportDialogComponent,
     RatingStarsComponent,
     ConvertedPriceComponent,
+    ReportThreadComponent,
     CatalogNamePipe,
     ClientAvatarComponent,
 

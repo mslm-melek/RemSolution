@@ -85,7 +85,8 @@ namespace RemSolution.Domain.Entities
         {
             if (carId <= 0)
             {
-                throw new DomainRuleException(nameof(CarId), "A block needs a car.");
+                throw new DomainRuleException(nameof(CarId), "CarUnavailability.CarRequired",
+                    "A block needs a car.");
             }
         }
 
@@ -93,7 +94,7 @@ namespace RemSolution.Domain.Entities
         {
             if (endDate <= startDate)
             {
-                throw new DomainRuleException(nameof(EndDate),
+                throw new DomainRuleException(nameof(EndDate), "Period.EndAfterStart",
                     "The end date must be after the start date.");
             }
         }
@@ -102,8 +103,8 @@ namespace RemSolution.Domain.Entities
         {
             if (note?.Length > MaxNoteLength)
             {
-                throw new DomainRuleException(nameof(Note),
-                    $"The note cannot be longer than {MaxNoteLength} characters.");
+                throw new DomainRuleException(nameof(Note), "CarUnavailability.NoteTooLong",
+                    $"The note cannot be longer than {MaxNoteLength} characters.", MaxNoteLength);
             }
         }
 

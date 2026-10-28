@@ -14,6 +14,7 @@ namespace RemSolution.Infrastructure.Data;
 public sealed class PersonalDataErasureStore : IPersonalDataErasureStore
 {
     private const string ClientEntity = nameof(Client);
+    private const string ReportEntity = nameof(AgencyReport);
     private const string ErasureAction = "ErasePersonalData";
 
     private readonly ApplicationDbContext _context;
@@ -65,6 +66,23 @@ public sealed class PersonalDataErasureStore : IPersonalDataErasureStore
         // redaction and copy those payloads into fresh rows.
         return _context.Set<AuditLog>()
             .Where(a => a.Entity == ClientEntity && a.EntityId == key
+                        && (a.Before != null || a.After != null))
+            .ExecuteUpdateAsync(
+                set => set.SetProperty(a => a.Before, (string?)null)
+                          .SetProperty(a => a.After, (string?)null),
+                cancellationToken);
+    }
+
+    public Task<int> RedactReportAuditTrailAsync(
+        IReadOnlyCollection<int> reportIds, CancellationToken cancellationToken)
+    {
+        if (reportIds.Count == 0) return Task.FromResult(0);
+
+        var keys = reportIds.Select(id => id.ToString()).ToList();
+
+        // ExecuteUpdate for the reason given above.
+        return _context.Set<AuditLog>()
+            .Where(a => a.Entity == ReportEntity && keys.Contains(a.EntityId!)
                         && (a.Before != null || a.After != null))
             .ExecuteUpdateAsync(
                 set => set.SetProperty(a => a.Before, (string?)null)

@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Http.HttpResults;
 using RemSolution.Application.Common.Models;
+using RemSolution.Application.Features.AgencyReport.Commands.PostAgencyReportMessageCommand;
 using RemSolution.Application.Features.AgencyReport.Commands.ResolveAgencyReportCommand;
 using RemSolution.Application.Features.AgencyReport.DTOs;
 using RemSolution.Application.Features.AgencyReport.Queries.GetAgencyReportsQuery;
@@ -17,7 +18,18 @@ public class AgencyReports : EndpointGroupBase
         app.MapGroup(this)
             .RequireAuthorization(Policies.PlatformAdminOnly)
             .MapGet(GetAgencyReports)
-            .MapPost(ResolveAgencyReport, "{id}/resolve");
+            .MapPost(ResolveAgencyReport, "{id}/resolve")
+            .MapPost(PostAgencyReportMessage, "{id}/messages");
+    }
+
+    public async Task<Results<Ok<int>, BadRequest>> PostAgencyReportMessage(
+        ISender sender, int id, PostAgencyReportMessageCommand command)
+    {
+        if (id != command.Id)
+            return TypedResults.BadRequest();
+
+        var messageId = await sender.Send(command);
+        return TypedResults.Ok(messageId);
     }
 
     public async Task<Ok<PaginatedList<AgencyReportDto>>> GetAgencyReports(

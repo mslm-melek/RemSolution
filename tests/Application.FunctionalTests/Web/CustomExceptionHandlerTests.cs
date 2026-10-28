@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.Json;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
@@ -70,11 +71,46 @@ public class CustomExceptionHandlerTests : BaseTestFixture
     public async Task ABrokenDomainRuleAnswersLikeAValidationFailure()
     {
         var (status, body) = await HandleAsync(
-            new DomainRuleException("EndMileage", "The return mileage cannot be less than the pickup mileage."));
+            new DomainRuleException("EndMileage", "Renting.ReturnMileageBelowPickup",
+                "The return mileage cannot be less than the pickup mileage."),
+            culture: "en");
 
         status.Should().Be(StatusCodes.Status400BadRequest);
         body.GetProperty("errors").GetProperty("EndMileage")[0].GetString()
             .Should().Contain("return mileage");
+    }
+
+    // The Domain cannot translate, so the rule names its wording and the handler
+    // answers in the reader's language, arguments included.
+    [Test]
+    public async Task ABrokenDomainRuleIsAnsweredInTheRequestLanguage()
+    {
+        var (_, french) = await HandleAsync(
+            new DomainRuleException("Note", "CarUnavailability.NoteTooLong",
+                "The note cannot be longer than 500 characters.", 500),
+            culture: "fr");
+
+        var (_, arabic) = await HandleAsync(
+            new DomainRuleException("Status", "AgencyReport.AlreadyUpheld",
+                "This report was already upheld."),
+            culture: "ar");
+
+        french.GetProperty("errors").GetProperty("Note")[0].GetString()
+            .Should().Contain("500").And.Contain("note");
+        arabic.GetProperty("errors").GetProperty("Status")[0].GetString()
+            .Should().NotBe("This report was already upheld.")
+            .And.NotStartWith("DomainRule.");
+    }
+
+    // A key nobody translated must not reach the screen as a key.
+    [Test]
+    public async Task AnUntranslatedDomainRuleFallsBackToItsEnglish()
+    {
+        var (_, body) = await HandleAsync(
+            new DomainRuleException("X", "No.Such.Key", "Plain English."),
+            culture: "fr");
+
+        body.GetProperty("errors").GetProperty("X")[0].GetString().Should().Be("Plain English.");
     }
 
     [Test]
@@ -112,15 +148,30 @@ public class CustomExceptionHandlerTests : BaseTestFixture
 
     // Runs one exception through the real handler and returns what a client would
     // receive.
-    private static async Task<(int Status, JsonElement Body)> HandleAsync(Exception exception)
+    private static async Task<(int Status, JsonElement Body)> HandleAsync(
+        Exception exception, string? culture = null)
     {
         return await UsingScopeAsync(async services =>
         {
             var handler = new CustomExceptionHandler(services.GetRequiredService<ILocalizer>());
             var context = NewContext();
 
-            var handled = await handler.TryHandleAsync(context, exception, CancellationToken.None);
-            handled.Should().BeTrue($"{exception.GetType().Name} must be mapped explicitly");
+            // What UseRequestLocalization would have set for the request.
+            var previous = CultureInfo.CurrentUICulture;
+            if (culture is not null)
+            {
+                CultureInfo.CurrentUICulture = CultureInfo.GetCultureInfo(culture);
+            }
+
+            try
+            {
+                var handled = await handler.TryHandleAsync(context, exception, CancellationToken.None);
+                handled.Should().BeTrue($"{exception.GetType().Name} must be mapped explicitly");
+            }
+            finally
+            {
+                CultureInfo.CurrentUICulture = previous;
+            }
 
             context.Response.Body.Position = 0;
             using var document = await JsonDocument.ParseAsync(context.Response.Body);

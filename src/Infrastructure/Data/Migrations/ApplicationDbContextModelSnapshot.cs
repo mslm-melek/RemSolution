@@ -294,8 +294,18 @@ namespace RemSolution.Infrastructure.Data.Migrations
                         .HasMaxLength(2000)
                         .HasColumnType("nvarchar(2000)");
 
+                    b.Property<int>("MessageCount")
+                        .HasColumnType("int");
+
+                    b.Property<string>("NotifyEmail")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
                     b.Property<int?>("RentingId")
                         .HasColumnType("int");
+
+                    b.Property<DateTime?>("ReopenedAt")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("ReporterName")
                         .HasMaxLength(256)
@@ -318,6 +328,11 @@ namespace RemSolution.Infrastructure.Data.Migrations
                     b.Property<string>("ResolvedByUserId")
                         .HasMaxLength(450)
                         .HasColumnType("nvarchar(450)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
 
                     b.Property<int>("Status")
                         .HasColumnType("int");
@@ -351,6 +366,42 @@ namespace RemSolution.Infrastructure.Data.Migrations
                         {
                             t.HasCheckConstraint("CK_AgencyReports_OneBooking", "(CASE WHEN [ReservationId] IS NULL THEN 0 ELSE 1 END + CASE WHEN [RentingId] IS NULL THEN 0 ELSE 1 END) = 1");
                         });
+                });
+
+            modelBuilder.Entity("RemSolution.Domain.Entities.AgencyReportMessage", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AgencyReportId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("AuthorUserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("Body")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<bool>("FromPlatform")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("Kind")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("SentAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AgencyReportId", "SentAt");
+
+                    b.ToTable("AgencyReportMessages", (string)null);
                 });
 
             modelBuilder.Entity("RemSolution.Domain.Entities.AgencyReview", b =>
@@ -2099,6 +2150,65 @@ namespace RemSolution.Infrastructure.Data.Migrations
                     b.ToTable("PlanFeatures");
                 });
 
+            modelBuilder.Entity("RemSolution.Domain.Entities.PlatformNotification", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ArgsJson")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("DedupKey")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<int>("Kind")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Link")
+                        .HasMaxLength(400)
+                        .HasColumnType("nvarchar(400)");
+
+                    b.Property<string>("MessageKey")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime?>("ReadAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("RecipientUserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int?>("SubjectId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("SubjectType")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DedupKey")
+                        .IsUnique();
+
+                    b.HasIndex("RecipientUserId", "CreatedAt");
+
+                    b.HasIndex("RecipientUserId", "ReadAt")
+                        .HasFilter("[ReadAt] IS NULL");
+
+                    b.ToTable("PlatformNotifications", (string)null);
+                });
+
             modelBuilder.Entity("RemSolution.Domain.Entities.Renting", b =>
                 {
                     b.Property<int>("Id")
@@ -2800,6 +2910,17 @@ namespace RemSolution.Infrastructure.Data.Migrations
                     b.Navigation("Agency");
 
                     b.Navigation("Client");
+                });
+
+            modelBuilder.Entity("RemSolution.Domain.Entities.AgencyReportMessage", b =>
+                {
+                    b.HasOne("RemSolution.Domain.Entities.AgencyReport", "AgencyReport")
+                        .WithMany("Messages")
+                        .HasForeignKey("AgencyReportId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("AgencyReport");
                 });
 
             modelBuilder.Entity("RemSolution.Domain.Entities.AgencyReview", b =>
@@ -4194,6 +4315,11 @@ namespace RemSolution.Infrastructure.Data.Migrations
                     b.Navigation("Reviews");
 
                     b.Navigation("Settings");
+                });
+
+            modelBuilder.Entity("RemSolution.Domain.Entities.AgencyReport", b =>
+                {
+                    b.Navigation("Messages");
                 });
 
             modelBuilder.Entity("RemSolution.Domain.Entities.Brand", b =>

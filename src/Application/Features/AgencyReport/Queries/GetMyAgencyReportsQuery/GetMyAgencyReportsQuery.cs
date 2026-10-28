@@ -52,7 +52,7 @@ namespace RemSolution.Application.Features.AgencyReport.Queries.GetMyAgencyRepor
                 reports = reports.Where(r => r.Status == status);
             }
 
-            return await reports
+            var page = await reports
                 .OrderByDescending(r => r.SubmittedAt)
                 .ThenByDescending(r => r.Id)
                 .Select(r => new AgencyReportDto
@@ -70,8 +70,22 @@ namespace RemSolution.Application.Features.AgencyReport.Queries.GetMyAgencyRepor
                     SubmittedAt = r.SubmittedAt,
                     ResolvedAt = r.ResolvedAt,
                     ResolutionNote = r.ResolutionNote,
+                    ReopenedAt = r.ReopenedAt,
                 })
                 .PaginatedListAsync(request.PageNumber, request.PageSize);
+
+            // Read-only here: the agency is not a party to the thread, but it is
+            // owed sight of what is said about it — and so nothing on it is ever
+            // "mine".
+            var threads = await AgencyReportThreads.LoadAsync(
+                _context, page.Items.Select(r => r.Id).ToList(), readerUserId: null, cancellationToken);
+
+            foreach (var report in page.Items)
+            {
+                report.Messages = threads[report.Id].ToList();
+            }
+
+            return page;
         }
     }
 }

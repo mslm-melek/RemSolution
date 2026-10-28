@@ -1,7 +1,7 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { TranslocoService } from '@jsverse/transloco';
 import {
-  AgenciesClient, AgencyReliabilityDto, AgencyReportDto
+  AgenciesClient, AgencyReliabilityDto, AgencyReportDto, AgencyReportStatus
 } from '../web-api-client';
 import {
   reportKindLabelKey, reportStatusLabelKey, reportStatusTone
@@ -28,6 +28,7 @@ export class AgencyReputationComponent implements OnInit {
   loading = true;
   error = '';
 
+  AgencyReportStatus = AgencyReportStatus;
   readonly kindLabelKey = reportKindLabelKey;
   readonly statusLabelKey = reportStatusLabelKey;
   readonly statusTone = reportStatusTone;

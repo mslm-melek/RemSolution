@@ -214,6 +214,14 @@ archived row frees its key.
 
 **Concurrency.** `IHasRowVersion` + `RowVersion` on the contended aggregates.
 
+**Domain errors are translated by key.** The Domain has no localizer, so a rule
+throws `DomainRuleException(property, "Area.Rule", "English text", args…)` and
+`CustomExceptionHandler` answers with `DomainRule.Area.Rule` from the resx
+(positional `{0}`), falling back to the English. A new key goes in all three resx
+files; `LocalizationTests.EveryDomainRuleKeyHasAWording` scans the Domain sources
+for keys and fails on a missing one. Handler-level `ValidationFailure` messages
+are not covered by it and many are still English literals.
+
 **Collation.** Name/search columns use `Latin1_General_100_CI_AI`
 (`DatabaseCollations.AccentInsensitive`) so French/Arabic names match regardless
 of accent or case. Chosen up front — changing a populated column later rebuilds
@@ -322,7 +330,29 @@ tenant claim, so agency-facing code filters on `AgencyId` by hand. What the
 triage screen shows about the booking is **snapshotted onto the row**
 (`BookingSummary`, `AgencyCancellationReason`), because the arbitrator cannot
 read tenant data. `Uphold`/`Dismiss` happen once and both require a note shown to
-both sides. Upholding costs reliability points; nothing else changes hands, which
+both sides. While it is `Open` the customer and the platform write to each other
+on it (`AgencyReportMessage`; the agency reads the thread, it is not a party, and
+the composer says so), and the customer may `Withdraw` it with a reason (stored in
+`ResolutionNote`, costs nothing, audited). A withdrawal is the one outcome that is
+not final: the customer may `Reopen` it **once**, within `ReportingWindowDays` of
+withdrawing — otherwise talking a customer into withdrawing would be a way out of
+arbitration. Withdrawals and reopenings are also written into the thread
+(`AgencyReportMessageKind`) so the history survives the next outcome. Otherwise
+closed means frozen. `AgencyReport` is `IHasRowVersion` since two people can now
+close it, and a message increments `MessageCount` so it too is an update the token
+guards — a message racing a verdict gets a 409, not a seat on a closed report (a
+counter, because a timestamp can land on the same tick and EF then skips the
+UPDATE). On erasure the customer's follow-up messages and a withdrawal's reason
+are emptied (free text is where a phone number ends up) while the opening
+`Message` and a verdict's note stay, and the `AgencyReport` audit payloads are
+blanked like the `Client` ones. Who else hears about it (`AgencyReportAlerts`): the
+customer may leave an address on the report (`NotifyEmail`, cleared on erasure) and is
+mailed the platform's replies and its verdict (`INotificationService.MailCustomerAsync` —
+signed by the platform, stored nowhere, ignores the agency's mail switches); the
+platform administrators get an in-app alert for every customer move (opened, wrote,
+withdrew, reopened) as `PlatformNotification` rows — the non-tenant twin of
+`Notification`, since a platform admin has no tenant for that table's filter to match.
+The same bell endpoints read it whenever the caller has no tenant. Upholding costs reliability points; nothing else changes hands, which
 is Malek's decision: until the platform holds the money, a debt no mechanism
 collects is a row in a table, not a sanction.
 

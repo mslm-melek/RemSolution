@@ -9,6 +9,9 @@ using RemSolution.Application.Features.ExchangeRate.Queries.GetDisplayRatesQuery
 using RemSolution.Application.Features.Marketplace.Commands.CancelMyReservationCommand;
 using RemSolution.Application.Features.Marketplace.Commands.CreateCustomerReservationCommand;
 using RemSolution.Application.Features.Marketplace.Commands.CreateMyReportCommand;
+using RemSolution.Application.Features.Marketplace.Commands.PostMyReportMessageCommand;
+using RemSolution.Application.Features.Marketplace.Commands.ReopenMyReportCommand;
+using RemSolution.Application.Features.Marketplace.Commands.WithdrawMyReportCommand;
 using RemSolution.Application.Features.Marketplace.Commands.CreateMyReviewCommand;
 using RemSolution.Application.Features.Marketplace.Commands.MarkMyChatReadCommand;
 using RemSolution.Application.Features.Marketplace.Commands.SendCustomerChatMessageCommand;
@@ -76,7 +79,10 @@ public class Marketplace : EndpointGroupBase
                 "my-reservations/{id}/requirements", Policies.CustomerOnly)
             // Complaining to the platform about an agency, and what came of it.
             .MapPost(ReportAgency, "reports", Policies.CustomerOnly)
-            .MapGet(GetMyReports, "my-reports", Policies.CustomerOnly);
+            .MapGet(GetMyReports, "my-reports", Policies.CustomerOnly)
+            .MapPost(PostMyReportMessage, "my-reports/{id}/messages", Policies.CustomerOnly)
+            .MapPost(WithdrawMyReport, "my-reports/{id}/withdraw", Policies.CustomerOnly)
+            .MapPost(ReopenMyReport, "my-reports/{id}/reopen", Policies.CustomerOnly);
 
         // Answering an ask carries a file (a transfer slip, a scan), so it binds
         // a form — and antiforgery middleware is not configured, so form binding
@@ -215,6 +221,36 @@ public class Marketplace : EndpointGroupBase
     {
         var result = await sender.Send(new GetMyReportsQuery());
         return TypedResults.Ok(result);
+    }
+
+    public async Task<Results<Ok<int>, BadRequest>> PostMyReportMessage(
+        ISender sender, int id, PostMyReportMessageCommand command)
+    {
+        if (id != command.Id)
+            return TypedResults.BadRequest();
+
+        var messageId = await sender.Send(command);
+        return TypedResults.Ok(messageId);
+    }
+
+    public async Task<Results<NoContent, BadRequest>> WithdrawMyReport(
+        ISender sender, int id, WithdrawMyReportCommand command)
+    {
+        if (id != command.Id)
+            return TypedResults.BadRequest();
+
+        await sender.Send(command);
+        return TypedResults.NoContent();
+    }
+
+    public async Task<Results<NoContent, BadRequest>> ReopenMyReport(
+        ISender sender, int id, ReopenMyReportCommand command)
+    {
+        if (id != command.Id)
+            return TypedResults.BadRequest();
+
+        await sender.Send(command);
+        return TypedResults.NoContent();
     }
 
     public async Task<Ok<IList<MyRentingDto>>> GetMyRentings(ISender sender)

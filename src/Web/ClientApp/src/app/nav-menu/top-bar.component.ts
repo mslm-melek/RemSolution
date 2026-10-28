@@ -48,7 +48,8 @@ export class TopBarComponent implements OnInit {
   workspace: ImpersonatedAgency | null = null;
 
   // The bell. Shown on the agency's own feature alone — reading one's own inbox
-  // needs no permission — and never to a customer, who has no staff alerts.
+  // needs no permission — or to a platform admin, and never to a customer, who
+  // has no staff alerts.
   canNotifications = false;
   unreadCount = 0;
 
@@ -105,8 +106,9 @@ export class TopBarComponent implements OnInit {
         this.workspace = { ...this.workspace, name: user.agencyName };
       }
 
-      this.canNotifications =
-        !this.isCustomer && (user.features?.includes('Notifications') ?? false);
+      // A platform admin has its own inbox: what customers do on their reports.
+      this.canNotifications = !this.isCustomer
+        && ((user.features?.includes('Notifications') ?? false) || AuthService.isPlatformAdmin(user));
 
       // Signed out or a customer: the marketplace audience. The rates are public
       // and small, and the picker hides itself when none are quoted.

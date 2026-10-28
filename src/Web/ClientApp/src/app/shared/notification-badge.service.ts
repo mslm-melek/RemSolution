@@ -29,9 +29,10 @@ export class NotificationBadgeService implements OnDestroy {
 
   constructor() {
     // Only where the agency actually has the module: without the feature every
-    // request would come back 403, once a minute, forever.
+    // request would come back 403, once a minute, forever. A platform admin has
+    // no agency and no features, and reads the platform's own inbox instead.
     this.auth.currentUser$.subscribe(user => {
-      if (user.features?.includes('Notifications')) {
+      if (user.features?.includes('Notifications') || AuthService.isPlatformAdmin(user)) {
         this.start();
       } else {
         this.stop();

@@ -17,11 +17,14 @@ namespace RemSolution.Application.Features.Notification.Queries.GetMyUnreadNotif
     {
         private readonly IApplicationDbContext _context;
         private readonly IUser _user;
+        private readonly ITenantProvider _tenant;
 
-        public GetMyUnreadNotificationCountQueryHandler(IApplicationDbContext context, IUser user)
+        public GetMyUnreadNotificationCountQueryHandler(
+            IApplicationDbContext context, IUser user, ITenantProvider tenant)
         {
             _context = context;
             _user = user;
+            _tenant = tenant;
         }
 
         public async Task<int> Handle(
@@ -30,6 +33,14 @@ namespace RemSolution.Application.Features.Notification.Queries.GetMyUnreadNotif
             if (_user.Id is not string userId)
             {
                 return 0;
+            }
+
+            // No agency: the platform inbox (see GetMyNotificationsQuery).
+            if (_tenant.AgencyId is null)
+            {
+                return await _context.PlatformNotifications
+                    .AsNoTracking()
+                    .CountAsync(n => n.RecipientUserId == userId && n.ReadAt == null, cancellationToken);
             }
 
             return await _context.Notifications

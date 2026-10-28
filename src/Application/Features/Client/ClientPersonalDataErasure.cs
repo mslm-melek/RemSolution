@@ -69,6 +69,15 @@ namespace RemSolution.Application.Features.Client
             // command runs again from the top.
             await store.RedactAuditTrailAsync(client.Id, cancellationToken);
 
+            // Loaded here, with their threads, for both jobs: the audit copies of
+            // them go first for the reason above, the rows themselves further down.
+            var reports = await context.AgencyReports
+                .Include(r => r.Messages)
+                .Where(r => r.ClientId == client.Id)
+                .ToListAsync(cancellationToken);
+
+            await store.RedactReportAuditTrailAsync(reports.Select(r => r.Id).ToList(), cancellationToken);
+
             var fileIds = client.ErasePersonalData(erasedAt);
 
             // A notification's text is not stored — but the values interpolated
@@ -92,13 +101,10 @@ namespace RemSolution.Application.Features.Client
             // found them — but both snapshot the customer's name at submit time
             // precisely so it outlives a rename, which is also what would make it
             // outlive an erasure. What they say about the agency stays: a rating,
-            // a complaint and its arbitration are records of the agency's
-            // conduct, not of the person, and the same reasoning keeps the
-            // notification rows above.
-            var reports = await context.AgencyReports
-                .Where(r => r.ClientId == client.Id)
-                .ToListAsync(cancellationToken);
-
+            // a complaint and its outcome are records of the agency's conduct,
+            // not of the person, and the same reasoning keeps the notification
+            // rows above. A report's follow-up messages do not: free text is
+            // where a phone number ends up (see AgencyReport.ErasePersonalData).
             foreach (var report in reports)
             {
                 report.ErasePersonalData();

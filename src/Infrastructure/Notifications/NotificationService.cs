@@ -253,6 +253,82 @@ public class NotificationService : INotificationService
         return new ClientNotificationResult(ClientNotificationOutcome.Sent);
     }
 
+    public async Task<int> NotifyPlatformAsync(PlatformAlert alert, CancellationToken cancellationToken)
+    {
+        var recipients = await _recipients.ForPlatformAdministratorsAsync(cancellationToken);
+
+        if (recipients.Count == 0)
+        {
+            return 0;
+        }
+
+        var keys = recipients.Select(r => PlatformDedupKey(r.UserId, alert)).ToList();
+
+        var alreadyTold = await _context.PlatformNotifications
+            .AsNoTracking()
+            .Where(n => keys.Contains(n.DedupKey))
+            .Select(n => n.DedupKey)
+            .ToListAsync(cancellationToken);
+
+        var told = new HashSet<string>(alreadyTold, StringComparer.Ordinal);
+        var now = _timeProvider.GetUtcNow().UtcDateTime;
+        var argsJson = alert.Args.ToJson();
+        var raised = new List<PlatformNotification>();
+
+        foreach (var recipient in recipients)
+        {
+            var key = PlatformDedupKey(recipient.UserId, alert);
+
+            if (!told.Add(key))
+            {
+                continue;
+            }
+
+            var row = new PlatformNotification
+            {
+                RecipientUserId = recipient.UserId,
+                Kind = alert.Kind,
+                MessageKey = alert.MessageKey,
+                SubjectType = alert.SubjectType,
+                SubjectId = alert.SubjectId,
+                ArgsJson = argsJson,
+                Link = alert.Link,
+                DedupKey = key,
+                CreatedAt = now,
+            };
+
+            _context.PlatformNotifications.Add(row);
+            raised.Add(row);
+        }
+
+        if (raised.Count == 0)
+        {
+            return 0;
+        }
+
+        return await TrySaveAsync("raising platform notifications", raised, cancellationToken)
+            ? raised.Count
+            : 0;
+    }
+
+    public async Task<bool> MailCustomerAsync(CustomerMail mail, CancellationToken cancellationToken)
+    {
+        var customer = mail.UserId is string userId
+            ? await _recipients.ForUserAsync(userId, cancellationToken)
+            : null;
+
+        // Signed by the platform: this is the arbitrator writing, not the agency.
+        return await TrySendAsync(
+            mail.Email,
+            mail.MessageKey,
+            mail.Args.Values,
+            customer?.Language,
+            customer?.FullName,
+            _emailOptions.FromName,
+            mail.Link,
+            cancellationToken);
+    }
+
     // ---------------------------------------------------------------------
     // Dedup keys. Format is internal and never parsed back — only compared —
     // but it is capped at the column's 200 characters, so the caller's token is
@@ -266,6 +342,10 @@ public class NotificationService : INotificationService
     private static string ClientDedupKey(ClientNotification notification) =>
         Key($"c:{notification.ClientId}|k:{(int)notification.Kind}"
             + $"|s:{(int)notification.SubjectType}:{notification.SubjectId}|t:{notification.DedupToken}");
+
+    private static string PlatformDedupKey(string userId, PlatformAlert alert) =>
+        Key($"u:{userId}|k:{(int)alert.Kind}|m:{alert.MessageKey}"
+            + $"|s:{(int)alert.SubjectType}:{alert.SubjectId}|t:{alert.DedupToken}");
 
     private static string Key(string value) =>
         value.Length <= 200 ? value : value[..200];
@@ -349,7 +429,7 @@ public class NotificationService : INotificationService
     /// recoverable.
     /// </param>
     private async Task<bool> TrySaveAsync(
-        string what, IEnumerable<Notification> owned, CancellationToken cancellationToken)
+        string what, IEnumerable<object> owned, CancellationToken cancellationToken)
     {
         try
         {

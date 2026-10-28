@@ -30,6 +30,15 @@
           {{ t('common.required') }}
         </mat-error>
       </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>{{ t('reports.customer.notifyEmail') }}</mat-label>
+        <input matInput type="email" formControlName="notifyEmail" autocomplete="email">
+        <mat-hint>{{ t('reports.customer.notifyEmailHint') }}</mat-hint>
+        <mat-error *ngIf="form.get('notifyEmail')?.invalid">
+          {{ t('reports.customer.notifyEmailInvalid') }}
+        </mat-error>
+      </mat-form-field>
     </form>
   </mat-dialog-content>
 

@@ -73,6 +73,25 @@ public class NotificationRecipientResolver : INotificationRecipients
             .ToList();
     }
 
+    public async Task<IReadOnlyList<NotificationRecipient>> ForPlatformAdministratorsAsync(
+        CancellationToken cancellationToken)
+    {
+        var administrators = await _userManager.GetUsersInRoleAsync(Roles.PlatformAdministrator);
+        var now = DateTimeOffset.UtcNow;
+
+        return administrators
+            .Where(u => u.LockoutEnd == null || u.LockoutEnd <= now)
+            .Select(u => new NotificationRecipient(u.Id, u.Email, u.FullName, u.PreferredLanguage))
+            .ToList();
+    }
+
+    public async Task<NotificationRecipient?> ForUserAsync(string userId, CancellationToken cancellationToken) =>
+        await _userManager.Users
+            .AsNoTracking()
+            .Where(u => u.Id == userId)
+            .Select(u => new NotificationRecipient(u.Id, u.Email, u.FullName, u.PreferredLanguage))
+            .FirstOrDefaultAsync(cancellationToken);
+
     // The agency's own people. Not query-filtered — ApplicationUser is an
     // Identity type, not an ITenantEntity — so the agency is filtered here.
     private async Task<List<StaffCandidate>> ActiveStaffAsync(

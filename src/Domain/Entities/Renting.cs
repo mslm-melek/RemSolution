@@ -103,12 +103,12 @@ namespace RemSolution.Domain.Entities
             Money? depositAmount = null,
             string? notes = null)
         {
-            RequirePositive(carId, nameof(carId), "A hire needs a car.");
-            RequirePositive(clientId, nameof(clientId), "A hire needs a client.");
+            RequirePositive(carId, nameof(carId), "Renting.CarRequired", "A hire needs a car.");
+            RequirePositive(clientId, nameof(clientId), "Renting.ClientRequired", "A hire needs a client.");
             RequirePeriod(startDate, endDate);
             RequireMileage(startMileage, nameof(startMileage));
-            RequireNotNegative(price, nameof(price), "The agreed price cannot be negative.");
-            RequireNotNegative(depositAmount, nameof(depositAmount), "The deposit cannot be negative.");
+            RequireNotNegative(price, nameof(price), "Renting.PriceNegative", "The agreed price cannot be negative.");
+            RequireNotNegative(depositAmount, nameof(depositAmount), "Renting.DepositNegative", "The deposit cannot be negative.");
             RequireDistinctSecondDriver(clientId, secondClientId);
 
             return new Renting
@@ -142,13 +142,13 @@ namespace RemSolution.Domain.Entities
             string? notes)
         {
             RequireLive("edited");
-            RequirePositive(carId, nameof(carId), "A hire needs a car.");
-            RequirePositive(clientId, nameof(clientId), "A hire needs a client.");
+            RequirePositive(carId, nameof(carId), "Renting.CarRequired", "A hire needs a car.");
+            RequirePositive(clientId, nameof(clientId), "Renting.ClientRequired", "A hire needs a client.");
             RequirePeriod(startDate, endDate);
             RequireMileage(startMileage, nameof(startMileage));
             RequireMileage(endMileage, nameof(endMileage));
             RequireReturnAfterPickup(startMileage, endMileage);
-            RequireNotNegative(price, nameof(price), "The agreed price cannot be negative.");
+            RequireNotNegative(price, nameof(price), "Renting.PriceNegative", "The agreed price cannot be negative.");
             RequireDistinctSecondDriver(clientId, secondClientId);
 
             CarId = carId;
@@ -175,7 +175,7 @@ namespace RemSolution.Domain.Entities
                 RequirePeriod(start, endDate);
             }
 
-            RequireNotNegative(price, nameof(price), "The agreed price cannot be negative.");
+            RequireNotNegative(price, nameof(price), "Renting.PriceNegative", "The agreed price cannot be negative.");
 
             EndDate = endDate;
             Price = price;
@@ -221,26 +221,28 @@ namespace RemSolution.Domain.Entities
         public void Cancel(Money? fee = null)
         {
             RequireLive("cancelled");
-            RequireNotNegative(fee, nameof(fee), "The cancellation fee cannot be negative.");
+            RequireNotNegative(fee, nameof(fee), "Renting.CancellationFeeNegative", "The cancellation fee cannot be negative.");
 
             if (fee is { Amount: > 0m })
             {
                 if (Price is not Money price)
                 {
-                    throw new DomainRuleException(nameof(CancellationFee),
+                    throw new DomainRuleException(nameof(CancellationFee), "Renting.NoPriceForFee",
                         "This renting carries no price, so no cancellation fee can be charged on it.");
                 }
 
                 if (fee.Currency != price.Currency)
                 {
-                    throw new DomainRuleException(nameof(CancellationFee),
-                        $"The cancellation fee must be in the hire's own currency ({price.Currency}).");
+                    throw new DomainRuleException(nameof(CancellationFee), "Renting.FeeCurrency",
+                        $"The cancellation fee must be in the hire's own currency ({price.Currency}).",
+                        price.Currency);
                 }
 
                 if (fee.Amount > price.Amount)
                 {
-                    throw new DomainRuleException(nameof(CancellationFee),
-                        $"The cancellation fee cannot exceed the agreed price ({price.Amount}).");
+                    throw new DomainRuleException(nameof(CancellationFee), "Renting.FeeAbovePrice",
+                        $"The cancellation fee cannot exceed the agreed price ({price.Amount}).",
+                        price.Amount);
                 }
             }
 
@@ -266,7 +268,7 @@ namespace RemSolution.Domain.Entities
 
             if (amount.Amount <= 0m)
             {
-                throw new DomainRuleException(nameof(RentingFee.Amount),
+                throw new DomainRuleException(nameof(RentingFee.Amount), "Renting.ExtraChargePositive",
                     "An extra charge must be more than nothing.");
             }
 
@@ -280,8 +282,8 @@ namespace RemSolution.Domain.Entities
 
             if (expected is not null && amount.Currency != expected)
             {
-                throw new DomainRuleException(nameof(RentingFee.Amount),
-                    $"An extra charge must be in the hire's own currency ({expected}).");
+                throw new DomainRuleException(nameof(RentingFee.Amount), "Renting.ExtraChargeCurrency",
+                    $"An extra charge must be in the hire's own currency ({expected}).", expected);
             }
 
             var fee = new RentingFee(kind, amount, note);
@@ -306,7 +308,7 @@ namespace RemSolution.Domain.Entities
 
             if (!_fees.Remove(fee))
             {
-                throw new DomainRuleException(nameof(Fees),
+                throw new DomainRuleException(nameof(Fees), "Renting.ChargeNotOnHire",
                     "That charge does not belong to this hire.");
             }
         }
@@ -329,26 +331,28 @@ namespace RemSolution.Domain.Entities
         {
             if (DepositAmount is not Money deposit || deposit.Amount <= 0m)
             {
-                throw new DomainRuleException(nameof(DepositRetainedAmount),
+                throw new DomainRuleException(nameof(DepositRetainedAmount), "Renting.NoDepositToSettle",
                     "This hire took no deposit, so there is nothing to settle.");
             }
 
             if (retained is { Amount: < 0m })
             {
-                throw new DomainRuleException(nameof(DepositRetainedAmount),
+                throw new DomainRuleException(nameof(DepositRetainedAmount), "Renting.RetainedNegative",
                     "A retained amount cannot be negative.");
             }
 
             if (retained is not null && retained.Currency != deposit.Currency)
             {
-                throw new DomainRuleException(nameof(DepositRetainedAmount),
-                    $"The retained amount must be in the deposit's own currency ({deposit.Currency}).");
+                throw new DomainRuleException(nameof(DepositRetainedAmount), "Renting.RetainedCurrency",
+                    $"The retained amount must be in the deposit's own currency ({deposit.Currency}).",
+                    deposit.Currency);
             }
 
             if (retained is { } kept && kept.Amount > deposit.Amount)
             {
-                throw new DomainRuleException(nameof(DepositRetainedAmount),
-                    $"The agency cannot keep more than the deposit it holds ({deposit.Amount}).");
+                throw new DomainRuleException(nameof(DepositRetainedAmount), "Renting.RetainedAboveDeposit",
+                    $"The agency cannot keep more than the deposit it holds ({deposit.Amount}).",
+                    deposit.Amount);
             }
 
             // Zero normalises to null so "nothing retained" and "no amount
@@ -394,7 +398,7 @@ namespace RemSolution.Domain.Entities
         {
             if (endDate <= startDate)
             {
-                throw new DomainRuleException(nameof(EndDate),
+                throw new DomainRuleException(nameof(EndDate), "Period.EndAfterStart",
                     "The end date must be after the start date.");
             }
         }
@@ -405,7 +409,7 @@ namespace RemSolution.Domain.Entities
         {
             if (startMileage.HasValue && endMileage.HasValue && endMileage < startMileage)
             {
-                throw new DomainRuleException(nameof(EndMileage),
+                throw new DomainRuleException(nameof(EndMileage), "Renting.ReturnMileageBelowPickup",
                     "The return mileage cannot be less than the pickup mileage.");
             }
         }
@@ -414,23 +418,24 @@ namespace RemSolution.Domain.Entities
         {
             if (mileage < 0)
             {
-                throw new DomainRuleException(property, "A mileage reading cannot be negative.");
+                throw new DomainRuleException(property, "Renting.MileageNegative",
+                    "A mileage reading cannot be negative.");
             }
         }
 
-        private static void RequireNotNegative(Money? amount, string property, string message)
+        private static void RequireNotNegative(Money? amount, string property, string messageKey, string message)
         {
             if (amount is { Amount: < 0m })
             {
-                throw new DomainRuleException(property, message);
+                throw new DomainRuleException(property, messageKey, message);
             }
         }
 
-        private static void RequirePositive(int id, string property, string message)
+        private static void RequirePositive(int id, string property, string messageKey, string message)
         {
             if (id <= 0)
             {
-                throw new DomainRuleException(property, message);
+                throw new DomainRuleException(property, messageKey, message);
             }
         }
 
@@ -438,7 +443,7 @@ namespace RemSolution.Domain.Entities
         {
             if (secondClientId == clientId)
             {
-                throw new DomainRuleException(nameof(SecondClientId),
+                throw new DomainRuleException(nameof(SecondClientId), "Renting.SecondDriverSame",
                     "The second driver must be a different client from the renter.");
             }
         }

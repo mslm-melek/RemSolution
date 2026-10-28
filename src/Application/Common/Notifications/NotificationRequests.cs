@@ -81,6 +81,36 @@ public sealed record ClientNotification(
     string? SentByUserId = null,
     bool IgnoreClientEmailSetting = false);
 
+/// <summary>
+/// One thing to tell every platform administrator, in the app only — the
+/// platform has no inbox address of its own to mail. Platform-level, so no tenant
+/// is pushed for it. Fields as on <see cref="StaffNotification"/>.
+/// </summary>
+public sealed record PlatformAlert(
+    NotificationKind Kind,
+    string MessageKey,
+    NotificationSubject SubjectType,
+    int? SubjectId,
+    string? Link,
+    NotificationArgs Args,
+    string DedupToken);
+
+/// <summary>
+/// One mail to a marketplace customer about something the platform did — not
+/// filed in any agency's records, so it neither needs a tenant nor obeys an
+/// agency's mail switches. Nothing is stored: the screen the mail points at is
+/// the record.
+/// </summary>
+/// <param name="Email">Where the customer asked to be written to.</param>
+/// <param name="UserId">Their account, for their name and language; null for neither.</param>
+/// <param name="Link">SPA route to put in the mail.</param>
+public sealed record CustomerMail(
+    string Email,
+    string? UserId,
+    string MessageKey,
+    NotificationArgs Args,
+    string? Link);
+
 /// <summary>What became of a client message.</summary>
 public enum ClientNotificationOutcome
 {

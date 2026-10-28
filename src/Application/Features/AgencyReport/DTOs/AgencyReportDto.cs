@@ -34,6 +34,28 @@ namespace RemSolution.Application.Features.AgencyReport.DTOs
         public DateTime SubmittedAt { get; init; }
 
         public DateTime? ResolvedAt { get; init; }
+
+        /// <summary>The verdict's reasoning — or, when Withdrawn, the customer's reason.</summary>
         public string? ResolutionNote { get; init; }
+
+        public DateTime? ReopenedAt { get; init; }
+
+        /// <summary>
+        /// Whether the customer left an address to be mailed the platform's replies
+        /// and verdict. Platform screen only — the address itself is never sent,
+        /// and the agency's list leaves this false.
+        /// </summary>
+        public bool CustomerGetsEmail { get; init; }
+
+        /// <summary>
+        /// Who wrote the last message on the thread — false means the customer
+        /// did and the platform owes an answer. Null when nobody has written one
+        /// (withdrawals and reopenings do not count; see AgencyReportThreads).
+        /// </summary>
+        public bool? LastMessageFromPlatform { get; set; }
+
+        /// <summary>The customer ↔ platform thread, oldest first.</summary>
+        // Settable: filled after the page is read (see AgencyReportThreads).
+        public IList<AgencyReportMessageDto> Messages { get; set; } = new List<AgencyReportMessageDto>();
     }
 }

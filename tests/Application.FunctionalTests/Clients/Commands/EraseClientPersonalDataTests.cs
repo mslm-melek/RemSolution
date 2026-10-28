@@ -219,7 +219,7 @@ public class EraseClientPersonalDataTests : BaseTestFixture
             SubmittedAt = DateTime.UtcNow
         });
 
-        await AddAsync(AgencyReport.Create(
+        var raised = AgencyReport.Create(
             agencyId,
             AgencyReportKind.ServiceQuality,
             "Nobody was at the counter.",
@@ -228,7 +228,20 @@ public class EraseClientPersonalDataTests : BaseTestFixture
             clientId: clientId,
             reporterUserId: "portal-user-1",
             reporterName: "Nadia Ben Salah",
-            bookingSummary: "Renault Clio, 1-4 May"));
+            bookingSummary: "Renault Clio, 1-4 May");
+        raised.PostFromCustomer("Call me on 22 000 000.", DateTime.UtcNow, "portal-user-1");
+        raised.PostFromPlatform("Which day was it?", DateTime.UtcNow, "platform-admin");
+        await AddAsync(raised);
+
+        // What a verdict or a withdrawal writes: the whole report, reporter included.
+        await AddAsync(new AuditLog
+        {
+            Action = "WithdrawAgencyReport",
+            Entity = nameof(AgencyReport),
+            EntityId = raised.Id.ToString(),
+            After = "{\"ReporterName\":\"Nadia Ben Salah\"}",
+            OccurredOn = DateTimeOffset.UtcNow
+        });
 
         await SendAsync(new EraseClientPersonalDataCommand(clientId));
 
@@ -252,6 +265,18 @@ public class EraseClientPersonalDataTests : BaseTestFixture
         // Kept on purpose: it names a car and two dates, never a person, and it
         // is all the arbitrator can see of a booking they cannot read.
         report.BookingSummary.Should().Be("Renault Clio, 1-4 May");
+
+        // The follow-ups are free text — where a phone number ends up — so the
+        // customer's go; the platform's stay.
+        var thread = (await AllAsync<AgencyReportMessage>()).Where(m => m.AgencyReportId == report.Id).ToList();
+        thread.Single(m => !m.FromPlatform).Body.Should().BeEmpty();
+        thread.Single(m => !m.FromPlatform).AuthorUserId.Should().BeNull();
+        thread.Single(m => m.FromPlatform).Body.Should().Be("Which day was it?");
+
+        var audit = (await AllAsync<AuditLog>())
+            .Single(a => a.Entity == nameof(AgencyReport) && a.EntityId == report.Id.ToString());
+        audit.After.Should().BeNull("the audit copy of the report carried the reporter's name");
+        audit.Action.Should().Be("WithdrawAgencyReport");
     }
 
     [Test]

@@ -30,10 +30,12 @@ namespace RemSolution.Application.Features.AgencyReport.Queries.GetAgencyReports
         : IRequestHandler<GetAgencyReportsQuery, PaginatedList<AgencyReportDto>>
     {
         private readonly IApplicationDbContext _context;
+        private readonly IUser _user;
 
-        public GetAgencyReportsQueryHandler(IApplicationDbContext context)
+        public GetAgencyReportsQueryHandler(IApplicationDbContext context, IUser user)
         {
             _context = context;
+            _user = user;
         }
 
         public async Task<PaginatedList<AgencyReportDto>> Handle(
@@ -51,7 +53,7 @@ namespace RemSolution.Application.Features.AgencyReport.Queries.GetAgencyReports
                 reports = reports.Where(r => r.AgencyId == agencyId);
             }
 
-            return await reports
+            var page = await reports
                 // Open before settled, then oldest first within each: the queue
                 // is a to-do list, and a settled report is history.
                 .OrderBy(r => r.Status == AgencyReportStatus.Open ? 0 : 1)
@@ -73,8 +75,21 @@ namespace RemSolution.Application.Features.AgencyReport.Queries.GetAgencyReports
                     SubmittedAt = r.SubmittedAt,
                     ResolvedAt = r.ResolvedAt,
                     ResolutionNote = r.ResolutionNote,
+                    ReopenedAt = r.ReopenedAt,
+                    CustomerGetsEmail = r.NotifyEmail != null,
                 })
                 .PaginatedListAsync(request.PageNumber, request.PageSize);
+
+            var threads = await AgencyReportThreads.LoadAsync(
+                _context, page.Items.Select(r => r.Id).ToList(), _user.Id, cancellationToken);
+
+            foreach (var report in page.Items)
+            {
+                report.Messages = threads[report.Id].ToList();
+                report.LastMessageFromPlatform = AgencyReportThreads.LastWriterIsPlatform(report.Messages);
+            }
+
+            return page;
         }
     }
 }

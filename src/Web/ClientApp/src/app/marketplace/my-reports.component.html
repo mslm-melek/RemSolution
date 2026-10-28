@@ -20,6 +20,10 @@
         </div>
         <div class="side">
           <span class="chip" [ngClass]="statusTone(r.status)">{{ t(statusLabelKey(r.status)) }}</span>
+          <!-- The platform wrote last on an open report: it is waiting on them. -->
+          <span class="chip info" *ngIf="r.status === AgencyReportStatus.Open && r.lastMessageFromPlatform === true">
+            {{ t('reports.customer.platformWrote') }}
+          </span>
           <!-- Instants, recorded from the clock, so they read local. -->
           <span class="when">{{ t('reports.submittedOn', { date: (r.submittedAt | date:'dd MMM yyyy') }) }}</span>
         </div>
@@ -27,18 +31,73 @@
 
       <p class="message">{{ r.message }}</p>
 
+      <!-- What they and the platform wrote since. Writable while it is open:
+           a settled report is frozen. -->
+      <app-report-thread [reportId]="r.id!" [messages]="r.messages || []" viewer="customer"
+                         [canWrite]="r.status === AgencyReportStatus.Open"
+                         (posted)="r.lastMessageFromPlatform = false"></app-report-thread>
+
       <!-- The platform's answer, in its own words. Shown to the customer as it
-           is shown to the agency: one decision, one wording. -->
+           is shown to the agency: one decision, one wording. A withdrawal is
+           the customer's own words instead, and says so. -->
       <div class="verdict" *ngIf="r.resolutionNote">
-        <div class="verdict-head">
+        <div class="verdict-head" *ngIf="r.status !== AgencyReportStatus.Withdrawn">
           <mat-icon aria-hidden="true">gavel</mat-icon>
           {{ t('reports.verdict') }} —
           {{ t('reports.resolvedOn', { date: (r.resolvedAt | date:'dd MMM yyyy') }) }}
         </div>
+        <div class="verdict-head" *ngIf="r.status === AgencyReportStatus.Withdrawn">
+          <mat-icon aria-hidden="true">undo</mat-icon>
+          {{ t('reports.customer.withdrawnByYou') }} —
+          {{ t('reports.closedOn', { date: (r.resolvedAt | date:'dd MMM yyyy') }) }}
+        </div>
         <p>{{ r.resolutionNote }}</p>
       </div>
 
-      <div class="pending" *ngIf="!r.resolutionNote">{{ t('reports.customer.pending') }}</div>
+      <div class="pending" *ngIf="r.status === AgencyReportStatus.Open && acting?.report !== r">
+        <span>{{ t('reports.customer.pending') }}</span>
+        <button mat-stroked-button type="button" (click)="open(r, 'withdraw')">
+          <mat-icon aria-hidden="true">undo</mat-icon> {{ t('reports.customer.withdraw') }}
+        </button>
+      </div>
+
+      <!-- A withdrawal can be taken back once, for when what got it dropped
+           does not happen. -->
+      <div class="pending" *ngIf="r.canReopen && acting?.report !== r">
+        <span>{{ t('reports.customer.reopenHint') }}</span>
+        <button mat-stroked-button type="button" (click)="open(r, 'reopen')">
+          <mat-icon aria-hidden="true">replay</mat-icon> {{ t('reports.customer.reopen') }}
+        </button>
+      </div>
+
+      <!-- Inline, like the platform's verdict form: the reason belongs to this
+           report and nothing else. -->
+      <div class="withdraw-form" *ngIf="acting?.report === r">
+        <p class="hint">
+          {{ t(acting!.mode === 'withdraw' ? 'reports.customer.withdrawHint' : 'reports.customer.reopenFormHint') }}
+        </p>
+        <mat-form-field appearance="outline">
+          <mat-label>
+            {{ t(acting!.mode === 'withdraw' ? 'reports.customer.withdrawReason' : 'reports.customer.reopenReason') }}
+          </mat-label>
+          <textarea matInput rows="3" maxlength="2000" [(ngModel)]="reason"
+                    [placeholder]="t(acting!.mode === 'withdraw'
+                      ? 'reports.customer.withdrawPlaceholder'
+                      : 'reports.customer.reopenPlaceholder')"></textarea>
+        </mat-form-field>
+
+        <div class="form-error" *ngIf="formError">{{ formError }}</div>
+
+        <div class="buttons">
+          <button mat-stroked-button type="button" (click)="cancel()" [disabled]="saving">
+            {{ t('common.cancel') }}
+          </button>
+          <button mat-flat-button color="primary" type="button" (click)="submit()" [disabled]="saving">
+            {{ saving ? t('common.saving')
+              : t(acting!.mode === 'withdraw' ? 'reports.customer.withdrawConfirm' : 'reports.customer.reopenConfirm') }}
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 </ng-container>

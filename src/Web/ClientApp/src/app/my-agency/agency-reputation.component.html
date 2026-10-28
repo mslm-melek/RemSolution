@@ -53,6 +53,7 @@
           </div>
           <div class="side">
             <span class="chip" [ngClass]="statusTone(r.status)">{{ t(statusLabelKey(r.status)) }}</span>
+            <span class="chip neutral" *ngIf="r.reopenedAt">{{ t('reports.reopened') }}</span>
             <!-- An instant, recorded from the clock, so it reads local. -->
             <span class="when">{{ t('reports.submittedOn', { date: (r.submittedAt | date:'dd MMM yyyy') }) }}</span>
           </div>
@@ -63,11 +64,20 @@
           <p>{{ r.message }}</p>
         </div>
 
+        <!-- Read-only: the agency is not a party to the customer ↔ platform
+             thread, but it is owed sight of what is said about it. -->
+        <app-report-thread [reportId]="r.id!" [messages]="r.messages || []" viewer="agency"></app-report-thread>
+
         <div class="verdict" *ngIf="r.resolutionNote">
-          <div class="verdict-head">
+          <div class="verdict-head" *ngIf="r.status !== AgencyReportStatus.Withdrawn">
             <mat-icon aria-hidden="true">gavel</mat-icon>
             {{ t('reports.verdict') }} —
             {{ t('reports.resolvedOn', { date: (r.resolvedAt | date:'dd MMM yyyy') }) }}
+          </div>
+          <div class="verdict-head" *ngIf="r.status === AgencyReportStatus.Withdrawn">
+            <mat-icon aria-hidden="true">undo</mat-icon>
+            {{ t('reports.withdrawnByCustomer') }} —
+            {{ t('reports.closedOn', { date: (r.resolvedAt | date:'dd MMM yyyy') }) }}
           </div>
           <p>{{ r.resolutionNote }}</p>
         </div>

@@ -1,11 +1,13 @@
 using System.Globalization;
 using System.Resources;
+using System.Text.RegularExpressions;
 using FluentAssertions;
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Localization;
 using NUnit.Framework;
 using RemSolution.Domain.Constants;
+using RemSolution.Domain.Enums;
 using RemSolution.Infrastructure;
 using RemSolution.Infrastructure.Localization;
 
@@ -68,6 +70,50 @@ public class LocalizationTests
             .ToList();
 
         missing.Should().BeEmpty($"every key must exist in SharedResource.{language}.resx");
+    }
+
+    /// <summary>
+    /// Every wording key a domain rule throws has an entry, so the API answers
+    /// in the reader's language rather than the English fallback. Read from the
+    /// Domain sources, so a new rule cannot be added without one; the test above
+    /// then holds fr and ar to the neutral file.
+    /// </summary>
+    [Test]
+    public void EveryDomainRuleKeyHasAWording()
+    {
+        var root = Path.GetFullPath(Path.Combine(
+            TestContext.CurrentContext.TestDirectory, "..", "..", "..", "..", "..", "src", "Domain"));
+
+        var literal = Directory.EnumerateFiles(root, "*.cs", SearchOption.AllDirectories)
+            .SelectMany(file => Regex.Matches(
+                    File.ReadAllText(file),
+                    // Thrown directly, or through Renting's two helpers that take the key.
+                    @"(DomainRuleException\(\s*[^,]+|Require(NotNegative|Positive)\([^,]+,[^,]+),\s*""(?<key>[A-Za-z]+\.[A-Za-z.]+)""")
+                .Select(match => match.Groups["key"].Value))
+            .ToList();
+
+        literal.Should().NotBeEmpty("the scan must find the Domain sources");
+
+        // The two keys composed from a state name.
+        var composed = new[]
+            {
+                AgencyReportStatus.Upheld, AgencyReportStatus.Dismissed, AgencyReportStatus.Withdrawn
+            }
+            .Select(status => $"AgencyReport.Already{status}")
+            .Concat(Enum.GetValues<ReservationRequirementStatus>()
+                .Select(status => $"Requirement.Status.{status}"));
+
+        var manager = new ResourceManager(
+            "RemSolution.Infrastructure.Resources.SharedResource", typeof(SharedResource).Assembly);
+        var neutral = manager.GetResourceSet(CultureInfo.InvariantCulture, createIfNotExists: true, tryParents: false);
+
+        var missing = literal.Concat(composed)
+            .Distinct()
+            .Where(key => neutral!.GetString($"DomainRule.{key}") is null)
+            .OrderBy(key => key)
+            .ToList();
+
+        missing.Should().BeEmpty("every DomainRuleException key needs a DomainRule.* entry in SharedResource.resx");
     }
 
     /// <summary>

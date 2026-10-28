@@ -2,6 +2,8 @@ import { Component, inject } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { TranslocoService } from '@jsverse/transloco';
+import { take } from 'rxjs/operators';
+import { AuthService } from '../shared/auth.service';
 import { AgencyReportKind, CreateMyReportCommand, MarketplaceClient } from '../web-api-client';
 import { extractValidationErrors, extractProblemDetail } from '../shared/form-utils';
 import { REPORT_KINDS, reportKindLabelKey } from '../shared/agency-reports';
@@ -40,6 +42,7 @@ export class ReportDialogComponent {
   constructor(
     private fb: FormBuilder,
     private client: MarketplaceClient,
+    private auth: AuthService,
     private dialog: MatDialogRef<ReportDialogComponent, boolean>
   ) {
     this.form = this.fb.group({
@@ -49,7 +52,16 @@ export class ReportDialogComponent {
           : AgencyReportKind.ServiceQuality,
         Validators.required
       ],
-      message: ['', [Validators.required, Validators.maxLength(2000)]]
+      message: ['', [Validators.required, Validators.maxLength(2000)]],
+      // Optional: where the platform's reply and decision are mailed. Offered
+      // with the account's address (the user name is the email) but the
+      // customer's to change or clear.
+      notifyEmail: ['', [Validators.email, Validators.maxLength(256)]]
+    });
+
+    this.auth.currentUser$.pipe(take(1)).subscribe(user => {
+      const email = user.userName?.includes('@') ? user.userName : '';
+      if (email && !this.form.value.notifyEmail) this.form.patchValue({ notifyEmail: email });
     });
   }
 
@@ -71,7 +83,8 @@ export class ReportDialogComponent {
       reservationId: this.data.reservationId,
       rentingId: this.data.rentingId,
       kind: this.form.value.kind,
-      message: this.form.value.message
+      message: this.form.value.message,
+      notifyEmail: this.form.value.notifyEmail?.trim() || undefined
     })).subscribe({
       next: () => this.dialog.close(true),
       error: err => {

@@ -1548,6 +1548,10 @@
     "customerAccount": "ما يقوله الحريف",
     "submittedOn": "أُبلغ عنه في {{ date }}",
     "resolvedOn": "فُصل فيه في {{ date }}",
+    "closedOn": "أُغلق في {{ date }}",
+    "withdrawnByCustomer": "سحبه العميل",
+    "customerWrote": "ردّ العميل",
+    "reopened": "أُعيد فتحه",
     "verdict": "القرار",
     "resolutionNote": "التعليل",
     "uphold": "قبول البلاغ",
@@ -1569,7 +1573,27 @@
     "statuses": {
       "1": "في الانتظار",
       "2": "مقبول",
-      "3": "مرفوض"
+      "3": "مرفوض",
+      "4": "مسحوب"
+    },
+    "thread": {
+      "title": "الرسائل",
+      "you": "أنت",
+      "platform": "المنصة",
+      "customer": "العميل",
+      "toPlatform": "اكتب إلى المنصة…",
+      "toCustomer": "اكتب إلى العميل…",
+      "yourMessage": "رسالتك",
+      "send": "إرسال",
+      "sendFailed": "تعذّر إرسال رسالتك. يرجى المحاولة مرة أخرى.",
+      "withdrawnByYou": "أغلقتَ البلاغ",
+      "withdrawnByCustomer": "أغلق العميل البلاغ",
+      "reopenedByYou": "أعدتَ فتح البلاغ",
+      "reopenedByCustomer": "أعاد العميل فتح البلاغ",
+      "erased": "رسالة محذوفة",
+      "agencyReads": "يمكن للوكالة قراءة هذه المحادثة.",
+      "customerMailed": "يتلقى العميل رسائلك والقرار عبر البريد الإلكتروني.",
+      "customerNotMailed": "لم يترك العميل بريدًا إلكترونيًا: لن يرى ردّك إلا عند فتح مساحته."
     },
     "customer": {
       "report": "إبلاغ المنصة",
@@ -1585,7 +1609,26 @@
       "myReports": "بلاغاتي",
       "pending": "في انتظار القرار",
       "cancelledByAgency": "ألغتها الوكالة",
-      "windowClosed": "انتهت مهلة الإبلاغ."
+      "windowClosed": "انتهت مهلة الإبلاغ.",
+      "withdraw": "إغلاق البلاغ",
+      "withdrawHint": "إغلاقه ينهي البلاغ قبل قرار المنصة. تطّلع الوكالة والمنصة على سببك.",
+      "withdrawReason": "لماذا تغلقه؟",
+      "withdrawPlaceholder": "مثلاً: توصّلت إلى حلّ مع الوكالة.",
+      "withdrawConfirm": "إغلاق البلاغ",
+      "reasonRequired": "يرجى ذكر السبب.",
+      "withdrawFailed": "تعذّر إغلاق البلاغ. يرجى المحاولة مرة أخرى.",
+      "withdrawnByYou": "أغلقته أنت",
+      "platformWrote": "راسلتك المنصة",
+      "reopen": "إعادة فتح البلاغ",
+      "reopenHint": "ألم تفِ الوكالة بوعدها؟ يمكنك إعادة فتح هذا البلاغ مرة واحدة.",
+      "reopenFormHint": "ستنظر المنصة في البلاغ مجدداً. لا يمكنك إعادة فتحه إلا مرة واحدة؛ تطّلع الوكالة والمنصة على سببك.",
+      "reopenReason": "لماذا تعيد فتحه؟",
+      "reopenPlaceholder": "مثلاً: لم يصل الاسترداد الموعود.",
+      "reopenConfirm": "إعادة فتح البلاغ",
+      "reopenFailed": "تعذّر إعادة فتح البلاغ. يرجى المحاولة مرة أخرى.",
+      "notifyEmail": "البريد الإلكتروني للردود (اختياري)",
+      "notifyEmailHint": "سنراسلك على هذا العنوان عندما ترد المنصّة أو تبتّ في البلاغ. اتركه فارغًا لمتابعة البلاغ من مساحتك فقط.",
+      "notifyEmailInvalid": "أدخل عنوان بريد إلكتروني صالحًا."
     }
   },
   "myAgency": {
@@ -1731,6 +1774,8 @@
       "agencyReportOpened": "قام {{client}} بالإبلاغ عن وكالتك إلى المنصة ({{reference}}). ستنظر المنصة في البلاغ.",
       "agencyReportUpheld": "قبلت المنصة البلاغ {{reference}}. يؤثر ذلك على نتيجة موثوقيتك التي يراها الحرفاء.",
       "agencyReportDismissed": "رفضت المنصة البلاغ {{reference}}. لم تتأثر نتيجتك.",
+      "agencyReportWithdrawn": "سحب العميل البلاغ {{reference}}. لم تتأثر نتيجتك.",
+      "agencyReportReopened": "أعاد العميل فتح البلاغ {{reference}}. ستنظر فيه المنصة مجدداً.",
       "carExpenseDueByDate": "{{expenseType}} تستحق للسيارة {{car}} في {{dueDate}} — بعد {{days}} يوم.",
       "carExpenseOverdueByDate": "{{expenseType}} كانت تستحق للسيارة {{car}} في {{dueDate}} — منذ {{days}} يوم.",
       "carExpenseDueByDistance": "{{expenseType}} تستحق للسيارة {{car}} عند {{dueKm}} كم — بقي {{km}} كم ({{mileage}} كم حالياً).",
@@ -1748,7 +1793,11 @@
       "clientCinExpiring": "تنتهي بطاقة تعريف {{client}} في {{expiryDate}} — بعد {{days}} يوم.",
       "clientCinExpired": "انتهت بطاقة تعريف {{client}} في {{expiryDate}} — منذ {{days}} يوم.",
       "clientPasseportExpiring": "ينتهي جواز سفر {{client}} في {{expiryDate}} — بعد {{days}} يوم.",
-      "clientPasseportExpired": "انتهى جواز سفر {{client}} في {{expiryDate}} — منذ {{days}} يوم."
+      "clientPasseportExpired": "انتهى جواز سفر {{client}} في {{expiryDate}} — منذ {{days}} يوم.",
+      "platformReportOpened": "بلاغ جديد {{reference}} ضد {{agency}}.",
+      "platformReportCustomerWrote": "كتب العميل على البلاغ {{reference}} ({{agency}}).",
+      "platformReportWithdrawn": "سحب العميل البلاغ {{reference}} ({{agency}}).",
+      "platformReportReopened": "أعاد العميل فتح البلاغ {{reference}} ({{agency}}): إنه بانتظار قرارك من جديد."
     }
   },
   "calendar": {

@@ -1148,6 +1148,7 @@ export class AgenciesClient implements IAgenciesClient {
 export interface IAgencyReportsClient {
     getAgencyReports(status: AgencyReportStatus | null | undefined, agencyId: number | null | undefined, pageNumber: number | undefined, pageSize: number | undefined): Observable<PaginatedListOfAgencyReportDto>;
     resolveAgencyReport(id: number, command: ResolveAgencyReportCommand): Observable<void>;
+    postAgencyReportMessage(id: number, command: PostAgencyReportMessageCommand): Observable<number>;
 }
 
 @Injectable({
@@ -1265,6 +1266,66 @@ export class AgencyReportsClient implements IAgencyReportsClient {
         if (status === 204) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
             return _observableOf(null as any);
+            }));
+        } else if (status === 400) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("A server side error occurred.", status, _responseText, _headers);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    postAgencyReportMessage(id: number, command: PostAgencyReportMessageCommand): Observable<number> {
+        let url_ = this.baseUrl + "/api/AgencyReports/{id}/messages";
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(command);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processPostAgencyReportMessage(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processPostAgencyReportMessage(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<number>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<number>;
+        }));
+    }
+
+    protected processPostAgencyReportMessage(response: HttpResponseBase): Observable<number> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+                result200 = resultData200 !== undefined ? resultData200 : <any>null;
+    
+            return _observableOf(result200);
             }));
         } else if (status === 400) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
@@ -7753,6 +7814,9 @@ export interface IMarketplaceClient {
     getMyReservationRequirements(id: number): Observable<ReservationRequirementDto[]>;
     reportAgency(command: CreateMyReportCommand): Observable<number>;
     getMyReports(): Observable<MyReportDto[]>;
+    postMyReportMessage(id: number, command: PostMyReportMessageCommand): Observable<number>;
+    withdrawMyReport(id: number, command: WithdrawMyReportCommand): Observable<void>;
+    reopenMyReport(id: number, command: ReopenMyReportCommand): Observable<void>;
     submitMyReservationRequirement(id: number, note: string | null | undefined, file: FileParameter | null | undefined): Observable<void>;
 }
 
@@ -8922,6 +8986,176 @@ export class MarketplaceClient implements IMarketplaceClient {
                 result200 = <any>null;
             }
             return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    postMyReportMessage(id: number, command: PostMyReportMessageCommand): Observable<number> {
+        let url_ = this.baseUrl + "/api/Marketplace/my-reports/{id}/messages";
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(command);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processPostMyReportMessage(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processPostMyReportMessage(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<number>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<number>;
+        }));
+    }
+
+    protected processPostMyReportMessage(response: HttpResponseBase): Observable<number> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+                result200 = resultData200 !== undefined ? resultData200 : <any>null;
+    
+            return _observableOf(result200);
+            }));
+        } else if (status === 400) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("A server side error occurred.", status, _responseText, _headers);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    withdrawMyReport(id: number, command: WithdrawMyReportCommand): Observable<void> {
+        let url_ = this.baseUrl + "/api/Marketplace/my-reports/{id}/withdraw";
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(command);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processWithdrawMyReport(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processWithdrawMyReport(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processWithdrawMyReport(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return _observableOf(null as any);
+            }));
+        } else if (status === 400) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("A server side error occurred.", status, _responseText, _headers);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    reopenMyReport(id: number, command: ReopenMyReportCommand): Observable<void> {
+        let url_ = this.baseUrl + "/api/Marketplace/my-reports/{id}/reopen";
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(command);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processReopenMyReport(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processReopenMyReport(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processReopenMyReport(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return _observableOf(null as any);
+            }));
+        } else if (status === 400) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("A server side error occurred.", status, _responseText, _headers);
             }));
         } else if (status !== 200 && status !== 204) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
@@ -13196,6 +13430,10 @@ export class AgencyReportDto implements IAgencyReportDto {
     submittedAt?: Date;
     resolvedAt?: Date | undefined;
     resolutionNote?: string | undefined;
+    reopenedAt?: Date | undefined;
+    customerGetsEmail?: boolean;
+    lastMessageFromPlatform?: boolean | undefined;
+    messages?: AgencyReportMessageDto[];
 
     constructor(data?: IAgencyReportDto) {
         if (data) {
@@ -13222,6 +13460,14 @@ export class AgencyReportDto implements IAgencyReportDto {
             this.submittedAt = _data["submittedAt"] ? new Date(_data["submittedAt"].toString()) : <any>undefined;
             this.resolvedAt = _data["resolvedAt"] ? new Date(_data["resolvedAt"].toString()) : <any>undefined;
             this.resolutionNote = _data["resolutionNote"];
+            this.reopenedAt = _data["reopenedAt"] ? new Date(_data["reopenedAt"].toString()) : <any>undefined;
+            this.customerGetsEmail = _data["customerGetsEmail"];
+            this.lastMessageFromPlatform = _data["lastMessageFromPlatform"];
+            if (Array.isArray(_data["messages"])) {
+                this.messages = [] as any;
+                for (let item of _data["messages"])
+                    this.messages!.push(AgencyReportMessageDto.fromJS(item));
+            }
         }
     }
 
@@ -13248,6 +13494,14 @@ export class AgencyReportDto implements IAgencyReportDto {
         data["submittedAt"] = this.submittedAt ? this.submittedAt.toISOString() : <any>undefined;
         data["resolvedAt"] = this.resolvedAt ? this.resolvedAt.toISOString() : <any>undefined;
         data["resolutionNote"] = this.resolutionNote;
+        data["reopenedAt"] = this.reopenedAt ? this.reopenedAt.toISOString() : <any>undefined;
+        data["customerGetsEmail"] = this.customerGetsEmail;
+        data["lastMessageFromPlatform"] = this.lastMessageFromPlatform;
+        if (Array.isArray(this.messages)) {
+            data["messages"] = [];
+            for (let item of this.messages)
+                data["messages"].push(item.toJSON());
+        }
         return data;
     }
 }
@@ -13267,6 +13521,10 @@ export interface IAgencyReportDto {
     submittedAt?: Date;
     resolvedAt?: Date | undefined;
     resolutionNote?: string | undefined;
+    reopenedAt?: Date | undefined;
+    customerGetsEmail?: boolean;
+    lastMessageFromPlatform?: boolean | undefined;
+    messages?: AgencyReportMessageDto[];
 }
 
 export enum AgencyReportKind {
@@ -13281,6 +13539,69 @@ export enum AgencyReportStatus {
     Open = 1,
     Upheld = 2,
     Dismissed = 3,
+    Withdrawn = 4,
+}
+
+export class AgencyReportMessageDto implements IAgencyReportMessageDto {
+    id?: number;
+    kind?: AgencyReportMessageKind;
+    fromPlatform?: boolean;
+    mine?: boolean;
+    body?: string | undefined;
+    sentAt?: Date;
+
+    constructor(data?: IAgencyReportMessageDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.kind = _data["kind"];
+            this.fromPlatform = _data["fromPlatform"];
+            this.mine = _data["mine"];
+            this.body = _data["body"];
+            this.sentAt = _data["sentAt"] ? new Date(_data["sentAt"].toString()) : <any>undefined;
+        }
+    }
+
+    static fromJS(data: any): AgencyReportMessageDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new AgencyReportMessageDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["kind"] = this.kind;
+        data["fromPlatform"] = this.fromPlatform;
+        data["mine"] = this.mine;
+        data["body"] = this.body;
+        data["sentAt"] = this.sentAt ? this.sentAt.toISOString() : <any>undefined;
+        return data;
+    }
+}
+
+export interface IAgencyReportMessageDto {
+    id?: number;
+    kind?: AgencyReportMessageKind;
+    fromPlatform?: boolean;
+    mine?: boolean;
+    body?: string | undefined;
+    sentAt?: Date;
+}
+
+export enum AgencyReportMessageKind {
+    Message = 1,
+    Withdrawal = 2,
+    Reopening = 3,
 }
 
 export class AgencyCreatedDto implements IAgencyCreatedDto {
@@ -14057,6 +14378,46 @@ export interface IResolveAgencyReportCommand {
     id?: number;
     upheld?: boolean;
     note?: string;
+}
+
+export class PostAgencyReportMessageCommand implements IPostAgencyReportMessageCommand {
+    id?: number;
+    body?: string;
+
+    constructor(data?: IPostAgencyReportMessageCommand) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.body = _data["body"];
+        }
+    }
+
+    static fromJS(data: any): PostAgencyReportMessageCommand {
+        data = typeof data === 'object' ? data : {};
+        let result = new PostAgencyReportMessageCommand();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["body"] = this.body;
+        return data;
+    }
+}
+
+export interface IPostAgencyReportMessageCommand {
+    id?: number;
+    body?: string;
 }
 
 export class AgencySubscriptionDto implements IAgencySubscriptionDto {
@@ -21926,6 +22287,7 @@ export class CreateMyReportCommand implements ICreateMyReportCommand {
     rentingId?: number | undefined;
     kind?: AgencyReportKind;
     message?: string;
+    notifyEmail?: string | undefined;
 
     constructor(data?: ICreateMyReportCommand) {
         if (data) {
@@ -21942,6 +22304,7 @@ export class CreateMyReportCommand implements ICreateMyReportCommand {
             this.rentingId = _data["rentingId"];
             this.kind = _data["kind"];
             this.message = _data["message"];
+            this.notifyEmail = _data["notifyEmail"];
         }
     }
 
@@ -21958,6 +22321,7 @@ export class CreateMyReportCommand implements ICreateMyReportCommand {
         data["rentingId"] = this.rentingId;
         data["kind"] = this.kind;
         data["message"] = this.message;
+        data["notifyEmail"] = this.notifyEmail;
         return data;
     }
 }
@@ -21967,6 +22331,7 @@ export interface ICreateMyReportCommand {
     rentingId?: number | undefined;
     kind?: AgencyReportKind;
     message?: string;
+    notifyEmail?: string | undefined;
 }
 
 export class MyReportDto implements IMyReportDto {
@@ -21982,6 +22347,9 @@ export class MyReportDto implements IMyReportDto {
     submittedAt?: Date;
     resolvedAt?: Date | undefined;
     resolutionNote?: string | undefined;
+    canReopen?: boolean;
+    lastMessageFromPlatform?: boolean | undefined;
+    messages?: AgencyReportMessageDto[];
 
     constructor(data?: IMyReportDto) {
         if (data) {
@@ -22006,6 +22374,13 @@ export class MyReportDto implements IMyReportDto {
             this.submittedAt = _data["submittedAt"] ? new Date(_data["submittedAt"].toString()) : <any>undefined;
             this.resolvedAt = _data["resolvedAt"] ? new Date(_data["resolvedAt"].toString()) : <any>undefined;
             this.resolutionNote = _data["resolutionNote"];
+            this.canReopen = _data["canReopen"];
+            this.lastMessageFromPlatform = _data["lastMessageFromPlatform"];
+            if (Array.isArray(_data["messages"])) {
+                this.messages = [] as any;
+                for (let item of _data["messages"])
+                    this.messages!.push(AgencyReportMessageDto.fromJS(item));
+            }
         }
     }
 
@@ -22030,6 +22405,13 @@ export class MyReportDto implements IMyReportDto {
         data["submittedAt"] = this.submittedAt ? this.submittedAt.toISOString() : <any>undefined;
         data["resolvedAt"] = this.resolvedAt ? this.resolvedAt.toISOString() : <any>undefined;
         data["resolutionNote"] = this.resolutionNote;
+        data["canReopen"] = this.canReopen;
+        data["lastMessageFromPlatform"] = this.lastMessageFromPlatform;
+        if (Array.isArray(this.messages)) {
+            data["messages"] = [];
+            for (let item of this.messages)
+                data["messages"].push(item.toJSON());
+        }
         return data;
     }
 }
@@ -22047,6 +22429,129 @@ export interface IMyReportDto {
     submittedAt?: Date;
     resolvedAt?: Date | undefined;
     resolutionNote?: string | undefined;
+    canReopen?: boolean;
+    lastMessageFromPlatform?: boolean | undefined;
+    messages?: AgencyReportMessageDto[];
+}
+
+export class PostMyReportMessageCommand implements IPostMyReportMessageCommand {
+    id?: number;
+    body?: string;
+
+    constructor(data?: IPostMyReportMessageCommand) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.body = _data["body"];
+        }
+    }
+
+    static fromJS(data: any): PostMyReportMessageCommand {
+        data = typeof data === 'object' ? data : {};
+        let result = new PostMyReportMessageCommand();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["body"] = this.body;
+        return data;
+    }
+}
+
+export interface IPostMyReportMessageCommand {
+    id?: number;
+    body?: string;
+}
+
+export class WithdrawMyReportCommand implements IWithdrawMyReportCommand {
+    id?: number;
+    reason?: string;
+
+    constructor(data?: IWithdrawMyReportCommand) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.reason = _data["reason"];
+        }
+    }
+
+    static fromJS(data: any): WithdrawMyReportCommand {
+        data = typeof data === 'object' ? data : {};
+        let result = new WithdrawMyReportCommand();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["reason"] = this.reason;
+        return data;
+    }
+}
+
+export interface IWithdrawMyReportCommand {
+    id?: number;
+    reason?: string;
+}
+
+export class ReopenMyReportCommand implements IReopenMyReportCommand {
+    id?: number;
+    reason?: string;
+
+    constructor(data?: IReopenMyReportCommand) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.reason = _data["reason"];
+        }
+    }
+
+    static fromJS(data: any): ReopenMyReportCommand {
+        data = typeof data === 'object' ? data : {};
+        let result = new ReopenMyReportCommand();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["reason"] = this.reason;
+        return data;
+    }
+}
+
+export interface IReopenMyReportCommand {
+    id?: number;
+    reason?: string;
 }
 
 export class PaginatedListOfModelCarDto implements IPaginatedListOfModelCarDto {

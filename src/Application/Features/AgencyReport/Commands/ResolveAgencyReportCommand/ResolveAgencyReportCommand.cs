@@ -62,6 +62,15 @@ namespace RemSolution.Application.Features.AgencyReport.Commands.ResolveAgencyRe
 
             await _context.SaveChangesAsync(cancellationToken);
 
+            // The customer learns the outcome by mail too, when they asked to.
+            await AgencyReportAlerts.MailCustomerAsync(
+                _notifications, _context, report,
+                report.Status == AgencyReportStatus.Upheld
+                    ? NotificationMessages.CustomerReportUpheld
+                    : NotificationMessages.CustomerReportDismissed,
+                report.ResolutionNote ?? string.Empty,
+                cancellationToken);
+
             // After the verdict is committed: the agency being told is not worth
             // undoing the decision over, and the notification service writes its
             // own rows. A platform administrator carries no agency claim, so the

@@ -1548,6 +1548,10 @@
     "customerAccount": "Ce que dit le client",
     "submittedOn": "Signalé le {{ date }}",
     "resolvedOn": "Arbitré le {{ date }}",
+    "closedOn": "Clos le {{ date }}",
+    "withdrawnByCustomer": "Retiré par le client",
+    "customerWrote": "Le client a répondu",
+    "reopened": "Rouvert",
     "verdict": "Décision",
     "resolutionNote": "Motivation",
     "uphold": "Retenir",
@@ -1569,7 +1573,27 @@
     "statuses": {
       "1": "En attente",
       "2": "Retenu",
-      "3": "Écarté"
+      "3": "Écarté",
+      "4": "Retiré"
+    },
+    "thread": {
+      "title": "Messages",
+      "you": "Vous",
+      "platform": "Plateforme",
+      "customer": "Client",
+      "toPlatform": "Écrire à la plateforme…",
+      "toCustomer": "Écrire au client…",
+      "yourMessage": "Votre message",
+      "send": "Envoyer",
+      "sendFailed": "Votre message n'a pas pu être envoyé. Veuillez réessayer.",
+      "withdrawnByYou": "Vous avez clos le signalement",
+      "withdrawnByCustomer": "Le client a clos le signalement",
+      "reopenedByYou": "Vous avez rouvert le signalement",
+      "reopenedByCustomer": "Le client a rouvert le signalement",
+      "erased": "Message effacé",
+      "agencyReads": "L'agence peut lire cette conversation.",
+      "customerMailed": "Le client reçoit vos messages et la décision par e-mail.",
+      "customerNotMailed": "Le client n'a pas laissé d'e-mail : il ne verra votre réponse qu'en ouvrant son espace."
     },
     "customer": {
       "report": "Signaler à la plateforme",
@@ -1585,7 +1609,26 @@
       "myReports": "Mes signalements",
       "pending": "En attente d'arbitrage",
       "cancelledByAgency": "Annulée par l'agence",
-      "windowClosed": "Le délai de signalement est passé."
+      "windowClosed": "Le délai de signalement est passé.",
+      "withdraw": "Clore le signalement",
+      "withdrawHint": "Le clore met fin au signalement avant la décision de la plateforme. L'agence et la plateforme lisent votre raison.",
+      "withdrawReason": "Pourquoi le clore ?",
+      "withdrawPlaceholder": "Par exemple : nous avons trouvé un arrangement avec l'agence.",
+      "withdrawConfirm": "Clore le signalement",
+      "reasonRequired": "Indiquez une raison.",
+      "withdrawFailed": "Le signalement n'a pas pu être clos. Veuillez réessayer.",
+      "withdrawnByYou": "Clos par vous",
+      "platformWrote": "La plateforme vous a écrit",
+      "reopen": "Rouvrir le signalement",
+      "reopenHint": "L'agence n'a pas tenu parole ? Vous pouvez rouvrir ce signalement une fois.",
+      "reopenFormHint": "La plateforme examinera de nouveau le signalement. Vous ne pouvez le rouvrir qu'une fois ; l'agence et la plateforme lisent votre raison.",
+      "reopenReason": "Pourquoi le rouvrir ?",
+      "reopenPlaceholder": "Par exemple : le remboursement promis n'est jamais arrivé.",
+      "reopenConfirm": "Rouvrir le signalement",
+      "reopenFailed": "Le signalement n'a pas pu être rouvert. Veuillez réessayer.",
+      "notifyEmail": "E-mail pour les réponses (facultatif)",
+      "notifyEmailHint": "Nous vous écrirons ici quand la plateforme répondra ou tranchera. Laissez vide pour suivre le signalement depuis votre espace uniquement.",
+      "notifyEmailInvalid": "Saisissez une adresse e-mail valide."
     }
   },
   "myAgency": {
@@ -1731,6 +1774,8 @@
       "agencyReportOpened": "{{client}} a signalé votre agence à la plateforme ({{reference}}). La plateforme va l'examiner.",
       "agencyReportUpheld": "Le signalement {{reference}} a été retenu par la plateforme. Il pèse sur votre note de fiabilité, visible par les clients.",
       "agencyReportDismissed": "Le signalement {{reference}} a été écarté par la plateforme. Votre note n'est pas touchée.",
+      "agencyReportWithdrawn": "Le signalement {{reference}} a été retiré par le client. Votre note n'est pas touchée.",
+      "agencyReportReopened": "Le client a rouvert le signalement {{reference}}. La plateforme va l'examiner de nouveau.",
       "carExpenseDueByDate": "{{expenseType}} arrive à échéance pour {{car}} le {{dueDate}} — dans {{days}} jour(s).",
       "carExpenseOverdueByDate": "{{expenseType}} était à échéance pour {{car}} le {{dueDate}} — il y a {{days}} jour(s).",
       "carExpenseDueByDistance": "{{expenseType}} arrive à échéance pour {{car}} à {{dueKm}} km — encore {{km}} km ({{mileage}} km actuellement).",
@@ -1748,7 +1793,11 @@
       "clientCinExpiring": "La CIN de {{client}} expire le {{expiryDate}} — dans {{days}} jour(s).",
       "clientCinExpired": "La CIN de {{client}} a expiré le {{expiryDate}} — il y a {{days}} jour(s).",
       "clientPasseportExpiring": "Le passeport de {{client}} expire le {{expiryDate}} — dans {{days}} jour(s).",
-      "clientPasseportExpired": "Le passeport de {{client}} a expiré le {{expiryDate}} — il y a {{days}} jour(s)."
+      "clientPasseportExpired": "Le passeport de {{client}} a expiré le {{expiryDate}} — il y a {{days}} jour(s).",
+      "platformReportOpened": "Nouveau signalement {{reference}} contre {{agency}}.",
+      "platformReportCustomerWrote": "Le client a écrit sur le signalement {{reference}} ({{agency}}).",
+      "platformReportWithdrawn": "Le client a retiré le signalement {{reference}} ({{agency}}).",
+      "platformReportReopened": "Le client a rouvert le signalement {{reference}} ({{agency}}) : il attend de nouveau votre décision."
     }
   },
   "calendar": {

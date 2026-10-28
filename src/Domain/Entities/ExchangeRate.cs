@@ -77,7 +77,7 @@ namespace RemSolution.Domain.Entities
 
             if (from == to)
             {
-                throw new DomainRuleException(nameof(ToCurrency),
+                throw new DomainRuleException(nameof(ToCurrency), "ExchangeRate.SameCurrency",
                     "A rate converts between two different currencies.");
             }
 
@@ -121,7 +121,7 @@ namespace RemSolution.Domain.Entities
         {
             if (string.IsNullOrWhiteSpace(currency) || currency.Trim().Length != 3)
             {
-                throw new DomainRuleException(field,
+                throw new DomainRuleException(field, "ExchangeRate.CurrencyCode",
                     "A currency is a 3-letter ISO 4217 code.");
             }
 
@@ -134,7 +134,8 @@ namespace RemSolution.Domain.Entities
             // meaning; both would reach a visitor as a plausible-looking figure.
             if (rate <= 0m)
             {
-                throw new DomainRuleException(nameof(Rate), "A rate is greater than zero.");
+                throw new DomainRuleException(nameof(Rate), "ExchangeRate.RatePositive",
+                    "A rate is greater than zero.");
             }
         }
     }

@@ -55,6 +55,10 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
             services
                 .RemoveAll<IImageProcessingQueue>()
                 .AddSingleton<IImageProcessingQueue, RecordingImageProcessingQueue>();
+            // Mail is recorded, never sent (see the fake's remarks).
+            services
+                .RemoveAll<Microsoft.AspNetCore.Identity.UI.Services.IEmailSender>()
+                .AddSingleton<Microsoft.AspNetCore.Identity.UI.Services.IEmailSender, RecordingEmailSender>();
             services
                 .RemoveAll<DbContextOptions<ApplicationDbContext>>()
                 // EF stacks one IDbContextOptionsConfiguration per AddDbContext

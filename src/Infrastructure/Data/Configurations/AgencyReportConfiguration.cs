@@ -45,6 +45,7 @@ public class AgencyReportConfiguration : IEntityTypeConfiguration<AgencyReport>
         builder.Property(r => r.ReporterUserId).HasMaxLength(450);
         builder.Property(r => r.ResolvedByUserId).HasMaxLength(450);
         builder.Property(r => r.ReporterName).HasMaxLength(256);
+        builder.Property(r => r.NotifyEmail).HasMaxLength(AgencyReport.MaxEmailLength);
 
         // No navigation to the booking on purpose: both targets are tenant
         // filtered, so an Include from the platform's triage screen would come

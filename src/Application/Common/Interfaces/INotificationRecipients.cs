@@ -42,4 +42,14 @@ public interface INotificationRecipients
     /// </summary>
     Task<IReadOnlyList<NotificationRecipient>> ForAdministratorsAsync(
         int agencyId, CancellationToken cancellationToken);
+
+    /// <summary>The active platform administrators. Same lockout rule.</summary>
+    Task<IReadOnlyList<NotificationRecipient>> ForPlatformAdministratorsAsync(
+        CancellationToken cancellationToken);
+
+    /// <summary>
+    /// One account, whatever its role — for a mail to a customer, whose name and
+    /// language live on their account. Null when it no longer exists.
+    /// </summary>
+    Task<NotificationRecipient?> ForUserAsync(string userId, CancellationToken cancellationToken);
 }

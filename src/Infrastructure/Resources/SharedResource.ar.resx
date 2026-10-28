@@ -994,6 +994,18 @@
   <data name="Notification.agencyReportDismissed.Body" xml:space="preserve">
     <value>حكمت المنصة لصالحك في البلاغ {{reference}}. لم تتأثر نتيجة موثوقيتك.</value>
   </data>
+  <data name="Notification.agencyReportWithdrawn.Subject" xml:space="preserve">
+    <value>سُحب البلاغ {{reference}}</value>
+  </data>
+  <data name="Notification.agencyReportWithdrawn.Body" xml:space="preserve">
+    <value>أغلق العميل البلاغ {{reference}} قبل قرار المنصة. لم تتأثر نتيجة موثوقيتك.</value>
+  </data>
+  <data name="Notification.agencyReportReopened.Subject" xml:space="preserve">
+    <value>أُعيد فتح البلاغ {{reference}}</value>
+  </data>
+  <data name="Notification.agencyReportReopened.Body" xml:space="preserve">
+    <value>أعاد العميل فتح البلاغ {{reference}} الذي كان قد سحبه. ستنظر فيه المنصة مجدداً وتبلغك بقرارها.</value>
+  </data>
   <data name="Notification.clientRentingStartingSoon.Subject" xml:space="preserve">
     <value>تبدأ فترة الإيجار في {{startDate}}</value>
   </data>
@@ -1114,5 +1126,190 @@
   </data>
   <data name="CatalogItem.portableWifi" xml:space="preserve">
     <value>واي فاي محمول</value>
-  </data></root>
+  </data>
+  <data name="DomainRule.AgencyReport.OneBooking" xml:space="preserve">
+    <value>يتعلق البلاغ بحجز واحد أو بعملية تأجير واحدة فقط.</value>
+  </data>
+  <data name="DomainRule.AgencyReport.MessageRequired" xml:space="preserve">
+    <value>اشرح ما حدث، فلا يمكن البتّ في بلاغ لا يروي ما جرى.</value>
+  </data>
+  <data name="DomainRule.AgencyReport.MessageTooLong" xml:space="preserve">
+    <value>لا يمكن أن يتجاوز البلاغ {0} حرفًا.</value>
+  </data>
+  <data name="DomainRule.AgencyReport.EmailTooLong" xml:space="preserve">
+    <value>لا يمكن أن يتجاوز عنوان البريد الإلكتروني {0} حرفًا.</value>
+  </data>
+  <data name="DomainRule.AgencyReport.ReopenNotWithdrawn" xml:space="preserve">
+    <value>لا يمكن إعادة فتح بلاغ إلا إذا كنت قد سحبته.</value>
+  </data>
+  <data name="DomainRule.AgencyReport.AlreadyReopened" xml:space="preserve">
+    <value>سبق أن أُعيد فتح هذا البلاغ مرة واحدة.</value>
+  </data>
+  <data name="DomainRule.AgencyReport.ReopenWindowClosed" xml:space="preserve">
+    <value>يمكن إعادة فتح البلاغ خلال {0} يومًا من سحبه.</value>
+  </data>
+  <data name="DomainRule.AgencyReport.EmptyMessage" xml:space="preserve">
+    <value>الرسالة فارغة.</value>
+  </data>
+  <data name="DomainRule.AgencyReport.ThreadMessageTooLong" xml:space="preserve">
+    <value>لا يمكن أن تتجاوز الرسالة {0} حرفًا.</value>
+  </data>
+  <data name="DomainRule.AgencyReport.AlreadyUpheld" xml:space="preserve">
+    <value>سبق أن قُبل هذا البلاغ.</value>
+  </data>
+  <data name="DomainRule.AgencyReport.AlreadyDismissed" xml:space="preserve">
+    <value>سبق أن رُفض هذا البلاغ.</value>
+  </data>
+  <data name="DomainRule.AgencyReport.AlreadyWithdrawn" xml:space="preserve">
+    <value>سبق أن سُحب هذا البلاغ.</value>
+  </data>
+  <data name="DomainRule.AgencyReport.NoteRequired" xml:space="preserve">
+    <value>اذكر السبب، فالقرار يُعرض على الطرف الآخر.</value>
+  </data>
+  <data name="DomainRule.AgencyReport.NoteTooLong" xml:space="preserve">
+    <value>لا يمكن أن تتجاوز الملاحظة {0} حرفًا.</value>
+  </data>
+  <data name="DomainRule.Requirement.NoReservation" xml:space="preserve">
+    <value>يجب أن يرتبط الطلب بحجز.</value>
+  </data>
+  <data name="DomainRule.Requirement.NegativeAmount" xml:space="preserve">
+    <value>لا يمكن أن يطلب الطلب مبلغًا سالبًا.</value>
+  </data>
+  <data name="DomainRule.Requirement.AnswerRequired" xml:space="preserve">
+    <value>أجب بملف أو بملاحظة.</value>
+  </data>
+  <data name="DomainRule.Requirement.RefusalReasonRequired" xml:space="preserve">
+    <value>اذكر سبب الرفض، فعلى العميل أن يعرف ما يرسله بدلاً منه.</value>
+  </data>
+  <data name="DomainRule.Requirement.Status.Requested" xml:space="preserve">
+    <value>لم تتم الإجابة عن هذا الطلب بعد.</value>
+  </data>
+  <data name="DomainRule.Requirement.Status.Submitted" xml:space="preserve">
+    <value>تمت الإجابة عن هذا الطلب بالفعل.</value>
+  </data>
+  <data name="DomainRule.Requirement.Status.Accepted" xml:space="preserve">
+    <value>تم قبول هذا الطلب بالفعل.</value>
+  </data>
+  <data name="DomainRule.Requirement.Status.Rejected" xml:space="preserve">
+    <value>تم رفض هذا الطلب بالفعل.</value>
+  </data>
+  <data name="DomainRule.Requirement.Status.Waived" xml:space="preserve">
+    <value>تم التنازل عن هذا الطلب.</value>
+  </data>
+  <data name="DomainRule.Requirement.LabelRequired" xml:space="preserve">
+    <value>اذكر ما هو مطلوب.</value>
+  </data>
+  <data name="DomainRule.Requirement.LabelTooLong" xml:space="preserve">
+    <value>لا يمكن أن يتجاوز الوصف {0} حرفًا.</value>
+  </data>
+  <data name="DomainRule.Requirement.NoteTooLong" xml:space="preserve">
+    <value>لا يمكن أن تتجاوز الملاحظة {0} حرفًا.</value>
+  </data>
+  <data name="DomainRule.Renting.CarRequired" xml:space="preserve">
+    <value>يتطلب التأجير سيارة.</value>
+  </data>
+  <data name="DomainRule.Renting.ClientRequired" xml:space="preserve">
+    <value>يتطلب التأجير عميلًا.</value>
+  </data>
+  <data name="DomainRule.Renting.PriceNegative" xml:space="preserve">
+    <value>لا يمكن أن يكون السعر المتفق عليه سالبًا.</value>
+  </data>
+  <data name="DomainRule.Renting.DepositNegative" xml:space="preserve">
+    <value>لا يمكن أن تكون الكفالة سالبة.</value>
+  </data>
+  <data name="DomainRule.Renting.CancellationFeeNegative" xml:space="preserve">
+    <value>لا يمكن أن تكون رسوم الإلغاء سالبة.</value>
+  </data>
+  <data name="DomainRule.Renting.NoPriceForFee" xml:space="preserve">
+    <value>لا سعر لهذا التأجير، لذا لا يمكن فرض رسوم إلغاء عليه.</value>
+  </data>
+  <data name="DomainRule.Renting.FeeCurrency" xml:space="preserve">
+    <value>يجب أن تكون رسوم الإلغاء بعملة التأجير ({0}).</value>
+  </data>
+  <data name="DomainRule.Renting.FeeAbovePrice" xml:space="preserve">
+    <value>لا يمكن أن تتجاوز رسوم الإلغاء السعر المتفق عليه ({0}).</value>
+  </data>
+  <data name="DomainRule.Renting.ExtraChargePositive" xml:space="preserve">
+    <value>يجب أن تكون الرسوم الإضافية أكبر من صفر.</value>
+  </data>
+  <data name="DomainRule.Renting.ExtraChargeCurrency" xml:space="preserve">
+    <value>يجب أن تكون الرسوم الإضافية بعملة التأجير ({0}).</value>
+  </data>
+  <data name="DomainRule.Renting.ChargeNotOnHire" xml:space="preserve">
+    <value>هذه الرسوم لا تخص هذا التأجير.</value>
+  </data>
+  <data name="DomainRule.Renting.NoDepositToSettle" xml:space="preserve">
+    <value>لم تُؤخذ كفالة في هذا التأجير، فلا شيء يُسوّى.</value>
+  </data>
+  <data name="DomainRule.Renting.RetainedNegative" xml:space="preserve">
+    <value>لا يمكن أن يكون المبلغ المحتجز سالبًا.</value>
+  </data>
+  <data name="DomainRule.Renting.RetainedCurrency" xml:space="preserve">
+    <value>يجب أن يكون المبلغ المحتجز بعملة الكفالة ({0}).</value>
+  </data>
+  <data name="DomainRule.Renting.RetainedAboveDeposit" xml:space="preserve">
+    <value>لا يمكن للوكالة أن تحتجز أكثر من الكفالة التي بحوزتها ({0}).</value>
+  </data>
+  <data name="DomainRule.Renting.ReturnMileageBelowPickup" xml:space="preserve">
+    <value>لا يمكن أن يكون عدّاد الكيلومترات عند الإرجاع أقل منه عند الاستلام.</value>
+  </data>
+  <data name="DomainRule.Renting.MileageNegative" xml:space="preserve">
+    <value>لا يمكن أن تكون قراءة عدّاد الكيلومترات سالبة.</value>
+  </data>
+  <data name="DomainRule.Renting.SecondDriverSame" xml:space="preserve">
+    <value>يجب أن يكون السائق الثاني عميلًا مختلفًا عن المستأجر.</value>
+  </data>
+  <data name="DomainRule.Period.EndAfterStart" xml:space="preserve">
+    <value>يجب أن يكون تاريخ النهاية بعد تاريخ البداية.</value>
+  </data>
+  <data name="DomainRule.ExchangeRate.SameCurrency" xml:space="preserve">
+    <value>يحوّل السعر بين عملتين مختلفتين.</value>
+  </data>
+  <data name="DomainRule.ExchangeRate.CurrencyCode" xml:space="preserve">
+    <value>العملة رمز من 3 أحرف وفق معيار ISO 4217.</value>
+  </data>
+  <data name="DomainRule.ExchangeRate.RatePositive" xml:space="preserve">
+    <value>يجب أن يكون السعر أكبر من صفر.</value>
+  </data>
+  <data name="DomainRule.CarUnavailability.CarRequired" xml:space="preserve">
+    <value>يتطلب الحجب سيارة.</value>
+  </data>
+  <data name="DomainRule.CarUnavailability.NoteTooLong" xml:space="preserve">
+    <value>لا يمكن أن تتجاوز الملاحظة {0} حرفًا.</value>
+  </data>
+  <data name="Validation.AgencyReport.NotConfirmed" xml:space="preserve">
+    <value>لا يمكنك الإبلاغ إلا عن حجز سبق أن أكدته الوكالة.</value>
+  </data>
+  <data name="Validation.AgencyReport.TooOld" xml:space="preserve">
+    <value>هذا الحجز قديم جدًا للإبلاغ عنه، إذ يُغلق باب البلاغات بعد {0} يومًا من انتهائه.</value>
+  </data>
+  <data name="Validation.AgencyReport.NotCancelledByAgency" xml:space="preserve">
+    <value>لم تُلغِ الوكالة هذا الحجز.</value>
+  </data>
+  <data name="Validation.AgencyReport.AlreadyReported" xml:space="preserve">
+    <value>سبق أن أبلغت عن هذا الحجز.</value>
+  </data>
+  <data name="Notification.customerReportAnswered.Subject" xml:space="preserve">
+    <value>ردّ على بلاغك {{reference}}</value>
+  </data>
+  <data name="Notification.customerReportAnswered.Body" xml:space="preserve">
+    <value>ردّت المنصّة على بلاغك {{reference}} بشأن {{agency}}:
+{{text}}
+يمكنك الرد عليها من مساحتك، في قسم بلاغاتي.</value>
+  </data>
+  <data name="Notification.customerReportUpheld.Subject" xml:space="preserve">
+    <value>تم قبول بلاغك {{reference}}</value>
+  </data>
+  <data name="Notification.customerReportUpheld.Body" xml:space="preserve">
+    <value>قبلت المنصّة بلاغك {{reference}} بشأن {{agency}}. أسبابها:
+{{text}}</value>
+  </data>
+  <data name="Notification.customerReportDismissed.Subject" xml:space="preserve">
+    <value>تم رفض بلاغك {{reference}}</value>
+  </data>
+  <data name="Notification.customerReportDismissed.Body" xml:space="preserve">
+    <value>رفضت المنصّة بلاغك {{reference}} بشأن {{agency}}. أسبابها:
+{{text}}</value>
+  </data>
+</root>
 

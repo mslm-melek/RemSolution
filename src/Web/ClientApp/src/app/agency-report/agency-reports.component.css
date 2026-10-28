@@ -157,6 +157,21 @@
   width: 100%;
 }
 
+.mail-note {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: 0;
+  font-size: var(--fs-sm);
+  color: var(--muted);
+}
+
+.mail-note mat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+}
+
 .resolve-form .hint {
   margin: 0;
   font-size: var(--fs-sm);

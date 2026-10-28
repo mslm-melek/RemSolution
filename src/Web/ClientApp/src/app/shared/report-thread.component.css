@@ -1,0 +1,146 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* The chat dialog's bubbles (chat-thread-dialog), set inside a report card. */
+
+.rt {
+  margin-top: var(--sp-3);
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--line);
+}
+
+.rt-label {
+  margin-bottom: var(--sp-2);
+  font-size: var(--fs-micro);
+  font-weight: var(--fw-medium);
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.rt-thread {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.rt-msg {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  max-width: 82%;
+}
+
+.rt-msg.mine {
+  align-self: flex-end;
+  align-items: flex-end;
+}
+
+.rt-bubble {
+  padding: 9px 12px;
+  border-radius: 13px;
+  border-end-start-radius: var(--r-xs);
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  font-size: var(--fs-sm);
+  line-height: 1.45;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.rt-msg.mine .rt-bubble {
+  background: var(--brand-500);
+  border-color: var(--brand-500);
+  color: var(--on-accent);
+  border-end-start-radius: 13px;
+  border-end-end-radius: var(--r-xs);
+}
+
+.rt-when {
+  margin-top: 3px;
+  font-size: 10px;
+  color: var(--muted);
+}
+
+.rt-bubble.erased {
+  font-style: italic;
+  color: var(--muted);
+}
+
+.rt-event {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  align-self: center;
+  max-width: 92%;
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  color: var(--ink-2);
+  font-size: var(--fs-sm);
+}
+
+.rt-event mat-icon {
+  flex: none;
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+  margin-top: 2px;
+}
+
+.rt-event-body {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.rt-note {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-micro);
+  color: var(--muted);
+}
+
+.rt-note mat-icon {
+  flex: none;
+  font-size: 14px;
+  width: 14px;
+  height: 14px;
+}
+
+.rt-error {
+  margin-top: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--r-sm);
+  background: var(--danger-bg);
+  color: var(--danger-ink);
+  font-size: var(--fs-sm);
+}
+
+.rt-foot {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--sp-2);
+  margin-top: var(--sp-3);
+}
+
+.rt-foot textarea {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 8px 11px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r);
+  background: var(--surface);
+  color: var(--ink);
+  font: var(--fw-normal) var(--fs-sm) var(--font-body);
+  resize: vertical;
+}
+
+.rt-foot textarea:focus {
+  outline: none;
+  border-color: var(--brand-500);
+}

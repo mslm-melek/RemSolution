@@ -32,11 +32,13 @@ namespace RemSolution.Application.Features.Notification.Queries.GetMyNotificatio
     {
         private readonly IApplicationDbContext _context;
         private readonly IUser _user;
+        private readonly ITenantProvider _tenant;
 
-        public GetMyNotificationsQueryHandler(IApplicationDbContext context, IUser user)
+        public GetMyNotificationsQueryHandler(IApplicationDbContext context, IUser user, ITenantProvider tenant)
         {
             _context = context;
             _user = user;
+            _tenant = tenant;
         }
 
         public async Task<PaginatedList<NotificationDto>> Handle(
@@ -48,32 +50,10 @@ namespace RemSolution.Application.Features.Notification.Queries.GetMyNotificatio
                     Array.Empty<NotificationDto>(), 0, request.PageNumber, request.PageSize);
             }
 
-            // Tenant-filtered on top of the recipient match. Rows with no
-            // recipient are the record of mail sent to a client and belong to
-            // nobody's inbox, so the equality below excludes them.
-            var query = _context.Notifications
-                .AsNoTracking()
-                .Where(n => n.RecipientUserId == userId);
-
-            if (request.OnlyUnread)
-            {
-                query = query.Where(n => n.ReadAt == null);
-            }
-
-            if (request.Kind.HasValue)
-            {
-                query = query.Where(n => n.Kind == request.Kind);
-            }
-
             // Projected to a flat row first: the arguments are stored as JSON and
             // are unpacked below, which SQL cannot do. Paginating before that
             // keeps it to one page's worth of parsing.
-            var page = await query
-                .OrderByDescending(n => n.CreatedAt)
-                .ThenByDescending(n => n.Id)
-                .Select(n => new Row(
-                    n.Id, n.Kind, n.MessageKey, n.ArgsJson,
-                    n.SubjectType, n.SubjectId, n.Link, n.CreatedAt, n.ReadAt))
+            var page = await Rows(userId, request)
                 .PaginatedListAsync(request.PageNumber, request.PageSize, cancellationToken);
 
             var items = page.Items
@@ -94,6 +74,45 @@ namespace RemSolution.Application.Features.Notification.Queries.GetMyNotificatio
 
             return new PaginatedList<NotificationDto>(
                 items, page.TotalCount, page.PageNumber, request.PageSize);
+        }
+
+        // Without an agency the caller is a platform administrator (or a customer,
+        // who is addressed by neither table), so the inbox is the platform one.
+        private IQueryable<Row> Rows(string userId, GetMyNotificationsQuery request)
+        {
+            if (_tenant.AgencyId is null)
+            {
+                var platform = _context.PlatformNotifications
+                    .AsNoTracking()
+                    .Where(n => n.RecipientUserId == userId);
+
+                if (request.OnlyUnread) platform = platform.Where(n => n.ReadAt == null);
+                if (request.Kind.HasValue) platform = platform.Where(n => n.Kind == request.Kind);
+
+                return platform
+                    .OrderByDescending(n => n.CreatedAt)
+                    .ThenByDescending(n => n.Id)
+                    .Select(n => new Row(
+                    n.Id, n.Kind, n.MessageKey, n.ArgsJson,
+                    n.SubjectType, n.SubjectId, n.Link, n.CreatedAt, n.ReadAt));
+            }
+
+            // Tenant-filtered on top of the recipient match. Rows with no
+            // recipient are the record of mail sent to a client and belong to
+            // nobody's inbox, so the equality below excludes them.
+            var query = _context.Notifications
+                .AsNoTracking()
+                .Where(n => n.RecipientUserId == userId);
+
+            if (request.OnlyUnread) query = query.Where(n => n.ReadAt == null);
+            if (request.Kind.HasValue) query = query.Where(n => n.Kind == request.Kind);
+
+            return query
+                .OrderByDescending(n => n.CreatedAt)
+                .ThenByDescending(n => n.Id)
+                .Select(n => new Row(
+                n.Id, n.Kind, n.MessageKey, n.ArgsJson,
+                n.SubjectType, n.SubjectId, n.Link, n.CreatedAt, n.ReadAt));
         }
 
         // Shape EF materializes, before the JSON arguments are unpacked. A class

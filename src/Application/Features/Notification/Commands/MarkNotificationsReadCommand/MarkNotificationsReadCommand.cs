@@ -25,13 +25,15 @@ namespace RemSolution.Application.Features.Notification.Commands.MarkNotificatio
     {
         private readonly IApplicationDbContext _context;
         private readonly IUser _user;
+        private readonly ITenantProvider _tenant;
         private readonly TimeProvider _timeProvider;
 
         public MarkNotificationsReadCommandHandler(
-            IApplicationDbContext context, IUser user, TimeProvider timeProvider)
+            IApplicationDbContext context, IUser user, ITenantProvider tenant, TimeProvider timeProvider)
         {
             _context = context;
             _user = user;
+            _tenant = tenant;
             _timeProvider = timeProvider;
         }
 
@@ -43,6 +45,12 @@ namespace RemSolution.Application.Features.Notification.Commands.MarkNotificatio
                 return 0;
             }
 
+            // No agency: the platform inbox (see GetMyNotificationsQuery).
+            if (_tenant.AgencyId is null)
+            {
+                return await MarkPlatformReadAsync(userId, request.Ids, cancellationToken);
+            }
+
             var query = _context.Notifications
                 .Where(n => n.RecipientUserId == userId && n.ReadAt == null);
 
@@ -50,6 +58,37 @@ namespace RemSolution.Application.Features.Notification.Commands.MarkNotificatio
             {
                 var ids = request.Ids.ToList();
                 query = query.Where(n => ids.Contains(n.Id));
+            }
+
+            var unread = await query.ToListAsync(cancellationToken);
+
+            if (unread.Count == 0)
+            {
+                return 0;
+            }
+
+            var now = _timeProvider.GetUtcNow().UtcDateTime;
+
+            foreach (var notification in unread)
+            {
+                notification.MarkRead(now);
+            }
+
+            await _context.SaveChangesAsync(cancellationToken);
+
+            return unread.Count;
+        }
+
+        private async Task<int> MarkPlatformReadAsync(
+            string userId, IReadOnlyCollection<int>? ids, CancellationToken cancellationToken)
+        {
+            var query = _context.PlatformNotifications
+                .Where(n => n.RecipientUserId == userId && n.ReadAt == null);
+
+            if (ids is { Count: > 0 })
+            {
+                var list = ids.ToList();
+                query = query.Where(n => list.Contains(n.Id));
             }
 
             var unread = await query.ToListAsync(cancellationToken);

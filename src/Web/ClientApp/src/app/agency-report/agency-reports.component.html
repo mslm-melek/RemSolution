@@ -20,6 +20,10 @@
             (click)="onFilter(AgencyReportStatus.Dismissed)">
       {{ t('reports.statuses.3') }}
     </button>
+    <button mat-stroked-button [class.active]="filter === AgencyReportStatus.Withdrawn"
+            (click)="onFilter(AgencyReportStatus.Withdrawn)">
+      {{ t('reports.statuses.4') }}
+    </button>
     <button mat-stroked-button [class.active]="filter === null" (click)="onFilter(null)">
       {{ t('reports.filterAll') }}
     </button>
@@ -47,6 +51,11 @@
         </div>
         <div class="side">
           <span class="chip" [ngClass]="statusTone(r.status)">{{ t(statusLabelKey(r.status)) }}</span>
+          <!-- The customer wrote last on an open report: the platform owes an answer. -->
+          <span class="chip info" *ngIf="r.status === AgencyReportStatus.Open && r.lastMessageFromPlatform === false">
+            {{ t('reports.customerWrote') }}
+          </span>
+          <span class="chip neutral" *ngIf="r.reopenedAt">{{ t('reports.reopened') }}</span>
           <!-- An instant, recorded from the clock, so it reads local. -->
           <span class="when">{{ t('reports.submittedOn', { date: (r.submittedAt | date:'dd MMM yyyy HH:mm') }) }}</span>
         </div>
@@ -65,11 +74,26 @@
         </div>
       </div>
 
+      <app-report-thread [reportId]="r.id!" [messages]="r.messages || []" viewer="platform"
+                         [canWrite]="r.status === AgencyReportStatus.Open"
+                         (posted)="r.lastMessageFromPlatform = true"></app-report-thread>
+      <!-- Whether what the platform writes here also reaches the customer's
+           inbox: worth knowing before writing something that needs a reply. -->
+      <p class="mail-note" *ngIf="r.status === AgencyReportStatus.Open">
+        <mat-icon aria-hidden="true">{{ r.customerGetsEmail ? 'mail' : 'unsubscribe' }}</mat-icon>
+        {{ t(r.customerGetsEmail ? 'reports.thread.customerMailed' : 'reports.thread.customerNotMailed') }}
+      </p>
+
       <div class="verdict" *ngIf="r.resolutionNote">
-        <div class="verdict-head">
+        <div class="verdict-head" *ngIf="r.status !== AgencyReportStatus.Withdrawn">
           <mat-icon aria-hidden="true">gavel</mat-icon>
           {{ t('reports.verdict') }} —
           {{ t('reports.resolvedOn', { date: (r.resolvedAt | date:'dd MMM yyyy') }) }}
+        </div>
+        <div class="verdict-head" *ngIf="r.status === AgencyReportStatus.Withdrawn">
+          <mat-icon aria-hidden="true">undo</mat-icon>
+          {{ t('reports.withdrawnByCustomer') }} —
+          {{ t('reports.closedOn', { date: (r.resolvedAt | date:'dd MMM yyyy') }) }}
         </div>
         <p>{{ r.resolutionNote }}</p>
       </div>

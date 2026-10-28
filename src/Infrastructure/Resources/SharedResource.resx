@@ -996,6 +996,18 @@
   <data name="Notification.agencyReportDismissed.Body" xml:space="preserve">
     <value>The platform found for you on report {{reference}}. Your reliability score is untouched.</value>
   </data>
+  <data name="Notification.agencyReportWithdrawn.Subject" xml:space="preserve">
+    <value>Report {{reference}} was withdrawn</value>
+  </data>
+  <data name="Notification.agencyReportWithdrawn.Body" xml:space="preserve">
+    <value>The customer closed report {{reference}} before the platform decided. Your reliability score is untouched.</value>
+  </data>
+  <data name="Notification.agencyReportReopened.Subject" xml:space="preserve">
+    <value>Report {{reference}} was reopened</value>
+  </data>
+  <data name="Notification.agencyReportReopened.Body" xml:space="preserve">
+    <value>The customer reopened report {{reference}}, which they had withdrawn. The platform will look at it again and tell you what it decides.</value>
+  </data>
   <data name="Notification.clientRentingStartingSoon.Subject" xml:space="preserve">
     <value>Your rental starts on {{startDate}}</value>
   </data>
@@ -1117,5 +1129,190 @@ Please return the vehicle or contact us as soon as possible.</value>
   </data>
   <data name="CatalogItem.portableWifi" xml:space="preserve">
     <value>Portable Wi-Fi</value>
-  </data></root>
+  </data>
+  <data name="DomainRule.AgencyReport.OneBooking" xml:space="preserve">
+    <value>A report is about exactly one booking — a reservation or a renting.</value>
+  </data>
+  <data name="DomainRule.AgencyReport.MessageRequired" xml:space="preserve">
+    <value>Say what went wrong — a report with no account of it cannot be arbitrated.</value>
+  </data>
+  <data name="DomainRule.AgencyReport.MessageTooLong" xml:space="preserve">
+    <value>The report cannot be longer than {0} characters.</value>
+  </data>
+  <data name="DomainRule.AgencyReport.EmailTooLong" xml:space="preserve">
+    <value>The email address cannot be longer than {0} characters.</value>
+  </data>
+  <data name="DomainRule.AgencyReport.ReopenNotWithdrawn" xml:space="preserve">
+    <value>Only a report you withdrew can be reopened.</value>
+  </data>
+  <data name="DomainRule.AgencyReport.AlreadyReopened" xml:space="preserve">
+    <value>This report was already reopened once.</value>
+  </data>
+  <data name="DomainRule.AgencyReport.ReopenWindowClosed" xml:space="preserve">
+    <value>A report can be reopened within {0} days of withdrawing it.</value>
+  </data>
+  <data name="DomainRule.AgencyReport.EmptyMessage" xml:space="preserve">
+    <value>The message is empty.</value>
+  </data>
+  <data name="DomainRule.AgencyReport.ThreadMessageTooLong" xml:space="preserve">
+    <value>A message cannot be longer than {0} characters.</value>
+  </data>
+  <data name="DomainRule.AgencyReport.AlreadyUpheld" xml:space="preserve">
+    <value>This report was already upheld.</value>
+  </data>
+  <data name="DomainRule.AgencyReport.AlreadyDismissed" xml:space="preserve">
+    <value>This report was already dismissed.</value>
+  </data>
+  <data name="DomainRule.AgencyReport.AlreadyWithdrawn" xml:space="preserve">
+    <value>This report was already withdrawn.</value>
+  </data>
+  <data name="DomainRule.AgencyReport.NoteRequired" xml:space="preserve">
+    <value>Say why — the outcome is shown to the other side.</value>
+  </data>
+  <data name="DomainRule.AgencyReport.NoteTooLong" xml:space="preserve">
+    <value>The note cannot be longer than {0} characters.</value>
+  </data>
+  <data name="DomainRule.Requirement.NoReservation" xml:space="preserve">
+    <value>A requirement belongs to a reservation.</value>
+  </data>
+  <data name="DomainRule.Requirement.NegativeAmount" xml:space="preserve">
+    <value>A requirement cannot ask for a negative amount.</value>
+  </data>
+  <data name="DomainRule.Requirement.AnswerRequired" xml:space="preserve">
+    <value>Answer this with a file or a note.</value>
+  </data>
+  <data name="DomainRule.Requirement.RefusalReasonRequired" xml:space="preserve">
+    <value>Say why it was refused — the customer has to know what to send instead.</value>
+  </data>
+  <data name="DomainRule.Requirement.Status.Requested" xml:space="preserve">
+    <value>This requirement has not been answered yet.</value>
+  </data>
+  <data name="DomainRule.Requirement.Status.Submitted" xml:space="preserve">
+    <value>This requirement has already been answered.</value>
+  </data>
+  <data name="DomainRule.Requirement.Status.Accepted" xml:space="preserve">
+    <value>This requirement has already been accepted.</value>
+  </data>
+  <data name="DomainRule.Requirement.Status.Rejected" xml:space="preserve">
+    <value>This requirement has already been refused.</value>
+  </data>
+  <data name="DomainRule.Requirement.Status.Waived" xml:space="preserve">
+    <value>This requirement has been waived.</value>
+  </data>
+  <data name="DomainRule.Requirement.LabelRequired" xml:space="preserve">
+    <value>Say what is being asked for.</value>
+  </data>
+  <data name="DomainRule.Requirement.LabelTooLong" xml:space="preserve">
+    <value>The label cannot be longer than {0} characters.</value>
+  </data>
+  <data name="DomainRule.Requirement.NoteTooLong" xml:space="preserve">
+    <value>The note cannot be longer than {0} characters.</value>
+  </data>
+  <data name="DomainRule.Renting.CarRequired" xml:space="preserve">
+    <value>A hire needs a car.</value>
+  </data>
+  <data name="DomainRule.Renting.ClientRequired" xml:space="preserve">
+    <value>A hire needs a client.</value>
+  </data>
+  <data name="DomainRule.Renting.PriceNegative" xml:space="preserve">
+    <value>The agreed price cannot be negative.</value>
+  </data>
+  <data name="DomainRule.Renting.DepositNegative" xml:space="preserve">
+    <value>The deposit cannot be negative.</value>
+  </data>
+  <data name="DomainRule.Renting.CancellationFeeNegative" xml:space="preserve">
+    <value>The cancellation fee cannot be negative.</value>
+  </data>
+  <data name="DomainRule.Renting.NoPriceForFee" xml:space="preserve">
+    <value>This renting carries no price, so no cancellation fee can be charged on it.</value>
+  </data>
+  <data name="DomainRule.Renting.FeeCurrency" xml:space="preserve">
+    <value>The cancellation fee must be in the hire&apos;s own currency ({0}).</value>
+  </data>
+  <data name="DomainRule.Renting.FeeAbovePrice" xml:space="preserve">
+    <value>The cancellation fee cannot exceed the agreed price ({0}).</value>
+  </data>
+  <data name="DomainRule.Renting.ExtraChargePositive" xml:space="preserve">
+    <value>An extra charge must be more than nothing.</value>
+  </data>
+  <data name="DomainRule.Renting.ExtraChargeCurrency" xml:space="preserve">
+    <value>An extra charge must be in the hire&apos;s own currency ({0}).</value>
+  </data>
+  <data name="DomainRule.Renting.ChargeNotOnHire" xml:space="preserve">
+    <value>That charge does not belong to this hire.</value>
+  </data>
+  <data name="DomainRule.Renting.NoDepositToSettle" xml:space="preserve">
+    <value>This hire took no deposit, so there is nothing to settle.</value>
+  </data>
+  <data name="DomainRule.Renting.RetainedNegative" xml:space="preserve">
+    <value>A retained amount cannot be negative.</value>
+  </data>
+  <data name="DomainRule.Renting.RetainedCurrency" xml:space="preserve">
+    <value>The retained amount must be in the deposit&apos;s own currency ({0}).</value>
+  </data>
+  <data name="DomainRule.Renting.RetainedAboveDeposit" xml:space="preserve">
+    <value>The agency cannot keep more than the deposit it holds ({0}).</value>
+  </data>
+  <data name="DomainRule.Renting.ReturnMileageBelowPickup" xml:space="preserve">
+    <value>The return mileage cannot be less than the pickup mileage.</value>
+  </data>
+  <data name="DomainRule.Renting.MileageNegative" xml:space="preserve">
+    <value>A mileage reading cannot be negative.</value>
+  </data>
+  <data name="DomainRule.Renting.SecondDriverSame" xml:space="preserve">
+    <value>The second driver must be a different client from the renter.</value>
+  </data>
+  <data name="DomainRule.Period.EndAfterStart" xml:space="preserve">
+    <value>The end date must be after the start date.</value>
+  </data>
+  <data name="DomainRule.ExchangeRate.SameCurrency" xml:space="preserve">
+    <value>A rate converts between two different currencies.</value>
+  </data>
+  <data name="DomainRule.ExchangeRate.CurrencyCode" xml:space="preserve">
+    <value>A currency is a 3-letter ISO 4217 code.</value>
+  </data>
+  <data name="DomainRule.ExchangeRate.RatePositive" xml:space="preserve">
+    <value>A rate is greater than zero.</value>
+  </data>
+  <data name="DomainRule.CarUnavailability.CarRequired" xml:space="preserve">
+    <value>A block needs a car.</value>
+  </data>
+  <data name="DomainRule.CarUnavailability.NoteTooLong" xml:space="preserve">
+    <value>The note cannot be longer than {0} characters.</value>
+  </data>
+  <data name="Validation.AgencyReport.NotConfirmed" xml:space="preserve">
+    <value>You can only report a booking the agency had confirmed.</value>
+  </data>
+  <data name="Validation.AgencyReport.TooOld" xml:space="preserve">
+    <value>This booking is too old to report — reports close {0} days after it ends.</value>
+  </data>
+  <data name="Validation.AgencyReport.NotCancelledByAgency" xml:space="preserve">
+    <value>This booking was not cancelled by the agency.</value>
+  </data>
+  <data name="Validation.AgencyReport.AlreadyReported" xml:space="preserve">
+    <value>You have already reported this booking.</value>
+  </data>
+  <data name="Notification.customerReportAnswered.Subject" xml:space="preserve">
+    <value>Reply to your report {{reference}}</value>
+  </data>
+  <data name="Notification.customerReportAnswered.Body" xml:space="preserve">
+    <value>The platform has replied to your report {{reference}} about {{agency}}:
+{{text}}
+You can answer it from your space, under My reports.</value>
+  </data>
+  <data name="Notification.customerReportUpheld.Subject" xml:space="preserve">
+    <value>Your report {{reference}} was upheld</value>
+  </data>
+  <data name="Notification.customerReportUpheld.Body" xml:space="preserve">
+    <value>The platform has upheld your report {{reference}} about {{agency}}. Its reasons:
+{{text}}</value>
+  </data>
+  <data name="Notification.customerReportDismissed.Subject" xml:space="preserve">
+    <value>Your report {{reference}} was dismissed</value>
+  </data>
+  <data name="Notification.customerReportDismissed.Body" xml:space="preserve">
+    <value>The platform has dismissed your report {{reference}} about {{agency}}. Its reasons:
+{{text}}</value>
+  </data>
+</root>
 

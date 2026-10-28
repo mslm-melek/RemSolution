@@ -8,7 +8,10 @@ namespace RemSolution.Domain.Entities
     /// administrator. Raised against a booking the customer actually had — there
     /// is no free-floating report, for the same reason there is no free-floating
     /// review — and settled once, as <see cref="AgencyReportStatus.Upheld"/> or
-    /// <see cref="AgencyReportStatus.Dismissed"/>.
+    /// <see cref="AgencyReportStatus.Dismissed"/>, unless the customer withdraws
+    /// it first. While it is open the customer and the platform can write to each
+    /// other on it (<see cref="Messages"/>); once closed, it is frozen — except
+    /// that the customer may reopen a withdrawal once (<see cref="Reopen"/>).
     /// <para>
     /// No money moves. An upheld report costs the agency reliability points and
     /// nothing else: until the platform actually holds the money, a debt no
@@ -30,10 +33,11 @@ namespace RemSolution.Domain.Entities
     /// which booking one is about.
     /// </para>
     /// </remarks>
-    public class AgencyReport : BaseAuditableEntity
+    public class AgencyReport : BaseAuditableEntity, IHasRowVersion
     {
         public const int MaxMessageLength = 2000;
         public const int MaxResolutionLength = 2000;
+        public const int MaxEmailLength = 256;
 
         /// <summary>
         /// How long after a booking ends it can still be complained about. A
@@ -65,6 +69,13 @@ namespace RemSolution.Domain.Entities
         /// </summary>
         public string? ReporterName { get; private set; }
 
+        /// <summary>
+        /// Where the customer asked to be written to when the platform replies or
+        /// decides. Optional, given on the report rather than read off the account,
+        /// because it is the customer's choice where this lands. Cleared on erasure.
+        /// </summary>
+        public string? NotifyEmail { get; private set; }
+
         /// <summary>What was booked and when, in one line ("Renault Clio, 12–15 Sep").</summary>
         public string? BookingSummary { get; private set; }
 
@@ -89,10 +100,47 @@ namespace RemSolution.Domain.Entities
         public string? ResolvedByUserId { get; private set; }
 
         /// <summary>
-        /// The arbitrator's reasoning. Shown to BOTH sides — an outcome nobody
-        /// explains is not arbitration — so it is required on either verdict.
+        /// Why it was closed, required whichever way: the arbitrator's reasoning on
+        /// a verdict (shown to BOTH sides — an outcome nobody explains is not
+        /// arbitration), or the customer's own reason on a withdrawal.
+        /// <see cref="Status"/> says which.
         /// </summary>
         public string? ResolutionNote { get; private set; }
+
+        /// <summary>
+        /// When the customer reopened it after withdrawing it. A report reopens
+        /// once: a complaint that can be dropped and revived at will is a lever
+        /// on the agency, not a request for arbitration.
+        /// </summary>
+        public DateTime? ReopenedAt { get; private set; }
+
+        /// <summary>
+        /// How many lines the thread has. Stored rather than counted because
+        /// incrementing it is what makes a message an UPDATE of this row, and so
+        /// subject to <see cref="RowVersion"/>: a message racing a verdict loses
+        /// with a concurrency error instead of landing on a closed report. A
+        /// counter, not a timestamp — two writes in the same clock tick would
+        /// leave a timestamp unchanged, and EF would then skip the UPDATE.
+        /// </summary>
+        public int MessageCount { get; private set; }
+
+        /// <summary>
+        /// Two people can now close a report — the platform deciding and the
+        /// customer withdrawing — so two closings starting from the same open row
+        /// must not both succeed, the second silently overwriting the first.
+        /// </summary>
+        public byte[]? RowVersion { get; set; }
+
+        // Owned outright by this aggregate, so the list is exposed read-only and
+        // grows only through Post, Withdraw and Reopen below.
+        private readonly List<AgencyReportMessage> _messages = new();
+
+        /// <summary>
+        /// What the customer and the platform said to each other after the report
+        /// was raised, plus a line for each withdrawal and reopening.
+        /// <see cref="Message"/> stays the opening account.
+        /// </summary>
+        public IReadOnlyCollection<AgencyReportMessage> Messages => _messages;
 
         /// <summary>Whether this report is what the score should count against the agency.</summary>
         public bool CountsAgainstAgency => Status == AgencyReportStatus.Upheld;
@@ -143,26 +191,33 @@ namespace RemSolution.Domain.Entities
             string? reporterUserId = null,
             string? reporterName = null,
             string? bookingSummary = null,
-            string? agencyCancellationReason = null)
+            string? agencyCancellationReason = null,
+            string? notifyEmail = null)
         {
             // One anchor, always: with neither there is nothing to arbitrate, and
             // with both it is unclear which booking the agency has to answer for.
             if ((reservationId is null) == (rentingId is null))
             {
-                throw new DomainRuleException(nameof(ReservationId),
+                throw new DomainRuleException(nameof(ReservationId), "AgencyReport.OneBooking",
                     "A report is about exactly one booking — a reservation or a renting.");
             }
 
             if (string.IsNullOrWhiteSpace(message))
             {
-                throw new DomainRuleException(nameof(Message),
+                throw new DomainRuleException(nameof(Message), "AgencyReport.MessageRequired",
                     "Say what went wrong — a report with no account of it cannot be arbitrated.");
             }
 
             if (message.Length > MaxMessageLength)
             {
-                throw new DomainRuleException(nameof(Message),
-                    $"The report cannot be longer than {MaxMessageLength} characters.");
+                throw new DomainRuleException(nameof(Message), "AgencyReport.MessageTooLong",
+                    $"The report cannot be longer than {MaxMessageLength} characters.", MaxMessageLength);
+            }
+
+            if (notifyEmail?.Trim().Length > MaxEmailLength)
+            {
+                throw new DomainRuleException(nameof(NotifyEmail), "AgencyReport.EmailTooLong",
+                    $"The email address cannot be longer than {MaxEmailLength} characters.", MaxEmailLength);
             }
 
             return new AgencyReport
@@ -175,6 +230,7 @@ namespace RemSolution.Domain.Entities
                 ReporterName = reporterName,
                 BookingSummary = bookingSummary,
                 AgencyCancellationReason = agencyCancellationReason,
+                NotifyEmail = string.IsNullOrWhiteSpace(notifyEmail) ? null : notifyEmail.Trim(),
                 Kind = kind,
                 Message = message.Trim(),
                 Status = AgencyReportStatus.Open,
@@ -189,46 +245,197 @@ namespace RemSolution.Domain.Entities
         /// and two dates, never a person, and it is all the arbitrator can see of
         /// a booking they cannot read.
         /// </summary>
+        /// <remarks>
+        /// The thread must be loaded. The customer's follow-ups are emptied (see
+        /// <see cref="AgencyReportMessage.Erase"/>), and so is a withdrawal's
+        /// reason; <see cref="Message"/> and a verdict's
+        /// <see cref="ResolutionNote"/> stay, being the complaint and its outcome.
+        /// </remarks>
         public void ErasePersonalData()
         {
+            var reporter = ReporterUserId;
+
             ReporterName = null;
             ReporterUserId = null;
+            NotifyEmail = null;
+
+            // The same id sits in two more columns: the customer created the row,
+            // and closed it if they withdrew it. (UpdatedBy needs nothing here —
+            // the save that writes this erasure restamps it with whoever erases.)
+            if (reporter is not null)
+            {
+                if (CreatedBy == reporter) CreatedBy = null;
+                if (ResolvedByUserId == reporter) ResolvedByUserId = null;
+            }
+
+            // A withdrawal's outcome is the customer's own free text, unlike a
+            // verdict's, which the platform wrote.
+            if (Status == AgencyReportStatus.Withdrawn)
+            {
+                ResolutionNote = null;
+            }
+
+            foreach (var message in _messages.Where(m => !m.FromPlatform))
+            {
+                message.Erase();
+            }
+        }
+
+        /// <summary>The customer adds to their account while the report is open.</summary>
+        public AgencyReportMessage PostFromCustomer(string body, DateTime at, string? byUserId)
+        {
+            // A settled report is frozen: a message after the verdict would read
+            // as an appeal, and there is none.
+            RequireOpen();
+            return Append(AgencyReportMessageKind.Message, fromPlatform: false, body, at, byUserId);
+        }
+
+        /// <summary>The platform asks or tells the customer something while the report is open.</summary>
+        public AgencyReportMessage PostFromPlatform(string body, DateTime at, string? byUserId)
+        {
+            RequireOpen();
+            return Append(AgencyReportMessageKind.Message, fromPlatform: true, body, at, byUserId);
         }
 
         /// <summary>The platform finds for the customer. Open → Upheld.</summary>
         public void Uphold(string note, DateTime at, string? byUserId) =>
-            Resolve(AgencyReportStatus.Upheld, note, at, byUserId);
+            Close(AgencyReportStatus.Upheld, note, at, byUserId);
 
         /// <summary>The platform finds for the agency. Open → Dismissed.</summary>
         public void Dismiss(string note, DateTime at, string? byUserId) =>
-            Resolve(AgencyReportStatus.Dismissed, note, at, byUserId);
+            Close(AgencyReportStatus.Dismissed, note, at, byUserId);
 
-        private void Resolve(AgencyReportStatus verdict, string note, DateTime at, string? byUserId)
+        /// <summary>
+        /// The customer closes their own report before the platform decides.
+        /// Open → Withdrawn. The reason goes on the report as its outcome and into
+        /// the thread, where it survives a later reopening.
+        /// </summary>
+        public void Withdraw(string reason, DateTime at, string? byUserId)
+        {
+            // Both checks before either change: a reason that fits the outcome
+            // but not the thread must not leave a half-withdrawn report tracked.
+            RequireOpen();
+            RequireBody(reason);
+
+            Close(AgencyReportStatus.Withdrawn, reason, at, byUserId);
+            Append(AgencyReportMessageKind.Withdrawal, fromPlatform: false, reason, at, byUserId);
+        }
+
+        /// <summary>
+        /// Whether a report in this state can still be reopened by the customer:
+        /// withdrawn, never reopened before, and within
+        /// <see cref="ReportingWindowDays"/> of the withdrawal — the case it exists
+        /// for is a promise made to get the report dropped and then not kept, which
+        /// shows within weeks, not years.
+        /// </summary>
+        /// <remarks>
+        /// "My reports" repeats this inline as <c>CanReopen</c>, because EF has to
+        /// translate it. Change one and change the other.
+        /// </remarks>
+        public static bool CanReopen(
+            AgencyReportStatus status, DateTime? reopenedAt, DateTime? withdrawnAt, DateTime now) =>
+            status == AgencyReportStatus.Withdrawn
+            && reopenedAt is null
+            && withdrawnAt is DateTime closed
+            && now <= closed.AddDays(ReportingWindowDays);
+
+        /// <summary>
+        /// The customer takes back their withdrawal. Withdrawn → Open, once. The
+        /// withdrawal stays readable in the thread; the report itself goes back to
+        /// having no outcome, so the platform can decide it as if it had never
+        /// been dropped.
+        /// </summary>
+        public void Reopen(string reason, DateTime at, string? byUserId)
+        {
+            if (!CanReopen(Status, ReopenedAt, ResolvedAt, at))
+            {
+                throw Status != AgencyReportStatus.Withdrawn
+                    ? new DomainRuleException(nameof(Status), "AgencyReport.ReopenNotWithdrawn",
+                        "Only a report you withdrew can be reopened.")
+                    : ReopenedAt is not null
+                        ? new DomainRuleException(nameof(Status), "AgencyReport.AlreadyReopened",
+                            "This report was already reopened once.")
+                        : new DomainRuleException(nameof(Status), "AgencyReport.ReopenWindowClosed",
+                            $"A report can be reopened within {ReportingWindowDays} days of withdrawing it.",
+                            ReportingWindowDays);
+            }
+
+            RequireBody(reason);
+
+            Status = AgencyReportStatus.Open;
+            ResolutionNote = null;
+            ResolvedAt = null;
+            ResolvedByUserId = null;
+            ReopenedAt = at;
+
+            Append(AgencyReportMessageKind.Reopening, fromPlatform: false, reason, at, byUserId);
+        }
+
+        private AgencyReportMessage Append(
+            AgencyReportMessageKind kind, bool fromPlatform, string body, DateTime at, string? byUserId)
+        {
+            RequireBody(body);
+
+            var message = new AgencyReportMessage(kind, fromPlatform, body.Trim(), at, byUserId);
+            _messages.Add(message);
+
+            // Also what turns a message into an update of this row (see MessageCount).
+            MessageCount++;
+
+            return message;
+        }
+
+        private static void RequireBody(string body)
+        {
+            if (string.IsNullOrWhiteSpace(body))
+            {
+                throw new DomainRuleException(nameof(Messages), "AgencyReport.EmptyMessage",
+                    "The message is empty.");
+            }
+
+            if (body.Length > MaxMessageLength)
+            {
+                throw new DomainRuleException(nameof(Messages), "AgencyReport.ThreadMessageTooLong",
+                    $"A message cannot be longer than {MaxMessageLength} characters.", MaxMessageLength);
+            }
+        }
+
+        private void RequireOpen()
         {
             // Settled once. Re-opening an arbitration would let a score move
             // twice on one complaint, and neither side could rely on the outcome.
             if (Status != AgencyReportStatus.Open)
             {
-                throw new DomainRuleException(nameof(Status),
+                // One key per outcome: the status word is not translatable on its own.
+                throw new DomainRuleException(nameof(Status), $"AgencyReport.Already{Status}",
                     $"This report was already {Status.ToString().ToLowerInvariant()}.");
             }
+        }
 
+        private void Close(AgencyReportStatus outcome, string note, DateTime at, string? byUserId)
+        {
+            RequireOpen();
+            RequireNote(note);
+
+            Status = outcome;
+            ResolutionNote = note.Trim();
+            ResolvedAt = at;
+            ResolvedByUserId = byUserId;
+        }
+
+        private static void RequireNote(string note)
+        {
             if (string.IsNullOrWhiteSpace(note))
             {
-                throw new DomainRuleException(nameof(ResolutionNote),
-                    "Say why — both sides are shown the outcome.");
+                throw new DomainRuleException(nameof(ResolutionNote), "AgencyReport.NoteRequired",
+                    "Say why — the outcome is shown to the other side.");
             }
 
             if (note.Length > MaxResolutionLength)
             {
-                throw new DomainRuleException(nameof(ResolutionNote),
-                    $"The note cannot be longer than {MaxResolutionLength} characters.");
+                throw new DomainRuleException(nameof(ResolutionNote), "AgencyReport.NoteTooLong",
+                    $"The note cannot be longer than {MaxResolutionLength} characters.", MaxResolutionLength);
             }
-
-            Status = verdict;
-            ResolutionNote = note.Trim();
-            ResolvedAt = at;
-            ResolvedByUserId = byUserId;
         }
     }
 }

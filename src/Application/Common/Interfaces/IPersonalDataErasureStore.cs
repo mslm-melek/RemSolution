@@ -48,6 +48,13 @@ public interface IPersonalDataErasureStore
     Task<int> RedactAuditTrailAsync(int clientId, CancellationToken cancellationToken);
 
     /// <summary>
+    /// The same for the audit rows about the reports this client raised: a
+    /// verdict, a withdrawal or a reopening wrote the whole report — reporter's
+    /// name, user id and thread-closing words included — into AuditLog.
+    /// </summary>
+    Task<int> RedactReportAuditTrailAsync(IReadOnlyCollection<int> reportIds, CancellationToken cancellationToken);
+
+    /// <summary>
     /// Appends the row saying the erasure happened. Carries no before/after by
     /// design — the reason is a note the operator typed, not a copy of what was
     /// erased.

@@ -54,6 +54,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>, IApplica
     public DbSet<ExtraServicesTypeTemplate> ExtraServicesTypeTemplates => Set<ExtraServicesTypeTemplate>();
     public DbSet<ModelCar> ModelCars => Set<ModelCar>();
     public DbSet<Notification> Notifications => Set<Notification>();
+    public DbSet<PlatformNotification> PlatformNotifications => Set<PlatformNotification>();
     public DbSet<Payment> Payments => Set<Payment>();
     public DbSet<Renting> Rentings => Set<Renting>();
     public DbSet<RentingHistory> RentingHistories => Set<RentingHistory>();

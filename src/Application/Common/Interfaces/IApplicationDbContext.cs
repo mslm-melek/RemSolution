@@ -33,6 +33,7 @@ public interface IApplicationDbContext
     DbSet<Facture> Factures { get; }
     DbSet<ModelCar> ModelCars { get; }
     DbSet<Notification> Notifications { get; }
+    DbSet<PlatformNotification> PlatformNotifications { get; }
     DbSet<Renting> Rentings { get; }
     DbSet<RentingHistory> RentingHistories { get; }
     DbSet<RentingFee> RentingFees { get; }

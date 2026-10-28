@@ -1548,6 +1548,10 @@
     "customerAccount": "What the customer says",
     "submittedOn": "Reported on {{ date }}",
     "resolvedOn": "Settled on {{ date }}",
+    "closedOn": "Closed on {{ date }}",
+    "withdrawnByCustomer": "Withdrawn by the customer",
+    "customerWrote": "Customer replied",
+    "reopened": "Reopened",
     "verdict": "Decision",
     "resolutionNote": "Reasoning",
     "uphold": "Uphold",
@@ -1569,7 +1573,27 @@
     "statuses": {
       "1": "Waiting",
       "2": "Upheld",
-      "3": "Dismissed"
+      "3": "Dismissed",
+      "4": "Withdrawn"
+    },
+    "thread": {
+      "title": "Messages",
+      "you": "You",
+      "platform": "Platform",
+      "customer": "Customer",
+      "toPlatform": "Write to the platform…",
+      "toCustomer": "Write to the customer…",
+      "yourMessage": "Your message",
+      "send": "Send",
+      "sendFailed": "Your message could not be sent. Please try again.",
+      "withdrawnByYou": "You closed the report",
+      "withdrawnByCustomer": "The customer closed the report",
+      "reopenedByYou": "You reopened the report",
+      "reopenedByCustomer": "The customer reopened the report",
+      "erased": "Message erased",
+      "agencyReads": "The agency can read this conversation.",
+      "customerMailed": "The customer receives your messages and the decision by email.",
+      "customerNotMailed": "The customer left no email: they will only see your reply when they open their space."
     },
     "customer": {
       "report": "Report to the platform",
@@ -1585,7 +1609,26 @@
       "myReports": "My reports",
       "pending": "Waiting to be settled",
       "cancelledByAgency": "Cancelled by the agency",
-      "windowClosed": "The reporting window has closed."
+      "windowClosed": "The reporting window has closed.",
+      "withdraw": "Close the report",
+      "withdrawHint": "Closing it ends the report before the platform decides. The agency and the platform read your reason.",
+      "withdrawReason": "Why are you closing it?",
+      "withdrawPlaceholder": "For example: the agency and I sorted it out.",
+      "withdrawConfirm": "Close the report",
+      "reasonRequired": "Please give a reason.",
+      "withdrawFailed": "The report could not be closed. Please try again.",
+      "withdrawnByYou": "Closed by you",
+      "platformWrote": "The platform wrote to you",
+      "reopen": "Reopen the report",
+      "reopenHint": "Didn't the agency keep its word? You can reopen this report once.",
+      "reopenFormHint": "The platform will look at the report again. You can only reopen it once; the agency and the platform read your reason.",
+      "reopenReason": "Why are you reopening it?",
+      "reopenPlaceholder": "For example: the promised refund never arrived.",
+      "reopenConfirm": "Reopen the report",
+      "reopenFailed": "The report could not be reopened. Please try again.",
+      "notifyEmail": "Email for replies (optional)",
+      "notifyEmailHint": "We will write to you here when the platform replies or decides. Leave it empty to follow the report from your space only.",
+      "notifyEmailInvalid": "Enter a valid email address."
     }
   },
   "myAgency": {
@@ -1731,6 +1774,8 @@
       "agencyReportOpened": "{{client}} has reported your agency to the platform ({{reference}}). The platform will look at it.",
       "agencyReportUpheld": "Report {{reference}} was upheld by the platform. It counts against your reliability score, which customers can see.",
       "agencyReportDismissed": "Report {{reference}} was dismissed by the platform. Your score is untouched.",
+      "agencyReportWithdrawn": "Report {{reference}} was withdrawn by the customer. Your score is untouched.",
+      "agencyReportReopened": "The customer reopened report {{reference}}. The platform will look at it again.",
       "carExpenseDueByDate": "{{expenseType}} is due for {{car}} on {{dueDate}} — in {{days}} day(s).",
       "carExpenseOverdueByDate": "{{expenseType}} was due for {{car}} on {{dueDate}} — {{days}} day(s) ago.",
       "carExpenseDueByDistance": "{{expenseType}} is due for {{car}} at {{dueKm}} km — {{km}} km to go ({{mileage}} km now).",
@@ -1748,7 +1793,11 @@
       "clientCinExpiring": "{{client}}'s ID card expires on {{expiryDate}} — in {{days}} day(s).",
       "clientCinExpired": "{{client}}'s ID card expired on {{expiryDate}} — {{days}} day(s) ago.",
       "clientPasseportExpiring": "{{client}}'s passport expires on {{expiryDate}} — in {{days}} day(s).",
-      "clientPasseportExpired": "{{client}}'s passport expired on {{expiryDate}} — {{days}} day(s) ago."
+      "clientPasseportExpired": "{{client}}'s passport expired on {{expiryDate}} — {{days}} day(s) ago.",
+      "platformReportOpened": "New report {{reference}} against {{agency}}.",
+      "platformReportCustomerWrote": "The customer wrote on report {{reference}} ({{agency}}).",
+      "platformReportWithdrawn": "The customer withdrew report {{reference}} ({{agency}}).",
+      "platformReportReopened": "The customer reopened report {{reference}} ({{agency}}): it is waiting for your decision again."
     }
   },
   "calendar": {

@@ -211,9 +211,14 @@ public class CustomExceptionHandler : IExceptionHandler
         httpContext.Response.StatusCode = StatusCodes.Status400BadRequest;
         httpContext.Response.ContentType = "application/json";
 
+        // A key missing from the resx comes back as itself; the English the
+        // rule was thrown with reads better than that.
+        var key = $"DomainRule.{exception.MessageKey}";
+        var localized = _localizer[key, exception.Arguments];
+
         var errors = new Dictionary<string, string[]>
         {
-            [exception.Property] = new[] { exception.Message }
+            [exception.Property] = new[] { localized == key ? exception.Message : localized }
         };
 
         await httpContext.Response.WriteAsJsonAsync(new ValidationProblemDetails(errors)

@@ -799,6 +799,54 @@
         }
       }
     },
+    "/api/AgencyReports/{id}/messages": {
+      "post": {
+        "tags": [
+          "AgencyReports"
+        ],
+        "operationId": "PostAgencyReportMessage",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          }
+        ],
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PostAgencyReportMessageCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 2
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": ""
+          }
+        }
+      }
+    },
     "/api/AgencySubscriptions": {
       "get": {
         "tags": [
@@ -5913,6 +5961,134 @@
         }
       }
     },
+    "/api/Marketplace/my-reports/{id}/messages": {
+      "post": {
+        "tags": [
+          "Marketplace"
+        ],
+        "operationId": "PostMyReportMessage",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          }
+        ],
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PostMyReportMessageCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 2
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/Marketplace/my-reports/{id}/withdraw": {
+      "post": {
+        "tags": [
+          "Marketplace"
+        ],
+        "operationId": "WithdrawMyReport",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          }
+        ],
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WithdrawMyReportCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 2
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "400": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/Marketplace/my-reports/{id}/reopen": {
+      "post": {
+        "tags": [
+          "Marketplace"
+        ],
+        "operationId": "ReopenMyReport",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          }
+        ],
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReopenMyReportCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 2
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "400": {
+            "description": ""
+          }
+        }
+      }
+    },
     "/api/Marketplace/my-reservations/requirements/{id}/submit": {
       "post": {
         "tags": [
@@ -8865,6 +9041,24 @@
           "resolutionNote": {
             "type": "string",
             "nullable": true
+          },
+          "reopenedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "customerGetsEmail": {
+            "type": "boolean"
+          },
+          "lastMessageFromPlatform": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "messages": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AgencyReportMessageDto"
+            }
           }
         }
       },
@@ -8892,7 +9086,50 @@
         "x-enumNames": [
           "Open",
           "Upheld",
-          "Dismissed"
+          "Dismissed",
+          "Withdrawn"
+        ],
+        "enum": [
+          1,
+          2,
+          3,
+          4
+        ]
+      },
+      "AgencyReportMessageDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/AgencyReportMessageKind"
+          },
+          "fromPlatform": {
+            "type": "boolean"
+          },
+          "mine": {
+            "type": "boolean"
+          },
+          "body": {
+            "type": "string",
+            "nullable": true
+          },
+          "sentAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "AgencyReportMessageKind": {
+        "type": "integer",
+        "description": "",
+        "x-enumNames": [
+          "Message",
+          "Withdrawal",
+          "Reopening"
         ],
         "enum": [
           1,
@@ -9300,6 +9537,19 @@
             "type": "boolean"
           },
           "note": {
+            "type": "string"
+          }
+        }
+      },
+      "PostAgencyReportMessageCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "body": {
             "type": "string"
           }
         }
@@ -14241,6 +14491,10 @@
           },
           "message": {
             "type": "string"
+          },
+          "notifyEmail": {
+            "type": "string",
+            "nullable": true
           }
         }
       },
@@ -14296,6 +14550,58 @@
           "resolutionNote": {
             "type": "string",
             "nullable": true
+          },
+          "canReopen": {
+            "type": "boolean"
+          },
+          "lastMessageFromPlatform": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "messages": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AgencyReportMessageDto"
+            }
+          }
+        }
+      },
+      "PostMyReportMessageCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "body": {
+            "type": "string"
+          }
+        }
+      },
+      "WithdrawMyReportCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "reason": {
+            "type": "string"
+          }
+        }
+      },
+      "ReopenMyReportCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "reason": {
+            "type": "string"
           }
         }
       },
