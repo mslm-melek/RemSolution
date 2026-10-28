@@ -74,8 +74,8 @@
   --danger: #dc2626;
   --danger-bg: #fee2e2;
   --danger-ink: #991b1b;
-  /* A filled alert pip — an unread count, a badge over a photo. Like
-     --brand-500 it does NOT change between themes: it carries white text, and
+  /* A filled alert pip — an unread count, a badge over a photo. It does NOT
+     change between themes: it carries white text, and
      the light-red that reads well as dark-mode *ink* fails as a *fill* under
      white. Only use it where the fill must be loud; a status is a .chip. */
   --danger-solid: #dc2626;
@@ -177,10 +177,11 @@
   --warn-fill: rgba(217, 119, 6, 0.1);
   --brand-fill: rgba(37, 99, 235, 0.1);
 
-  /* The app bar. Deliberately the same charcoal band in both themes: it is
-     chrome, not content, and it separates the app from the canvas without
-     competing with the status colours inside the page. Because it is always
-     dark, its own ink and hover states are always the light-on-dark set. */
+  /* The app bar. A dark charcoal band in both themes (dark mode only moves it
+     from navy to neutral): it is chrome, not content, and it separates the app
+     from the canvas without competing with the status colours inside the page.
+     Because it is always dark, its own ink and hover states are always the
+     light-on-dark set. */
   --nav-1: #141c2e;
   --nav-2: #121a2b;
   --nav-3: #0f172a;
@@ -212,28 +213,34 @@
 :root[data-theme='dark'] {
   color-scheme: dark;
 
-  /* The tint stops invert: they exist to be quiet fills, and #eff6ff is not a
-     quiet fill on a dark canvas. The deep stops (700+) stay put — they carry
-     the hero gradients, which read correctly dark on dark. */
-  --brand-50: #1c2740;
-  --brand-100: #1e3a5f;
-  --brand-200: #2a4a72;
-  /* The filled button deliberately does NOT lighten: it has white text, and
-     lightening it drops contrast below AA. Only the text stop lightens. */
-  --brand-500: #3b82f6;
-  --brand-600: #60a5fa;
+  /* The canvas and surfaces are neutral charcoal, not blue-grey: blue on a
+     blue-tinted canvas washes out, and the accent only reads as an accent when
+     nothing around it shares its hue. The tint stops invert — they exist to be
+     quiet fills, and #eff6ff is not a quiet fill on a dark canvas. The deep
+     stops (700+) are dark blue, so the hero gradients sit with the canvas
+     instead of glowing on it. */
+  --brand-50: #1a2233;
+  --brand-100: #1c2a44;
+  --brand-200: #263a5e;
+  /* The filled button is darker than the text stop: it carries white text
+     (4.7:1 here). Only the text stop lightens. */
+  --brand-500: #2f6fe0;
+  --brand-600: #6ea8fe;
+  --brand-700: #1f4a9c;
+  --brand-800: #183873;
+  --brand-900: #10224a;
 
-  --canvas: #1a1f2e;
-  --surface: #2a3042;
-  --surface-2: #232838;
-  --surface-3: #323a4e;
-  --line: #3a4256;
-  --line-strong: #4b5568;
+  --canvas: #14161b;
+  --surface: #1c1f26;
+  --surface-2: #181b21;
+  --surface-3: #252932;
+  --line: #2d313b;
+  --line-strong: #3e434f;
 
-  --ink: #f1f5f9;
-  --ink-2: #cbd5e1;
-  --muted: #94a3b8;
-  --muted-2: #6b7688;
+  --ink: #f4f4f5;
+  --ink-2: #d4d4d8;
+  --muted: #a1a1aa;
+  --muted-2: #71717a;
 
   --ok: #34d399;
   --ok-bg: #064e3b;
@@ -244,11 +251,18 @@
   --danger: #f87171;
   --danger-bg: #4c1d1d;
   --danger-ink: #fca5a5;
-  --info-bg: #1e3a5f;
-  --info-ink: #93c5fd;
+  --info-bg: #1c2a44;
+  --info-ink: #a9cbff;
 
-  --row-attention: #2f2c26;
-  --row-overdue: #332631;
+  --row-attention: #23231f;
+  --row-overdue: #262025;
+
+  /* The app bar follows the canvas to neutral: a navy band over a charcoal
+     page reads as a second, unrelated blue. Still dark, so its ink and hover
+     states are unchanged. */
+  --nav-1: #101217;
+  --nav-2: #0e1014;
+  --nav-3: #0b0d10;
 
   /* Shadows go black rather than blue-grey: a tinted shadow on a dark surface
      reads as a glow. */
@@ -259,7 +273,7 @@
   --overlay-weak: rgba(255, 255, 255, 0.04);
   --overlay: rgba(255, 255, 255, 0.09);
 
-  /* The star stays gold but is lifted a little: #f2a413 on #2a3042 is dimmer
+  /* The star stays gold but is lifted a little: #f2a413 on #1c1f26 is dimmer
      than it looks on white. */
   --star: #fbbf24;
 
@@ -267,7 +281,7 @@
      alpha — 12% of a dark green over a dark surface is invisible. */
   --ok-fill: rgba(52, 211, 153, 0.18);
   --warn-fill: rgba(251, 191, 36, 0.16);
-  --brand-fill: rgba(96, 165, 250, 0.16);
+  --brand-fill: rgba(110, 168, 254, 0.14);
 }
 
 /* ------------------------------------------------------------------ base ---- */

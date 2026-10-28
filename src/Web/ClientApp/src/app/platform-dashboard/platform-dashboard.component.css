@@ -45,7 +45,7 @@
 .kpi.fleet::before { background: var(--info); }
 .kpi.people::before { background: var(--warn); }
 /* --brand-500, not --brand-700: this is a 3px stripe on a card, and the deep
-   stops stay dark in dark mode, where a #1d4ed8 stripe on #2a3042 all but
+   stops stay dark in dark mode, where a #1f4a9c stripe on #1c1f26 all but
    disappears. Every other stripe here is already a mid-tone. */
 .kpi.accounts::before { background: var(--brand-500); }
 .kpi.reach::before { background: var(--ok); }
